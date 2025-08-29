@@ -4,19 +4,23 @@
   "description": "Modern CRM system for medical institutions",
   "private": true,
   "workspaces": [
-    "packages/*"
+    "packages/*",
+    "packages/plugins/*"
   ],
   "scripts": {
-    "dev": "lerna run dev --parallel",
-    "build": "lerna run build",
-    "test": "lerna run test",
-    "lint": "lerna run lint",
-    "clean": "lerna clean",
-    "bootstrap": "lerna bootstrap",
+    "dev": "npm run dev --workspaces --if-present",
+    "build": "npm run build --workspaces --if-present",
+    "build:shared": "npm run build --workspace=@medical-crm/shared",
+    "build:backend": "npm run build --workspace=@medical-crm/backend",
+    "build:frontend": "npm run build --workspace=@medical-crm/frontend",
+    "build:plugins": "npm run build --workspace=@medical-crm/plugins",
+    "test": "npm run test --workspaces --if-present",
+    "lint": "npm run lint --workspaces --if-present",
+    "clean": "rm -rf packages/*/dist packages/*/node_modules node_modules",
     "docker:up": "docker compose up -d",
     "docker:down": "docker compose down",
-    "db:migrate": "cd packages/backend && npm run db:migrate",
-    "db:seed": "cd packages/backend && npm run db:seed"
+    "db:migrate": "npm run db:migrate --workspace=@medical-crm/backend",
+    "db:seed": "npm run db:seed --workspace=@medical-crm/backend"
   },
   "devDependencies": {
     "@types/nodemailer": "^6.4.19",

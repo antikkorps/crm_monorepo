@@ -1,4 +1,4 @@
-import Router from "koa-router"
+import Router from "@koa/router"
 import { InvoiceController } from "../controllers/InvoiceController"
 import { authenticate } from "../middleware/auth"
 import { requirePermission } from "../middleware/permissions"

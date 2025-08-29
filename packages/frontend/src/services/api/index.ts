@@ -1,104 +1,113 @@
 import type { LoginCredentials } from "@/stores/auth"
 import type { User } from "@medical-crm/shared"
-import axios, { type AxiosInstance, type AxiosResponse } from "axios"
 
-// Create axios instance with base configuration
-const apiClient: AxiosInstance = axios.create({
-  baseURL: "/api",
-  timeout: 10000,
-  headers: {
-    "Content-Type": "application/json",
-  },
-})
+const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:3000/api"
 
-// Request interceptor to add auth token
-apiClient.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem("accessToken")
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`
-    }
-    return config
-  },
-  (error) => {
-    return Promise.reject(error)
+class ApiClient {
+  private baseURL: string
+
+  constructor(baseURL: string) {
+    this.baseURL = baseURL
   }
-)
 
-// Response interceptor for error handling and token refresh
-apiClient.interceptors.response.use(
-  (response) => response,
-  async (error) => {
-    const originalRequest = error.config
+  private async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
+    const token = localStorage.getItem("token")
 
-    // Handle 401 errors (unauthorized)
-    if (error.response?.status === 401 && !originalRequest._retry) {
-      originalRequest._retry = true
+    const config: RequestInit = {
+      headers: {
+        "Content-Type": "application/json",
+        ...(token && { Authorization: `Bearer ${token}` }),
+        ...options.headers,
+      },
+      ...options,
+    }
 
-      try {
-        const refreshToken = localStorage.getItem("refreshToken")
-        if (refreshToken) {
-          const response = await axios.post("/api/auth/refresh", {
-            refreshToken,
-          })
+    const response = await fetch(`${this.baseURL}${endpoint}`, config)
 
-          const { accessToken, refreshToken: newRefreshToken } = response.data
-          localStorage.setItem("accessToken", accessToken)
-          localStorage.setItem("refreshToken", newRefreshToken)
-
-          // Retry original request with new token
-          originalRequest.headers.Authorization = `Bearer ${accessToken}`
-          return apiClient(originalRequest)
-        }
-      } catch (refreshError) {
-        // Refresh failed, redirect to login
-        localStorage.removeItem("accessToken")
-        localStorage.removeItem("refreshToken")
+    if (!response.ok) {
+      if (response.status === 401) {
+        localStorage.removeItem("token")
         window.location.href = "/login"
-        return Promise.reject(refreshError)
+        throw new Error("Unauthorized")
       }
+      throw new Error(`HTTP error! status: ${response.status}`)
     }
 
-    return Promise.reject(error)
+    return response.json()
   }
-)
 
-// Auth API endpoints
-export const authApi = {
-  login: (
-    credentials: LoginCredentials
-  ): Promise<
-    AxiosResponse<{
-      user: User
-      accessToken: string
-      refreshToken: string
-    }>
-  > => {
-    return apiClient.post("/auth/login", credentials)
-  },
+  async get<T>(endpoint: string): Promise<T> {
+    return this.request<T>(endpoint, { method: "GET" })
+  }
 
-  logout: (refreshToken: string): Promise<AxiosResponse<void>> => {
-    return apiClient.post("/auth/logout", { refreshToken })
-  },
+  async post<T>(endpoint: string, data?: any): Promise<T> {
+    return this.request<T>(endpoint, {
+      method: "POST",
+      body: data ? JSON.stringify(data) : undefined,
+    })
+  }
 
-  refresh: (
-    refreshToken: string
-  ): Promise<
-    AxiosResponse<{
-      accessToken: string
-      refreshToken: string
-    }>
-  > => {
-    return apiClient.post("/auth/refresh", { refreshToken })
-  },
+  async put<T>(endpoint: string, data?: any): Promise<T> {
+    return this.request<T>(endpoint, {
+      method: "PUT",
+      body: data ? JSON.stringify(data) : undefined,
+    })
+  }
 
-  getCurrentUser: (): Promise<AxiosResponse<User>> => {
-    return apiClient.get("/auth/me")
-  },
-
-  updateProfile: (profileData: Partial<User>): Promise<AxiosResponse<User>> => {
-    return apiClient.put("/auth/profile", profileData)
-  },
+  async delete<T>(endpoint: string): Promise<T> {
+    return this.request<T>(endpoint, { method: "DELETE" })
+  }
 }
 
-export default apiClient
+const apiClient = new ApiClient(API_BASE_URL)
+
+export const authApi = {
+  login: (credentials: LoginCredentials) =>
+    apiClient.post<{ token: string; user: User }>("/auth/login", credentials),
+
+  logout: () => apiClient.post("/auth/logout"),
+
+  getProfile: () => apiClient.get<User>("/auth/profile"),
+
+  updateProfile: (data: Partial<User>) => apiClient.put<User>("/auth/profile", data),
+}
+
+export const institutionsApi = {
+  getAll: () => apiClient.get("/institutions"),
+  getById: (id: string) => apiClient.get(`/institutions/${id}`),
+  create: (data: any) => apiClient.post("/institutions", data),
+  update: (id: string, data: any) => apiClient.put(`/institutions/${id}`, data),
+  delete: (id: string) => apiClient.delete(`/institutions/${id}`),
+}
+
+export const tasksApi = {
+  getAll: () => apiClient.get("/tasks"),
+  getById: (id: string) => apiClient.get(`/tasks/${id}`),
+  create: (data: any) => apiClient.post("/tasks", data),
+  update: (id: string, data: any) => apiClient.put(`/tasks/${id}`, data),
+  delete: (id: string) => apiClient.delete(`/tasks/${id}`),
+}
+
+export const quotesApi = {
+  getAll: () => apiClient.get("/quotes"),
+  getById: (id: string) => apiClient.get(`/quotes/${id}`),
+  create: (data: any) => apiClient.post("/quotes", data),
+  update: (id: string, data: any) => apiClient.put(`/quotes/${id}`, data),
+  delete: (id: string) => apiClient.delete(`/quotes/${id}`),
+}
+
+export const invoicesApi = {
+  getAll: () => apiClient.get("/invoices"),
+  getById: (id: string) => apiClient.get(`/invoices/${id}`),
+  create: (data: any) => apiClient.post("/invoices", data),
+  update: (id: string, data: any) => apiClient.put(`/invoices/${id}`, data),
+  delete: (id: string) => apiClient.delete(`/invoices/${id}`),
+}
+
+export const teamApi = {
+  getAll: () => apiClient.get("/teams"),
+  getById: (id: string) => apiClient.get(`/teams/${id}`),
+  create: (data: any) => apiClient.post("/teams", data),
+  update: (id: string, data: any) => apiClient.put(`/teams/${id}`, data),
+  delete: (id: string) => apiClient.delete(`/teams/${id}`),
+}

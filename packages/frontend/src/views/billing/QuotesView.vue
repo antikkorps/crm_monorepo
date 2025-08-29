@@ -1,26 +1,16 @@
 <template>
-  <AppLayout>
-    <div class="quotes">
-      <Card>
-        <template #title>
-          <i class="pi pi-file-edit mr-2"></i>
-          Quotes
-        </template>
-        <template #content>
-          <p>Quote management will be implemented in a future task.</p>
-        </template>
-      </Card>
-    </div>
-  </AppLayout>
+  <div class="quotes-view">
+    <h1>Quotes</h1>
+    <p>Quotes functionality coming soon...</p>
+  </div>
 </template>
 
 <script setup lang="ts">
-import AppLayout from "@/components/layout/AppLayout.vue"
-import Card from "primevue/card"
+// Quotes view component
 </script>
 
 <style scoped>
-.quotes {
-  padding: 1rem;
+.quotes-view {
+  padding: 2rem;
 }
 </style>

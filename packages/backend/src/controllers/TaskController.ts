@@ -3,7 +3,7 @@ import {
   TaskSearchFilters,
   TaskUpdateRequest,
 } from "@medical-crm/shared"
-import { Context } from "koa"
+import { Context } from "../types/koa"
 import { MedicalInstitution } from "../models/MedicalInstitution"
 import { Task, TaskPriority, TaskStatus } from "../models/Task"
 import { User } from "../models/User"

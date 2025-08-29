@@ -1,6 +1,6 @@
 import { ComplianceStatus, InstitutionType } from "@medical-crm/shared"
 import Joi from "joi"
-import { Context } from "koa"
+import { Context } from "../types/koa"
 import { createError } from "../middleware/errorHandler"
 import { ContactPerson, MedicalInstitution, MedicalProfile, User } from "../models"
 import { CsvImportService } from "../services/CsvImportService"

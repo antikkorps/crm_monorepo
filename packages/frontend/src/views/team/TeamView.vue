@@ -1,26 +1,16 @@
 <template>
-  <AppLayout>
-    <div class="team">
-      <Card>
-        <template #title>
-          <i class="pi pi-users mr-2"></i>
-          Team
-        </template>
-        <template #content>
-          <p>Team management will be implemented in a future task.</p>
-        </template>
-      </Card>
-    </div>
-  </AppLayout>
+  <div class="team-view">
+    <h1>Team</h1>
+    <p>Team functionality coming soon...</p>
+  </div>
 </template>
 
 <script setup lang="ts">
-import AppLayout from "@/components/layout/AppLayout.vue"
-import Card from "primevue/card"
+// Team view component
 </script>
 
 <style scoped>
-.team {
-  padding: 1rem;
+.team-view {
+  padding: 2rem;
 }
 </style>

@@ -1,6 +1,6 @@
-import { Context, Next } from "koa"
 import { User, UserRole } from "../models/User"
 import { AuthService } from "../services/AuthService"
+import { Context, Next } from "../types/koa"
 import { logger } from "../utils/logger"
 import { createError } from "./errorHandler"
 

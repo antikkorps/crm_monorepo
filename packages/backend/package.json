@@ -16,6 +16,7 @@
   },
   "dependencies": {
     "@koa/multer": "^4.0.0",
+    "@koa/router": "^14.0.0",
     "@medical-crm/shared": "^1.0.0",
     "@types/koa-multer": "^1.0.4",
     "@types/multer": "^2.0.0",
@@ -32,7 +33,6 @@
     "koa-cors": "^0.0.16",
     "koa-helmet": "^7.0.2",
     "koa-jwt": "^4.0.4",
-    "koa-router": "^13.1.0",
     "nodemailer": "^6.9.16",
     "pg": "^8.13.1",
     "puppeteer": "^24.2.0",
@@ -46,6 +46,7 @@
     "@types/jsonwebtoken": "^9.0.7",
     "@types/koa": "^2.15.0",
     "@types/koa__multer": "^2.0.7",
+    "@types/koa__router": "^12.0.4",
     "@types/koa-bodyparser": "^4.3.12",
     "@types/koa-cors": "^0.0.5",
     "@types/koa-router": "^7.4.8",

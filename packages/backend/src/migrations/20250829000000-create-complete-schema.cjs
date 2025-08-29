@@ -391,7 +391,7 @@ module.exports = {
         onUpdate: "CASCADE",
         onDelete: "CASCADE",
       },
-      created_by: {
+      assigned_user_id: {
         type: Sequelize.UUID,
         allowNull: false,
         references: {
@@ -401,26 +401,61 @@ module.exports = {
         onUpdate: "CASCADE",
         onDelete: "CASCADE",
       },
-      status: {
-        type: Sequelize.ENUM("draft", "sent", "accepted", "rejected", "expired"),
+      template_id: {
+        type: Sequelize.UUID,
+        allowNull: true,
+      },
+      title: {
+        type: Sequelize.STRING,
         allowNull: false,
-        defaultValue: "draft",
+      },
+      description: {
+        type: Sequelize.TEXT,
+        allowNull: true,
       },
       valid_until: {
         type: Sequelize.DATE,
         allowNull: false,
+      },
+      status: {
+        type: Sequelize.ENUM(
+          "draft",
+          "sent",
+          "accepted",
+          "rejected",
+          "expired",
+          "cancelled"
+        ),
+        allowNull: false,
+        defaultValue: "draft",
+      },
+      accepted_at: {
+        type: Sequelize.DATE,
+        allowNull: true,
+      },
+      rejected_at: {
+        type: Sequelize.DATE,
+        allowNull: true,
+      },
+      client_comments: {
+        type: Sequelize.TEXT,
+        allowNull: true,
+      },
+      internal_notes: {
+        type: Sequelize.TEXT,
+        allowNull: true,
       },
       subtotal: {
         type: Sequelize.DECIMAL(10, 2),
         allowNull: false,
         defaultValue: 0,
       },
-      tax_rate: {
-        type: Sequelize.DECIMAL(5, 2),
+      total_discount_amount: {
+        type: Sequelize.DECIMAL(10, 2),
         allowNull: false,
         defaultValue: 0,
       },
-      tax_amount: {
+      total_tax_amount: {
         type: Sequelize.DECIMAL(10, 2),
         allowNull: false,
         defaultValue: 0,
@@ -429,10 +464,6 @@ module.exports = {
         type: Sequelize.DECIMAL(10, 2),
         allowNull: false,
         defaultValue: 0,
-      },
-      notes: {
-        type: Sequelize.TEXT,
-        allowNull: true,
       },
       created_at: {
         type: Sequelize.DATE,
@@ -444,8 +475,8 @@ module.exports = {
       },
     })
 
-    // Create quote_items table
-    await queryInterface.createTable("quote_items", {
+    // Create quote_lines table
+    await queryInterface.createTable("quote_lines", {
       id: {
         type: Sequelize.UUID,
         defaultValue: Sequelize.UUIDV4,
@@ -461,6 +492,11 @@ module.exports = {
         onUpdate: "CASCADE",
         onDelete: "CASCADE",
       },
+      order_index: {
+        type: Sequelize.INTEGER,
+        allowNull: false,
+        defaultValue: 0,
+      },
       description: {
         type: Sequelize.STRING,
         allowNull: false,
@@ -474,9 +510,45 @@ module.exports = {
         type: Sequelize.DECIMAL(10, 2),
         allowNull: false,
       },
-      total_price: {
+      discount_type: {
+        type: Sequelize.ENUM("percentage", "fixed"),
+        allowNull: false,
+        defaultValue: "percentage",
+      },
+      discount_value: {
         type: Sequelize.DECIMAL(10, 2),
         allowNull: false,
+        defaultValue: 0,
+      },
+      discount_amount: {
+        type: Sequelize.DECIMAL(10, 2),
+        allowNull: false,
+        defaultValue: 0,
+      },
+      tax_rate: {
+        type: Sequelize.DECIMAL(5, 2),
+        allowNull: false,
+        defaultValue: 0,
+      },
+      tax_amount: {
+        type: Sequelize.DECIMAL(10, 2),
+        allowNull: false,
+        defaultValue: 0,
+      },
+      subtotal: {
+        type: Sequelize.DECIMAL(10, 2),
+        allowNull: false,
+        defaultValue: 0,
+      },
+      total_after_discount: {
+        type: Sequelize.DECIMAL(10, 2),
+        allowNull: false,
+        defaultValue: 0,
+      },
+      total: {
+        type: Sequelize.DECIMAL(10, 2),
+        allowNull: false,
+        defaultValue: 0,
       },
       created_at: {
         type: Sequelize.DATE,
@@ -500,16 +572,6 @@ module.exports = {
         allowNull: false,
         unique: true,
       },
-      quote_id: {
-        type: Sequelize.UUID,
-        allowNull: true,
-        references: {
-          model: "quotes",
-          key: "id",
-        },
-        onUpdate: "CASCADE",
-        onDelete: "SET NULL",
-      },
       institution_id: {
         type: Sequelize.UUID,
         allowNull: false,
@@ -520,7 +582,7 @@ module.exports = {
         onUpdate: "CASCADE",
         onDelete: "CASCADE",
       },
-      created_by: {
+      assigned_user_id: {
         type: Sequelize.UUID,
         allowNull: false,
         references: {
@@ -530,26 +592,56 @@ module.exports = {
         onUpdate: "CASCADE",
         onDelete: "CASCADE",
       },
+      quote_id: {
+        type: Sequelize.UUID,
+        allowNull: true,
+        references: {
+          model: "quotes",
+          key: "id",
+        },
+        onUpdate: "CASCADE",
+        onDelete: "SET NULL",
+      },
+      template_id: {
+        type: Sequelize.UUID,
+        allowNull: true,
+      },
+      title: {
+        type: Sequelize.STRING,
+        allowNull: false,
+      },
+      description: {
+        type: Sequelize.TEXT,
+        allowNull: true,
+      },
+      due_date: {
+        type: Sequelize.DATE,
+        allowNull: false,
+      },
       status: {
         type: Sequelize.ENUM("draft", "sent", "paid", "overdue", "cancelled"),
         allowNull: false,
         defaultValue: "draft",
       },
-      due_date: {
-        type: Sequelize.DATE,
-        allowNull: false,
+      client_comments: {
+        type: Sequelize.TEXT,
+        allowNull: true,
+      },
+      internal_notes: {
+        type: Sequelize.TEXT,
+        allowNull: true,
       },
       subtotal: {
         type: Sequelize.DECIMAL(10, 2),
         allowNull: false,
         defaultValue: 0,
       },
-      tax_rate: {
-        type: Sequelize.DECIMAL(5, 2),
+      total_discount_amount: {
+        type: Sequelize.DECIMAL(10, 2),
         allowNull: false,
         defaultValue: 0,
       },
-      tax_amount: {
+      total_tax_amount: {
         type: Sequelize.DECIMAL(10, 2),
         allowNull: false,
         defaultValue: 0,
@@ -564,10 +656,6 @@ module.exports = {
         allowNull: false,
         defaultValue: 0,
       },
-      notes: {
-        type: Sequelize.TEXT,
-        allowNull: true,
-      },
       created_at: {
         type: Sequelize.DATE,
         allowNull: false,
@@ -578,8 +666,8 @@ module.exports = {
       },
     })
 
-    // Create invoice_items table
-    await queryInterface.createTable("invoice_items", {
+    // Create invoice_lines table
+    await queryInterface.createTable("invoice_lines", {
       id: {
         type: Sequelize.UUID,
         defaultValue: Sequelize.UUIDV4,
@@ -595,6 +683,11 @@ module.exports = {
         onUpdate: "CASCADE",
         onDelete: "CASCADE",
       },
+      order_index: {
+        type: Sequelize.INTEGER,
+        allowNull: false,
+        defaultValue: 0,
+      },
       description: {
         type: Sequelize.STRING,
         allowNull: false,
@@ -608,9 +701,45 @@ module.exports = {
         type: Sequelize.DECIMAL(10, 2),
         allowNull: false,
       },
-      total_price: {
+      discount_type: {
+        type: Sequelize.ENUM("percentage", "fixed"),
+        allowNull: false,
+        defaultValue: "percentage",
+      },
+      discount_value: {
         type: Sequelize.DECIMAL(10, 2),
         allowNull: false,
+        defaultValue: 0,
+      },
+      discount_amount: {
+        type: Sequelize.DECIMAL(10, 2),
+        allowNull: false,
+        defaultValue: 0,
+      },
+      tax_rate: {
+        type: Sequelize.DECIMAL(5, 2),
+        allowNull: false,
+        defaultValue: 0,
+      },
+      tax_amount: {
+        type: Sequelize.DECIMAL(10, 2),
+        allowNull: false,
+        defaultValue: 0,
+      },
+      subtotal: {
+        type: Sequelize.DECIMAL(10, 2),
+        allowNull: false,
+        defaultValue: 0,
+      },
+      total_after_discount: {
+        type: Sequelize.DECIMAL(10, 2),
+        allowNull: false,
+        defaultValue: 0,
+      },
+      total: {
+        type: Sequelize.DECIMAL(10, 2),
+        allowNull: false,
+        defaultValue: 0,
       },
       created_at: {
         type: Sequelize.DATE,
@@ -643,23 +772,28 @@ module.exports = {
         type: Sequelize.DECIMAL(10, 2),
         allowNull: false,
       },
-      payment_method: {
-        type: Sequelize.ENUM("cash", "check", "bank_transfer", "credit_card", "other"),
-        allowNull: false,
-      },
       payment_date: {
         type: Sequelize.DATE,
         allowNull: false,
       },
-      reference_number: {
+      payment_method: {
+        type: Sequelize.ENUM("cash", "check", "bank_transfer", "credit_card", "other"),
+        allowNull: false,
+      },
+      reference: {
         type: Sequelize.STRING,
         allowNull: true,
+      },
+      status: {
+        type: Sequelize.ENUM("pending", "confirmed", "cancelled", "failed"),
+        allowNull: false,
+        defaultValue: "pending",
       },
       notes: {
         type: Sequelize.TEXT,
         allowNull: true,
       },
-      created_by: {
+      recorded_by: {
         type: Sequelize.UUID,
         allowNull: false,
         references: {
@@ -711,32 +845,35 @@ module.exports = {
 
     await queryInterface.addIndex("quotes", ["quote_number"], { unique: true })
     await queryInterface.addIndex("quotes", ["institution_id"])
-    await queryInterface.addIndex("quotes", ["created_by"])
+    await queryInterface.addIndex("quotes", ["assigned_user_id"])
     await queryInterface.addIndex("quotes", ["status"])
     await queryInterface.addIndex("quotes", ["valid_until"])
 
-    await queryInterface.addIndex("quote_items", ["quote_id"])
+    await queryInterface.addIndex("quote_lines", ["quote_id"])
 
     await queryInterface.addIndex("invoices", ["invoice_number"], { unique: true })
     await queryInterface.addIndex("invoices", ["quote_id"])
     await queryInterface.addIndex("invoices", ["institution_id"])
-    await queryInterface.addIndex("invoices", ["created_by"])
+    await queryInterface.addIndex("invoices", ["assigned_user_id"])
     await queryInterface.addIndex("invoices", ["status"])
     await queryInterface.addIndex("invoices", ["due_date"])
 
-    await queryInterface.addIndex("invoice_items", ["invoice_id"])
+    await queryInterface.addIndex("invoice_lines", ["invoice_id"])
 
     await queryInterface.addIndex("payments", ["invoice_id"])
+    await queryInterface.addIndex("payments", ["status"])
+    await queryInterface.addIndex("payments", ["payment_method"])
     await queryInterface.addIndex("payments", ["payment_date"])
-    await queryInterface.addIndex("payments", ["created_by"])
+    await queryInterface.addIndex("payments", ["recorded_by"])
+    await queryInterface.addIndex("payments", ["reference"])
   },
 
   async down(queryInterface, Sequelize) {
     // Drop tables in reverse order to avoid foreign key constraints
     await queryInterface.dropTable("payments")
-    await queryInterface.dropTable("invoice_items")
+    await queryInterface.dropTable("invoice_lines")
     await queryInterface.dropTable("invoices")
-    await queryInterface.dropTable("quote_items")
+    await queryInterface.dropTable("quote_lines")
     await queryInterface.dropTable("quotes")
     await queryInterface.dropTable("tasks")
     await queryInterface.dropTable("contact_persons")
@@ -760,5 +897,12 @@ module.exports = {
     await queryInterface.sequelize.query(
       'DROP TYPE IF EXISTS "enum_payments_payment_method";'
     )
+    await queryInterface.sequelize.query(
+      'DROP TYPE IF EXISTS "enum_quote_lines_discount_type";'
+    )
+    await queryInterface.sequelize.query(
+      'DROP TYPE IF EXISTS "enum_invoice_lines_discount_type";'
+    )
+    await queryInterface.sequelize.query('DROP TYPE IF EXISTS "enum_payments_status";')
   },
 }

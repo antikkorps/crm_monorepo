@@ -1,5 +1,5 @@
 import { useAuthStore } from "@/stores/auth"
-import { io } from "socket.io-client"
+import { io, type Socket } from "socket.io-client"
 import { onMounted, onUnmounted, ref } from "vue"
 
 export interface SocketNotification {
@@ -95,7 +95,7 @@ export function useSocket() {
       })
     })
 
-    socket.value.on("connect_error", (error) => {
+    socket.value.on("connect_error", (error: Error) => {
       console.error("Socket connection error:", error)
       isConnected.value = false
     })

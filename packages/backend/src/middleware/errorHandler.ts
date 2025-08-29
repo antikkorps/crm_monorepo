@@ -1,4 +1,4 @@
-import { Context, Next } from "koa"
+import { Context, Next } from "../types/koa"
 import { logger } from "../utils/logger"
 
 export interface AppError extends Error {

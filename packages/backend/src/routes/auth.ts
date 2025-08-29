@@ -1,4 +1,4 @@
-import Router from "koa-router"
+import Router from "@koa/router"
 import { AuthController } from "../controllers/AuthController"
 import { authenticate, optionalAuth } from "../middleware/auth"
 

@@ -1,4 +1,4 @@
-import { Context, Next } from "koa"
+import { Context, Next } from "../types/koa"
 import { MedicalInstitution } from "../models/MedicalInstitution"
 import { Team } from "../models/Team"
 import { User, UserRole } from "../models/User"

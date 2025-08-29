@@ -1,8 +1,8 @@
 import Joi from "joi"
-import { Context, Next } from "koa"
 import { createError } from "../middleware/errorHandler"
 import { User } from "../models/User"
 import { AuthService } from "../services/AuthService"
+import { Context, Next } from "../types/koa"
 import { logger } from "../utils/logger"
 
 // Validation schemas

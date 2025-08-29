@@ -1,4 +1,4 @@
-import { computed, ref } from "vue"
+import { computed, ref, type ComputedRef, type Ref } from "vue"
 
 export interface ValidationRule {
   required?: boolean
@@ -10,11 +10,11 @@ export interface ValidationRule {
 }
 
 export interface FieldValidation {
-  value: any
-  error: string
+  value: Ref<any>
+  error: Ref<string>
   rules: ValidationRule[]
   validate: () => void
-  isValid: boolean
+  isValid: ComputedRef<boolean>
 }
 
 export function useFormValidation() {

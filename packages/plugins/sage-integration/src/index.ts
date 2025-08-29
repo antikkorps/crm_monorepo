@@ -1,27 +1,62 @@
-// SAGE Integration Plugin
-// This plugin will be implemented in later tasks
+// SAGE Integration Plugin for Medical CRM
 
-export interface SagePlugin {
+export interface SageConfig {
+  apiUrl: string
+  apiKey: string
+  companyId: string
+}
+
+export interface SageCustomer {
+  id: string
   name: string
-  version: string
-  initialize(): Promise<void>
-  syncCustomers(): Promise<void>
-  syncInvoices(): Promise<void>
+  email?: string
+  address?: string
+  phone?: string
 }
 
-export const sagePlugin: SagePlugin = {
-  name: "sage-integration",
-  version: "1.0.0",
-
-  async initialize() {
-    console.log("SAGE Integration plugin initialized")
-  },
-
-  async syncCustomers() {
-    console.log("Syncing customers with SAGE")
-  },
-
-  async syncInvoices() {
-    console.log("Syncing invoices with SAGE")
-  },
+export interface SageInvoice {
+  id: string
+  customerId: string
+  amount: number
+  currency: string
+  status: "draft" | "sent" | "paid" | "overdue"
+  dueDate: Date
+  items: SageInvoiceItem[]
 }
+
+export interface SageInvoiceItem {
+  description: string
+  quantity: number
+  unitPrice: number
+  taxRate: number
+}
+
+export class SageIntegration {
+  private config: SageConfig
+
+  constructor(config: SageConfig) {
+    this.config = config
+  }
+
+  async syncCustomers(): Promise<SageCustomer[]> {
+    // TODO: Implement SAGE API integration
+    throw new Error("Not implemented yet")
+  }
+
+  async createInvoice(invoice: Omit<SageInvoice, "id">): Promise<SageInvoice> {
+    // TODO: Implement SAGE invoice creation
+    throw new Error("Not implemented yet")
+  }
+
+  async getInvoices(): Promise<SageInvoice[]> {
+    // TODO: Implement SAGE invoice retrieval
+    throw new Error("Not implemented yet")
+  }
+
+  async syncInvoices(): Promise<void> {
+    // TODO: Implement bidirectional sync
+    throw new Error("Not implemented yet")
+  }
+}
+
+export default SageIntegration

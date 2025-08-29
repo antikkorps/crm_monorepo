@@ -1,4 +1,4 @@
-import Router from "koa-router"
+import Router from "@koa/router"
 import { MedicalInstitutionController } from "../controllers/MedicalInstitutionController"
 import { authenticate } from "../middleware/auth"
 import {

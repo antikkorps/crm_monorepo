@@ -4,10 +4,10 @@
   "private": true,
   "description": "Plugin packages for medical CRM",
   "scripts": {
-    "build": "lerna run build --scope=@medical-crm/plugins/*",
-    "dev": "lerna run dev --parallel --scope=@medical-crm/plugins/*",
-    "test": "lerna run test --scope=@medical-crm/plugins/*",
-    "lint": "lerna run lint --scope=@medical-crm/plugins/*"
+    "build": "npm run build --workspace=@medical-crm/sage-integration",
+    "dev": "npm run dev --workspace=@medical-crm/sage-integration",
+    "test": "npm run test --workspace=@medical-crm/sage-integration",
+    "lint": "npm run lint --workspace=@medical-crm/sage-integration"
   },
   "devDependencies": {
     "typescript": "^5.1.6"

@@ -1,5 +1,5 @@
 import multer from "@koa/multer"
-import Router from "koa-router"
+import Router from "@koa/router"
 import { DocumentTemplateController } from "../controllers/DocumentTemplateController"
 import { authenticate } from "../middleware/auth"
 import { requirePermission } from "../middleware/permissions"

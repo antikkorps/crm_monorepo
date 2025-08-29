@@ -1,4 +1,4 @@
-import Router from "koa-router"
+import Router from "@koa/router"
 import { SocketController } from "../controllers/SocketController"
 import { authenticate, authorize } from "../middleware/auth"
 import { UserRole } from "../models/User"

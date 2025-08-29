@@ -125,43 +125,39 @@ export class DatabaseSeeder {
         return
       }
 
+      // Get a demo user to assign institutions to
+      const [users] = await sequelize.query("SELECT id FROM users LIMIT 1")
+      const demoUserId = users.length > 0 ? (users[0] as any).id : null
+
       // Sample medical institutions
       const sampleInstitutions = [
         {
           id: uuidv4(),
           name: "General Hospital",
           type: "hospital",
-          address_line1: "123 Medical Center Dr",
-          city: "New York",
-          state: "NY",
-          postal_code: "10001",
-          country: "US",
-          phone: "(555) 123-4567",
-          email: "info@generalhospital.com",
-          bed_capacity: 250,
-          surgical_rooms: 12,
-          specialties: ["cardiology", "neurology", "oncology"],
-          departments: ["emergency", "surgery", "pediatrics"],
-          equipment_types: ["mri", "ct_scan", "ultrasound"],
-          certifications: ["joint_commission", "iso_9001"],
+          address: JSON.stringify({
+            street: "123 Medical Center Dr",
+            city: "New York",
+            state: "NY",
+            zipCode: "10001",
+            country: "US",
+          }),
+          assigned_user_id: demoUserId,
+          tags: ["major_hospital", "teaching_hospital"],
         },
         {
           id: uuidv4(),
           name: "City Medical Clinic",
           type: "clinic",
-          address_line1: "456 Health St",
-          city: "Los Angeles",
-          state: "CA",
-          postal_code: "90210",
-          country: "US",
-          phone: "(555) 987-6543",
-          email: "contact@citymedical.com",
-          bed_capacity: 20,
-          surgical_rooms: 2,
-          specialties: ["family_medicine", "internal_medicine"],
-          departments: ["outpatient", "lab"],
-          equipment_types: ["x_ray", "ultrasound"],
-          certifications: ["clia"],
+          address: JSON.stringify({
+            street: "456 Health St",
+            city: "Los Angeles",
+            state: "CA",
+            zipCode: "90210",
+            country: "US",
+          }),
+          assigned_user_id: demoUserId,
+          tags: ["outpatient_clinic"],
         },
       ]
 
@@ -169,23 +165,16 @@ export class DatabaseSeeder {
         await sequelize.query(
           `
           INSERT INTO medical_institutions (
-            id, name, type, address_line1, city, state, postal_code, country,
-            phone, email, bed_capacity, surgical_rooms, specialties, departments,
-            equipment_types, certifications, is_compliant, created_at, updated_at
+            id, name, type, address, assigned_user_id, tags, is_active, created_at, updated_at
           ) VALUES (
-            :id, :name, :type, :address_line1, :city, :state, :postal_code, :country,
-            :phone, :email, :bed_capacity, :surgical_rooms, :specialties, :departments,
-            :equipment_types, :certifications, :is_compliant, NOW(), NOW()
+            :id, :name, :type, :address::jsonb, :assigned_user_id, :tags::text[], :is_active, NOW(), NOW()
           )
         `,
           {
             replacements: {
               ...institution,
-              specialties: JSON.stringify(institution.specialties),
-              departments: JSON.stringify(institution.departments),
-              equipment_types: JSON.stringify(institution.equipment_types),
-              certifications: JSON.stringify(institution.certifications),
-              is_compliant: true,
+              tags: `{${institution.tags.map((tag) => `"${tag}"`).join(",")}}`,
+              is_active: true,
             },
           }
         )

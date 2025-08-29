@@ -6,7 +6,7 @@ import {
   InvoiceStatus,
   PaymentCreateRequest,
 } from "@medical-crm/shared"
-import { Context } from "koa"
+import { Context } from "../types/koa"
 import { InvoiceLine } from "../models/InvoiceLine"
 import { Payment } from "../models/Payment"
 import { User, UserRole } from "../models/User"

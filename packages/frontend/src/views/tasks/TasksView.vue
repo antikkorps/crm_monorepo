@@ -1,26 +1,16 @@
 <template>
-  <AppLayout>
-    <div class="tasks">
-      <Card>
-        <template #title>
-          <i class="pi pi-check-square mr-2"></i>
-          Tasks
-        </template>
-        <template #content>
-          <p>Task management will be implemented in a future task.</p>
-        </template>
-      </Card>
-    </div>
-  </AppLayout>
+  <div class="tasks-view">
+    <h1>Tasks</h1>
+    <p>Tasks functionality coming soon...</p>
+  </div>
 </template>
 
 <script setup lang="ts">
-import AppLayout from "@/components/layout/AppLayout.vue"
-import Card from "primevue/card"
+// Tasks view component
 </script>
 
 <style scoped>
-.tasks {
-  padding: 1rem;
+.tasks-view {
+  padding: 2rem;
 }
 </style>

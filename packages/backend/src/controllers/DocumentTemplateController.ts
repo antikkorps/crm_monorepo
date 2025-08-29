@@ -1,4 +1,4 @@
-import { Context } from "koa"
+import { Context } from "../types/koa"
 import {
   DocumentTemplateCreationAttributes,
   TemplateType,

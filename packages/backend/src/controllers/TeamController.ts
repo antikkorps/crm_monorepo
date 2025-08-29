@@ -1,4 +1,4 @@
-import { Context, Next } from "koa"
+import { Context, Next } from "../types/koa"
 import { Team } from "../models/Team"
 import { User } from "../models/User"
 import { createError } from "../utils/logger"

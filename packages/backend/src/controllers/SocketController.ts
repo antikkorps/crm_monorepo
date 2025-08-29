@@ -1,4 +1,4 @@
-import { Context } from "koa"
+import { Context } from "../types/koa"
 import { User } from "../models/User"
 import { SocketService } from "../services/SocketService"
 import { logger } from "../utils/logger"

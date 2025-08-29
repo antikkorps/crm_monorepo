@@ -1,5 +1,5 @@
-import { Context, Next } from "koa"
 import { User, UserRole } from "../models/User"
+import { Context, Next } from "../types/koa"
 import { createError } from "./errorHandler"
 
 /**

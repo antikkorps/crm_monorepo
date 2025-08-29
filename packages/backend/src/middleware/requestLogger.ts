@@ -1,5 +1,5 @@
-import { Context, Next } from "koa"
 import { v4 as uuidv4 } from "uuid"
+import { Context, Next } from "../types/koa"
 import { logger } from "../utils/logger"
 
 export const requestLogger = async (ctx: Context, next: Next) => {

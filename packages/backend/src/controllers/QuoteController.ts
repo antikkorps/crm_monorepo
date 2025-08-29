@@ -6,7 +6,7 @@ import {
   QuoteStatus,
   QuoteUpdateRequest,
 } from "@medical-crm/shared"
-import { Context } from "koa"
+import { Context } from "../types/koa"
 import { QuoteLine } from "../models/QuoteLine"
 import { User, UserRole } from "../models/User"
 import { NotificationService } from "../services/NotificationService"

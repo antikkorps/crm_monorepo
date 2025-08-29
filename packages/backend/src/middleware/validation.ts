@@ -1,5 +1,5 @@
 import Joi from "joi"
-import { Context, Next } from "koa"
+import { Context, Next } from "../types/koa"
 import { createError } from "./errorHandler"
 
 /**
