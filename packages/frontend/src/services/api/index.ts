@@ -73,11 +73,39 @@ export const authApi = {
 }
 
 export const institutionsApi = {
-  getAll: () => apiClient.get("/institutions"),
+  getAll: (filters?: any) => {
+    const params = new URLSearchParams()
+    if (filters) {
+      Object.entries(filters).forEach(([key, value]) => {
+        if (value !== undefined && value !== null && value !== "") {
+          if (Array.isArray(value)) {
+            value.forEach((v) => params.append(key, v.toString()))
+          } else {
+            params.append(key, value.toString())
+          }
+        }
+      })
+    }
+    const queryString = params.toString()
+    return apiClient.get(`/institutions${queryString ? `?${queryString}` : ""}`)
+  },
   getById: (id: string) => apiClient.get(`/institutions/${id}`),
   create: (data: any) => apiClient.post("/institutions", data),
   update: (id: string, data: any) => apiClient.put(`/institutions/${id}`, data),
   delete: (id: string) => apiClient.delete(`/institutions/${id}`),
+  search: (query: string) =>
+    apiClient.get(`/institutions/search?q=${encodeURIComponent(query)}`),
+  importCsv: (file: File) => {
+    const formData = new FormData()
+    formData.append("file", file)
+    return fetch(`${API_BASE_URL}/institutions/import`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("token")}`,
+      },
+      body: formData,
+    }).then((response) => response.json())
+  },
 }
 
 export const tasksApi = {

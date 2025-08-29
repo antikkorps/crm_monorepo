@@ -1,5 +1,5 @@
 import { useAuthStore } from "@/stores/auth"
-import { io, type Socket } from "socket.io-client"
+import { io } from "socket.io-client"
 import { onMounted, onUnmounted, ref } from "vue"
 
 export interface SocketNotification {
@@ -11,7 +11,7 @@ export interface SocketNotification {
 
 export function useSocket() {
   const authStore = useAuthStore()
-  const socket = ref<Socket | null>(null)
+  const socket = ref<any>(null)
   const isConnected = ref(false)
   const notifications = ref<SocketNotification[]>([])
 

@@ -17,6 +17,12 @@ export const useAuthStore = defineStore("auth", {
   getters: {
     currentUser: (state) => state.user,
     isLoggedIn: (state) => state.isAuthenticated && !!state.token,
+    userName: (state) =>
+      state.user ? `${state.user.firstName} ${state.user.lastName}` : "User",
+    userAvatar: (state) => state.user?.avatarSeed || undefined,
+    userRole: (state) => state.user?.role,
+    accessToken: (state) => state.token,
+    isInitialized: (state) => state.isAuthenticated || !state.token,
   },
 
   actions: {

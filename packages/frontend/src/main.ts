@@ -3,6 +3,7 @@ import { createPinia } from "pinia"
 import PrimeVue from "primevue/config"
 import ConfirmationService from "primevue/confirmationservice"
 import ToastService from "primevue/toastservice"
+import Tooltip from "primevue/tooltip"
 import { createApp } from "vue"
 
 // PrimeVue theme and styles
@@ -25,6 +26,9 @@ app.use(PrimeVue, {
 // Add PrimeVue services
 app.use(ToastService)
 app.use(ConfirmationService)
+
+// Add PrimeVue directives
+app.directive("tooltip", Tooltip)
 
 // Add Pinia store
 app.use(pinia)
