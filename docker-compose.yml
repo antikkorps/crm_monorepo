@@ -1,0 +1,64 @@
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: medical-crm-postgres
+    environment:
+      POSTGRES_DB: medical_crm_dev
+      POSTGRES_USER: medical_crm_user
+      POSTGRES_PASSWORD: medical_crm_password
+      POSTGRES_HOST_AUTH_METHOD: trust
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./migrations/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - medical-crm-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U medical_crm_user -d medical_crm_dev"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  postgres-test:
+    image: postgres:15-alpine
+    container_name: medical-crm-postgres-test
+    environment:
+      POSTGRES_DB: medical_crm_test
+      POSTGRES_USER: medical_crm_user
+      POSTGRES_PASSWORD: medical_crm_password
+      POSTGRES_HOST_AUTH_METHOD: trust
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_test_data:/var/lib/postgresql/data
+    networks:
+      - medical-crm-network
+    restart: unless-stopped
+    profiles:
+      - test
+
+  redis:
+    image: redis:7-alpine
+    container_name: medical-crm-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - medical-crm-network
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+
+volumes:
+  postgres_data:
+    driver: local
+  postgres_test_data:
+    driver: local
+  redis_data:
+    driver: local
+
+networks:
+  medical-crm-network:
+    driver: bridge

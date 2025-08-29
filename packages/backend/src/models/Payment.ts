@@ -1,0 +1,438 @@
+import { PaymentMethod, PaymentStatus } from "@medical-crm/shared"
+import { Association, DataTypes, Model, Op, Optional } from "sequelize"
+import { sequelize } from "../config/database"
+import { User } from "./User"
+
+export interface PaymentAttributes {
+  id: string
+  invoiceId: string
+
+  // Payment details
+  amount: number
+  paymentDate: Date
+  paymentMethod: PaymentMethod
+  reference?: string
+
+  // Status and notes
+  status: PaymentStatus
+  notes?: string
+
+  // Metadata
+  recordedBy: string
+  createdAt: Date
+  updatedAt: Date
+}
+
+export interface PaymentCreationAttributes
+  extends Optional<PaymentAttributes, "id" | "status" | "createdAt" | "updatedAt"> {}
+
+export class Payment
+  extends Model<PaymentAttributes, PaymentCreationAttributes>
+  implements PaymentAttributes
+{
+  public id!: string
+  public invoiceId!: string
+
+  // Payment details
+  public amount!: number
+  public paymentDate!: Date
+  public paymentMethod!: PaymentMethod
+  public reference?: string
+
+  // Status and notes
+  public status!: PaymentStatus
+  public notes?: string
+
+  // Metadata
+  public recordedBy!: string
+  public readonly createdAt!: Date
+  public readonly updatedAt!: Date
+
+  // Associations
+  public invoice?: any
+  public recordedByUser?: User
+
+  public static override associations: {
+    invoice: Association<Payment, any>
+    recordedByUser: Association<Payment, User>
+  }
+
+  // Instance methods
+  public canBeModified(): boolean {
+    return [PaymentStatus.PENDING].includes(this.status)
+  }
+
+  public canBeDeleted(): boolean {
+    return [
+      PaymentStatus.PENDING,
+      PaymentStatus.FAILED,
+      PaymentStatus.CANCELLED,
+    ].includes(this.status)
+  }
+
+  public canBeConfirmed(): boolean {
+    return this.status === PaymentStatus.PENDING
+  }
+
+  public canBeCancelled(): boolean {
+    return [PaymentStatus.PENDING].includes(this.status)
+  }
+
+  public async confirm(): Promise<void> {
+    if (!this.canBeConfirmed()) {
+      throw new Error("Payment cannot be confirmed in its current state")
+    }
+
+    this.status = PaymentStatus.CONFIRMED
+    await this.save()
+
+    // Update the invoice payment status
+    const invoice = await this.getInvoice()
+    if (invoice) {
+      await invoice.updatePaymentStatus()
+    }
+  }
+
+  public async fail(reason?: string): Promise<void> {
+    if (this.status !== PaymentStatus.PENDING) {
+      throw new Error("Only pending payments can be marked as failed")
+    }
+
+    this.status = PaymentStatus.FAILED
+    if (reason) {
+      this.notes = this.notes ? `${this.notes}\nFailed: ${reason}` : `Failed: ${reason}`
+    }
+    await this.save()
+
+    // Update the invoice payment status
+    const invoice = await this.getInvoice()
+    if (invoice) {
+      await invoice.updatePaymentStatus()
+    }
+  }
+
+  public async cancel(reason?: string): Promise<void> {
+    if (!this.canBeCancelled()) {
+      throw new Error("Payment cannot be cancelled in its current state")
+    }
+
+    this.status = PaymentStatus.CANCELLED
+    if (reason) {
+      this.notes = this.notes
+        ? `${this.notes}\nCancelled: ${reason}`
+        : `Cancelled: ${reason}`
+    }
+    await this.save()
+
+    // Update the invoice payment status
+    const invoice = await this.getInvoice()
+    if (invoice) {
+      await invoice.updatePaymentStatus()
+    }
+  }
+
+  public async getInvoice(): Promise<any | null> {
+    if (this.invoice) {
+      return this.invoice
+    }
+    const { Invoice } = require("./Invoice")
+    return Invoice.findByPk(this.invoiceId)
+  }
+
+  public isRecent(): boolean {
+    const daysSincePayment = Math.floor(
+      (Date.now() - this.paymentDate.getTime()) / (1000 * 60 * 60 * 24)
+    )
+    return daysSincePayment <= 7
+  }
+
+  public getFormattedReference(): string {
+    if (!this.reference) {
+      return `${this.paymentMethod.toUpperCase()}-${this.id.slice(-8)}`
+    }
+    return this.reference
+  }
+
+  public override toJSON(): any {
+    const values = { ...this.get() } as any
+    return {
+      ...values,
+      canBeModified: this.canBeModified(),
+      canBeDeleted: this.canBeDeleted(),
+      canBeConfirmed: this.canBeConfirmed(),
+      canBeCancelled: this.canBeCancelled(),
+      isRecent: this.isRecent(),
+      formattedReference: this.getFormattedReference(),
+    }
+  }
+
+  // Static methods
+  public static async createPayment(data: PaymentCreationAttributes): Promise<Payment> {
+    const payment = await this.create({
+      ...data,
+      status: PaymentStatus.PENDING,
+    })
+
+    // Update the invoice payment status
+    const invoice = await payment.getInvoice()
+    if (invoice) {
+      await invoice.updatePaymentStatus()
+    }
+
+    return payment
+  }
+
+  public static async findByInvoice(invoiceId: string): Promise<Payment[]> {
+    return this.findAll({
+      where: { invoiceId },
+      include: [
+        {
+          model: User,
+          as: "recordedByUser",
+          attributes: ["id", "firstName", "lastName", "email"],
+        },
+      ],
+      order: [["paymentDate", "DESC"]],
+    })
+  }
+
+  public static async findByStatus(status: PaymentStatus): Promise<Payment[]> {
+    return this.findAll({
+      where: { status },
+      include: [
+        {
+          model: sequelize.models.Invoice,
+          as: "invoice",
+          attributes: ["id", "invoiceNumber", "title", "total"],
+        },
+        {
+          model: User,
+          as: "recordedByUser",
+          attributes: ["id", "firstName", "lastName", "email"],
+        },
+      ],
+      order: [["paymentDate", "DESC"]],
+    })
+  }
+
+  public static async findByUser(userId: string): Promise<Payment[]> {
+    return this.findAll({
+      where: { recordedBy: userId },
+      include: [
+        {
+          model: sequelize.models.Invoice,
+          as: "invoice",
+          attributes: ["id", "invoiceNumber", "title", "total"],
+        },
+      ],
+      order: [["paymentDate", "DESC"]],
+    })
+  }
+
+  public static async findByPaymentMethod(method: PaymentMethod): Promise<Payment[]> {
+    return this.findAll({
+      where: { paymentMethod: method },
+      include: [
+        {
+          model: sequelize.models.Invoice,
+          as: "invoice",
+          attributes: ["id", "invoiceNumber", "title", "total"],
+        },
+        {
+          model: User,
+          as: "recordedByUser",
+          attributes: ["id", "firstName", "lastName", "email"],
+        },
+      ],
+      order: [["paymentDate", "DESC"]],
+    })
+  }
+
+  public static async findByDateRange(
+    startDate: Date,
+    endDate: Date
+  ): Promise<Payment[]> {
+    return this.findAll({
+      where: {
+        paymentDate: {
+          [Op.between]: [startDate, endDate],
+        },
+      },
+      include: [
+        {
+          model: sequelize.models.Invoice,
+          as: "invoice",
+          attributes: ["id", "invoiceNumber", "title", "total"],
+        },
+        {
+          model: User,
+          as: "recordedByUser",
+          attributes: ["id", "firstName", "lastName", "email"],
+        },
+      ],
+      order: [["paymentDate", "DESC"]],
+    })
+  }
+
+  public static async getTotalByStatus(status: PaymentStatus): Promise<number> {
+    const result = await this.sum("amount", {
+      where: { status },
+    })
+    return result || 0
+  }
+
+  public static async getTotalByInvoice(invoiceId: string): Promise<number> {
+    const result = await this.sum("amount", {
+      where: {
+        invoiceId,
+        status: PaymentStatus.CONFIRMED,
+      },
+    })
+    return result || 0
+  }
+
+  public static async getPaymentSummary(invoiceId: string): Promise<{
+    totalPaid: number
+    totalPending: number
+    paymentCount: number
+    lastPaymentDate?: Date
+  }> {
+    const payments = await this.findByInvoice(invoiceId)
+
+    const confirmedPayments = payments.filter((p) => p.status === PaymentStatus.CONFIRMED)
+    const pendingPayments = payments.filter((p) => p.status === PaymentStatus.PENDING)
+
+    const totalPaid = confirmedPayments.reduce((sum, p) => sum + p.amount, 0)
+    const totalPending = pendingPayments.reduce((sum, p) => sum + p.amount, 0)
+
+    const lastPaymentDate =
+      confirmedPayments.length > 0
+        ? confirmedPayments.sort(
+            (a, b) => b.paymentDate.getTime() - a.paymentDate.getTime()
+          )[0].paymentDate
+        : undefined
+
+    return {
+      totalPaid,
+      totalPending,
+      paymentCount: confirmedPayments.length,
+      lastPaymentDate,
+    }
+  }
+
+  public static async reconcilePayments(invoiceId: string): Promise<void> {
+    const { Invoice } = require("./Invoice")
+    const invoice = await Invoice.findByPk(invoiceId)
+    if (!invoice) {
+      throw new Error("Invoice not found")
+    }
+
+    await invoice.updatePaymentStatus()
+  }
+}
+
+// Initialize the model
+Payment.init(
+  {
+    id: {
+      type: DataTypes.UUID,
+      defaultValue: DataTypes.UUIDV4,
+      primaryKey: true,
+    },
+    invoiceId: {
+      type: DataTypes.UUID,
+      allowNull: false,
+      field: "invoice_id",
+      references: {
+        model: "invoices",
+        key: "id",
+      },
+      onDelete: "CASCADE",
+    },
+    amount: {
+      type: DataTypes.DECIMAL(10, 2),
+      allowNull: false,
+      validate: {
+        min: 0.01,
+      },
+    },
+    paymentDate: {
+      type: DataTypes.DATE,
+      allowNull: false,
+      field: "payment_date",
+      validate: {
+        isDate: true,
+      },
+    },
+    paymentMethod: {
+      type: DataTypes.ENUM(...Object.values(PaymentMethod)),
+      allowNull: false,
+      field: "payment_method",
+    },
+    reference: {
+      type: DataTypes.STRING,
+      allowNull: true,
+      validate: {
+        len: [0, 255],
+      },
+    },
+    status: {
+      type: DataTypes.ENUM(...Object.values(PaymentStatus)),
+      allowNull: false,
+      defaultValue: PaymentStatus.PENDING,
+    },
+    notes: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+    },
+    recordedBy: {
+      type: DataTypes.UUID,
+      allowNull: false,
+      field: "recorded_by",
+      references: {
+        model: "users",
+        key: "id",
+      },
+      onDelete: "CASCADE",
+    },
+    createdAt: {
+      type: DataTypes.DATE,
+      allowNull: false,
+      field: "created_at",
+    },
+    updatedAt: {
+      type: DataTypes.DATE,
+      allowNull: false,
+      field: "updated_at",
+    },
+  },
+  {
+    sequelize,
+    modelName: "Payment",
+    tableName: "payments",
+    timestamps: true,
+    underscored: true,
+    indexes: [
+      {
+        fields: ["invoice_id"],
+      },
+      {
+        fields: ["status"],
+      },
+      {
+        fields: ["payment_method"],
+      },
+      {
+        fields: ["payment_date"],
+      },
+      {
+        fields: ["recorded_by"],
+      },
+      {
+        fields: ["reference"],
+      },
+    ],
+  }
+)
+
+export default Payment

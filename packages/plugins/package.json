@@ -1,0 +1,15 @@
+{
+  "name": "@medical-crm/plugins",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Plugin packages for medical CRM",
+  "scripts": {
+    "build": "lerna run build --scope=@medical-crm/plugins/*",
+    "dev": "lerna run dev --parallel --scope=@medical-crm/plugins/*",
+    "test": "lerna run test --scope=@medical-crm/plugins/*",
+    "lint": "lerna run lint --scope=@medical-crm/plugins/*"
+  },
+  "devDependencies": {
+    "typescript": "^5.1.6"
+  }
+}

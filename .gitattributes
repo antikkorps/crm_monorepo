@@ -1,0 +1,62 @@
+# -----------------------------
+# Normalize line endings to LF
+# -----------------------------
+
+# All text files: normalize to LF in repo
+* text=auto eol=lf
+
+# Specific code files
+*.js     text eol=lf
+*.ts     text eol=lf
+*.cjs    text eol=lf
+*.mjs    text eol=lf
+*.json   text eol=lf
+*.html   text eol=lf
+*.css    text eol=lf
+*.scss   text eol=lf
+*.md     text eol=lf
+*.yml    text eol=lf
+*.yaml   text eol=lf
+*.env    text eol=lf
+*.env.*  text eol=lf
+
+# Shell scripts
+*.sh     text eol=lf
+*.bash   text eol=lf
+
+# Seeds / data scripts
+packages/backend/src/seeders/*.cjs text eol=lf
+
+# Ignore binary files for line endings
+*.png    binary
+*.jpg    binary
+*.jpeg   binary
+*.gif    binary
+*.ico    binary
+*.pdf    binary
+*.zip    binary
+*.tar    binary
+*.gz     binary
+*.mp4    binary
+*.mp3    binary
+*.woff   binary
+*.woff2  binary
+*.eot    binary
+*.ttf    binary
+*.otf    binary
+
+# -----------------------------
+# Optional: force LF for CI / editors
+# -----------------------------
+# Forces LF even if core.autocrlf is true on Windows
+*.lock   text eol=lf
+package.json text eol=lf
+lerna.json text eol=lf
+tsconfig*.json text eol=lf
+
+
+# sur windows
+# git config --global core.autocrlf true
+
+# sur linux/macos
+# git config --global core.autocrlf input
