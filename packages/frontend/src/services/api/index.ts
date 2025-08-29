@@ -1,5 +1,9 @@
-import type { LoginCredentials } from "@/stores/auth"
 import type { User } from "@medical-crm/shared"
+
+export interface LoginCredentials {
+  email: string
+  password: string
+}
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:3000/api"
 
@@ -105,6 +109,15 @@ export const institutionsApi = {
       },
       body: formData,
     }).then((response) => response.json())
+  },
+  // Contact person endpoints
+  contacts: {
+    create: (institutionId: string, data: any) =>
+      apiClient.post(`/institutions/${institutionId}/contacts`, data),
+    update: (institutionId: string, contactId: string, data: any) =>
+      apiClient.put(`/institutions/${institutionId}/contacts/${contactId}`, data),
+    delete: (institutionId: string, contactId: string) =>
+      apiClient.delete(`/institutions/${institutionId}/contacts/${contactId}`),
   },
 }
 

@@ -586,8 +586,8 @@ const loadInstitutions = async () => {
     }
 
     const response = await institutionsApi.getAll(params)
-    institutions.value = response.data || []
-    totalRecords.value = response.meta?.total || 0
+    institutions.value = (response as any).data || []
+    totalRecords.value = (response as any).meta?.total || 0
   } catch (error) {
     console.error("Error loading institutions:", error)
     toast.add({

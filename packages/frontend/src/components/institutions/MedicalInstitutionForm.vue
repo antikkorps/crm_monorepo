@@ -571,6 +571,8 @@ const handleSubmit = async () => {
     const savedInstitution: MedicalInstitution = {
       id: props.institution?.id || `institution-${Date.now()}`,
       ...institutionData,
+      tags: institutionData.tags || [],
+      isActive: institutionData.isActive ?? true,
       medicalProfile: {
         id: props.institution?.medicalProfile.id || `profile-${Date.now()}`,
         ...institutionData.medicalProfile,

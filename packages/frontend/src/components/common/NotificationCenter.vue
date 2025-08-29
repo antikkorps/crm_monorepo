@@ -134,7 +134,7 @@ const toggleNotifications = (event: Event) => {
 
   // Mark visible notifications as read when panel opens
   setTimeout(() => {
-    if (notificationPanel.value?.visible) {
+    if ((notificationPanel.value as any)?.visible) {
       markVisibleAsRead()
     }
   }, 100)

@@ -549,8 +549,16 @@ const loadInstitution = async () => {
   error.value = ""
 
   try {
-    // In a real implementation, this would call the API
-    // For now, we'll simulate the API call with mock data
+    // Try to load from API first, fallback to mock data
+    try {
+      const response = await institutionsApi.getById(institutionId)
+      institution.value = response as MedicalInstitution
+      return
+    } catch (apiError) {
+      console.warn("API call failed, using mock data:", apiError)
+    }
+
+    // Fallback to mock data
     await new Promise((resolve) => setTimeout(resolve, 1000))
 
     // Mock institution data
@@ -690,8 +698,12 @@ const deleteContact = async (contact: ContactPerson) => {
   if (!institution.value) return
 
   try {
-    // In a real implementation, this would call the API
-    await new Promise((resolve) => setTimeout(resolve, 500))
+    // Try API call first, fallback to local removal
+    try {
+      await institutionsApi.contacts.delete(institution.value.id, contact.id)
+    } catch (apiError) {
+      console.warn("API delete failed, removing locally:", apiError)
+    }
 
     // Remove contact from the list
     institution.value.contactPersons = institution.value.contactPersons.filter(

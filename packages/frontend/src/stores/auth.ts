@@ -1,11 +1,6 @@
-import { authApi } from "@/services/api"
+import { authApi, type LoginCredentials } from "@/services/api"
 import type { User } from "@medical-crm/shared"
 import { defineStore } from "pinia"
-
-export interface LoginCredentials {
-  email: string
-  password: string
-}
 
 export const useAuthStore = defineStore("auth", {
   state: () => ({
