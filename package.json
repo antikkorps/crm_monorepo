@@ -9,6 +9,9 @@
   ],
   "scripts": {
     "dev": "npm run dev --workspaces --if-present",
+    "dev:front": "npm run dev --workspace=@medical-crm/frontend",
+    "dev:back": "npm run dev --workspace=@medical-crm/backend",
+    "dev:shared": "npm run dev --workspace=@medical-crm/shared",
     "build": "npm run build --workspaces --if-present",
     "build:shared": "npm run build --workspace=@medical-crm/shared",
     "build:backend": "npm run build --workspace=@medical-crm/backend",

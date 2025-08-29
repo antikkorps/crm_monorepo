@@ -87,13 +87,13 @@ export const createApp = (): Koa => {
     }
   })
 
-  // Apply routes
-  app.use(router.routes())
-  app.use(router.allowedMethods())
-
-  // Apply auth routes
+  // Apply auth routes first
   app.use(authRoutes.routes())
   app.use(authRoutes.allowedMethods())
+
+  // Apply other API routes
+  app.use(router.routes())
+  app.use(router.allowedMethods())
 
   // Apply institution routes
   app.use(institutionRoutes.routes())

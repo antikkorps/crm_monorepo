@@ -29,6 +29,7 @@ export class AuthController {
    * Authenticate user with email and password
    */
   static async login(ctx: Context, next: Next) {
+    console.log("AuthController.login called with:", ctx.request.body)
     // Validate request body
     const { error, value } = loginSchema.validate(ctx.request.body)
     if (error) {
@@ -49,6 +50,7 @@ export class AuthController {
         maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
       })
 
+      ctx.status = 200
       ctx.body = {
         success: true,
         message: "Login successful",
@@ -74,7 +76,6 @@ export class AuthController {
       })
       throw error
     }
-    await next()
   }
 
   /**
