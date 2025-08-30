@@ -6,13 +6,13 @@ import {
   InvoiceStatus,
   PaymentCreateRequest,
 } from "@medical-crm/shared"
-import { Context } from "../types/koa"
 import { InvoiceLine } from "../models/InvoiceLine"
 import { Payment } from "../models/Payment"
 import { User, UserRole } from "../models/User"
 import { InvoiceService } from "../services/InvoiceService"
 import { NotificationService } from "../services/NotificationService"
 import { EmailOptionsBody } from "../types"
+import { Context } from "../types/koa"
 
 // Define InvoiceLineUpdateRequest locally since it's not exported from shared
 interface InvoiceLineUpdateRequest {

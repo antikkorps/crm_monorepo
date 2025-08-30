@@ -12,8 +12,12 @@ const InstitutionDetail = () => import("@/views/institutions/InstitutionDetailVi
 const Tasks = () => import("@/views/tasks/TasksView.vue")
 const Quotes = () => import("@/views/billing/QuotesView.vue")
 const Invoices = () => import("@/views/billing/InvoicesView.vue")
+const InvoiceDetail = () => import("@/views/billing/InvoiceDetailView.vue")
 const Team = () => import("@/views/team/TeamView.vue")
 const Profile = () => import("@/views/profile/ProfileView.vue")
+const Notifications = () => import("@/views/notifications/NotificationsView.vue")
+const Templates = () => import("@/views/templates/TemplatesView.vue")
+const BillingAnalytics = () => import("@/views/billing/BillingAnalyticsView.vue")
 
 const routes: RouteRecordRaw[] = [
   {
@@ -89,6 +93,15 @@ const routes: RouteRecordRaw[] = [
     },
   },
   {
+    path: "/invoices/:id",
+    name: "InvoiceDetail",
+    component: InvoiceDetail,
+    meta: {
+      requiresAuth: true,
+      title: "Invoice Details",
+    },
+  },
+  {
     path: "/team",
     name: "Team",
     component: Team,
@@ -104,6 +117,33 @@ const routes: RouteRecordRaw[] = [
     meta: {
       requiresAuth: true,
       title: "Profile",
+    },
+  },
+  {
+    path: "/notifications",
+    name: "Notifications",
+    component: Notifications,
+    meta: {
+      requiresAuth: true,
+      title: "Notifications",
+    },
+  },
+  {
+    path: "/templates",
+    name: "Templates",
+    component: Templates,
+    meta: {
+      requiresAuth: true,
+      title: "Document Templates",
+    },
+  },
+  {
+    path: "/billing/analytics",
+    name: "BillingAnalytics",
+    component: BillingAnalytics,
+    meta: {
+      requiresAuth: true,
+      title: "Billing Analytics",
     },
   },
   {

@@ -2,7 +2,6 @@
   "name": "@medical-crm/backend",
   "version": "1.0.0",
   "private": true,
-  "type": "module",
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "build": "tsc",
@@ -15,6 +14,7 @@
     "db:reset": "sequelize-cli db:drop && sequelize-cli db:create && npm run db:migrate && npm run db:seed"
   },
   "dependencies": {
+    "@koa/cors": "^5.0.0",
     "@koa/multer": "^4.0.0",
     "@koa/router": "^14.0.0",
     "@medical-crm/shared": "^1.0.0",
@@ -30,7 +30,6 @@
     "jsonwebtoken": "^9.0.2",
     "koa": "^2.15.3",
     "koa-bodyparser": "^4.4.1",
-    "koa-cors": "^0.0.16",
     "koa-helmet": "^7.0.2",
     "koa-jwt": "^4.0.4",
     "nodemailer": "^6.9.16",
@@ -45,10 +44,10 @@
     "@types/bcryptjs": "^2.4.6",
     "@types/jsonwebtoken": "^9.0.7",
     "@types/koa": "^2.15.0",
+    "@types/koa__cors": "^5.0.0",
     "@types/koa__multer": "^2.0.7",
     "@types/koa__router": "^12.0.4",
     "@types/koa-bodyparser": "^4.3.12",
-    "@types/koa-cors": "^0.0.5",
     "@types/koa-router": "^7.4.8",
     "@types/node": "^22.10.2",
     "@types/socket.io-client": "^3.0.0",

@@ -1,12 +1,13 @@
+import cors from "@koa/cors"
 import Router from "@koa/router"
 import Koa from "koa"
 import bodyParser from "koa-bodyparser"
-import cors from "koa-cors"
 import helmet from "koa-helmet"
 import config from "./config/environment"
 import { errorHandler } from "./middleware/errorHandler"
 import { requestLogger } from "./middleware/requestLogger"
 import authRoutes from "./routes/auth"
+import billingAnalyticsRoutes from "./routes/billing-analytics"
 import institutionRoutes from "./routes/institutions"
 import invoiceRoutes from "./routes/invoices"
 import quoteRoutes from "./routes/quotes"
@@ -94,6 +95,10 @@ export const createApp = (): Koa => {
   // Apply other API routes
   app.use(router.routes())
   app.use(router.allowedMethods())
+
+  // Apply billing analytics routes
+  app.use(billingAnalyticsRoutes.routes())
+  app.use(billingAnalyticsRoutes.allowedMethods())
 
   // Apply institution routes
   app.use(institutionRoutes.routes())

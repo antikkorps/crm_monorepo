@@ -87,6 +87,20 @@
             </router-link>
           </li>
 
+          <li class="layout-menuitem">
+            <router-link to="/templates" class="layout-menuitem-link">
+              <i class="layout-menuitem-icon pi pi-palette"></i>
+              <span class="layout-menuitem-text">Templates</span>
+            </router-link>
+          </li>
+
+          <li class="layout-menuitem">
+            <router-link to="/billing/analytics" class="layout-menuitem-link">
+              <i class="layout-menuitem-icon pi pi-chart-bar"></i>
+              <span class="layout-menuitem-text">Billing Analytics</span>
+            </router-link>
+          </li>
+
           <li class="layout-menuitem-category">
             <span class="layout-menuitem-text">Team</span>
           </li>
