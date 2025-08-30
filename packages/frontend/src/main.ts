@@ -21,6 +21,7 @@ app.use(PrimeVue, {
   theme: {
     preset: Aura,
   },
+  ripple: true,
 })
 
 // Add PrimeVue services

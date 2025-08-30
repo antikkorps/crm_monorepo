@@ -136,6 +136,12 @@
 
 <script setup lang="ts">
 import type { DocumentTemplate, TemplateType } from "@medical-crm/shared"
+import Button from "primevue/button"
+import Dialog from "primevue/dialog"
+import Dropdown from "primevue/dropdown"
+import InputText from "primevue/inputtext"
+import ProgressSpinner from "primevue/progressspinner"
+import Toast from "primevue/toast"
 import { useToast } from "primevue/usetoast"
 import { onMounted, ref } from "vue"
 import { templatesApi } from "../../services/api"

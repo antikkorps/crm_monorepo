@@ -5,7 +5,15 @@
 </template>
 
 <script setup lang="ts">
-// Main App component
+import { useAuthStore } from "@/stores/auth"
+import { onMounted } from "vue"
+
+const authStore = useAuthStore()
+
+// Initialize authentication on app startup
+onMounted(() => {
+  authStore.initializeAuth()
+})
 </script>
 
 <style>

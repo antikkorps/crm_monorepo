@@ -1,127 +1,129 @@
 <template>
-  <div class="billing-analytics">
-    <div class="flex justify-content-between align-items-center mb-4">
-      <h1 class="text-3xl font-bold text-900">Billing Analytics & Reports</h1>
+  <AppLayout>
+    <div class="billing-analytics">
+      <div class="flex justify-content-between align-items-center mb-4">
+        <h1 class="text-3xl font-bold text-900">Billing Analytics & Reports</h1>
 
-      <div class="flex gap-2">
-        <Button
-          icon="pi pi-refresh"
-          label="Refresh"
-          @click="refreshData"
-          :loading="loading"
-          class="p-button-outlined"
-        />
-        <Button
-          icon="pi pi-download"
-          label="Export"
-          @click="showExportDialog = true"
-          class="p-button-outlined"
-        />
-      </div>
-    </div>
-
-    <!-- Date Range Filter -->
-    <Card class="mb-4">
-      <template #content>
-        <div class="flex flex-wrap gap-3 align-items-center">
-          <div class="flex flex-column">
-            <label class="text-sm font-medium mb-1">Date Range</label>
-            <Calendar
-              v-model="dateRange"
-              selection-mode="range"
-              :manual-input="false"
-              date-format="mm/dd/yy"
-              placeholder="Select date range"
-              @date-select="onDateRangeChange"
-            />
-          </div>
-
-          <div class="flex flex-column" v-if="canViewAllBilling">
-            <label class="text-sm font-medium mb-1">User Filter</label>
-            <Dropdown
-              v-model="selectedUserId"
-              :options="userOptions"
-              option-label="label"
-              option-value="value"
-              placeholder="All Users"
-              @change="onUserFilterChange"
-              class="w-12rem"
-            />
-          </div>
-
+        <div class="flex gap-2">
           <Button
-            icon="pi pi-filter-slash"
-            label="Clear Filters"
-            @click="clearFilters"
-            class="p-button-text"
-            style="margin-top: 1.5rem"
+            icon="pi pi-refresh"
+            label="Refresh"
+            @click="refreshData"
+            :loading="loading"
+            class="p-button-outlined"
+          />
+          <Button
+            icon="pi pi-download"
+            label="Export"
+            @click="showExportDialog = true"
+            class="p-button-outlined"
           />
         </div>
-      </template>
-    </Card>
+      </div>
 
-    <!-- Loading State -->
-    <div v-if="loading" class="flex justify-content-center p-4">
-      <ProgressSpinner />
+      <!-- Date Range Filter -->
+      <Card class="mb-4">
+        <template #content>
+          <div class="flex flex-wrap gap-3 align-items-center">
+            <div class="flex flex-column">
+              <label class="text-sm font-medium mb-1">Date Range</label>
+              <Calendar
+                v-model="dateRange"
+                selection-mode="range"
+                :manual-input="false"
+                date-format="mm/dd/yy"
+                placeholder="Select date range"
+                @date-select="onDateRangeChange"
+              />
+            </div>
+
+            <div class="flex flex-column" v-if="canViewAllBilling">
+              <label class="text-sm font-medium mb-1">User Filter</label>
+              <Dropdown
+                v-model="selectedUserId"
+                :options="userOptions"
+                option-label="label"
+                option-value="value"
+                placeholder="All Users"
+                @change="onUserFilterChange"
+                class="w-12rem"
+              />
+            </div>
+
+            <Button
+              icon="pi pi-filter-slash"
+              label="Clear Filters"
+              @click="clearFilters"
+              class="p-button-text"
+              style="margin-top: 1.5rem"
+            />
+          </div>
+        </template>
+      </Card>
+
+      <!-- Loading State -->
+      <div v-if="loading" class="flex justify-content-center p-4">
+        <ProgressSpinner />
+      </div>
+
+      <!-- Dashboard Content -->
+      <div v-else-if="dashboardData" class="grid">
+        <!-- KPI Cards -->
+        <div class="col-12">
+          <BillingKPICards :kpis="dashboardData.kpis" />
+        </div>
+
+        <!-- Revenue Analytics -->
+        <div class="col-12 lg:col-8">
+          <RevenueAnalyticsChart :data="dashboardData.revenueAnalytics" />
+        </div>
+
+        <!-- Outstanding Summary -->
+        <div class="col-12 lg:col-4">
+          <OutstandingSummaryCard :data="dashboardData.outstandingAnalytics" />
+        </div>
+
+        <!-- Payment Analytics -->
+        <div class="col-12 lg:col-6">
+          <PaymentMethodChart :data="dashboardData.paymentAnalytics" />
+        </div>
+
+        <!-- Cash Flow Projections -->
+        <div class="col-12 lg:col-6">
+          <CashFlowProjectionChart :data="dashboardData.cashFlowProjections" />
+        </div>
+
+        <!-- Medical Institution Segments -->
+        <div class="col-12">
+          <MedicalSegmentAnalytics :data="dashboardData.segmentAnalytics" />
+        </div>
+
+        <!-- Outstanding Invoices Table -->
+        <div class="col-12">
+          <OutstandingInvoicesTable :data="dashboardData.outstandingAnalytics" />
+        </div>
+      </div>
+
+      <!-- Error State -->
+      <div
+        v-else-if="error"
+        class="flex flex-column align-items-center justify-content-center p-6"
+      >
+        <i class="pi pi-exclamation-triangle text-6xl text-orange-500 mb-3"></i>
+        <h3 class="text-xl font-semibold mb-2">Failed to Load Analytics</h3>
+        <p class="text-600 mb-4 text-center">{{ error }}</p>
+        <Button label="Try Again" @click="loadDashboardData" />
+      </div>
+
+      <!-- Export Dialog -->
+      <ExportDialog
+        v-model:visible="showExportDialog"
+        :date-range="dateRange"
+        :selected-user-id="selectedUserId"
+        @export="handleExport"
+      />
     </div>
-
-    <!-- Dashboard Content -->
-    <div v-else-if="dashboardData" class="grid">
-      <!-- KPI Cards -->
-      <div class="col-12">
-        <BillingKPICards :kpis="dashboardData.kpis" />
-      </div>
-
-      <!-- Revenue Analytics -->
-      <div class="col-12 lg:col-8">
-        <RevenueAnalyticsChart :data="dashboardData.revenueAnalytics" />
-      </div>
-
-      <!-- Outstanding Summary -->
-      <div class="col-12 lg:col-4">
-        <OutstandingSummaryCard :data="dashboardData.outstandingAnalytics" />
-      </div>
-
-      <!-- Payment Analytics -->
-      <div class="col-12 lg:col-6">
-        <PaymentMethodChart :data="dashboardData.paymentAnalytics" />
-      </div>
-
-      <!-- Cash Flow Projections -->
-      <div class="col-12 lg:col-6">
-        <CashFlowProjectionChart :data="dashboardData.cashFlowProjections" />
-      </div>
-
-      <!-- Medical Institution Segments -->
-      <div class="col-12">
-        <MedicalSegmentAnalytics :data="dashboardData.segmentAnalytics" />
-      </div>
-
-      <!-- Outstanding Invoices Table -->
-      <div class="col-12">
-        <OutstandingInvoicesTable :data="dashboardData.outstandingAnalytics" />
-      </div>
-    </div>
-
-    <!-- Error State -->
-    <div
-      v-else-if="error"
-      class="flex flex-column align-items-center justify-content-center p-6"
-    >
-      <i class="pi pi-exclamation-triangle text-6xl text-orange-500 mb-3"></i>
-      <h3 class="text-xl font-semibold mb-2">Failed to Load Analytics</h3>
-      <p class="text-600 mb-4 text-center">{{ error }}</p>
-      <Button label="Try Again" @click="loadDashboardData" />
-    </div>
-
-    <!-- Export Dialog -->
-    <ExportDialog
-      v-model:visible="showExportDialog"
-      :date-range="dateRange"
-      :selected-user-id="selectedUserId"
-      @export="handleExport"
-    />
-  </div>
+  </AppLayout>
 </template>
 
 <script setup lang="ts">
@@ -133,6 +135,7 @@ import OutstandingInvoicesTable from "@/components/billing/analytics/Outstanding
 import OutstandingSummaryCard from "@/components/billing/analytics/OutstandingSummaryCard.vue"
 import PaymentMethodChart from "@/components/billing/analytics/PaymentMethodChart.vue"
 import RevenueAnalyticsChart from "@/components/billing/analytics/RevenueAnalyticsChart.vue"
+import AppLayout from "@/components/layout/AppLayout.vue"
 import { billingAnalyticsApi } from "@/services/api/billing-analytics"
 import { useAuthStore } from "@/stores/auth"
 import { useToast } from "primevue/usetoast"

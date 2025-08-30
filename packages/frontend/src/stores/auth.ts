@@ -3,11 +3,14 @@ import type { User } from "@medical-crm/shared"
 import { defineStore } from "pinia"
 
 export const useAuthStore = defineStore("auth", {
-  state: () => ({
-    user: null as User | null,
-    token: localStorage.getItem("token") || null,
-    isAuthenticated: false,
-  }),
+  state: () => {
+    const token = localStorage.getItem("token")
+    return {
+      user: null as User | null,
+      token: token,
+      isAuthenticated: false,
+    }
+  },
 
   getters: {
     currentUser: (state) => state.user,
@@ -17,7 +20,6 @@ export const useAuthStore = defineStore("auth", {
     userAvatar: (state) => state.user?.avatarSeed || undefined,
     userRole: (state) => state.user?.role,
     accessToken: (state) => state.token,
-    isInitialized: (state) => state.isAuthenticated || !state.token,
   },
 
   actions: {
@@ -76,11 +78,13 @@ export const useAuthStore = defineStore("auth", {
       }
     },
 
-    initializeAuth() {
-      if (this.token) {
-        this.fetchUser().catch(() => {
+    async initializeAuth() {
+      if (this.token && !this.isAuthenticated) {
+        try {
+          await this.fetchUser()
+        } catch (error) {
           this.logout()
-        })
+        }
       }
     },
   },

@@ -434,6 +434,11 @@
 
 <script setup lang="ts">
 import type { DocumentTemplate, DocumentTemplateCreateRequest } from "@medical-crm/shared"
+import Button from "primevue/button"
+import Dialog from "primevue/dialog"
+import Dropdown from "primevue/dropdown"
+import InputText from "primevue/inputtext"
+import Textarea from "primevue/textarea"
 import { useToast } from "primevue/usetoast"
 import { computed, onMounted, ref, watch } from "vue"
 import { templatesApi } from "../../services/api"
@@ -526,6 +531,45 @@ const isFormValid = computed(() => {
   )
 })
 
+// Reset form
+const resetForm = () => {
+  formData.value = {
+    name: "",
+    type: "quote",
+    companyName: "",
+    companyAddress: {
+      street: "",
+      city: "",
+      state: "",
+      zipCode: "",
+      country: "",
+    },
+    companyEmail: "",
+    companyPhone: "",
+    companyWebsite: "",
+    taxNumber: "",
+    vatNumber: "",
+    siretNumber: "",
+    registrationNumber: "",
+    logoPosition: "top_left",
+    primaryColor: "",
+    secondaryColor: "",
+    headerHeight: 80,
+    footerHeight: 60,
+    marginTop: 20,
+    marginBottom: 20,
+    marginLeft: 15,
+    marginRight: 15,
+    customHeader: "",
+    customFooter: "",
+    termsAndConditions: "",
+    paymentInstructions: "",
+    htmlTemplate: "",
+    styles: "",
+  }
+  errors.value = {}
+}
+
 // Watch for template changes
 watch(
   () => props.template,
@@ -569,45 +613,6 @@ const loadTemplateData = (template: DocumentTemplate) => {
     htmlTemplate: template.htmlTemplate || "",
     styles: template.styles || "",
   }
-}
-
-// Reset form
-const resetForm = () => {
-  formData.value = {
-    name: "",
-    type: "quote",
-    companyName: "",
-    companyAddress: {
-      street: "",
-      city: "",
-      state: "",
-      zipCode: "",
-      country: "",
-    },
-    companyEmail: "",
-    companyPhone: "",
-    companyWebsite: "",
-    taxNumber: "",
-    vatNumber: "",
-    siretNumber: "",
-    registrationNumber: "",
-    logoPosition: "top_left",
-    primaryColor: "",
-    secondaryColor: "",
-    headerHeight: 80,
-    footerHeight: 60,
-    marginTop: 20,
-    marginBottom: 20,
-    marginLeft: 15,
-    marginRight: 15,
-    customHeader: "",
-    customFooter: "",
-    termsAndConditions: "",
-    paymentInstructions: "",
-    htmlTemplate: "",
-    styles: "",
-  }
-  errors.value = {}
 }
 
 // Validate form

@@ -165,8 +165,15 @@ router.beforeEach(async (to, _from, next) => {
   // Check if route requires authentication
   if (to.meta.requiresAuth !== false) {
     // Try to restore authentication state if not already done
-    if (!authStore.isAuthenticated && !authStore.isInitialized) {
-      await authStore.initializeAuth()
+    if (!authStore.isAuthenticated && authStore.token) {
+      try {
+        await authStore.fetchUser()
+      } catch (error) {
+        // If token is invalid, clear it and redirect to login
+        authStore.logout()
+        next({ name: "Login", query: { redirect: to.fullPath } })
+        return
+      }
     }
 
     // Redirect to login if not authenticated
