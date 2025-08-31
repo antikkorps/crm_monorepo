@@ -2,14 +2,14 @@ import { createPinia } from "pinia"
 import { createApp } from "vue"
 
 // Vuetify
-import { createVuetify } from 'vuetify'
-import * as components from 'vuetify/components'
-import * as directives from 'vuetify/directives'
-import 'vuetify/styles'
-import '@mdi/font/css/materialdesignicons.css'
+import "@mdi/font/css/materialdesignicons.css"
+import { createVuetify } from "vuetify"
+import * as components from "vuetify/components"
+import * as directives from "vuetify/directives"
+import "vuetify/styles"
 
 // i18n
-import i18n from './i18n'
+import i18n from "./i18n"
 
 import App from "./App.vue"
 import router from "./router"
@@ -22,24 +22,41 @@ const vuetify = createVuetify({
   components,
   directives,
   theme: {
-    defaultTheme: 'light',
+    defaultTheme: "light",
     themes: {
       light: {
+        dark: false,
         colors: {
-          primary: '#1976D2',
-          secondary: '#424242',
-          accent: '#82B1FF',
-          error: '#FF5252',
-          info: '#2196F3',
-          success: '#4CAF50',
-          warning: '#FFC107',
-        }
-      }
-    }
+          primary: "#00695C",
+          secondary: "#616161",
+          accent: "#4FC3F7",
+          error: "#D32F2F",
+          info: "#1976D2",
+          success: "#388E3C",
+          warning: "#FBC02D",
+          surface: "#F5F5F5",
+          background: "#FFFFFF",
+        },
+      },
+      dark: {
+        dark: true,
+        colors: {
+          primary: "#26A69A", // Un bleu-vert plus clair pour le mode sombre
+          secondary: "#757575",
+          accent: "#81D4FA",
+          error: "#EF5350",
+          info: "#42A5F5",
+          success: "#66BB6A",
+          warning: "#FFEE58",
+          surface: "#272727", // Surface sombre pour les cartes
+          background: "#121212",
+        },
+      },
+    },
   },
   icons: {
-    defaultSet: 'mdi'
-  }
+    defaultSet: "mdi",
+  },
 })
 
 // Add Vuetify

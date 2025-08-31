@@ -18,7 +18,7 @@
         </template>
         <template v-slot:title>
           <span v-show="!rail" class="text-h6 font-weight-bold text-primary">
-            {{ $t('sidebar.appName') }}
+            {{ $t("sidebar.appName") }}
           </span>
         </template>
         <template v-slot:append>
@@ -90,16 +90,19 @@
               <div class="d-flex align-center">
                 <v-avatar size="40" class="me-3">
                   <v-img
-                    :src="authStore.userAvatar || 'https://randomuser.me/api/portraits/women/85.jpg'"
+                    :src="
+                      authStore.userAvatar ||
+                      'https://randomuser.me/api/portraits/women/85.jpg'
+                    "
                     alt="User Avatar"
                   ></v-img>
                 </v-avatar>
                 <div class="flex-grow-1 text-truncate">
                   <div class="text-subtitle-2 font-weight-bold text-truncate">
-                    {{ authStore.userName || 'User' }}
+                    {{ authStore.userName || "User" }}
                   </div>
                   <div class="text-caption text-medium-emphasis text-truncate">
-                    {{ authStore.user?.email || 'user@example.com' }}
+                    {{ authStore.user?.email || "user@example.com" }}
                   </div>
                 </div>
                 <v-icon size="16" class="text-medium-emphasis">
@@ -120,15 +123,22 @@
             <v-card-text class="pa-2">
               <v-avatar size="32">
                 <v-img
-                  :src="authStore.userAvatar || 'https://randomuser.me/api/portraits/women/85.jpg'"
+                  :src="
+                    authStore.userAvatar ||
+                    'https://randomuser.me/api/portraits/women/85.jpg'
+                  "
                   alt="User Avatar"
                 ></v-img>
               </v-avatar>
               <v-tooltip activator="parent" location="right">
                 <div>
-                  <div class="font-weight-bold">{{ authStore.userName || 'User' }}</div>
-                  <div class="text-caption">{{ authStore.user?.email || 'user@example.com' }}</div>
-                  <div class="text-caption mt-1">{{ $t('sidebar.clickToViewProfile') }}</div>
+                  <div class="font-weight-bold">{{ authStore.userName || "User" }}</div>
+                  <div class="text-caption">
+                    {{ authStore.user?.email || "user@example.com" }}
+                  </div>
+                  <div class="text-caption mt-1">
+                    {{ $t("sidebar.clickToViewProfile") }}
+                  </div>
                 </div>
               </v-tooltip>
             </v-card-text>
@@ -144,9 +154,9 @@
             class="logout-button"
           >
             <v-icon>mdi-logout</v-icon>
-            <span v-if="!rail" class="ml-2">{{ $t('navigation.logout') }}</span>
+            <span v-if="!rail" class="ml-2">{{ $t("navigation.logout") }}</span>
             <v-tooltip v-if="rail" activator="parent" location="right">
-              {{ $t('navigation.logout') }}
+              {{ $t("navigation.logout") }}
             </v-tooltip>
           </v-btn>
         </div>
@@ -154,11 +164,10 @@
     </v-navigation-drawer>
 
     <!-- App Bar -->
-    <v-app-bar color="blue-darken-1" density="compact" elevation="2">
+    <v-app-bar color="primary" density="compact" elevation="2">
       <template v-slot:prepend>
         <v-app-bar-nav-icon @click="rail = !rail"></v-app-bar-nav-icon>
       </template>
-
 
       <v-spacer></v-spacer>
 
@@ -176,13 +185,13 @@
       <!-- User Menu -->
       <v-menu>
         <template v-slot:activator="{ props }">
-          <v-btn
-            icon
-            v-bind="props"
-          >
+          <v-btn icon v-bind="props">
             <v-avatar size="32">
               <v-img
-                :src="authStore.userAvatar || 'https://randomuser.me/api/portraits/women/85.jpg'"
+                :src="
+                  authStore.userAvatar ||
+                  'https://randomuser.me/api/portraits/women/85.jpg'
+                "
                 alt="User Avatar"
               ></v-img>
             </v-avatar>
@@ -216,7 +225,7 @@
     <v-dialog v-model="showSearch" max-width="600">
       <v-card>
         <v-card-title>
-          <span class="text-h5">{{ $t('search.title') }}</span>
+          <span class="text-h5">{{ $t("search.title") }}</span>
         </v-card-title>
         <v-card-text>
           <v-text-field
@@ -227,18 +236,15 @@
             clearable
             autofocus
           ></v-text-field>
-          <v-alert
-            v-if="searchQuery"
-            type="info"
-            variant="tonal"
-            class="mt-4"
-          >
-            {{ $t('search.comingSoon') }}
+          <v-alert v-if="searchQuery" type="info" variant="tonal" class="mt-4">
+            {{ $t("search.comingSoon") }}
           </v-alert>
         </v-card-text>
         <v-card-actions>
           <v-spacer></v-spacer>
-          <v-btn color="primary" @click="showSearch = false">{{ $t('common.close') }}</v-btn>
+          <v-btn color="primary" @click="showSearch = false">{{
+            $t("common.close")
+          }}</v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
@@ -267,20 +273,20 @@ const mainNavigation = [
     title: "navigation.dashboard",
     icon: "mdi-view-dashboard",
     to: "/dashboard",
-    value: "dashboard"
+    value: "dashboard",
   },
   {
     title: "navigation.institutions",
     icon: "mdi-domain",
     to: "/institutions",
-    value: "institutions"
+    value: "institutions",
   },
   {
     title: "navigation.tasks",
     icon: "mdi-check-circle",
     to: "/tasks",
-    value: "tasks"
-  }
+    value: "tasks",
+  },
 ]
 
 const billingNavigation = [
@@ -288,26 +294,26 @@ const billingNavigation = [
     title: "navigation.quotes",
     icon: "mdi-file-document-edit",
     to: "/quotes",
-    value: "quotes"
+    value: "quotes",
   },
   {
     title: "navigation.invoices",
     icon: "mdi-file-document",
     to: "/invoices",
-    value: "invoices"
+    value: "invoices",
   },
   {
     title: "navigation.templates",
     icon: "mdi-palette",
     to: "/templates",
-    value: "templates"
+    value: "templates",
   },
   {
     title: "navigation.analytics",
     icon: "mdi-chart-bar",
     to: "/billing/analytics",
-    value: "analytics"
-  }
+    value: "analytics",
+  },
 ]
 
 const additionalNavigation = [
@@ -315,14 +321,14 @@ const additionalNavigation = [
     title: "navigation.team",
     icon: "mdi-account-group",
     to: "/team",
-    value: "team"
+    value: "team",
   },
   {
     title: "navigation.webhooks",
     icon: "mdi-webhook",
     to: "/webhooks",
-    value: "webhooks"
-  }
+    value: "webhooks",
+  },
 ]
 
 // Handle logout
@@ -344,7 +350,11 @@ const handleLogout = async () => {
 
 /* Améliorer l'apparence des éléments de navigation */
 :deep(.v-list-item--active) {
-  background: linear-gradient(90deg, rgba(25, 118, 210, 0.1) 0%, rgba(25, 118, 210, 0.05) 100%) !important;
+  background: linear-gradient(
+    90deg,
+    rgba(25, 118, 210, 0.1) 0%,
+    rgba(25, 118, 210, 0.05) 100%
+  ) !important;
   border-right: 3px solid #1976d2;
 }
 
@@ -356,7 +366,11 @@ const handleLogout = async () => {
 
 /* Style pour les cartes utilisateur */
 .user-card {
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 249, 250, 0.95) 100%) !important;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.95) 0%,
+    rgba(248, 249, 250, 0.95) 100%
+  ) !important;
   border: 1px solid rgba(25, 118, 210, 0.2) !important;
   cursor: pointer;
   transition: all 0.3s ease;
@@ -364,14 +378,22 @@ const handleLogout = async () => {
 }
 
 .user-card:hover {
-  background: linear-gradient(135deg, rgba(25, 118, 210, 0.05) 0%, rgba(25, 118, 210, 0.02) 100%) !important;
+  background: linear-gradient(
+    135deg,
+    rgba(25, 118, 210, 0.05) 0%,
+    rgba(25, 118, 210, 0.02) 100%
+  ) !important;
   border-color: rgba(25, 118, 210, 0.4) !important;
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(25, 118, 210, 0.15) !important;
 }
 
 .user-card-mini {
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 249, 250, 0.95) 100%) !important;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.95) 0%,
+    rgba(248, 249, 250, 0.95) 100%
+  ) !important;
   border: 1px solid rgba(25, 118, 210, 0.2) !important;
   cursor: pointer;
   transition: all 0.3s ease;
@@ -380,7 +402,11 @@ const handleLogout = async () => {
 }
 
 .user-card-mini:hover {
-  background: linear-gradient(135deg, rgba(25, 118, 210, 0.08) 0%, rgba(25, 118, 210, 0.04) 100%) !important;
+  background: linear-gradient(
+    135deg,
+    rgba(25, 118, 210, 0.08) 0%,
+    rgba(25, 118, 210, 0.04) 100%
+  ) !important;
   border-color: rgba(25, 118, 210, 0.5) !important;
   transform: translateY(-1px) scale(1.05);
   box-shadow: 0 4px 12px rgba(25, 118, 210, 0.2) !important;

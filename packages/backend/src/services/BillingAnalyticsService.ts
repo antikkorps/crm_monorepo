@@ -898,7 +898,10 @@ export class BillingAnalyticsService {
     const query = `
       SELECT 
         i.institution_id,
-        COUNT(CASE WHEN i.status = 'paid' THEN 1 END)::float / COUNT(i.id) as payment_rate
+        CASE 
+          WHEN COUNT(i.id) = 0 THEN 0
+          ELSE COUNT(CASE WHEN i.status = 'paid' THEN 1 END)::float / COUNT(i.id)
+        END as payment_rate
       FROM invoices i
       WHERE i.status != 'cancelled'
       ${userFilter}
@@ -977,7 +980,10 @@ export class BillingAnalyticsService {
     const query = `
       SELECT 
         AVG(EXTRACT(DAY FROM (paid_at - sent_at))) as avg_collection_time,
-        COUNT(CASE WHEN status = 'paid' THEN 1 END)::float / COUNT(*) * 100 as collection_rate,
+        CASE 
+          WHEN COUNT(*) = 0 THEN 0
+          ELSE COUNT(CASE WHEN status = 'paid' THEN 1 END)::float / COUNT(*) * 100
+        END as collection_rate,
         AVG(total_paid / NULLIF(total, 0)) * 100 as customer_payment_score
       FROM invoices
       WHERE status != 'cancelled'
@@ -1000,7 +1006,10 @@ export class BillingAnalyticsService {
 
     const query = `
       SELECT 
-        COUNT(CASE WHEN status = 'overdue' THEN 1 END)::float / COUNT(*) * 100 as overdue_rate
+        CASE 
+          WHEN COUNT(*) = 0 THEN 0
+          ELSE COUNT(CASE WHEN status = 'overdue' THEN 1 END)::float / COUNT(*) * 100
+        END as overdue_rate
       FROM invoices
       WHERE status != 'cancelled'
       ${userFilter}

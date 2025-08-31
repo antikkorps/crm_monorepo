@@ -1,128 +1,154 @@
 <template>
-  <Dialog
-    v-model:visible="dialogVisible"
-    header="Export Analytics Data"
-    modal
-    class="w-11 md:w-6 lg:w-4"
+  <v-dialog
+    v-model="dialogVisible"
+    max-width="600px"
+    persistent
   >
-    <div class="flex flex-column gap-4">
-      <!-- Export Type Selection -->
-      <div class="flex flex-column gap-2">
-        <label class="font-medium">Export Type</label>
-        <div class="flex flex-column gap-2">
-          <div class="flex align-items-center">
-            <RadioButton v-model="selectedType" input-id="revenue" value="revenue" />
-            <label for="revenue" class="ml-2">Revenue Analytics</label>
+    <v-card>
+      <v-card-title class="text-h5 pa-4">
+        <v-icon icon="mdi-download" class="mr-2" />
+        Export Analytics Data
+      </v-card-title>
+
+      <v-card-text class="pa-4">
+        <div class="d-flex flex-column ga-4">
+          <!-- Export Type Selection -->
+          <div>
+            <label class="text-body-2 font-weight-medium mb-2 d-block">Export Type</label>
+            <v-radio-group v-model="selectedType" class="mt-2">
+              <v-radio label="Revenue Analytics" value="revenue" />
+              <v-radio label="Payment Analytics" value="payments" />
+              <v-radio label="Outstanding Invoices" value="outstanding" />
+              <v-radio label="Medical Institution Segments" value="segments" />
+            </v-radio-group>
           </div>
-          <div class="flex align-items-center">
-            <RadioButton v-model="selectedType" input-id="payments" value="payments" />
-            <label for="payments" class="ml-2">Payment Analytics</label>
-          </div>
-          <div class="flex align-items-center">
-            <RadioButton
-              v-model="selectedType"
-              input-id="outstanding"
-              value="outstanding"
+
+          <!-- Export Description -->
+          <v-alert
+            v-if="selectedType"
+            type="info"
+            variant="tonal"
+            class="mb-2"
+          >
+            <v-alert-title class="text-body-1 font-weight-medium">
+              {{ getExportTitle(selectedType) }}
+            </v-alert-title>
+            <div class="text-body-2">{{ getExportDescription(selectedType) }}</div>
+          </v-alert>
+
+          <!-- Date Range (for applicable exports) -->
+          <div v-if="showDateRange">
+            <label class="text-body-2 font-weight-medium mb-2 d-block">Date Range</label>
+            <div class="text-body-2 text-medium-emphasis mb-2">
+              Current selection: {{ formatDateRange() }}
+            </div>
+            <v-checkbox
+              v-model="useCustomDateRange"
+              label="Use custom date range"
+              density="compact"
             />
-            <label for="outstanding" class="ml-2">Outstanding Invoices</label>
+            <v-menu
+              v-if="useCustomDateRange"
+              v-model="customDateMenu"
+              :close-on-content-click="false"
+              transition="scale-transition"
+              offset-y
+              min-width="auto"
+            >
+              <template v-slot:activator="{ props }">
+                <v-text-field
+                  v-bind="props"
+                  :model-value="customDateRangeText"
+                  label="Select custom date range"
+                  prepend-icon="mdi-calendar"
+                  readonly
+                  variant="outlined"
+                ></v-text-field>
+              </template>
+              <v-date-picker
+                v-model="customDateRange"
+                range
+                @update:model-value="customDateMenu = false"
+              ></v-date-picker>
+            </v-menu>
           </div>
-          <div class="flex align-items-center">
-            <RadioButton v-model="selectedType" input-id="segments" value="segments" />
-            <label for="segments" class="ml-2">Medical Institution Segments</label>
+
+          <!-- User Filter (if applicable) -->
+          <div v-if="showUserFilter && selectedUserId">
+            <label class="text-body-2 font-weight-medium mb-2 d-block">User Filter</label>
+            <div class="text-body-2 text-medium-emphasis mb-2">
+              Current selection: {{ selectedUserId ? "Specific User" : "All Users" }}
+            </div>
+            <v-checkbox
+              v-model="includeUserFilter"
+              label="Include current user filter"
+              density="compact"
+            />
           </div>
-        </div>
-      </div>
 
-      <!-- Export Description -->
-      <div v-if="selectedType" class="p-3 border-round bg-blue-50">
-        <div class="text-blue-800 font-medium mb-1">
-          {{ getExportTitle(selectedType) }}
-        </div>
-        <div class="text-blue-600 text-sm">{{ getExportDescription(selectedType) }}</div>
-      </div>
-
-      <!-- Date Range (for applicable exports) -->
-      <div v-if="showDateRange" class="flex flex-column gap-2">
-        <label class="font-medium">Date Range</label>
-        <div class="text-sm text-600 mb-2">
-          Current selection: {{ formatDateRange() }}
-        </div>
-        <div class="flex align-items-center gap-2">
-          <Checkbox v-model="useCustomDateRange" input-id="customDate" />
-          <label for="customDate" class="text-sm">Use custom date range</label>
-        </div>
-        <Calendar
-          v-if="useCustomDateRange"
-          v-model="customDateRange"
-          selection-mode="range"
-          :manual-input="false"
-          date-format="mm/dd/yy"
-          placeholder="Select custom date range"
-          class="w-full"
-        />
-      </div>
-
-      <!-- User Filter (if applicable) -->
-      <div v-if="showUserFilter && selectedUserId" class="flex flex-column gap-2">
-        <label class="font-medium">User Filter</label>
-        <div class="text-sm text-600">
-          Current selection: {{ selectedUserId ? "Specific User" : "All Users" }}
-        </div>
-        <div class="flex align-items-center gap-2">
-          <Checkbox v-model="includeUserFilter" input-id="includeUser" />
-          <label for="includeUser" class="text-sm">Include current user filter</label>
-        </div>
-      </div>
-
-      <!-- Export Format -->
-      <div class="flex flex-column gap-2">
-        <label class="font-medium">Export Format</label>
-        <Dropdown
-          v-model="exportFormat"
-          :options="formatOptions"
-          option-label="label"
-          option-value="value"
-          placeholder="Select format"
-          class="w-full"
-        />
-      </div>
-
-      <!-- File Name Preview -->
-      <div class="flex flex-column gap-2">
-        <label class="font-medium">File Name</label>
-        <InputText v-model="fileName" placeholder="Enter file name" class="w-full" />
-        <div class="text-sm text-600">Full name: {{ fileName }}.{{ exportFormat }}</div>
-      </div>
-
-      <!-- Export Options -->
-      <div class="flex flex-column gap-2">
-        <label class="font-medium">Options</label>
-        <div class="flex flex-column gap-2">
-          <div class="flex align-items-center">
-            <Checkbox v-model="includeHeaders" input-id="headers" />
-            <label for="headers" class="ml-2 text-sm">Include column headers</label>
+          <!-- Export Format -->
+          <div>
+            <label class="text-body-2 font-weight-medium mb-2 d-block">Export Format</label>
+            <v-select
+              v-model="exportFormat"
+              :items="formatOptions"
+              item-title="label"
+              item-value="value"
+              placeholder="Select format"
+              variant="outlined"
+            />
           </div>
-          <div class="flex align-items-center">
-            <Checkbox v-model="includeSummary" input-id="summary" />
-            <label for="summary" class="ml-2 text-sm">Include summary statistics</label>
+
+          <!-- File Name Preview -->
+          <div>
+            <label class="text-body-2 font-weight-medium mb-2 d-block">File Name</label>
+            <v-text-field
+              v-model="fileName"
+              placeholder="Enter file name"
+              variant="outlined"
+            />
+            <div class="text-body-2 text-medium-emphasis">Full name: {{ fileName }}.{{ exportFormat }}</div>
+          </div>
+
+          <!-- Export Options -->
+          <div>
+            <label class="text-body-2 font-weight-medium mb-2 d-block">Options</label>
+            <div class="d-flex flex-column ga-1">
+              <v-checkbox
+                v-model="includeHeaders"
+                label="Include column headers"
+                density="compact"
+              />
+              <v-checkbox
+                v-model="includeSummary"
+                label="Include summary statistics"
+                density="compact"
+              />
+            </div>
           </div>
         </div>
-      </div>
-    </div>
+      </v-card-text>
 
-    <template #footer>
-      <div class="flex justify-content-end gap-2">
-        <Button label="Cancel" @click="dialogVisible = false" class="p-button-text" />
-        <Button
-          label="Export"
-          icon="pi pi-download"
+      <v-card-actions class="pa-4">
+        <v-spacer />
+        <v-btn
+          variant="text"
+          @click="dialogVisible = false"
+        >
+          Cancel
+        </v-btn>
+        <v-btn
+          color="primary"
+          prepend-icon="mdi-download"
           @click="handleExport"
           :disabled="!selectedType || exporting"
           :loading="exporting"
-        />
-      </div>
-    </template>
-  </Dialog>
+        >
+          Export
+        </v-btn>
+      </v-card-actions>
+    </v-card>
+  </v-dialog>
 </template>
 
 <script setup lang="ts">
@@ -160,6 +186,7 @@ const includeHeaders = ref(true)
 const includeSummary = ref(true)
 const useCustomDateRange = ref(false)
 const customDateRange = ref<Date[] | null>(null)
+const customDateMenu = ref(false)
 const includeUserFilter = ref(true)
 const exporting = ref(false)
 
@@ -175,6 +202,13 @@ const showDateRange = computed(() => {
 
 const showUserFilter = computed(() => {
   return props.selectedUserId !== null
+})
+
+const customDateRangeText = computed(() => {
+  if (!customDateRange.value || customDateRange.value.length !== 2) return ""
+  const start = new Date(customDateRange.value[0]).toLocaleDateString()
+  const end = new Date(customDateRange.value[1]).toLocaleDateString()
+  return `${start} - ${end}`
 })
 
 const formatOptions = [
@@ -294,6 +328,7 @@ const resetForm = () => {
   includeSummary.value = true
   useCustomDateRange.value = false
   customDateRange.value = null
+  customDateMenu.value = false
   includeUserFilter.value = true
   exporting.value = false
 }
@@ -322,7 +357,5 @@ watch([useCustomDateRange, customDateRange, includeUserFilter], () => {
 </script>
 
 <style scoped>
-.p-dialog .p-dialog-content {
-  padding: 1.5rem;
-}
+/* Vuetify styles - no custom styles needed */
 </style>

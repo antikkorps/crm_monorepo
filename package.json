@@ -26,6 +26,7 @@
     "db:seed": "npm run db:seed --workspace=@medical-crm/backend"
   },
   "devDependencies": {
+    "@types/jest": "^30.0.0",
     "@types/nodemailer": "^6.4.19",
     "@typescript-eslint/eslint-plugin": "^8.15.0",
     "@typescript-eslint/parser": "^8.15.0",
@@ -36,5 +37,9 @@
   "engines": {
     "node": ">=18.0.0",
     "npm": ">=9.0.0"
+  },
+  "dependencies": {
+    "chart.js": "^4.5.0",
+    "lodash-es": "^4.17.21"
   }
 }

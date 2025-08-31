@@ -1,118 +1,137 @@
 <template>
   <AppLayout>
-    <div class="billing-analytics">
-      <div class="flex justify-content-between align-items-center mb-4">
-        <h1 class="text-3xl font-bold text-900">Billing Analytics & Reports</h1>
+    <v-container class="billing-analytics">
+      <div class="d-flex justify-space-between align-center mb-4">
+        <h1 class="text-h3 font-weight-bold">Billing Analytics & Reports</h1>
 
-        <div class="flex gap-2">
-          <Button
-            icon="pi pi-refresh"
-            label="Refresh"
+        <div class="d-flex ga-2">
+          <v-btn
+            prepend-icon="mdi-refresh"
+            variant="outlined"
             @click="refreshData"
             :loading="loading"
-            class="p-button-outlined"
-          />
-          <Button
-            icon="pi pi-download"
-            label="Export"
+          >
+            Refresh
+          </v-btn>
+          <v-btn
+            prepend-icon="mdi-download"
+            variant="outlined"
             @click="showExportDialog = true"
-            class="p-button-outlined"
-          />
+          >
+            Export
+          </v-btn>
         </div>
       </div>
 
       <!-- Date Range Filter -->
-      <Card class="mb-4">
-        <template #content>
-          <div class="flex flex-wrap gap-3 align-items-center">
-            <div class="flex flex-column">
-              <label class="text-sm font-medium mb-1">Date Range</label>
-              <Calendar
-                v-model="dateRange"
-                selection-mode="range"
-                :manual-input="false"
-                date-format="mm/dd/yy"
-                placeholder="Select date range"
-                @date-select="onDateRangeChange"
-              />
+      <v-card class="mb-4">
+        <v-card-text>
+          <div class="d-flex flex-wrap ga-4 align-center">
+            <div>
+              <label class="text-body-2 font-weight-medium mb-1 d-block">Date Range</label>
+              <v-menu
+                v-model="dateRangeMenu"
+                :close-on-content-click="false"
+                transition="scale-transition"
+                offset-y
+                min-width="auto"
+              >
+                <template v-slot:activator="{ props }">
+                  <v-text-field
+                    v-bind="props"
+                    :model-value="dateRangeText"
+                    label="Select date range"
+                    prepend-icon="mdi-calendar"
+                    readonly
+                    variant="outlined"
+                  ></v-text-field>
+                </template>
+                <v-date-picker
+                  v-model="dateRange"
+                  range
+                  @update:model-value="onDateRangeChange"
+                ></v-date-picker>
+              </v-menu>
             </div>
 
-            <div class="flex flex-column" v-if="canViewAllBilling">
-              <label class="text-sm font-medium mb-1">User Filter</label>
-              <Dropdown
+            <div v-if="canViewAllBilling">
+              <label class="text-body-2 font-weight-medium mb-1 d-block">User Filter</label>
+              <v-select
                 v-model="selectedUserId"
-                :options="userOptions"
-                option-label="label"
-                option-value="value"
+                :items="userOptions"
+                item-title="label"
+                item-value="value"
                 placeholder="All Users"
-                @change="onUserFilterChange"
-                class="w-12rem"
-              />
+                @update:model-value="onUserFilterChange"
+                variant="outlined"
+                style="width: 200px"
+              ></v-select>
             </div>
 
-            <Button
-              icon="pi pi-filter-slash"
-              label="Clear Filters"
+            <v-btn
+              prepend-icon="mdi-filter-remove"
+              variant="text"
               @click="clearFilters"
-              class="p-button-text"
               style="margin-top: 1.5rem"
-            />
+            >
+              Clear Filters
+            </v-btn>
           </div>
-        </template>
-      </Card>
+        </v-card-text>
+      </v-card>
 
       <!-- Loading State -->
-      <div v-if="loading" class="flex justify-content-center p-4">
-        <ProgressSpinner />
+      <div v-if="loading" class="d-flex justify-center pa-4">
+        <v-progress-circular indeterminate size="64"></v-progress-circular>
       </div>
 
       <!-- Dashboard Content -->
-      <div v-else-if="dashboardData" class="grid">
+      <v-row v-else-if="dashboardData">
         <!-- KPI Cards -->
-        <div class="col-12">
+        <v-col cols="12">
           <BillingKPICards :kpis="dashboardData.kpis" />
-        </div>
+        </v-col>
 
         <!-- Revenue Analytics -->
-        <div class="col-12 lg:col-8">
+        <v-col cols="12" lg="8">
           <RevenueAnalyticsChart :data="dashboardData.revenueAnalytics" />
-        </div>
+        </v-col>
 
         <!-- Outstanding Summary -->
-        <div class="col-12 lg:col-4">
+        <v-col cols="12" lg="4">
           <OutstandingSummaryCard :data="dashboardData.outstandingAnalytics" />
-        </div>
+        </v-col>
 
         <!-- Payment Analytics -->
-        <div class="col-12 lg:col-6">
+        <v-col cols="12" lg="6">
           <PaymentMethodChart :data="dashboardData.paymentAnalytics" />
-        </div>
+        </v-col>
 
         <!-- Cash Flow Projections -->
-        <div class="col-12 lg:col-6">
+        <v-col cols="12" lg="6">
           <CashFlowProjectionChart :data="dashboardData.cashFlowProjections" />
-        </div>
+        </v-col>
 
         <!-- Medical Institution Segments -->
-        <div class="col-12">
+        <v-col cols="12">
           <MedicalSegmentAnalytics :data="dashboardData.segmentAnalytics" />
-        </div>
+        </v-col>
 
         <!-- Outstanding Invoices Table -->
-        <div class="col-12">
+        <v-col cols="12">
           <OutstandingInvoicesTable :data="dashboardData.outstandingAnalytics" />
-        </div>
-      </div>
+        </v-col>
+      </v-row>
 
       <!-- Error State -->
       <div
         v-else-if="error"
-        class="flex flex-column align-items-center justify-content-center p-6"
+        class="d-flex flex-column align-center justify-center pa-6"
       >
-        <i class="pi pi-exclamation-triangle text-6xl text-orange-500 mb-3"></i>
-        <h3 class="text-xl font-semibold mb-2">Failed to Load Analytics</h3>
-        <p class="text-600 mb-4 text-center">{{ error }}</p>
-        <Button label="Try Again" @click="loadDashboardData" />
+        <v-icon icon="mdi-alert-triangle" size="96" color="orange" class="mb-3"></v-icon>
+        <h3 class="text-h5 font-weight-medium mb-2">Failed to Load Analytics</h3>
+        <p class="text-medium-emphasis mb-4 text-center">{{ error }}</p>
+        <v-btn @click="loadDashboardData">Try Again</v-btn>
       </div>
 
       <!-- Export Dialog -->
@@ -122,7 +141,26 @@
         :selected-user-id="selectedUserId"
         @export="handleExport"
       />
-    </div>
+
+      <!-- Snackbar -->
+      <v-snackbar
+        v-model="snackbar"
+        :color="snackbarColor"
+        timeout="4000"
+        location="top"
+      >
+        {{ snackbarText }}
+        <template v-slot:actions>
+          <v-btn
+            color="white"
+            variant="text"
+            @click="snackbar = false"
+          >
+            Close
+          </v-btn>
+        </template>
+      </v-snackbar>
+    </v-container>
   </AppLayout>
 </template>
 
@@ -138,10 +176,8 @@ import RevenueAnalyticsChart from "@/components/billing/analytics/RevenueAnalyti
 import AppLayout from "@/components/layout/AppLayout.vue"
 import { billingAnalyticsApi } from "@/services/api/billing-analytics"
 import { useAuthStore } from "@/stores/auth"
-import { useToast } from "primevue/usetoast"
 import { computed, onMounted, ref, watch } from "vue"
 
-const toast = useToast()
 const authStore = useAuthStore()
 
 // Reactive data
@@ -151,6 +187,12 @@ const dashboardData = ref<any>(null)
 const dateRange = ref<Date[] | null>(null)
 const selectedUserId = ref<string | null>(null)
 const showExportDialog = ref(false)
+const dateRangeMenu = ref(false)
+
+// Snackbar state
+const snackbar = ref(false)
+const snackbarText = ref('')
+const snackbarColor = ref('success')
 
 // User options for filtering
 const userOptions = ref([
@@ -162,6 +204,20 @@ const userOptions = ref([
 const canViewAllBilling = computed(() => {
   return authStore.userRole === "super_admin" || authStore.userRole === "team_admin"
 })
+
+const dateRangeText = computed(() => {
+  if (!dateRange.value || dateRange.value.length !== 2) return ""
+  const start = new Date(dateRange.value[0]).toLocaleDateString()
+  const end = new Date(dateRange.value[1]).toLocaleDateString()
+  return `${start} - ${end}`
+})
+
+// Snackbar helper function
+const showSnackbar = (text: string, color: string = 'success') => {
+  snackbarText.value = text
+  snackbarColor.value = color
+  snackbar.value = true
+}
 
 // Methods
 const loadDashboardData = async () => {
@@ -184,12 +240,7 @@ const loadDashboardData = async () => {
     dashboardData.value = response.data
   } catch (err: any) {
     error.value = err.message || "Failed to load billing analytics"
-    toast.add({
-      severity: "error",
-      summary: "Error",
-      detail: "Failed to load billing analytics data",
-      life: 5000,
-    })
+    showSnackbar("Failed to load billing analytics data", "error")
   } finally {
     loading.value = false
   }
@@ -200,6 +251,7 @@ const refreshData = () => {
 }
 
 const onDateRangeChange = () => {
+  dateRangeMenu.value = false
   if (dateRange.value && dateRange.value.length === 2) {
     loadDashboardData()
   }
@@ -243,19 +295,9 @@ const handleExport = async (exportType: string) => {
     document.body.removeChild(link)
     window.URL.revokeObjectURL(url)
 
-    toast.add({
-      severity: "success",
-      summary: "Success",
-      detail: "Analytics data exported successfully",
-      life: 3000,
-    })
+    showSnackbar("Analytics data exported successfully", "success")
   } catch (err: any) {
-    toast.add({
-      severity: "error",
-      summary: "Export Failed",
-      detail: err.message || "Failed to export analytics data",
-      life: 5000,
-    })
+    showSnackbar(err.message || "Failed to export analytics data", "error")
   }
 }
 
@@ -294,12 +336,6 @@ watch(
 
 <style scoped>
 .billing-analytics {
-  padding: 1rem;
-}
-
-@media (max-width: 768px) {
-  .billing-analytics {
-    padding: 0.5rem;
-  }
+  max-width: 100%;
 }
 </style>

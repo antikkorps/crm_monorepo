@@ -1,6 +1,6 @@
 // Document template type definitions
 
-import { BaseEntity } from "./common"
+import { Address, BaseEntity } from "./common"
 
 export enum TemplateType {
   QUOTE = "quote",
@@ -14,14 +14,6 @@ export enum LogoPosition {
   TOP_RIGHT = "top_right",
   HEADER_LEFT = "header_left",
   HEADER_RIGHT = "header_right",
-}
-
-export interface Address {
-  street: string
-  city: string
-  state: string
-  zipCode: string
-  country: string
 }
 
 export interface DocumentTemplate extends BaseEntity {

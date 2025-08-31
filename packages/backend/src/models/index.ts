@@ -1,4 +1,6 @@
 // Model exports and associations setup
+import { Call } from "./Call"
+import { Comment } from "./Comment"
 import { ContactPerson } from "./ContactPerson"
 import { DocumentTemplate } from "./DocumentTemplate"
 import { DocumentVersion } from "./DocumentVersion"
@@ -6,6 +8,10 @@ import { Invoice } from "./Invoice"
 import { InvoiceLine } from "./InvoiceLine"
 import { MedicalInstitution } from "./MedicalInstitution"
 import { MedicalProfile } from "./MedicalProfile"
+import { Meeting } from "./Meeting"
+import { MeetingParticipant } from "./MeetingParticipant"
+import { Note } from "./Note"
+import { NoteShare } from "./NoteShare"
 import { Payment } from "./Payment"
 import { Quote } from "./Quote"
 import { QuoteLine } from "./QuoteLine"
@@ -318,8 +324,207 @@ User.hasMany(Webhook, {
   onDelete: "CASCADE",
 })
 
+// Note associations
+Note.belongsTo(User, {
+  foreignKey: "creatorId",
+  as: "creator",
+  onDelete: "CASCADE",
+})
+
+Note.belongsTo(MedicalInstitution, {
+  foreignKey: "institutionId",
+  as: "institution",
+  onDelete: "SET NULL",
+})
+
+Note.hasMany(NoteShare, {
+  foreignKey: "noteId",
+  as: "shares",
+  onDelete: "CASCADE",
+})
+
+// NoteShare associations
+NoteShare.belongsTo(Note, {
+  foreignKey: "noteId",
+  as: "note",
+  onDelete: "CASCADE",
+})
+
+NoteShare.belongsTo(User, {
+  foreignKey: "userId",
+  as: "user",
+  onDelete: "CASCADE",
+})
+
+// User note associations
+User.hasMany(Note, {
+  foreignKey: "creatorId",
+  as: "createdNotes",
+  onDelete: "CASCADE",
+})
+
+User.hasMany(NoteShare, {
+  foreignKey: "userId",
+  as: "noteShares",
+  onDelete: "CASCADE",
+})
+
+// MedicalInstitution note associations
+MedicalInstitution.hasMany(Note, {
+  foreignKey: "institutionId",
+  as: "notes",
+  onDelete: "SET NULL",
+})
+
+// Meeting associations
+Meeting.belongsTo(User, {
+  foreignKey: "organizerId",
+  as: "organizer",
+  onDelete: "CASCADE",
+})
+
+Meeting.belongsTo(MedicalInstitution, {
+  foreignKey: "institutionId",
+  as: "institution",
+  onDelete: "SET NULL",
+})
+
+Meeting.hasMany(MeetingParticipant, {
+  foreignKey: "meetingId",
+  as: "participants",
+  onDelete: "CASCADE",
+})
+
+Meeting.hasMany(Comment, {
+  foreignKey: "meetingId",
+  as: "comments",
+  onDelete: "CASCADE",
+})
+
+// MeetingParticipant associations
+MeetingParticipant.belongsTo(Meeting, {
+  foreignKey: "meetingId",
+  as: "meeting",
+  onDelete: "CASCADE",
+})
+
+MeetingParticipant.belongsTo(User, {
+  foreignKey: "userId",
+  as: "user",
+  onDelete: "CASCADE",
+})
+
+// User meeting associations
+User.hasMany(Meeting, {
+  foreignKey: "organizerId",
+  as: "organizedMeetings",
+  onDelete: "CASCADE",
+})
+
+User.hasMany(MeetingParticipant, {
+  foreignKey: "userId",
+  as: "meetingParticipations",
+  onDelete: "CASCADE",
+})
+
+// MedicalInstitution meeting associations
+MedicalInstitution.hasMany(Meeting, {
+  foreignKey: "institutionId",
+  as: "meetings",
+  onDelete: "SET NULL",
+})
+
+// Comment associations
+Comment.belongsTo(Meeting, {
+  foreignKey: "meetingId",
+  as: "meeting",
+  onDelete: "CASCADE",
+})
+
+Comment.belongsTo(User, {
+  foreignKey: "userId",
+  as: "user",
+  onDelete: "CASCADE",
+})
+
+// User comment associations
+User.hasMany(Comment, {
+  foreignKey: "userId",
+  as: "comments",
+  onDelete: "CASCADE",
+})
+
+// Call associations
+Call.belongsTo(User, {
+  foreignKey: "userId",
+  as: "user",
+  onDelete: "CASCADE",
+})
+
+Call.belongsTo(MedicalInstitution, {
+  foreignKey: "institutionId",
+  as: "institution",
+  onDelete: "SET NULL",
+})
+
+Call.belongsTo(ContactPerson, {
+  foreignKey: "contactPersonId",
+  as: "contactPerson",
+  onDelete: "SET NULL",
+})
+
+// User call associations
+User.hasMany(Call, {
+  foreignKey: "userId",
+  as: "calls",
+  onDelete: "CASCADE",
+})
+
+// MedicalInstitution call associations
+MedicalInstitution.hasMany(Call, {
+  foreignKey: "institutionId",
+  as: "calls",
+  onDelete: "SET NULL",
+})
+
+// ContactPerson call associations
+ContactPerson.hasMany(Call, {
+  foreignKey: "contactPersonId",
+  as: "calls",
+  onDelete: "SET NULL",
+})
+
+// Reminder associations
+Reminder.belongsTo(User, {
+  foreignKey: "userId",
+  as: "user",
+  onDelete: "CASCADE",
+})
+
+Reminder.belongsTo(MedicalInstitution, {
+  foreignKey: "institutionId",
+  as: "institution",
+  onDelete: "SET NULL",
+})
+
+// User reminder associations
+User.hasMany(Reminder, {
+  foreignKey: "userId",
+  as: "reminders",
+  onDelete: "CASCADE",
+})
+
+// MedicalInstitution reminder associations
+MedicalInstitution.hasMany(Reminder, {
+  foreignKey: "institutionId",
+  as: "reminders",
+  onDelete: "SET NULL",
+})
+
 // Export all models
 export {
+  Call,
+  Comment,
   ContactPerson,
   DocumentTemplate,
   DocumentVersion,
@@ -327,9 +532,14 @@ export {
   InvoiceLine,
   MedicalInstitution,
   MedicalProfile,
+  Meeting,
+  MeetingParticipant,
+  Note,
+  NoteShare,
   Payment,
   Quote,
   QuoteLine,
+  Reminder,
   Task,
   Team,
   User,
@@ -352,6 +562,13 @@ export default {
   Payment,
   DocumentTemplate,
   DocumentVersion,
+  Meeting,
+  MeetingParticipant,
+  Note,
+  NoteShare,
+  Comment,
+  Call,
+  Reminder,
   Webhook,
   WebhookLog,
 }

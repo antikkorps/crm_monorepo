@@ -1,123 +1,128 @@
 <template>
-  <Card>
-    <template #title>
-      <div class="flex align-items-center gap-2">
-        <i class="pi pi-exclamation-triangle text-orange-500"></i>
-        <span>Outstanding Invoices</span>
-      </div>
-    </template>
+  <v-card elevation="2" v-if="data">
+    <v-card-title class="d-flex align-center">
+      <v-icon icon="mdi-alert-circle-outline" color="warning" class="mr-2"></v-icon>
+      <span>Outstanding Invoices</span>
+    </v-card-title>
 
-    <template #content>
+    <v-card-text>
       <!-- Summary Metrics -->
-      <div class="grid mb-4">
-        <div class="col-12">
-          <div class="text-center p-3 border-round bg-orange-50">
-            <div class="text-orange-600 font-medium mb-1">Total Outstanding</div>
-            <div class="text-3xl font-bold text-orange-900">
+      <v-row class="mb-4">
+        <v-col cols="12">
+          <v-sheet rounded color="orange-lighten-5" class="text-center pa-3">
+            <div class="text-warning font-weight-medium mb-1">Total Outstanding</div>
+            <div class="text-h4 font-weight-bold text-orange-darken-4">
               {{ formatCurrency(data.totalOutstanding) }}
             </div>
-          </div>
-        </div>
-      </div>
+          </v-sheet>
+        </v-col>
+      </v-row>
 
       <!-- Breakdown -->
-      <div class="grid mb-4">
-        <div class="col-6">
-          <div class="text-center p-2 border-round bg-red-50">
-            <div class="text-red-600 text-sm font-medium mb-1">Overdue</div>
-            <div class="text-lg font-bold text-red-900">
+      <v-row class="mb-4">
+        <v-col cols="6">
+          <v-sheet rounded color="red-lighten-5" class="text-center pa-2">
+            <div class="text-error text-body-2 font-weight-medium mb-1">Overdue</div>
+            <div class="text-h6 font-weight-bold text-red-darken-4">
               {{ formatCurrency(data.overdueAmount) }}
             </div>
-            <div class="text-xs text-red-600">{{ data.overdueCount }} invoices</div>
-          </div>
-        </div>
-        <div class="col-6">
-          <div class="text-center p-2 border-round bg-yellow-50">
-            <div class="text-yellow-600 text-sm font-medium mb-1">Partial</div>
-            <div class="text-lg font-bold text-yellow-900">
+            <div class="text-caption text-error">{{ data.overdueCount }} invoices</div>
+          </v-sheet>
+        </v-col>
+        <v-col cols="6">
+          <v-sheet rounded color="yellow-lighten-5" class="text-center pa-2">
+            <div class="text-warning text-body-2 font-weight-medium mb-1">Partial</div>
+            <div class="text-h6 font-weight-bold text-yellow-darken-4">
               {{ formatCurrency(data.partiallyPaidAmount) }}
             </div>
-            <div class="text-xs text-yellow-600">
+            <div class="text-caption text-warning">
               {{ data.partiallyPaidCount }} invoices
             </div>
-          </div>
-        </div>
-      </div>
+          </v-sheet>
+        </v-col>
+      </v-row>
 
       <!-- Aging Analysis -->
       <div class="mb-4">
-        <h4 class="text-lg font-semibold mb-3">Aging Analysis</h4>
-        <div class="space-y-2">
-          <div
-            v-for="bucket in data.agingBuckets"
-            :key="bucket.label"
-            class="flex align-items-center justify-content-between p-2 border-1 border-200 border-round"
-          >
-            <div class="flex-1">
-              <div class="font-medium text-sm">{{ bucket.label }}</div>
-              <div class="text-xs text-600">{{ bucket.count }} invoices</div>
+        <h4 class="text-h6 font-weight-semibold mb-3">Aging Analysis</h4>
+        <div
+          v-for="bucket in data.agingBuckets"
+          :key="bucket.label"
+          class="d-flex align-center justify-space-between pa-2 border rounded mb-2"
+        >
+          <div>
+            <div class="font-weight-medium text-body-2">{{ bucket.label }}</div>
+            <div class="text-caption text-medium-emphasis">
+              {{ bucket.count }} invoices
             </div>
-            <div class="text-right">
-              <div class="font-bold">{{ formatCurrency(bucket.amount) }}</div>
-              <ProgressBar
-                :value="getAgingPercentage(bucket.amount)"
-                :show-value="false"
-                class="h-0-5rem mt-1"
-                :class="getAgingProgressClass(bucket.daysMin)"
-              />
-            </div>
+          </div>
+          <div class="text-right" style="min-width: 100px">
+            <div class="font-weight-bold">{{ formatCurrency(bucket.amount) }}</div>
+            <v-progress-linear
+              :model-value="getAgingPercentage(bucket.amount)"
+              :color="getAgingProgressColor(bucket.daysMin)"
+              height="6"
+              rounded
+              class="mt-1"
+            ></v-progress-linear>
           </div>
         </div>
       </div>
 
       <!-- Quick Actions -->
-      <div class="flex gap-2">
-        <Button
-          label="View All"
-          icon="pi pi-eye"
+      <div class="d-flex ga-2">
+        <v-btn
+          text="View All"
+          prepend-icon="mdi-eye"
           @click="$emit('view-all')"
-          class="p-button-sm p-button-outlined flex-1"
+          variant="outlined"
+          class="flex-grow-1"
         />
-        <Button
-          label="Send Reminders"
-          icon="pi pi-send"
+        <v-btn
+          text="Send Reminders"
+          prepend-icon="mdi-send"
           @click="$emit('send-reminders')"
-          class="p-button-sm p-button-outlined flex-1"
+          variant="outlined"
+          class="flex-grow-1"
           :disabled="data.overdueCount === 0"
         />
       </div>
 
       <!-- Top Overdue (if any) -->
-      <div
-        v-if="data.topOverdueInvoices && data.topOverdueInvoices.length > 0"
-        class="mt-4"
-      >
-        <h4 class="text-lg font-semibold mb-3">Top Overdue Invoices</h4>
-        <div class="space-y-2">
-          <div
+      <div v-if="data.topOverdueInvoices?.length > 0" class="mt-4">
+        <h4 class="text-h6 font-weight-semibold mb-3">Top Overdue Invoices</h4>
+        <v-list lines="two" class="pa-0 bg-transparent">
+          <v-list-item
             v-for="invoice in data.topOverdueInvoices.slice(0, 3)"
             :key="invoice.id"
-            class="flex align-items-center justify-content-between p-2 border-1 border-200 border-round hover:bg-gray-50 cursor-pointer"
             @click="$emit('view-invoice', invoice.id)"
+            class="border rounded mb-2"
           >
-            <div class="flex-1">
-              <div class="font-medium text-sm">{{ invoice.invoiceNumber }}</div>
-              <div class="text-xs text-600">{{ invoice.institutionName }}</div>
-              <div class="text-xs text-red-600">
-                {{ invoice.daysOverdue }} days overdue
-              </div>
+            <v-list-item-title class="font-weight-medium text-body-2">{{
+              invoice.invoiceNumber
+            }}</v-list-item-title>
+            <v-list-item-subtitle class="text-caption">{{
+              invoice.institutionName
+            }}</v-list-item-subtitle>
+            <div class="text-caption text-error">
+              {{ invoice.daysOverdue }} days overdue
             </div>
-            <div class="text-right">
-              <div class="font-bold text-red-600">
-                {{ formatCurrency(invoice.remainingAmount) }}
+
+            <template v-slot:append>
+              <div class="text-right">
+                <div class="font-weight-bold text-error">
+                  {{ formatCurrency(invoice.remainingAmount) }}
+                </div>
+                <div class="text-caption text-medium-emphasis">
+                  of {{ formatCurrency(invoice.amount) }}
+                </div>
               </div>
-              <div class="text-xs text-600">of {{ formatCurrency(invoice.amount) }}</div>
-            </div>
-          </div>
-        </div>
+            </template>
+          </v-list-item>
+        </v-list>
       </div>
-    </template>
-  </Card>
+    </v-card-text>
+  </v-card>
 </template>
 
 <script setup lang="ts">
@@ -152,7 +157,7 @@ interface OutstandingInvoiceAnalytics {
 }
 
 interface Props {
-  data: OutstandingInvoiceAnalytics
+  data: OutstandingInvoiceAnalytics | null
 }
 
 const props = defineProps<Props>()
@@ -166,6 +171,9 @@ defineEmits<{
 
 // Computed properties
 const maxAgingAmount = computed(() => {
+  if (!props.data?.agingBuckets || props.data.agingBuckets.length === 0) {
+    return 0
+  }
   return Math.max(...props.data.agingBuckets.map((bucket) => bucket.amount))
 })
 
@@ -184,28 +192,9 @@ const getAgingPercentage = (amount: number): number => {
   return (amount / maxAgingAmount.value) * 100
 }
 
-const getAgingProgressClass = (daysMin: number): string => {
-  if (daysMin <= 30) return "p-progressbar-success"
-  if (daysMin <= 60) return "p-progressbar-warning"
-  if (daysMin <= 90) return "p-progressbar-danger"
-  return "p-progressbar-danger"
+const getAgingProgressColor = (daysMin: number): string => {
+  if (daysMin <= 30) return "success"
+  if (daysMin <= 60) return "warning"
+  return "error"
 }
 </script>
-
-<style scoped>
-.space-y-2 > * + * {
-  margin-top: 0.5rem;
-}
-
-.h-0-5rem {
-  height: 0.5rem;
-}
-
-.hover\:bg-gray-50:hover {
-  background-color: #f9fafb;
-}
-
-.cursor-pointer {
-  cursor: pointer;
-}
-</style>
