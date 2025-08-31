@@ -19,19 +19,43 @@ export function useSocket() {
   const maxReconnectAttempts = 5
 
   const connect = () => {
-    if (!authStore.isAuthenticated || socket.value?.connected || isConnecting.value) {
+    // Get token directly from localStorage as backup
+    const storeToken = authStore.accessToken
+    const localToken = localStorage.getItem("token")
+    const token = storeToken || localToken
+    
+    console.log("Connect attempt - token details:", {
+      storeToken: storeToken ? storeToken.substring(0, 20) + '...' : 'null',
+      localToken: localToken ? localToken.substring(0, 20) + '...' : 'null',
+      finalToken: token ? token.substring(0, 20) + '...' : 'null'
+    })
+    
+    if (!token || socket.value?.connected || isConnecting.value) {
+      console.log("Socket connection blocked:", {
+        isAuthenticated: authStore.isAuthenticated,
+        hasStoreToken: !!storeToken,
+        hasLocalStorageToken: !!localToken,
+        finalToken: !!token,
+        connected: socket.value?.connected,
+        isConnecting: isConnecting.value
+      })
       return
     }
 
     isConnecting.value = true
     console.log("Attempting to connect to Socket.io server...")
+    console.log("Auth token available:", !!token, "Token preview:", token ? token.substring(0, 20) + '...' : 'none')
 
     // Determine the socket URL based on environment
-    const socketUrl = import.meta.env.VITE_API_URL || "http://localhost:3001"
+    // Remove /api from the URL if present since Socket.io connects to the root
+    let socketUrl = import.meta.env.VITE_API_URL || "http://localhost:3001"
+    if (socketUrl.endsWith("/api")) {
+      socketUrl = socketUrl.slice(0, -4)
+    }
 
     socket.value = io(socketUrl, {
       auth: {
-        token: authStore.accessToken,
+        token: token,
       },
       transports: ["websocket", "polling"],
       timeout: 20000,
@@ -141,8 +165,19 @@ export function useSocket() {
 
     socket.value.on("connect_error", (error: Error) => {
       console.error("Socket connection error:", error)
+      console.error("Socket URL used:", socketUrl)
+      console.error("Auth token present:", !!token)
       isConnected.value = false
       isConnecting.value = false
+
+      // Add user-friendly error notification
+      addNotification({
+        type: "error",
+        message:
+          "Unable to establish real-time connection. Some features may be limited.",
+        data: { error: error.message },
+        timestamp: new Date(),
+      })
     })
 
     socket.value.on("error", (error: any) => {
@@ -199,10 +234,17 @@ export function useSocket() {
 
   // Watch for authentication changes
   watch(
-    () => authStore.isAuthenticated,
-    (isAuth) => {
-      if (isAuth && authStore.accessToken) {
-        connect()
+    () => [authStore.accessToken, localStorage.getItem("token")],
+    ([storeToken, localToken]) => {
+      const token = storeToken || localToken
+      console.log("Auth state changed:", { 
+        hasStoreToken: !!storeToken,
+        hasLocalToken: !!localToken, 
+        finalToken: !!token,
+        isAuthenticated: authStore.isAuthenticated
+      })
+      if (token) {
+        setTimeout(() => connect(), 100) // Small delay to ensure token is fully available
       } else {
         disconnect()
       }
@@ -212,7 +254,8 @@ export function useSocket() {
 
   // Auto-connect when authenticated
   onMounted(() => {
-    if (authStore.isAuthenticated && authStore.accessToken) {
+    const token = authStore.accessToken || localStorage.getItem("token")
+    if (token) {
       connect()
     }
   })

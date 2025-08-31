@@ -68,7 +68,7 @@ export const apiClient = new ApiClient(API_BASE_URL)
 
 export const authApi = {
   login: (credentials: LoginCredentials) =>
-    apiClient.post<{ token: string; user: User }>("/auth/login", credentials),
+    apiClient.post<{ data: { accessToken: string; user: User } }>("/auth/login", credentials),
 
   logout: () => apiClient.post("/auth/logout"),
 

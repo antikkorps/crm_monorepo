@@ -5,10 +5,11 @@ import { defineStore } from "pinia"
 export const useAuthStore = defineStore("auth", {
   state: () => {
     const token = localStorage.getItem("token")
+    console.log("Auth store initializing with token:", !!token)
     return {
       user: null as User | null,
       token: token,
-      isAuthenticated: false,
+      isAuthenticated: !!token,
     }
   },
 
@@ -19,17 +20,29 @@ export const useAuthStore = defineStore("auth", {
       state.user ? `${state.user.firstName} ${state.user.lastName}` : "User",
     userAvatar: (state) => state.user?.avatarSeed || undefined,
     userRole: (state) => state.user?.role,
-    accessToken: (state) => state.token,
+    accessToken: (state) => {
+      console.log("accessToken getter called, returning:", !!state.token)
+      return state.token
+    },
   },
 
   actions: {
     async login(credentials: LoginCredentials) {
       try {
         const response = await authApi.login(credentials)
-        this.token = response.token
-        this.user = response.user
+        console.log("Login response:", {
+          hasToken: !!response.data.accessToken,
+          tokenPreview: response.data.accessToken ? response.data.accessToken.substring(0, 20) + '...' : 'undefined',
+          hasUser: !!response.data.user,
+          response: response
+        })
+        this.token = response.data.accessToken
+        this.user = response.data.user
+        console.log("Setting isAuthenticated = true in login")
         this.isAuthenticated = true
-        localStorage.setItem("token", response.token)
+        if (response.data.accessToken) {
+          localStorage.setItem("token", response.data.accessToken)
+        }
         return response
       } catch (error) {
         this.logout()
@@ -58,6 +71,7 @@ export const useAuthStore = defineStore("auth", {
       try {
         const user = await authApi.getProfile()
         this.user = user
+        console.log("Setting isAuthenticated = true in fetchUser")
         this.isAuthenticated = true
         return user
       } catch (error) {
@@ -79,10 +93,12 @@ export const useAuthStore = defineStore("auth", {
     },
 
     async initializeAuth() {
-      if (this.token && !this.isAuthenticated) {
+      console.log("initializeAuth called - token:", !!this.token, "isAuthenticated:", this.isAuthenticated)
+      if (this.token && !this.user) {
         try {
           await this.fetchUser()
         } catch (error) {
+          console.log("initializeAuth failed, logging out:", error)
           this.logout()
         }
       }
