@@ -6,7 +6,6 @@ const router = new Router({
   prefix: "/api/auth",
 })
 
-console.log("Auth routes loaded with prefix: /api/auth")
 
 // Public routes
 router.post("/login", AuthController.login)

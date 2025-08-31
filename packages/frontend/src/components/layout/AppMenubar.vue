@@ -132,6 +132,13 @@
           </router-link>
         </li>
 
+        <li>
+          <router-link to="/webhooks" class="topbar-item">
+            <i class="pi pi-send"></i>
+            <span class="topbar-item-text">Webhooks</span>
+          </router-link>
+        </li>
+
         <!-- Notifications -->
         <li>
           <NotificationCenter />
@@ -276,6 +283,14 @@
           >
             <i class="pi pi-users"></i>
             <span>Team</span>
+          </router-link>
+          <router-link
+            to="/webhooks"
+            class="mobile-menu-item"
+            @click="showMobileMenu = false"
+          >
+            <i class="pi pi-send"></i>
+            <span>Webhooks</span>
           </router-link>
         </nav>
       </div>

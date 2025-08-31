@@ -1,7 +1,9 @@
 import { createServer } from "http"
 import { createApp } from "./app"
 import config from "./config/environment"
+import { PluginService } from "./services/PluginService"
 import { SocketService } from "./services/SocketService"
+import { WebhookJobProcessor } from "./services/WebhookJobProcessor"
 import { initializeDatabase } from "./utils/database-init"
 import { logger } from "./utils/logger"
 
@@ -27,11 +29,23 @@ async function startServer() {
     const httpServer = createServer(app.callback())
     console.log("HTTP server created")
 
+    // Initialize plugin system
+    console.log("Initializing plugin system...")
+    const pluginService = PluginService.getInstance()
+    await pluginService.initialize()
+    console.log("Plugin system initialized")
+
     // Initialize Socket.io
     console.log("Initializing Socket.io...")
     const socketService = SocketService.getInstance()
     socketService.initialize(httpServer)
     console.log("Socket.io initialized")
+
+    // Start webhook job processor
+    console.log("Starting webhook job processor...")
+    const webhookJobProcessor = WebhookJobProcessor.getInstance()
+    webhookJobProcessor.start()
+    console.log("Webhook job processor started")
 
     // Start server
     console.log("Starting server on port", config.port)
@@ -46,8 +60,14 @@ async function startServer() {
     })
 
     // Graceful shutdown handling
-    const gracefulShutdown = (signal: string) => {
+    const gracefulShutdown = async (signal: string) => {
       logger.info(`Received ${signal}, shutting down gracefully`)
+
+      // Stop webhook job processor
+      webhookJobProcessor.stop()
+
+      // Shutdown plugin system
+      await pluginService.shutdown()
 
       server.close(() => {
         logger.info("Server closed")

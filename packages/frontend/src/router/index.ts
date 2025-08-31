@@ -18,6 +18,7 @@ const Profile = () => import("@/views/profile/ProfileView.vue")
 const Notifications = () => import("@/views/notifications/NotificationsView.vue")
 const Templates = () => import("@/views/templates/TemplatesView.vue")
 const BillingAnalytics = () => import("@/views/billing/BillingAnalyticsView.vue")
+const Webhooks = () => import("@/views/webhooks/WebhooksView.vue")
 
 const routes: RouteRecordRaw[] = [
   {
@@ -144,6 +145,15 @@ const routes: RouteRecordRaw[] = [
     meta: {
       requiresAuth: true,
       title: "Billing Analytics",
+    },
+  },
+  {
+    path: "/webhooks",
+    name: "Webhooks",
+    component: Webhooks,
+    meta: {
+      requiresAuth: true,
+      title: "Webhooks",
     },
   },
   {

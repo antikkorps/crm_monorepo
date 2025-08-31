@@ -1,0 +1,5 @@
+export { default as PluginConfiguration } from "./PluginConfiguration.vue"
+export { default as PluginDetails } from "./PluginDetails.vue"
+export { default as PluginDiscovery } from "./PluginDiscovery.vue"
+export { default as PluginHealthCheck } from "./PluginHealthCheck.vue"
+export { default as PluginManager } from "./PluginManager.vue"

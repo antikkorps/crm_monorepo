@@ -12,6 +12,8 @@ import { QuoteLine } from "./QuoteLine"
 import { Task } from "./Task"
 import { Team } from "./Team"
 import { User } from "./User"
+import { Webhook } from "./Webhook"
+import { WebhookLog } from "./WebhookLog"
 
 // Define associations
 // MedicalInstitution associations
@@ -289,6 +291,33 @@ Invoice.belongsTo(DocumentTemplate, {
   onDelete: "SET NULL",
 })
 
+// Webhook associations
+Webhook.belongsTo(User, {
+  foreignKey: "createdBy",
+  as: "creator",
+  onDelete: "CASCADE",
+})
+
+Webhook.hasMany(WebhookLog, {
+  foreignKey: "webhookId",
+  as: "logs",
+  onDelete: "CASCADE",
+})
+
+// WebhookLog associations
+WebhookLog.belongsTo(Webhook, {
+  foreignKey: "webhookId",
+  as: "webhook",
+  onDelete: "CASCADE",
+})
+
+// User webhook associations
+User.hasMany(Webhook, {
+  foreignKey: "createdBy",
+  as: "createdWebhooks",
+  onDelete: "CASCADE",
+})
+
 // Export all models
 export {
   ContactPerson,
@@ -304,6 +333,8 @@ export {
   Task,
   Team,
   User,
+  Webhook,
+  WebhookLog,
 }
 
 // Export default for convenience
@@ -321,4 +352,6 @@ export default {
   Payment,
   DocumentTemplate,
   DocumentVersion,
+  Webhook,
+  WebhookLog,
 }

@@ -10,12 +10,14 @@ import authRoutes from "./routes/auth"
 import billingAnalyticsRoutes from "./routes/billing-analytics"
 import institutionRoutes from "./routes/institutions"
 import invoiceRoutes from "./routes/invoices"
+import pluginRoutes from "./routes/plugins"
 import quoteRoutes from "./routes/quotes"
 import socketRoutes from "./routes/socket"
 import taskRoutes from "./routes/tasks"
 import teamRoutes from "./routes/teams"
 import templateRoutes from "./routes/templates"
 import userRoutes from "./routes/users"
+import webhookRoutes from "./routes/webhooks"
 import { logger } from "./utils/logger"
 
 export const createApp = (): Koa => {
@@ -131,6 +133,14 @@ export const createApp = (): Koa => {
   // Apply template routes
   app.use(templateRoutes.routes())
   app.use(templateRoutes.allowedMethods())
+
+  // Apply webhook routes
+  app.use(webhookRoutes.routes())
+  app.use(webhookRoutes.allowedMethods())
+
+  // Apply plugin routes
+  app.use(pluginRoutes.routes())
+  app.use(pluginRoutes.allowedMethods())
 
   // 404 handler
   app.use(async (ctx) => {

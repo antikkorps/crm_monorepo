@@ -1,7 +1,7 @@
 import { DiscountType } from "@medical-crm/shared"
 import { Association, DataTypes, Model, Optional } from "sequelize"
 import { sequelize } from "../config/database"
-import { Quote } from "./Quote"
+import type { Quote } from "./Quote"
 
 export interface QuoteLineAttributes {
   id: string

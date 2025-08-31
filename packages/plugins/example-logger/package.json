@@ -1,0 +1,65 @@
+{
+  "name": "example-logger-plugin",
+  "version": "1.0.0",
+  "description": "Example plugin that logs system events for demonstration purposes",
+  "author": "Medical CRM Team",
+  "license": "MIT",
+  "main": "index.js",
+  "displayName": "Example Event Logger",
+  "category": "utility",
+  "keywords": [
+    "logging",
+    "events",
+    "example"
+  ],
+  "homepage": "https://github.com/medical-crm/plugins/example-logger",
+  "enabled": true,
+  "hooks": [
+    "user:created",
+    "user:login",
+    "institution:created",
+    "task:created",
+    "invoice:created",
+    "payment:received"
+  ],
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "logLevel": {
+        "type": "string",
+        "enum": [
+          "debug",
+          "info",
+          "warn",
+          "error"
+        ],
+        "default": "info",
+        "description": "Logging level for events"
+      },
+      "enabledEvents": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        },
+        "default": [
+          "user:created",
+          "invoice:created"
+        ],
+        "description": "List of events to log"
+      },
+      "includeDetails": {
+        "type": "boolean",
+        "default": false,
+        "description": "Include detailed event data in logs"
+      }
+    }
+  },
+  "defaultConfig": {
+    "logLevel": "info",
+    "enabledEvents": [
+      "user:created",
+      "invoice:created"
+    ],
+    "includeDetails": false
+  }
+}

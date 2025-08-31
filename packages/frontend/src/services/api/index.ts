@@ -340,3 +340,9 @@ export { documentsApi } from "./documents"
 
 // Export billing analytics API
 export { billingAnalyticsApi } from "./billing-analytics"
+
+// Export webhooks API
+export { webhooksApi } from "./webhooks"
+
+// Export plugins API
+export { PluginService } from "./plugins"

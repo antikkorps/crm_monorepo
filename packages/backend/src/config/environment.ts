@@ -49,6 +49,10 @@ const envSchema = Joi.object({
 
   // Logging
   LOG_LEVEL: Joi.string().valid("error", "warn", "info", "debug").default("info"),
+
+  // Plugin configuration
+  PLUGIN_DIRECTORY: Joi.string().optional(),
+  PLUGIN_AUTO_ENABLE: Joi.boolean().default(true),
 }).unknown()
 
 // Validate environment variables
@@ -83,6 +87,11 @@ export const config = {
 
   logging: {
     level: envVars.LOG_LEVEL,
+  },
+
+  plugins: {
+    directory: envVars.PLUGIN_DIRECTORY,
+    autoEnable: envVars.PLUGIN_AUTO_ENABLE,
   },
 }
 

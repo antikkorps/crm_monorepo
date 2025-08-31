@@ -409,10 +409,10 @@ Task.init(
     underscored: true,
     indexes: [
       {
-        fields: ["assigned_to"],
+        fields: ["assignee_id"],
       },
       {
-        fields: ["created_by"],
+        fields: ["creator_id"],
       },
       {
         fields: ["institution_id"],
@@ -433,7 +433,7 @@ Task.init(
         fields: ["status", "due_date"],
       },
       {
-        fields: ["assigned_to", "status"],
+        fields: ["assignee_id", "status"],
       },
     ],
     hooks: {
