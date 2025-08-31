@@ -72,9 +72,9 @@ export const authApi = {
 
   logout: () => apiClient.post("/auth/logout"),
 
-  getProfile: () => apiClient.get<User>("/auth/profile"),
+  getProfile: () => apiClient.get<User>("/auth/me"),
 
-  updateProfile: (data: Partial<User>) => apiClient.put<User>("/auth/profile", data),
+  updateProfile: (data: Partial<User>) => apiClient.put<User>("/auth/me", data),
 }
 
 export const institutionsApi = {

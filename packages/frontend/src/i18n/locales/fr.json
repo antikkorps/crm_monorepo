@@ -1,0 +1,96 @@
+{
+  "common": {
+    "loading": "Chargement...",
+    "save": "Enregistrer",
+    "cancel": "Annuler",
+    "delete": "Supprimer",
+    "edit": "Modifier",
+    "add": "Ajouter",
+    "search": "Rechercher",
+    "close": "Fermer",
+    "confirm": "Confirmer",
+    "yes": "Oui",
+    "no": "Non",
+    "ok": "OK",
+    "back": "Retour",
+    "next": "Suivant",
+    "previous": "Précédent",
+    "refresh": "Actualiser",
+    "export": "Exporter",
+    "import": "Importer"
+  },
+  "navigation": {
+    "dashboard": "Tableau de bord",
+    "institutions": "Institutions",
+    "tasks": "Tâches",
+    "quotes": "Devis",
+    "invoices": "Factures",
+    "templates": "Modèles",
+    "analytics": "Analytiques",
+    "team": "Équipe",
+    "webhooks": "Webhooks",
+    "profile": "Profil",
+    "logout": "Se déconnecter"
+  },
+  "auth": {
+    "login": "Se connecter",
+    "logout": "Se déconnecter",
+    "email": "Email",
+    "password": "Mot de passe",
+    "rememberMe": "Se souvenir de moi",
+    "forgotPassword": "Mot de passe oublié ?",
+    "loginTitle": "Connectez-vous à votre compte",
+    "loginError": "Erreur de connexion. Vérifiez vos identifiants.",
+    "emailRequired": "L'email est requis",
+    "emailInvalid": "Format d'email invalide",
+    "passwordRequired": "Le mot de passe est requis",
+    "passwordMinLength": "Le mot de passe doit contenir au moins 6 caractères"
+  },
+  "sidebar": {
+    "appName": "MyCRM",
+    "billing": "Facturation",
+    "viewProfile": "Voir le profil",
+    "clickToViewProfile": "Cliquer pour voir le profil"
+  },
+  "notifications": {
+    "title": "Notifications",
+    "empty": "Aucune notification",
+    "markAllRead": "Tout marquer comme lu",
+    "clearAll": "Tout effacer",
+    "viewAll": "Voir toutes les notifications",
+    "dismiss": "Ignorer",
+    "connected": "Connecté",
+    "disconnected": "Déconnecté",
+    "justNow": "À l'instant",
+    "minutesAgo": "{count}m",
+    "hoursAgo": "{count}h",
+    "daysAgo": "{count}j",
+    "taskAssigned": "Vous avez été assigné à une nouvelle tâche : {title}",
+    "institutionUpdated": "L'institution médicale \"{name}\" a été mise à jour",
+    "teamActivity": "{user} {action} {target}",
+    "webhookTriggered": "Webhook \"{name}\" a été déclenché"
+  },
+  "search": {
+    "title": "Recherche",
+    "placeholder": "Rechercher...",
+    "comingSoon": "Fonctionnalité de recherche bientôt disponible...",
+    "shortcut": "Ctrl+K pour ouvrir la recherche"
+  },
+  "profile": {
+    "title": "Profil utilisateur",
+    "personalInfo": "Informations personnelles",
+    "firstName": "Prénom",
+    "lastName": "Nom",
+    "email": "Email",
+    "phone": "Téléphone",
+    "updateSuccess": "Profil mis à jour avec succès"
+  },
+  "errors": {
+    "generic": "Une erreur est survenue",
+    "network": "Erreur de connexion réseau",
+    "unauthorized": "Accès non autorisé",
+    "forbidden": "Action interdite",
+    "notFound": "Ressource non trouvée",
+    "serverError": "Erreur serveur interne"
+  }
+}

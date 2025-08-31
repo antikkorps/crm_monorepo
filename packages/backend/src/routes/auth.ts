@@ -14,6 +14,7 @@ router.post("/refresh", AuthController.refresh)
 // Protected routes
 router.post("/logout", optionalAuth, AuthController.logout)
 router.get("/me", authenticate, AuthController.me)
+router.put("/me", authenticate, AuthController.updateProfile)
 router.post("/change-password", authenticate, AuthController.changePassword)
 
 export default router

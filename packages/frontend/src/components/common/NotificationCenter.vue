@@ -16,10 +16,9 @@
       />
     </Button>
 
-    <OverlayPanel
+    <Popover
       ref="notificationPanel"
       :pt="{ root: { style: 'width: 400px; max-height: 500px' } }"
-      :show-close-icon="false"
     >
       <div class="notification-header">
         <div class="notification-title">
@@ -102,7 +101,7 @@
           @click="viewAllNotifications"
         />
       </div>
-    </OverlayPanel>
+    </Popover>
   </div>
 </template>
 
@@ -113,7 +112,7 @@ import { useNotificationStore } from "@/stores/notifications"
 import Badge from "primevue/badge"
 import Button from "primevue/button"
 import Divider from "primevue/divider"
-import OverlayPanel from "primevue/overlaypanel"
+import Popover from "primevue/popover"
 import { computed, onMounted, onUnmounted, ref, watch } from "vue"
 import { useRouter } from "vue-router"
 
@@ -133,7 +132,7 @@ const {
   clearNotifications: clearSocketNotifications,
 } = useSocket()
 
-const notificationPanel = ref<InstanceType<typeof OverlayPanel>>()
+const notificationPanel = ref<InstanceType<typeof Popover>>()
 
 // Use notification store for display
 const displayNotifications = computed(() => {

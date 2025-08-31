@@ -1,0 +1,96 @@
+{
+  "common": {
+    "loading": "Loading...",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "add": "Add",
+    "search": "Search",
+    "close": "Close",
+    "confirm": "Confirm",
+    "yes": "Yes",
+    "no": "No",
+    "ok": "OK",
+    "back": "Back",
+    "next": "Next",
+    "previous": "Previous",
+    "refresh": "Refresh",
+    "export": "Export",
+    "import": "Import"
+  },
+  "navigation": {
+    "dashboard": "Dashboard",
+    "institutions": "Institutions",
+    "tasks": "Tasks",
+    "quotes": "Quotes",
+    "invoices": "Invoices",
+    "templates": "Templates",
+    "analytics": "Analytics",
+    "team": "Team",
+    "webhooks": "Webhooks",
+    "profile": "Profile",
+    "logout": "Logout"
+  },
+  "auth": {
+    "login": "Login",
+    "logout": "Logout",
+    "email": "Email",
+    "password": "Password",
+    "rememberMe": "Remember me",
+    "forgotPassword": "Forgot password?",
+    "loginTitle": "Sign in to your account",
+    "loginError": "Login error. Check your credentials.",
+    "emailRequired": "Email is required",
+    "emailInvalid": "Invalid email format",
+    "passwordRequired": "Password is required",
+    "passwordMinLength": "Password must be at least 6 characters long"
+  },
+  "sidebar": {
+    "appName": "MyCRM",
+    "billing": "Billing",
+    "viewProfile": "View profile",
+    "clickToViewProfile": "Click to view profile"
+  },
+  "notifications": {
+    "title": "Notifications",
+    "empty": "No notifications",
+    "markAllRead": "Mark all as read",
+    "clearAll": "Clear all",
+    "viewAll": "View All Notifications",
+    "dismiss": "Dismiss",
+    "connected": "Connected",
+    "disconnected": "Disconnected",
+    "justNow": "Just now",
+    "minutesAgo": "{count}m ago",
+    "hoursAgo": "{count}h ago",
+    "daysAgo": "{count}d ago",
+    "taskAssigned": "You have been assigned a new task: {title}",
+    "institutionUpdated": "Medical institution \"{name}\" has been updated",
+    "teamActivity": "{user} {action} {target}",
+    "webhookTriggered": "Webhook \"{name}\" was triggered"
+  },
+  "search": {
+    "title": "Search",
+    "placeholder": "Search...",
+    "comingSoon": "Search functionality coming soon...",
+    "shortcut": "Ctrl+K to open search"
+  },
+  "profile": {
+    "title": "User Profile",
+    "personalInfo": "Personal Information",
+    "firstName": "First Name",
+    "lastName": "Last Name",
+    "email": "Email",
+    "phone": "Phone",
+    "updateSuccess": "Profile updated successfully"
+  },
+  "errors": {
+    "generic": "An error occurred",
+    "network": "Network connection error",
+    "unauthorized": "Unauthorized access",
+    "forbidden": "Forbidden action",
+    "notFound": "Resource not found",
+    "serverError": "Internal server error"
+  }
+}

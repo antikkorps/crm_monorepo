@@ -1,14 +1,15 @@
-import Aura from "@primeuix/themes/aura"
 import { createPinia } from "pinia"
-import PrimeVue from "primevue/config"
-import ConfirmationService from "primevue/confirmationservice"
-import ToastService from "primevue/toastservice"
-import Tooltip from "primevue/tooltip"
 import { createApp } from "vue"
 
-// PrimeVue theme and styles
-import "primeflex/primeflex.css"
-import "primeicons/primeicons.css"
+// Vuetify
+import { createVuetify } from 'vuetify'
+import * as components from 'vuetify/components'
+import * as directives from 'vuetify/directives'
+import 'vuetify/styles'
+import '@mdi/font/css/materialdesignicons.css'
+
+// i18n
+import i18n from './i18n'
 
 import App from "./App.vue"
 import router from "./router"
@@ -16,25 +17,41 @@ import router from "./router"
 const app = createApp(App)
 const pinia = createPinia()
 
-// Configure PrimeVue
-app.use(PrimeVue, {
+// Create Vuetify instance
+const vuetify = createVuetify({
+  components,
+  directives,
   theme: {
-    preset: Aura,
+    defaultTheme: 'light',
+    themes: {
+      light: {
+        colors: {
+          primary: '#1976D2',
+          secondary: '#424242',
+          accent: '#82B1FF',
+          error: '#FF5252',
+          info: '#2196F3',
+          success: '#4CAF50',
+          warning: '#FFC107',
+        }
+      }
+    }
   },
-  ripple: true,
+  icons: {
+    defaultSet: 'mdi'
+  }
 })
 
-// Add PrimeVue services
-app.use(ToastService)
-app.use(ConfirmationService)
-
-// Add PrimeVue directives
-app.directive("tooltip", Tooltip)
+// Add Vuetify
+app.use(vuetify)
 
 // Add Pinia store
 app.use(pinia)
 
 // Add Vue Router
 app.use(router)
+
+// Add i18n
+app.use(i18n)
 
 app.mount("#app")

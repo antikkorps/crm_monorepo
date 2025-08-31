@@ -173,6 +173,53 @@ export class AuthController {
   }
 
   /**
+   * PUT /api/auth/me
+   * Update current authenticated user profile
+   */
+  static async updateProfile(ctx: Context) {
+    const updateProfileSchema = Joi.object({
+      firstName: Joi.string().optional(),
+      lastName: Joi.string().optional(),
+      email: Joi.string().email().optional(),
+      phone: Joi.string().optional(),
+    })
+
+    // Validate request body
+    const { error, value } = updateProfileSchema.validate(ctx.request.body)
+    if (error) {
+      throw createError(error.details[0].message, 400, "VALIDATION_ERROR", error.details)
+    }
+
+    const user = ctx.state.user as User
+
+    try {
+      // Update user profile
+      await user.update(value)
+      await user.reload()
+
+      ctx.body = {
+        success: true,
+        message: "Profile updated successfully",
+        data: {
+          user: user.toJSON(),
+        },
+      }
+
+      logger.info("Profile updated successfully", {
+        userId: user.id,
+        email: user.email,
+        updatedFields: Object.keys(value),
+      })
+    } catch (error) {
+      logger.warn("Profile update failed", {
+        userId: user.id,
+        error: (error as Error).message,
+      })
+      throw error
+    }
+  }
+
+  /**
    * POST /api/auth/change-password
    * Change user password
    */

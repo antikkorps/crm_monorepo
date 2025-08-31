@@ -170,12 +170,13 @@
     - Write tests for PDF generation and email delivery
     - _Requirements: 2.3, 2.5_
 
-- [x] 8. Initialize Vue.js frontend with PrimeVue components
+- [x] 8. Initialize Vue.js frontend with Vuetify components and internationalization
 
-  - [x] 8.1 Set up Vue.js application with PrimeVue and routing
+  - [x] 8.1 Set up Vue.js application with Vuetify and routing
 
     - Create Vue.js 3 application with Composition API setup
-    - Configure PrimeVue component library and theming
+    - Configure Vuetify 3 component library with Material Design 3 theming
+    - Set up Vue I18n for internationalization with French, English, Spanish, and German support
     - Set up Vue Router for application navigation
     - Implement Pinia store for state management
     - _Requirements: 7.1, 7.4_
@@ -188,11 +189,20 @@
     - Add authentication guards for protected routes
     - _Requirements: 4.1, 4.2, 10.1, 10.2_
 
+  - [x] 8.2 Implement internationalization system
+
+    - Create translation files for French, English, Spanish, and German
+    - Set up locale detection and user preference storage
+    - Implement date, number, and currency formatting per locale
+    - Create language switcher component with real-time updates
+    - Add fallback logic for missing translations
+    - _Requirements: 7.1, 7.2, 7.3, 7.4, 7.5_
+
 - [x] 9. Build medical institution management frontend
 
   - [x] 9.1 Create medical institution list and search interface
 
-    - Build medical institution listing component with PrimeVue DataTable
+    - Build medical institution listing component with Vuetify DataTable
     - Implement advanced search and filtering for medical criteria
     - Add segmentation interface for surgical rooms, bed capacity, specialties
     - Create responsive design for medical institution cards
@@ -410,7 +420,7 @@
 
   - [ ] 18.2 Implement frontend performance optimizations
     - Add code splitting and lazy loading for Vue.js routes
-    - Optimize PrimeVue component loading and bundle size
+    - Optimize Vuetify component loading and bundle size with tree-shaking
     - Implement virtual scrolling for large medical institution lists
     - Add image optimization for DiceBear avatars and assets
     - _Requirements: 7.1, 8.1, 10.1_

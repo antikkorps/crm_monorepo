@@ -27,7 +27,7 @@ export function useSocket() {
     console.log("Attempting to connect to Socket.io server...")
 
     // Determine the socket URL based on environment
-    const socketUrl = import.meta.env.VITE_API_URL || "http://localhost:3000"
+    const socketUrl = import.meta.env.VITE_API_URL || "http://localhost:3001"
 
     socket.value = io(socketUrl, {
       auth: {
@@ -39,6 +39,8 @@ export function useSocket() {
       reconnectionDelay: 1000,
       reconnectionDelayMax: 5000,
       reconnectionAttempts: maxReconnectAttempts,
+      forceNew: true,
+      autoConnect: true,
     })
 
     socket.value.on("connect", () => {
@@ -49,7 +51,7 @@ export function useSocket() {
 
       // Join user-specific room for targeted notifications
       if (authStore.user?.id) {
-        socket.value?.emit("join-room", { userId: authStore.user.id })
+        socket.value?.emit("join-room", { room: `user:${authStore.user.id}` })
         console.log(`Joined room for user: ${authStore.user.id}`)
       }
     })

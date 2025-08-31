@@ -6,14 +6,14 @@ A modern Customer Relationship Management system designed specifically for manag
 
 This project is organized as a monorepo with the following packages:
 
-- **Frontend** (`packages/frontend`): Vue.js 3 application with PrimeVue components
+- **Frontend** (`packages/frontend`): Vue.js 3 application with Vuetify 3 components and Vue I18n
 - **Backend** (`packages/backend`): Koa.js API server with TypeScript
 - **Shared** (`packages/shared`): Shared types, constants, and utilities
 - **Plugins** (`packages/plugins`): Extensible plugin system for integrations
 
 ## Technology Stack
 
-- **Frontend**: Vue.js 3, PrimeVue, Pinia, TypeScript
+- **Frontend**: Vue.js 3, Vuetify 3, Vue I18n, Pinia, TypeScript
 - **Backend**: Koa.js, Socket.io, Sequelize, PostgreSQL
 - **Development**: Lerna, TypeScript, Vite, Docker Compose
 

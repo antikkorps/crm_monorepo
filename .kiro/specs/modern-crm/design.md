@@ -6,13 +6,14 @@ The Modern Medical CRM is a comprehensive customer relationship management syste
 
 ### Technology Stack
 
-- **Frontend**: Vue.js 3 with Composition API, PrimeVue UI components, Pinia for state management
+- **Frontend**: Vue.js 3 with Composition API, Vuetify 3 UI components, Pinia for state management, Vue I18n for internationalization
 - **Backend**: Koa.js with TypeScript, Socket.io for real-time communication
 - **Database**: PostgreSQL with Sequelize ORM for robust database operations
 - **Authentication**: JWT tokens with refresh token rotation
 - **File Storage**: Local file system with configurable cloud storage plugins
 - **Monorepo Management**: Lerna or Nx for workspace management
 - **Avatar Generation**: DiceBear API integration
+- **Internationalization**: Vue I18n with support for multiple languages (French, English, Spanish, German)
 
 ## Architecture
 
@@ -21,9 +22,10 @@ The Modern Medical CRM is a comprehensive customer relationship management syste
 ```mermaid
 graph TB
     subgraph "Frontend (Vue.js)"
-        A[Vue.js App] --> B[PrimeVue Components]
+        A[Vue.js App] --> B[Vuetify Components]
         A --> C[Pinia Store]
         A --> D[Socket.io Client]
+        A --> E[Vue I18n]
     end
 
     subgraph "Backend (Koa.js)"
@@ -63,7 +65,9 @@ medical-crm/
 │   │   │   ├── views/
 │   │   │   ├── stores/
 │   │   │   ├── composables/
-│   │   │   └── plugins/
+│   │   │   ├── plugins/
+│   │   │   ├── locales/   # i18n translation files
+│   │   │   └── assets/
 │   │   ├── public/
 │   │   └── package.json
 │   ├── backend/           # Koa.js API server
@@ -1106,6 +1110,533 @@ function calculateDocumentTotal(lines: (QuoteLine | InvoiceLine)[]): DocumentTot
 
   return { subtotal, totalDiscountAmount, totalTaxAmount, total }
 }
+```
+
+## Internationalization (i18n)
+
+### Supported Languages
+
+The Medical CRM system supports multiple languages to serve international healthcare markets:
+
+- **French (fr)**: Primary language, complete translation
+- **English (en)**: Secondary language, complete translation
+- **Spanish (es)**: Tertiary language, complete translation
+- **German (de)**: Quaternary language, complete translation
+
+### Translation Architecture
+
+```typescript
+// i18n configuration
+interface I18nConfig {
+  locale: string
+  fallbackLocale: string
+  messages: Record<string, any>
+  dateTimeFormats: Record<string, any>
+  numberFormats: Record<string, any>
+}
+
+// Translation structure
+interface TranslationMessages {
+  common: {
+    actions: {
+      save: string
+      cancel: string
+      delete: string
+      edit: string
+      create: string
+      search: string
+      filter: string
+      export: string
+      import: string
+    }
+    labels: {
+      name: string
+      email: string
+      phone: string
+      address: string
+      status: string
+      date: string
+      amount: string
+    }
+    messages: {
+      success: string
+      error: string
+      warning: string
+      info: string
+      loading: string
+      noData: string
+    }
+  }
+  auth: {
+    login: string
+    logout: string
+    password: string
+    forgotPassword: string
+    rememberMe: string
+    invalidCredentials: string
+  }
+  institutions: {
+    title: string
+    hospital: string
+    clinic: string
+    medicalCenter: string
+    specialtyClinic: string
+    bedCapacity: string
+    surgicalRooms: string
+    specialties: string
+    departments: string
+  }
+  billing: {
+    quote: string
+    invoice: string
+    payment: string
+    total: string
+    subtotal: string
+    discount: string
+    tax: string
+    dueDate: string
+    paymentMethod: string
+  }
+  tasks: {
+    title: string
+    description: string
+    priority: string
+    assignee: string
+    dueDate: string
+    status: {
+      todo: string
+      inProgress: string
+      completed: string
+      cancelled: string
+    }
+    priority: {
+      low: string
+      medium: string
+      high: string
+      urgent: string
+    }
+  }
+  plugins: {
+    title: string
+    install: string
+    configure: string
+    enable: string
+    disable: string
+    uninstall: string
+    status: {
+      enabled: string
+      disabled: string
+      error: string
+      loading: string
+    }
+    categories: {
+      integration: string
+      billing: string
+      notification: string
+      analytics: string
+      workflow: string
+      utility: string
+    }
+  }
+}
+```
+
+### Localization Features
+
+#### Date and Time Formatting
+
+```typescript
+// Date/time formats per locale
+const dateTimeFormats = {
+  fr: {
+    short: { year: "numeric", month: "short", day: "numeric" },
+    long: { year: "numeric", month: "long", day: "numeric", weekday: "long" },
+    time: { hour: "2-digit", minute: "2-digit", hour12: false },
+  },
+  en: {
+    short: { year: "numeric", month: "short", day: "numeric" },
+    long: { year: "numeric", month: "long", day: "numeric", weekday: "long" },
+    time: { hour: "2-digit", minute: "2-digit", hour12: true },
+  },
+  es: {
+    short: { year: "numeric", month: "short", day: "numeric" },
+    long: { year: "numeric", month: "long", day: "numeric", weekday: "long" },
+    time: { hour: "2-digit", minute: "2-digit", hour12: false },
+  },
+  de: {
+    short: { year: "numeric", month: "short", day: "numeric" },
+    long: { year: "numeric", month: "long", day: "numeric", weekday: "long" },
+    time: { hour: "2-digit", minute: "2-digit", hour12: false },
+  },
+}
+```
+
+#### Number and Currency Formatting
+
+```typescript
+// Number formats per locale
+const numberFormats = {
+  fr: {
+    currency: { style: "currency", currency: "EUR", notation: "standard" },
+    decimal: { minimumFractionDigits: 2, maximumFractionDigits: 2 },
+    percent: { style: "percent", minimumFractionDigits: 1 },
+  },
+  en: {
+    currency: { style: "currency", currency: "USD", notation: "standard" },
+    decimal: { minimumFractionDigits: 2, maximumFractionDigits: 2 },
+    percent: { style: "percent", minimumFractionDigits: 1 },
+  },
+  es: {
+    currency: { style: "currency", currency: "EUR", notation: "standard" },
+    decimal: { minimumFractionDigits: 2, maximumFractionDigits: 2 },
+    percent: { style: "percent", minimumFractionDigits: 1 },
+  },
+  de: {
+    currency: { style: "currency", currency: "EUR", notation: "standard" },
+    decimal: { minimumFractionDigits: 2, maximumFractionDigits: 2 },
+    percent: { style: "percent", minimumFractionDigits: 1 },
+  },
+}
+```
+
+### Translation Management
+
+#### File Structure
+
+```
+src/locales/
+├── fr/
+│   ├── common.json
+│   ├── auth.json
+│   ├── institutions.json
+│   ├── billing.json
+│   ├── tasks.json
+│   └── plugins.json
+├── en/
+│   ├── common.json
+│   ├── auth.json
+│   ├── institutions.json
+│   ├── billing.json
+│   ├── tasks.json
+│   └── plugins.json
+├── es/
+│   └── ... (same structure)
+└── de/
+    └── ... (same structure)
+```
+
+#### Dynamic Loading
+
+```typescript
+// Lazy loading of translation files
+const loadLocaleMessages = async (locale: string) => {
+  const messages = await Promise.all([
+    import(`@/locales/${locale}/common.json`),
+    import(`@/locales/${locale}/auth.json`),
+    import(`@/locales/${locale}/institutions.json`),
+    import(`@/locales/${locale}/billing.json`),
+    import(`@/locales/${locale}/tasks.json`),
+    import(`@/locales/${locale}/plugins.json`),
+  ])
+
+  return {
+    common: messages[0].default,
+    auth: messages[1].default,
+    institutions: messages[2].default,
+    billing: messages[3].default,
+    tasks: messages[4].default,
+    plugins: messages[5].default,
+  }
+}
+```
+
+### User Language Preferences
+
+#### Language Selection
+
+- **Browser Detection**: Automatic detection of user's browser language
+- **User Preference**: Stored in user profile and localStorage
+- **Fallback Logic**: French → English → Browser default
+- **Real-time Switching**: Change language without page reload
+
+#### Persistence
+
+```typescript
+// Language preference storage
+interface UserLanguagePreference {
+  userId: string
+  locale: string
+  dateFormat: string
+  timeFormat: string
+  currency: string
+  timezone: string
+}
+
+// Store in user profile and sync across devices
+const updateUserLanguage = async (userId: string, locale: string) => {
+  await userApi.updateProfile(userId, { preferredLocale: locale })
+  localStorage.setItem("user-locale", locale)
+  i18n.global.locale.value = locale
+}
+```
+
+## Vuetify Integration
+
+### Component Library
+
+The system uses Vuetify 3 as the primary UI component library, providing:
+
+- **Material Design 3**: Modern, accessible design system
+- **Responsive Layout**: Mobile-first responsive components
+- **Theme System**: Customizable themes with dark/light mode support
+- **Accessibility**: Built-in ARIA support and keyboard navigation
+- **Performance**: Tree-shaking and optimized bundle size
+
+### Theme Configuration
+
+```typescript
+// Vuetify theme configuration
+const vuetifyTheme = {
+  defaultTheme: "light",
+  themes: {
+    light: {
+      colors: {
+        primary: "#1976D2", // Medical blue
+        secondary: "#424242", // Dark grey
+        accent: "#82B1FF", // Light blue
+        error: "#FF5252", // Red
+        info: "#2196F3", // Blue
+        success: "#4CAF50", // Green
+        warning: "#FFC107", // Amber
+        surface: "#FFFFFF", // White
+        background: "#F5F5F5", // Light grey
+      },
+    },
+    dark: {
+      colors: {
+        primary: "#2196F3", // Lighter blue for dark mode
+        secondary: "#616161", // Medium grey
+        accent: "#FF4081", // Pink accent
+        error: "#FF5252", // Red
+        info: "#2196F3", // Blue
+        success: "#4CAF50", // Green
+        warning: "#FF9800", // Orange
+        surface: "#121212", // Dark surface
+        background: "#000000", // Black
+      },
+    },
+  },
+}
+```
+
+### Custom Components
+
+#### Medical-Specific Components
+
+```vue
+<!-- MedicalInstitutionCard.vue -->
+<template>
+  <v-card class="medical-institution-card" elevation="2">
+    <v-card-title class="d-flex align-center">
+      <v-icon :icon="getInstitutionIcon(institution.type)" class="me-2" />
+      {{ institution.name }}
+      <v-spacer />
+      <v-chip :color="getStatusColor(institution.status)" size="small">
+        {{ $t(`institutions.status.${institution.status}`) }}
+      </v-chip>
+    </v-card-title>
+
+    <v-card-text>
+      <v-row>
+        <v-col cols="12" md="6">
+          <div class="text-caption text-medium-emphasis">
+            {{ $t("institutions.type") }}
+          </div>
+          <div class="text-body-2">
+            {{ $t(`institutions.types.${institution.type}`) }}
+          </div>
+        </v-col>
+        <v-col cols="12" md="6">
+          <div class="text-caption text-medium-emphasis">
+            {{ $t("institutions.bedCapacity") }}
+          </div>
+          <div class="text-body-2">
+            {{ institution.medicalProfile.bedCapacity || $t("common.notSpecified") }}
+          </div>
+        </v-col>
+      </v-row>
+    </v-card-text>
+
+    <v-card-actions>
+      <v-btn variant="text" color="primary" @click="$emit('view', institution)">
+        {{ $t("common.actions.view") }}
+      </v-btn>
+      <v-btn variant="text" color="primary" @click="$emit('edit', institution)">
+        {{ $t("common.actions.edit") }}
+      </v-btn>
+    </v-card-actions>
+  </v-card>
+</template>
+```
+
+#### Responsive Data Tables
+
+```vue
+<!-- ResponsiveDataTable.vue -->
+<template>
+  <v-data-table
+    :headers="localizedHeaders"
+    :items="items"
+    :loading="loading"
+    :search="search"
+    class="responsive-data-table"
+  >
+    <template #top>
+      <v-toolbar flat>
+        <v-toolbar-title>{{ title }}</v-toolbar-title>
+        <v-spacer />
+        <v-text-field
+          v-model="search"
+          :label="$t('common.actions.search')"
+          prepend-inner-icon="mdi-magnify"
+          variant="outlined"
+          density="compact"
+          single-line
+          hide-details
+        />
+      </v-toolbar>
+    </template>
+
+    <template #item.actions="{ item }">
+      <v-btn-group variant="text" density="compact">
+        <v-btn icon="mdi-eye" @click="$emit('view', item)" />
+        <v-btn icon="mdi-pencil" @click="$emit('edit', item)" />
+        <v-btn icon="mdi-delete" color="error" @click="$emit('delete', item)" />
+      </v-btn-group>
+    </template>
+
+    <template #no-data>
+      <v-empty-state
+        :headline="$t('common.messages.noData')"
+        :title="$t('common.messages.noDataDescription')"
+        icon="mdi-database-off"
+      />
+    </template>
+  </v-data-table>
+</template>
+```
+
+### Form Components
+
+#### Internationalized Forms
+
+```vue
+<!-- InstitutionForm.vue -->
+<template>
+  <v-form ref="form" v-model="valid" @submit.prevent="handleSubmit">
+    <v-container>
+      <v-row>
+        <v-col cols="12" md="6">
+          <v-text-field
+            v-model="formData.name"
+            :label="$t('institutions.name')"
+            :rules="nameRules"
+            variant="outlined"
+            required
+          />
+        </v-col>
+        <v-col cols="12" md="6">
+          <v-select
+            v-model="formData.type"
+            :items="institutionTypes"
+            :label="$t('institutions.type')"
+            :rules="typeRules"
+            variant="outlined"
+            required
+          />
+        </v-col>
+      </v-row>
+
+      <v-row>
+        <v-col cols="12">
+          <v-textarea
+            v-model="formData.description"
+            :label="$t('institutions.description')"
+            variant="outlined"
+            rows="3"
+          />
+        </v-col>
+      </v-row>
+
+      <v-row>
+        <v-col cols="12" md="4">
+          <v-text-field
+            v-model="formData.medicalProfile.bedCapacity"
+            :label="$t('institutions.bedCapacity')"
+            type="number"
+            variant="outlined"
+            min="0"
+          />
+        </v-col>
+        <v-col cols="12" md="4">
+          <v-text-field
+            v-model="formData.medicalProfile.surgicalRooms"
+            :label="$t('institutions.surgicalRooms')"
+            type="number"
+            variant="outlined"
+            min="0"
+          />
+        </v-col>
+        <v-col cols="12" md="4">
+          <v-select
+            v-model="formData.medicalProfile.specialties"
+            :items="medicalSpecialties"
+            :label="$t('institutions.specialties')"
+            variant="outlined"
+            multiple
+            chips
+          />
+        </v-col>
+      </v-row>
+    </v-container>
+
+    <v-card-actions>
+      <v-spacer />
+      <v-btn variant="text" @click="$emit('cancel')">
+        {{ $t("common.actions.cancel") }}
+      </v-btn>
+      <v-btn
+        type="submit"
+        color="primary"
+        variant="elevated"
+        :loading="loading"
+        :disabled="!valid"
+      >
+        {{ $t("common.actions.save") }}
+      </v-btn>
+    </v-card-actions>
+  </v-form>
+</template>
+
+<script setup lang="ts">
+import { computed } from "vue"
+import { useI18n } from "vue-i18n"
+
+const { t } = useI18n()
+
+const institutionTypes = computed(() => [
+  { title: t("institutions.types.hospital"), value: "hospital" },
+  { title: t("institutions.types.clinic"), value: "clinic" },
+  { title: t("institutions.types.medicalCenter"), value: "medical_center" },
+  { title: t("institutions.types.specialtyClinic"), value: "specialty_clinic" },
+])
+
+const nameRules = computed(() => [
+  (v: string) => !!v || t("validation.required", { field: t("institutions.name") }),
+  (v: string) =>
+    v.length >= 2 || t("validation.minLength", { field: t("institutions.name"), min: 2 }),
+])
+</script>
 ```
 
 ## Security Considerations

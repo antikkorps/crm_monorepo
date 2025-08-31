@@ -1,77 +1,103 @@
 <template>
-  <div class="login-container">
-    <div class="login-card">
-      <div class="login-header">
-        <h1 class="login-title">Medical CRM</h1>
-        <p class="login-subtitle">Connectez-vous à votre compte</p>
-      </div>
+  <v-app>
+    <v-main>
+      <v-container class="fill-height" fluid>
+        <v-row align="center" justify="center" class="fill-height">
+          <v-col cols="12" sm="8" md="4">
+            <v-card elevation="12" class="login-card">
+              <v-card-text class="pa-8">
+                <div class="text-center mb-8">
+                  <h1 class="text-h3 font-weight-bold primary--text mb-2">
+                    Medical CRM
+                  </h1>
+                  <p class="text-subtitle-1 text-medium-emphasis">
+                    Connectez-vous à votre compte
+                  </p>
+                </div>
 
-      <form @submit.prevent="handleLogin" class="login-form">
-        <div class="form-group">
-          <label for="email" class="form-label">Email</label>
-          <InputText
-            id="email"
-            v-model="credentials.email"
-            type="email"
-            placeholder="Votre adresse email"
-            :class="{ 'p-invalid': errors.email }"
-            required
-            autofocus
-          />
-          <small v-if="errors.email" class="p-error">{{ errors.email }}</small>
-        </div>
+                <v-form @submit.prevent="handleLogin">
+                  <v-text-field
+                    v-model="credentials.email"
+                    label="Email"
+                    type="email"
+                    placeholder="Votre adresse email"
+                    prepend-inner-icon="mdi-email"
+                    variant="outlined"
+                    :error-messages="errors.email"
+                    :error="!!errors.email"
+                    required
+                    autofocus
+                    class="mb-4"
+                  />
 
-        <div class="form-group">
-          <label for="password" class="form-label">Mot de passe</label>
-          <Password
-            id="password"
-            v-model="credentials.password"
-            placeholder="Votre mot de passe"
-            :class="{ 'p-invalid': errors.password }"
-            :feedback="false"
-            toggle-mask
-            required
-          />
-          <small v-if="errors.password" class="p-error">{{ errors.password }}</small>
-        </div>
+                  <v-text-field
+                    v-model="credentials.password"
+                    label="Mot de passe"
+                    :type="showPassword ? 'text' : 'password'"
+                    placeholder="Votre mot de passe"
+                    prepend-inner-icon="mdi-lock"
+                    :append-inner-icon="showPassword ? 'mdi-eye' : 'mdi-eye-off'"
+                    variant="outlined"
+                    :error-messages="errors.password"
+                    :error="!!errors.password"
+                    required
+                    class="mb-4"
+                    @click:append-inner="showPassword = !showPassword"
+                  />
 
-        <div class="form-group">
-          <div class="flex align-items-center">
-            <Checkbox id="remember" v-model="rememberMe" :binary="true" />
-            <label for="remember" class="ml-2">Se souvenir de moi</label>
-          </div>
-        </div>
+                  <v-checkbox
+                    v-model="rememberMe"
+                    label="Se souvenir de moi"
+                    color="primary"
+                    class="mb-4"
+                  />
 
-        <Button
-          type="submit"
-          label="Se connecter"
-          :loading="isLoading"
-          :disabled="!isFormValid"
-          class="login-button"
-          icon="pi pi-sign-in"
-        />
+                  <v-btn
+                    type="submit"
+                    color="primary"
+                    size="large"
+                    :loading="isLoading"
+                    :disabled="!isFormValid"
+                    prepend-icon="mdi-login"
+                    variant="elevated"
+                    block
+                    class="mb-4"
+                  >
+                    Se connecter
+                  </v-btn>
 
-        <div v-if="loginError" class="error-message">
-          <Message severity="error" :closable="false">
-            {{ loginError }}
-          </Message>
-        </div>
-      </form>
+                  <v-alert
+                    v-if="loginError"
+                    type="error"
+                    variant="tonal"
+                    class="mb-4"
+                  >
+                    {{ loginError }}
+                  </v-alert>
+                </v-form>
 
-      <div class="login-footer">
-        <a href="#" class="forgot-password">Mot de passe oublié ?</a>
-      </div>
-    </div>
-  </div>
+                <v-divider class="my-6" />
+
+                <div class="text-center">
+                  <v-btn
+                    variant="text"
+                    color="primary"
+                    size="small"
+                  >
+                    Mot de passe oublié ?
+                  </v-btn>
+                </div>
+              </v-card-text>
+            </v-card>
+          </v-col>
+        </v-row>
+      </v-container>
+    </v-main>
+  </v-app>
 </template>
 
 <script setup lang="ts">
 import { useAuthStore } from "@/stores/auth"
-import Button from "primevue/button"
-import Checkbox from "primevue/checkbox"
-import InputText from "primevue/inputtext"
-import Message from "primevue/message"
-import Password from "primevue/password"
 import { computed, reactive, ref } from "vue"
 import { useRoute, useRouter } from "vue-router"
 
@@ -87,6 +113,7 @@ const credentials = reactive({
 const rememberMe = ref(false)
 const isLoading = ref(false)
 const loginError = ref("")
+const showPassword = ref(false)
 
 const errors = reactive({
   email: "",
@@ -138,115 +165,14 @@ const handleLogin = async () => {
 </script>
 
 <style scoped>
-.login-container {
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+.login-card {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  padding: 1rem;
+  border-radius: 16px;
 }
 
-.login-card {
+:deep(.v-card-text) {
   background: white;
   border-radius: 12px;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-  padding: 2rem;
-  width: 100%;
-  max-width: 400px;
-}
-
-.login-header {
-  text-align: center;
-  margin-bottom: 2rem;
-}
-
-.login-title {
-  font-size: 2rem;
-  font-weight: 700;
-  color: #1f2937;
-  margin: 0 0 0.5rem 0;
-}
-
-.login-subtitle {
-  color: #6b7280;
-  margin: 0;
-  font-size: 0.95rem;
-}
-
-.login-form {
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-}
-
-.form-group {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.form-label {
-  font-weight: 500;
-  color: #374151;
-  font-size: 0.9rem;
-}
-
-.login-button {
-  width: 100%;
-  padding: 0.75rem;
-  font-weight: 600;
-  margin-top: 0.5rem;
-}
-
-.error-message {
-  margin-top: 1rem;
-}
-
-.login-footer {
-  text-align: center;
-  margin-top: 1.5rem;
-  padding-top: 1.5rem;
-  border-top: 1px solid #e5e7eb;
-}
-
-.forgot-password {
-  color: #667eea;
-  text-decoration: none;
-  font-size: 0.9rem;
-  font-weight: 500;
-}
-
-.forgot-password:hover {
-  text-decoration: underline;
-}
-
-/* PrimeVue component customizations */
-:deep(.p-inputtext),
-:deep(.p-password-input) {
-  width: 100%;
-  padding: 0.75rem;
-  border-radius: 6px;
-  border: 1px solid #d1d5db;
-  font-size: 0.95rem;
-}
-
-:deep(.p-inputtext:focus),
-:deep(.p-password-input:focus) {
-  border-color: #667eea;
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-}
-
-:deep(.p-password) {
-  width: 100%;
-}
-
-:deep(.p-checkbox) {
-  width: 1.2rem;
-  height: 1.2rem;
-}
-
-:deep(.p-message) {
-  margin: 0;
+  margin: 8px;
 }
 </style>

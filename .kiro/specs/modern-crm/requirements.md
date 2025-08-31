@@ -4,7 +4,7 @@
 
 This document outlines the requirements for a modern Customer Relationship Management (CRM) system built as a monorepo application, specifically designed for managing business relationships with medical institutions such as hospitals and clinics. The system will provide comprehensive contact management, billing capabilities, real-time notifications, webhook functionality, and extensible plugin architecture to integrate with external systems like Learning Management Systems (LMS) and accounting software such as SAGE.
 
-The CRM will be built using Vue.js with PrimeVue for the frontend, Koa.js for the backend API, PostgreSQL for data persistence, and Socket.io for real-time communication. The system will include medical-specific features for segmentation and data management tailored to healthcare business contexts.
+The CRM will be built using Vue.js with Vuetify 3 for the frontend UI components, Vue I18n for internationalization, Koa.js for the backend API, PostgreSQL for data persistence, and Socket.io for real-time communication. The system will include medical-specific features for segmentation and data management tailored to healthcare business contexts, with support for multiple languages to serve international markets.
 
 ## Requirements
 
@@ -92,19 +92,43 @@ The CRM will be built using Vue.js with PrimeVue for the frontend, Koa.js for th
 4. WHEN a SAGE accounting integration is configured THEN the system SHALL sync customer and invoice data bidirectionally
 5. IF a plugin encounters errors THEN the system SHALL log the error and continue system operation
 
-### Requirement 7: Monorepo Architecture and Development
+### Requirement 7: Internationalization and Localization
+
+**User Story:** As a business user operating in international markets, I want the CRM interface available in multiple languages with proper localization, so that I can use the system effectively in my preferred language and serve clients in different regions.
+
+#### Acceptance Criteria
+
+1. WHEN a user accesses the system THEN the system SHALL detect browser language and display the interface in the appropriate supported language (French, English, Spanish, German)
+2. WHEN a user changes language preference THEN the system SHALL update all interface elements, date formats, number formats, and currency displays immediately without page reload
+3. WHEN a user creates or views financial documents THEN the system SHALL format currencies, dates, and numbers according to the selected locale
+4. WHEN new content is added to the system THEN the system SHALL provide translation keys for all user-facing text elements
+5. IF a translation is missing for the selected language THEN the system SHALL fall back to French as the primary language, then English as secondary fallback
+
+### Requirement 8: Modern UI Components and Accessibility
+
+**User Story:** As a CRM user, I want a modern, accessible, and responsive interface that works well on all devices, so that I can efficiently manage my medical institution relationships from any device.
+
+#### Acceptance Criteria
+
+1. WHEN a user accesses the system on any device THEN the system SHALL provide a responsive interface that adapts to screen size using Vuetify's responsive grid system
+2. WHEN a user navigates the interface THEN the system SHALL provide Material Design 3 components with consistent styling and behavior
+3. WHEN a user with accessibility needs uses the system THEN the system SHALL provide ARIA labels, keyboard navigation, and screen reader support
+4. WHEN a user prefers dark mode THEN the system SHALL provide a dark theme option with appropriate contrast ratios
+5. IF a user has slow internet connection THEN the system SHALL load efficiently with optimized bundle sizes and lazy loading
+
+### Requirement 9: Monorepo Architecture and Development
 
 **User Story:** As a developer, I want the system organized as a monorepo with clear separation of concerns, so that I can efficiently develop and maintain both frontend and backend components.
 
 #### Acceptance Criteria
 
-1. WHEN the project is structured THEN the system SHALL separate frontend (Vue.js/PrimeVue) and backend (Koa.js) into distinct packages
+1. WHEN the project is structured THEN the system SHALL separate frontend (Vue.js/Vuetify) and backend (Koa.js) into distinct packages
 2. WHEN dependencies are managed THEN the system SHALL use a monorepo tool to handle shared dependencies and build processes
 3. WHEN the database is configured THEN the system SHALL use PostgreSQL with proper migrations and seeding
 4. WHEN the application starts THEN the system SHALL serve the Vue.js frontend and Koa.js API on configured ports
 5. IF environment variables are missing THEN the system SHALL provide clear error messages and fallback defaults
 
-### Requirement 8: Medical Institution Segmentation and Analytics
+### Requirement 10: Medical Institution Segmentation and Analytics
 
 **User Story:** As a sales manager, I want to segment and analyze medical institutions based on their operational characteristics, so that I can tailor my sales approach and identify business opportunities in the healthcare sector.
 
@@ -116,7 +140,7 @@ The CRM will be built using Vue.js with PrimeVue for the frontend, Koa.js for th
 4. WHEN analyzing opportunities THEN the system SHALL identify potential upselling based on institution growth, new departments, or equipment replacement cycles
 5. IF medical compliance requirements change THEN the system SHALL flag affected institutions and track compliance status
 
-### Requirement 9: Team Collaboration and Task Management
+### Requirement 11: Team Collaboration and Task Management
 
 **User Story:** As a team member, I want to collaborate with my colleagues on customer accounts and track assigned tasks, so that we can work efficiently together and ensure nothing falls through the cracks.
 
@@ -128,7 +152,7 @@ The CRM will be built using Vue.js with PrimeVue for the frontend, Koa.js for th
 4. WHEN a user profile is created THEN the system SHALL generate avatar images using DiceBear API for consistent visual identification
 5. IF a task is overdue THEN the system SHALL notify the assigned team member and their supervisor via real-time notifications
 
-### Requirement 10: User Profile and Team Management
+### Requirement 12: User Profile and Team Management
 
 **User Story:** As a team manager, I want to manage user profiles and team structure, so that I can organize my team effectively and maintain clear accountability.
 
@@ -140,7 +164,7 @@ The CRM will be built using Vue.js with PrimeVue for the frontend, Koa.js for th
 4. WHEN assigning territories or accounts THEN the system SHALL allow managers to distribute medical institutions among team members
 5. IF team structure changes THEN the system SHALL update permissions and reassign tasks accordingly
 
-### Requirement 11: Data Security and Privacy
+### Requirement 13: Data Security and Privacy
 
 **User Story:** As a business owner, I want customer data to be secure and compliant with privacy regulations including healthcare data protection, so that I can maintain customer trust and meet legal requirements.
 

@@ -1,298 +1,149 @@
 <template>
-  <div class="layout-topbar layout-topbar-sticky">
-    <div class="layout-topbar-inner">
-      <!-- Logo Container -->
-      <div class="layout-topbar-logo-container">
-        <router-link
-          to="/dashboard"
-          class="layout-topbar-logo"
-          aria-label="Medical CRM logo"
-        >
-          <svg
-            width="165"
-            height="40"
-            viewBox="0 0 165 40"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <text
-              x="10"
-              y="25"
-              font-family="Arial, sans-serif"
-              font-size="18"
-              font-weight="bold"
-              fill="var(--p-primary-color)"
+  <div class="layout-container">
+    <!-- Sidebar Drawer - Always visible on desktop -->
+    <Drawer 
+      v-model:visible="sidebarVisible" 
+      position="left" 
+      class="sidebar-drawer"
+      :showCloseIcon="false"
+    >
+      <template #header>
+        <div class="sidebar-header">
+          <router-link to="/dashboard" class="sidebar-logo">
+            <svg
+              width="35"
+              height="40"
+              viewBox="0 0 35 40"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
             >
-              Medical CRM
-            </text>
-          </svg>
-        </router-link>
-        <router-link
-          to="/dashboard"
-          class="layout-topbar-icon"
-          aria-label="Medical CRM icon"
-        >
-          <svg
-            width="35"
-            height="40"
-            viewBox="0 0 35 40"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
+              <path
+                d="M25.87 18.05L23.16 17.45L25.27 20.46V29.78L32.49 23.76V13.53L29.18 14.73L25.87 18.04V18.05ZM25.27 35.49L29.18 31.58V27.67L25.27 30.98V35.49ZM20.16 17.14H20.03H20.17H20.16ZM30.1 5.19L34.89 4.81L33.08 12.33L24.1 15.67L30.08 5.2L30.1 5.19ZM5.72 14.74L2.41 13.54V23.77L9.63 29.79V20.47L11.74 17.46L9.03 18.06L5.72 14.75V14.74ZM9.63 30.98L5.72 27.67V31.58L9.63 35.49V30.98ZM4.8 5.2L10.78 15.67L1.81 12.33L0 4.81L4.79 5.19L4.8 5.2ZM24.37 21.05V34.59L22.56 37.29L20.46 39.4H14.44L12.34 37.29L10.53 34.59V21.05L12.42 18.23L17.45 26.8L22.48 18.23L24.37 21.05ZM22.85 0L22.57 0.69L17.45 13.08L12.33 0.69L12.05 0H22.85Z"
+                fill="var(--p-primary-color)"
+              />
+              <path
+                d="M30.69 4.21L24.37 4.81L22.57 0.69L22.86 0H26.48L30.69 4.21ZM23.75 5.67L22.66 3.08L18.05 14.24V17.14H19.7H20.03H20.16H20.2L24.1 15.7L30.11 5.19L23.75 5.67ZM4.21002 4.21L10.53 4.81L12.33 0.69L12.05 0H8.43002L4.22002 4.21H4.21002ZM21.9 17.4L20.6 18.2H14.3L13 17.4L12.4 18.2L12.42 18.23L17.45 26.8L22.48 18.23L22.5 18.2L21.9 17.4ZM4.79002 5.19L10.8 15.7L14.7 17.14H14.74H15.2H16.85V14.24L12.24 3.09L11.15 5.68L4.79002 5.2V5.19Z"
+                fill="var(--p-text-color)"
+              />
+            </svg>
+            <span class="sidebar-title">Medical CRM</span>
+          </router-link>
+        </div>
+      </template>
+
+      <div class="sidebar-content">
+        <nav class="sidebar-nav">
+          <router-link
+            v-for="item in navigationItems"
+            :key="item.label"
+            :to="item.to"
+            class="sidebar-item"
+            :class="{ 'router-link-active': $route.path === item.to }"
           >
-            <path
-              d="M25.87 18.05L23.16 17.45L25.27 20.46V29.78L32.49 23.76V13.53L29.18 14.73L25.87 18.04V18.05ZM25.27 35.49L29.18 31.58V27.67L25.27 30.98V35.49ZM20.16 17.14H20.03H20.17H20.16ZM30.1 5.19L34.89 4.81L33.08 12.33L24.1 15.67L30.08 5.2L30.1 5.19ZM5.72 14.74L2.41 13.54V23.77L9.63 29.79V20.47L11.74 17.46L9.03 18.06L5.72 14.75V14.74ZM9.63 30.98L5.72 27.67V31.58L9.63 35.49V30.98ZM4.8 5.2L10.78 15.67L1.81 12.33L0 4.81L4.79 5.19L4.8 5.2ZM24.37 21.05V34.59L22.56 37.29L20.46 39.4H14.44L12.34 37.29L10.53 34.59V21.05L12.42 18.23L17.45 26.8L22.48 18.23L24.37 21.05ZM22.85 0L22.57 0.69L17.45 13.08L12.33 0.69L12.05 0H22.85Z"
-              fill="var(--p-primary-color)"
-            />
-            <path
-              d="M30.69 4.21L24.37 4.81L22.57 0.69L22.86 0H26.48L30.69 4.21ZM23.75 5.67L22.66 3.08L18.05 14.24V17.14H19.7H20.03H20.16H20.2L24.1 15.7L30.11 5.19L23.75 5.67ZM4.21002 4.21L10.53 4.81L12.33 0.69L12.05 0H8.43002L4.22002 4.21H4.21002ZM21.9 17.4L20.6 18.2H14.3L13 17.4L12.4 18.2L12.42 18.23L17.45 26.8L22.48 18.23L22.5 18.2L21.9 17.4ZM4.79002 5.19L10.8 15.7L14.7 17.14H14.74H15.2H16.85V14.24L12.24 3.09L11.15 5.68L4.79002 5.2V5.19Z"
-              fill="var(--p-text-color)"
-            />
-          </svg>
-        </router-link>
+            <i :class="item.icon"></i>
+            <span class="sidebar-item-text">{{ item.label }}</span>
+          </router-link>
+
+          <div class="sidebar-section">
+            <span class="sidebar-section-title">Billing</span>
+            <router-link
+              v-for="item in billingItems"
+              :key="item.label"
+              :to="item.to"
+              class="sidebar-item"
+              :class="{ 'router-link-active': $route.path === item.to }"
+            >
+              <i :class="item.icon"></i>
+              <span class="sidebar-item-text">{{ item.label }}</span>
+            </router-link>
+          </div>
+
+          <router-link
+            v-for="item in additionalItems"
+            :key="item.label"
+            :to="item.to"
+            class="sidebar-item"
+            :class="{ 'router-link-active': $route.path === item.to }"
+          >
+            <i :class="item.icon"></i>
+            <span class="sidebar-item-text">{{ item.label }}</span>
+          </router-link>
+        </nav>
       </div>
+    </Drawer>
 
-      <!-- Navigation Items -->
-      <ul class="topbar-items">
-        <!-- Search -->
-        <li>
-          <div class="search-container">
-            <Button
-              type="button"
-              aria-label="Search"
-              class="topbar-item search-button"
-              @click="showSearchDialog = true"
-            >
-              <i class="pi pi-search"></i>
-              <span class="search-placeholder">Search</span>
-              <span class="search-keys"> <kbd>⌘</kbd><kbd>K</kbd> </span>
-            </Button>
-          </div>
-        </li>
-
-        <!-- Navigation Links -->
-        <li>
-          <router-link to="/dashboard" class="topbar-item">
-            <i class="pi pi-home"></i>
-            <span class="topbar-item-text">Dashboard</span>
-          </router-link>
-        </li>
-
-        <li>
-          <router-link to="/institutions" class="topbar-item">
-            <i class="pi pi-building"></i>
-            <span class="topbar-item-text">Institutions</span>
-          </router-link>
-        </li>
-
-        <li>
-          <router-link to="/tasks" class="topbar-item">
-            <i class="pi pi-check-square"></i>
-            <span class="topbar-item-text">Tasks</span>
-          </router-link>
-        </li>
-
-        <!-- Billing Dropdown -->
-        <li class="dropdown-container">
+    <!-- Top MenuBar - Clean and minimal -->
+    <div class="top-menubar" :class="{ 'sidebar-open': sidebarVisible }">
+      <div class="menubar-content">
+        <div class="menubar-start">
+          <!-- Toggle Sidebar Button -->
           <Button
-            type="button"
-            class="topbar-item dropdown-toggle"
-            @click="toggleBillingMenu"
-            aria-haspopup="true"
-          >
-            <i class="pi pi-credit-card"></i>
-            <span class="topbar-item-text">Billing</span>
-            <i class="pi pi-angle-down"></i>
-          </Button>
-          <div v-if="showBillingMenu" class="dropdown-menu">
-            <router-link to="/quotes" class="dropdown-item">
-              <i class="pi pi-file-edit"></i>
-              <span>Quotes</span>
-            </router-link>
-            <router-link to="/invoices" class="dropdown-item">
-              <i class="pi pi-file"></i>
-              <span>Invoices</span>
-            </router-link>
-            <router-link to="/templates" class="dropdown-item">
-              <i class="pi pi-palette"></i>
-              <span>Templates</span>
-            </router-link>
-            <div class="dropdown-separator"></div>
-            <router-link to="/billing/analytics" class="dropdown-item">
-              <i class="pi pi-chart-bar"></i>
-              <span>Analytics</span>
-              <span class="shortcut">⌘A</span>
-            </router-link>
-          </div>
-        </li>
+            icon="pi pi-bars"
+            text
+            rounded
+            @click="toggleSidebar"
+            class="sidebar-toggle"
+            aria-label="Toggle menu"
+          />
+        </div>
 
-        <li>
-          <router-link to="/team" class="topbar-item">
-            <i class="pi pi-users"></i>
-            <span class="topbar-item-text">Team</span>
-          </router-link>
-        </li>
+        <div class="menubar-end">
+          <!-- Search Button -->
+          <Button
+            icon="pi pi-search"
+            text
+            rounded
+            aria-label="Search"
+            @click="showSearchDialog = true"
+            class="action-button"
+          />
 
-        <li>
-          <router-link to="/webhooks" class="topbar-item">
-            <i class="pi pi-send"></i>
-            <span class="topbar-item-text">Webhooks</span>
-          </router-link>
-        </li>
-
-        <!-- Notifications -->
-        <li>
+          <!-- Notifications -->
           <NotificationCenter />
-        </li>
 
-        <!-- Profile Menu -->
-        <li class="dropdown-container">
-          <Button
-            type="button"
-            class="topbar-item profile-button"
-            @click="toggleProfileMenu"
-            aria-haspopup="true"
-          >
-            <Avatar
-              :image="
-                authStore.userAvatar ||
-                'https://primefaces.org/cdn/primevue/images/avatar/amyelsner.png'
-              "
-              shape="circle"
-              size="small"
-            />
-          </Button>
-          <div v-if="showProfileMenu" class="dropdown-menu profile-menu">
-            <div class="profile-info">
+          <!-- Profile Menu -->
+          <div class="profile-section">
+            <Button
+              @click="toggleProfileMenu"
+              text
+              rounded
+              aria-haspopup="true"
+              class="profile-button"
+            >
               <Avatar
                 :image="
                   authStore.userAvatar ||
                   'https://primefaces.org/cdn/primevue/images/avatar/amyelsner.png'
                 "
                 shape="circle"
-                size="large"
+                size="small"
               />
-              <div class="profile-details">
-                <span class="profile-name">{{ authStore.userName }}</span>
-                <span class="profile-email">{{ authStore.user?.email }}</span>
-              </div>
-            </div>
-            <div class="dropdown-separator"></div>
-            <router-link to="/profile" class="dropdown-item">
-              <i class="pi pi-user"></i>
-              <span>Profile</span>
-            </router-link>
-            <div class="dropdown-separator"></div>
-            <button @click="handleLogout" class="dropdown-item logout-item">
-              <i class="pi pi-sign-out"></i>
-              <span>Logout</span>
-            </button>
+            </Button>
+            <Menu
+              ref="profileMenu"
+              :model="profileMenuItems"
+              :popup="true"
+              class="profile-menu"
+            >
+              <template #start>
+                <div class="profile-info">
+                  <Avatar
+                    :image="
+                      authStore.userAvatar ||
+                      'https://primefaces.org/cdn/primevue/images/avatar/amyelsner.png'
+                    "
+                    shape="circle"
+                    size="large"
+                  />
+                  <div class="profile-details">
+                    <span class="profile-name">{{ authStore.userName }}</span>
+                    <span class="profile-email">{{ authStore.user?.email }}</span>
+                  </div>
+                </div>
+              </template>
+            </Menu>
           </div>
-        </li>
-
-        <!-- Mobile Menu Button -->
-        <li class="menu-button">
-          <Button
-            type="button"
-            class="topbar-item mobile-menu-button"
-            @click="toggleMobileMenu"
-            aria-label="Menu"
-          >
-            <i class="pi pi-bars"></i>
-          </Button>
-        </li>
-      </ul>
-    </div>
-
-    <!-- Mobile Menu Overlay -->
-    <div
-      v-if="showMobileMenu"
-      class="mobile-menu-overlay"
-      @click="showMobileMenu = false"
-    >
-      <div class="mobile-menu" @click.stop>
-        <div class="mobile-menu-header">
-          <span class="mobile-menu-title">Medical CRM</span>
-          <Button type="button" class="mobile-menu-close" @click="showMobileMenu = false">
-            <i class="pi pi-times"></i>
-          </Button>
         </div>
-        <nav class="mobile-menu-nav">
-          <router-link
-            to="/dashboard"
-            class="mobile-menu-item"
-            @click="showMobileMenu = false"
-          >
-            <i class="pi pi-home"></i>
-            <span>Dashboard</span>
-          </router-link>
-          <router-link
-            to="/institutions"
-            class="mobile-menu-item"
-            @click="showMobileMenu = false"
-          >
-            <i class="pi pi-building"></i>
-            <span>Institutions</span>
-          </router-link>
-          <router-link
-            to="/tasks"
-            class="mobile-menu-item"
-            @click="showMobileMenu = false"
-          >
-            <i class="pi pi-check-square"></i>
-            <span>Tasks</span>
-          </router-link>
-          <div class="mobile-menu-section">
-            <span class="mobile-menu-section-title">Billing</span>
-            <router-link
-              to="/quotes"
-              class="mobile-menu-item"
-              @click="showMobileMenu = false"
-            >
-              <i class="pi pi-file-edit"></i>
-              <span>Quotes</span>
-            </router-link>
-            <router-link
-              to="/invoices"
-              class="mobile-menu-item"
-              @click="showMobileMenu = false"
-            >
-              <i class="pi pi-file"></i>
-              <span>Invoices</span>
-            </router-link>
-            <router-link
-              to="/templates"
-              class="mobile-menu-item"
-              @click="showMobileMenu = false"
-            >
-              <i class="pi pi-palette"></i>
-              <span>Templates</span>
-            </router-link>
-            <router-link
-              to="/billing/analytics"
-              class="mobile-menu-item"
-              @click="showMobileMenu = false"
-            >
-              <i class="pi pi-chart-bar"></i>
-              <span>Analytics</span>
-            </router-link>
-          </div>
-          <router-link
-            to="/team"
-            class="mobile-menu-item"
-            @click="showMobileMenu = false"
-          >
-            <i class="pi pi-users"></i>
-            <span>Team</span>
-          </router-link>
-          <router-link
-            to="/webhooks"
-            class="mobile-menu-item"
-            @click="showMobileMenu = false"
-          >
-            <i class="pi pi-send"></i>
-            <span>Webhooks</span>
-          </router-link>
-        </nav>
       </div>
     </div>
 
@@ -304,7 +155,7 @@
       :closable="true"
       class="search-dialog"
     >
-      <div class="search-dialog-content">
+      <div class="search-content">
         <InputText
           v-model="searchQuery"
           placeholder="Search..."
@@ -325,7 +176,10 @@ import { useAuthStore } from "@/stores/auth"
 import Avatar from "primevue/avatar"
 import Button from "primevue/button"
 import Dialog from "primevue/dialog"
+import Drawer from "primevue/drawer"
 import InputText from "primevue/inputtext"
+import Menu from "primevue/menu"
+import MenuBar from "primevue/menubar"
 import { onMounted, onUnmounted, ref } from "vue"
 import { useRouter } from "vue-router"
 
@@ -333,41 +187,75 @@ const router = useRouter()
 const authStore = useAuthStore()
 
 // Reactive state
-const showBillingMenu = ref(false)
-const showProfileMenu = ref(false)
-const showMobileMenu = ref(false)
+const sidebarVisible = ref(true) // Open by default on desktop
 const showSearchDialog = ref(false)
 const searchQuery = ref("")
+const profileMenu = ref()
 
-// Toggle functions
-const toggleBillingMenu = () => {
-  showBillingMenu.value = !showBillingMenu.value
-  showProfileMenu.value = false
+// Check if mobile
+const isMobile = ref(false)
+
+// Navigation items for sidebar
+const navigationItems = ref([
+  { label: "Dashboard", icon: "pi pi-home", to: "/dashboard" },
+  { label: "Institutions", icon: "pi pi-building", to: "/institutions" },
+  { label: "Tasks", icon: "pi pi-check-square", to: "/tasks" }
+])
+
+const billingItems = ref([
+  { label: "Quotes", icon: "pi pi-file-edit", to: "/quotes" },
+  { label: "Invoices", icon: "pi pi-file", to: "/invoices" },
+  { label: "Templates", icon: "pi pi-palette", to: "/templates" },
+  { label: "Analytics", icon: "pi pi-chart-bar", to: "/billing/analytics" }
+])
+
+const additionalItems = ref([
+  { label: "Team", icon: "pi pi-users", to: "/team" },
+  { label: "Webhooks", icon: "pi pi-send", to: "/webhooks" }
+])
+
+// Profile menu items with proper header
+const profileMenuItems = ref([
+  {
+    label: "Profile",
+    icon: "pi pi-user",
+    command: () => router.push("/profile")
+  },
+  { separator: true },
+  {
+    label: "Logout",
+    icon: "pi pi-sign-out",
+    command: handleLogout,
+    class: "logout-item"
+  }
+])
+
+// Toggle sidebar
+const toggleSidebar = () => {
+  sidebarVisible.value = !sidebarVisible.value
 }
 
-const toggleProfileMenu = () => {
-  showProfileMenu.value = !showProfileMenu.value
-  showBillingMenu.value = false
+// Toggle profile menu with proper event handling
+const toggleProfileMenu = (event: Event) => {
+  if (profileMenu.value) {
+    profileMenu.value.toggle(event)
+  }
 }
 
-const toggleMobileMenu = () => {
-  showMobileMenu.value = !showMobileMenu.value
+// Handle window resize
+const checkMobile = () => {
+  isMobile.value = window.innerWidth <= 768
+  if (isMobile.value) {
+    sidebarVisible.value = false
+  } else {
+    sidebarVisible.value = true
+  }
 }
 
 // Handle logout
-const handleLogout = async () => {
+async function handleLogout() {
   await authStore.logout()
   router.push("/login")
-  showProfileMenu.value = false
-}
-
-// Close dropdowns when clicking outside
-const handleClickOutside = (event: Event) => {
-  const target = event.target as Element
-  if (!target.closest(".dropdown-container")) {
-    showBillingMenu.value = false
-    showProfileMenu.value = false
-  }
 }
 
 // Keyboard shortcuts
@@ -379,219 +267,212 @@ const handleKeydown = (event: KeyboardEvent) => {
 }
 
 onMounted(() => {
-  document.addEventListener("click", handleClickOutside)
+  checkMobile()
   document.addEventListener("keydown", handleKeydown)
+  window.addEventListener("resize", checkMobile)
 })
 
 onUnmounted(() => {
-  document.removeEventListener("click", handleClickOutside)
   document.removeEventListener("keydown", handleKeydown)
+  window.removeEventListener("resize", checkMobile)
 })
 </script>
 
 <style scoped>
-/* Layout Topbar - Based on PrimeVue official site */
-.layout-topbar {
-  position: sticky;
-  top: 0;
-  z-index: 1000;
-  background: var(--p-surface-0);
-  border-bottom: 1px solid var(--p-surface-border);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-}
-
-.layout-topbar-sticky {
-  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
-}
-
-.layout-topbar-inner {
+/* Layout Container */
+.layout-container {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 1rem;
-  height: 4rem;
-  max-width: 1200px;
-  margin: 0 auto;
+  flex-direction: column;
+  height: 100vh;
 }
 
-/* Logo */
-.layout-topbar-logo-container {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
+/* Sidebar Drawer Styling */
+.sidebar-drawer {
+  width: 280px;
+  border-radius: 0 !important;
+  border: none !important;
+  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.1);
 }
 
-.layout-topbar-logo {
-  display: flex;
-  align-items: center;
-  text-decoration: none;
-  color: var(--p-text-color);
+.sidebar-drawer :deep(.p-drawer) {
+  width: 280px !important;
+  height: 100vh !important;
+  position: fixed !important;
+  left: 0 !important;
+  top: 0 !important;
+  z-index: 1000 !important;
 }
 
-.layout-topbar-icon {
-  display: none;
-  align-items: center;
-  text-decoration: none;
-  color: var(--p-text-color);
-}
-
-/* Navigation Items */
-.topbar-items {
-  display: flex;
-  align-items: center;
-  list-style: none;
-  margin: 0;
+.sidebar-drawer :deep(.p-drawer-content) {
   padding: 0;
-  gap: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
 }
 
-.topbar-item {
+.sidebar-drawer :deep(.p-drawer-header) {
+  padding: 1.5rem 1rem 1rem 1rem;
+  border-bottom: 1px solid var(--p-surface-border);
+  flex-shrink: 0;
+}
+
+/* Sidebar Header */
+.sidebar-header {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 0.75rem;
-  border-radius: 6px;
+  justify-content: center;
+}
+
+.sidebar-logo {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
   text-decoration: none;
   color: var(--p-text-color);
-  background: transparent;
-  border: 1px solid transparent;
-  transition: all 0.2s;
-  cursor: pointer;
-  font-size: 0.875rem;
-  font-weight: 500;
 }
 
-.topbar-item:hover {
-  background: var(--p-surface-100);
+.sidebar-title {
+  font-weight: 600;
+  font-size: 1.125rem;
   color: var(--p-primary-color);
 }
 
-.topbar-item.router-link-active {
-  background: var(--p-primary-50);
-  color: var(--p-primary-color);
-  border-color: var(--p-primary-200);
-}
-
-.topbar-item-text {
-  white-space: nowrap;
-}
-
-/* Search Button */
-.search-container {
-  position: relative;
-}
-
-.search-button {
-  min-width: 200px;
-  justify-content: space-between;
-  background: var(--p-surface-50);
-  border: 1px solid var(--p-surface-border);
-}
-
-.search-button:hover {
-  background: var(--p-surface-100);
-  border-color: var(--p-primary-200);
-}
-
-.search-placeholder {
+/* Sidebar Content */
+.sidebar-content {
+  padding: 1rem 0;
+  overflow-y: auto;
   flex: 1;
-  text-align: left;
-  color: var(--p-text-muted-color);
 }
 
-.search-keys {
+.sidebar-nav {
   display: flex;
+  flex-direction: column;
   gap: 0.25rem;
 }
 
-.search-keys kbd {
-  background: var(--p-surface-200);
-  border: 1px solid var(--p-surface-300);
-  border-radius: 3px;
-  padding: 0.125rem 0.25rem;
-  font-size: 0.75rem;
-  font-family: monospace;
-  color: var(--p-text-muted-color);
-}
-
-/* Dropdown */
-.dropdown-container {
-  position: relative;
-}
-
-.dropdown-toggle {
-  gap: 0.5rem;
-}
-
-.dropdown-menu {
-  position: absolute;
-  top: 100%;
-  right: 0;
-  min-width: 200px;
-  background: var(--p-surface-0);
-  border: 1px solid var(--p-surface-border);
-  border-radius: 6px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  padding: 0.5rem 0;
-  z-index: 1001;
-  margin-top: 0.25rem;
-}
-
-.dropdown-item {
+.sidebar-item {
   display: flex;
   align-items: center;
   gap: 0.75rem;
   padding: 0.75rem 1rem;
   text-decoration: none;
   color: var(--p-text-color);
-  background: transparent;
-  border: none;
-  width: 100%;
-  text-align: left;
-  cursor: pointer;
+  border-radius: var(--p-border-radius);
+  margin: 0 1rem;
+  transition: all 0.2s ease;
+  font-weight: 500;
+}
+
+.sidebar-item:hover {
+  background: var(--p-surface-100);
+  color: var(--p-primary-color);
+  transform: translateX(2px);
+}
+
+.sidebar-item.router-link-active {
+  background: var(--p-primary-50);
+  color: var(--p-primary-color);
+  border-left: 3px solid var(--p-primary-color);
+  font-weight: 600;
+}
+
+.sidebar-item i {
+  width: 1.25rem;
+  flex-shrink: 0;
+}
+
+.sidebar-item-text {
+  white-space: nowrap;
+}
+
+.sidebar-section {
+  margin: 1.5rem 0 1rem 0;
+}
+
+.sidebar-section-title {
+  display: block;
+  padding: 0.5rem 1rem;
   font-size: 0.875rem;
-  transition: background-color 0.2s;
-}
-
-.dropdown-item:hover {
-  background: var(--p-surface-100);
-}
-
-.dropdown-separator {
-  height: 1px;
-  background: var(--p-surface-border);
-  margin: 0.5rem 0;
-}
-
-.shortcut {
-  margin-left: auto;
-  font-size: 0.75rem;
+  font-weight: 600;
   color: var(--p-text-muted-color);
-  background: var(--p-surface-100);
-  padding: 0.125rem 0.375rem;
-  border-radius: 3px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
-/* Profile Menu */
+/* Top MenuBar */
+.top-menubar {
+  position: sticky;
+  top: 0;
+  z-index: 999;
+  background: var(--p-surface-0);
+  border-bottom: 1px solid var(--p-surface-border);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  transition: margin-left 0.3s ease;
+  margin-left: 0;
+}
+
+.top-menubar.sidebar-open {
+  margin-left: 280px;
+}
+
+.menubar-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 1rem;
+  height: 4rem;
+}
+
+.menubar-start {
+  display: flex;
+  align-items: center;
+}
+
+.menubar-end {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.sidebar-toggle {
+  color: var(--p-text-muted-color);
+}
+
+.sidebar-toggle:hover {
+  color: var(--p-primary-color);
+  background: var(--p-primary-50);
+}
+
+.action-button {
+  color: var(--p-text-muted-color);
+}
+
+.action-button:hover {
+  color: var(--p-primary-color);
+  background: var(--p-primary-50);
+}
+
+/* Profile Section */
+.profile-section {
+  position: relative;
+}
+
 .profile-button {
   padding: 0.25rem;
-  border-radius: 50%;
 }
 
-.profile-menu {
-  right: 0;
-  min-width: 280px;
+.profile-menu :deep(.p-menu-header) {
+  padding: 1rem;
+  background: var(--p-surface-50);
+  border-bottom: 1px solid var(--p-surface-border);
+  border-radius: var(--p-border-radius) var(--p-border-radius) 0 0;
 }
 
 .profile-info {
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  padding: 1rem;
-  background: var(--p-surface-50);
-  margin: -0.5rem -0rem 0.5rem -0rem;
-  border-radius: 6px 6px 0 0;
 }
 
 .profile-details {
@@ -610,150 +491,62 @@ onUnmounted(() => {
   color: var(--p-text-muted-color);
 }
 
-.logout-item {
-  color: var(--p-red-500);
-}
-
-.logout-item:hover {
-  background: var(--p-red-50);
-  color: var(--p-red-600);
-}
-
-/* Mobile Menu */
-.menu-button {
-  display: none;
-}
-
-.mobile-menu-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
-  z-index: 1002;
-}
-
-.mobile-menu {
-  position: fixed;
-  top: 0;
-  right: 0;
-  width: 300px;
-  height: 100vh;
-  background: var(--p-surface-0);
-  box-shadow: -4px 0 12px rgba(0, 0, 0, 0.15);
-  overflow-y: auto;
-}
-
-.mobile-menu-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 1rem;
-  border-bottom: 1px solid var(--p-surface-border);
-}
-
-.mobile-menu-title {
-  font-weight: 600;
-  font-size: 1.125rem;
-}
-
-.mobile-menu-close {
-  padding: 0.5rem;
-  border-radius: 50%;
-}
-
-.mobile-menu-nav {
-  padding: 1rem 0;
-}
-
-.mobile-menu-item {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 0.75rem 1rem;
-  text-decoration: none;
-  color: var(--p-text-color);
-  transition: background-color 0.2s;
-}
-
-.mobile-menu-item:hover {
-  background: var(--p-surface-100);
-}
-
-.mobile-menu-section {
-  margin: 1rem 0;
-}
-
-.mobile-menu-section-title {
-  display: block;
-  padding: 0.5rem 1rem;
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: var(--p-text-muted-color);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
 /* Search Dialog */
-.search-dialog {
-  max-width: 500px;
-}
-
-.search-dialog-content {
-  padding: 1rem 0;
+.search-content {
+  padding: 0.5rem 0;
 }
 
 .search-results {
   margin-top: 1rem;
   padding: 1rem;
   background: var(--p-surface-50);
-  border-radius: 6px;
+  border-radius: var(--p-border-radius);
   text-align: center;
 }
 
 /* Responsive Design */
-@media (max-width: 1024px) {
-  .topbar-item-text {
-    display: none;
-  }
-
-  .search-button {
-    min-width: auto;
-    width: 2.5rem;
-  }
-
-  .search-placeholder,
-  .search-keys {
-    display: none;
-  }
-}
-
 @media (max-width: 768px) {
-  .layout-topbar-logo {
-    display: none;
+  .sidebar-drawer {
+    width: 100vw;
+    transform: translateX(-100%);
   }
 
-  .layout-topbar-icon {
-    display: flex;
+  .sidebar-drawer.visible {
+    transform: translateX(0);
   }
 
-  .topbar-items li:not(.menu-button):not(:last-child) {
-    display: none;
+  .top-menubar {
+    margin-left: 0 !important;
   }
 
-  .menu-button {
-    display: block;
+  .sidebar-toggle {
+    display: inline-flex;
   }
 }
 
-@media (max-width: 480px) {
-  .layout-topbar-inner {
-    padding: 0 0.5rem;
+@media (min-width: 769px) {
+  .sidebar-drawer :deep(.p-drawer-mask) {
+    display: none;
   }
+  
+  .sidebar-drawer {
+    position: fixed;
+    transform: none;
+  }
+}
 
-  .mobile-menu {
-    width: 100vw;
-  }
+/* Global Menu Item Styling for Logout */
+:deep(.logout-item) {
+  color: var(--p-red-500) !important;
+}
+
+:deep(.logout-item:hover) {
+  background: var(--p-red-50) !important;
+  color: var(--p-red-600) !important;
+}
+
+/* Hide close icon from drawer */
+.sidebar-drawer :deep(.p-drawer-close) {
+  display: none;
 }
 </style>

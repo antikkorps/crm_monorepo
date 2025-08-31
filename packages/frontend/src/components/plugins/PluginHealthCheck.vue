@@ -92,10 +92,7 @@
             }"
           >
             <div class="flex align-items-center gap-2">
-              <i
-                :class="getHealthStatusIcon(check.status)"
-                :class="getHealthStatusColor(check.status)"
-              ></i>
+              <i :class="getHealthStatusIcon(check.status)"></i>
               <span class="font-medium">{{ getHealthStatusText(check.status) }}</span>
             </div>
             <div class="text-600 text-sm">{{ formatTimestamp(check.timestamp) }}</div>
