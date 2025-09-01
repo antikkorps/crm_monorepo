@@ -213,7 +213,9 @@ NoteShare.init(
       field: "user_id",
     },
     permission: {
-      type: DataTypes.ENUM(...Object.values(SharePermission)),
+      type: process.env.NODE_ENV === "test" 
+        ? DataTypes.STRING  // Use STRING in test environment to avoid ENUM issues with pg-mem
+        : DataTypes.ENUM(...Object.values(SharePermission)),
       allowNull: false,
       defaultValue: SharePermission.READ,
       validate: {

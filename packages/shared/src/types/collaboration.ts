@@ -283,6 +283,8 @@ export interface NoteSearchFilters {
   isPrivate?: boolean
   search?: string
   sharedWithUserId?: string
+  // For access control scoping in backend queries
+  userId?: string
 }
 
 export interface MeetingSearchFilters {
@@ -293,6 +295,8 @@ export interface MeetingSearchFilters {
   startDateFrom?: Date
   startDateTo?: Date
   search?: string
+  // For access control scoping in backend queries
+  userId?: string
 }
 
 export interface CallSearchFilters {

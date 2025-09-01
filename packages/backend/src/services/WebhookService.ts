@@ -319,7 +319,18 @@ export class WebhookService {
    */
   static verifySignature(payload: string, signature: string, secret: string): boolean {
     const expectedSignature = this.generateSignature(payload, secret)
-    return crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expectedSignature))
+    
+    // Check if signatures have the same length before using timingSafeEqual
+    if (signature.length !== expectedSignature.length) {
+      return false
+    }
+    
+    try {
+      return crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expectedSignature))
+    } catch (error) {
+      // If timingSafeEqual fails for any reason, return false
+      return false
+    }
   }
 
   /**

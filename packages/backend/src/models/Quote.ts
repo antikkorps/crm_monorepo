@@ -84,19 +84,24 @@ export class Quote
 
   // Instance methods
   public isExpired(): boolean {
-    return this.status !== QuoteStatus.ACCEPTED && new Date() > this.validUntil
+    const status = this.status || this.getDataValue('status')
+    const validUntil = this.validUntil || this.getDataValue('validUntil')
+    return status !== QuoteStatus.ACCEPTED && new Date() > validUntil
   }
 
   public canBeModified(): boolean {
-    return [QuoteStatus.DRAFT, QuoteStatus.SENT].includes(this.status)
+    const status = this.status || this.getDataValue('status')
+    return [QuoteStatus.DRAFT, QuoteStatus.SENT].includes(status)
   }
 
   public canBeAccepted(): boolean {
-    return this.status === QuoteStatus.SENT && !this.isExpired()
+    const status = this.status || this.getDataValue('status')
+    return status === QuoteStatus.SENT && !this.isExpired()
   }
 
   public canBeRejected(): boolean {
-    return this.status === QuoteStatus.SENT && !this.isExpired()
+    const status = this.status || this.getDataValue('status')
+    return status === QuoteStatus.SENT && !this.isExpired()
   }
 
   public async accept(clientComments?: string): Promise<void> {
@@ -165,12 +170,14 @@ export class Quote
   }
 
   public getDaysUntilExpiry(): number | null {
-    if (this.status === QuoteStatus.ACCEPTED || this.status === QuoteStatus.REJECTED) {
+    const status = this.status || this.getDataValue('status')
+    if (status === QuoteStatus.ACCEPTED || status === QuoteStatus.REJECTED) {
       return null
     }
 
+    const validUntil = this.validUntil || this.getDataValue('validUntil')
     const now = new Date()
-    const diffTime = this.validUntil.getTime() - now.getTime()
+    const diffTime = validUntil.getTime() - now.getTime()
     return Math.ceil(diffTime / (1000 * 60 * 60 * 24))
   }
 

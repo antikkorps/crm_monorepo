@@ -151,7 +151,7 @@ export class User
 
   public static async findWithoutTeam(): Promise<User[]> {
     return this.findAll({
-      where: sequelize.where(sequelize.col("teamId"), "IS", null),
+      where: { teamId: null },
       attributes: { exclude: ["passwordHash"] },
       order: [
         ["firstName", "ASC"],
@@ -202,9 +202,16 @@ User.init(
       },
     },
     role: {
-      type: DataTypes.ENUM(...Object.values(UserRole)),
+      type: process.env.NODE_ENV === "test" 
+        ? DataTypes.STRING  // Use STRING in test environment to avoid ENUM issues with pg-mem
+        : DataTypes.ENUM(...Object.values(UserRole)),
       allowNull: false,
       defaultValue: UserRole.USER,
+      ...(process.env.NODE_ENV === "test" && {
+        validate: {
+          isIn: [Object.values(UserRole)],
+        },
+      }),
     },
     teamId: {
       type: DataTypes.UUID,

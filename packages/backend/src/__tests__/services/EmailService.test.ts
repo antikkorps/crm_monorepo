@@ -8,7 +8,7 @@ const mockClose = vi.fn()
 
 vi.mock("nodemailer", () => ({
   default: {
-    createTransporter: vi.fn(() => ({
+    createTransport: vi.fn(() => ({
       sendMail: mockSendMail,
       verify: mockVerify,
       close: mockClose,

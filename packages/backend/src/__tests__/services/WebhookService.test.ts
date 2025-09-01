@@ -100,6 +100,7 @@ describe("WebhookService", () => {
         payload: eventData,
         status: WebhookLogStatus.PENDING,
         maxAttempts: 4, // maxRetries + 1
+        attemptCount: 0,
       })
       expect(mockWebhook.recordTrigger).toHaveBeenCalled()
     })
@@ -240,7 +241,7 @@ describe("WebhookService", () => {
       const payload = '{"test":"data"}'
       const secret = "test-secret"
       const signature =
-        "sha256=f7bc83f430538424b13298e6aa6fb143ef4d59a14946175997479dbc2d1a3cd8"
+        "sha256=e914119c41a12d9a06ed4306f9f3c1ce32ee6618cbb06f54f00a280ba2dc7985"
 
       const isValid = WebhookService.verifySignature(payload, signature, secret)
 
@@ -250,7 +251,7 @@ describe("WebhookService", () => {
     it("should reject incorrect signature", () => {
       const payload = '{"test":"data"}'
       const secret = "test-secret"
-      const signature = "sha256=invalid"
+      const signature = "sha256=0000000000000000000000000000000000000000000000000000000000000000"
 
       const isValid = WebhookService.verifySignature(payload, signature, secret)
 

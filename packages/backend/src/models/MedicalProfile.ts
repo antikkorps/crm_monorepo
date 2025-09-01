@@ -219,10 +219,17 @@ MedicalProfile.init(
       },
     },
     complianceStatus: {
-      type: DataTypes.ENUM(...Object.values(ComplianceStatus)),
+      type: process.env.NODE_ENV === "test" 
+        ? DataTypes.STRING  // Use STRING in test environment to avoid ENUM issues with pg-mem
+        : DataTypes.ENUM(...Object.values(ComplianceStatus)),
       allowNull: false,
       defaultValue: ComplianceStatus.PENDING_REVIEW,
       field: "compliance_status",
+      ...(process.env.NODE_ENV === "test" && {
+        validate: {
+          isIn: [Object.values(ComplianceStatus)],
+        },
+      }),
     },
     lastAuditDate: {
       type: DataTypes.DATE,

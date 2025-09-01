@@ -19,6 +19,25 @@ vi.mock("handlebars", () => ({
   registerHelper: vi.fn(),
 }))
 
+// Mock DocumentTemplate model
+vi.mock("../../models/DocumentTemplate", () => ({
+  DocumentTemplate: {
+    createTemplate: vi.fn(),
+    findByPk: vi.fn(),
+    getActiveTemplates: vi.fn(),
+    getDefaultTemplate: vi.fn(),
+    findOne: vi.fn(),
+    create: vi.fn(),
+    update: vi.fn(),
+    destroy: vi.fn(),
+  },
+  TemplateType: {
+    QUOTE: "quote",
+    INVOICE: "invoice",
+    BOTH: "both",
+  },
+}))
+
 describe("DocumentTemplateService", () => {
   let templateService: DocumentTemplateService
   let mockTemplate: any
@@ -77,12 +96,12 @@ describe("DocumentTemplateService", () => {
     }
 
     // Mock Sequelize model methods
-    vi.mocked(DocumentTemplate.createTemplate).mockResolvedValue(mockTemplate as any)
-    vi.mocked(DocumentTemplate.findByPk).mockResolvedValue(mockTemplate as any)
-    vi.mocked(DocumentTemplate.getActiveTemplates).mockResolvedValue([
-      mockTemplate,
-    ] as any)
-    vi.mocked(DocumentTemplate.getDefaultTemplate).mockResolvedValue(mockTemplate as any)
+    ;(DocumentTemplate.createTemplate as any).mockResolvedValue(mockTemplate)
+    ;(DocumentTemplate.findByPk as any).mockResolvedValue(mockTemplate)
+    ;(DocumentTemplate.getActiveTemplates as any).mockResolvedValue([mockTemplate])
+    ;(DocumentTemplate.getDefaultTemplate as any).mockResolvedValue(mockTemplate)
+    ;(DocumentTemplate.findOne as any).mockResolvedValue(mockTemplate)
+    ;(DocumentTemplate.create as any).mockResolvedValue(mockTemplate)
   })
 
   afterEach(() => {
@@ -279,8 +298,7 @@ describe("DocumentTemplateService", () => {
         expect.objectContaining({
           name: "Duplicated Template",
           createdBy: "user-1",
-        }),
-        "user-1"
+        })
       )
     })
 
@@ -353,7 +371,10 @@ describe("DocumentTemplateService", () => {
     it("should generate template preview with sample data", async () => {
       const result = await templateService.previewTemplate("template-1")
 
-      expect(result).toContain("<html>Compiled template</html>")
+      expect(result).toContain("<!DOCTYPE html>")
+      expect(result).toContain("<html>")
+      expect(result).toContain("<div>Custom HTML template</div>")
+      expect(result).toContain("body { font-family: Arial; }")
       expect(DocumentTemplate.findByPk).toHaveBeenCalledWith("template-1")
     })
 
@@ -367,7 +388,10 @@ describe("DocumentTemplateService", () => {
 
       const result = await templateService.previewTemplate("template-1", customData)
 
-      expect(result).toContain("<html>Compiled template</html>")
+      expect(result).toContain("<!DOCTYPE html>")
+      expect(result).toContain("<html>")
+      expect(result).toContain("<div>Custom HTML template</div>")
+      expect(result).toContain("body { font-family: Arial; }")
     })
 
     it("should throw error when template not found", async () => {

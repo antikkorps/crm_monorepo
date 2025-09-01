@@ -6,11 +6,27 @@ import { AvatarService } from "../../services/AvatarService"
 
 describe("User Model", () => {
   beforeEach(async () => {
-    await sequelize.sync({ force: true })
+    try {
+      if (process.env.NODE_ENV === "test") {
+        // For pg-mem, just clean tables data without recreating schema
+        await User.destroy({ where: {}, force: true })
+        await Team.destroy({ where: {}, force: true })
+      } else {
+        await sequelize.sync({ force: true })
+      }
+    } catch (error) {
+      console.warn("Database cleanup warning:", error.message)
+      // Fallback: try sync without force
+      try {
+        await sequelize.sync()
+      } catch (syncError) {
+        console.warn("Database sync warning:", syncError.message)
+      }
+    }
   })
 
   afterEach(async () => {
-    await sequelize.truncate({ cascade: true })
+    // Clean up is handled in beforeEach
   })
 
   describe("Model Creation", () => {

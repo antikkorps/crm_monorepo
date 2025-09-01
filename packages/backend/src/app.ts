@@ -10,6 +10,8 @@ import authRoutes from "./routes/auth"
 import billingAnalyticsRoutes from "./routes/billing-analytics"
 import institutionRoutes from "./routes/institutions"
 import invoiceRoutes from "./routes/invoices"
+import noteRoutes from "./routes/notes"
+import meetingRoutes from "./routes/meetings"
 import pluginRoutes from "./routes/plugins"
 import quoteRoutes from "./routes/quotes"
 import socketRoutes from "./routes/socket"
@@ -117,6 +119,14 @@ export const createApp = (): Koa => {
   // Apply socket routes
   app.use(socketRoutes.routes())
   app.use(socketRoutes.allowedMethods())
+
+  // Apply note routes
+  app.use(noteRoutes.routes())
+  app.use(noteRoutes.allowedMethods())
+
+  // Apply meeting routes
+  app.use(meetingRoutes.routes())
+  app.use(meetingRoutes.allowedMethods())
 
   // Apply task routes
   app.use(taskRoutes.routes())

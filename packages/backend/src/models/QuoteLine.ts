@@ -87,44 +87,66 @@ export class QuoteLine
 
   // Instance methods
   public calculateTotals(): void {
+    const quantity = this.quantity || this.getDataValue('quantity') || 0
+    const unitPrice = this.unitPrice || this.getDataValue('unitPrice') || 0
+    const discountType = this.discountType || this.getDataValue('discountType')
+    const discountValue = this.discountValue || this.getDataValue('discountValue') || 0
+    const taxRate = this.taxRate || this.getDataValue('taxRate') || 0
+    
     // Calculate subtotal
-    this.subtotal = this.quantity * this.unitPrice
+    const subtotal = quantity * unitPrice
+    this.setDataValue('subtotal', subtotal)
+    // Set as property for direct access in tests
+    ;(this as any).subtotal = subtotal
 
     // Calculate discount amount
-    if (this.discountType === DiscountType.PERCENTAGE) {
-      this.discountAmount = this.subtotal * (this.discountValue / 100)
-    } else if (this.discountType === DiscountType.FIXED_AMOUNT) {
-      this.discountAmount = Math.min(this.discountValue, this.subtotal)
-    } else {
-      this.discountAmount = 0
+    let discountAmount = 0
+    if (discountType === DiscountType.PERCENTAGE) {
+      discountAmount = subtotal * (discountValue / 100)
+    } else if (discountType === DiscountType.FIXED_AMOUNT) {
+      discountAmount = Math.min(discountValue, subtotal)
     }
+    this.setDataValue('discountAmount', discountAmount)
+    ;(this as any).discountAmount = discountAmount
 
     // Calculate total after discount
-    this.totalAfterDiscount = this.subtotal - this.discountAmount
+    const totalAfterDiscount = subtotal - discountAmount
+    this.setDataValue('totalAfterDiscount', totalAfterDiscount)
+    ;(this as any).totalAfterDiscount = totalAfterDiscount
 
     // Calculate tax amount
-    this.taxAmount = this.totalAfterDiscount * (this.taxRate / 100)
+    const taxAmount = totalAfterDiscount * (taxRate / 100)
+    this.setDataValue('taxAmount', taxAmount)
+    ;(this as any).taxAmount = taxAmount
 
     // Calculate final total
-    this.total = this.totalAfterDiscount + this.taxAmount
+    const total = totalAfterDiscount + taxAmount
+    this.setDataValue('total', total)
+    ;(this as any).total = total
   }
 
   public validateDiscount(): boolean {
-    if (this.discountType === DiscountType.PERCENTAGE) {
-      return this.discountValue >= 0 && this.discountValue <= 100
-    } else if (this.discountType === DiscountType.FIXED_AMOUNT) {
-      return this.discountValue >= 0 && this.discountValue <= this.subtotal
+    const discountType = this.discountType || this.getDataValue('discountType')
+    const discountValue = this.discountValue || this.getDataValue('discountValue') || 0
+    const subtotal = this.subtotal || this.getDataValue('subtotal') || 0
+    
+    if (discountType === DiscountType.PERCENTAGE) {
+      return discountValue >= 0 && discountValue <= 100
+    } else if (discountType === DiscountType.FIXED_AMOUNT) {
+      return discountValue >= 0 && discountValue <= subtotal
     }
     return true
   }
 
   public getDiscountPercentage(): number {
-    if (this.subtotal === 0) return 0
-    return (this.discountAmount / this.subtotal) * 100
+    const subtotal = this.subtotal || this.getDataValue('subtotal') || 0
+    const discountAmount = this.discountAmount || this.getDataValue('discountAmount') || 0
+    if (subtotal === 0) return 0
+    return (discountAmount / subtotal) * 100
   }
 
   public getTaxPercentage(): number {
-    return this.taxRate
+    return this.taxRate || this.getDataValue('taxRate') || 0
   }
 
   public override toJSON(): any {

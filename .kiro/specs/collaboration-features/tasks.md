@@ -55,7 +55,7 @@
   - Test migrations up and down for data integrity
   - _Requirements: 5.4_
 
-- [ ] 8. Implement API routes for Note operations
+- [x] 8. Implement API routes for Note operations
 
   - Create REST endpoints for note CRUD operations
   - Implement note sharing endpoints with permission validation
@@ -63,7 +63,7 @@
   - Write integration tests for note API endpoints
   - _Requirements: 1.1, 1.2, 1.3, 1.4, 1.5, 5.3_
 
-- [ ] 9. Implement API routes for Meeting operations
+- [x] 9. Implement API routes for Meeting operations
 
   - Create REST endpoints for meeting CRUD operations
   - Implement participant invitation and status management endpoints
@@ -71,7 +71,7 @@
   - Write integration tests for meeting API endpoints
   - _Requirements: 2.1, 2.2, 2.5, 2.6, 5.3_
 
-- [ ] 10. Implement API routes for Comment operations
+- [x] 10. Implement API routes for Comment operations
 
   - Create REST endpoints for comment CRUD on meetings
   - Implement comment permissions and validation

@@ -347,6 +347,30 @@ export class Note
 }
 
 // Initialize the model
+const isPgDialect = sequelize.getDialect() === "postgres"
+const noteIndexes: any[] = [
+  {
+    fields: ["creator_id"],
+  },
+  {
+    fields: ["institution_id"],
+  },
+  {
+    fields: ["is_private"],
+  },
+  {
+    fields: ["created_at"],
+  },
+  {
+    fields: ["creator_id", "is_private"],
+  },
+]
+
+// Only create the GIN index in non-test environments, as pg-mem doesn't support it
+if (isPgDialect && process.env.NODE_ENV !== "test") {
+  noteIndexes.push({ name: "notes_tags_gin_idx", fields: ["tags"], using: "gin" })
+}
+
 Note.init(
   {
     id: {
@@ -444,28 +468,7 @@ Note.init(
     tableName: "notes",
     timestamps: true,
     underscored: true,
-    indexes: [
-      {
-        fields: ["creator_id"],
-      },
-      {
-        fields: ["institution_id"],
-      },
-      {
-        fields: ["is_private"],
-      },
-      {
-        fields: ["created_at"],
-      },
-      {
-        name: "notes_tags_gin_idx",
-        fields: ["tags"],
-        using: "gin",
-      },
-      {
-        fields: ["creator_id", "is_private"],
-      },
-    ],
+    indexes: noteIndexes,
     hooks: {
       beforeValidate: (note: Note) => {
         // Validate note data

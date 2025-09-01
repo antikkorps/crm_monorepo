@@ -37,6 +37,11 @@ export enum NotificationType {
   INVOICE_CREATED = "invoice_created",
   PAYMENT_RECEIVED = "payment_received",
   INVOICE_OVERDUE = "invoice_overdue",
+
+  // Meeting comments
+  MEETING_COMMENT_ADDED = "meeting_comment_added",
+  MEETING_COMMENT_UPDATED = "meeting_comment_updated",
+  MEETING_COMMENT_DELETED = "meeting_comment_deleted",
 }
 
 export enum NotificationPriority {

@@ -478,12 +478,21 @@ Call.init(
       },
     },
     callType: {
-      type: DataTypes.ENUM(...Object.values(CallType)),
+      type: process.env.NODE_ENV === "test" 
+        ? DataTypes.STRING 
+        : DataTypes.ENUM(...Object.values(CallType)),
       allowNull: false,
       field: "call_type",
-      validate: {
-        isIn: [Object.values(CallType)],
-      },
+      ...(process.env.NODE_ENV === "test" && {
+        validate: {
+          isIn: [Object.values(CallType)],
+        },
+      }),
+      ...((process.env.NODE_ENV !== "test") && {
+        validate: {
+          isIn: [Object.values(CallType)],
+        },
+      }),
     },
     userId: {
       type: DataTypes.UUID,

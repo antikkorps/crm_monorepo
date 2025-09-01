@@ -58,32 +58,38 @@ export class MedicalInstitution
 
   // Instance methods
   public getFullAddress(): string {
-    const { street, city, state, zipCode, country } = this.address
+    const address = this.address || this.getDataValue('address')
+    const { street, city, state, zipCode, country } = address
     return `${street}, ${city}, ${state} ${zipCode}, ${country}`
   }
 
   public hasTag(tag: string): boolean {
-    return this.tags.includes(tag.toLowerCase())
+    const tags = this.tags || this.getDataValue('tags')
+    return tags.includes(tag.toLowerCase())
   }
 
   public addTag(tag: string): void {
     const normalizedTag = tag.toLowerCase().trim()
+    const currentTags = this.tags || this.getDataValue('tags')
     if (!this.hasTag(normalizedTag)) {
-      this.tags = [...this.tags, normalizedTag]
+      this.tags = [...currentTags, normalizedTag]
     }
   }
 
   public removeTag(tag: string): void {
     const normalizedTag = tag.toLowerCase().trim()
-    this.tags = this.tags.filter((t) => t !== normalizedTag)
+    const currentTags = this.tags || this.getDataValue('tags')
+    this.tags = currentTags.filter((t) => t !== normalizedTag)
   }
 
   public async getPrimaryContact(): Promise<ContactPerson | null> {
-    return ContactPerson.findPrimaryContact(this.id)
+    const id = this.id || this.getDataValue('id')
+    return ContactPerson.findPrimaryContact(id)
   }
 
   public async getActiveContacts(): Promise<ContactPerson[]> {
-    return ContactPerson.findByInstitution(this.id)
+    const id = this.id || this.getDataValue('id')
+    return ContactPerson.findByInstitution(id)
   }
 
   public override toJSON(): any {
@@ -412,8 +418,15 @@ MedicalInstitution.init(
       },
     },
     type: {
-      type: DataTypes.ENUM(...Object.values(InstitutionType)),
+      type: process.env.NODE_ENV === "test" 
+        ? DataTypes.STRING  // Use STRING in test environment to avoid ENUM issues with pg-mem
+        : DataTypes.ENUM(...Object.values(InstitutionType)),
       allowNull: false,
+      ...(process.env.NODE_ENV === "test" && {
+        validate: {
+          isIn: [Object.values(InstitutionType)],
+        },
+      }),
     },
     address: {
       type: DataTypes.JSONB,

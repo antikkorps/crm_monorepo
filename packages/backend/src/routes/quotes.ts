@@ -8,90 +8,60 @@ const router = new Router({ prefix: "/api/quotes" })
 // All quote routes require authentication
 router.use(authenticate)
 
+// Temporary stub routes for testing - these will return 501 (Not Implemented)
+const notImplementedHandler = async (ctx: any) => {
+  ctx.status = 501
+  ctx.body = {
+    error: {
+      code: "NOT_IMPLEMENTED",
+      message: "This endpoint is not yet implemented",
+      timestamp: new Date().toISOString(),
+    },
+  }
+}
+
 // GET /api/quotes - Get all quotes with filtering
-// router.get("/", requirePermission("canViewAllBilling"), QuoteController.getQuotes)
+router.get("/", notImplementedHandler)
 
 // GET /api/quotes/statistics - Get quote statistics
-// router.get(
-//   "/statistics",
-//   requirePermission("canViewAllBilling"),
-//   QuoteController.getQuoteStatistics
-// )
+router.get("/statistics", notImplementedHandler)
 
-// // GET /api/quotes/institution/:institutionId - Get quotes by institution
-// router.get(
-//   "/institution/:institutionId",
-//   requirePermission("canViewAllBilling"),
-//   QuoteController.getQuotesByInstitution
-// )
+// GET /api/quotes/:id - Get a specific quote
+router.get("/:id", notImplementedHandler)
 
-// // GET /api/quotes/user/:userId - Get quotes by user
-// router.get(
-//   "/user/:userId",
-//   requirePermission("canViewAllBilling"),
-//   QuoteController.getQuotesByUser
-// )
+// POST /api/quotes - Create a new quote
+router.post("/", notImplementedHandler)
 
-// // GET /api/quotes/status/:status - Get quotes by status
-// router.get(
-//   "/status/:status",
-//   requirePermission("canViewAllBilling"),
-//   QuoteController.getQuotesByStatus
-// )
+// PUT /api/quotes/:id - Update a quote
+router.put("/:id", notImplementedHandler)
 
-// // GET /api/quotes/:id - Get a specific quote
-// router.get("/:id", QuoteController.getQuote)
+// DELETE /api/quotes/:id - Delete a quote
+router.delete("/:id", notImplementedHandler)
 
-// // POST /api/quotes - Create a new quote
-// router.post("/", requirePermission("canCreateQuotes"), QuoteController.createQuote)
+// Quote status workflow endpoints
+// PUT /api/quotes/:id/send - Send quote to client
+router.put("/:id/send", notImplementedHandler)
 
-// // PUT /api/quotes/:id - Update a quote
-// router.put("/:id", QuoteController.updateQuote)
+// PUT /api/quotes/:id/accept - Accept quote (client action)
+router.put("/:id/accept", notImplementedHandler)
 
-// // DELETE /api/quotes/:id - Delete a quote
-// router.delete("/:id", requirePermission("canDeleteQuotes"), QuoteController.deleteQuote)
+// PUT /api/quotes/:id/reject - Reject quote (client action)
+router.put("/:id/reject", notImplementedHandler)
 
-// // Quote status workflow endpoints
-// // PUT /api/quotes/:id/send - Send quote to client
-// router.put("/:id/send", QuoteController.sendQuote)
+// PUT /api/quotes/:id/cancel - Cancel quote
+router.put("/:id/cancel", notImplementedHandler)
 
-// // PUT /api/quotes/:id/accept - Accept quote (client action)
-// router.put("/:id/accept", QuoteController.acceptQuote)
+// Quote line management endpoints
+// POST /api/quotes/:id/lines - Add line to quote
+router.post("/:id/lines", notImplementedHandler)
 
-// // PUT /api/quotes/:id/reject - Reject quote (client action)
-// router.put("/:id/reject", QuoteController.rejectQuote)
+// PUT /api/quotes/:id/lines/:lineId - Update quote line
+router.put("/:id/lines/:lineId", notImplementedHandler)
 
-// // PUT /api/quotes/:id/cancel - Cancel quote
-// router.put("/:id/cancel", QuoteController.cancelQuote)
+// DELETE /api/quotes/:id/lines/:lineId - Delete quote line
+router.delete("/:id/lines/:lineId", notImplementedHandler)
 
-// // POST /api/quotes/:id/convert-to-invoice - Convert quote to invoice
-// router.post(
-//   "/:id/convert-to-invoice",
-//   requirePermission("canConvertQuotesToInvoices"),
-//   QuoteController.convertToInvoice
-// )
-
-// // Quote line management endpoints
-// // GET /api/quotes/:id/lines - Get quote lines
-// router.get("/:id/lines", QuoteController.getQuoteLines)
-
-// // POST /api/quotes/:id/lines - Add line to quote
-// router.post("/:id/lines", QuoteController.addQuoteLine)
-
-// // PUT /api/quotes/:id/lines/:lineId - Update quote line
-// router.put("/:id/lines/:lineId", QuoteController.updateQuoteLine)
-
-// // DELETE /api/quotes/:id/lines/:lineId - Delete quote line
-// router.delete("/:id/lines/:lineId", QuoteController.deleteQuoteLine)
-
-// // PUT /api/quotes/:id/lines/reorder - Reorder quote lines
-// router.put("/:id/lines/reorder", QuoteController.reorderQuoteLines)
-
-// // PDF generation and document management endpoints
-// // GET /api/quotes/:id/pdf - Generate and download quote PDF
-// router.get("/:id/pdf", QuoteController.generateQuotePdf)
-
-// // GET /api/quotes/:id/versions - Get document versions for quote
-// router.get("/:id/versions", QuoteController.getQuoteVersions)
+// PUT /api/quotes/:id/lines/reorder - Reorder quote lines
+router.put("/:id/lines/reorder", notImplementedHandler)
 
 export default router
