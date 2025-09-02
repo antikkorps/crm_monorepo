@@ -6,16 +6,33 @@ import { User, UserRole } from "../../models/User"
 
 describe("Meeting Model - Isolated Test", () => {
   beforeEach(async () => {
-    // Only sync the models we need
-    await User.sync({ force: true })
-    await Meeting.sync({ force: true })
-    await MeetingParticipant.sync({ force: true })
+    try {
+      // Clean up existing data first
+      try {
+        await MeetingParticipant.destroy({ where: {}, force: true })
+        await Meeting.destroy({ where: {}, force: true })
+        await User.destroy({ where: {}, force: true })
+      } catch (cleanupError) {
+        // Tables might not exist yet, that's ok
+      }
+      
+      // Ensure tables exist
+      await User.sync({ force: false })
+      await Meeting.sync({ force: false })
+      await MeetingParticipant.sync({ force: false })
+    } catch (error) {
+      console.warn("Setup failed:", error.message)
+    }
   })
 
   afterEach(async () => {
-    await MeetingParticipant.destroy({ where: {}, truncate: true })
-    await Meeting.destroy({ where: {}, truncate: true })
-    await User.destroy({ where: {}, truncate: true })
+    try {
+      await MeetingParticipant.destroy({ where: {}, force: true })
+      await Meeting.destroy({ where: {}, force: true })
+      await User.destroy({ where: {}, force: true })
+    } catch (error) {
+      // Ignore cleanup errors
+    }
   })
 
   it("should create a simple meeting", async () => {

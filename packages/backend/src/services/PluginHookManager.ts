@@ -103,7 +103,11 @@ export class DefaultPluginHookManager implements PluginHookManager {
     })
 
     // Get the first callback
-    const firstCallback = hookCallbacks.values().next().value
+    const firstCallback = hookCallbacks.values().next().value as (Function | undefined)
+
+    if (!firstCallback) {
+      return undefined
+    }
 
     try {
       const result = firstCallback(...args)
@@ -117,7 +121,7 @@ export class DefaultPluginHookManager implements PluginHookManager {
     } catch (error) {
       logger.error(`Error executing first hook callback: ${hookName}`, {
         error: error instanceof Error ? error.message : String(error),
-        callbackName: firstCallback.name || "anonymous",
+        callbackName: (firstCallback as Function).name || "anonymous",
       })
       throw error
     }

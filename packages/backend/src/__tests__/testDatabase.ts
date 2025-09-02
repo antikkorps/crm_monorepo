@@ -1,4 +1,4 @@
-import { newDb } from "pg-mem"
+import { newDb, DataType } from "pg-mem"
 import { Sequelize } from "sequelize"
 
 // Create an in-memory PostgreSQL database for testing
@@ -10,14 +10,14 @@ export const createTestDatabase = () => {
   // Add some PostgreSQL functions that might be used
   db.public.registerFunction({
     name: "version",
-    returns: "text",
+    returns: DataType.text,
     implementation: () => "PostgreSQL 13.0 (pg-mem)",
   })
 
   // Enable uuid generation
   db.public.registerFunction({
     name: "gen_random_uuid",
-    returns: "uuid",
+    returns: DataType.uuid,
     implementation: () => {
       return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function (c) {
         const r = (Math.random() * 16) | 0

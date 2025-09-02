@@ -79,7 +79,7 @@
   - Write integration tests for comment API endpoints
   - _Requirements: 2.3, 2.4, 5.3_
 
-- [ ] 11. Implement API routes for Call operations
+- [x] 11. Implement API routes for Call operations
 
   - Create REST endpoints for call logging and retrieval
   - Implement call search and filtering functionality
@@ -87,7 +87,7 @@
   - Write integration tests for call API endpoints
   - _Requirements: 3.1, 3.2, 3.3, 3.4, 3.5, 5.3_
 
-- [ ] 12. Implement API routes for Reminder operations
+- [x] 12. Implement API routes for Reminder operations
 
   - Create REST endpoints for reminder CRUD operations
   - Implement reminder notification system

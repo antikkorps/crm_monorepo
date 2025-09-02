@@ -82,6 +82,7 @@ export interface PluginHookManager {
   unregister(hookName: string, callback: Function): void
   execute(hookName: string, ...args: any[]): Promise<any[]>
   executeFirst(hookName: string, ...args: any[]): Promise<any>
+  clear(): void
 }
 
 export interface Plugin {
@@ -109,6 +110,12 @@ export interface PluginRegistry {
   getByCategory(category: PluginCategory): PluginInstance[]
   getEnabled(): PluginInstance[]
   getStats(): Record<string, any>
+  // Extended management helpers
+  exists(pluginName: string): boolean
+  updateStatus(pluginName: string, status: PluginStatus, error?: string): void
+  updateConfig(pluginName: string, config: Record<string, any>): void
+  getPluginsByStatus(status: PluginStatus): PluginInstance[]
+  clear(): void
 }
 
 export interface PluginLoader {

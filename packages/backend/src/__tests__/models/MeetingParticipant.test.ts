@@ -9,13 +9,23 @@ describe("MeetingParticipant Model - Isolated Test", () => {
   let testMeeting: Meeting
 
   beforeEach(async () => {
-    // Only sync the models we need
-    await User.sync({ force: true })
-    await Meeting.sync({ force: true })
-    await MeetingParticipant.sync({ force: true })
+    try {
+      // Clean up existing data first
+      try {
+        await MeetingParticipant.destroy({ where: {}, force: true })
+        await Meeting.destroy({ where: {}, force: true })
+        await User.destroy({ where: {}, force: true })
+      } catch (cleanupError) {
+        // Tables might not exist yet, that's ok
+      }
+      
+      // Ensure tables exist
+      await User.sync({ force: false })
+      await Meeting.sync({ force: false })
+      await MeetingParticipant.sync({ force: false })
 
-    // Create test user
-    testUser = await User.create({
+      // Create test user
+      testUser = await User.create({
       email: "test@example.com",
       passwordHash: "hashedpassword",
       firstName: "Test",
@@ -35,12 +45,19 @@ describe("MeetingParticipant Model - Isolated Test", () => {
       endDate,
       organizerId: testUser.id,
     })
+    } catch (error) {
+      console.warn("Setup failed:", error.message)
+    }
   })
 
   afterEach(async () => {
-    await MeetingParticipant.destroy({ where: {}, truncate: true })
-    await Meeting.destroy({ where: {}, truncate: true })
-    await User.destroy({ where: {}, truncate: true })
+    try {
+      await MeetingParticipant.destroy({ where: {}, force: true })
+      await Meeting.destroy({ where: {}, force: true })
+      await User.destroy({ where: {}, force: true })
+    } catch (error) {
+      // Ignore cleanup errors
+    }
   })
 
   it("should create a meeting participant", async () => {

@@ -8,12 +8,14 @@ import { errorHandler } from "./middleware/errorHandler"
 import { requestLogger } from "./middleware/requestLogger"
 import authRoutes from "./routes/auth"
 import billingAnalyticsRoutes from "./routes/billing-analytics"
+import callRoutes from "./routes/calls"
 import institutionRoutes from "./routes/institutions"
 import invoiceRoutes from "./routes/invoices"
 import noteRoutes from "./routes/notes"
 import meetingRoutes from "./routes/meetings"
 import pluginRoutes from "./routes/plugins"
 import quoteRoutes from "./routes/quotes"
+import reminderRoutes from "./routes/reminders"
 import socketRoutes from "./routes/socket"
 import taskRoutes from "./routes/tasks"
 import teamRoutes from "./routes/teams"
@@ -104,6 +106,10 @@ export const createApp = (): Koa => {
   app.use(billingAnalyticsRoutes.routes())
   app.use(billingAnalyticsRoutes.allowedMethods())
 
+  // Apply call routes
+  app.use(callRoutes.routes())
+  app.use(callRoutes.allowedMethods())
+
   // Apply institution routes
   app.use(institutionRoutes.routes())
   app.use(institutionRoutes.allowedMethods())
@@ -115,6 +121,10 @@ export const createApp = (): Koa => {
   // Apply quote routes
   app.use(quoteRoutes.routes())
   app.use(quoteRoutes.allowedMethods())
+
+  // Apply reminder routes
+  app.use(reminderRoutes.routes())
+  app.use(reminderRoutes.allowedMethods())
 
   // Apply socket routes
   app.use(socketRoutes.routes())

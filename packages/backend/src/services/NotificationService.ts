@@ -42,6 +42,14 @@ export enum NotificationType {
   MEETING_COMMENT_ADDED = "meeting_comment_added",
   MEETING_COMMENT_UPDATED = "meeting_comment_updated",
   MEETING_COMMENT_DELETED = "meeting_comment_deleted",
+
+  // Reminder notifications
+  REMINDER_CREATED = "reminder_created",
+  REMINDER_DUE_SOON = "reminder_due_soon",
+  REMINDER_OVERDUE = "reminder_overdue",
+  REMINDER_COMPLETED = "reminder_completed",
+  REMINDER_SNOOZED = "reminder_snoozed",
+  REMINDER_RESCHEDULED = "reminder_rescheduled",
 }
 
 export enum NotificationPriority {
@@ -62,6 +70,7 @@ export interface NotificationData {
   teamId?: string
   institutionId?: string
   taskId?: string
+  reminderId?: string
   senderId?: string
   senderName?: string
   timestamp?: string

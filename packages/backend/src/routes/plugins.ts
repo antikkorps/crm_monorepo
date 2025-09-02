@@ -116,7 +116,7 @@ router.post("/install", async (ctx: Context) => {
     // Authenticate request
     const user = await authenticatePluginRequest(ctx)
     
-    const { pluginPath } = ctx.request.body as { pluginPath: string }
+    const { pluginPath } = (ctx.request as any).body as { pluginPath: string }
 
     if (!pluginPath) {
       throw createError("Plugin path is required", 400, "MISSING_PLUGIN_PATH")
@@ -140,7 +140,7 @@ router.post("/install", async (ctx: Context) => {
     })
   } catch (error) {
     logger.error("Failed to install plugin", {
-      pluginPath: ctx.request.body?.pluginPath,
+      pluginPath: (ctx.request as any)?.body?.pluginPath,
       error: error instanceof Error ? error.message : String(error),
     })
 

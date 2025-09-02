@@ -4,6 +4,7 @@ import { sequelize } from "../config/database"
 import { CollaborationValidation } from "../types/collaboration"
 import { MedicalInstitution } from "./MedicalInstitution"
 import { User } from "./User"
+import type { NoteShare } from "./NoteShare"
 
 export interface NoteAttributes {
   id: string
@@ -402,21 +403,24 @@ Note.init(
       allowNull: false,
       defaultValue: sequelize.getDialect() === "postgres" ? [] : "[]",
       get() {
-        const value = this.getDataValue("tags")
+        const raw = this.getDataValue("tags") as unknown
         if (sequelize.getDialect() === "postgres") {
-          return value as string[]
+          return (raw as string[]) ?? []
         }
-        try {
-          return JSON.parse(value as string) as string[]
-        } catch {
-          return []
+        if (typeof raw === "string") {
+          try {
+            return JSON.parse(raw) as string[]
+          } catch {
+            return []
+          }
         }
+        return Array.isArray(raw) ? (raw as string[]) : []
       },
       set(value: string[]) {
         if (sequelize.getDialect() === "postgres") {
-          this.setDataValue("tags", value)
+          this.setDataValue("tags", value as unknown as any)
         } else {
-          this.setDataValue("tags", JSON.stringify(value || []))
+          this.setDataValue("tags", JSON.stringify(value || []) as unknown as any)
         }
       },
       validate: {
@@ -477,11 +481,5 @@ Note.init(
     },
   }
 )
-
-// Import NoteShare for circular dependency resolution
-let NoteShare: any
-import("./NoteShare").then((module) => {
-  NoteShare = module.NoteShare
-})
 
 export default Note

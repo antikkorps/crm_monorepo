@@ -3,6 +3,7 @@ import { DataTypes, Model, Optional } from "sequelize"
 import { sequelize } from "../config/database"
 import { CollaborationValidation } from "../types/collaboration"
 import { User } from "./User"
+import type { Meeting } from "./Meeting"
 
 export interface MeetingParticipantAttributes {
   id: string
@@ -13,7 +14,7 @@ export interface MeetingParticipantAttributes {
 }
 
 export interface MeetingParticipantCreationAttributes
-  extends Optional<MeetingParticipantAttributes, "id" | "createdAt"> {}
+  extends Optional<MeetingParticipantAttributes, "id" | "status" | "createdAt"> {}
 
 export class MeetingParticipant
   extends Model<MeetingParticipantAttributes, MeetingParticipantCreationAttributes>
@@ -380,11 +381,5 @@ MeetingParticipant.init(
     },
   }
 )
-
-// Import Meeting for circular dependency resolution
-let Meeting: any
-import("./Meeting").then((module) => {
-  Meeting = module.Meeting
-})
 
 export default MeetingParticipant

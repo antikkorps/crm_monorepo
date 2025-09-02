@@ -1,6 +1,8 @@
-import { MeetingStatus } from "@medical-crm/shared"
+import { MeetingStatus, ParticipantStatus } from "@medical-crm/shared"
 import { DataTypes, Model, Op, Optional } from "sequelize"
 import { sequelize } from "../config/database"
+import type { MeetingParticipant } from "./MeetingParticipant"
+import type { Comment } from "./Comment"
 import { CollaborationValidation } from "../types/collaboration"
 import { MedicalInstitution } from "./MedicalInstitution"
 import { User } from "./User"
@@ -20,7 +22,7 @@ export interface MeetingAttributes {
 }
 
 export interface MeetingCreationAttributes
-  extends Optional<MeetingAttributes, "id" | "createdAt" | "updatedAt"> {}
+  extends Optional<MeetingAttributes, "id" | "status" | "createdAt" | "updatedAt"> {}
 
 export class Meeting
   extends Model<MeetingAttributes, MeetingCreationAttributes>
@@ -89,7 +91,7 @@ export class Meeting
     return MeetingParticipant.create({
       meetingId: this.id,
       userId,
-      status: "invited",
+      status: ParticipantStatus.INVITED,
     })
   }
 
@@ -542,15 +544,5 @@ Meeting.init(
     },
   }
 )
-
-// Import MeetingParticipant and Comment for circular dependency resolution
-let MeetingParticipant: any
-let Comment: any
-import("./MeetingParticipant").then((module) => {
-  MeetingParticipant = module.MeetingParticipant
-})
-import("./Comment").then((module) => {
-  Comment = module.Comment
-})
 
 export default Meeting

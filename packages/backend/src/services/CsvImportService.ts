@@ -371,9 +371,9 @@ export class CsvImportService {
     const currentAddress = existing.address || existing.getDataValue('address')
     const currentTags = existing.tags || existing.getDataValue('tags')
     
-    await existing.update({
-      name: data.name || currentName,
-      type: data.type || currentType,
+      await existing.update({
+        name: data.name || currentName,
+        type: (data.type as unknown as InstitutionType) || currentType,
       address: {
         ...currentAddress,
         street: data.street || currentAddress.street,
@@ -399,7 +399,7 @@ export class CsvImportService {
           departments: data.departments ? data.departments.split(',').map(d => d.trim()) : existingProfile.getDataValue('departments'),
           equipmentTypes: data.equipmentTypes ? data.equipmentTypes.split(',').map(e => e.trim()) : existingProfile.getDataValue('equipmentTypes'),
           certifications: data.certifications ? data.certifications.split(',').map(c => c.trim()) : existingProfile.getDataValue('certifications'),
-          complianceStatus: data.complianceStatus || existingProfile.getDataValue('complianceStatus'),
+          complianceStatus: (data.complianceStatus as unknown as ComplianceStatus) || existingProfile.getDataValue('complianceStatus'),
           lastAuditDate: data.lastAuditDate ? new Date(data.lastAuditDate) : existingProfile.getDataValue('lastAuditDate'),
           complianceExpirationDate: data.complianceExpirationDate ? new Date(data.complianceExpirationDate) : existingProfile.getDataValue('complianceExpirationDate'),
           complianceNotes: data.complianceNotes || existingProfile.getDataValue('complianceNotes')

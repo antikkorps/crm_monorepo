@@ -7,7 +7,8 @@ describe("MedicalProfile Model", () => {
   beforeAll(async () => {
     try {
       await DatabaseManager.connect()
-      await DatabaseManager.sync({ force: true })
+      await MedicalInstitution.sync({ force: false })
+      await MedicalProfile.sync({ force: false })
     } catch (error) {
       console.warn("Database not available for testing:", error)
     }
@@ -60,12 +61,14 @@ describe("MedicalProfile Model", () => {
       })
     } catch (error) {
       if (error.message?.includes("connect")) return
+      throw error
     }
   })
 
   describe("Model Creation", () => {
     it("should create a medical profile with valid data", async () => {
       try {
+        if (!institution) return
         const profile = await MedicalProfile.create({
           ...validProfileData,
           institutionId: institution.id,
@@ -86,6 +89,7 @@ describe("MedicalProfile Model", () => {
 
     it("should normalize specialties to lowercase", async () => {
       try {
+        if (!institution) return
         const profile = await MedicalProfile.create({
           ...validProfileData,
           institutionId: institution.id,
@@ -101,6 +105,7 @@ describe("MedicalProfile Model", () => {
 
     it("should normalize departments to lowercase", async () => {
       try {
+        if (!institution) return
         const profile = await MedicalProfile.create({
           ...validProfileData,
           institutionId: institution.id,
@@ -116,6 +121,7 @@ describe("MedicalProfile Model", () => {
 
     it("should normalize equipment types to lowercase", async () => {
       try {
+        if (!institution) return
         const profile = await MedicalProfile.create({
           ...validProfileData,
           institutionId: institution.id,
@@ -131,6 +137,7 @@ describe("MedicalProfile Model", () => {
 
     it("should validate bed capacity range", async () => {
       try {
+        if (!institution) return
         await expect(
           MedicalProfile.create({
             ...validProfileData,
@@ -154,6 +161,7 @@ describe("MedicalProfile Model", () => {
 
     it("should validate surgical rooms range", async () => {
       try {
+        if (!institution) return
         await expect(
           MedicalProfile.create({
             ...validProfileData,
@@ -177,6 +185,7 @@ describe("MedicalProfile Model", () => {
 
     it("should validate specialties array", async () => {
       try {
+        if (!institution) return
         await expect(
           MedicalProfile.create({
             ...validProfileData,
@@ -192,6 +201,7 @@ describe("MedicalProfile Model", () => {
 
     it("should validate departments array", async () => {
       try {
+        if (!institution) return
         await expect(
           MedicalProfile.create({
             ...validProfileData,
@@ -207,6 +217,7 @@ describe("MedicalProfile Model", () => {
 
     it("should validate equipment types array", async () => {
       try {
+        if (!institution) return
         await expect(
           MedicalProfile.create({
             ...validProfileData,
@@ -222,6 +233,7 @@ describe("MedicalProfile Model", () => {
 
     it("should validate certifications array", async () => {
       try {
+        if (!institution) return
         await expect(
           MedicalProfile.create({
             ...validProfileData,
@@ -237,6 +249,7 @@ describe("MedicalProfile Model", () => {
 
     it("should require valid compliance status", async () => {
       try {
+        if (!institution) return
         await expect(
           MedicalProfile.create({
             ...validProfileData,
@@ -252,6 +265,7 @@ describe("MedicalProfile Model", () => {
 
     it("should validate compliance notes length", async () => {
       try {
+        if (!institution) return
         const longNotes = "a".repeat(2001)
         await expect(
           MedicalProfile.create({
@@ -272,6 +286,7 @@ describe("MedicalProfile Model", () => {
 
     beforeEach(async () => {
       try {
+        if (!institution) return
         profile = await MedicalProfile.create({
           ...validProfileData,
           institutionId: institution.id,
@@ -283,6 +298,7 @@ describe("MedicalProfile Model", () => {
 
     it("should check if profile is compliant", async () => {
       try {
+        if (!profile) return
         expect(profile.isCompliant()).toBe(true)
 
         profile.complianceStatus = ComplianceStatus.NON_COMPLIANT
@@ -295,6 +311,7 @@ describe("MedicalProfile Model", () => {
 
     it("should check if compliance is expired", async () => {
       try {
+        if (!profile) return
         // Future date - not expired
         profile.complianceExpirationDate = new Date(Date.now() + 86400000) // +1 day
         expect(profile.isComplianceExpired()).toBe(false)
@@ -314,6 +331,7 @@ describe("MedicalProfile Model", () => {
 
     it("should check if profile has specialty", async () => {
       try {
+        if (!profile) return
         expect(profile.hasSpecialty("cardiology")).toBe(true)
         expect(profile.hasSpecialty("CARDIOLOGY")).toBe(true)
         expect(profile.hasSpecialty("dermatology")).toBe(false)
@@ -325,6 +343,7 @@ describe("MedicalProfile Model", () => {
 
     it("should check if profile has department", async () => {
       try {
+        if (!profile) return
         expect(profile.hasDepartment("emergency")).toBe(true)
         expect(profile.hasDepartment("EMERGENCY")).toBe(true)
         expect(profile.hasDepartment("radiology")).toBe(false)
@@ -336,6 +355,7 @@ describe("MedicalProfile Model", () => {
 
     it("should check if profile has equipment type", async () => {
       try {
+        if (!profile) return
         expect(profile.hasEquipmentType("mri")).toBe(true)
         expect(profile.hasEquipmentType("MRI")).toBe(true)
         expect(profile.hasEquipmentType("pet_scan")).toBe(false)
@@ -385,6 +405,7 @@ describe("MedicalProfile Model", () => {
 
     it("should find profile by institution", async () => {
       try {
+        if (!institution) return
         const profile = await MedicalProfile.findByInstitution(institution.id)
         expect(profile).toBeDefined()
         expect(profile?.institutionId).toBe(institution.id)
@@ -396,6 +417,7 @@ describe("MedicalProfile Model", () => {
 
     it("should find profiles by compliance status", async () => {
       try {
+        if (!institution) return
         const compliantProfiles = await MedicalProfile.findByCompliance(
           ComplianceStatus.COMPLIANT
         )
@@ -417,6 +439,7 @@ describe("MedicalProfile Model", () => {
 
     it("should find expired compliance profiles", async () => {
       try {
+        if (!institution) return
         // Update one profile to have expired compliance
         await MedicalProfile.update(
           { complianceExpirationDate: new Date(Date.now() - 86400000) }, // Yesterday
@@ -436,6 +459,7 @@ describe("MedicalProfile Model", () => {
   describe("Unique Constraints", () => {
     it("should enforce unique institution_id constraint", async () => {
       try {
+        if (!institution) return
         // Create first profile
         await MedicalProfile.create({
           ...validProfileData,

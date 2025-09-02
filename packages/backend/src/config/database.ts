@@ -17,14 +17,14 @@ if (config.env === "test") {
     // Add some PostgreSQL functions that might be used
     db.public.registerFunction({
       name: "version",
-      returns: "text",
+      returns: pgMem.DataType.text,
       implementation: () => "PostgreSQL 13.0 (pg-mem)",
     })
 
     // Enable uuid generation
     db.public.registerFunction({
       name: "gen_random_uuid",
-      returns: "uuid",
+      returns: pgMem.DataType.uuid,
       implementation: () => {
         return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function (c) {
           const r = (Math.random() * 16) | 0

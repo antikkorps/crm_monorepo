@@ -1,5 +1,5 @@
 import bcrypt from "bcryptjs"
-import { DataTypes, Model, Optional } from "sequelize"
+import { DataTypes, Model, Optional, Op } from "sequelize"
 import { sequelize } from "../config/database"
 import { AvatarService } from "../services/AvatarService"
 
@@ -151,7 +151,7 @@ export class User
 
   public static async findWithoutTeam(): Promise<User[]> {
     return this.findAll({
-      where: { teamId: null },
+      where: { teamId: { [Op.is]: null } as any },
       attributes: { exclude: ["passwordHash"] },
       order: [
         ["firstName", "ASC"],

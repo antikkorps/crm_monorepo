@@ -20,15 +20,15 @@ process.env.DB_PORT = process.env.DB_PORT || "5432"
 beforeAll(async () => {
   try {
     const { sequelize } = await import("../config/database")
-    
+
     // Import all models to ensure they're registered
     await import("../models")
-    
+
     // Sync database schema once at the start
     await sequelize.sync({ force: true })
-    
+
     console.log("Test database initialized successfully")
   } catch (error) {
-    console.warn("Database initialization warning:", error.message)
+    console.warn("Database initialization warning:", (error as Error).message)
   }
 })
