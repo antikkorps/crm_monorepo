@@ -9,7 +9,7 @@ import {
   validateInstitutionOwnership,
 } from "../middleware/permissions"
 
-const router = new Router()
+const router = new Router({ prefix: "/api/institutions" })
 
 // Apply authentication middleware to all routes
 router.use(authenticate)
@@ -97,6 +97,29 @@ router.post(
   canEditInstitution(),
   validateInstitutionOwnership(),
   MedicalInstitutionController.addContactPerson
+)
+
+// GET /api/institutions/:id/collaboration - Get collaboration data for institution
+router.get(
+  "/:id/collaboration",
+  canViewInstitutionsFiltered(),
+  validateInstitutionOwnership(),
+  MedicalInstitutionController.getCollaborationData
+)
+
+// GET /api/institutions/:id/timeline - Get timeline of all interactions
+router.get(
+  "/:id/timeline",
+  canViewInstitutionsFiltered(),
+  validateInstitutionOwnership(),
+  MedicalInstitutionController.getTimeline
+)
+
+// GET /api/institutions/search/unified - Unified search across institutions, tasks, and collaboration features
+router.get(
+  "/search/unified",
+  canViewInstitutionsFiltered(),
+  MedicalInstitutionController.unifiedSearch
 )
 
 export default router

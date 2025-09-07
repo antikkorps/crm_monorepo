@@ -100,6 +100,45 @@ export const institutionsApi = {
   delete: (id: string) => apiClient.delete(`/institutions/${id}`),
   search: (query: string) =>
     apiClient.get(`/institutions/search?q=${encodeURIComponent(query)}`),
+  // Collaboration endpoints
+  getCollaboration: (id: string) => apiClient.get(`/institutions/${id}/collaboration`),
+  getTimeline: (
+    id: string,
+    params?: { limit?: number; offset?: number; startDate?: string; endDate?: string }
+  ) => {
+    const qp = new URLSearchParams()
+    if (params) {
+      Object.entries(params).forEach(([key, value]) => {
+        if (value !== undefined && value !== null && value !== "") {
+          qp.append(key, String(value))
+        }
+      })
+    }
+    const queryString = qp.toString()
+    return apiClient.get(`/institutions/${id}/timeline${queryString ? `?${queryString}` : ""}`)
+  },
+  unifiedSearch: (params: {
+    q: string
+    type?: "institutions" | "tasks" | "notes" | "meetings" | "calls" | "reminders" | "all"
+    institutionId?: string
+    limit?: number
+    offset?: number
+    startDate?: string
+    endDate?: string
+    scope?: "own" | "team" | "all"
+  }) => {
+    const qp = new URLSearchParams()
+    qp.append("q", params.q)
+    if (params.type) qp.append("type", params.type)
+    if (params.institutionId) qp.append("institutionId", params.institutionId)
+    if (params.limit !== undefined) qp.append("limit", String(params.limit))
+    if (params.offset !== undefined) qp.append("offset", String(params.offset))
+    if (params.startDate) qp.append("startDate", params.startDate)
+    if (params.endDate) qp.append("endDate", params.endDate)
+    if (params.scope) qp.append("scope", params.scope)
+    const queryString = qp.toString()
+    return apiClient.get(`/institutions/search/unified?${queryString}`)
+  },
   importCsv: (file: File) => {
     const formData = new FormData()
     formData.append("file", file)

@@ -66,6 +66,50 @@ interface RolePermissions {
   canManageWebhooks: boolean
   canViewWebhookLogs: boolean
   canManageIntegrations: boolean
+
+  // Collaboration Features - Notes
+  canCreateNotes: boolean
+  canEditAllNotes: boolean
+  canEditOwnNotes: boolean
+  canEditSharedNotes: boolean
+  canDeleteNotes: boolean
+  canShareNotes: boolean
+  canViewAllNotes: boolean
+  canViewOwnNotes: boolean
+  canViewSharedNotes: boolean
+
+  // Collaboration Features - Meetings
+  canCreateMeetings: boolean
+  canEditAllMeetings: boolean
+  canEditOwnMeetings: boolean
+  canDeleteMeetings: boolean
+  canInviteParticipants: boolean
+  canViewAllMeetings: boolean
+  canViewOwnMeetings: boolean
+  canViewInvitedMeetings: boolean
+
+  // Collaboration Features - Comments
+  canCreateComments: boolean
+  canEditAllComments: boolean
+  canEditOwnComments: boolean
+  canDeleteComments: boolean
+  canViewComments: boolean
+
+  // Collaboration Features - Calls
+  canCreateCalls: boolean
+  canEditAllCalls: boolean
+  canEditOwnCalls: boolean
+  canDeleteCalls: boolean
+  canViewAllCalls: boolean
+  canViewOwnCalls: boolean
+
+  // Collaboration Features - Reminders
+  canCreateReminders: boolean
+  canEditAllReminders: boolean
+  canEditOwnReminders: boolean
+  canDeleteReminders: boolean
+  canViewAllReminders: boolean
+  canViewOwnReminders: boolean
 }
 
 /**
@@ -133,6 +177,50 @@ export const ROLE_PERMISSIONS: Record<UserRole, RolePermissions> = {
     canManageWebhooks: true,
     canViewWebhookLogs: true,
     canManageIntegrations: true,
+
+    // Collaboration Features - Notes - Full Access
+    canCreateNotes: true,
+    canEditAllNotes: true,
+    canEditOwnNotes: true,
+    canEditSharedNotes: true,
+    canDeleteNotes: true,
+    canShareNotes: true,
+    canViewAllNotes: true,
+    canViewOwnNotes: true,
+    canViewSharedNotes: true,
+
+    // Collaboration Features - Meetings - Full Access
+    canCreateMeetings: true,
+    canEditAllMeetings: true,
+    canEditOwnMeetings: true,
+    canDeleteMeetings: true,
+    canInviteParticipants: true,
+    canViewAllMeetings: true,
+    canViewOwnMeetings: true,
+    canViewInvitedMeetings: true,
+
+    // Collaboration Features - Comments - Full Access
+    canCreateComments: true,
+    canEditAllComments: true,
+    canEditOwnComments: true,
+    canDeleteComments: true,
+    canViewComments: true,
+
+    // Collaboration Features - Calls - Full Access
+    canCreateCalls: true,
+    canEditAllCalls: true,
+    canEditOwnCalls: true,
+    canDeleteCalls: true,
+    canViewAllCalls: true,
+    canViewOwnCalls: true,
+
+    // Collaboration Features - Reminders - Full Access
+    canCreateReminders: true,
+    canEditAllReminders: true,
+    canEditOwnReminders: true,
+    canDeleteReminders: true,
+    canViewAllReminders: true,
+    canViewOwnReminders: true,
   },
 
   [UserRole.TEAM_ADMIN]: {
@@ -196,6 +284,50 @@ export const ROLE_PERMISSIONS: Record<UserRole, RolePermissions> = {
     canManageWebhooks: true,
     canViewWebhookLogs: true,
     canManageIntegrations: false,
+
+    // Collaboration Features - Notes - Full Team Access
+    canCreateNotes: true,
+    canEditAllNotes: true,
+    canEditOwnNotes: true,
+    canEditSharedNotes: true,
+    canDeleteNotes: true,
+    canShareNotes: true,
+    canViewAllNotes: true,
+    canViewOwnNotes: true,
+    canViewSharedNotes: true,
+
+    // Collaboration Features - Meetings - Full Team Access
+    canCreateMeetings: true,
+    canEditAllMeetings: true,
+    canEditOwnMeetings: true,
+    canDeleteMeetings: true,
+    canInviteParticipants: true,
+    canViewAllMeetings: true,
+    canViewOwnMeetings: true,
+    canViewInvitedMeetings: true,
+
+    // Collaboration Features - Comments - Full Team Access
+    canCreateComments: true,
+    canEditAllComments: true,
+    canEditOwnComments: true,
+    canDeleteComments: true,
+    canViewComments: true,
+
+    // Collaboration Features - Calls - Full Team Access
+    canCreateCalls: true,
+    canEditAllCalls: true,
+    canEditOwnCalls: true,
+    canDeleteCalls: true,
+    canViewAllCalls: true,
+    canViewOwnCalls: true,
+
+    // Collaboration Features - Reminders - Full Team Access
+    canCreateReminders: true,
+    canEditAllReminders: true,
+    canEditOwnReminders: true,
+    canDeleteReminders: true,
+    canViewAllReminders: true,
+    canViewOwnReminders: true,
   },
 
   [UserRole.USER]: {
@@ -259,6 +391,50 @@ export const ROLE_PERMISSIONS: Record<UserRole, RolePermissions> = {
     canManageWebhooks: false,
     canViewWebhookLogs: false,
     canManageIntegrations: false,
+
+    // Collaboration Features - Notes - Basic Access
+    canCreateNotes: true,
+    canEditAllNotes: false,
+    canEditOwnNotes: true,
+    canEditSharedNotes: true,
+    canDeleteNotes: false,
+    canShareNotes: false,
+    canViewAllNotes: false,
+    canViewOwnNotes: true,
+    canViewSharedNotes: true,
+
+    // Collaboration Features - Meetings - Basic Access
+    canCreateMeetings: true,
+    canEditAllMeetings: false,
+    canEditOwnMeetings: true,
+    canDeleteMeetings: false,
+    canInviteParticipants: false,
+    canViewAllMeetings: false,
+    canViewOwnMeetings: true,
+    canViewInvitedMeetings: true,
+
+    // Collaboration Features - Comments - Basic Access
+    canCreateComments: true,
+    canEditAllComments: false,
+    canEditOwnComments: true,
+    canDeleteComments: false,
+    canViewComments: true,
+
+    // Collaboration Features - Calls - Basic Access
+    canCreateCalls: true,
+    canEditAllCalls: false,
+    canEditOwnCalls: true,
+    canDeleteCalls: false,
+    canViewAllCalls: false,
+    canViewOwnCalls: true,
+
+    // Collaboration Features - Reminders - Basic Access
+    canCreateReminders: true,
+    canEditAllReminders: false,
+    canEditOwnReminders: true,
+    canDeleteReminders: false,
+    canViewAllReminders: false,
+    canViewOwnReminders: true,
   },
 
   [UserRole.ADMIN]: {
@@ -324,6 +500,50 @@ export const ROLE_PERMISSIONS: Record<UserRole, RolePermissions> = {
     canManageWebhooks: false,
     canViewWebhookLogs: true,
     canManageIntegrations: false,
+
+    // Collaboration Features - Notes - Full Access
+    canCreateNotes: true,
+    canEditAllNotes: true,
+    canEditOwnNotes: true,
+    canEditSharedNotes: true,
+    canDeleteNotes: true,
+    canShareNotes: true,
+    canViewAllNotes: true,
+    canViewOwnNotes: true,
+    canViewSharedNotes: true,
+
+    // Collaboration Features - Meetings - Full Access
+    canCreateMeetings: true,
+    canEditAllMeetings: true,
+    canEditOwnMeetings: true,
+    canDeleteMeetings: true,
+    canInviteParticipants: true,
+    canViewAllMeetings: true,
+    canViewOwnMeetings: true,
+    canViewInvitedMeetings: true,
+
+    // Collaboration Features - Comments - Full Access
+    canCreateComments: true,
+    canEditAllComments: true,
+    canEditOwnComments: true,
+    canDeleteComments: true,
+    canViewComments: true,
+
+    // Collaboration Features - Calls - Full Access
+    canCreateCalls: true,
+    canEditAllCalls: true,
+    canEditOwnCalls: true,
+    canDeleteCalls: true,
+    canViewAllCalls: true,
+    canViewOwnCalls: true,
+
+    // Collaboration Features - Reminders - Full Access
+    canCreateReminders: true,
+    canEditAllReminders: true,
+    canEditOwnReminders: true,
+    canDeleteReminders: true,
+    canViewAllReminders: true,
+    canViewOwnReminders: true,
   },
 
   [UserRole.MANAGER]: {
@@ -389,6 +609,50 @@ export const ROLE_PERMISSIONS: Record<UserRole, RolePermissions> = {
     canManageWebhooks: false,
     canViewWebhookLogs: false,
     canManageIntegrations: false,
+
+    // Collaboration Features - Notes - Limited Access
+    canCreateNotes: true,
+    canEditAllNotes: false,
+    canEditOwnNotes: true,
+    canEditSharedNotes: true,
+    canDeleteNotes: false,
+    canShareNotes: true,
+    canViewAllNotes: true,
+    canViewOwnNotes: true,
+    canViewSharedNotes: true,
+
+    // Collaboration Features - Meetings - Limited Access
+    canCreateMeetings: true,
+    canEditAllMeetings: false,
+    canEditOwnMeetings: true,
+    canDeleteMeetings: false,
+    canInviteParticipants: true,
+    canViewAllMeetings: true,
+    canViewOwnMeetings: true,
+    canViewInvitedMeetings: true,
+
+    // Collaboration Features - Comments - Limited Access
+    canCreateComments: true,
+    canEditAllComments: false,
+    canEditOwnComments: true,
+    canDeleteComments: false,
+    canViewComments: true,
+
+    // Collaboration Features - Calls - Limited Access
+    canCreateCalls: true,
+    canEditAllCalls: false,
+    canEditOwnCalls: true,
+    canDeleteCalls: false,
+    canViewAllCalls: true,
+    canViewOwnCalls: true,
+
+    // Collaboration Features - Reminders - Limited Access
+    canCreateReminders: true,
+    canEditAllReminders: false,
+    canEditOwnReminders: true,
+    canDeleteReminders: false,
+    canViewAllReminders: true,
+    canViewOwnReminders: true,
   },
 }
 
@@ -794,3 +1058,33 @@ export function addPermissionsToContext() {
     await next()
   }
 }
+
+/**
+ * Convenience middleware functions for collaboration permissions
+ */
+export const canCreateNotes = () => requirePermission("canCreateNotes")
+export const canEditNotes = () => requirePermission("canEditOwnNotes")
+export const canDeleteNotes = () => requirePermission("canDeleteNotes")
+export const canShareNotes = () => requirePermission("canShareNotes")
+export const canViewNotes = () => requirePermission("canViewOwnNotes")
+
+export const canCreateMeetings = () => requirePermission("canCreateMeetings")
+export const canEditMeetings = () => requirePermission("canEditOwnMeetings")
+export const canDeleteMeetings = () => requirePermission("canDeleteMeetings")
+export const canInviteToMeetings = () => requirePermission("canInviteParticipants")
+export const canViewMeetings = () => requirePermission("canViewOwnMeetings")
+
+export const canCreateComments = () => requirePermission("canCreateComments")
+export const canEditComments = () => requirePermission("canEditOwnComments")
+export const canDeleteComments = () => requirePermission("canDeleteComments")
+export const canViewComments = () => requirePermission("canViewComments")
+
+export const canCreateCalls = () => requirePermission("canCreateCalls")
+export const canEditCalls = () => requirePermission("canEditOwnCalls")
+export const canDeleteCalls = () => requirePermission("canDeleteCalls")
+export const canViewCalls = () => requirePermission("canViewOwnCalls")
+
+export const canCreateReminders = () => requirePermission("canCreateReminders")
+export const canEditReminders = () => requirePermission("canEditOwnReminders")
+export const canDeleteReminders = () => requirePermission("canDeleteReminders")
+export const canViewReminders = () => requirePermission("canViewOwnReminders")

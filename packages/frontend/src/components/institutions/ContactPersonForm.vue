@@ -4,97 +4,62 @@
       <div class="formgrid grid">
         <!-- First Name -->
         <div class="field col-12 md:col-6">
-          <label for="firstName" class="block text-900 font-medium mb-2">
-            First Name *
-          </label>
-          <InputText
-            id="firstName"
+          <v-text-field
             v-model="form.firstName"
-            class="w-full"
-            :class="{ 'p-invalid': errors.firstName }"
-            placeholder="Enter first name"
+            label="First Name *"
+            :error-messages="errors.firstName ? [errors.firstName] : []"
           />
-          <small v-if="errors.firstName" class="p-error">{{ errors.firstName }}</small>
         </div>
 
         <!-- Last Name -->
         <div class="field col-12 md:col-6">
-          <label for="lastName" class="block text-900 font-medium mb-2">
-            Last Name *
-          </label>
-          <InputText
-            id="lastName"
+          <v-text-field
             v-model="form.lastName"
-            class="w-full"
-            :class="{ 'p-invalid': errors.lastName }"
-            placeholder="Enter last name"
+            label="Last Name *"
+            :error-messages="errors.lastName ? [errors.lastName] : []"
           />
-          <small v-if="errors.lastName" class="p-error">{{ errors.lastName }}</small>
         </div>
 
         <!-- Email -->
         <div class="field col-12">
-          <label for="email" class="block text-900 font-medium mb-2">Email *</label>
-          <InputText
-            id="email"
+          <v-text-field
             v-model="form.email"
             type="email"
-            class="w-full"
-            :class="{ 'p-invalid': errors.email }"
-            placeholder="Enter email address"
+            label="Email *"
+            :error-messages="errors.email ? [errors.email] : []"
           />
-          <small v-if="errors.email" class="p-error">{{ errors.email }}</small>
         </div>
 
         <!-- Phone -->
         <div class="field col-12 md:col-6">
-          <label for="phone" class="block text-900 font-medium mb-2">Phone</label>
-          <InputText
-            id="phone"
+          <v-text-field
             v-model="form.phone"
-            class="w-full"
-            :class="{ 'p-invalid': errors.phone }"
-            placeholder="Enter phone number"
+            label="Phone"
+            :error-messages="errors.phone ? [errors.phone] : []"
           />
-          <small v-if="errors.phone" class="p-error">{{ errors.phone }}</small>
         </div>
 
         <!-- Title -->
         <div class="field col-12 md:col-6">
-          <label for="title" class="block text-900 font-medium mb-2">Title</label>
-          <InputText
-            id="title"
+          <v-text-field
             v-model="form.title"
-            class="w-full"
-            :class="{ 'p-invalid': errors.title }"
-            placeholder="Enter job title"
+            label="Title"
+            :error-messages="errors.title ? [errors.title] : []"
           />
-          <small v-if="errors.title" class="p-error">{{ errors.title }}</small>
         </div>
 
         <!-- Department -->
         <div class="field col-12">
-          <label for="department" class="block text-900 font-medium mb-2"
-            >Department</label
-          >
-          <InputText
-            id="department"
+          <v-text-field
             v-model="form.department"
-            class="w-full"
-            :class="{ 'p-invalid': errors.department }"
-            placeholder="Enter department"
+            label="Department"
+            :error-messages="errors.department ? [errors.department] : []"
           />
-          <small v-if="errors.department" class="p-error">{{ errors.department }}</small>
         </div>
 
         <!-- Primary Contact -->
         <div class="field col-12">
-          <div class="flex align-items-center">
-            <Checkbox id="isPrimary" v-model="form.isPrimary" :binary="true" />
-            <label for="isPrimary" class="ml-2 text-900 font-medium">
-              Set as primary contact
-            </label>
-          </div>
+          <v-checkbox v-model="form.isPrimary" label="Set as primary contact" />
           <small class="text-600">
             Primary contacts are displayed first and used for main communications
           </small>
@@ -103,20 +68,10 @@
 
       <!-- Form Actions -->
       <div class="flex justify-content-end gap-2 mt-4">
-        <Button
-          label="Cancel"
-          icon="pi pi-times"
-          severity="secondary"
-          outlined
-          @click="$emit('cancel')"
-          type="button"
-        />
-        <Button
-          :label="isEditing ? 'Update Contact' : 'Add Contact'"
-          :icon="isEditing ? 'pi pi-check' : 'pi pi-plus'"
-          :loading="saving"
-          type="submit"
-        />
+        <v-btn variant="outlined" color="secondary" prepend-icon="mdi-close" @click="$emit('cancel')" type="button">Cancel</v-btn>
+        <v-btn :loading="saving" color="primary" :prepend-icon="isEditing ? 'mdi-check' : 'mdi-plus'" type="submit">
+          {{ isEditing ? 'Update Contact' : 'Add Contact' }}
+        </v-btn>
       </div>
     </form>
   </div>
@@ -124,10 +79,6 @@
 
 <script setup lang="ts">
 import type { ContactPerson } from "@medical-crm/shared"
-import Button from "primevue/button"
-import Checkbox from "primevue/checkbox"
-import InputText from "primevue/inputtext"
-import { useToast } from "primevue/usetoast"
 import { computed, reactive, ref, watch } from "vue"
 
 interface Props {
@@ -142,7 +93,7 @@ interface Emits {
 
 const props = defineProps<Props>()
 const emit = defineEmits<Emits>()
-const toast = useToast()
+// Notifications handled by parent (Vuetify snackbar)
 
 const saving = ref(false)
 const isEditing = computed(() => !!props.contact)
@@ -187,7 +138,7 @@ watch(
   { immediate: true }
 )
 
-const resetForm = () => {
+function resetForm() {
   form.firstName = ""
   form.lastName = ""
   form.email = ""
@@ -198,7 +149,7 @@ const resetForm = () => {
   clearErrors()
 }
 
-const clearErrors = () => {
+function clearErrors() {
   Object.keys(errors).forEach((key) => {
     errors[key as keyof typeof errors] = ""
   })
@@ -288,24 +239,13 @@ const handleSubmit = async () => {
 
     emit("contact-saved", savedContact)
 
-    toast.add({
-      severity: "success",
-      summary: "Success",
-      detail: `Contact ${isEditing.value ? "updated" : "added"} successfully`,
-      life: 3000,
-    })
+    // Parent can display snackbar
 
     if (!isEditing.value) {
       resetForm()
     }
   } catch (error) {
     console.error("Error saving contact:", error)
-    toast.add({
-      severity: "error",
-      summary: "Error",
-      detail: `Failed to ${isEditing.value ? "update" : "add"} contact`,
-      life: 3000,
-    })
   } finally {
     saving.value = false
   }

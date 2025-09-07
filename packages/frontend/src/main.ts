@@ -12,7 +12,9 @@ import "vuetify/styles"
 import i18n from "./i18n"
 
 import App from "./App.vue"
+import Card from "./components/base/Card.vue"
 import router from "./router"
+// PrimeVue services for backward compatibility
 
 const app = createApp(App)
 const pinia = createPinia()
@@ -70,5 +72,10 @@ app.use(router)
 
 // Add i18n
 app.use(i18n)
+
+// No PrimeVue: we rely solely on Vuetify now
+
+// Register lightweight compatibility components
+app.component("Card", Card)
 
 app.mount("#app")

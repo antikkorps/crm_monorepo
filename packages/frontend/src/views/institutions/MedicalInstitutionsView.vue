@@ -10,33 +10,31 @@
           </p>
         </div>
         <div class="page-actions">
-          <Button
-            label="Import CSV"
-            icon="pi pi-upload"
-            outlined
+          <v-btn
+            variant="outlined"
+            prepend-icon="mdi-upload"
             class="mr-2"
             @click="showImportDialog = true"
-          />
-          <Button
-            label="Add Institution"
-            icon="pi pi-plus"
-            @click="showCreateDialog = true"
-          />
+            >Import CSV</v-btn
+          >
+          <v-btn color="primary" prepend-icon="mdi-plus" @click="showCreateDialog = true"
+            >Add Institution</v-btn
+          >
         </div>
       </div>
 
       <!-- Search and Filter Section -->
-      <Card class="mb-4">
-        <template #content>
+      <v-card class="mb-4">
+        <v-card-text>
           <div class="search-filters">
             <!-- Quick Search -->
             <div class="field col-12 md:col-4">
               <label for="search" class="block text-900 font-medium mb-2">Search</label>
-              <InputText
+              <v-text-field
                 id="search"
                 v-model="searchQuery"
-                placeholder="Search institutions..."
-                class="w-full"
+                label="Search institutions"
+                density="comfortable"
                 @input="onSearchInput"
               />
             </div>
@@ -44,27 +42,25 @@
             <!-- Institution Type Filter -->
             <div class="field col-12 md:col-3">
               <label for="type" class="block text-900 font-medium mb-2">Type</label>
-              <Dropdown
-                id="type"
+              <v-select
                 v-model="filters.type"
-                :options="institutionTypeOptions"
-                option-label="label"
-                option-value="value"
-                placeholder="All Types"
-                class="w-full"
-                show-clear
-                @change="applyFilters"
+                :items="institutionTypeOptions"
+                item-title="label"
+                item-value="value"
+                label="Type"
+                clearable
+                @update:model-value="applyFilters"
               />
             </div>
 
             <!-- Location Filter -->
             <div class="field col-12 md:col-3">
               <label for="city" class="block text-900 font-medium mb-2">City</label>
-              <InputText
+              <v-text-field
                 id="city"
                 v-model="filters.city"
-                placeholder="Filter by city"
-                class="w-full"
+                label="City"
+                density="comfortable"
                 @input="onFilterInput"
               />
             </div>
@@ -74,31 +70,32 @@
               <label for="assigned" class="block text-900 font-medium mb-2"
                 >Assigned To</label
               >
-              <Dropdown
-                id="assigned"
+              <v-select
                 v-model="filters.assignedUserId"
-                :options="userOptions"
-                option-label="label"
-                option-value="value"
-                placeholder="All Users"
-                class="w-full"
-                show-clear
-                @change="applyFilters"
+                :items="userOptions"
+                item-title="label"
+                item-value="value"
+                label="Assigned To"
+                clearable
+                @update:model-value="applyFilters"
               />
             </div>
           </div>
 
           <!-- Advanced Filters Toggle -->
           <div class="advanced-filters-toggle">
-            <Button
-              :label="
-                showAdvancedFilters ? 'Hide Advanced Filters' : 'Show Advanced Filters'
-              "
-              :icon="showAdvancedFilters ? 'pi pi-chevron-up' : 'pi pi-chevron-down'"
-              text
+            <v-btn
+              variant="text"
               size="small"
               @click="showAdvancedFilters = !showAdvancedFilters"
-            />
+            >
+              <v-icon class="mr-1">{{
+                showAdvancedFilters ? "mdi-chevron-up" : "mdi-chevron-down"
+              }}</v-icon>
+              {{
+                showAdvancedFilters ? "Hide Advanced Filters" : "Show Advanced Filters"
+              }}
+            </v-btn>
           </div>
 
           <!-- Advanced Filters -->
@@ -111,16 +108,18 @@
               <div class="field col-12 md:col-3">
                 <label class="block text-900 font-medium mb-2">Bed Capacity</label>
                 <div class="flex gap-2">
-                  <InputNumber
-                    v-model="filters.minBedCapacity"
-                    placeholder="Min"
-                    class="w-full"
+                  <v-text-field
+                    v-model.number="filters.minBedCapacity"
+                    type="number"
+                    label="Min"
+                    density="comfortable"
                     @input="onFilterInput"
                   />
-                  <InputNumber
-                    v-model="filters.maxBedCapacity"
-                    placeholder="Max"
-                    class="w-full"
+                  <v-text-field
+                    v-model.number="filters.maxBedCapacity"
+                    type="number"
+                    label="Max"
+                    density="comfortable"
                     @input="onFilterInput"
                   />
                 </div>
@@ -130,16 +129,18 @@
               <div class="field col-12 md:col-3">
                 <label class="block text-900 font-medium mb-2">Surgical Rooms</label>
                 <div class="flex gap-2">
-                  <InputNumber
-                    v-model="filters.minSurgicalRooms"
-                    placeholder="Min"
-                    class="w-full"
+                  <v-text-field
+                    v-model.number="filters.minSurgicalRooms"
+                    type="number"
+                    label="Min"
+                    density="comfortable"
                     @input="onFilterInput"
                   />
-                  <InputNumber
-                    v-model="filters.maxSurgicalRooms"
-                    placeholder="Max"
-                    class="w-full"
+                  <v-text-field
+                    v-model.number="filters.maxSurgicalRooms"
+                    type="number"
+                    label="Max"
+                    density="comfortable"
                     @input="onFilterInput"
                   />
                 </div>
@@ -148,318 +149,267 @@
               <!-- Specialties Filter -->
               <div class="field col-12 md:col-3">
                 <label class="block text-900 font-medium mb-2">Specialties</label>
-                <MultiSelect
+                <v-select
                   v-model="filters.specialties"
-                  :options="specialtyOptions"
-                  option-label="label"
-                  option-value="value"
-                  placeholder="Select specialties"
-                  class="w-full"
-                  @change="applyFilters"
+                  :items="specialtyOptions"
+                  item-title="label"
+                  item-value="value"
+                  label="Specialties"
+                  multiple
+                  chips
+                  clearable
+                  @update:model-value="applyFilters"
                 />
               </div>
 
               <!-- Compliance Status Filter -->
               <div class="field col-12 md:col-3">
                 <label class="block text-900 font-medium mb-2">Compliance Status</label>
-                <Dropdown
+                <v-select
                   v-model="filters.complianceStatus"
-                  :options="complianceStatusOptions"
-                  option-label="label"
-                  option-value="value"
-                  placeholder="All Statuses"
-                  class="w-full"
-                  show-clear
-                  @change="applyFilters"
+                  :items="complianceStatusOptions"
+                  item-title="label"
+                  item-value="value"
+                  label="Compliance Status"
+                  clearable
+                  @update:model-value="applyFilters"
                 />
               </div>
             </div>
 
             <!-- Filter Actions -->
             <div class="flex justify-content-end gap-2 mt-3">
-              <Button
-                label="Clear Filters"
-                icon="pi pi-times"
-                outlined
+              <v-btn
+                variant="outlined"
                 size="small"
+                prepend-icon="mdi-close"
                 @click="clearFilters"
-              />
-              <Button
-                label="Apply Filters"
-                icon="pi pi-check"
+                >Clear Filters</v-btn
+              >
+              <v-btn
                 size="small"
+                prepend-icon="mdi-check"
+                color="primary"
                 @click="applyFilters"
-              />
+                >Apply Filters</v-btn
+              >
             </div>
           </div>
-        </template>
-      </Card>
+        </v-card-text>
+      </v-card>
 
       <!-- Data Table -->
-      <Card>
-        <template #content>
-          <DataTable
-            v-model:selection="selectedInstitutions"
-            :value="institutions"
+      <v-card>
+        <v-card-text>
+          <v-data-table
+            :items="institutions"
             :loading="loading"
-            :paginator="true"
-            :rows="20"
-            :total-records="totalRecords"
-            :lazy="true"
-            paginator-template="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
-            :rows-per-page-options="[10, 20, 50]"
-            current-page-report-template="Showing {first} to {last} of {totalRecords} institutions"
-            selection-mode="multiple"
-            data-key="id"
-            @page="onPage"
-            @sort="onSort"
+            :items-per-page="lazyParams.rows"
+            :page="Math.floor(lazyParams.first / lazyParams.rows) + 1"
+            :headers="tableHeaders"
+            :items-length="totalRecords"
+            item-key="id"
+            @update:page="
+              (p) => {
+                lazyParams.first = (p - 1) * lazyParams.rows
+                loadInstitutions()
+              }
+            "
           >
-            <template #header>
-              <div class="flex justify-content-between align-items-center">
+            <template #top>
+              <div class="d-flex justify-between align-center mb-2">
                 <h3 class="m-0">Institutions ({{ totalRecords }})</h3>
-                <div class="flex gap-2">
-                  <Button
-                    icon="pi pi-refresh"
-                    outlined
+                <div class="d-flex gap-2">
+                  <v-btn
+                    variant="outlined"
                     size="small"
-                    @click="refreshData"
+                    prepend-icon="mdi-refresh"
                     :loading="loading"
-                  />
-                  <Button
-                    icon="pi pi-download"
-                    outlined
+                    @click="refreshData"
+                    >Refresh</v-btn
+                  >
+                  <v-btn
+                    variant="outlined"
                     size="small"
+                    prepend-icon="mdi-download"
                     @click="exportData"
-                  />
-                </div>
-              </div>
-            </template>
-
-            <template #empty>
-              <div class="text-center py-6">
-                <i class="pi pi-building text-4xl text-400 mb-3"></i>
-                <p class="text-600 text-lg">No medical institutions found</p>
-                <p class="text-500">
-                  Try adjusting your search criteria or add a new institution
-                </p>
-              </div>
-            </template>
-
-            <template #loading>
-              <div class="text-center py-6">
-                <ProgressSpinner />
-                <p class="text-600 mt-3">Loading institutions...</p>
-              </div>
-            </template>
-
-            <!-- Institution Name Column -->
-            <Column field="name" header="Institution" sortable style="min-width: 12rem">
-              <template #body="{ data }">
-                <div class="flex align-items-center">
-                  <div class="institution-avatar mr-3">
-                    <Avatar
-                      :label="data.name.charAt(0).toUpperCase()"
-                      shape="circle"
-                      size="normal"
-                      :style="{ backgroundColor: getInstitutionColor(data.type) }"
-                    />
-                  </div>
-                  <div>
-                    <div class="font-semibold text-900">{{ data.name }}</div>
-                    <div class="text-600 text-sm">
-                      {{ formatInstitutionType(data.type) }}
-                    </div>
-                  </div>
-                </div>
-              </template>
-            </Column>
-
-            <!-- Location Column -->
-            <Column
-              field="address.city"
-              header="Location"
-              sortable
-              style="min-width: 10rem"
-            >
-              <template #body="{ data }">
-                <div>
-                  <div class="font-medium">
-                    {{ data.address.city }}, {{ data.address.state }}
-                  </div>
-                  <div class="text-600 text-sm">{{ data.address.country }}</div>
-                </div>
-              </template>
-            </Column>
-
-            <!-- Medical Profile Column -->
-            <Column header="Medical Profile" style="min-width: 12rem">
-              <template #body="{ data }">
-                <div class="medical-profile-summary">
-                  <div class="flex gap-3 mb-2">
-                    <div
-                      v-if="data.medicalProfile.bedCapacity"
-                      class="flex align-items-center"
-                    >
-                      <i class="pi pi-home text-600 mr-1"></i>
-                      <span class="text-sm"
-                        >{{ data.medicalProfile.bedCapacity }} beds</span
-                      >
-                    </div>
-                    <div
-                      v-if="data.medicalProfile.surgicalRooms"
-                      class="flex align-items-center"
-                    >
-                      <i class="pi pi-cog text-600 mr-1"></i>
-                      <span class="text-sm"
-                        >{{ data.medicalProfile.surgicalRooms }} OR</span
-                      >
-                    </div>
-                  </div>
-                  <div class="specialties-tags">
-                    <Tag
-                      v-for="specialty in data.medicalProfile.specialties.slice(0, 2)"
-                      :key="specialty"
-                      :value="specialty"
-                      severity="info"
-                      class="mr-1 mb-1"
-                    />
-                    <Tag
-                      v-if="data.medicalProfile.specialties.length > 2"
-                      :value="`+${data.medicalProfile.specialties.length - 2} more`"
-                      severity="secondary"
-                      class="mr-1 mb-1"
-                    />
-                  </div>
-                </div>
-              </template>
-            </Column>
-
-            <!-- Compliance Status Column -->
-            <Column
-              field="medicalProfile.complianceStatus"
-              header="Compliance"
-              sortable
-              style="min-width: 8rem"
-            >
-              <template #body="{ data }">
-                <Tag
-                  :value="formatComplianceStatus(data.medicalProfile.complianceStatus)"
-                  :severity="getComplianceSeverity(data.medicalProfile.complianceStatus)"
-                />
-              </template>
-            </Column>
-
-            <!-- Assigned User Column -->
-            <Column
-              field="assignedUserId"
-              header="Assigned To"
-              sortable
-              style="min-width: 8rem"
-            >
-              <template #body="{ data }">
-                <div v-if="data.assignedUser" class="flex align-items-center">
-                  <Avatar
-                    :image="data.assignedUser.avatar"
-                    shape="circle"
-                    size="small"
-                    class="mr-2"
-                  />
-                  <span class="text-sm"
-                    >{{ data.assignedUser.firstName }}
-                    {{ data.assignedUser.lastName }}</span
+                    >Export</v-btn
                   >
                 </div>
-                <span v-else class="text-500 text-sm">Unassigned</span>
-              </template>
-            </Column>
+              </div>
+            </template>
 
-            <!-- Actions Column -->
-            <Column header="Actions" style="min-width: 8rem">
-              <template #body="{ data }">
-                <div class="flex gap-1">
-                  <Button
-                    icon="pi pi-eye"
-                    severity="secondary"
-                    text
-                    rounded
-                    size="small"
-                    @click="viewInstitution(data)"
-                    v-tooltip="'View Details'"
-                  />
-                  <Button
-                    icon="pi pi-pencil"
-                    severity="secondary"
-                    text
-                    rounded
-                    size="small"
-                    @click="editInstitution(data)"
-                    v-tooltip="'Edit'"
-                  />
-                  <Button
-                    icon="pi pi-trash"
-                    severity="danger"
-                    text
-                    rounded
-                    size="small"
-                    @click="confirmDelete(data)"
-                    v-tooltip="'Delete'"
-                  />
+            <template #no-data>
+              <div class="text-center py-6">
+                <v-icon size="36" class="mb-2">mdi-domain</v-icon>
+                <div class="text-subtitle-1">No medical institutions found</div>
+                <div class="text-caption">
+                  Try adjusting your search or add a new institution
                 </div>
-              </template>
-            </Column>
-          </DataTable>
-        </template>
-      </Card>
+              </div>
+            </template>
 
-      <!-- Create Institution Dialog -->
-      <Dialog
-        v-model:visible="showCreateDialog"
-        header="Add New Medical Institution"
-        :modal="true"
-        :closable="true"
-        :style="{ width: '70vw' }"
-        class="p-fluid"
-      >
-        <MedicalInstitutionForm
-          @institution-saved="onInstitutionCreated"
-          @cancel="showCreateDialog = false"
-        />
-      </Dialog>
+            <template #item.name="{ item }">
+              <div class="d-flex align-center">
+                <v-avatar size="28" class="mr-2" :color="getInstitutionColor(item.type)">
+                  <span class="white--text">{{ item.name.charAt(0).toUpperCase() }}</span>
+                </v-avatar>
+                <div>
+                  <div class="font-semibold">{{ item.name }}</div>
+                  <div class="text-caption">{{ formatInstitutionType(item.type) }}</div>
+                </div>
+              </div>
+            </template>
 
-      <!-- Import CSV Dialog -->
-      <Dialog
-        v-model:visible="showImportDialog"
-        header="Import Medical Institutions"
-        :modal="true"
-        :closable="true"
-        :style="{ width: '40vw' }"
-        class="p-fluid"
-      >
-        <p class="text-600 mb-4">Import medical institutions from a CSV file</p>
-        <!-- Import interface will be implemented in subtask 9.3 -->
-        <div class="text-center py-4">
-          <i class="pi pi-upload text-4xl text-400 mb-3"></i>
-          <p class="text-600">CSV import interface coming soon...</p>
-        </div>
-        <template #footer>
-          <Button
-            label="Cancel"
-            icon="pi pi-times"
-            text
-            @click="showImportDialog = false"
-          />
-          <Button label="Import" icon="pi pi-upload" @click="showImportDialog = false" />
-        </template>
-      </Dialog>
+            <template #item.location="{ item }">
+              <div>
+                <div class="font-medium">
+                  {{ item.address.city }}, {{ item.address.state }}
+                </div>
+                <div class="text-caption">{{ item.address.country }}</div>
+              </div>
+            </template>
 
-      <!-- Delete Confirmation Dialog -->
-      <ConfirmDialog />
+            <template #item.profile="{ item }">
+              <div v-if="item.medicalProfile" class="d-flex flex-column">
+                <div class="d-flex gap-4 mb-1">
+                  <div
+                    v-if="item.medicalProfile?.bedCapacity"
+                    class="d-flex align-center"
+                  >
+                    <v-icon size="16" class="mr-1">mdi-hospital</v-icon>
+                    <span class="text-caption"
+                      >{{ item.medicalProfile?.bedCapacity }} beds</span
+                    >
+                  </div>
+                  <div
+                    v-if="item.medicalProfile?.surgicalRooms"
+                    class="d-flex align-center"
+                  >
+                    <v-icon size="16" class="mr-1">mdi-hammer-wrench</v-icon>
+                    <span class="text-caption"
+                      >{{ item.medicalProfile?.surgicalRooms }} OR</span
+                    >
+                  </div>
+                </div>
+                <div>
+                  <v-chip
+                    v-for="sp in (item.medicalProfile?.specialties || []).slice(0, 2)"
+                    :key="sp"
+                    size="x-small"
+                    class="mr-1 mb-1"
+                    color="info"
+                    variant="tonal"
+                    >{{ sp }}</v-chip
+                  >
+                  <v-chip
+                    v-if="(item.medicalProfile?.specialties || []).length > 2"
+                    size="x-small"
+                    variant="tonal"
+                  >
+                    +{{ (item.medicalProfile?.specialties || []).length - 2 }} more
+                  </v-chip>
+                </div>
+              </div>
+              <div v-else class="text-caption text-medium-emphasis">
+                No medical profile
+              </div>
+            </template>
+
+            <template #item.status="{ item }">
+              <div class="d-flex gap-2">
+                <v-chip v-if="item.medicalProfile" :color="getComplianceSeverity(item.medicalProfile.complianceStatus)" variant="tonal">
+                  {{ formatComplianceStatus(item.medicalProfile.complianceStatus) }}
+                </v-chip>
+                <v-chip v-else variant="tonal">No profile</v-chip>
+                <v-chip :color="item.isActive ? 'success' : 'error'" variant="tonal">
+                  {{ item.isActive ? "Active" : "Inactive" }}
+                </v-chip>
+              </div>
+            </template>
+
+            <template #item.actions="{ item }">
+              <div class="d-flex gap-1">
+                <v-btn
+                  icon="mdi-eye"
+                  variant="text"
+                  size="small"
+                  @click="viewInstitution(item)"
+                />
+                <v-btn
+                  icon="mdi-pencil"
+                  variant="text"
+                  size="small"
+                  @click="editInstitution(item)"
+                />
+                <v-btn
+                  icon="mdi-delete"
+                  color="error"
+                  variant="text"
+                  size="small"
+                  @click="confirmDelete(item)"
+                />
+              </div>
+            </template>
+          </v-data-table>
+        </v-card-text>
+      </v-card>
+
+      <!-- Create Institution Dialog (Vuetify) -->
+      <v-dialog v-model="showCreateDialog" max-width="900">
+        <v-card>
+          <v-card-title>Add New Medical Institution</v-card-title>
+          <v-card-text>
+            <MedicalInstitutionForm
+              @institution-saved="onInstitutionCreated"
+              @cancel="showCreateDialog = false"
+            />
+          </v-card-text>
+        </v-card>
+      </v-dialog>
+
+      <!-- Import CSV Dialog (Vuetify) -->
+      <v-dialog v-model="showImportDialog" max-width="600">
+        <v-card>
+          <v-card-title>Import Medical Institutions</v-card-title>
+          <v-card-text>
+            <p class="text-600 mb-4">Import medical institutions from a CSV file</p>
+            <div class="text-center py-4">
+              <v-icon size="36" class="mb-2">mdi-upload</v-icon>
+              <p class="text-600">CSV import interface coming soon...</p>
+            </div>
+          </v-card-text>
+          <v-card-actions>
+            <v-spacer></v-spacer>
+            <v-btn variant="text" @click="showImportDialog = false">Cancel</v-btn>
+            <v-btn color="primary" @click="showImportDialog = false">Import</v-btn>
+          </v-card-actions>
+        </v-card>
+      </v-dialog>
+
+      <!-- Delete Confirmation Dialog (Vuetify) -->
+      <v-dialog v-model="confirmVisible" max-width="420">
+        <v-card>
+          <v-card-title>Delete Confirmation</v-card-title>
+          <v-card-text>{{ confirmMessage }}</v-card-text>
+          <v-card-actions>
+            <v-spacer></v-spacer>
+            <v-btn variant="text" @click="confirmVisible = false">Cancel</v-btn>
+            <v-btn color="error" @click="confirmAccept">Delete</v-btn>
+          </v-card-actions>
+        </v-card>
+      </v-dialog>
+
+      <!-- Snackbar notifications -->
+      <v-snackbar v-model="snackbar.visible" :color="snackbar.color" timeout="3000">
+        {{ snackbar.message }}
+      </v-snackbar>
     </div>
   </AppLayout>
 </template>
 
 <script setup lang="ts">
-import MedicalInstitutionForm from "@/components/institutions/MedicalInstitutionForm.vue"
+import MedicalInstitutionForm from "@/components/institutions/MedicalInstitutionFormVuetify.vue"
 import AppLayout from "@/components/layout/AppLayout.vue"
 import { institutionsApi } from "@/services/api"
 import type {
@@ -468,27 +418,29 @@ import type {
   MedicalInstitution,
   MedicalInstitutionSearchFilters,
 } from "@medical-crm/shared"
-import Avatar from "primevue/avatar"
-import Button from "primevue/button"
-import Card from "primevue/card"
-import Column from "primevue/column"
-import ConfirmDialog from "primevue/confirmdialog"
-import DataTable from "primevue/datatable"
-import Dialog from "primevue/dialog"
-import Dropdown from "primevue/dropdown"
-import InputNumber from "primevue/inputnumber"
-import InputText from "primevue/inputtext"
-import MultiSelect from "primevue/multiselect"
-import ProgressSpinner from "primevue/progressspinner"
-import Tag from "primevue/tag"
-import { useConfirm } from "primevue/useconfirm"
-import { useToast } from "primevue/usetoast"
+// Using Vuetify components globally; no PrimeVue imports
 import { computed, onMounted, ref, watch } from "vue"
 import { useRouter } from "vue-router"
 
 const router = useRouter()
-const toast = useToast()
-const confirm = useConfirm()
+// Local snackbar + confirm state (Vuetify)
+const snackbar = ref<{ visible: boolean; color: string; message: string }>({
+  visible: false,
+  color: "info",
+  message: "",
+})
+const showSnackbar = (message: string, color: string = "info") => {
+  snackbar.value = { visible: true, color, message }
+}
+const confirmVisible = ref(false)
+const confirmMessage = ref("")
+const confirmTarget = ref<MedicalInstitution | null>(null)
+const confirmAccept = () => {
+  confirmVisible.value = false
+  if (confirmTarget.value) {
+    void deleteInstitution(confirmTarget.value)
+  }
+}
 
 // Reactive data
 const institutions = ref<MedicalInstitution[]>([])
@@ -586,16 +538,18 @@ const loadInstitutions = async () => {
     }
 
     const response = await institutionsApi.getAll(params)
-    institutions.value = (response as any).data || []
-    totalRecords.value = (response as any).meta?.total || 0
+    const payload: any = response
+    // Support both old and new backend shapes
+    if (payload?.success && payload.data) {
+      institutions.value = payload.data.institutions || []
+      totalRecords.value = payload.data.pagination?.total || payload.data.total || 0
+    } else {
+      institutions.value = payload.data || []
+      totalRecords.value = payload.meta?.total || 0
+    }
   } catch (error) {
     console.error("Error loading institutions:", error)
-    toast.add({
-      severity: "error",
-      summary: "Error",
-      detail: "Failed to load medical institutions",
-      life: 3000,
-    })
+    showSnackbar("Failed to load medical institutions", "error")
   } finally {
     loading.value = false
   }
@@ -621,7 +575,7 @@ const onSearchInput = () => {
   }, 500)
 }
 
-const searchTimeout = ref<NodeJS.Timeout>()
+const searchTimeout = ref<ReturnType<typeof setTimeout> | undefined>()
 
 const onFilterInput = () => {
   // Debounce filter input
@@ -631,7 +585,7 @@ const onFilterInput = () => {
   }, 800)
 }
 
-const filterTimeout = ref<NodeJS.Timeout>()
+const filterTimeout = ref<ReturnType<typeof setTimeout> | undefined>()
 
 const applyFilters = () => {
   lazyParams.value.first = 0 // Reset to first page
@@ -661,12 +615,7 @@ const refreshData = () => {
 
 const exportData = () => {
   // Export functionality to be implemented
-  toast.add({
-    severity: "info",
-    summary: "Export",
-    detail: "Export functionality coming soon",
-    life: 3000,
-  })
+  showSnackbar("Export functionality coming soon", "info")
 }
 
 const viewInstitution = (institution: MedicalInstitution) => {
@@ -678,48 +627,26 @@ const editInstitution = (institution: MedicalInstitution) => {
 }
 
 const confirmDelete = (institution: MedicalInstitution) => {
-  confirm.require({
-    message: `Are you sure you want to delete ${institution.name}?`,
-    header: "Delete Confirmation",
-    icon: "pi pi-exclamation-triangle",
-    rejectClass: "p-button-secondary p-button-outlined",
-    rejectLabel: "Cancel",
-    acceptLabel: "Delete",
-    acceptClass: "p-button-danger",
-    accept: () => deleteInstitution(institution),
-  })
+  confirmMessage.value = `Are you sure you want to delete ${institution.name}?`
+  confirmTarget.value = institution
+  confirmVisible.value = true
 }
 
 const deleteInstitution = async (institution: MedicalInstitution) => {
   try {
     await institutionsApi.delete(institution.id)
-    toast.add({
-      severity: "success",
-      summary: "Success",
-      detail: `${institution.name} has been deleted`,
-      life: 3000,
-    })
+    showSnackbar(`${institution.name} has been deleted`, "success")
     loadInstitutions()
   } catch (error) {
     console.error("Error deleting institution:", error)
-    toast.add({
-      severity: "error",
-      summary: "Error",
-      detail: "Failed to delete institution",
-      life: 3000,
-    })
+    showSnackbar("Failed to delete institution", "error")
   }
 }
 
 const onInstitutionCreated = (newInstitution: MedicalInstitution) => {
   showCreateDialog.value = false
   loadInstitutions() // Refresh the list
-  toast.add({
-    severity: "success",
-    summary: "Success",
-    detail: `${newInstitution.name} has been created successfully`,
-    life: 3000,
-  })
+  showSnackbar(`${newInstitution.name} has been created successfully`, "success")
 }
 
 // Utility functions
@@ -762,6 +689,15 @@ const getInstitutionColor = (type: InstitutionType): string => {
   }
   return colorMap[type] || "#6c757d"
 }
+
+// Vuetify data-table headers
+const tableHeaders = [
+  { title: "Institution", value: "name", sortable: false },
+  { title: "Location", value: "location", sortable: false },
+  { title: "Medical Profile", value: "profile", sortable: false },
+  { title: "Status", value: "status", sortable: false },
+  { title: "Actions", value: "actions", sortable: false, align: "end" },
+]
 
 // Lifecycle
 onMounted(() => {

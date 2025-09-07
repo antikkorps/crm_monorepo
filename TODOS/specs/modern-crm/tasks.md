@@ -441,3 +441,43 @@
     - Configure monitoring and logging for production environment
     - Create deployment documentation and operational procedures
     - _Requirements: 7.4, 11.2, 11.3_
+
+- [x] 20. Collaboration features integration (Notes, Meetings, Calls, Reminders)
+
+  - [x] 20.1 Backend models, APIs, and security
+
+    - Implement Note, Meeting, Call, Reminder models with validation
+    - Add sharing (notes), participants (meetings), ownership rules
+    - Enforce RBAC + team-based access middleware for collaboration features
+    - Provide consistent error handling across endpoints
+    - _Requirements: 1.1–4.6, 5.2, 5.4, 11.1_
+
+  - [x] 20.2 Institution integration: collaboration and timeline endpoints
+    - `GET /api/institutions/:id/collaboration`: consolidated stats + recent items
+    - `GET /api/institutions/:id/timeline`: chronological interactions with pagination
+    - _Requirements: 5.1, 5.3, 1.5, 2.5, 3.2, 4.4_
+
+  - [x] 20.3 Unified search across CRM entities
+    - `GET /api/institutions/search/unified` across institutions, tasks, notes, meetings, calls, reminders
+    - Add `scope=own|team|all` with RBAC-constrained behavior
+    - Apply team filtering for tasks/notes/meetings/calls/reminders
+    - Respect note privacy and sharing
+    - _Requirements: 5.1, 5.3_
+
+  - [x] 20.4 Notifications for collaboration features
+    - Meeting invitations/updates/comments notifications
+    - Reminder created/due soon/overdue/completed notifications
+    - Team activity notifications
+    - _Requirements: 2.2, 2.4, 4.2_
+
+  - [x] 20.5 Backend API documentation for frontend development
+    - Add `packages/backend/BACKEND_API.md` documenting endpoints and scope rules
+    - Provide request/response examples and parameter descriptions
+    - _Requirements: 7.1, 7.4, 11.1_
+
+  - [x] 20.6 Frontend integration on Institution detail
+    - Add collaboration summary panel (stats + recent items)
+    - Add timeline tab with pagination
+    - Add unified search tab with `scope=own|team|all` selector
+    - Wire API services for collaboration, timeline, and unified search
+    - _Requirements: 5.1, 5.3_

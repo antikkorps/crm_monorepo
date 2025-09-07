@@ -1,8 +1,11 @@
 import { ComplianceStatus, InstitutionType } from "@medical-crm/shared"
 import Joi from "joi"
+import { Op, literal } from "sequelize"
+import { sequelize } from "../config/database"
 import { Context } from "../types/koa"
 import { createError } from "../middleware/errorHandler"
 import { ContactPerson, MedicalInstitution, MedicalProfile, User } from "../models"
+import { TaskStatus } from "../models/Task"
 import { CsvImportService } from "../services/CsvImportService"
 import { NotificationService } from "../services/NotificationService"
 import { logger } from "../utils/logger"
@@ -154,7 +157,7 @@ const searchSchema = Joi.object({
   page: Joi.number().integer().min(1).default(1),
   limit: Joi.number().integer().min(1).max(100).default(20),
   sortBy: Joi.string().valid("name", "type", "createdAt", "updatedAt").default("name"),
-  sortOrder: Joi.string().valid("ASC", "DESC").default("ASC"),
+  sortOrder: Joi.string().uppercase().valid("ASC", "DESC").default("ASC"),
 })
 
 export class MedicalInstitutionController {
@@ -875,6 +878,800 @@ export class MedicalInstitutionController {
         userId: ctx.state.user?.id,
         error: (error as Error).message,
         filename: file.originalFilename,
+      })
+      throw error
+    }
+  }
+
+  /**
+   * GET /api/institutions/:id/collaboration
+   * Get collaboration data for a specific institution
+   */
+  static async getCollaborationData(ctx: Context) {
+    try {
+      const institutionId = ctx.params.id
+      const user = ctx.state.user as User
+
+      // Get collaboration data in parallel
+      const [notes, meetings, calls, reminders, tasks] = await Promise.all([
+        // Get notes related to this institution
+        import("../models/Note").then(({ Note }) =>
+          Note.findByInstitution(institutionId)
+        ),
+        // Get meetings related to this institution
+        import("../models/Meeting").then(({ Meeting }) =>
+          Meeting.findAll({
+            where: { institutionId },
+            include: [
+              {
+                model: User,
+                as: "organizer",
+                attributes: ["id", "firstName", "lastName", "email"],
+              },
+            ],
+            order: [["createdAt", "DESC"]],
+          })
+        ),
+        // Get calls related to this institution
+        import("../models/Call").then(({ Call }) =>
+          Call.findAll({
+            where: { institutionId },
+            include: [
+              {
+                model: User,
+                as: "user",
+                attributes: ["id", "firstName", "lastName", "email"],
+              },
+            ],
+            order: [["createdAt", "DESC"]],
+          })
+        ),
+        // Get reminders related to this institution
+        import("../models/Reminder").then(({ Reminder }) =>
+          Reminder.findAll({
+            where: { institutionId },
+            include: [
+              {
+                model: User,
+                as: "user",
+                attributes: ["id", "firstName", "lastName", "email"],
+              },
+            ],
+            // Reminder model uses "reminderDate"
+            order: [["reminderDate", "ASC"]],
+          })
+        ),
+        // Get tasks related to this institution
+        import("../models/Task").then(({ Task }) =>
+          Task.findAll({
+            where: { institutionId },
+            include: [
+              {
+                model: User,
+                as: "assignee",
+                attributes: ["id", "firstName", "lastName", "email"],
+              },
+              {
+                model: User,
+                as: "creator",
+                attributes: ["id", "firstName", "lastName", "email"],
+              },
+            ],
+            order: [["createdAt", "DESC"]],
+          })
+        ),
+      ])
+
+      // Get summary statistics
+      const stats = {
+        totalNotes: notes.length,
+        totalMeetings: meetings.length,
+        totalCalls: calls.length,
+        totalReminders: reminders.length,
+        totalTasks: tasks.length,
+        upcomingMeetings: meetings.filter(m => new Date(m.startDate) > new Date()).length,
+        pendingReminders: reminders.filter(r => !r.isCompleted && new Date(r.reminderDate) > new Date()).length,
+        openTasks: tasks.filter(t => t.status !== TaskStatus.COMPLETED && t.status !== TaskStatus.CANCELLED).length,
+      }
+
+      ctx.body = {
+        stats,
+        recentNotes: notes.slice(0, 5),
+        upcomingMeetings: meetings
+          .filter(m => new Date(m.startDate) > new Date())
+          .slice(0, 5),
+        recentCalls: calls.slice(0, 5),
+        pendingReminders: reminders
+          .filter(r => !r.isCompleted)
+          .slice(0, 5),
+        openTasks: tasks
+          .filter(t => t.status !== TaskStatus.COMPLETED && t.status !== TaskStatus.CANCELLED)
+          .slice(0, 10),
+      }
+
+      logger.info("Collaboration data retrieved", {
+        userId: user.id,
+        institutionId,
+        stats,
+      })
+    } catch (error) {
+      logger.error("Failed to get collaboration data", {
+        userId: ctx.state.user?.id,
+        institutionId: ctx.params.id,
+        error: (error as Error).message,
+      })
+      throw error
+    }
+  }
+
+  /**
+   * GET /api/institutions/:id/timeline
+   * Get timeline of all interactions for a specific institution
+   */
+  static async getTimeline(ctx: Context) {
+    try {
+      const institutionId = ctx.params.id
+      const user = ctx.state.user as User
+      const { limit = 50, offset = 0, startDate, endDate } = ctx.query
+
+      const whereClause: any = { institutionId }
+      
+      // Add date filtering if provided
+      if (startDate || endDate) {
+        whereClause.createdAt = {}
+        if (startDate) {
+          whereClause.createdAt.$gte = new Date(startDate as string)
+        }
+        if (endDate) {
+          whereClause.createdAt.$lte = new Date(endDate as string)
+        }
+      }
+
+      // Get all interactions for this institution
+      const [notes, meetings, calls, reminders, tasks] = await Promise.all([
+        import("../models/Note").then(({ Note }) =>
+          Note.findAll({
+            where: whereClause,
+            include: [
+              {
+                model: User,
+                as: "creator",
+                attributes: ["id", "firstName", "lastName", "email"],
+              },
+            ],
+          })
+        ),
+        import("../models/Meeting").then(({ Meeting }) =>
+          Meeting.findAll({
+            where: whereClause,
+            include: [
+              {
+                model: User,
+                as: "organizer",
+                attributes: ["id", "firstName", "lastName", "email"],
+              },
+            ],
+          })
+        ),
+        import("../models/Call").then(({ Call }) =>
+          Call.findAll({
+            where: whereClause,
+            include: [
+              {
+                model: User,
+                as: "user",
+                attributes: ["id", "firstName", "lastName", "email"],
+              },
+            ],
+          })
+        ),
+        import("../models/Reminder").then(({ Reminder }) =>
+          Reminder.findAll({
+            where: whereClause,
+            include: [
+              {
+                model: User,
+                as: "user",
+                attributes: ["id", "firstName", "lastName", "email"],
+              },
+            ],
+          })
+        ),
+        import("../models/Task").then(({ Task }) =>
+          Task.findAll({
+            where: whereClause,
+            include: [
+              {
+                model: User,
+                as: "assignee",
+                attributes: ["id", "firstName", "lastName", "email"],
+              },
+              {
+                model: User,
+                as: "creator",
+                attributes: ["id", "firstName", "lastName", "email"],
+              },
+            ],
+          })
+        ),
+      ])
+
+      // Combine all interactions into a timeline
+      const timelineItems: any[] = []
+
+      // Add notes to timeline
+      notes.forEach(note => {
+        timelineItems.push({
+          id: note.id,
+          type: 'note',
+          title: note.title,
+          description: note.content.slice(0, 200) + (note.content.length > 200 ? '...' : ''),
+          user: note.creator,
+          createdAt: note.createdAt,
+          metadata: {
+            tags: note.tags,
+            isPrivate: note.isPrivate,
+          },
+        })
+      })
+
+      // Add meetings to timeline
+      meetings.forEach(meeting => {
+        timelineItems.push({
+          id: meeting.id,
+          type: 'meeting',
+          title: meeting.title,
+          description: meeting.description || '',
+          user: meeting.organizer,
+          createdAt: meeting.createdAt,
+          metadata: {
+            startDate: meeting.startDate,
+            endDate: meeting.endDate,
+            location: meeting.location,
+            status: meeting.status,
+          },
+        })
+      })
+
+      // Add calls to timeline
+      calls.forEach(call => {
+        timelineItems.push({
+          id: call.id,
+          type: 'call',
+          title: `Call to ${call.phoneNumber}`,
+          description: call.summary || '',
+          user: call.user,
+          createdAt: call.createdAt,
+          metadata: {
+            phoneNumber: call.phoneNumber,
+            duration: call.duration,
+            callType: call.callType,
+          },
+        })
+      })
+
+      // Add reminders to timeline
+      reminders.forEach(reminder => {
+        timelineItems.push({
+          id: reminder.id,
+          type: 'reminder',
+          title: reminder.title,
+          description: reminder.description || '',
+          user: reminder.user,
+          createdAt: reminder.createdAt,
+          metadata: {
+            dueDate: reminder.reminderDate,
+            priority: reminder.priority,
+            isCompleted: reminder.isCompleted,
+          },
+        })
+      })
+
+      // Add tasks to timeline
+      tasks.forEach(task => {
+        timelineItems.push({
+          id: task.id,
+          type: 'task',
+          title: task.title,
+          description: task.description || '',
+          user: task.creator,
+          assignee: task.assignee,
+          createdAt: task.createdAt,
+          metadata: {
+            status: task.status,
+            priority: task.priority,
+            dueDate: task.dueDate,
+          },
+        })
+      })
+
+      // Sort by creation date (most recent first)
+      timelineItems.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+
+      // Apply pagination
+      const total = timelineItems.length
+      const paginatedItems = timelineItems.slice(Number(offset), Number(offset) + Number(limit))
+
+      ctx.body = {
+        items: paginatedItems,
+        pagination: {
+          total,
+          limit: Number(limit),
+          offset: Number(offset),
+          hasMore: Number(offset) + Number(limit) < total,
+        },
+      }
+
+      logger.info("Timeline retrieved", {
+        userId: user.id,
+        institutionId,
+        totalItems: total,
+        itemsReturned: paginatedItems.length,
+      })
+    } catch (error) {
+      logger.error("Failed to get timeline", {
+        userId: ctx.state.user?.id,
+        institutionId: ctx.params.id,
+        error: (error as Error).message,
+      })
+      throw error
+    }
+  }
+
+  /**
+   * GET /api/institutions/search/unified
+   * Unified search across institutions, tasks, and collaboration features
+   */
+  static async unifiedSearch(ctx: Context) {
+    try {
+      const user = ctx.state.user as User
+      const { 
+        q: query, 
+        type, 
+        limit = 20, 
+        offset = 0,
+        institutionId,
+        startDate,
+        endDate,
+        scope: rawScope
+      } = ctx.query
+
+      if (!query) {
+        throw createError("Search query is required", 400, "QUERY_REQUIRED")
+      }
+
+      const searchTerm = String(query).trim()
+      const searchLimit = Math.min(Number(limit), 100) // Max 100 results
+      const searchOffset = Number(offset)
+
+      // Apply team filtering based on user permissions
+      const teamFilter = ctx.state.teamFilter || {
+        userId: user.id,
+        teamId: user.teamId,
+        role: user.role,
+      }
+
+      // Determine requested scope (own | team | all) constrained by role
+      const requestedScope = typeof rawScope === 'string' ? rawScope.toLowerCase() : undefined
+      // Defaults per role
+      let effectiveScope: 'own' | 'team' | 'all' = 'own'
+      if (user.role === 'super_admin') effectiveScope = 'all'
+      else if (user.role === 'team_admin') effectiveScope = 'team'
+      // Apply requested scope if allowed
+      if (requestedScope === 'own') effectiveScope = 'own'
+      else if (requestedScope === 'team') {
+        effectiveScope = user.role === 'user' ? 'own' : 'team'
+      } else if (requestedScope === 'all') {
+        effectiveScope = user.role === 'super_admin' ? 'all' : (user.role === 'team_admin' ? 'team' : 'own')
+      }
+
+      const useAll = effectiveScope === 'all'
+      const useTeam = effectiveScope === 'team'
+
+      // Resolve team members if team scope is active
+      let teamMemberIds: string[] | null = null
+      if (useTeam && teamFilter.teamId) {
+        const teamMembers = await User.findByTeam(teamFilter.teamId)
+        teamMemberIds = teamMembers.map((m) => m.id)
+        if (teamMemberIds.length === 0) teamMemberIds = [teamFilter.userId]
+      }
+
+      const results: any = {
+        institutions: [],
+        tasks: [],
+        notes: [],
+        meetings: [],
+        calls: [],
+        reminders: [],
+      }
+
+      // Search institutions
+      if (!type || type === 'institutions') {
+        const institutions = await MedicalInstitution.findAll({
+          where: {
+            name: { [Op.iLike]: `%${searchTerm}%` },
+            ...(institutionId && { id: institutionId }),
+          },
+          include: [
+            {
+              model: User,
+              as: "assignedUser",
+              attributes: ["id", "firstName", "lastName", "email"],
+            },
+          ],
+          limit: searchLimit,
+          offset: searchOffset,
+        })
+
+        results.institutions = institutions.map(inst => ({
+          id: inst.id,
+          type: 'institution',
+          title: inst.name,
+          subtitle: `${inst.type} - ${inst.getFullAddress()}`,
+          assignedUser: inst.assignedUser,
+          createdAt: inst.createdAt,
+        }))
+      }
+
+      // Search tasks
+      if (!type || type === 'tasks') {
+        const { Task } = await import("../models/Task")
+        const taskWhere: any = {
+          [Op.or]: [
+            { title: { [Op.iLike]: `%${searchTerm}%` } },
+            { description: { [Op.iLike]: `%${searchTerm}%` } },
+          ],
+          ...(institutionId && { institutionId }),
+        }
+
+        // Apply team filtering for tasks
+        if (!useAll) {
+          if (teamMemberIds) {
+            taskWhere[Op.and] = [
+              taskWhere,
+              {
+                [Op.or]: [
+                  { assigneeId: { [Op.in]: teamMemberIds } },
+                  { creatorId: { [Op.in]: teamMemberIds } },
+                ],
+              },
+            ]
+          } else {
+            taskWhere[Op.and] = [
+              taskWhere,
+              {
+                [Op.or]: [
+                  { assigneeId: teamFilter.userId },
+                  { creatorId: teamFilter.userId },
+                ],
+              },
+            ]
+          }
+        }
+
+        const tasks = await Task.findAll({
+          where: taskWhere,
+          include: [
+            {
+              model: User,
+              as: "assignee",
+              attributes: ["id", "firstName", "lastName", "email"],
+            },
+            {
+              model: User,
+              as: "creator",
+              attributes: ["id", "firstName", "lastName", "email"],
+            },
+            {
+              model: MedicalInstitution,
+              as: "institution",
+              attributes: ["id", "name"],
+            },
+          ],
+          limit: searchLimit,
+          offset: searchOffset,
+        })
+
+        results.tasks = tasks.map(task => ({
+          id: task.id,
+          type: 'task',
+          title: task.title,
+          subtitle: task.description || '',
+          assignee: task.assignee,
+          creator: task.creator,
+          institution: task.institution,
+          status: task.status,
+          priority: task.priority,
+          dueDate: task.dueDate,
+          createdAt: task.createdAt,
+        }))
+      }
+
+      // Search notes
+      if (!type || type === 'notes') {
+        const { Note } = await import("../models/Note")
+        const noteWhere: any = {}
+
+        // Search filters
+        noteWhere[Op.or] = [
+          { title: { [Op.iLike]: `%${searchTerm}%` } },
+          { content: { [Op.iLike]: `%${searchTerm}%` } },
+          { tags: { [Op.overlap]: [searchTerm] } as any },
+        ]
+        if (institutionId) noteWhere.institutionId = institutionId
+
+        // Access control
+        if (useAll) {
+          // No additional restrictions
+        } else if (teamMemberIds) {
+          // Team admins: public notes, own notes, team-created public notes, or notes shared with them
+          const teamIdsList = teamMemberIds.map((id) => `'${id}'`).join(", ")
+          noteWhere[Op.and] = [
+            noteWhere,
+            {
+              [Op.or]: [
+                { creatorId: teamFilter.userId },
+                { isPrivate: false },
+                { creatorId: { [Op.in]: teamMemberIds }, isPrivate: false } as any,
+                {
+                  id: {
+                    [Op.in]: literal(`(SELECT note_id FROM note_shares WHERE user_id = '${teamFilter.userId}')`),
+                  },
+                },
+              ],
+            },
+          ]
+        } else {
+          // Regular users: own notes, public, or shared with them
+          noteWhere[Op.and] = [
+            noteWhere,
+            {
+              [Op.or]: [
+                { creatorId: teamFilter.userId },
+                { isPrivate: false },
+                {
+                  id: {
+                    [Op.in]: literal(`(SELECT note_id FROM note_shares WHERE user_id = '${teamFilter.userId}')`),
+                  },
+                },
+              ],
+            },
+          ]
+        }
+
+        const notes = await Note.findAll({
+          where: noteWhere,
+          include: [
+            { model: User, as: "creator", attributes: ["id", "firstName", "lastName", "email"] },
+            { model: MedicalInstitution, as: "institution", attributes: ["id", "name"] },
+          ],
+          limit: searchLimit,
+          offset: searchOffset,
+          order: [["createdAt", "DESC"]],
+        })
+
+        results.notes = notes.map(note => ({
+          id: note.id,
+          type: 'note',
+          title: note.title,
+          subtitle: note.content.slice(0, 100) + (note.content.length > 100 ? '...' : ''),
+          creator: (note as any).creator,
+          institution: (note as any).institution,
+          tags: (note as any).tags,
+          isPrivate: (note as any).isPrivate,
+          createdAt: (note as any).createdAt,
+        }))
+      }
+
+      // Search meetings
+      if (!type || type === 'meetings') {
+        const { Meeting } = await import("../models/Meeting")
+        const meetingWhere: any = {
+          [Op.or]: [
+            { title: { [Op.iLike]: `%${searchTerm}%` } },
+            { description: { [Op.iLike]: `%${searchTerm}%` } },
+          ],
+          ...(institutionId && { institutionId }),
+        }
+
+        // Access control
+        if (useAll) {
+          // No additional restriction
+        } else if (teamMemberIds) {
+          const idsList = teamMemberIds.map((id) => `'${id}'`).join(", ")
+          meetingWhere[Op.and] = [
+            meetingWhere,
+            {
+              [Op.or]: [
+                { organizerId: { [Op.in]: teamMemberIds } },
+                {
+                  id: {
+                    [Op.in]: literal(`(SELECT meeting_id FROM meeting_participants WHERE user_id IN (${idsList}))`),
+                  },
+                },
+              ],
+            },
+          ]
+        } else {
+          meetingWhere[Op.and] = [
+            meetingWhere,
+            {
+              [Op.or]: [
+                { organizerId: teamFilter.userId },
+                {
+                  id: {
+                    [Op.in]: literal(`(SELECT meeting_id FROM meeting_participants WHERE user_id = '${teamFilter.userId}')`),
+                  },
+                },
+              ],
+            },
+          ]
+        }
+
+        const meetings = await Meeting.findAll({
+          where: meetingWhere,
+          include: [
+            {
+              model: User,
+              as: "organizer",
+              attributes: ["id", "firstName", "lastName", "email"],
+            },
+            {
+              model: MedicalInstitution,
+              as: "institution",
+              attributes: ["id", "name"],
+            },
+          ],
+          limit: searchLimit,
+          offset: searchOffset,
+        })
+
+        results.meetings = meetings.map(meeting => ({
+          id: meeting.id,
+          type: 'meeting',
+          title: meeting.title,
+          subtitle: meeting.description || '',
+          organizer: meeting.organizer,
+          institution: meeting.institution,
+          startDate: meeting.startDate,
+          endDate: meeting.endDate,
+          status: meeting.status,
+          createdAt: meeting.createdAt,
+        }))
+      }
+
+      // Search calls
+      if (!type || type === 'calls') {
+        const { Call } = await import("../models/Call")
+        
+        const calls = await Call.findAll({
+          where: {
+            [Op.or]: [
+              { phoneNumber: { [Op.iLike]: `%${searchTerm}%` } },
+              { summary: { [Op.iLike]: `%${searchTerm}%` } },
+            ],
+            ...(institutionId && { institutionId }),
+            ...(
+              useAll
+                ? {}
+                : teamMemberIds
+                  ? { userId: { [Op.in]: teamMemberIds } }
+                  : { userId: teamFilter.userId }
+            ),
+          },
+          include: [
+            {
+              model: User,
+              as: "user",
+              attributes: ["id", "firstName", "lastName", "email"],
+            },
+            {
+              model: MedicalInstitution,
+              as: "institution",
+              attributes: ["id", "name"],
+            },
+          ],
+          limit: searchLimit,
+          offset: searchOffset,
+        })
+
+        results.calls = calls.map(call => ({
+          id: call.id,
+          type: 'call',
+          title: `Call to ${call.phoneNumber}`,
+          subtitle: call.summary || '',
+          user: call.user,
+          institution: call.institution,
+          phoneNumber: call.phoneNumber,
+          duration: call.duration,
+          callType: call.callType,
+          createdAt: call.createdAt,
+        }))
+      }
+
+      // Search reminders
+      if (!type || type === 'reminders') {
+        const { Reminder } = await import("../models/Reminder")
+        
+        const reminders = await Reminder.findAll({
+          where: {
+            [Op.or]: [
+              { title: { [Op.iLike]: `%${searchTerm}%` } },
+              { description: { [Op.iLike]: `%${searchTerm}%` } },
+            ],
+            ...(institutionId && { institutionId }),
+            ...(
+              useAll
+                ? {}
+                : teamMemberIds
+                  ? { userId: { [Op.in]: teamMemberIds } }
+                  : { userId: teamFilter.userId }
+            ),
+          },
+          include: [
+            {
+              model: User,
+              as: "user",
+              attributes: ["id", "firstName", "lastName", "email"],
+            },
+            {
+              model: MedicalInstitution,
+              as: "institution",
+              attributes: ["id", "name"],
+            },
+          ],
+          limit: searchLimit,
+          offset: searchOffset,
+        })
+
+        results.reminders = reminders.map(reminder => ({
+          id: reminder.id,
+          type: 'reminder',
+          title: reminder.title,
+          subtitle: reminder.description || '',
+          user: reminder.user,
+          institution: reminder.institution,
+          dueDate: reminder.reminderDate,
+          priority: reminder.priority,
+          isCompleted: reminder.isCompleted,
+          createdAt: reminder.createdAt,
+        }))
+      }
+
+      // Calculate totals
+      const totals = {
+        institutions: results.institutions.length,
+        tasks: results.tasks.length,
+        notes: results.notes.length,
+        meetings: results.meetings.length,
+        calls: results.calls.length,
+        reminders: results.reminders.length,
+      }
+
+      const totalResults = Object.values(totals).reduce((sum, count) => sum + count, 0)
+
+      ctx.body = {
+        query: searchTerm,
+        results,
+        totals,
+        totalResults,
+        pagination: {
+          limit: searchLimit,
+          offset: searchOffset,
+        },
+      }
+
+      logger.info("Unified search completed", {
+        userId: user.id,
+        query: searchTerm,
+        totalResults,
+        totals,
+      })
+    } catch (error) {
+      logger.error("Unified search failed", {
+        userId: ctx.state.user?.id,
+        query: ctx.query.q,
+        error: (error as Error).message,
       })
       throw error
     }

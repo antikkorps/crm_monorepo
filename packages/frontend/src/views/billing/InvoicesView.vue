@@ -1,84 +1,38 @@
 <template>
   <div class="invoices-view">
-    <div class="header">
+    <div class="header d-flex justify-between align-center mb-3">
       <h1>Invoices</h1>
       <div class="header-actions">
-        <Button
-          icon="pi pi-plus"
-          label="New Invoice"
-          @click="showCreateDialog = true"
-          class="p-button-primary"
-        />
+        <v-btn color="primary" prepend-icon="mdi-plus" @click="showCreateDialog = true">New Invoice</v-btn>
       </div>
     </div>
 
     <!-- Filters -->
-    <Card class="filters-card">
-      <template #content>
+    <v-card class="filters-card mb-3">
+      <v-card-text>
         <div class="filters-grid">
           <div class="field">
-            <label for="status-filter">Status</label>
-            <Dropdown
-              id="status-filter"
-              v-model="filters.status"
-              :options="statusOptions"
-              option-label="label"
-              option-value="value"
-              placeholder="All Statuses"
-              show-clear
-              @change="loadInvoices"
-            />
+            <v-select v-model="filters.status" :items="statusOptions" item-title="label" item-value="value" label="Status" clearable @update:model-value="loadInvoices" />
           </div>
 
           <div class="field">
-            <label for="institution-filter">Institution</label>
-            <Dropdown
-              id="institution-filter"
-              v-model="filters.institutionId"
-              :options="institutions"
-              option-label="name"
-              option-value="id"
-              placeholder="All Institutions"
-              show-clear
-              filter
-              @change="loadInvoices"
-            />
+            <v-select v-model="filters.institutionId" :items="institutions" item-title="name" item-value="id" label="Institution" clearable @update:model-value="loadInvoices" />
           </div>
 
           <div class="field">
-            <label for="date-from">Date From</label>
-            <Calendar
-              id="date-from"
-              v-model="filters.dateFrom"
-              placeholder="Select date"
-              show-clear
-              @date-select="loadInvoices"
-            />
+            <v-text-field v-model="dateFromStr" type="date" label="Date From" @update:model-value="onDateChange('from')" />
           </div>
 
           <div class="field">
-            <label for="date-to">Date To</label>
-            <Calendar
-              id="date-to"
-              v-model="filters.dateTo"
-              placeholder="Select date"
-              show-clear
-              @date-select="loadInvoices"
-            />
+            <v-text-field v-model="dateToStr" type="date" label="Date To" @update:model-value="onDateChange('to')" />
           </div>
 
           <div class="field">
-            <label for="search">Search</label>
-            <InputText
-              id="search"
-              v-model="filters.search"
-              placeholder="Search invoices..."
-              @input="debouncedSearch"
-            />
+            <v-text-field v-model="filters.search" label="Search" @input="debouncedSearch" />
           </div>
         </div>
-      </template>
-    </Card>
+      </v-card-text>
+    </v-card>
 
     <!-- Statistics Cards -->
     <div class="stats-grid">

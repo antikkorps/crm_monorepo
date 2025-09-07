@@ -38,6 +38,17 @@ export enum NotificationType {
   PAYMENT_RECEIVED = "payment_received",
   INVOICE_OVERDUE = "invoice_overdue",
 
+  // Meeting notifications
+  MEETING_CREATED = "meeting_created",
+  MEETING_UPDATED = "meeting_updated",
+  MEETING_INVITATION_SENT = "meeting_invitation_sent",
+  MEETING_INVITATION_ACCEPTED = "meeting_invitation_accepted",
+  MEETING_INVITATION_DECLINED = "meeting_invitation_declined",
+  MEETING_REMINDER = "meeting_reminder",
+  MEETING_CANCELLED = "meeting_cancelled",
+  MEETING_STARTED = "meeting_started",
+  MEETING_ENDED = "meeting_ended",
+
   // Meeting comments
   MEETING_COMMENT_ADDED = "meeting_comment_added",
   MEETING_COMMENT_UPDATED = "meeting_comment_updated",
@@ -71,6 +82,8 @@ export interface NotificationData {
   institutionId?: string
   taskId?: string
   reminderId?: string
+  meetingId?: string
+  commentId?: string
   senderId?: string
   senderName?: string
   timestamp?: string
@@ -717,7 +730,7 @@ export class NotificationService {
    * Generate unique notification ID
    */
   private generateNotificationId(): string {
-    return `notif_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+    return `notif_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`
   }
 
   /**

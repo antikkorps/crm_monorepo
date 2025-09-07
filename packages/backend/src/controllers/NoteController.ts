@@ -9,6 +9,8 @@ import { Note } from "../models/Note"
 import { NoteShare } from "../models/NoteShare"
 import { User } from "../models/User"
 import { Context } from "../types/koa"
+import { createCollaborationError, CollaborationErrorCode } from "../middleware/collaborationErrorHandler"
+import { logger } from "../utils/logger"
 
 export class NoteController {
   // GET /api/notes - Get all notes with optional filtering
@@ -79,15 +81,16 @@ export class NoteController {
         },
       }
     } catch (error) {
-      ctx.status = 500
-      ctx.body = {
-        success: false,
-        error: {
-          code: "NOTE_FETCH_ERROR",
-          message: "Failed to fetch notes",
-          details: error instanceof Error ? error.message : "Unknown error",
-        },
-      }
+      logger.error("Failed to fetch notes", {
+        error: error instanceof Error ? error.message : "Unknown error",
+        userId: ctx.state.user?.id,
+        filters: ctx.query,
+      })
+      throw createCollaborationError(
+        CollaborationErrorCode.INVALID_SEARCH_PARAMETERS,
+        "Failed to fetch notes. Please check your search parameters.",
+        { originalError: error instanceof Error ? error.message : "Unknown error" }
+      )
     }
   }
 
@@ -113,29 +116,13 @@ export class NoteController {
       })
 
       if (!note) {
-        ctx.status = 404
-        ctx.body = {
-          success: false,
-          error: {
-            code: "NOTE_NOT_FOUND",
-            message: "Note not found",
-          },
-        }
-        return
+        throw createCollaborationError(CollaborationErrorCode.NOTE_NOT_FOUND)
       }
 
       // Check permissions
       const canAccess = await note.canUserAccess(user.id)
       if (!canAccess) {
-        ctx.status = 403
-        ctx.body = {
-          success: false,
-          error: {
-            code: "INSUFFICIENT_PERMISSIONS",
-            message: "You don't have permission to access this note",
-          },
-        }
-        return
+        throw createCollaborationError(CollaborationErrorCode.NOTE_ACCESS_DENIED)
       }
 
       // Include shares if user is the creator or has admin privileges

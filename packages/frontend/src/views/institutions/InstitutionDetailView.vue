@@ -3,7 +3,7 @@
     <div class="institution-detail-view">
       <!-- Loading State -->
       <div v-if="loading" class="text-center py-8">
-        <ProgressSpinner />
+        <v-progress-circular indeterminate color="primary" />
         <p class="text-600 mt-3">Loading institution details...</p>
       </div>
 
@@ -11,7 +11,7 @@
       <div v-else-if="error" class="text-center py-8">
         <i class="pi pi-exclamation-triangle text-4xl text-orange-500 mb-3"></i>
         <p class="text-600 text-lg mb-4">{{ error }}</p>
-        <Button label="Go Back" icon="pi pi-arrow-left" @click="goBack" />
+        <v-btn prepend-icon="mdi-arrow-left" @click="goBack">Go Back</v-btn>
       </div>
 
       <!-- Institution Details -->
@@ -19,23 +19,12 @@
         <!-- Header Section -->
         <div class="page-header mb-4">
           <div class="flex align-items-center mb-3">
-            <Button
-              icon="pi pi-arrow-left"
-              text
-              rounded
-              class="mr-3"
-              @click="goBack"
-              v-tooltip="'Back to Institutions'"
-            />
+            <v-btn icon="mdi-arrow-left" variant="text" class="mr-3" @click="goBack" />
             <div class="institution-header-info">
               <div class="flex align-items-center mb-2">
-                <Avatar
-                  :label="institution.name.charAt(0).toUpperCase()"
-                  shape="circle"
-                  size="large"
-                  :style="{ backgroundColor: getInstitutionColor(institution.type) }"
-                  class="mr-3"
-                />
+                <v-avatar size="40" class="mr-3" :color="getInstitutionColor(institution.type)">
+                  <span class="white--text">{{ (institution.name || '').charAt(0).toUpperCase() }}</span>
+                </v-avatar>
                 <div>
                   <h1 class="text-3xl font-bold text-900 m-0">{{ institution.name }}</h1>
                   <p class="text-600 text-lg m-0">
@@ -44,68 +33,58 @@
                 </div>
               </div>
               <div class="flex align-items-center gap-3">
-                <Tag
-                  :value="
-                    formatComplianceStatus(institution.medicalProfile.complianceStatus)
-                  "
-                  :severity="
-                    getComplianceSeverity(institution.medicalProfile.complianceStatus)
-                  "
-                />
-                <Tag v-if="institution.assignedUserId" value="Assigned" severity="info" />
-                <Tag v-else value="Unassigned" severity="secondary" />
-                <Tag
-                  :value="institution.isActive ? 'Active' : 'Inactive'"
-                  :severity="institution.isActive ? 'success' : 'danger'"
-                />
+                <v-chip v-if="institution.medicalProfile" :color="getComplianceSeverity(institution.medicalProfile.complianceStatus)" variant="tonal">
+                  {{ formatComplianceStatus(institution.medicalProfile.complianceStatus) }}
+                </v-chip>
+                <v-chip v-else variant="tonal">No profile</v-chip>
+                <v-chip color="info" variant="tonal" v-if="institution.assignedUserId">Assigned</v-chip>
+                <v-chip color="secondary" variant="tonal" v-else>Unassigned</v-chip>
+                <v-chip :color="institution.isActive ? 'success' : 'error'" variant="tonal">
+                  {{ institution.isActive ? 'Active' : 'Inactive' }}
+                </v-chip>
               </div>
             </div>
           </div>
 
           <div class="page-actions">
-            <Button
-              label="Edit Institution"
-              icon="pi pi-pencil"
-              @click="toggleEditMode"
-              :severity="editMode ? 'secondary' : 'primary'"
-              :outlined="editMode"
-            />
-            <Button
-              label="Delete"
-              icon="pi pi-trash"
-              severity="danger"
-              outlined
-              @click="confirmDelete"
-            />
+            <v-btn prepend-icon="mdi-pencil" :variant="editMode ? 'outlined' : 'elevated'" :color="editMode ? 'secondary' : 'primary'" @click="toggleEditMode">Edit Institution</v-btn>
+            <v-btn prepend-icon="mdi-delete" color="error" variant="outlined" @click="confirmDelete">Delete</v-btn>
           </div>
         </div>
 
         <!-- Edit Mode Form -->
         <div v-if="editMode">
-          <Card>
-            <template #title>Edit Institution</template>
-            <template #content>
+          <v-card>
+            <v-card-title>Edit Institution</v-card-title>
+            <v-card-text>
               <MedicalInstitutionForm
                 :institution="institution"
                 @institution-saved="onInstitutionSaved"
                 @cancel="cancelEdit"
               />
-            </template>
-          </Card>
+            </v-card-text>
+          </v-card>
         </div>
 
         <!-- View Mode Content -->
         <div v-else>
-          <!-- Content Tabs -->
-          <TabView>
-            <!-- Overview Tab -->
-            <TabPanel header="Overview" value="0">
+          <!-- Content Tabs (Vuetify) -->
+          <v-tabs v-model="activeTab" class="mb-3">
+            <v-tab value="overview">Overview</v-tab>
+            <v-tab value="medical">Medical Profile</v-tab>
+            <v-tab value="contacts">Contact Persons</v-tab>
+            <v-tab v-if="enableCollab" value="collab">Collaboration</v-tab>
+            <v-tab v-if="enableCollab" value="timeline">Timeline</v-tab>
+            <v-tab v-if="enableCollab" value="search">Search</v-tab>
+          </v-tabs>
+          <v-window v-model="activeTab">
+            <v-window-item value="overview">
               <div class="grid">
                 <!-- Basic Information Card -->
                 <div class="col-12 lg:col-6">
-                  <Card>
-                    <template #title>Basic Information</template>
-                    <template #content>
+                  <v-card>
+                    <v-card-title>Basic Information</v-card-title>
+                    <v-card-text>
                       <div class="institution-info">
                         <div class="info-item mb-3">
                           <label class="font-semibold text-900">Institution Name</label>
@@ -120,53 +99,46 @@
                         <div class="info-item mb-3">
                           <label class="font-semibold text-900">Status</label>
                           <p class="text-700 mt-1">
-                            <Tag
-                              :value="institution.isActive ? 'Active' : 'Inactive'"
-                              :severity="institution.isActive ? 'success' : 'danger'"
-                            />
+                            <v-chip :color="institution.isActive ? 'success' : 'error'" variant="tonal">
+                              {{ institution.isActive ? 'Active' : 'Inactive' }}
+                            </v-chip>
                           </p>
                         </div>
                         <div class="info-item">
                           <label class="font-semibold text-900">Tags</label>
                           <div class="mt-1">
-                            <Tag
-                              v-for="tag in institution.tags"
-                              :key="tag"
-                              :value="tag"
-                              severity="secondary"
-                              class="mr-1 mb-1"
-                            />
-                            <span v-if="!institution.tags.length" class="text-500">
+                            <v-chip v-for="tag in (institution.tags || [])" :key="tag" class="mr-1 mb-1" size="small" variant="tonal">{{ tag }}</v-chip>
+                            <span v-if="!(institution.tags?.length)" class="text-500">
                               No tags
                             </span>
                           </div>
                         </div>
                       </div>
-                    </template>
-                  </Card>
+                    </v-card-text>
+                  </v-card>
                 </div>
 
                 <!-- Address Information Card -->
                 <div class="col-12 lg:col-6">
-                  <Card>
-                    <template #title>Address Information</template>
-                    <template #content>
+                  <v-card>
+                    <v-card-title>Address Information</v-card-title>
+                    <v-card-text>
                       <div class="address-info">
                         <div class="info-item mb-3">
                           <label class="font-semibold text-900">Street Address</label>
-                          <p class="text-700 mt-1">{{ institution.address.street }}</p>
+                          <p class="text-700 mt-1">{{ institution.address?.street || 'Not specified' }}</p>
                         </div>
                         <div class="grid">
                           <div class="col-6">
                             <div class="info-item mb-3">
                               <label class="font-semibold text-900">City</label>
-                              <p class="text-700 mt-1">{{ institution.address.city }}</p>
+                              <p class="text-700 mt-1">{{ institution.address?.city || 'Not specified' }}</p>
                             </div>
                           </div>
                           <div class="col-6">
                             <div class="info-item mb-3">
                               <label class="font-semibold text-900">State</label>
-                              <p class="text-700 mt-1">{{ institution.address.state }}</p>
+                              <p class="text-700 mt-1">{{ institution.address?.state || 'Not specified' }}</p>
                             </div>
                           </div>
                         </div>
@@ -175,7 +147,7 @@
                             <div class="info-item mb-3">
                               <label class="font-semibold text-900">ZIP Code</label>
                               <p class="text-700 mt-1">
-                                {{ institution.address.zipCode }}
+                                {{ institution.address?.zipCode || 'Not specified' }}
                               </p>
                             </div>
                           </div>
@@ -183,24 +155,23 @@
                             <div class="info-item">
                               <label class="font-semibold text-900">Country</label>
                               <p class="text-700 mt-1">
-                                {{ institution.address.country }}
+                                {{ institution.address?.country || 'Not specified' }}
                               </p>
                             </div>
                           </div>
                         </div>
                       </div>
-                    </template>
-                  </Card>
+                    </v-card-text>
+                  </v-card>
                 </div>
               </div>
-            </TabPanel>
+            </v-window-item>
 
-            <!-- Medical Profile Tab -->
-            <TabPanel header="Medical Profile" value="1">
-              <Card>
-                <template #title>Medical Information</template>
-                <template #content>
-                  <div class="medical-profile-info">
+            <v-window-item value="medical">
+              <v-card>
+                <v-card-title>Medical Information</v-card-title>
+                <v-card-text>
+                  <div v-if="institution.medicalProfile" class="medical-profile-info">
                     <div class="grid">
                       <div class="col-12 md:col-6 lg:col-3">
                         <div class="info-item mb-4">
@@ -226,7 +197,7 @@
                         <div class="info-item mb-4">
                           <label class="font-semibold text-900">Specialties</label>
                           <p class="text-700 mt-1">
-                            {{ institution.medicalProfile.specialties.length }}
+                            {{ (institution.medicalProfile.specialties || []).length }}
                           </p>
                         </div>
                       </div>
@@ -234,7 +205,7 @@
                         <div class="info-item mb-4">
                           <label class="font-semibold text-900">Departments</label>
                           <p class="text-700 mt-1">
-                            {{ institution.medicalProfile.departments.length }}
+                            {{ (institution.medicalProfile.departments || []).length }}
                           </p>
                         </div>
                       </div>
@@ -247,15 +218,9 @@
                             >Medical Specialties</label
                           >
                           <div class="mt-2">
-                            <Tag
-                              v-for="specialty in institution.medicalProfile.specialties"
-                              :key="specialty"
-                              :value="specialty"
-                              severity="info"
-                              class="mr-1 mb-1"
-                            />
+                            <v-chip v-for="specialty in (institution.medicalProfile.specialties || [])" :key="specialty" class="mr-1 mb-1" size="small" color="info" variant="tonal">{{ specialty }}</v-chip>
                             <span
-                              v-if="!institution.medicalProfile.specialties.length"
+                              v-if="!(institution.medicalProfile.specialties && institution.medicalProfile.specialties.length)"
                               class="text-500"
                             >
                               No specialties specified
@@ -267,15 +232,9 @@
                         <div class="info-item mb-4">
                           <label class="font-semibold text-900">Departments</label>
                           <div class="mt-2">
-                            <Tag
-                              v-for="department in institution.medicalProfile.departments"
-                              :key="department"
-                              :value="department"
-                              severity="secondary"
-                              class="mr-1 mb-1"
-                            />
+                            <v-chip v-for="department in (institution.medicalProfile.departments || [])" :key="department" class="mr-1 mb-1" size="small" variant="tonal">{{ department }}</v-chip>
                             <span
-                              v-if="!institution.medicalProfile.departments.length"
+                              v-if="!(institution.medicalProfile.departments && institution.medicalProfile.departments.length)"
                               class="text-500"
                             >
                               No departments specified
@@ -290,16 +249,9 @@
                         <div class="info-item mb-4">
                           <label class="font-semibold text-900">Equipment Types</label>
                           <div class="mt-2">
-                            <Tag
-                              v-for="equipment in institution.medicalProfile
-                                .equipmentTypes"
-                              :key="equipment"
-                              :value="equipment"
-                              severity="warning"
-                              class="mr-1 mb-1"
-                            />
+                            <v-chip v-for="equipment in (institution.medicalProfile.equipmentTypes || [])" :key="equipment" class="mr-1 mb-1" size="small" color="warning" variant="tonal">{{ equipment }}</v-chip>
                             <span
-                              v-if="!institution.medicalProfile.equipmentTypes.length"
+                              v-if="!(institution.medicalProfile.equipmentTypes && institution.medicalProfile.equipmentTypes.length)"
                               class="text-500"
                             >
                               No equipment specified
@@ -311,16 +263,18 @@
                         <div class="info-item mb-4">
                           <label class="font-semibold text-900">Certifications</label>
                           <div class="mt-2">
-                            <Tag
-                              v-for="certification in institution.medicalProfile
-                                .certifications"
+                            <v-chip
+                              v-for="certification in (institution.medicalProfile.certifications || [])"
                               :key="certification"
-                              :value="certification"
-                              severity="success"
+                              color="success"
+                              size="small"
+                              variant="tonal"
                               class="mr-1 mb-1"
-                            />
+                            >
+                              {{ certification }}
+                            </v-chip>
                             <span
-                              v-if="!institution.medicalProfile.certifications.length"
+                              v-if="!(institution.medicalProfile.certifications && institution.medicalProfile.certifications.length)"
                               class="text-500"
                             >
                               No certifications specified
@@ -330,7 +284,7 @@
                       </div>
                     </div>
 
-                    <div v-if="institution.medicalProfile.complianceNotes" class="grid">
+                    <div v-if="institution.medicalProfile && institution.medicalProfile.complianceNotes" class="grid">
                       <div class="col-12">
                         <div class="info-item">
                           <label class="font-semibold text-900">Compliance Notes</label>
@@ -341,27 +295,24 @@
                       </div>
                     </div>
                   </div>
-                </template>
-              </Card>
-            </TabPanel>
+                  <div v-else class="text-muted py-3">
+                    No medical profile available
+                  </div>
+                </v-card-text>
+              </v-card>
+            </v-window-item>
 
-            <!-- Contact Persons Tab -->
-            <TabPanel header="Contact Persons" value="2">
-              <Card>
-                <template #title>
+            <v-window-item value="contacts">
+              <v-card>
+                <v-card-title>
                   <div class="flex justify-content-between align-items-center">
                     <span>Contact Persons</span>
-                    <Button
-                      label="Add Contact"
-                      icon="pi pi-plus"
-                      size="small"
-                      @click="showAddContactDialog = true"
-                    />
+                    <v-btn size="small" color="primary" prepend-icon="mdi-plus" @click="showAddContactDialog = true">Add Contact</v-btn>
                   </div>
-                </template>
-                <template #content>
+                </v-card-title>
+                <v-card-text>
                   <div
-                    v-if="institution.contactPersons.length === 0"
+                    v-if="!institution.contactPersons?.length"
                     class="text-center py-6"
                   >
                     <i class="pi pi-users text-4xl text-400 mb-3"></i>
@@ -371,32 +322,22 @@
 
                   <div v-else class="contact-persons-list">
                     <div
-                      v-for="contact in institution.contactPersons"
+                      v-for="contact in (institution.contactPersons || [])"
                       :key="contact.id"
                       class="contact-person-card mb-3"
                     >
-                      <Card>
-                        <template #content>
+                      <v-card>
+                        <v-card-text>
                           <div class="flex justify-content-between align-items-start">
                             <div class="contact-info">
                               <div class="flex align-items-center mb-2">
-                                <Avatar
-                                  :label="`${contact.firstName.charAt(
-                                    0
-                                  )}${contact.lastName.charAt(0)}`"
-                                  shape="circle"
-                                  size="normal"
-                                  class="mr-3"
-                                />
+                                <v-avatar size="28" class="mr-2">
+                                  <span>{{ `${(contact.firstName || '').charAt(0)}${(contact.lastName || '').charAt(0)}` || '?' }}</span>
+                                </v-avatar>
                                 <div>
                                   <h4 class="text-900 font-semibold m-0">
                                     {{ contact.firstName }} {{ contact.lastName }}
-                                    <Tag
-                                      v-if="contact.isPrimary"
-                                      value="Primary"
-                                      severity="success"
-                                      class="ml-2"
-                                    />
+                                    <v-chip v-if="contact.isPrimary" class="ml-2" size="x-small" color="success" variant="tonal">Primary</v-chip>
                                   </h4>
                                   <p class="text-600 m-0">
                                     {{ contact.title || "No title" }}
@@ -425,60 +366,189 @@
                               </div>
                             </div>
                             <div class="contact-actions">
-                              <Button
-                                icon="pi pi-pencil"
-                                text
-                                rounded
+                              <v-btn
+                                variant="text"
                                 size="small"
+                                icon="mdi-pencil"
                                 @click="editContact(contact)"
-                                v-tooltip="'Edit Contact'"
+                                :title="'Edit Contact'"
                               />
-                              <Button
-                                icon="pi pi-trash"
-                                text
-                                rounded
+                              <v-btn
+                                variant="text"
                                 size="small"
-                                severity="danger"
+                                color="error"
+                                icon="mdi-trash-can-outline"
                                 @click="confirmDeleteContact(contact)"
-                                v-tooltip="'Delete Contact'"
+                                :title="'Delete Contact'"
                               />
                             </div>
                           </div>
-                        </template>
-                      </Card>
+                        </v-card-text>
+                      </v-card>
                     </div>
                   </div>
-                </template>
-              </Card>
-            </TabPanel>
-          </TabView>
+                </v-card-text>
+              </v-card>
+            </v-window-item>
+
+            <!-- Collaboration Summary (feature-flagged) -->
+            <v-window-item v-if="enableCollab" value="collab">
+              <div v-if="!collabData" class="text-center py-6">
+                <v-progress-circular indeterminate color="primary" />
+              </div>
+              <div v-else class="collab-summary-grid">
+                <v-card class="summary-card">
+                  <v-card-title>Stats</v-card-title>
+                  <v-card-text>
+                    <div class="stats-grid">
+                      <div class="stat"><span class="stat-label">Notes</span><span class="stat-value">{{ collabData.stats.totalNotes }}</span></div>
+                      <div class="stat"><span class="stat-label">Meetings</span><span class="stat-value">{{ collabData.stats.totalMeetings }}</span></div>
+                      <div class="stat"><span class="stat-label">Calls</span><span class="stat-value">{{ collabData.stats.totalCalls }}</span></div>
+                      <div class="stat"><span class="stat-label">Reminders</span><span class="stat-value">{{ collabData.stats.totalReminders }}</span></div>
+                      <div class="stat"><span class="stat-label">Open Tasks</span><span class="stat-value">{{ collabData.stats.openTasks }}</span></div>
+                    </div>
+                  </v-card-text>
+                </v-card>
+                <v-card class="summary-card">
+                  <v-card-title>Recent Notes</v-card-title>
+                  <v-card-text>
+                    <ul class="list-unstyled compact-list">
+                      <li v-for="n in collabData.recentNotes" :key="n.id">
+                        <i class="pi pi-file-edit mr-2"></i>
+                        <strong>{{ n.title }}</strong>
+                        <small class="text-muted"> · {{ formatDateTime(n.createdAt) }}</small>
+                      </li>
+                      <li v-if="!collabData.recentNotes?.length" class="text-muted">No notes</li>
+                    </ul>
+                  </v-card-text>
+                </v-card>
+                <v-card class="summary-card">
+                  <v-card-title>Upcoming Meetings</v-card-title>
+                  <v-card-text>
+                    <ul class="list-unstyled compact-list">
+                      <li v-for="m in collabData.upcomingMeetings" :key="m.id">
+                        <i class="pi pi-calendar mr-2"></i>
+                        <strong>{{ m.title }}</strong>
+                        <small class="text-muted"> · {{ formatDateTime(m.startDate) }}</small>
+                      </li>
+                      <li v-if="!collabData.upcomingMeetings?.length" class="text-muted">No meetings</li>
+                    </ul>
+                  </v-card-text>
+                </v-card>
+                <v-card class="summary-card">
+                  <v-card-title>Recent Calls</v-card-title>
+                  <v-card-text>
+                    <ul class="list-unstyled compact-list">
+                      <li v-for="c in collabData.recentCalls" :key="c.id">
+                        <i class="pi pi-phone mr-2"></i>
+                        <strong>{{ c.phoneNumber }}</strong>
+                        <small class="text-muted"> · {{ formatDateTime(c.createdAt) }}</small>
+                      </li>
+                      <li v-if="!collabData.recentCalls?.length" class="text-muted">No calls</li>
+                    </ul>
+                  </v-card-text>
+                </v-card>
+                <v-card class="summary-card">
+                  <v-card-title>Pending Reminders</v-card-title>
+                  <v-card-text>
+                    <ul class="list-unstyled compact-list">
+                      <li v-for="r in collabData.pendingReminders" :key="r.id">
+                        <i class="pi pi-bell mr-2"></i>
+                        <strong>{{ r.title }}</strong>
+                        <small class="text-muted"> · {{ formatDateTime(r.reminderDate) }}</small>
+                      </li>
+                      <li v-if="!collabData.pendingReminders?.length" class="text-muted">No reminders</li>
+                    </ul>
+                  </v-card-text>
+                </v-card>
+              </div>
+            </v-window-item>
+
+            <!-- Timeline Tab (feature-flagged) -->
+            <v-window-item v-if="enableCollab" value="timeline">
+              <div v-if="!timelineItems.length" class="text-center py-6">
+                <v-progress-circular indeterminate color="primary" />
+              </div>
+              <div v-else class="timeline-list">
+                <div v-for="item in timelineItems" :key="`${item.type}-${item.id}`" class="timeline-item">
+                  <span class="item-icon" :class="`type-${item.type}`">
+                    <i :class="getTypeIcon(item.type)"></i>
+                  </span>
+                  <div class="item-content">
+                    <div class="item-header">
+                      <span class="item-type">{{ item.type }}</span>
+                      <span class="item-date">{{ formatDateTime(item.createdAt) }}</span>
+                    </div>
+                    <div class="item-title">{{ item.title }}</div>
+                    <div v-if="item.description" class="item-desc text-muted">{{ item.description }}</div>
+                  </div>
+                </div>
+                <div class="timeline-pagination">
+                  <v-btn variant="text" prepend-icon="mdi-chevron-left" :disabled="!(timelinePagination && timelinePagination.offset > 0)" @click="loadMoreTimeline(-1)">Previous</v-btn>
+                  <span class="mx-2 text-muted">
+                    {{ (timelinePagination?.offset || 0) + 1 }}–
+                    {{ Math.min((timelinePagination?.offset || 0) + (timelinePagination?.limit || 0), timelinePagination?.total || 0) }}
+                    / {{ timelinePagination?.total || 0 }}
+                  </span>
+                  <v-btn variant="text" append-icon="mdi-chevron-right" :disabled="!(timelinePagination && timelinePagination.hasMore)" @click="loadMoreTimeline(1)">Next</v-btn>
+                </div>
+              </div>
+            </v-window-item>
+
+            <!-- Unified Search Tab (feature-flagged) -->
+            <v-window-item v-if="enableCollab" value="search">
+              <div class="search-controls">
+                <div class="scope-select">
+                  <label class="mr-2">Scope</label>
+                  <v-btn-toggle v-model="unifiedScope" mandatory>
+                    <v-btn v-for="option in scopeOptions" :key="option.value" :value="option.value" size="small">{{ option.label }}</v-btn>
+                  </v-btn-toggle>
+                </div>
+                <div class="query-input d-flex align-center">
+                  <v-text-field v-model="unifiedQuery" label="Search term" density="comfortable" class="mr-2" @keyup.enter="runUnifiedSearch" />
+                  <v-select v-model="unifiedType" :items="typeOptions" item-title="label" item-value="value" label="Type" class="mr-2" />
+                  <v-btn color="primary" prepend-icon="mdi-magnify" @click="runUnifiedSearch">Search</v-btn>
+                </div>
+              </div>
+              <div v-if="unifiedLoading" class="text-center py-4"><v-progress-circular indeterminate color="primary" /></div>
+              <div v-else-if="unifiedError" class="text-danger py-2">{{ unifiedError }}</div>
+              <div v-else class="search-results" v-if="unifiedData">
+                <div class="result-summary text-muted mb-3">{{ unifiedData.totalResults }} results</div>
+                <div class="result-group" v-for="group in groupedResults" :key="group.key">
+                  <h4>{{ group.title }} <small class="text-muted">({{ group.items.length }})</small></h4>
+                  <ul class="list-unstyled compact-list">
+                    <li v-for="it in group.items" :key="it.id">
+                      <i :class="group.icon + ' mr-2'"></i>
+                      <strong>{{ it.title }}</strong>
+                      <small class="text-muted" v-if="it.subtitle"> · {{ it.subtitle }}</small>
+                    </li>
+                    <li v-if="!group.items.length" class="text-muted">No {{ group.title.toLowerCase() }}</li>
+                  </ul>
+                </div>
+              </div>
+            </v-window-item>
+          </v-window>
         </div>
 
         <!-- Add Contact Dialog -->
-        <Dialog
-          v-model:visible="showAddContactDialog"
-          header="Add Contact Person"
-          :modal="true"
-          :closable="true"
-          :style="{ width: '40vw' }"
-          class="p-fluid"
-        >
+        <v-dialog v-model="showAddContactDialog" max-width="600">
+          <v-card>
+            <v-card-title>Add Contact Person</v-card-title>
+            <v-card-text>
           <ContactPersonForm
             :institution-id="institution.id"
             @contact-saved="onContactSaved"
             @cancel="showAddContactDialog = false"
           />
-        </Dialog>
+            </v-card-text>
+          </v-card>
+        </v-dialog>
 
         <!-- Edit Contact Dialog -->
-        <Dialog
-          v-model:visible="showEditContactDialog"
-          header="Edit Contact Person"
-          :modal="true"
-          :closable="true"
-          :style="{ width: '40vw' }"
-          class="p-fluid"
-        >
+        <v-dialog v-model="showEditContactDialog" max-width="600">
+          <v-card>
+            <v-card-title>Edit Contact Person</v-card-title>
+            <v-card-text>
           <ContactPersonForm
             v-if="editingContact"
             :institution-id="institution.id"
@@ -486,13 +556,27 @@
             @contact-saved="onContactSaved"
             @cancel="showEditContactDialog = false"
           />
-        </Dialog>
+            </v-card-text>
+          </v-card>
+        </v-dialog>
 
-        <!-- Delete Contact Confirmation -->
-        <ConfirmDialog />
+        <!-- Delete Confirmations (Vuetify) -->
+        <v-dialog v-model="confirmVisible" max-width="420">
+          <v-card>
+            <v-card-title>Delete Confirmation</v-card-title>
+            <v-card-text>{{ confirmMessage }}</v-card-text>
+            <v-card-actions>
+              <v-spacer></v-spacer>
+              <v-btn variant="text" @click="confirmVisible = false">Cancel</v-btn>
+              <v-btn color="error" @click="confirmAccept">Delete</v-btn>
+            </v-card-actions>
+          </v-card>
+        </v-dialog>
 
-        <!-- Delete Institution Confirmation -->
-        <ConfirmDialog />
+        <!-- Snackbar notifications -->
+        <v-snackbar v-model="snackbar.visible" :color="snackbar.color" timeout="3000">
+          {{ snackbar.message }}
+        </v-snackbar>
       </div>
     </div>
   </AppLayout>
@@ -500,7 +584,7 @@
 
 <script setup lang="ts">
 import ContactPersonForm from "@/components/institutions/ContactPersonForm.vue"
-import MedicalInstitutionForm from "@/components/institutions/MedicalInstitutionForm.vue"
+import MedicalInstitutionForm from "@/components/institutions/MedicalInstitutionFormVuetify.vue"
 import AppLayout from "@/components/layout/AppLayout.vue"
 import { institutionsApi } from "@/services/api"
 import type {
@@ -509,24 +593,24 @@ import type {
   InstitutionType,
   MedicalInstitution,
 } from "@medical-crm/shared"
-import Avatar from "primevue/avatar"
-import Button from "primevue/button"
-import Card from "primevue/card"
-import ConfirmDialog from "primevue/confirmdialog"
-import Dialog from "primevue/dialog"
-import ProgressSpinner from "primevue/progressspinner"
-import TabPanel from "primevue/tabpanel"
-import TabView from "primevue/tabview"
-import Tag from "primevue/tag"
-import { useConfirm } from "primevue/useconfirm"
-import { useToast } from "primevue/usetoast"
-import { onMounted, ref } from "vue"
+import { onMounted, ref, computed } from "vue"
 import { useRoute, useRouter } from "vue-router"
 
 const route = useRoute()
 const router = useRouter()
-const toast = useToast()
-const confirm = useConfirm()
+// Local snackbar + confirm state (Vuetify)
+const snackbar = ref<{ visible: boolean; color: string; message: string }>({ visible: false, color: "info", message: "" })
+const showSnackbar = (message: string, color: string = "info") => {
+  snackbar.value = { visible: true, color, message }
+}
+const confirmVisible = ref(false)
+const confirmMessage = ref("")
+const confirmAction = ref<null | (() => void)>(null)
+const confirmAccept = () => {
+  confirmVisible.value = false
+  if (confirmAction.value) confirmAction.value()
+}
+// No PrimeVue confirm; using Vuetify dialog
 
 // Reactive data
 const institution = ref<MedicalInstitution | null>(null)
@@ -536,6 +620,24 @@ const editMode = ref(false)
 const showAddContactDialog = ref(false)
 const showEditContactDialog = ref(false)
 const editingContact = ref<ContactPerson | null>(null)
+
+// Collaboration and timeline (feature hooks)
+const collabData = ref<any | null>(null)
+const timelineItems = ref<any[]>([])
+const timelinePagination = ref<{ total: number; limit: number; offset: number; hasMore: boolean } | null>(null)
+const scopeOptions = [
+  { label: 'Own', value: 'own' },
+  { label: 'Team', value: 'team' },
+  { label: 'All', value: 'all' },
+]
+const unifiedScope = ref<'own' | 'team' | 'all'>((localStorage.getItem('unifiedScope') as any) || 'team')
+const unifiedQuery = ref('')
+const unifiedType = ref<"institutions" | "tasks" | "notes" | "meetings" | "calls" | "reminders" | "all" | undefined>('all')
+const unifiedData = ref<any | null>(null)
+const unifiedLoading = ref(false)
+const unifiedError = ref('')
+const enableCollab = (import.meta as any).env?.VITE_FEATURE_COLLAB === '1'
+const activeTab = ref<'overview' | 'medical' | 'contacts' | 'collab' | 'timeline' | 'search'>('overview')
 
 // Methods
 const loadInstitution = async () => {
@@ -551,8 +653,8 @@ const loadInstitution = async () => {
   try {
     // Try to load from API first, fallback to mock data
     try {
-      const response = await institutionsApi.getById(institutionId)
-      institution.value = response as MedicalInstitution
+      const response = await institutionsApi.getById(institutionId) as any
+      institution.value = response.data?.institution || response as MedicalInstitution
       return
     } catch (apiError) {
       console.warn("API call failed, using mock data:", apiError)
@@ -632,25 +734,13 @@ const cancelEdit = () => {
 const onInstitutionSaved = (savedInstitution: MedicalInstitution) => {
   institution.value = savedInstitution
   editMode.value = false
-  toast.add({
-    severity: "success",
-    summary: "Success",
-    detail: "Institution updated successfully",
-    life: 3000,
-  })
+  showSnackbar("Institution updated successfully", "success")
 }
 
 const confirmDelete = () => {
-  confirm.require({
-    message: `Are you sure you want to delete ${institution.value?.name}?`,
-    header: "Delete Confirmation",
-    icon: "pi pi-exclamation-triangle",
-    rejectClass: "p-button-secondary p-button-outlined",
-    rejectLabel: "Cancel",
-    acceptLabel: "Delete",
-    acceptClass: "p-button-danger",
-    accept: () => deleteInstitution(),
-  })
+  confirmMessage.value = `Are you sure you want to delete ${institution.value?.name}?`
+  confirmAction.value = () => deleteInstitution()
+  confirmVisible.value = true
 }
 
 const deleteInstitution = async () => {
@@ -658,21 +748,11 @@ const deleteInstitution = async () => {
 
   try {
     await institutionsApi.delete(institution.value.id)
-    toast.add({
-      severity: "success",
-      summary: "Success",
-      detail: `${institution.value.name} has been deleted`,
-      life: 3000,
-    })
+    showSnackbar(`${institution.value.name} has been deleted`, "success")
     router.push("/institutions")
   } catch (error) {
     console.error("Error deleting institution:", error)
-    toast.add({
-      severity: "error",
-      summary: "Error",
-      detail: "Failed to delete institution",
-      life: 3000,
-    })
+    showSnackbar("Failed to delete institution", "error")
   }
 }
 
@@ -682,16 +762,9 @@ const editContact = (contact: ContactPerson) => {
 }
 
 const confirmDeleteContact = (contact: ContactPerson) => {
-  confirm.require({
-    message: `Are you sure you want to delete ${contact.firstName} ${contact.lastName}?`,
-    header: "Delete Contact",
-    icon: "pi pi-exclamation-triangle",
-    rejectClass: "p-button-secondary p-button-outlined",
-    rejectLabel: "Cancel",
-    acceptLabel: "Delete",
-    acceptClass: "p-button-danger",
-    accept: () => deleteContact(contact),
-  })
+  confirmMessage.value = `Are you sure you want to delete ${contact.firstName} ${contact.lastName}?`
+  confirmAction.value = () => deleteContact(contact)
+  confirmVisible.value = true
 }
 
 const deleteContact = async (contact: ContactPerson) => {
@@ -710,20 +783,10 @@ const deleteContact = async (contact: ContactPerson) => {
       (c) => c.id !== contact.id
     )
 
-    toast.add({
-      severity: "success",
-      summary: "Success",
-      detail: `${contact.firstName} ${contact.lastName} has been deleted`,
-      life: 3000,
-    })
+    showSnackbar(`${contact.firstName} ${contact.lastName} has been deleted`, "success")
   } catch (error) {
     console.error("Error deleting contact:", error)
-    toast.add({
-      severity: "error",
-      summary: "Error",
-      detail: "Failed to delete contact",
-      life: 3000,
-    })
+    showSnackbar("Failed to delete contact", "error")
   }
 }
 
@@ -795,6 +858,94 @@ const getInstitutionColor = (type: InstitutionType): string => {
 // Lifecycle
 onMounted(() => {
   loadInstitution()
+  if (enableCollab) {
+    // Lazy fetch collaboration summary and initial timeline
+    if (route.params.id) {
+      void institutionsApi
+        .getCollaboration(String(route.params.id))
+        .then((data) => (collabData.value = data))
+        .catch((e) => console.warn('Collab load failed', e))
+      void institutionsApi
+        .getTimeline(String(route.params.id), { limit: 25, offset: 0 })
+        .then((data: any) => {
+          timelineItems.value = data.items || []
+          timelinePagination.value = data.pagination || null
+        })
+        .catch((e) => console.warn('Timeline load failed', e))
+    }
+  }
+})
+
+// Helpers
+const formatDateTime = (d: string | Date) => new Date(d).toLocaleString()
+const getTypeIcon = (type: string) => {
+  const map: Record<string, string> = {
+    note: 'pi pi-file-edit',
+    meeting: 'pi pi-calendar',
+    call: 'pi pi-phone',
+    reminder: 'pi pi-bell',
+    task: 'pi pi-list-check',
+    institution: 'pi pi-building',
+  }
+  return map[type] || 'pi pi-circle'
+}
+
+const loadMoreTimeline = async (direction: -1 | 1) => {
+  if (!timelinePagination?.value || !route.params.id) return
+  const { limit, offset, total } = timelinePagination.value
+  let newOffset = offset + direction * limit
+  newOffset = Math.max(0, Math.min(newOffset, Math.max(0, total - limit)))
+  const data: any = await institutionsApi.getTimeline(String(route.params.id), { limit, offset: newOffset })
+  timelineItems.value = data.items || []
+  timelinePagination.value = data.pagination || null
+}
+
+// Unified search
+const typeOptions = [
+  { label: 'All', value: 'all' },
+  { label: 'Institutions', value: 'institutions' },
+  { label: 'Tasks', value: 'tasks' },
+  { label: 'Notes', value: 'notes' },
+  { label: 'Meetings', value: 'meetings' },
+  { label: 'Calls', value: 'calls' },
+  { label: 'Reminders', value: 'reminders' },
+]
+
+const runUnifiedSearch = async () => {
+  if (!unifiedQuery.value) return
+  unifiedLoading.value = true
+  unifiedError.value = ''
+  try {
+    localStorage.setItem('unifiedScope', unifiedScope.value)
+    const data = await institutionsApi.unifiedSearch({
+      q: unifiedQuery.value,
+      type: unifiedType.value === 'all' ? undefined : unifiedType.value,
+      scope: unifiedScope.value,
+      limit: 20,
+      offset: 0,
+    })
+    unifiedData.value = data
+  } catch (e: any) {
+    unifiedError.value = e?.message || 'Search failed'
+  } finally {
+    unifiedLoading.value = false
+  }
+}
+
+const groupedResults = computed(() => {
+  if (!unifiedData.value?.results) return []
+  const r = unifiedData.value.results
+  const groups = [
+    { key: 'institutions', title: 'Institutions', items: r.institutions || [], icon: 'pi pi-building' },
+    { key: 'tasks', title: 'Tasks', items: r.tasks || [], icon: 'pi pi-list-check' },
+    { key: 'notes', title: 'Notes', items: r.notes || [], icon: 'pi pi-file-edit' },
+    { key: 'meetings', title: 'Meetings', items: r.meetings || [], icon: 'pi pi-calendar' },
+    { key: 'calls', title: 'Calls', items: r.calls || [], icon: 'pi pi-phone' },
+    { key: 'reminders', title: 'Reminders', items: r.reminders || [], icon: 'pi pi-bell' },
+  ]
+  return unifiedType.value && unifiedType.value !== 'all'
+    ? groups.filter(g => g.key === unifiedType.value)
+    : groups
 })
 </script>
 
@@ -818,6 +969,44 @@ onMounted(() => {
   display: flex;
   gap: 0.5rem;
 }
+
+/* Collaboration summary */
+.collab-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 1rem;
+}
+.summary-card {
+  height: 100%;
+}
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.75rem;
+}
+.stat {
+  display: flex;
+  justify-content: space-between;
+  background: var(--surface-100);
+  padding: 0.5rem 0.75rem;
+  border-radius: 6px;
+}
+.stat-label { color: var(--text-color-secondary); }
+.stat-value { font-weight: 600; }
+.compact-list li { padding: 0.25rem 0; }
+
+/* Timeline */
+.timeline-list { display: flex; flex-direction: column; gap: 0.75rem; }
+.timeline-item { display: flex; gap: 0.75rem; align-items: flex-start; }
+.item-icon { width: 28px; height: 28px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; background: var(--surface-200); }
+.item-content { flex: 1; }
+.item-header { display: flex; justify-content: space-between; color: var(--text-color-secondary); font-size: 0.875rem; }
+.item-title { font-weight: 600; }
+.timeline-pagination { display: flex; align-items: center; justify-content: center; gap: 0.5rem; margin-top: 0.5rem; }
+
+/* Unified Search */
+.search-controls { display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem; flex-wrap: wrap; }
+.scope-select { display: flex; align-items: center; gap: 0.5rem; }
 
 .info-item {
   margin-bottom: 1rem;

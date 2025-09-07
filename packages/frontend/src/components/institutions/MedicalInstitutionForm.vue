@@ -329,7 +329,6 @@ import MultiSelect from "primevue/multiselect"
 import TabPanel from "primevue/tabpanel"
 import TabView from "primevue/tabview"
 import Textarea from "primevue/textarea"
-import { useToast } from "primevue/usetoast"
 import { computed, reactive, ref, watch } from "vue"
 
 interface Props {
@@ -343,7 +342,7 @@ interface Emits {
 
 const props = defineProps<Props>()
 const emit = defineEmits<Emits>()
-const toast = useToast()
+// Snackbar/notifications are handled by parent components (Vuetify)
 
 const saving = ref(false)
 const isEditing = computed(() => !!props.institution)
@@ -452,7 +451,7 @@ watch(
   { immediate: true }
 )
 
-const resetForm = () => {
+function resetForm() {
   form.name = ""
   form.type = "" as InstitutionType
   form.isActive = true
@@ -478,7 +477,7 @@ const resetForm = () => {
   clearErrors()
 }
 
-const clearErrors = () => {
+function clearErrors() {
   Object.keys(errors).forEach((key) => {
     errors[key as keyof typeof errors] = ""
   })
@@ -584,24 +583,13 @@ const handleSubmit = async () => {
 
     emit("institution-saved", savedInstitution)
 
-    toast.add({
-      severity: "success",
-      summary: "Success",
-      detail: `Institution ${isEditing.value ? "updated" : "created"} successfully`,
-      life: 3000,
-    })
+    // Notify parent via emitted event; parent can display snackbar
 
     if (!isEditing.value) {
       resetForm()
     }
   } catch (error) {
     console.error("Error saving institution:", error)
-    toast.add({
-      severity: "error",
-      summary: "Error",
-      detail: `Failed to ${isEditing.value ? "update" : "create"} institution`,
-      life: 3000,
-    })
   } finally {
     saving.value = false
   }
