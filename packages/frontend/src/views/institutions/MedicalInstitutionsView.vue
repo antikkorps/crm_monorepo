@@ -666,27 +666,10 @@
       </v-dialog>
 
       <!-- Import CSV Dialog (Vuetify) -->
-      <v-dialog v-model="showImportDialog" max-width="600">
-        <v-card>
-          <v-card-title>{{ t("institutions.importInstitutions") }}</v-card-title>
-          <v-card-text>
-            <p class="text-600 mb-4">{{ t("institutions.importFromCSV") }}</p>
-            <div class="text-center py-4">
-              <v-icon size="36" class="mb-2">mdi-upload</v-icon>
-              <p class="text-600">{{ t("institutions.csvImportComingSoon") }}</p>
-            </div>
-          </v-card-text>
-          <v-card-actions>
-            <v-spacer></v-spacer>
-            <v-btn variant="text" @click="showImportDialog = false">{{
-              t("common.cancel")
-            }}</v-btn>
-            <v-btn color="primary" @click="showImportDialog = false">{{
-              t("common.import")
-            }}</v-btn>
-          </v-card-actions>
-        </v-card>
-      </v-dialog>
+      <ImportInstitutionsDialog
+        v-model="showImportDialog"
+        @completed="onImportCompleted"
+      />
 
       <!-- Delete Confirmation Dialog (Vuetify) -->
       <v-dialog v-model="confirmVisible" max-width="420">
@@ -713,6 +696,7 @@
 
 <script setup lang="ts">
 import MedicalInstitutionForm from "@/components/institutions/MedicalInstitutionFormVuetify.vue"
+import ImportInstitutionsDialog from "@/components/institutions/ImportInstitutionsDialog.vue"
 import AppLayout from "@/components/layout/AppLayout.vue"
 import { institutionsApi } from "@/services/api"
 import type {
@@ -745,6 +729,12 @@ const confirmAccept = () => {
   if (confirmTarget.value) {
     void deleteInstitution(confirmTarget.value)
   }
+}
+
+const onImportCompleted = () => {
+  showImportDialog.value = false
+  showSnackbar(t('institutions.importCompleted'), 'success')
+  loadInstitutions()
 }
 
 // Reactive data

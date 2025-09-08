@@ -139,16 +139,47 @@ export const institutionsApi = {
     const queryString = qp.toString()
     return apiClient.get(`/institutions/search/unified?${queryString}`)
   },
-  importCsv: (file: File) => {
+  importCsv: (
+    file: File,
+    options?: { skipDuplicates?: boolean; mergeDuplicates?: boolean; validateOnly?: boolean }
+  ) => {
     const formData = new FormData()
     formData.append("file", file)
-    return fetch(`${API_BASE_URL}/institutions/import`, {
+    const qp = new URLSearchParams()
+    if (options?.skipDuplicates !== undefined) qp.append("skipDuplicates", String(options.skipDuplicates))
+    if (options?.mergeDuplicates !== undefined) qp.append("mergeDuplicates", String(options.mergeDuplicates))
+    if (options?.validateOnly !== undefined) qp.append("validateOnly", String(options.validateOnly))
+    const query = qp.toString()
+    return fetch(`${API_BASE_URL}/institutions/import${query ? `?${query}` : ""}`, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${localStorage.getItem("token")}`,
       },
       body: formData,
     }).then((response) => response.json())
+  },
+  validateCsv: (file: File) => {
+    const formData = new FormData()
+    formData.append("file", file)
+    return fetch(`${API_BASE_URL}/institutions/import/validate`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("token")}`,
+      },
+      body: formData,
+    }).then((response) => response.json())
+  },
+  downloadImportTemplate: async (): Promise<Blob> => {
+    const response = await fetch(`${API_BASE_URL}/institutions/import/template`, {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("token")}`,
+      },
+    })
+    if (!response.ok) {
+      throw new Error(`Failed to download template (${response.status})`)
+    }
+    return await response.blob()
   },
   // Contact person endpoints
   contacts: {

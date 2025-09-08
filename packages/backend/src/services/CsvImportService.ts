@@ -36,31 +36,31 @@ export class CsvImportService {
   private static readonly REQUIRED_FIELDS = ["name", "type", "street", "city", "state", "zipCode", "country"]
   
   private static readonly FIELD_MAPPINGS: Record<string, string[]> = {
-    name: ["name", "institution_name", "institutionName", "institution name"],
-    type: ["type", "institution_type", "institutionType", "hospital type"],
-    street: ["street", "address", "street_address", "street address"],
-    city: ["city"],
-    state: ["state", "province"],
-    zipCode: ["zipCode", "zip_code", "postal_code", "zip", "zip code"],
-    country: ["country"],
-    bedCapacity: ["bedCapacity", "bed_capacity", "beds"],
-    surgicalRooms: ["surgicalRooms", "surgical_rooms"],
-    specialties: ["specialties", "medical_specialties"],
-    departments: ["departments"],
-    equipmentTypes: ["equipmentTypes", "equipment_types", "equipment"],
+    name: ["name", "institution_name", "institutionName", "institution name", "nom", "nom_etablissement", "raison_sociale"],
+    type: ["type", "institution_type", "institutionType", "hospital type", "type_institution", "type_etablissement"],
+    street: ["street", "address", "street_address", "street address", "adresse", "rue"],
+    city: ["city", "ville"],
+    state: ["state", "province", "etat", "departement", "département"],
+    zipCode: ["zipCode", "zip_code", "postal_code", "zip", "zip code", "code_postal", "code postal"],
+    country: ["country", "pays"],
+    bedCapacity: ["bedCapacity", "bed_capacity", "beds", "capacite_lits", "capacité_lits", "nb_lits"],
+    surgicalRooms: ["surgicalRooms", "surgical_rooms", "salles_operation", "salles_operatoires", "salles d'opération"],
+    specialties: ["specialties", "medical_specialties", "specialites", "spécialités"],
+    departments: ["departments", "departements", "départements", "services"],
+    equipmentTypes: ["equipmentTypes", "equipment_types", "equipment", "types_equipements", "equipements", "équipements"],
     certifications: ["certifications"],
-    complianceStatus: ["complianceStatus", "compliance_status"],
-    lastAuditDate: ["lastAuditDate", "last_audit_date", "audit_date"],
-    complianceExpirationDate: ["complianceExpirationDate", "compliance_expiration_date", "expiration_date"],
-    complianceNotes: ["complianceNotes", "compliance_notes"],
-    tags: ["tags"],
-    contactFirstName: ["contactFirstName", "contact_first_name", "first_name"],
-    contactLastName: ["contactLastName", "contact_last_name", "last_name"],
-    contactEmail: ["contactEmail", "contact_email", "email"],
-    contactPhone: ["contactPhone", "contact_phone", "phone"],
-    contactTitle: ["contactTitle", "contact_title", "title"],
-    contactDepartment: ["contactDepartment", "contact_department"],
-    contactIsPrimary: ["contactIsPrimary", "contact_is_primary", "is_primary"]
+    complianceStatus: ["complianceStatus", "compliance_status", "statut_conformite", "statut conformité"],
+    lastAuditDate: ["lastAuditDate", "last_audit_date", "audit_date", "date_dernier_audit", "date dernier audit"],
+    complianceExpirationDate: ["complianceExpirationDate", "compliance_expiration_date", "expiration_date", "date_expiration_conformite", "date expiration conformité"],
+    complianceNotes: ["complianceNotes", "compliance_notes", "notes_conformite", "notes conformité"],
+    tags: ["tags", "etiquettes", "étiquettes"],
+    contactFirstName: ["contactFirstName", "contact_first_name", "first_name", "prenom_contact", "prénom_contact", "prenom", "prénom"],
+    contactLastName: ["contactLastName", "contact_last_name", "last_name", "nom_contact", "nom"],
+    contactEmail: ["contactEmail", "contact_email", "email", "email_contact", "courriel_contact"],
+    contactPhone: ["contactPhone", "contact_phone", "phone", "telephone_contact", "téléphone_contact", "telephone", "téléphone"],
+    contactTitle: ["contactTitle", "contact_title", "title", "fonction_contact", "titre_contact"],
+    contactDepartment: ["contactDepartment", "contact_department", "departement_contact", "département_contact", "service_contact"],
+    contactIsPrimary: ["contactIsPrimary", "contact_is_primary", "is_primary", "contact_principal", "est_principal", "principal"]
   }
 
   static async importMedicalInstitutions(
@@ -306,14 +306,29 @@ export class CsvImportService {
         
         if (existingInstitution) {
           duplicatesFound++
-          
-          if (options.skipDuplicates) {
-            continue
-          } else if (options.mergeDuplicates) {
+
+          // When a duplicate institution is found, we may still want to add/update contacts from this row
+          const hasContactData = !!(row.data.contactFirstName || row.data.contactLastName || row.data.contactEmail || row.data.contactPhone)
+
+          if (options.mergeDuplicates) {
             await this.mergeInstitution(existingInstitution, row.data)
+            // Upsert contact if present
+            if (hasContactData) {
+              await this.upsertContact(existingInstitution, row.data, true)
+            }
             duplicatesMerged++
             successes.push(existingInstitution)
             importedInstitutions.push(existingInstitution)
+            continue
+          }
+
+          if (options.skipDuplicates) {
+            // Skip creating a new institution but still append contact if provided
+            if (hasContactData) {
+              await this.upsertContact(existingInstitution, row.data, false)
+              successes.push(existingInstitution)
+              importedInstitutions.push(existingInstitution)
+            }
             continue
           }
         }
@@ -338,6 +353,59 @@ export class CsvImportService {
       duplicatesFound,
       duplicatesMerged
     }
+  }
+
+  private static async upsertContact(institution: MedicalInstitution, data: Record<string, string>, allowUpdate: boolean): Promise<void> {
+    const institutionId = institution.id || institution.getDataValue('id')
+    if (!institutionId) return
+
+    const { ContactPerson } = await import('../models')
+
+    // Define a simple duplicate strategy: prefer email, fallback to (firstName+lastName+phone)
+    let existing: any = null
+    if (data.contactEmail) {
+      existing = await ContactPerson.findOne({ where: { institutionId, email: data.contactEmail } })
+    }
+    if (!existing && (data.contactFirstName || data.contactLastName) && data.contactPhone) {
+      existing = await ContactPerson.findOne({
+        where: {
+          institutionId,
+          firstName: data.contactFirstName || '',
+          lastName: data.contactLastName || '',
+          phone: data.contactPhone,
+        },
+      })
+    }
+
+    // Normalize isPrimary
+    const isPrimary = data.contactIsPrimary === 'true' || data.contactIsPrimary === '1' || (!data.contactIsPrimary ? false : false)
+
+    if (existing) {
+      if (allowUpdate) {
+        await existing.update({
+          firstName: data.contactFirstName || existing.getDataValue('firstName'),
+          lastName: data.contactLastName || existing.getDataValue('lastName'),
+          email: data.contactEmail || existing.getDataValue('email'),
+          phone: data.contactPhone || existing.getDataValue('phone'),
+          title: data.contactTitle || existing.getDataValue('title'),
+          department: data.contactDepartment || existing.getDataValue('department'),
+          isPrimary: typeof data.contactIsPrimary !== 'undefined' ? isPrimary : existing.getDataValue('isPrimary'),
+        })
+      }
+      return
+    }
+
+    // Create new contact
+    await ContactPerson.create({
+      institutionId,
+      firstName: data.contactFirstName || '',
+      lastName: data.contactLastName || '',
+      email: data.contactEmail,
+      phone: data.contactPhone,
+      title: data.contactTitle,
+      department: data.contactDepartment,
+      isPrimary,
+    })
   }
 
   private static async findDuplicateInstitution(data: Record<string, string>): Promise<MedicalInstitution | null> {
@@ -510,14 +578,19 @@ export class CsvImportService {
       'contactTitle', 'contactDepartment', 'contactIsPrimary'
     ].join(',')
 
-    const exampleRow = [
+    // Quote any value that contains commas or quotes to avoid column shifts in spreadsheet apps
+    const esc = (v: string) => (/,|"|\n/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v)
+
+    const exampleValues = [
       'General Hospital', 'hospital', '123 Medical Center Dr', 'Healthcare City', 'CA', '90210', 'US',
       '150', '8', 'cardiology,neurology', 'emergency,icu',
       'mri,ct_scan', 'jcaho,iso_9001', 'compliant',
       '2024-01-15', '2025-01-15', 'All requirements met', 'cardiology,emergency',
       'John', 'Doe', 'john.doe@hospital.com', '+1234567890',
       'Chief Medical Officer', 'Administration', 'true'
-    ].join(',')
+    ]
+
+    const exampleRow = exampleValues.map(esc).join(',')
 
     return `${headers}\n${exampleRow}`
   }

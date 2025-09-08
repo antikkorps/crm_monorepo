@@ -36,6 +36,11 @@ Invalid Hospital,invalid_type,456 Test Ave,Test City,CA,90210,US,abc,xyz,neurolo
 
         const lines = template.split("\n")
         expect(lines).toHaveLength(2) // Header + example row
+
+        // Ensure values that contain commas are quoted to prevent column shifts
+        expect(lines[1]).toContain('"cardiology,neurology"')
+        expect(lines[1]).toContain('"emergency,icu"')
+        expect(lines[1]).toContain('"jcaho,iso_9001"')
       } catch (error) {
         // This test doesn't require database
         throw error
@@ -322,6 +327,63 @@ General Hospital,hospital,123 Medical Center Dr,Healthcare City,CA,90210,US,"car
         expect(institutions).toHaveLength(2)
       } catch (error) {
         if (error.message?.includes("connect")) return
+        throw error
+      }
+    })
+
+    it("should allow multiple contacts for same institution across rows", async () => {
+      try {
+        const csv = [
+          'name,type,street,city,state,zipCode,country,contactFirstName,contactLastName,contactEmail,contactPhone',
+          'Group Hospital,hospital,1 Health St,MedCity,CA,90001,US,John,Doe,john@group.com,+111',
+          'Group Hospital,hospital,1 Health St,MedCity,CA,90001,US,Jane,Smith,jane@group.com,+222'
+        ].join('\n')
+
+        const result = await CsvImportService.importMedicalInstitutions(csv, {
+          validateOnly: false,
+          skipDuplicates: true, // skip creating duplicate institution but still add contacts
+        })
+
+        expect(result.success).toBe(true)
+
+        const inst = await MedicalInstitution.findOne({ where: { name: 'Group Hospital' } })
+        const instId = inst?.getDataValue('id')
+        const contacts = await ContactPerson.findAll({ where: { institutionId: instId } })
+        expect(contacts).toHaveLength(2)
+      } catch (error) {
+        if (error.message?.includes('connect')) return
+        throw error
+      }
+    })
+
+    it("should update existing contact on duplicate (mergeDuplicates)", async () => {
+      try {
+        const csv1 = [
+          'name,type,street,city,state,zipCode,country,contactFirstName,contactLastName,contactEmail,contactPhone,contactTitle',
+          'Merge Clinic,clinic,9 Care Rd,HealTown,TX,73301,US,Alice,Brown,alice@clinic.com,+333,Assistant',
+        ].join('\n')
+
+        await CsvImportService.importMedicalInstitutions(csv1, { validateOnly: false })
+
+        const csv2 = [
+          'name,type,street,city,state,zipCode,country,contactFirstName,contactLastName,contactEmail,contactPhone,contactTitle',
+          'Merge Clinic,clinic,9 Care Rd,HealTown,TX,73301,US,Alice,Brown,alice@clinic.com,+333,Manager',
+        ].join('\n')
+
+        const res2 = await CsvImportService.importMedicalInstitutions(csv2, {
+          validateOnly: false,
+          skipDuplicates: false,
+          mergeDuplicates: true,
+        })
+
+        expect(res2.success).toBe(true)
+
+        const inst = await MedicalInstitution.findOne({ where: { name: 'Merge Clinic' } })
+        const instId = inst?.getDataValue('id')
+        const contact = await ContactPerson.findOne({ where: { institutionId: instId, email: 'alice@clinic.com' } })
+        expect(contact?.getDataValue('title')).toBe('Manager')
+      } catch (error) {
+        if (error.message?.includes('connect')) return
         throw error
       }
     })

@@ -741,33 +741,40 @@ export class MedicalInstitutionController {
       )
     }
 
-    // Check if file is provided
-    if (!ctx.request.files || !ctx.request.files.file) {
-      throw createError("CSV file is required", 400, "FILE_REQUIRED")
-    }
-
-    const file = Array.isArray(ctx.request.files.file)
-      ? ctx.request.files.file[0]
-      : ctx.request.files.file
+    // Support both multer (ctx.file) and koa-body (ctx.request.files)
+    const hasMulterFile = (ctx as any).file
+    const file = hasMulterFile
+      ? (ctx as any).file
+      : (Array.isArray(ctx.request.files?.file)
+        ? ctx.request.files?.file?.[0]
+        : ctx.request.files?.file)
 
     if (!file) {
       throw createError("CSV file is required", 400, "FILE_REQUIRED")
     }
 
-    // Validate file type
-    if (!file.originalFilename?.endsWith(".csv") && file.mimetype !== "text/csv") {
+    const fileName = file.originalname || file.originalFilename
+    const mime = file.mimetype
+    if (!(fileName?.toLowerCase().endsWith(".csv") || mime === "text/csv" || mime === "application/vnd.ms-excel")) {
       throw createError("File must be a CSV file", 400, "INVALID_FILE_TYPE")
     }
 
     try {
       // Read file content
-      const fs = await import("fs")
-      const csvData = fs.readFileSync(file.filepath, "utf8")
+      let csvData = ""
+      if (hasMulterFile && file.buffer) {
+        csvData = file.buffer.toString("utf8")
+      } else if ((file as any).filepath) {
+        const fs = await import("fs")
+        csvData = fs.readFileSync((file as any).filepath, "utf8")
+      } else {
+        throw createError("Unable to read uploaded file", 400, "FILE_READ_ERROR")
+      }
 
       // Import institutions
       const result = await CsvImportService.importMedicalInstitutions(csvData, {
         ...options,
-        userId: ctx.state.user?.id,
+        assignedUserId: ctx.state.user?.id,
       })
 
       ctx.body = {
@@ -791,7 +798,7 @@ export class MedicalInstitutionController {
       logger.error("CSV import failed", {
         userId: ctx.state.user?.id,
         error: (error as Error).message,
-        filename: file.originalFilename,
+        filename: fileName,
       })
       throw error
     }
@@ -829,28 +836,35 @@ export class MedicalInstitutionController {
    * Validate CSV data without importing
    */
   static async validateCsv(ctx: ContextWithFiles) {
-    // Check if file is provided
-    if (!ctx.request.files || !ctx.request.files.file) {
-      throw createError("CSV file is required", 400, "FILE_REQUIRED")
-    }
-
-    const file = Array.isArray(ctx.request.files.file)
-      ? ctx.request.files.file[0]
-      : ctx.request.files.file
+    // Support both multer (ctx.file) and koa-body (ctx.request.files)
+    const hasMulterFile = (ctx as any).file
+    const file = hasMulterFile
+      ? (ctx as any).file
+      : (Array.isArray(ctx.request.files?.file)
+        ? ctx.request.files?.file?.[0]
+        : ctx.request.files?.file)
 
     if (!file) {
       throw createError("CSV file is required", 400, "FILE_REQUIRED")
     }
 
-    // Validate file type
-    if (!file.originalFilename?.endsWith(".csv") && file.mimetype !== "text/csv") {
+    const fileName = file.originalname || file.originalFilename
+    const mime = file.mimetype
+    if (!(fileName?.toLowerCase().endsWith(".csv") || mime === "text/csv" || mime === "application/vnd.ms-excel")) {
       throw createError("File must be a CSV file", 400, "INVALID_FILE_TYPE")
     }
 
     try {
       // Read file content
-      const fs = await import("fs")
-      const csvData = fs.readFileSync(file.filepath, "utf8")
+      let csvData = ""
+      if (hasMulterFile && file.buffer) {
+        csvData = file.buffer.toString("utf8")
+      } else if ((file as any).filepath) {
+        const fs = await import("fs")
+        csvData = fs.readFileSync((file as any).filepath, "utf8")
+      } else {
+        throw createError("Unable to read uploaded file", 400, "FILE_READ_ERROR")
+      }
 
       // Validate CSV data
       const result = await CsvImportService.validateCsvData(csvData)
@@ -877,7 +891,7 @@ export class MedicalInstitutionController {
       logger.error("CSV validation failed", {
         userId: ctx.state.user?.id,
         error: (error as Error).message,
-        filename: file.originalFilename,
+        filename: fileName,
       })
       throw error
     }
