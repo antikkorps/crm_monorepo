@@ -481,3 +481,49 @@
     - Add unified search tab with `scope=own|team|all` selector
     - Wire API services for collaboration, timeline, and unified search
     - _Requirements: 5.1, 5.3_
+
+- [ ] 21. Implement comprehensive data export and segmentation system
+
+  - [ ] 21.1 Create data export backend functionality
+
+    - Implement CSV/Excel export service for medical institutions
+    - Create contact export functionality with filtering options
+    - Add quote and invoice export capabilities with date ranges
+    - Implement task export with team and status filtering
+    - Add permission-based export restrictions (team/own data only)
+    - Create export job queue for large datasets
+    - Write unit tests for export services
+    - _Requirements: 1.1, 1.5, 2.1, 9.1, 10.1_
+
+  - [ ] 21.2 Build contact and institution segmentation backend
+
+    - Create segmentation model and database schema
+    - Implement dynamic filtering system for institutions (specialties, bed capacity, regions)
+    - Add contact segmentation by role, activity, engagement level
+    - Create saved segment functionality with sharing capabilities
+    - Implement segment-based bulk operations (tasks, communications)
+    - Add segment analytics and reporting endpoints
+    - Write unit tests for segmentation logic
+    - _Requirements: 1.2, 1.3, 8.1, 10.2, 10.4_
+
+  - [ ] 21.3 Develop export management frontend interface
+
+    - Create export center dashboard with history and status tracking
+    - Build export configuration forms with field selection
+    - Implement export preview with sample data display
+    - Add export scheduling and automation interface
+    - Create export format selection (CSV, Excel, PDF reports)
+    - Build export download and email delivery interface
+    - Add export permissions and team access controls
+    - _Requirements: 1.5, 2.3, 10.1, 11.1_
+
+  - [ ] 21.4 Build advanced segmentation and filtering frontend
+
+    - Create segment builder with drag-and-drop criteria interface
+    - Implement real-time segment preview with count updates
+    - Build saved segment management and sharing interface
+    - Add segment-based bulk action tools (assign tasks, send communications)
+    - Create segment analytics dashboard with engagement metrics
+    - Implement segment export integration with custom fields
+    - Build segment comparison and overlap analysis tools
+    - _Requirements: 1.3, 8.1, 8.2, 10.2, 10.4_

@@ -3,9 +3,9 @@
     <!-- Navigation Drawer -->
     <v-navigation-drawer
       v-model="drawer"
-      :rail="rail"
-      permanent
-      @click="rail = false"
+      :rail="shouldShowRail"
+      :permanent="isPermanent"
+      @click="mobile ? (drawer = false) : (rail = false)"
       class="sidebar-gradient"
       elevation="3"
     >
@@ -17,15 +17,22 @@
           </v-avatar>
         </template>
         <template v-slot:title>
-          <span v-show="!rail" class="text-h6 font-weight-bold text-primary">
+          <span v-show="!shouldShowRail" class="text-h6 font-weight-bold text-primary">
             {{ $t("sidebar.appName") }}
           </span>
         </template>
         <template v-slot:append>
           <v-btn
+            v-if="!mobile"
             variant="text"
             icon="mdi-chevron-left"
             @click.stop="rail = !rail"
+          ></v-btn>
+          <v-btn
+            v-if="mobile"
+            variant="text"
+            icon="mdi-close"
+            @click.stop="drawer = false"
           ></v-btn>
         </template>
       </v-list-item>
@@ -80,7 +87,7 @@
         <div class="pa-2">
           <!-- User Info Card -->
           <v-card
-            v-if="!rail"
+            v-if="!shouldShowRail"
             class="user-card mb-3"
             variant="outlined"
             @click="$router.push('/profile')"
@@ -114,7 +121,7 @@
 
           <!-- Mini User Card for Rail Mode -->
           <v-card
-            v-else
+            v-else-if="shouldShowRail"
             class="user-card-mini mb-3 d-flex justify-center"
             variant="outlined"
             @click="$router.push('/profile')"
@@ -148,14 +155,14 @@
           <v-btn
             color="error"
             variant="tonal"
-            :block="!rail"
-            :icon="rail"
+            :block="!shouldShowRail"
+            :icon="shouldShowRail"
             @click="handleLogout"
             class="logout-button"
           >
             <v-icon>mdi-logout</v-icon>
-            <span v-if="!rail" class="ml-2">{{ $t("navigation.logout") }}</span>
-            <v-tooltip v-if="rail" activator="parent" location="right">
+            <span v-if="!shouldShowRail" class="ml-2">{{ $t("navigation.logout") }}</span>
+            <v-tooltip v-if="shouldShowRail" activator="parent" location="right">
               {{ $t("navigation.logout") }}
             </v-tooltip>
           </v-btn>
@@ -166,7 +173,7 @@
     <!-- App Bar -->
     <v-app-bar color="primary" density="compact" elevation="2">
       <template v-slot:prepend>
-        <v-app-bar-nav-icon @click="rail = !rail"></v-app-bar-nav-icon>
+        <v-app-bar-nav-icon @click="mobile ? (drawer = !drawer) : (rail = !rail)"></v-app-bar-nav-icon>
       </template>
 
       <v-spacer></v-spacer>
@@ -255,17 +262,23 @@
 import LanguageSelector from "@/components/common/LanguageSelector.vue"
 import NotificationCenterVuetify from "@/components/common/NotificationCenterVuetify.vue"
 import { useAuthStore } from "@/stores/auth"
-import { ref } from "vue"
+import { computed, ref } from "vue"
 import { useRouter } from "vue-router"
+import { useDisplay } from "vuetify"
 
 const authStore = useAuthStore()
 const router = useRouter()
+const { mobile } = useDisplay()
 
 // Reactive state
-const drawer = ref(true)
+const drawer = ref(!mobile.value) // Fermé par défaut sur mobile
 const rail = ref(false)
 const showSearch = ref(false)
 const searchQuery = ref("")
+
+// Computed properties for responsive sidebar
+const isPermanent = computed(() => !mobile.value)
+const shouldShowRail = computed(() => !mobile.value && rail.value)
 
 // Navigation items
 const mainNavigation = [
@@ -445,5 +458,41 @@ const handleLogout = async () => {
 .user-card:hover .mdi-chevron-right {
   transform: translateX(2px);
   transition: transform 0.2s ease;
+}
+
+/* Mobile specific styles */
+@media (max-width: 960px) {
+  /* Ensure drawer takes full height on mobile */
+  :deep(.v-navigation-drawer) {
+    height: 100vh !important;
+    z-index: 1006 !important;
+  }
+  
+  /* Add overlay backdrop when drawer is open on mobile */
+  :deep(.v-overlay__scrim) {
+    background-color: rgba(0, 0, 0, 0.5) !important;
+  }
+  
+  /* Ensure main content is not affected by drawer on mobile */
+  :deep(.v-main) {
+    padding-left: 0 !important;
+  }
+  
+  /* Make sure app bar nav icon is visible on mobile */
+  .v-app-bar .v-app-bar-nav-icon {
+    display: flex !important;
+  }
+  
+  /* Style for mobile close button in drawer */
+  .v-list-item .v-btn[icon="mdi-close"] {
+    color: rgba(var(--v-theme-error)) !important;
+    background: rgba(var(--v-theme-error), 0.1) !important;
+    border-radius: 8px !important;
+  }
+  
+  .v-list-item .v-btn[icon="mdi-close"]:hover {
+    background: rgba(var(--v-theme-error), 0.2) !important;
+    transform: scale(1.05);
+  }
 }
 </style>

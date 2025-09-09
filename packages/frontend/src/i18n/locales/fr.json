@@ -17,7 +17,8 @@
     "previous": "Précédent",
     "refresh": "Actualiser",
     "export": "Exporter",
-    "import": "Importer"
+    "import": "Importer",
+    "viewDetails": "Voir les détails"
   },
   "navigation": {
     "dashboard": "Tableau de bord",
