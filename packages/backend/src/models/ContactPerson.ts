@@ -1,5 +1,6 @@
 import { DataTypes, Model, Op, Optional } from "sequelize"
 import { sequelize } from "../config/database"
+import { MedicalInstitution } from "./MedicalInstitution"
 
 export interface ContactPersonAttributes {
   id: string
@@ -38,6 +39,9 @@ export class ContactPerson
   public isActive!: boolean
   public readonly createdAt!: Date
   public readonly updatedAt!: Date
+
+  // Associations
+  public institution?: MedicalInstitution
 
   // Instance methods
   public getFullName(): string {

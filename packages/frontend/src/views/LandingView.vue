@@ -22,6 +22,7 @@
                   variant="elevated"
                   @click="goToLogin"
                   class="mr-4"
+                  data-testid="login-button"
                 >
                   Se connecter
                 </v-btn>
@@ -31,6 +32,7 @@
                   prepend-icon="mdi-arrow-down"
                   variant="outlined"
                   @click="scrollToFeatures"
+                  data-testid="learn-more-button"
                 >
                   En savoir plus
                 </v-btn>

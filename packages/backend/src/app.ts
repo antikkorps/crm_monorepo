@@ -11,6 +11,7 @@ import billingAnalyticsRoutes from "./routes/billing-analytics"
 import callRoutes from "./routes/calls"
 import institutionRoutes from "./routes/institutions"
 import invoiceRoutes from "./routes/invoices"
+import exportRoutes from "./routes/export"
 import noteRoutes from "./routes/notes"
 import meetingRoutes from "./routes/meetings"
 import pluginRoutes from "./routes/plugins"
@@ -117,6 +118,10 @@ export const createApp = (): Koa => {
   // Apply invoice routes
   app.use(invoiceRoutes.routes())
   app.use(invoiceRoutes.allowedMethods())
+
+  // Apply export routes
+  app.use(exportRoutes.routes())
+  app.use(exportRoutes.allowedMethods())
 
   // Apply quote routes
   app.use(quoteRoutes.routes())
