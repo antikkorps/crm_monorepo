@@ -27,7 +27,7 @@ const uploadCsv = multer({
     if (allowed.includes(file.mimetype) || file.originalname.toLowerCase().endsWith(".csv")) {
       cb(null, true)
     } else {
-      cb(new Error("Invalid file type. Only CSV files are allowed."))
+      cb(new Error('Invalid file type. Only CSV files are allowed.'), false)
     }
   },
 })

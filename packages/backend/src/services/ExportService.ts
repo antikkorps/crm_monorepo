@@ -1,4 +1,6 @@
 import { Op } from "sequelize"
+import ExcelJS from 'exceljs'
+import { logger } from "../utils/logger"
 import {
   MedicalInstitution,
   MedicalProfile,
@@ -29,6 +31,9 @@ export interface ExportOptions {
   taskStatus?: string
   quoteStatus?: string
   invoiceStatus?: string
+  limit?: number // For pagination
+  offset?: number // For pagination
+  useQueue?: boolean // Use queue system for large exports
 }
 
 export interface ExportResult {
@@ -119,6 +124,8 @@ export class ExportService {
           },
         ],
         order: [["name", "ASC"]],
+        limit: options.limit,
+        offset: options.offset,
       })
 
       const data = institutions.map(institution => {
@@ -167,7 +174,7 @@ export class ExportService {
                      'application/json',
       }
     } catch (error) {
-      console.error('Error exporting medical institutions:', error)
+      logger.error('Error exporting medical institutions:', { error })
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Unknown error occurred',
@@ -232,6 +239,8 @@ export class ExportService {
           },
         ],
         order: [["lastName", "ASC"], ["firstName", "ASC"]],
+        limit: options.limit,
+        offset: options.offset,
       })
 
       const data = contacts.map(contact => ({
@@ -344,6 +353,8 @@ export class ExportService {
           },
         ],
         order: [["dueDate", "ASC"], ["priority", "DESC"]],
+        limit: options.limit,
+        offset: options.offset,
       })
 
       const data = tasks.map(task => ({
@@ -446,6 +457,8 @@ export class ExportService {
           },
         ],
         order: [["createdAt", "DESC"]],
+        limit: options.limit,
+        offset: options.offset,
       })
 
       const data = quotes.map(quote => ({
@@ -548,6 +561,8 @@ export class ExportService {
           },
         ],
         order: [["createdAt", "DESC"]],
+        limit: options.limit,
+        offset: options.offset,
       })
 
       const data = invoices.map(invoice => ({
@@ -628,11 +643,67 @@ export class ExportService {
     return csvRows.join('\n')
   }
 
-  /**
-   * Generate JSON content from data
-   */
+/**
+    * Generate JSON content from data
+    */
   static generateJSON(data: any[]): string {
     return JSON.stringify(data, null, 2)
+  }
+
+  /**
+    * Generate XLSX content from data using ExcelJS
+    */
+  static async generateXLSX(data: any[], includeHeaders: boolean = true): Promise<Buffer> {
+    if (data.length === 0) {
+      return Buffer.from('')
+    }
+
+    const workbook = new ExcelJS.Workbook()
+    const worksheet = workbook.addWorksheet('Data')
+
+    const headers = Object.keys(data[0])
+    
+    if (includeHeaders) {
+      worksheet.addRow(headers)
+    }
+
+    data.forEach(row => {
+      const values = headers.map(header => {
+        const value = row[header]
+        if (value === null || value === undefined) {
+          return ''
+        }
+        if (typeof value === 'object' && value instanceof Date) {
+          return value
+        }
+        if (typeof value === 'object') {
+          return JSON.stringify(value)
+        }
+        return value
+      })
+      worksheet.addRow(values)
+    })
+
+    // Auto-fit columns for better readability
+    worksheet.columns.forEach(column => {
+      if (column.header) {
+        column.width = Math.max(12, column.header.toString().length + 2)
+      }
+    })
+
+    // Add header row styling
+    if (includeHeaders && worksheet.rowCount > 0) {
+      const headerRow = worksheet.getRow(1)
+      headerRow.font = { bold: true }
+      headerRow.fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FFE0E0E0' }
+      }
+    }
+
+    const buffer = await workbook.xlsx.writeBuffer()
+    return Buffer.from(buffer)
   }
 
   /**
@@ -659,8 +730,95 @@ export class ExportService {
 
       return false
     } catch (error) {
-      console.error('Error checking export permissions:', error)
+      logger.error('Error checking export permissions:', { error })
       return false
+    }
+  }
+
+  /**
+   * Queue-based export for large datasets
+   * This would integrate with Bull/Agenda or similar queue system
+   */
+  static async queueExport(options: ExportOptions, exportType: string): Promise<ExportResult> {
+    try {
+      // For now, return immediate result for small exports
+      // In production, this would:
+      // 1. Create a job record in database
+      // 2. Add job to queue (Bull, Agenda, etc.)
+      // 3. Return job ID for status tracking
+      // 4. Queue worker would process export and save to storage
+      // 5. Notify user when complete
+      
+      const estimatedRecords = await this.estimateRecordCount(options, exportType)
+      
+      // Use queue for large exports (>1000 records)
+      if (options.useQueue && estimatedRecords > 1000) {
+        // TODO: Implement actual queue system
+        // For now, fall back to immediate export
+        logger.info('Large export requested, queue system not yet implemented', {
+          exportType,
+          estimatedRecords,
+          options
+        })
+      }
+
+      // For small exports or when queue is not available, process immediately
+      switch (exportType) {
+        case 'institutions':
+          return await this.exportMedicalInstitutions(options)
+        case 'contacts':
+          return await this.exportContacts(options)
+        case 'tasks':
+          return await this.exportTasks(options)
+        case 'quotes':
+          return await this.exportQuotes(options)
+        case 'invoices':
+          return await this.exportInvoices(options)
+        default:
+          return {
+            success: false,
+            error: 'Invalid export type'
+          }
+      }
+    } catch (error) {
+      logger.error('Error in queueExport:', { error })
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error occurred'
+      }
+    }
+  }
+
+  /**
+   * Estimate record count for queue decision making
+   */
+  private static async estimateRecordCount(options: ExportOptions, exportType: string): Promise<number> {
+    try {
+      // Simple estimation - in production this would be more sophisticated
+      const baseCount = 100 // Default estimate
+      
+      // TODO: Implement actual count queries based on filters
+      // This would involve running COUNT queries with the same filters as the export
+      
+      return baseCount
+    } catch (error) {
+      logger.warn('Error estimating record count, using default', { error })
+      return 100 // Conservative default
+    }
+  }
+
+  /**
+   * Get export job status (for queue system)
+   */
+  static async getExportStatus(jobId: string): Promise<any> {
+    // TODO: Implement job status tracking
+    // This would query the database for job status
+    return {
+      jobId,
+      status: 'pending', // pending, processing, completed, failed
+      progress: 0,
+      estimatedCompletion: null,
+      downloadUrl: null
     }
   }
 }

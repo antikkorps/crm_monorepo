@@ -14,6 +14,12 @@ router.get("/tasks", ExportController.exportTasks)
 router.get("/quotes", ExportController.exportQuotes)
 router.get("/invoices", ExportController.exportInvoices)
 
+// Queue export endpoint
+router.post("/queue", ExportController.queueExport)
+
+// Export status endpoint
+router.get("/status/:jobId", ExportController.getExportStatus)
+
 // Metadata endpoint
 router.get("/metadata", ExportController.getExportMetadata)
 
