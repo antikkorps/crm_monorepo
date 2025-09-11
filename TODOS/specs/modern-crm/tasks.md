@@ -541,7 +541,7 @@
     - Write unit tests for segmentation logic
     - _Requirements: 1.2, 1.3, 8.1, 10.2, 10.4_
 
-  - [ ] 21.3 Develop export management frontend interface
+  - [x] 21.3 Develop export management frontend interface
 
     - Create export center dashboard with history and status tracking
     - Build export configuration forms with field selection
@@ -562,3 +562,34 @@
     - Implement segment export integration with custom fields
     - Build segment comparison and overlap analysis tools
     - _Requirements: 1.3, 8.1, 8.2, 10.2, 10.4_
+
+- [x] 22. Implement Contact Management CRUD API ⚠️ **MANQUANT - PRIORITÉ HAUTE**
+
+  - [x] 22.1 Create ContactController with comprehensive CRUD operations
+
+    - Implement ContactController with all CRUD operations (GET, POST, PUT, DELETE)
+    - Add contact listing with pagination, filtering by institution, role, active status
+    - Create contact detail endpoint with institution information
+    - Implement contact search functionality across name, email, phone, title
+    - Add validation for contact data (email uniqueness, phone format, required fields)
+    - Enforce team-based permissions for contact access (RBAC)
+    - Add primary contact management (ensure only one primary per institution)
+    - Write comprehensive error handling for all contact operations
+    - _Requirements: 1.2, 4.1, 4.2, 10.1, 11.1_
+
+  - [x] 22.2 Create contact routes and integrate with existing endpoints
+
+    - Add contact routes to main router (/api/contacts)
+    - Update institution endpoints to include contact management
+    - Add contact creation within institution creation workflow
+    - Implement bulk contact operations (import, export, bulk update)
+    - Create contact assignment and transfer functionality between institutions
+    - Add contact activity tracking and audit logging
+    - Write integration tests for all contact endpoints
+    - Test contact-institution relationship integrity
+    - _Requirements: 1.1, 1.3, 1.4, 8.3, 10.4_
+
+  **CONTEXTE:** Les modèles ContactPerson existent mais aucune API CRUD dédiée n'a été implémentée.
+  Les contacts ne peuvent actuellement être gérés que via les institutions ou les exports.
+  **IMPACT:** Fonctionnalité manquante critique pour la gestion complète des contacts CRM.
+  **PRIORITÉ:** Haute - requis pour compléter le système de gestion des contacts.

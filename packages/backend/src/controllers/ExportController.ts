@@ -108,7 +108,7 @@ export class ExportController {
    * GET /api/export/institutions
    */
   static async exportMedicalInstitutions(ctx: Context) {
-    return this.handleExport(ctx, 'institutions', ExportService.exportMedicalInstitutions, {
+    return ExportController.handleExport(ctx, 'institutions', ExportService.exportMedicalInstitutions, {
       institutionType: ctx.query.type as string,
     })
   }
@@ -118,7 +118,7 @@ export class ExportController {
    * GET /api/export/contacts
    */
   static async exportContacts(ctx: Context) {
-    return this.handleExport(ctx, 'contacts', ExportService.exportContacts)
+    return ExportController.handleExport(ctx, 'contacts', ExportService.exportContacts)
   }
 
   /**
@@ -126,7 +126,7 @@ export class ExportController {
    * GET /api/export/tasks
    */
   static async exportTasks(ctx: Context) {
-    return this.handleExport(ctx, 'tasks', ExportService.exportTasks, {
+    return ExportController.handleExport(ctx, 'tasks', ExportService.exportTasks, {
       taskStatus: ctx.query.status as string,
     })
   }
@@ -136,7 +136,7 @@ export class ExportController {
    * GET /api/export/quotes
    */
   static async exportQuotes(ctx: Context) {
-    return this.handleExport(ctx, 'quotes', ExportService.exportQuotes, {
+    return ExportController.handleExport(ctx, 'quotes', ExportService.exportQuotes, {
       quoteStatus: ctx.query.status as string,
     })
   }
@@ -146,7 +146,7 @@ export class ExportController {
    * GET /api/export/invoices
    */
   static async exportInvoices(ctx: Context) {
-    return this.handleExport(ctx, 'invoices', ExportService.exportInvoices, {
+    return ExportController.handleExport(ctx, 'invoices', ExportService.exportInvoices, {
       invoiceStatus: ctx.query.status as string,
     })
   }
@@ -264,6 +264,9 @@ export class ExportController {
         return
       }
 
+      // Get record counts for each export type
+      const recordCounts = await ExportService.getRecordCounts(userId)
+
       // Return metadata about available exports
       ctx.body = {
         availableExports: [
@@ -273,6 +276,7 @@ export class ExportController {
             description: 'Export medical institutions with profiles and contacts',
             formats: ['csv', 'xlsx', 'json'],
             permissions: await ExportService.checkExportPermissions(userId, 'institutions'),
+            recordCount: recordCounts.institutions,
           },
           {
             type: 'contacts',
@@ -280,6 +284,7 @@ export class ExportController {
             description: 'Export contact persons with institution details',
             formats: ['csv', 'xlsx', 'json'],
             permissions: await ExportService.checkExportPermissions(userId, 'contacts'),
+            recordCount: recordCounts.contacts,
           },
           {
             type: 'tasks',
@@ -287,6 +292,7 @@ export class ExportController {
             description: 'Export tasks with assignment and status details',
             formats: ['csv', 'xlsx', 'json'],
             permissions: await ExportService.checkExportPermissions(userId, 'tasks'),
+            recordCount: recordCounts.tasks,
           },
           {
             type: 'quotes',
@@ -294,6 +300,7 @@ export class ExportController {
             description: 'Export quotes with line items and financial details',
             formats: ['csv', 'xlsx', 'json'],
             permissions: await ExportService.checkExportPermissions(userId, 'quotes'),
+            recordCount: recordCounts.quotes,
           },
           {
             type: 'invoices',
@@ -301,6 +308,7 @@ export class ExportController {
             description: 'Export invoices with payments and financial details',
             formats: ['csv', 'xlsx', 'json'],
             permissions: await ExportService.checkExportPermissions(userId, 'invoices'),
+            recordCount: recordCounts.invoices,
           },
         ],
         formats: {

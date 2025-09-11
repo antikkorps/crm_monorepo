@@ -7,14 +7,10 @@ import {
   ContactPerson,
   User,
   Task,
-  Note,
-  Meeting,
-  Call,
-  Reminder,
   Quote,
   Invoice,
 } from "../models"
-import { UserRole } from "@medical-crm/shared"
+import { UserRole } from "../models/User"
 
 export interface ExportOptions {
   format: 'csv' | 'xlsx' | 'json'
@@ -209,18 +205,31 @@ export class ExportService {
 
       // Apply team-based filtering
       if (options.teamMemberIds && options.teamMemberIds.length > 0) {
-        whereClause[Op.or] = [
-          {
-            '$institution.assignedUserId$': {
-              [Op.in]: options.teamMemberIds,
+        const teamFilter = {
+          [Op.or]: [
+            {
+              '$institution.assigned_user_id$': {
+                [Op.in]: options.teamMemberIds,
+              },
             },
-          },
-          {
-            '$institution.assignedUserId$': null,
-          },
-        ]
+            {
+              '$institution.assigned_user_id$': null,
+            },
+          ],
+        }
+        
+        // If there's already an Op.or (from search), combine them
+        if (whereClause[Op.or]) {
+          whereClause[Op.and] = [
+            { [Op.or]: whereClause[Op.or] },
+            teamFilter
+          ]
+          delete whereClause[Op.or]
+        } else {
+          Object.assign(whereClause, teamFilter)
+        }
       } else if (options.userId) {
-        whereClause['$institution.assignedUserId$'] = options.userId
+        whereClause['$institution.assigned_user_id$'] = options.userId
       }
 
       const contacts = await ContactPerson.findAll({
@@ -243,28 +252,34 @@ export class ExportService {
         offset: options.offset,
       })
 
-      const data = contacts.map(contact => ({
-        id: contact.id,
-        firstName: contact.firstName,
-        lastName: contact.lastName,
-        email: contact.email,
-        phone: contact.phone,
-        title: contact.title,
-        department: contact.department,
-        isPrimary: contact.isPrimary,
-        isActive: contact.isActive,
-        institutionId: contact.institutionId,
-        institutionName: contact.institution?.name || null,
-        institutionType: contact.institution?.type || null,
-        institutionCity: contact.institution?.address.city || null,
-        institutionState: contact.institution?.address.state || null,
-        assignedUser: contact.institution?.assignedUser 
-          ? `${contact.institution.assignedUser.firstName} ${contact.institution.assignedUser.lastName}`
-          : null,
-        assignedUserEmail: contact.institution?.assignedUser?.email || null,
-        createdAt: contact.createdAt,
-        updatedAt: contact.updatedAt,
-      }))
+      const data = contacts.map(contact => {
+        const contactData = contact.toJSON() as any
+        const institution = contact.institution
+        const institutionData = institution ? institution.toJSON() as any : null
+        
+        return {
+          id: contactData.id,
+          firstName: contactData.firstName,
+          lastName: contactData.lastName,
+          email: contactData.email,
+          phone: contactData.phone,
+          title: contactData.title,
+          department: contactData.department,
+          isPrimary: contactData.isPrimary,
+          isActive: contactData.isActive,
+          institutionId: contactData.institutionId,
+          institutionName: institutionData?.name || null,
+          institutionType: institutionData?.type || null,
+          institutionCity: institutionData?.address?.city || null,
+          institutionState: institutionData?.address?.state || null,
+          assignedUser: institutionData?.assignedUser 
+            ? `${institutionData.assignedUser.firstName} ${institutionData.assignedUser.lastName}`
+            : null,
+          assignedUserEmail: institutionData?.assignedUser?.email || null,
+          createdAt: contactData.createdAt,
+          updatedAt: contactData.updatedAt,
+        }
+      })
 
       return {
         success: true,
@@ -314,23 +329,49 @@ export class ExportService {
 
       // Apply team-based filtering
       if (options.teamMemberIds && options.teamMemberIds.length > 0) {
-        whereClause[Op.or] = [
-          {
-            assigneeId: {
-              [Op.in]: options.teamMemberIds,
+        const teamFilter = {
+          [Op.or]: [
+            {
+              assigneeId: {
+                [Op.in]: options.teamMemberIds,
+              },
             },
-          },
-          {
-            creatorId: {
-              [Op.in]: options.teamMemberIds,
+            {
+              creatorId: {
+                [Op.in]: options.teamMemberIds,
+              },
             },
-          },
-        ]
+          ],
+        }
+        
+        // If there's already an Op.or (from search), combine them
+        if (whereClause[Op.or]) {
+          whereClause[Op.and] = [
+            { [Op.or]: whereClause[Op.or] },
+            teamFilter
+          ]
+          delete whereClause[Op.or]
+        } else {
+          Object.assign(whereClause, teamFilter)
+        }
       } else if (options.userId) {
-        whereClause[Op.or] = [
-          { assigneeId: options.userId },
-          { creatorId: options.userId },
-        ]
+        const userFilter = {
+          [Op.or]: [
+            { assigneeId: options.userId },
+            { creatorId: options.userId },
+          ],
+        }
+        
+        // If there's already an Op.or (from search), combine them
+        if (whereClause[Op.or]) {
+          whereClause[Op.and] = [
+            { [Op.or]: whereClause[Op.or] },
+            userFilter
+          ]
+          delete whereClause[Op.or]
+        } else {
+          Object.assign(whereClause, userFilter)
+        }
       }
 
       const tasks = await Task.findAll({
@@ -717,6 +758,9 @@ export class ExportService {
       // Super admins can export anything
       if (user.role === UserRole.SUPER_ADMIN) return true
 
+      // Admins can export anything
+      if (user.role === UserRole.ADMIN) return true
+
       // Team admins can export team data
       if (user.role === UserRole.TEAM_ADMIN) {
         // Team admins can export institutions, contacts, tasks, quotes, invoices
@@ -804,6 +848,85 @@ export class ExportService {
     } catch (error) {
       logger.warn('Error estimating record count, using default', { error })
       return 100 // Conservative default
+    }
+  }
+
+  /**
+   * Get record counts for each export type
+   */
+  static async getRecordCounts(userId: string): Promise<any> {
+    try {
+      const user = await User.findByPk(userId)
+      if (!user) {
+        throw new Error('User not found')
+      }
+
+      // Determine team filtering based on user role
+      const teamMemberIds = user.role === UserRole.SUPER_ADMIN || user.role === UserRole.ADMIN 
+        ? undefined 
+        : [userId]
+
+      // Count medical institutions
+      const institutionWhereClause: any = { isActive: true }
+      if (teamMemberIds) {
+        institutionWhereClause['$assigned_user_id$'] = { [Op.in]: teamMemberIds }
+      }
+      const institutionCount = await MedicalInstitution.count({ where: institutionWhereClause })
+
+      // Count contact persons
+      const contactWhereClause: any = { isActive: true }
+      if (teamMemberIds) {
+        contactWhereClause['$institution.assigned_user_id$'] = { [Op.in]: teamMemberIds }
+      }
+      const contactCount = await ContactPerson.count({ 
+        where: contactWhereClause,
+        include: [{
+          model: MedicalInstitution,
+          as: "institution",
+          attributes: [],
+        }]
+      })
+
+      // Count tasks
+      const taskWhereClause: any = {}
+      if (teamMemberIds) {
+        taskWhereClause[Op.or] = [
+          { assigneeId: { [Op.in]: teamMemberIds } },
+          { creatorId: { [Op.in]: teamMemberIds } }
+        ]
+      }
+      const taskCount = await Task.count({ where: taskWhereClause })
+
+      // Count quotes  
+      const quoteWhereClause: any = {}
+      if (teamMemberIds) {
+        quoteWhereClause['$assignedUserId$'] = { [Op.in]: teamMemberIds }
+      }
+      const quoteCount = await Quote.count({ where: quoteWhereClause })
+
+      // Count invoices
+      const invoiceWhereClause: any = {}
+      if (teamMemberIds) {
+        invoiceWhereClause['$assignedUserId$'] = { [Op.in]: teamMemberIds }
+      }
+      const invoiceCount = await Invoice.count({ where: invoiceWhereClause })
+
+      return {
+        institutions: institutionCount,
+        contacts: contactCount,
+        tasks: taskCount,
+        quotes: quoteCount,
+        invoices: invoiceCount,
+      }
+    } catch (error) {
+      logger.error('Error getting record counts:', { error })
+      return {
+        institutions: 0,
+        contacts: 0,
+        tasks: 0,
+        quotes: 0,
+        invoices: 0,
+      }
     }
   }
 

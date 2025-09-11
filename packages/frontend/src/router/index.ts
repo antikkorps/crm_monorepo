@@ -19,6 +19,7 @@ const Notifications = () => import("@/views/notifications/NotificationsView.vue"
 const Templates = () => import("@/views/templates/TemplatesView.vue")
 const BillingAnalytics = () => import("@/views/billing/BillingAnalyticsView.vue")
 const Webhooks = () => import("@/views/webhooks/WebhooksView.vue")
+const ExportCenter = () => import("@/views/export/ExportCenterView.vue")
 
 const routes: RouteRecordRaw[] = [
   {
@@ -154,6 +155,15 @@ const routes: RouteRecordRaw[] = [
     meta: {
       requiresAuth: true,
       title: "Webhooks",
+    },
+  },
+  {
+    path: "/export",
+    name: "ExportCenter",
+    component: ExportCenter,
+    meta: {
+      requiresAuth: true,
+      title: "Export Center",
     },
   },
   {

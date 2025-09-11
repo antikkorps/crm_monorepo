@@ -9,6 +9,7 @@ import { requestLogger } from "./middleware/requestLogger"
 import authRoutes from "./routes/auth"
 import billingAnalyticsRoutes from "./routes/billing-analytics"
 import callRoutes from "./routes/calls"
+import contactRoutes from "./routes/contacts"
 import institutionRoutes from "./routes/institutions"
 import invoiceRoutes from "./routes/invoices"
 import exportRoutes from "./routes/export"
@@ -111,6 +112,10 @@ export const createApp = (): Koa => {
   // Apply call routes
   app.use(callRoutes.routes())
   app.use(callRoutes.allowedMethods())
+
+  // Apply contact routes
+  app.use(contactRoutes.routes())
+  app.use(contactRoutes.allowedMethods())
 
   // Apply institution routes
   app.use(institutionRoutes.routes())

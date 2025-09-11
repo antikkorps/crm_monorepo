@@ -1,4 +1,5 @@
 import { describe, it, expect } from "vitest"
+import { Op } from "sequelize"
 import { SegmentService } from "../../services/SegmentService"
 import { SegmentCriteria, SegmentType } from "../../models/Segment"
 import { MedicalInstitutionSearchFilters } from "@medical-crm/shared"
@@ -62,7 +63,7 @@ describe("SegmentService", () => {
       const whereClause = SegmentService["buildWhereClause"](filters)
 
       expect(whereClause).toEqual({
-        name: { $iLike: "%Test Hospital%" },
+        name: { [Op.iLike]: "%Test Hospital%" },
       })
     })
 
@@ -80,7 +81,7 @@ describe("SegmentService", () => {
       const whereClause = SegmentService["buildWhereClause"](filters)
 
       expect(whereClause).toEqual({
-        "address.city": { $iLike: "%Paris%" },
+        "address.city": { [Op.iLike]: "%Paris%" },
       })
     })
 
@@ -89,7 +90,7 @@ describe("SegmentService", () => {
       const whereClause = SegmentService["buildWhereClause"](filters)
 
       expect(whereClause).toEqual({
-        tags: { $overlap: ["urgent", "private"] },
+        tags: { [Op.overlap]: ["urgent", "private"] },
       })
     })
 
@@ -105,7 +106,7 @@ describe("SegmentService", () => {
       const whereClause = SegmentService["buildWhereClause"](filters)
 
       expect(whereClause).toEqual({
-        "address.city": { $iLike: "%Paris%" },
+        "address.city": { [Op.iLike]: "%Paris%" },
       })
     })
   })

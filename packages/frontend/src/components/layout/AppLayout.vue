@@ -342,6 +342,12 @@ const additionalNavigation = [
     to: "/webhooks",
     value: "webhooks",
   },
+  {
+    title: "navigation.export",
+    icon: "mdi-download",
+    to: "/export",
+    value: "export",
+  },
 ]
 
 // Handle logout

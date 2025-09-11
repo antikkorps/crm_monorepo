@@ -187,6 +187,94 @@ export class DatabaseSeeder {
     }
   }
 
+  static async seedContactPersons() {
+    try {
+      const [contacts] = await sequelize.query(
+        "SELECT COUNT(*) as count FROM contact_persons"
+      )
+      const contactCount = parseInt((contacts[0] as any).count)
+
+      if (contactCount > 0) {
+        logger.info(`Found ${contactCount} contact persons, skipping seeding`)
+        return
+      }
+
+      // Get existing institutions to link contacts to
+      const [institutions] = await sequelize.query(
+        "SELECT id FROM medical_institutions ORDER BY name LIMIT 2"
+      )
+
+      if (institutions.length === 0) {
+        logger.warn("No medical institutions found, skipping contact seeding")
+        return
+      }
+
+      const sampleContacts = [
+        {
+          id: uuidv4(),
+          firstName: "Dr. John",
+          lastName: "Smith",
+          email: "john.smith@generalhospital.com",
+          phone: "+1-555-0101",
+          position: "Chief Medical Officer",
+          institutionId: (institutions[0] as any).id,
+        },
+        {
+          id: uuidv4(),
+          firstName: "Sarah",
+          lastName: "Johnson",
+          email: "sarah.johnson@generalhospital.com",
+          phone: "+1-555-0102",
+          position: "Department Head",
+          institutionId: (institutions[0] as any).id,
+        },
+        {
+          id: uuidv4(),
+          firstName: "Dr. Michael",
+          lastName: "Brown",
+          email: "michael.brown@citymedical.com",
+          phone: "+1-555-0201",
+          position: "Senior Physician",
+          institutionId: institutions.length > 1 ? (institutions[1] as any).id : (institutions[0] as any).id,
+        },
+        {
+          id: uuidv4(),
+          firstName: "Lisa",
+          lastName: "Davis",
+          email: "lisa.davis@citymedical.com",
+          phone: "+1-555-0202",
+          position: "Procurement Manager",
+          institutionId: institutions.length > 1 ? (institutions[1] as any).id : (institutions[0] as any).id,
+        },
+      ]
+
+      for (const contact of sampleContacts) {
+        await sequelize.query(
+          `
+          INSERT INTO contact_persons (
+            id, first_name, last_name, email, phone, position, 
+            institution_id, is_active, created_at, updated_at
+          ) VALUES (
+            :id, :firstName, :lastName, :email, :phone, :position,
+            :institutionId, :is_active, NOW(), NOW()
+          )
+        `,
+          {
+            replacements: {
+              ...contact,
+              is_active: true,
+            },
+          }
+        )
+      }
+
+      logger.info("Demo contact persons seeded successfully")
+    } catch (error) {
+      logger.error("Error seeding contact persons", { error })
+      throw error
+    }
+  }
+
   static async seedAll() {
     try {
       logger.info("Starting database seeding...")
@@ -194,6 +282,7 @@ export class DatabaseSeeder {
       await this.seedTeams()
       await this.seedUsers()
       await this.seedMedicalInstitutions()
+      await this.seedContactPersons()
 
       logger.info("Database seeding completed successfully")
     } catch (error) {
