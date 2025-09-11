@@ -385,17 +385,18 @@
     - _Requirements: All backend requirements_
 
 - [x] 16.1.1 **Corriger l'erreur TypeScript dans institutions.ts (ligne 30,7)** ✅
-    - Problème : Expected 2 arguments, but got 1 dans le callback multer fileFilter
-    - Solution : Ajout du deuxième argument `false` au callback d'erreur
-    - Impact : Compilation backend restaurée
-    - Priorité : Haute (bloqueur) - RÉSOLU
+
+  - Problème : Expected 2 arguments, but got 1 dans le callback multer fileFilter
+  - Solution : Ajout du deuxième argument `false` au callback d'erreur
+  - Impact : Compilation backend restaurée
+  - Priorité : Haute (bloqueur) - RÉSOLU
 
 - [x] 16.1.2 **Refactoriser ExportController pour réduire la duplication de code** ✅
-    - Problème : Duplication massive de code dans les méthodes d'export
-    - Solution : Création de méthodes utilitaires communes (validateUserAndPermissions, parseExportOptions, handleExportResult, handleExport)
-    - Impact : Réduction de ~400 lignes à ~150 lignes pour les exports principaux
-    - Bénéfices : Maintenance facilitée, réduction des bugs, cohérence accrue
-    - Priorité : Haute (qualité de code) - RÉSOLU
+  - Problème : Duplication massive de code dans les méthodes d'export
+  - Solution : Création de méthodes utilitaires communes (validateUserAndPermissions, parseExportOptions, handleExportResult, handleExport)
+  - Impact : Réduction de ~400 lignes à ~150 lignes pour les exports principaux
+  - Bénéfices : Maintenance facilitée, réduction des bugs, cohérence accrue
+  - Priorité : Haute (qualité de code) - RÉSOLU
 
 **🔄 En attente :** Dépend de la correction du bug TypeScript (institutions.ts:30,7)
 
@@ -413,13 +414,13 @@
 
 - [ ] 17.2 Build compliance monitoring and reporting
 
-    - Create healthcare compliance tracking interface
-    - Implement data access audit trails and reporting
-    - Add security incident logging and notification
-    - Build data retention and privacy management tools
-    - _Requirements: 11.3, 11.4, 11.5_
+  - Create healthcare compliance tracking interface
+  - Implement data access audit trails and reporting
+  - Add security incident logging and notification
+  - Build data retention and privacy management tools
+  - _Requirements: 11.3, 11.4, 11.5_
 
-    **🔄 En attente :** Dépend de la correction du bug TypeScript (institutions.ts:30,7)
+  **🔄 En attente :** Dépend de la correction du bug TypeScript (institutions.ts:30,7)
 
 - [ ] 18. Performance optimization and production readiness
 
@@ -435,13 +436,13 @@
 
 - [ ] 18.2 Implement frontend performance optimizations
 
-    - Add code splitting and lazy loading for Vue.js routes
-    - Optimize Vuetify component loading and bundle size with tree-shaking
-    - Implement virtual scrolling for large medical institution lists
-    - Add image optimization for DiceBear avatars and assets
-    - _Requirements: 7.1, 8.1, 10.1_
+  - Add code splitting and lazy loading for Vue.js routes
+  - Optimize Vuetify component loading and bundle size with tree-shaking
+  - Implement virtual scrolling for large medical institution lists
+  - Add image optimization for DiceBear avatars and assets
+  - _Requirements: 7.1, 8.1, 10.1_
 
-    **🔄 En attente :** Dépend de la correction du bug TypeScript (institutions.ts:30,7)
+  **🔄 En attente :** Dépend de la correction du bug TypeScript (institutions.ts:30,7)
 
 - [ ] 19. Final integration testing and deployment preparation
 
@@ -457,13 +458,13 @@
 
 - [ ] 19.2 Prepare production deployment configuration
 
-    - Create production Docker configurations and environment setup
-    - Implement database migration and seeding for production
-    - Configure monitoring and logging for production environment
-    - Create deployment documentation and operational procedures
-    - _Requirements: 7.4, 11.2, 11.3_
+  - Create production Docker configurations and environment setup
+  - Implement database migration and seeding for production
+  - Configure monitoring and logging for production environment
+  - Create deployment documentation and operational procedures
+  - _Requirements: 7.4, 11.2, 11.3_
 
-    **🔄 En attente :** Dépend de la correction du bug TypeScript (institutions.ts:30,7)
+  **🔄 En attente :** Dépend de la correction du bug TypeScript (institutions.ts:30,7)
 
 - [x] 20. Collaboration features integration (Notes, Meetings, Calls, Reminders)
 
@@ -476,11 +477,13 @@
     - _Requirements: 1.1–4.6, 5.2, 5.4, 11.1_
 
   - [x] 20.2 Institution integration: collaboration and timeline endpoints
+
     - `GET /api/institutions/:id/collaboration`: consolidated stats + recent items
     - `GET /api/institutions/:id/timeline`: chronological interactions with pagination
     - _Requirements: 5.1, 5.3, 1.5, 2.5, 3.2, 4.4_
 
   - [x] 20.3 Unified search across CRM entities
+
     - `GET /api/institutions/search/unified` across institutions, tasks, notes, meetings, calls, reminders
     - Add `scope=own|team|all` with RBAC-constrained behavior
     - Apply team filtering for tasks/notes/meetings/calls/reminders
@@ -488,12 +491,14 @@
     - _Requirements: 5.1, 5.3_
 
   - [x] 20.4 Notifications for collaboration features
+
     - Meeting invitations/updates/comments notifications
     - Reminder created/due soon/overdue/completed notifications
     - Team activity notifications
     - _Requirements: 2.2, 2.4, 4.2_
 
   - [x] 20.5 Backend API documentation for frontend development
+
     - Add `packages/backend/BACKEND_API.md` documenting endpoints and scope rules
     - Provide request/response examples and parameter descriptions
     - _Requirements: 7.1, 7.4, 11.1_
@@ -519,12 +524,13 @@
     - _Requirements: 1.1, 1.5, 2.1, 9.1, 10.1_
 
     **✅ Améliorations supplémentaires implémentées :**
+
     - Support XLSX avec ExcelJS (formatage professionnel, auto-fit des colonnes)
     - Pagination avec limit/offset pour les gros exports
     - Système de logging avancé avec Winston (JSON, rotation des fichiers)
     - Architecture de queue pour exports asynchrones (endpoints API + estimation de taille)
 
-  - [ ] 21.2 Build contact and institution segmentation backend
+  - [x] 21.2 Build contact and institution segmentation backend
 
     - Create segmentation model and database schema
     - Implement dynamic filtering system for institutions (specialties, bed capacity, regions)
@@ -534,8 +540,6 @@
     - Add segment analytics and reporting endpoints
     - Write unit tests for segmentation logic
     - _Requirements: 1.2, 1.3, 8.1, 10.2, 10.4_
-
-    **🔄 En attente :** Dépend de la correction du bug TypeScript (institutions.ts:30,7)
 
   - [ ] 21.3 Develop export management frontend interface
 
@@ -548,8 +552,6 @@
     - Add export permissions and team access controls
     - _Requirements: 1.5, 2.3, 10.1, 11.1_
 
-    **🔄 En attente :** Dépend de la correction du bug TypeScript (institutions.ts:30,7)
-
   - [ ] 21.4 Build advanced segmentation and filtering frontend
 
     - Create segment builder with drag-and-drop criteria interface
@@ -560,5 +562,3 @@
     - Implement segment export integration with custom fields
     - Build segment comparison and overlap analysis tools
     - _Requirements: 1.3, 8.1, 8.2, 10.2, 10.4_
-
-    **🔄 En attente :** Dépend de la correction du bug TypeScript (institutions.ts:30,7)

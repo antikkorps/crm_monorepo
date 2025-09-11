@@ -17,6 +17,7 @@ import meetingRoutes from "./routes/meetings"
 import pluginRoutes from "./routes/plugins"
 import quoteRoutes from "./routes/quotes"
 import reminderRoutes from "./routes/reminders"
+import segmentRoutes from "./routes/segments"
 import socketRoutes from "./routes/socket"
 import taskRoutes from "./routes/tasks"
 import teamRoutes from "./routes/teams"
@@ -130,6 +131,10 @@ export const createApp = (): Koa => {
   // Apply reminder routes
   app.use(reminderRoutes.routes())
   app.use(reminderRoutes.allowedMethods())
+
+  // Apply segment routes
+  app.use(segmentRoutes.routes())
+  app.use(segmentRoutes.allowedMethods())
 
   // Apply socket routes
   app.use(socketRoutes.routes())

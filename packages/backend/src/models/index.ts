@@ -16,6 +16,7 @@ import { Payment } from "./Payment"
 import { Quote } from "./Quote"
 import { QuoteLine } from "./QuoteLine"
 import { Reminder } from "./Reminder"
+import { Segment } from "./Segment"
 import { Task } from "./Task"
 import { Team } from "./Team"
 import { User } from "./User"
@@ -522,6 +523,33 @@ MedicalInstitution.hasMany(Reminder, {
   onDelete: "SET NULL",
 })
 
+// Segment associations
+Segment.belongsTo(User, {
+  foreignKey: "ownerId",
+  as: "owner",
+  onDelete: "CASCADE",
+})
+
+Segment.belongsTo(Team, {
+  foreignKey: "teamId",
+  as: "team",
+  onDelete: "SET NULL",
+})
+
+// User segment associations
+User.hasMany(Segment, {
+  foreignKey: "ownerId",
+  as: "segments",
+  onDelete: "CASCADE",
+})
+
+// Team segment associations
+Team.hasMany(Segment, {
+  foreignKey: "teamId",
+  as: "segments",
+  onDelete: "SET NULL",
+})
+
 // Export all models
 export {
   Call,
@@ -541,6 +569,7 @@ export {
   Quote,
   QuoteLine,
   Reminder,
+  Segment,
   Task,
   Team,
   User,
@@ -570,6 +599,7 @@ export default {
   Comment,
   Call,
   Reminder,
+  Segment,
   Webhook,
   WebhookLog,
 }
