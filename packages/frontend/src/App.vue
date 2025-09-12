@@ -1,7 +1,7 @@
 <template>
   <div id="app">
     <router-view />
-    
+
     <!-- Global Snackbar -->
     <v-snackbar
       v-model="snackbarState.show"
@@ -11,12 +11,7 @@
     >
       {{ snackbarState.message }}
       <template #actions>
-        <v-btn
-          variant="text"
-          @click="hideSnackbar"
-        >
-          Fermer
-        </v-btn>
+        <v-btn variant="text" @click="hideSnackbar"> Fermer </v-btn>
       </template>
     </v-snackbar>
   </div>

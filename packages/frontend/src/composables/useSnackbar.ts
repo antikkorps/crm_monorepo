@@ -1,4 +1,4 @@
-import { ref } from 'vue'
+import { ref } from "vue"
 
 export interface SnackbarState {
   show: boolean
@@ -9,22 +9,22 @@ export interface SnackbarState {
 
 const snackbarState = ref<SnackbarState>({
   show: false,
-  message: '',
-  color: 'success',
-  timeout: 3000
+  message: "",
+  color: "success",
+  timeout: 3000,
 })
 
 export function useSnackbar() {
   const showSnackbar = (
-    message: string, 
-    color: 'success' | 'error' | 'warning' | 'info' = 'success',
+    message: string,
+    color: "success" | "error" | "warning" | "info" = "success",
     timeout: number = 3000
   ) => {
     snackbarState.value = {
       show: true,
       message,
       color,
-      timeout
+      timeout,
     }
   }
 
@@ -35,6 +35,6 @@ export function useSnackbar() {
   return {
     snackbarState,
     showSnackbar,
-    hideSnackbar
+    hideSnackbar,
   }
 }
