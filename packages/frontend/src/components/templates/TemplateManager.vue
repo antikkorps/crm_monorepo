@@ -57,11 +57,7 @@
     <div class="template-content">
       <!-- Loading State -->
       <div v-if="loading" class="loading-state">
-        <v-progress-circular
-          indeterminate
-          color="primary"
-          size="64"
-        />
+        <v-progress-circular indeterminate color="primary" size="64" />
         <p class="mt-4">Loading templates...</p>
       </div>
 
@@ -113,7 +109,7 @@
           <v-icon color="warning" class="mr-3">mdi-alert-circle</v-icon>
           Confirm Delete
         </v-card-title>
-        
+
         <v-card-text>
           <div class="delete-content">
             <h4 class="mb-3">Delete Template</h4>
@@ -121,9 +117,9 @@
               Are you sure you want to delete the template "{{ templateToDelete?.name }}"?
               This action cannot be undone.
             </p>
-            <v-alert 
-              v-if="templateToDelete?.isDefault" 
-              type="warning" 
+            <v-alert
+              v-if="templateToDelete?.isDefault"
+              type="warning"
               variant="tonal"
               class="mb-0"
             >
@@ -135,12 +131,7 @@
 
         <v-card-actions>
           <v-spacer />
-          <v-btn
-            variant="text"
-            @click="showDeleteDialog = false"
-          >
-            Cancel
-          </v-btn>
+          <v-btn variant="text" @click="showDeleteDialog = false"> Cancel </v-btn>
           <v-btn
             color="error"
             variant="elevated"
@@ -428,7 +419,7 @@ onMounted(() => {
   .header-actions {
     width: 100%;
   }
-  
+
   .header-actions .v-btn {
     width: 100%;
   }

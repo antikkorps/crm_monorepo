@@ -47,430 +47,428 @@
             </v-row>
           </div>
 
-      <!-- Company Information -->
-      <div class="form-section">
-        <h4 class="section-title">Company Information</h4>
+          <!-- Company Information -->
+          <div class="form-section">
+            <h4 class="section-title">Company Information</h4>
 
-        <v-row>
-          <v-col cols="12">
-            <v-text-field
-              id="company-name"
-              v-model="formData.companyName"
-              label="Company Name"
-              placeholder="Enter company name"
-              :error-messages="errors.companyName"
-              required
-              variant="outlined"
-              density="compact"
+            <v-row>
+              <v-col cols="12">
+                <v-text-field
+                  id="company-name"
+                  v-model="formData.companyName"
+                  label="Company Name"
+                  placeholder="Enter company name"
+                  :error-messages="errors.companyName"
+                  required
+                  variant="outlined"
+                  density="compact"
+                />
+              </v-col>
+            </v-row>
+
+            <v-row>
+              <v-col cols="12" md="6">
+                <v-text-field
+                  id="company-email"
+                  v-model="formData.companyEmail"
+                  type="email"
+                  label="Email"
+                  placeholder="company@example.com"
+                  :error-messages="errors.companyEmail"
+                  variant="outlined"
+                  density="compact"
+                />
+              </v-col>
+
+              <v-col cols="12" md="6">
+                <v-text-field
+                  id="company-phone"
+                  v-model="formData.companyPhone"
+                  label="Phone"
+                  placeholder="+1 (555) 123-4567"
+                  variant="outlined"
+                  density="compact"
+                />
+              </v-col>
+            </v-row>
+
+            <v-row>
+              <v-col cols="12">
+                <v-text-field
+                  id="company-website"
+                  v-model="formData.companyWebsite"
+                  label="Website"
+                  placeholder="https://www.company.com"
+                  :error-messages="errors.companyWebsite"
+                  variant="outlined"
+                  density="compact"
+                />
+              </v-col>
+            </v-row>
+
+            <!-- Address -->
+            <div class="address-section">
+              <h5>Company Address *</h5>
+              <v-row>
+                <v-col cols="12">
+                  <v-text-field
+                    id="address-street"
+                    v-model="formData.companyAddress.street"
+                    label="Street Address"
+                    placeholder="123 Business Street"
+                    :error-messages="errors['companyAddress.street']"
+                    required
+                    variant="outlined"
+                    density="compact"
+                  />
+                </v-col>
+              </v-row>
+
+              <v-row>
+                <v-col cols="12" md="6">
+                  <v-text-field
+                    id="address-city"
+                    v-model="formData.companyAddress.city"
+                    label="City"
+                    placeholder="Business City"
+                    :error-messages="errors['companyAddress.city']"
+                    required
+                    variant="outlined"
+                    density="compact"
+                  />
+                </v-col>
+
+                <v-col cols="12" md="6">
+                  <v-text-field
+                    id="address-state"
+                    v-model="formData.companyAddress.state"
+                    label="State/Province"
+                    placeholder="State"
+                    :error-messages="errors['companyAddress.state']"
+                    required
+                    variant="outlined"
+                    density="compact"
+                  />
+                </v-col>
+              </v-row>
+
+              <v-row>
+                <v-col cols="12" md="6">
+                  <v-text-field
+                    id="address-zip"
+                    v-model="formData.companyAddress.zipCode"
+                    label="ZIP/Postal Code"
+                    placeholder="12345"
+                    :error-messages="errors['companyAddress.zipCode']"
+                    required
+                    variant="outlined"
+                    density="compact"
+                  />
+                </v-col>
+
+                <v-col cols="12" md="6">
+                  <v-text-field
+                    id="address-country"
+                    v-model="formData.companyAddress.country"
+                    label="Country"
+                    placeholder="United States"
+                    :error-messages="errors['companyAddress.country']"
+                    required
+                    variant="outlined"
+                    density="compact"
+                  />
+                </v-col>
+              </v-row>
+            </div>
+          </div>
+
+          <!-- Legal Information -->
+          <div class="form-section">
+            <h4 class="section-title">Legal Information</h4>
+
+            <v-row>
+              <v-col cols="12" md="6">
+                <v-text-field
+                  id="tax-number"
+                  v-model="formData.taxNumber"
+                  label="Tax Number"
+                  placeholder="Tax ID"
+                  variant="outlined"
+                  density="compact"
+                />
+              </v-col>
+
+              <v-col cols="12" md="6">
+                <v-text-field
+                  id="vat-number"
+                  v-model="formData.vatNumber"
+                  label="VAT Number"
+                  placeholder="VAT ID"
+                  variant="outlined"
+                  density="compact"
+                />
+              </v-col>
+            </v-row>
+
+            <v-row>
+              <v-col cols="12" md="6">
+                <v-text-field
+                  id="siret-number"
+                  v-model="formData.siretNumber"
+                  label="SIRET Number"
+                  placeholder="SIRET"
+                  variant="outlined"
+                  density="compact"
+                />
+              </v-col>
+
+              <v-col cols="12" md="6">
+                <v-text-field
+                  id="registration-number"
+                  v-model="formData.registrationNumber"
+                  label="Registration Number"
+                  placeholder="Business Registration"
+                  variant="outlined"
+                  density="compact"
+                />
+              </v-col>
+            </v-row>
+          </div>
+
+          <!-- Logo and Branding -->
+          <div class="form-section">
+            <h4 class="section-title">Logo and Branding</h4>
+
+            <LogoUploader
+              v-model:logo-url="formData.logoUrl"
+              @upload="handleLogoUpload"
             />
-          </v-col>
-        </v-row>
 
-        <v-row>
-          <v-col cols="12" md="6">
-            <v-text-field
-              id="company-email"
-              v-model="formData.companyEmail"
-              type="email"
-              label="Email"
-              placeholder="company@example.com"
-              :error-messages="errors.companyEmail"
-              variant="outlined"
-              density="compact"
-            />
-          </v-col>
+            <v-row>
+              <v-col cols="12" md="6">
+                <v-select
+                  id="logo-position"
+                  v-model="formData.logoPosition"
+                  :items="logoPositionOptions"
+                  item-title="label"
+                  item-value="value"
+                  label="Logo Position"
+                  placeholder="Select logo position"
+                  variant="outlined"
+                  density="compact"
+                />
+              </v-col>
+            </v-row>
 
-          <v-col cols="12" md="6">
-            <v-text-field
-              id="company-phone"
-              v-model="formData.companyPhone"
-              label="Phone"
-              placeholder="+1 (555) 123-4567"
-              variant="outlined"
-              density="compact"
-            />
-          </v-col>
-        </v-row>
+            <v-row>
+              <v-col cols="12" md="6">
+                <label for="primary-color">Primary Color</label>
+                <ColorPicker
+                  v-model="formData.primaryColor"
+                  format="hex"
+                  :class="{ 'p-invalid': errors.primaryColor }"
+                />
+                <small v-if="errors.primaryColor" class="p-error">{{
+                  errors.primaryColor
+                }}</small>
+              </v-col>
 
-        <v-row>
-          <v-col cols="12">
-            <v-text-field
-              id="company-website"
-              v-model="formData.companyWebsite"
-              label="Website"
-              placeholder="https://www.company.com"
-              :error-messages="errors.companyWebsite"
-              variant="outlined"
-              density="compact"
-            />
-          </v-col>
-        </v-row>
+              <v-col cols="12" md="6">
+                <label for="secondary-color">Secondary Color</label>
+                <ColorPicker
+                  v-model="formData.secondaryColor"
+                  format="hex"
+                  :class="{ 'p-invalid': errors.secondaryColor }"
+                />
+                <small v-if="errors.secondaryColor" class="p-error">{{
+                  errors.secondaryColor
+                }}</small>
+              </v-col>
+            </v-row>
+          </div>
 
-        <!-- Address -->
-        <div class="address-section">
-          <h5>Company Address *</h5>
-          <v-row>
-            <v-col cols="12">
-              <v-text-field
-                id="address-street"
-                v-model="formData.companyAddress.street"
-                label="Street Address"
-                placeholder="123 Business Street"
-                :error-messages="errors['companyAddress.street']"
-                required
-                variant="outlined"
-                density="compact"
-              />
-            </v-col>
-          </v-row>
+          <!-- Layout Settings -->
+          <div class="form-section">
+            <h4 class="section-title">Layout Settings</h4>
 
-          <v-row>
-            <v-col cols="12" md="6">
-              <v-text-field
-                id="address-city"
-                v-model="formData.companyAddress.city"
-                label="City"
-                placeholder="Business City"
-                :error-messages="errors['companyAddress.city']"
-                required
-                variant="outlined"
-                density="compact"
-              />
-            </v-col>
+            <v-row>
+              <v-col cols="12" md="6">
+                <v-text-field
+                  id="header-height"
+                  v-model.number="formData.headerHeight"
+                  type="number"
+                  label="Header Height (px)"
+                  min="0"
+                  max="200"
+                  suffix="px"
+                  variant="outlined"
+                  density="compact"
+                />
+              </v-col>
 
-            <v-col cols="12" md="6">
-              <v-text-field
-                id="address-state"
-                v-model="formData.companyAddress.state"
-                label="State/Province"
-                placeholder="State"
-                :error-messages="errors['companyAddress.state']"
-                required
-                variant="outlined"
-                density="compact"
-              />
-            </v-col>
-          </v-row>
+              <v-col cols="12" md="6">
+                <v-text-field
+                  id="footer-height"
+                  v-model.number="formData.footerHeight"
+                  type="number"
+                  label="Footer Height (px)"
+                  min="0"
+                  max="200"
+                  suffix="px"
+                  variant="outlined"
+                  density="compact"
+                />
+              </v-col>
+            </v-row>
 
-          <v-row>
-            <v-col cols="12" md="6">
-              <v-text-field
-                id="address-zip"
-                v-model="formData.companyAddress.zipCode"
-                label="ZIP/Postal Code"
-                placeholder="12345"
-                :error-messages="errors['companyAddress.zipCode']"
-                required
-                variant="outlined"
-                density="compact"
-              />
-            </v-col>
+            <v-row>
+              <v-col cols="12" md="6">
+                <v-text-field
+                  id="margin-top"
+                  v-model.number="formData.marginTop"
+                  type="number"
+                  label="Top Margin (px)"
+                  min="0"
+                  max="100"
+                  suffix="px"
+                  variant="outlined"
+                  density="compact"
+                />
+              </v-col>
 
-            <v-col cols="12" md="6">
-              <v-text-field
-                id="address-country"
-                v-model="formData.companyAddress.country"
-                label="Country"
-                placeholder="United States"
-                :error-messages="errors['companyAddress.country']"
-                required
-                variant="outlined"
-                density="compact"
-              />
-            </v-col>
-          </v-row>
-        </div>
-      </div>
+              <v-col cols="12" md="6">
+                <v-text-field
+                  id="margin-bottom"
+                  v-model.number="formData.marginBottom"
+                  type="number"
+                  label="Bottom Margin (px)"
+                  min="0"
+                  max="100"
+                  suffix="px"
+                  variant="outlined"
+                  density="compact"
+                />
+              </v-col>
+            </v-row>
 
-      <!-- Legal Information -->
-      <div class="form-section">
-        <h4 class="section-title">Legal Information</h4>
+            <v-row>
+              <v-col cols="12" md="6">
+                <v-text-field
+                  id="margin-left"
+                  v-model.number="formData.marginLeft"
+                  type="number"
+                  label="Left Margin (px)"
+                  min="0"
+                  max="100"
+                  suffix="px"
+                  variant="outlined"
+                  density="compact"
+                />
+              </v-col>
 
-        <v-row>
-          <v-col cols="12" md="6">
-            <v-text-field
-              id="tax-number"
-              v-model="formData.taxNumber"
-              label="Tax Number"
-              placeholder="Tax ID"
-              variant="outlined"
-              density="compact"
-            />
-          </v-col>
+              <v-col cols="12" md="6">
+                <v-text-field
+                  id="margin-right"
+                  v-model.number="formData.marginRight"
+                  type="number"
+                  label="Right Margin (px)"
+                  min="0"
+                  max="100"
+                  suffix="px"
+                  variant="outlined"
+                  density="compact"
+                />
+              </v-col>
+            </v-row>
+          </div>
 
-          <v-col cols="12" md="6">
-            <v-text-field
-              id="vat-number"
-              v-model="formData.vatNumber"
-              label="VAT Number"
-              placeholder="VAT ID"
-              variant="outlined"
-              density="compact"
-            />
-          </v-col>
-        </v-row>
+          <!-- Custom Content -->
+          <div class="form-section">
+            <h4 class="section-title">Custom Content</h4>
 
-        <v-row>
-          <v-col cols="12" md="6">
-            <v-text-field
-              id="siret-number"
-              v-model="formData.siretNumber"
-              label="SIRET Number"
-              placeholder="SIRET"
-              variant="outlined"
-              density="compact"
-            />
-          </v-col>
+            <v-row>
+              <v-col cols="12">
+                <v-textarea
+                  id="custom-header"
+                  v-model="formData.customHeader"
+                  label="Custom Header Text"
+                  placeholder="Custom header content..."
+                  rows="3"
+                  variant="outlined"
+                  density="compact"
+                />
+              </v-col>
+            </v-row>
 
-          <v-col cols="12" md="6">
-            <v-text-field
-              id="registration-number"
-              v-model="formData.registrationNumber"
-              label="Registration Number"
-              placeholder="Business Registration"
-              variant="outlined"
-              density="compact"
-            />
-          </v-col>
-        </v-row>
-      </div>
+            <v-row>
+              <v-col cols="12">
+                <v-textarea
+                  id="custom-footer"
+                  v-model="formData.customFooter"
+                  label="Custom Footer Text"
+                  placeholder="Custom footer content..."
+                  rows="3"
+                  variant="outlined"
+                  density="compact"
+                />
+              </v-col>
+            </v-row>
 
-      <!-- Logo and Branding -->
-      <div class="form-section">
-        <h4 class="section-title">Logo and Branding</h4>
+            <v-row>
+              <v-col cols="12">
+                <v-textarea
+                  id="terms-conditions"
+                  v-model="formData.termsAndConditions"
+                  label="Terms and Conditions"
+                  placeholder="Terms and conditions..."
+                  rows="4"
+                  variant="outlined"
+                  density="compact"
+                />
+              </v-col>
+            </v-row>
 
-        <LogoUploader v-model:logo-url="formData.logoUrl" @upload="handleLogoUpload" />
-
-        <v-row>
-          <v-col cols="12" md="6">
-            <v-select
-              id="logo-position"
-              v-model="formData.logoPosition"
-              :items="logoPositionOptions"
-              item-title="label"
-              item-value="value"
-              label="Logo Position"
-              placeholder="Select logo position"
-              variant="outlined"
-              density="compact"
-            />
-          </v-col>
-        </v-row>
-
-        <v-row>
-          <v-col cols="12" md="6">
-            <label for="primary-color">Primary Color</label>
-            <ColorPicker
-              v-model="formData.primaryColor"
-              format="hex"
-              :class="{ 'p-invalid': errors.primaryColor }"
-            />
-            <small v-if="errors.primaryColor" class="p-error">{{
-              errors.primaryColor
-            }}</small>
-          </v-col>
-
-          <v-col cols="12" md="6">
-            <label for="secondary-color">Secondary Color</label>
-            <ColorPicker
-              v-model="formData.secondaryColor"
-              format="hex"
-              :class="{ 'p-invalid': errors.secondaryColor }"
-            />
-            <small v-if="errors.secondaryColor" class="p-error">{{
-              errors.secondaryColor
-            }}</small>
-          </v-col>
-        </v-row>
-      </div>
-
-      <!-- Layout Settings -->
-      <div class="form-section">
-        <h4 class="section-title">Layout Settings</h4>
-
-        <v-row>
-          <v-col cols="12" md="6">
-            <v-text-field
-              id="header-height"
-              v-model.number="formData.headerHeight"
-              type="number"
-              label="Header Height (px)"
-              min="0"
-              max="200"
-              suffix="px"
-              variant="outlined"
-              density="compact"
-            />
-          </v-col>
-
-          <v-col cols="12" md="6">
-            <v-text-field
-              id="footer-height"
-              v-model.number="formData.footerHeight"
-              type="number"
-              label="Footer Height (px)"
-              min="0"
-              max="200"
-              suffix="px"
-              variant="outlined"
-              density="compact"
-            />
-          </v-col>
-        </v-row>
-
-        <v-row>
-          <v-col cols="12" md="6">
-            <v-text-field
-              id="margin-top"
-              v-model.number="formData.marginTop"
-              type="number"
-              label="Top Margin (px)"
-              min="0"
-              max="100"
-              suffix="px"
-              variant="outlined"
-              density="compact"
-            />
-          </v-col>
-
-          <v-col cols="12" md="6">
-            <v-text-field
-              id="margin-bottom"
-              v-model.number="formData.marginBottom"
-              type="number"
-              label="Bottom Margin (px)"
-              min="0"
-              max="100"
-              suffix="px"
-              variant="outlined"
-              density="compact"
-            />
-          </v-col>
-        </v-row>
-
-        <v-row>
-          <v-col cols="12" md="6">
-            <v-text-field
-              id="margin-left"
-              v-model.number="formData.marginLeft"
-              type="number"
-              label="Left Margin (px)"
-              min="0"
-              max="100"
-              suffix="px"
-              variant="outlined"
-              density="compact"
-            />
-          </v-col>
-
-          <v-col cols="12" md="6">
-            <v-text-field
-              id="margin-right"
-              v-model.number="formData.marginRight"
-              type="number"
-              label="Right Margin (px)"
-              min="0"
-              max="100"
-              suffix="px"
-              variant="outlined"
-              density="compact"
-            />
-          </v-col>
-        </v-row>
-      </div>
-
-      <!-- Custom Content -->
-      <div class="form-section">
-        <h4 class="section-title">Custom Content</h4>
-
-        <v-row>
-          <v-col cols="12">
-            <v-textarea
-              id="custom-header"
-              v-model="formData.customHeader"
-              label="Custom Header Text"
-              placeholder="Custom header content..."
-              rows="3"
-              variant="outlined"
-              density="compact"
-            />
-          </v-col>
-        </v-row>
-
-        <v-row>
-          <v-col cols="12">
-            <v-textarea
-              id="custom-footer"
-              v-model="formData.customFooter"
-              label="Custom Footer Text"
-              placeholder="Custom footer content..."
-              rows="3"
-              variant="outlined"
-              density="compact"
-            />
-          </v-col>
-        </v-row>
-
-        <v-row>
-          <v-col cols="12">
-            <v-textarea
-              id="terms-conditions"
-              v-model="formData.termsAndConditions"
-              label="Terms and Conditions"
-              placeholder="Terms and conditions..."
-              rows="4"
-              variant="outlined"
-              density="compact"
-            />
-          </v-col>
-        </v-row>
-
-        <v-row>
-          <v-col cols="12">
-            <v-textarea
-              id="payment-instructions"
-              v-model="formData.paymentInstructions"
-              label="Payment Instructions"
-              placeholder="Payment instructions..."
-              rows="3"
-              variant="outlined"
-              density="compact"
-            />
-          </v-col>
-        </v-row>
-      </div>
+            <v-row>
+              <v-col cols="12">
+                <v-textarea
+                  id="payment-instructions"
+                  v-model="formData.paymentInstructions"
+                  label="Payment Instructions"
+                  placeholder="Payment instructions..."
+                  rows="3"
+                  variant="outlined"
+                  density="compact"
+                />
+              </v-col>
+            </v-row>
+          </div>
         </v-form>
-    </v-card-text>
+      </v-card-text>
 
-    <v-card-actions>
-      <v-spacer />
-      <div class="dialog-footer">
-        <v-btn
-          variant="outlined"
-          @click="handleCancel"
-        >
-          Cancel
-        </v-btn>
-        <v-btn
-          variant="outlined"
-          color="info"
-          @click="handlePreview"
-          :disabled="!isFormValid"
-        >
-          Preview
-        </v-btn>
-        <v-btn
-          color="primary"
-          @click="handleSubmit"
-          :loading="saving"
-          :disabled="!isFormValid"
-        >
-          {{ isEditing ? 'Update Template' : 'Create Template' }}
-        </v-btn>
-      </div>
-    </v-card-actions>
-  </v-card>
-</v-dialog>
+      <v-card-actions>
+        <v-spacer />
+        <div class="dialog-footer">
+          <v-btn variant="outlined" @click="handleCancel"> Cancel </v-btn>
+          <v-btn
+            variant="outlined"
+            color="info"
+            @click="handlePreview"
+            :disabled="!isFormValid"
+          >
+            Preview
+          </v-btn>
+          <v-btn
+            color="primary"
+            @click="handleSubmit"
+            :loading="saving"
+            :disabled="!isFormValid"
+          >
+            {{ isEditing ? "Update Template" : "Create Template" }}
+          </v-btn>
+        </div>
+      </v-card-actions>
+    </v-card>
+  </v-dialog>
 </template>
 
 <script setup lang="ts">
