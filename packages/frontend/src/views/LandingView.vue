@@ -3,7 +3,7 @@
     <v-main>
       <!-- Hero Section -->
       <v-container fluid class="hero-section">
-        <v-row align="center" class="fill-height">
+        <v-row align="center" justify="center" class="fill-height text-center text-md-left">
           <v-col cols="12" md="6">
             <div class="hero-content">
               <h1 class="hero-title">
@@ -39,10 +39,64 @@
               </div>
             </div>
           </v-col>
-          <v-col cols="12" md="6" class="text-center">
-            <v-icon size="200" color="rgba(255, 255, 255, 0.2)">
-              mdi-heart-pulse
-            </v-icon>
+          <v-col cols="12" md="6" class="d-flex align-center justify-center">
+            <div class="hero-image-container">
+              <v-card class="mockup-card" elevation="8">
+                <v-card-item>
+                  <v-card-title class="d-flex align-center text-body-2">
+                    <v-icon color="light-blue-accent-3" start icon="mdi-chart-bar" />
+                    <span>Performance</span>
+                  </v-card-title>
+                </v-card-item>
+                <v-card-text class="pa-0">
+                  <v-sparkline
+                    :model-value="[10, 40, 20, 80, 50, 70]"
+                    height="80"
+                    color="light-blue-accent-3"
+                    line-width="2"
+                  />
+                </v-card-text>
+              </v-card>
+              <v-card class="mockup-card-2" elevation="16">
+                <v-card-item>
+                  <v-card-title class="d-flex align-center text-body-2">
+                    <v-icon color="green-accent-3" start icon="mdi-account-group" />
+                    <span>Nouveaux Contacts</span>
+                  </v-card-title>
+                </v-card-item>
+                <v-card-text>
+                  <div class="d-flex justify-space-around">
+                    <v-avatar color="rgba(255,255,255,0.3)" size="40">
+                      <v-icon>mdi-account</v-icon>
+                    </v-avatar>
+                    <v-avatar color="rgba(255,255,255,0.3)" size="40">
+                      <v-icon>mdi-account</v-icon>
+                    </v-avatar>
+                    <v-avatar color="rgba(255,255,255,0.3)" size="40">
+                      <v-icon>mdi-account</v-icon>
+                    </v-avatar>
+                  </div>
+                </v-card-text>
+              </v-card>
+               <v-card class="mockup-card-3" elevation="12">
+                <v-card-item>
+                  <v-card-title class="d-flex align-center text-body-2">
+                    <v-icon color="amber-accent-3" start icon="mdi-check-all" />
+                    <span>Tâches</span>
+                  </v-card-title>
+                </v-card-item>
+                <v-card-text>
+                  <div class="d-flex align-center mb-2">
+                    <v-checkbox-btn :model-value="true" readonly color="amber-accent-3" class="mr-2" />
+                    <span class="text-decoration-line-through">Rendez-vous Dr. Martin</span>
+                  </div>
+                   <div class="d-flex align-center">
+                    <v-checkbox-btn :model-value="false" readonly class="mr-2" />
+                    <span>Préparer démo</span>
+                  </div>
+                </v-card-text>
+              </v-card>
+            </div>
           </v-col>
         </v-row>
       </v-container>
@@ -226,7 +280,9 @@ const scrollToFeatures = () => {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
   min-height: 100vh;
-  padding: 4rem 0;
+  padding: 4rem 2rem;
+  display: flex;
+  align-items: center;
 }
 
 .hero-title {
@@ -246,6 +302,7 @@ const scrollToFeatures = () => {
   line-height: 1.6;
   margin-bottom: 2rem;
   opacity: 0.9;
+  max-width: 500px;
 }
 
 .hero-actions {
@@ -254,41 +311,95 @@ const scrollToFeatures = () => {
   flex-wrap: wrap;
 }
 
+.hero-image-container {
+  position: relative;
+  width: 100%;
+  max-width: 450px;
+  height: 400px;
+  transform: rotate(-5deg);
+}
+.mockup-card, .mockup-card-2, .mockup-card-3 {
+  position: absolute;
+  background-color: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: white;
+  border-radius: 16px;
+}
+.mockup-card {
+  width: 70%;
+  top: 0;
+  left: 0;
+  transform: rotate(-10deg);
+}
+.mockup-card-2 {
+  width: 60%;
+  bottom: 20px;
+  right: 0;
+  transform: rotate(8deg);
+}
+.mockup-card-3 {
+  width: 55%;
+  bottom: 120px;
+  left: 30px;
+  transform: rotate(5deg);
+}
+
+:deep(.v-sparkline__label) {
+  fill: white !important;
+}
+
 /* Features Section */
 .features-section {
-  padding: 6rem 0;
+  padding: 6rem 2rem;
   background: #f8f9fa;
 }
 
 .feature-card {
   height: 100%;
-  transition: transform 0.2s ease-in-out;
+  transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+  border-radius: 16px;
 }
 
 .feature-card:hover {
-  transform: translateY(-4px);
+  transform: translateY(-8px);
+  box-shadow: 0 10px 20px rgba(0,0,0,0.1);
 }
 
 /* CTA Section */
 .cta-section {
   background: #1f2937;
   color: white;
-  padding: 6rem 0;
+  padding: 6rem 2rem;
 }
 
 /* Footer */
 .footer {
   background: #111827;
   color: white;
-  padding: 3rem 0 1rem;
+  padding: 3rem 2rem 1rem;
 }
 
 /* Responsive Design */
-@media (max-width: 768px) {
+@media (max-width: 960px) {
+  .hero-section {
+    padding-top: 6rem;
+    padding-bottom: 4rem;
+    min-height: auto;
+  }
+  .hero-image-container {
+    margin-top: 4rem;
+    transform: rotate(0);
+    max-width: 350px;
+    height: 300px;
+  }
   .hero-title {
     font-size: 2.5rem;
   }
-  
+  .hero-description {
+    font-size: 1.1rem;
+  }
   .hero-actions {
     justify-content: center;
   }

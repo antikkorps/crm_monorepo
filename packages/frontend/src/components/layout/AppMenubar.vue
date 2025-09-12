@@ -26,7 +26,7 @@
                 fill="var(--p-text-color)"
               />
             </svg>
-            <span class="sidebar-title">Medical CRM</span>
+            <span class="sidebar-title">{{ t("sidebar.appName") }}</span>
           </router-link>
         </div>
       </template>
@@ -45,7 +45,7 @@
           </router-link>
 
           <div class="sidebar-section">
-            <span class="sidebar-section-title">Billing</span>
+            <span class="sidebar-section-title">{{ t("sidebar.billing") }}</span>
             <router-link
               v-for="item in billingItems"
               :key="item.label"
@@ -180,11 +180,13 @@ import Drawer from "primevue/drawer"
 import InputText from "primevue/inputtext"
 import Menu from "primevue/menu"
 import MenuBar from "primevue/menubar"
-import { onMounted, onUnmounted, ref } from "vue"
+import { onMounted, onUnmounted, ref, computed } from "vue"
 import { useRouter } from "vue-router"
+import { useI18n } from "vue-i18n"
 
 const router = useRouter()
 const authStore = useAuthStore()
+const { t } = useI18n()
 
 // Reactive state
 const sidebarVisible = ref(true) // Open by default on desktop
@@ -196,22 +198,24 @@ const profileMenu = ref()
 const isMobile = ref(false)
 
 // Navigation items for sidebar
-const navigationItems = ref([
-  { label: "Dashboard", icon: "pi pi-home", to: "/dashboard" },
-  { label: "Institutions", icon: "pi pi-building", to: "/institutions" },
-  { label: "Tasks", icon: "pi pi-check-square", to: "/tasks" }
+const navigationItems = computed(() => [
+  { label: t("navigation.dashboard"), icon: "pi pi-home", to: "/dashboard" },
+  { label: t("navigation.institutions"), icon: "pi pi-building", to: "/institutions" },
+  { label: t("navigation.tasks"), icon: "pi pi-check-square", to: "/tasks" }
 ])
 
-const billingItems = ref([
-  { label: "Quotes", icon: "pi pi-file-edit", to: "/quotes" },
-  { label: "Invoices", icon: "pi pi-file", to: "/invoices" },
-  { label: "Templates", icon: "pi pi-palette", to: "/templates" },
-  { label: "Analytics", icon: "pi pi-chart-bar", to: "/billing/analytics" }
+const billingItems = computed(() => [
+  { label: t("navigation.quotes"), icon: "pi pi-file-edit", to: "/quotes" },
+  { label: t("navigation.invoices"), icon: "pi pi-file", to: "/invoices" },
+  { label: t("navigation.templates"), icon: "pi pi-palette", to: "/templates" },
+  { label: t("navigation.analytics"), icon: "pi pi-chart-bar", to: "/billing/analytics" }
 ])
 
-const additionalItems = ref([
-  { label: "Team", icon: "pi pi-users", to: "/team" },
-  { label: "Webhooks", icon: "pi pi-send", to: "/webhooks" }
+const additionalItems = computed(() => [
+  { label: t("navigation.segmentation"), icon: "pi pi-filter", to: "/segmentation" },
+  { label: t("navigation.team"), icon: "pi pi-users", to: "/team" },
+  { label: t("navigation.webhooks"), icon: "pi pi-send", to: "/webhooks" },
+  { label: t("navigation.exportCenter"), icon: "pi pi-download", to: "/export" }
 ])
 
 // Profile menu items with proper header

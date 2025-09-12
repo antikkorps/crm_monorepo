@@ -108,5 +108,303 @@
     "hours": "hours",
     "minutes": "minutes",
     "seconds": "seconds"
+  },
+  "segmentation": {
+    "title": "Advanced Segmentation",
+    "subtitle": "Create and manage customer segments with advanced filtering and analytics",
+    "builder": {
+      "title": "Segment Builder",
+      "subtitle": "Build custom segments by combining multiple filters",
+      "activeFilters": "Active Filters",
+      "noFilters": "No filters added yet. Start by selecting a filter type above.",
+      "segmentName": "Segment Name",
+      "segmentDescription": "Segment Description",
+      "createSegment": "Create Segment",
+      "updateSegment": "Update Segment",
+      "clearFilters": "Clear All Filters",
+      "previewResults": "Preview Results",
+      "saveSegment": "Save Segment"
+    },
+    "filters": {
+      "addFilter": "Add Filter",
+      "activeContacts": {
+        "label": "Active Contacts",
+        "hasContacts": "Has active contacts",
+        "noContacts": "No active contacts"
+      },
+      "medicalProfile": {
+        "label": "Medical Profile",
+        "placeholder": "Select medical profile criteria..."
+      },
+      "teamAssignment": {
+        "label": "Team Assignment",
+        "teams": {
+          "sales": "Sales Team",
+          "support": "Support Team",
+          "medical": "Medical Team"
+        }
+      },
+      "dateRange": {
+        "label": "Date Range",
+        "startDate": "Start Date",
+        "endDate": "End Date",
+        "field": "Date Field",
+        "fields": {
+          "createdAt": "Created At",
+          "updatedAt": "Updated At",
+          "lastContact": "Last Contact",
+          "nextAppointment": "Next Appointment"
+        }
+      },
+      "name": {
+        "label": "Name"
+      },
+      "type": {
+        "label": "Type"
+      },
+      "location": {
+        "label": "Location",
+        "country": "Country",
+        "region": "Region/State",
+        "city": "City",
+        "countries": {
+          "us": "United States",
+          "ca": "Canada",
+          "fr": "France"
+        }
+      },
+      "specialty": {
+        "label": "Specialty",
+        "specialties": {
+          "cardiology": "Cardiology",
+          "neurology": "Neurology",
+          "orthopedics": "Orthopedics",
+          "pediatrics": "Pediatrics",
+          "oncology": "Oncology",
+          "radiology": "Radiology",
+          "surgery": "Surgery",
+          "emergency": "Emergency Medicine"
+        }
+      },
+      "capacity": {
+        "label": "Capacity",
+        "minCapacity": "Minimum Capacity",
+        "maxCapacity": "Maximum Capacity",
+        "type": "Capacity Type",
+        "types": {
+          "beds": "Beds",
+          "rooms": "Rooms",
+          "staff": "Staff Members",
+          "patients": "Patients"
+        }
+      },
+      "compliance": {
+        "label": "Compliance",
+        "type": "Compliance Type",
+        "status": "Compliance Status",
+        "types": {
+          "hipaa": "HIPAA",
+          "gdpr": "GDPR",
+          "sox": "SOX",
+          "iso27001": "ISO 27001"
+        },
+        "statuses": {
+          "compliant": "Compliant",
+          "nonCompliant": "Non-Compliant",
+          "pending": "Pending Review",
+          "expired": "Expired"
+        }
+      },
+      "role": {
+        "label": "Role",
+        "roles": {
+          "admin": "Administrator",
+          "manager": "Manager",
+          "doctor": "Doctor",
+          "nurse": "Nurse",
+          "receptionist": "Receptionist",
+          "specialist": "Specialist",
+          "coordinator": "Coordinator",
+          "assistant": "Assistant"
+        }
+      },
+      "department": {
+        "label": "Department",
+        "departments": {
+          "administration": "Administration",
+          "medical": "Medical",
+          "nursing": "Nursing",
+          "support": "Support",
+          "it": "IT",
+          "finance": "Finance",
+          "hr": "Human Resources",
+          "marketing": "Marketing"
+        }
+      },
+      "title": {
+        "label": "Title",
+        "titles": {
+          "dr": "Dr.",
+          "prof": "Prof.",
+          "mr": "Mr.",
+          "mrs": "Mrs.",
+          "ms": "Ms.",
+          "rn": "RN",
+          "lpn": "LPN",
+          "pa": "PA"
+        }
+      },
+      "primary": {
+        "label": "Primary Contact",
+        "primaryOnly": "Primary contacts only",
+        "nonPrimaryOnly": "Non-primary contacts only"
+      },
+      "contactMethod": {
+        "label": "Contact Method",
+        "methods": {
+          "email": "Email",
+          "phone": "Phone",
+          "mobile": "Mobile",
+          "video": "Video Call",
+          "inPerson": "In Person",
+          "mail": "Mail"
+        }
+      },
+      "activityLevel": {
+        "label": "Activity Level",
+        "timeframe": "Timeframe",
+        "levels": {
+          "high": "High Activity",
+          "medium": "Medium Activity",
+          "low": "Low Activity",
+          "inactive": "Inactive"
+        },
+        "timeframes": {
+          "last7Days": "Last 7 Days",
+          "last30Days": "Last 30 Days",
+          "last90Days": "Last 90 Days",
+          "lastYear": "Last Year"
+        }
+      }
+    },
+    "saved": {
+      "title": "Saved Segments",
+      "subtitle": "Manage your saved segments and quick actions",
+      "createNew": "Create New Segment",
+      "search": "Search segments...",
+      "actions": "Actions",
+      "edit": "Edit Segment",
+      "duplicate": "Duplicate Segment",
+      "delete": "Delete Segment",
+      "share": "Share Segment",
+      "export": "Export Results",
+      "analytics": "View Analytics",
+      "compare": "Compare Segments",
+      "lastModified": "Last Modified",
+      "recordCount": "Records",
+      "confirmDelete": "Are you sure you want to delete this segment?",
+      "segmentDeleted": "Segment deleted successfully",
+      "segmentDuplicated": "Segment duplicated successfully"
+    },
+    "preview": {
+      "title": "Segment Preview",
+      "subtitle": "Preview of records matching your filter criteria",
+      "totalRecords": "Total Records",
+      "loading": "Loading preview data...",
+      "noResults": "No records match the current filter criteria",
+      "exportResults": "Export Results",
+      "saveAsSegment": "Save as Segment",
+      "applyFilters": "Apply Filters"
+    },
+    "analytics": {
+      "title": "Segment Analytics",
+      "subtitle": "Detailed analytics and insights for your segments",
+      "overview": "Overview",
+      "demographics": "Demographics",
+      "behavior": "Behavior",
+      "trends": "Trends",
+      "totalRecords": "Total Records",
+      "growthRate": "Growth Rate",
+      "engagementScore": "Engagement Score",
+      "conversionRate": "Conversion Rate",
+      "averageValue": "Average Value",
+      "topSegments": "Top Segments",
+      "recentActivity": "Recent Activity",
+      "performanceMetrics": "Performance Metrics",
+      "exportReport": "Export Report"
+    },
+    "export": {
+      "title": "Export Segment",
+      "subtitle": "Export segment data in various formats",
+      "format": "Export Format",
+      "formats": {
+        "csv": "CSV (Comma Separated Values)",
+        "excel": "Excel (.xlsx)",
+        "pdf": "PDF Report",
+        "json": "JSON Data"
+      },
+      "includeFields": "Include Fields",
+      "selectAll": "Select All",
+      "selectNone": "Select None",
+      "fileName": "File Name",
+      "export": "Export Data",
+      "exporting": "Exporting data...",
+      "exportComplete": "Export completed successfully",
+      "exportError": "Error during export"
+    },
+    "sharing": {
+      "title": "Share Segment",
+      "subtitle": "Share segment with team members",
+      "shareWith": "Share With",
+      "teamMembers": "Team Members",
+      "permissionLevel": "Permission Level",
+      "permissions": {
+        "view": "View Only",
+        "edit": "Can Edit",
+        "admin": "Full Access"
+      },
+      "message": "Message (Optional)",
+      "share": "Share Segment",
+      "sharedSuccessfully": "Segment shared successfully",
+      "sharingError": "Error sharing segment"
+    },
+    "comparison": {
+      "title": "Compare Segments",
+      "subtitle": "Compare multiple segments side by side",
+      "selectSegments": "Select Segments to Compare",
+      "addSegment": "Add Segment",
+      "removeSegment": "Remove Segment",
+      "comparisonMetrics": "Comparison Metrics",
+      "metrics": {
+        "size": "Segment Size",
+        "growth": "Growth Rate",
+        "engagement": "Engagement",
+        "conversion": "Conversion",
+        "value": "Average Value"
+      },
+      "visualComparison": "Visual Comparison",
+      "exportComparison": "Export Comparison"
+    },
+    "bulkActions": {
+      "title": "Bulk Actions",
+      "subtitle": "Perform actions on multiple records in the segment",
+      "selectAction": "Select Action",
+      "actions": {
+        "assign": "Assign to Team",
+        "updateStatus": "Update Status",
+        "sendEmail": "Send Email",
+        "export": "Export Selected",
+        "delete": "Delete Records",
+        "addTags": "Add Tags",
+        "removeTags": "Remove Tags"
+      },
+      "selectedRecords": "Selected Records",
+      "confirmAction": "Confirm Action",
+      "actionDescription": "You are about to {action} on {count} records.",
+      "proceed": "Proceed",
+      "cancel": "Cancel",
+      "actionCompleted": "Action completed successfully",
+      "actionError": "Error performing action"
+    }
   }
 }

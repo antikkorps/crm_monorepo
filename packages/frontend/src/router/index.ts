@@ -20,6 +20,7 @@ const Templates = () => import("@/views/templates/TemplatesView.vue")
 const BillingAnalytics = () => import("@/views/billing/BillingAnalyticsView.vue")
 const Webhooks = () => import("@/views/webhooks/WebhooksView.vue")
 const ExportCenter = () => import("@/views/export/ExportCenterView.vue")
+const Segmentation = () => import("@/views/segmentation/SegmentationView.vue")
 
 const routes: RouteRecordRaw[] = [
   {
@@ -157,15 +158,24 @@ const routes: RouteRecordRaw[] = [
       title: "Webhooks",
     },
   },
-  {
-    path: "/export",
-    name: "ExportCenter",
-    component: ExportCenter,
-    meta: {
-      requiresAuth: true,
-      title: "Export Center",
-    },
-  },
+   {
+     path: "/export",
+     name: "ExportCenter",
+     component: ExportCenter,
+     meta: {
+       requiresAuth: true,
+       title: "Export Center",
+     },
+   },
+   {
+     path: "/segmentation",
+     name: "Segmentation",
+     component: Segmentation,
+     meta: {
+       requiresAuth: true,
+       title: "Segmentation",
+     },
+   },
   {
     path: "/:pathMatch(.*)*",
     name: "NotFound",

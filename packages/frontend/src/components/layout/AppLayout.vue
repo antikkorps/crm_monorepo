@@ -331,6 +331,12 @@ const billingNavigation = [
 
 const additionalNavigation = [
   {
+    title: "navigation.segmentation",
+    icon: "mdi-filter-variant",
+    to: "/segmentation",
+    value: "segmentation",
+  },
+  {
     title: "navigation.team",
     icon: "mdi-account-group",
     to: "/team",
@@ -343,7 +349,7 @@ const additionalNavigation = [
     value: "webhooks",
   },
   {
-    title: "navigation.export",
+    title: "navigation.exportCenter",
     icon: "mdi-download",
     to: "/export",
     value: "export",

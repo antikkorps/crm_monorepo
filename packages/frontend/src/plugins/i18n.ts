@@ -1,7 +1,6 @@
 import { createI18n } from "vue-i18n"
 
-// Import translation files
-import enCommon from "@/locales/en/common.json"
+// Import only default locale translation files statically
 import frCommon from "@/locales/fr/common.json"
 
 // Define supported locales
@@ -206,7 +205,7 @@ const messages = {
     common: frCommon,
   },
   en: {
-    common: enCommon,
+    common: {}, // Will be loaded dynamically
   },
   es: {
     common: {}, // Will be loaded dynamically
@@ -249,7 +248,9 @@ export const i18n = createI18n({
 
 // Function to load locale messages dynamically
 export async function loadLocaleMessages(locale: SupportedLocale) {
-  if (i18n.global.availableLocales.includes(locale)) {
+  // Check if locale messages are already loaded
+  const existingMessages = i18n.global.getLocaleMessage(locale) as any
+  if (existingMessages && existingMessages.common && Object.keys(existingMessages.common).length > 0) {
     return
   }
 
@@ -284,7 +285,7 @@ export async function setLocale(locale: SupportedLocale) {
   await loadLocaleMessages(locale)
 
   // Set the locale
-  i18n.global.locale.value = locale
+  i18n.global.locale = locale
 
   // Save to localStorage
   localStorage.setItem("user-locale", locale)
@@ -295,7 +296,7 @@ export async function setLocale(locale: SupportedLocale) {
 
 // Utility function to get current locale
 export function getCurrentLocale(): SupportedLocale {
-  return i18n.global.locale.value as SupportedLocale
+  return i18n.global.locale as SupportedLocale
 }
 
 // Utility function to check if locale is supported

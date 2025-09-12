@@ -392,13 +392,12 @@
   - Priorité : Haute (bloqueur) - RÉSOLU
 
 - [x] 16.1.2 **Refactoriser ExportController pour réduire la duplication de code** ✅
+
   - Problème : Duplication massive de code dans les méthodes d'export
   - Solution : Création de méthodes utilitaires communes (validateUserAndPermissions, parseExportOptions, handleExportResult, handleExport)
   - Impact : Réduction de ~400 lignes à ~150 lignes pour les exports principaux
   - Bénéfices : Maintenance facilitée, réduction des bugs, cohérence accrue
   - Priorité : Haute (qualité de code) - RÉSOLU
-
-**🔄 En attente :** Dépend de la correction du bug TypeScript (institutions.ts:30,7)
 
 - [ ] 17. Security implementation and compliance features
 
@@ -410,8 +409,6 @@
     - Add data encryption for sensitive medical information
     - _Requirements: 11.1, 11.2, 11.3, 11.4_
 
-    **🔄 En attente :** Dépend de la correction du bug TypeScript (institutions.ts:30,7)
-
 - [ ] 17.2 Build compliance monitoring and reporting
 
   - Create healthcare compliance tracking interface
@@ -419,8 +416,6 @@
   - Add security incident logging and notification
   - Build data retention and privacy management tools
   - _Requirements: 11.3, 11.4, 11.5_
-
-  **🔄 En attente :** Dépend de la correction du bug TypeScript (institutions.ts:30,7)
 
 - [ ] 18. Performance optimization and production readiness
 
@@ -463,8 +458,6 @@
   - Configure monitoring and logging for production environment
   - Create deployment documentation and operational procedures
   - _Requirements: 7.4, 11.2, 11.3_
-
-  **🔄 En attente :** Dépend de la correction du bug TypeScript (institutions.ts:30,7)
 
 - [x] 20. Collaboration features integration (Notes, Meetings, Calls, Reminders)
 

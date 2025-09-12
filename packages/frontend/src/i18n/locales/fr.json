@@ -28,8 +28,11 @@
     "invoices": "Factures",
     "templates": "Modèles",
     "analytics": "Analytiques",
+    "segmentation": "Segmentation",
     "team": "Équipe",
     "webhooks": "Webhooks",
+    "export": "Exporter",
+    "exportCenter": "Centre d'Export",
     "profile": "Profil",
     "logout": "Se déconnecter"
   },
@@ -180,5 +183,378 @@
       "status": "Statut",
       "actions": "Actions"
     }
+  },
+  "analytics": {
+    "timeRange": {
+      "7d": "7 jours",
+      "30d": "30 jours",
+      "90d": "90 jours",
+      "1y": "1 an"
+    }
+  },
+  "segmentation": {
+    "title": "Segmentation Avancée",
+    "subtitle": "Créez et gérez des segments de clients avec des filtres et analyses avancés",
+    "createSegment": "Créer un Segment",
+    "types": {
+      "institution": "Institution",
+      "contact": "Contact"
+    },
+    "tabs": {
+      "list": "Liste des Segments",
+      "builder": "Constructeur",
+      "analytics": "Analyses",
+      "comparison": "Comparaison"
+    },
+    "confirmDelete": "Êtes-vous sûr de vouloir supprimer le segment \"{name}\" ?",
+    "builder": {
+      "title": "Constructeur de Segment",
+      "subtitle": "Créez des segments personnalisés en combinant plusieurs filtres",
+      "activeFilters": "Filtres Actifs",
+      "noFilters": "Aucun filtre ajouté. Commencez par sélectionner un type de filtre ci-dessus.",
+      "segmentName": "Nom du Segment",
+      "segmentDescription": "Description du Segment",
+      "segmentType": "Type de Segment",
+      "createSegment": "Créer le Segment",
+      "updateSegment": "Mettre à jour le Segment",
+      "clearFilters": "Effacer Tous les Filtres",
+      "previewResults": "Aperçu des Résultats",
+      "saveSegment": "Enregistrer le Segment",
+      "createNew": "Créer un Nouveau",
+      "institutionFilters": "Filtres Institution",
+      "contactFilters": "Filtres Contact",
+      "combinedFilters": "Filtres Combinés",
+      "empty": {
+        "title": "Aucun segment en construction",
+        "message": "Commencez à créer un nouveau segment avec des filtres personnalisés"
+      },
+      "preview": {
+        "title": "Aperçu des Résultats"
+      }
+    },
+    "filters": {
+      "addFilter": "Ajouter un Filtre",
+      "activeContacts": {
+        "label": "Contacts Actifs",
+        "hasContacts": "A des contacts actifs",
+        "noContacts": "Pas de contacts actifs"
+      },
+      "medicalProfile": {
+        "label": "Profil Médical",
+        "placeholder": "Sélectionner les critères du profil médical..."
+      },
+      "teamAssignment": {
+        "label": "Affectation d'Équipe",
+        "teams": {
+          "sales": "Équipe Ventes",
+          "support": "Équipe Support",
+          "medical": "Équipe Médicale"
+        }
+      },
+      "dateRange": {
+        "label": "Période de Dates",
+        "startDate": "Date de Début",
+        "endDate": "Date de Fin",
+        "field": "Champ de Date",
+        "fields": {
+          "createdAt": "Créé le",
+          "updatedAt": "Modifié le",
+          "lastContact": "Dernier Contact",
+          "nextAppointment": "Prochain Rendez-vous"
+        }
+      },
+      "name": {
+        "label": "Nom"
+      },
+      "type": {
+        "label": "Type"
+      },
+      "location": {
+        "label": "Localisation",
+        "country": "Pays",
+        "region": "Région/État",
+        "city": "Ville",
+        "countries": {
+          "us": "États-Unis",
+          "ca": "Canada",
+          "fr": "France"
+        }
+      },
+      "specialty": {
+        "label": "Spécialité",
+        "specialties": {
+          "cardiology": "Cardiologie",
+          "neurology": "Neurologie",
+          "orthopedics": "Orthopédie",
+          "pediatrics": "Pédiatrie",
+          "oncology": "Oncologie",
+          "radiology": "Radiologie",
+          "surgery": "Chirurgie",
+          "emergency": "Médecine d'Urgence"
+        }
+      },
+      "capacity": {
+        "label": "Capacité",
+        "minCapacity": "Capacité Minimale",
+        "maxCapacity": "Capacité Maximale",
+        "type": "Type de Capacité",
+        "types": {
+          "beds": "Lits",
+          "rooms": "Salles",
+          "staff": "Membres du Personnel",
+          "patients": "Patients"
+        }
+      },
+      "compliance": {
+        "label": "Conformité",
+        "type": "Type de Conformité",
+        "status": "Statut de Conformité",
+        "types": {
+          "hipaa": "HIPAA",
+          "gdpr": "RGPD",
+          "sox": "SOX",
+          "iso27001": "ISO 27001"
+        },
+        "statuses": {
+          "compliant": "Conforme",
+          "nonCompliant": "Non Conforme",
+          "pending": "En Attente de Vérification",
+          "expired": "Expiré"
+        }
+      },
+      "role": {
+        "label": "Rôle",
+        "roles": {
+          "admin": "Administrateur",
+          "manager": "Gestionnaire",
+          "doctor": "Médecin",
+          "nurse": "Infirmier",
+          "receptionist": "Réceptionniste",
+          "specialist": "Spécialiste",
+          "coordinator": "Coordinateur",
+          "assistant": "Assistant"
+        }
+      },
+      "department": {
+        "label": "Département",
+        "departments": {
+          "administration": "Administration",
+          "medical": "Médical",
+          "nursing": "Soins Infirmiers",
+          "support": "Support",
+          "it": "Informatique",
+          "finance": "Finance",
+          "hr": "Ressources Humaines",
+          "marketing": "Marketing"
+        }
+      },
+      "title": {
+        "label": "Titre",
+        "titles": {
+          "dr": "Dr",
+          "prof": "Prof",
+          "mr": "M.",
+          "mrs": "Mme",
+          "ms": "Mlle",
+          "rn": "Infirmier Diplômé",
+          "lpn": "Infirmier Auxiliaire",
+          "pa": "Assistant Médical"
+        }
+      },
+      "primary": {
+        "label": "Contact Principal",
+        "primaryOnly": "Contacts principaux uniquement",
+        "nonPrimaryOnly": "Contacts non principaux uniquement"
+      },
+      "contactMethod": {
+        "label": "Méthode de Contact",
+        "methods": {
+          "email": "Email",
+          "phone": "Téléphone",
+          "mobile": "Mobile",
+          "video": "Appel Vidéo",
+          "inPerson": "En Personne",
+          "mail": "Courrier"
+        }
+      },
+      "activityLevel": {
+        "label": "Niveau d'Activité",
+        "timeframe": "Période",
+        "levels": {
+          "high": "Activité Élevée",
+          "medium": "Activité Moyenne",
+          "low": "Faible Activité",
+          "inactive": "Inactif"
+        },
+        "timeframes": {
+          "last7Days": "Derniers 7 jours",
+          "last30Days": "Derniers 30 jours",
+          "last90Days": "Derniers 90 jours",
+          "lastYear": "Dernière année"
+        }
+      }
+    },
+    "saved": {
+      "title": "Segments Enregistrés",
+      "subtitle": "Gérez vos segments enregistrés et actions rapides",
+      "createNew": "Créer un Nouveau Segment",
+      "search": "Rechercher des segments...",
+      "actions": "Actions",
+      "edit": "Modifier le Segment",
+      "duplicate": "Dupliquer le Segment",
+      "delete": "Supprimer le Segment",
+      "share": "Partager le Segment",
+      "export": "Exporter les Résultats",
+      "analytics": "Voir les Analyses",
+      "compare": "Comparer les Segments",
+      "lastModified": "Dernière Modification",
+      "recordCount": "Enregistrements",
+      "confirmDelete": "Êtes-vous sûr de vouloir supprimer ce segment ?",
+      "segmentDeleted": "Segment supprimé avec succès",
+      "segmentDuplicated": "Segment dupliqué avec succès",
+      "tabs": {
+        "all": "Tous",
+        "mine": "Mes segments",
+        "team": "Équipe",
+        "shared": "Partagés"
+      },
+      "empty": {
+        "title": "Aucun segment trouvé",
+        "message": "Aucun segment ne correspond aux critères de recherche"
+      },
+      "createFirst": "Créer votre premier segment"
+    },
+    "preview": {
+      "title": "Aperçu du Segment",
+      "subtitle": "Aperçu des enregistrements correspondant à vos critères de filtre",
+      "totalRecords": "Total des Enregistrements",
+      "activeRecords": "Enregistrements Actifs",
+      "matchPercentage": "Pourcentage de Correspondance",
+      "loading": "Chargement des données d'aperçu...",
+      "noResults": "Aucun enregistrement ne correspond aux critères de filtre actuels",
+      "noData": "Aucune donnée disponible",
+      "addFilters": "Ajouter des Filtres",
+      "exportResults": "Exporter les Résultats",
+      "saveAsSegment": "Enregistrer comme Segment",
+      "applyFilters": "Appliquer les Filtres"
+    },
+    "analytics": {
+      "title": "Analyses du Segment",
+      "subtitle": "Analyses détaillées et insights pour vos segments",
+      "overview": "Aperçu",
+      "demographics": "Démographie",
+      "behavior": "Comportement",
+      "trends": "Tendances",
+      "totalRecords": "Total des Enregistrements",
+      "growthRate": "Taux de Croissance",
+      "engagementScore": "Score d'Engagement",
+      "conversionRate": "Taux de Conversion",
+      "averageValue": "Valeur Moyenne",
+      "topSegments": "Principaux Segments",
+      "performanceMetrics": "Métriques de Performance",
+      "exportReport": "Exporter le Rapport",
+      "activeRecords": "Enregistrements Actifs",
+      "engagementRate": "Taux d'engagement",
+      "avgInteractions": "Interactions moyennes",
+      "distribution": {
+        "title": "Distribution"
+      },
+      "trend": {
+        "title": "Tendance"
+      },
+      "engagement": {
+        "title": "Engagement",
+        "tasksCompleted": "Tâches Terminées",
+        "communicationsSent": "Communications Envoyées",
+        "meetingsScheduled": "Rendez-vous Programmés"
+      },
+      "topPerformers": {
+        "title": "Meilleurs Performers"
+      },
+      "recentActivity": {
+        "title": "Activité Récente"
+      }
+    },
+    "export": {
+      "title": "Exporter le Segment",
+      "subtitle": "Exporter les données du segment dans divers formats",
+      "format": "Format d'Export",
+      "formats": {
+        "csv": "CSV (Valeurs Séparées par des Virgules)",
+        "excel": "Excel (.xlsx)",
+        "pdf": "Rapport PDF",
+        "json": "Données JSON"
+      },
+      "includeFields": "Inclure les Champs",
+      "selectAll": "Tout Sélectionner",
+      "selectNone": "Ne rien Sélectionner",
+      "fileName": "Nom du Fichier",
+      "export": "Exporter les Données",
+      "exporting": "Exportation des données...",
+      "exportComplete": "Exportation terminée avec succès",
+      "exportError": "Erreur lors de l'exportation"
+    },
+    "sharing": {
+      "title": "Partager le Segment",
+      "subtitle": "Partager le segment avec les membres de l'équipe",
+      "shareWith": "Partager Avec",
+      "teamMembers": "Membres de l'Équipe",
+      "permissionLevel": "Niveau d'Autorisation",
+      "permissions": {
+        "view": "Vue Uniquement",
+        "edit": "Peut Modifier",
+        "admin": "Accès Complet"
+      },
+      "message": "Message (Optionnel)",
+      "share": "Partager le Segment",
+      "sharedSuccessfully": "Segment partagé avec succès",
+      "sharingError": "Erreur lors du partage du segment"
+    },
+    "comparison": {
+      "title": "Comparer les Segments",
+      "subtitle": "Comparer plusieurs segments côte à côte",
+      "selectSegments": "Sélectionner les Segments à Comparer",
+      "addSegment": "Ajouter un Segment",
+      "removeSegment": "Supprimer le Segment",
+      "comparisonMetrics": "Métriques de Comparaison",
+      "metrics": {
+        "size": "Taille du Segment",
+        "growth": "Taux de Croissance",
+        "engagement": "Engagement",
+        "conversion": "Conversion",
+        "value": "Valeur Moyenne"
+      },
+      "visualComparison": "Comparaison Visuelle",
+      "exportComparison": "Exporter la Comparaison"
+    },
+    "bulkActions": {
+      "title": "Actions en Masse",
+      "subtitle": "Effectuer des actions sur plusieurs enregistrements du segment",
+      "selectAction": "Sélectionner une Action",
+      "actions": {
+        "assign": "Assigner à une Équipe",
+        "updateStatus": "Mettre à jour le Statut",
+        "sendEmail": "Envoyer un Email",
+        "export": "Exporter la Sélection",
+        "delete": "Supprimer les Enregistrements",
+        "addTags": "Ajouter des Tags",
+        "removeTags": "Supprimer des Tags"
+      },
+      "selectedRecords": "Enregistrements Sélectionnés",
+      "confirmAction": "Confirmer l'Action",
+      "actionDescription": "Vous êtes sur le point d'{action} sur {count} enregistrements.",
+      "proceed": "Continuer",
+      "cancel": "Annuler",
+      "actionCompleted": "Action terminée avec succès",
+      "actionError": "Erreur lors de l'exécution de l'action"
+    }
+  },
+  "validation": {
+    "required": "Ce champ est requis",
+    "minLength": "Ce champ doit contenir au moins {min} caractères",
+    "maxLength": "Ce champ ne peut pas dépasser {max} caractères",
+    "email": "Veuillez saisir un email valide",
+    "number": "Veuillez saisir un nombre valide",
+    "positive": "La valeur doit être positive"
   }
 }
