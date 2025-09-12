@@ -23,6 +23,7 @@
   "navigation": {
     "dashboard": "Tableau de bord",
     "institutions": "Institutions",
+    "contacts": "Contacts",
     "tasks": "Tâches",
     "quotes": "Devis",
     "invoices": "Factures",
@@ -556,5 +557,16 @@
     "email": "Veuillez saisir un email valide",
     "number": "Veuillez saisir un nombre valide",
     "positive": "La valeur doit être positive"
+  },
+  "invoices": {
+    "table": {
+      "invoiceNumber": "Facture #",
+      "institution": "Institution",
+      "title": "Titre",
+      "status": "Statut",
+      "amount": "Montant",
+      "dueDate": "Échéance",
+      "actions": "Actions"
+    }
   }
 }

@@ -556,9 +556,9 @@
     - Build segment comparison and overlap analysis tools
     - _Requirements: 1.3, 8.1, 8.2, 10.2, 10.4_
 
-- [x] 22. Implement Contact Management CRUD API ⚠️ **MANQUANT - PRIORITÉ HAUTE**
+- [~] 22. Implement Contact Management CRUD API ⚠️ **MANQUANT - PRIORITÉ HAUTE**
 
-  - [x] 22.1 Create ContactController with comprehensive CRUD operations
+  - [ ] 22.1 Create ContactController with comprehensive CRUD operations
 
     - Implement ContactController with all CRUD operations (GET, POST, PUT, DELETE)
     - Add contact listing with pagination, filtering by institution, role, active status
@@ -570,7 +570,7 @@
     - Write comprehensive error handling for all contact operations
     - _Requirements: 1.2, 4.1, 4.2, 10.1, 11.1_
 
-  - [x] 22.2 Create contact routes and integrate with existing endpoints
+  - [ ] 22.2 Create contact routes and integrate with existing endpoints
 
     - Add contact routes to main router (/api/contacts)
     - Update institution endpoints to include contact management
@@ -586,3 +586,21 @@
   Les contacts ne peuvent actuellement être gérés que via les institutions ou les exports.
   **IMPACT:** Fonctionnalité manquante critique pour la gestion complète des contacts CRM.
   **PRIORITÉ:** Haute - requis pour compléter le système de gestion des contacts.
+
+- [ ] 23. Frontend Harmonization and Polish
+
+  - [ ] 23.1 Refine and complete Quotes/Invoices UI
+    - Ensure consistent design between Quotes and Invoices views.
+    - Improve forms for creating/editing lines.
+    - Add missing UI elements for actions (e.g., email tracking, history).
+
+  - [ ] 23.2 Refine and complete Notifications UI
+    - Improve the notification center component.
+    - Ensure all user-facing notifications are clear, translatable, and actionable.
+    - Review real-time updates for notifications.
+
+  - [ ] 23.3 Implement enhanced loading states
+    - Replace spinners with `v-skeleton-loader` where appropriate for a better perceived performance.
+
+  - [ ] 23.4 Conduct full accessibility (a11y) audit
+    - Check color contrasts, keyboard navigation, and ARIA attributes across the application.

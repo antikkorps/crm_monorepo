@@ -8,60 +8,77 @@
         </p>
       </div>
       <div class="header-actions">
-        <Button
-          label="Create Template"
-          icon="pi pi-plus"
+        <v-btn
+          color="primary"
+          prepend-icon="mdi-plus"
+          variant="elevated"
           @click="showCreateDialog = true"
-          class="p-button-primary"
-        />
+        >
+          Create Template
+        </v-btn>
       </div>
     </div>
 
     <div class="template-filters">
-      <div class="filter-row">
-        <div class="filter-group">
-          <label for="type-filter">Type:</label>
-          <Dropdown
-            id="type-filter"
-            v-model="filters.type"
-            :options="templateTypeOptions"
-            option-label="label"
-            option-value="value"
-            placeholder="All Types"
-            show-clear
-            @change="loadTemplates"
-          />
-        </div>
-        <div class="filter-group">
-          <label for="search-filter">Search:</label>
-          <InputText
-            id="search-filter"
-            v-model="filters.search"
-            placeholder="Search templates..."
-            @input="debouncedSearch"
-          />
-        </div>
-      </div>
+      <v-card variant="outlined">
+        <v-card-text class="pa-4">
+          <v-row dense>
+            <v-col cols="12" sm="6" md="3">
+              <v-select
+                v-model="filters.type"
+                :items="templateTypeOptions"
+                item-title="label"
+                item-value="value"
+                label="Type"
+                variant="outlined"
+                density="compact"
+                clearable
+                hide-details
+                @update:model-value="loadTemplates"
+              />
+            </v-col>
+            <v-col cols="12" sm="6" md="9">
+              <v-text-field
+                v-model="filters.search"
+                label="Search templates..."
+                prepend-inner-icon="mdi-magnify"
+                variant="outlined"
+                density="compact"
+                clearable
+                hide-details
+                @input="debouncedSearch"
+              />
+            </v-col>
+          </v-row>
+        </v-card-text>
+      </v-card>
     </div>
 
     <div class="template-content">
       <!-- Loading State -->
       <div v-if="loading" class="loading-state">
-        <ProgressSpinner />
-        <p>Loading templates...</p>
+        <v-progress-circular
+          indeterminate
+          color="primary"
+          size="64"
+        />
+        <p class="mt-4">Loading templates...</p>
       </div>
 
       <!-- Empty State -->
       <div v-else-if="templates.length === 0" class="empty-state">
-        <i class="pi pi-file-o empty-icon"></i>
+        <v-icon size="64" class="mb-4 empty-icon">mdi-file-document-outline</v-icon>
         <h3>No Templates Found</h3>
         <p>Create your first document template to get started.</p>
-        <Button
-          label="Create Template"
-          icon="pi pi-plus"
+        <v-btn
+          color="primary"
+          prepend-icon="mdi-plus"
+          variant="elevated"
           @click="showCreateDialog = true"
-          class="p-button-primary"
-        />
+          class="mt-4"
+        >
+          Create Template
+        </v-btn>
       </div>
 
       <!-- Templates Grid -->
@@ -90,59 +107,61 @@
     <TemplatePreview v-model:visible="showPreviewDialog" :template="previewingTemplate" />
 
     <!-- Delete Confirmation Dialog -->
-    <Dialog
-      v-model:visible="showDeleteDialog"
-      header="Confirm Delete"
-      :modal="true"
-      :closable="false"
-      class="delete-dialog"
-    >
-      <div class="delete-content">
-        <i class="pi pi-exclamation-triangle delete-icon"></i>
-        <div class="delete-message">
-          <h4>Delete Template</h4>
-          <p>
-            Are you sure you want to delete the template "{{ templateToDelete?.name }}"?
-            This action cannot be undone.
-          </p>
-          <p v-if="templateToDelete?.isDefault" class="warning-text">
-            <strong>Warning:</strong> This is a default template. You should set another
-            template as default before deleting this one.
-          </p>
-        </div>
-      </div>
+    <v-dialog v-model="showDeleteDialog" max-width="500">
+      <v-card>
+        <v-card-title class="d-flex align-center">
+          <v-icon color="warning" class="mr-3">mdi-alert-circle</v-icon>
+          Confirm Delete
+        </v-card-title>
+        
+        <v-card-text>
+          <div class="delete-content">
+            <h4 class="mb-3">Delete Template</h4>
+            <p class="mb-3">
+              Are you sure you want to delete the template "{{ templateToDelete?.name }}"?
+              This action cannot be undone.
+            </p>
+            <v-alert 
+              v-if="templateToDelete?.isDefault" 
+              type="warning" 
+              variant="tonal"
+              class="mb-0"
+            >
+              <strong>Warning:</strong> This is a default template. You should set another
+              template as default before deleting this one.
+            </v-alert>
+          </div>
+        </v-card-text>
 
-      <template #footer>
-        <Button
-          label="Cancel"
-          icon="pi pi-times"
-          text
-          @click="showDeleteDialog = false"
-        />
-        <Button
-          label="Delete"
-          icon="pi pi-trash"
-          severity="danger"
-          @click="deleteTemplate"
-          :loading="deleting"
-        />
-      </template>
-    </Dialog>
+        <v-card-actions>
+          <v-spacer />
+          <v-btn
+            variant="text"
+            @click="showDeleteDialog = false"
+          >
+            Cancel
+          </v-btn>
+          <v-btn
+            color="error"
+            variant="elevated"
+            :loading="deleting"
+            @click="deleteTemplate"
+          >
+            Delete
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
 
-    <!-- Toast for notifications -->
-    <Toast />
+    <!-- Snackbar for notifications -->
+    <v-snackbar v-model="snackbar.visible" :color="snackbar.color" timeout="3000">
+      {{ snackbar.message }}
+    </v-snackbar>
   </div>
 </template>
 
 <script setup lang="ts">
 import type { DocumentTemplate, TemplateType } from "@medical-crm/shared"
-import Button from "primevue/button"
-import Dialog from "primevue/dialog"
-import Dropdown from "primevue/dropdown"
-import InputText from "primevue/inputtext"
-import ProgressSpinner from "primevue/progressspinner"
-import Toast from "primevue/toast"
-import { useToast } from "primevue/usetoast"
 import { onMounted, ref } from "vue"
 import { templatesApi } from "../../services/api"
 import TemplateCard from "./TemplateCard.vue"
@@ -160,6 +179,17 @@ const selectedTemplate = ref<DocumentTemplate | null>(null)
 const templateToDelete = ref<DocumentTemplate | null>(null)
 const previewingTemplate = ref<DocumentTemplate | null>(null)
 
+// Snackbar state
+const snackbar = ref<{ visible: boolean; color: string; message: string }>({
+  visible: false,
+  color: "info",
+  message: "",
+})
+
+const showSnackbar = (message: string, color: string = "info") => {
+  snackbar.value = { visible: true, color, message }
+}
+
 // Filters
 const filters = ref({
   type: null as TemplateType | null,
@@ -172,9 +202,6 @@ const templateTypeOptions = [
   { label: "Invoice Templates", value: "invoice" },
   { label: "Both Types", value: "both" },
 ]
-
-// Toast for notifications
-const toast = useToast()
 
 // Debounced search
 let searchTimeout: NodeJS.Timeout
@@ -193,12 +220,7 @@ const loadTemplates = async () => {
     templates.value = response.data || []
   } catch (error) {
     console.error("Failed to load templates:", error)
-    toast.add({
-      severity: "error",
-      summary: "Error",
-      detail: "Failed to load templates",
-      life: 3000,
-    })
+    showSnackbar("Failed to load templates", "error")
   } finally {
     loading.value = false
   }
@@ -224,24 +246,14 @@ const deleteTemplate = async () => {
     deleting.value = true
     await templatesApi.delete(templateToDelete.value.id)
 
-    toast.add({
-      severity: "success",
-      summary: "Success",
-      detail: "Template deleted successfully",
-      life: 3000,
-    })
+    showSnackbar("Template deleted successfully", "success")
 
     await loadTemplates()
     showDeleteDialog.value = false
     templateToDelete.value = null
   } catch (error) {
     console.error("Failed to delete template:", error)
-    toast.add({
-      severity: "error",
-      summary: "Error",
-      detail: "Failed to delete template",
-      life: 3000,
-    })
+    showSnackbar("Failed to delete template", "error")
   } finally {
     deleting.value = false
   }
@@ -253,22 +265,12 @@ const duplicateTemplate = async (template: DocumentTemplate) => {
     const newName = `${template.name} (Copy)`
     await templatesApi.duplicate(template.id, newName)
 
-    toast.add({
-      severity: "success",
-      summary: "Success",
-      detail: "Template duplicated successfully",
-      life: 3000,
-    })
+    showSnackbar("Template duplicated successfully", "success")
 
     await loadTemplates()
   } catch (error) {
     console.error("Failed to duplicate template:", error)
-    toast.add({
-      severity: "error",
-      summary: "Error",
-      detail: "Failed to duplicate template",
-      life: 3000,
-    })
+    showSnackbar("Failed to duplicate template", "error")
   }
 }
 
@@ -277,22 +279,12 @@ const setDefaultTemplate = async (template: DocumentTemplate) => {
   try {
     await templatesApi.setDefault(template.id)
 
-    toast.add({
-      severity: "success",
-      summary: "Success",
-      detail: "Default template updated",
-      life: 3000,
-    })
+    showSnackbar("Default template updated", "success")
 
     await loadTemplates()
   } catch (error) {
     console.error("Failed to set default template:", error)
-    toast.add({
-      severity: "error",
-      summary: "Error",
-      detail: "Failed to set default template",
-      life: 3000,
-    })
+    showSnackbar("Failed to set default template", "error")
   }
 }
 
@@ -332,14 +324,14 @@ onMounted(() => {
 
 .header-content h2 {
   margin: 0 0 0.5rem 0;
-  color: var(--text-color);
+  color: rgb(var(--v-theme-on-surface));
   font-size: 1.75rem;
   font-weight: 600;
 }
 
 .header-description {
   margin: 0;
-  color: var(--text-color-secondary);
+  color: rgb(var(--v-theme-on-surface-variant));
   font-size: 1rem;
 }
 
@@ -348,30 +340,7 @@ onMounted(() => {
 }
 
 .template-filters {
-  background: var(--surface-card);
-  border: 1px solid var(--surface-border);
-  border-radius: 8px;
-  padding: 1.5rem;
   margin-bottom: 2rem;
-}
-
-.filter-row {
-  display: grid;
-  grid-template-columns: 200px 1fr;
-  gap: 1.5rem;
-  align-items: end;
-}
-
-.filter-group {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.filter-group label {
-  font-weight: 500;
-  color: var(--text-color);
-  font-size: 0.875rem;
 }
 
 .template-content {
@@ -388,7 +357,7 @@ onMounted(() => {
 }
 
 .loading-state p {
-  color: var(--text-color-secondary);
+  color: rgb(var(--v-theme-on-surface-variant));
   margin: 0;
 }
 
@@ -402,20 +371,19 @@ onMounted(() => {
 }
 
 .empty-icon {
-  font-size: 3rem;
-  color: var(--text-color-secondary);
+  color: rgb(var(--v-theme-on-surface-variant));
   margin-bottom: 1rem;
 }
 
 .empty-state h3 {
   margin: 0 0 0.5rem 0;
-  color: var(--text-color);
+  color: rgb(var(--v-theme-on-surface));
   font-size: 1.25rem;
 }
 
 .empty-state p {
   margin: 0 0 1.5rem 0;
-  color: var(--text-color-secondary);
+  color: rgb(var(--v-theme-on-surface-variant));
 }
 
 .templates-grid {
@@ -424,43 +392,20 @@ onMounted(() => {
   gap: 1.5rem;
 }
 
-.delete-dialog {
-  max-width: 500px;
-}
-
-.delete-content {
-  display: flex;
-  align-items: flex-start;
-  gap: 1rem;
-  padding: 1rem 0;
-}
-
-.delete-icon {
-  font-size: 2rem;
-  color: var(--orange-500);
-  flex-shrink: 0;
-  margin-top: 0.25rem;
-}
-
-.delete-message h4 {
+.delete-content h4 {
   margin: 0 0 0.75rem 0;
-  color: var(--text-color);
+  color: rgb(var(--v-theme-on-surface));
   font-size: 1.125rem;
 }
 
-.delete-message p {
+.delete-content p {
   margin: 0 0 0.75rem 0;
-  color: var(--text-color-secondary);
+  color: rgb(var(--v-theme-on-surface-variant));
   line-height: 1.5;
 }
 
-.delete-message p:last-child {
+.delete-content p:last-child {
   margin-bottom: 0;
-}
-
-.warning-text {
-  color: var(--orange-600) !important;
-  font-size: 0.875rem;
 }
 
 /* Responsive design */
@@ -474,18 +419,18 @@ onMounted(() => {
     align-items: stretch;
   }
 
-  .filter-row {
-    grid-template-columns: 1fr;
-    gap: 1rem;
-  }
-
   .templates-grid {
     grid-template-columns: 1fr;
   }
+}
 
-  .delete-content {
-    flex-direction: column;
-    text-align: center;
+@media (max-width: 600px) {
+  .header-actions {
+    width: 100%;
+  }
+  
+  .header-actions .v-btn {
+    width: 100%;
   }
 }
 </style>

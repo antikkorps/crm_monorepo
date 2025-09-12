@@ -46,7 +46,9 @@
               <div class="d-flex align-center justify-space-between">
                 <div>
                   <div class="text-h5 font-weight-bold">{{ totalRecords }}</div>
-                  <div class="text-caption text-medium-emphasis">Institutions Totales</div>
+                  <div class="text-caption text-medium-emphasis">
+                    Institutions Totales
+                  </div>
                 </div>
                 <v-icon color="primary" size="32">mdi-hospital-building</v-icon>
               </div>
@@ -125,7 +127,9 @@
               color="primary"
               @click="showAdvancedFilters = !showAdvancedFilters"
             >
-              <v-icon start>{{ showAdvancedFilters ? "mdi-filter-variant-minus" : "mdi-filter-variant" }}</v-icon>
+              <v-icon start>{{
+                showAdvancedFilters ? "mdi-filter-variant-minus" : "mdi-filter-variant"
+              }}</v-icon>
               Filtres avancés
             </v-btn>
             <v-btn
@@ -212,24 +216,45 @@
           :items-length="totalRecords"
           item-key="id"
           class="elevation-0 enhanced-table"
-          @update:page="(p) => { lazyParams.first = (p - 1) * lazyParams.rows; loadInstitutions(); }"
+          @update:page="
+            (p) => {
+              lazyParams.first = (p - 1) * lazyParams.rows
+              loadInstitutions()
+            }
+          "
         >
           <template #no-data>
             <div class="table-empty-state text-center py-12">
               <v-icon size="64" class="mb-4 empty-icon">mdi-domain-off</v-icon>
-              <div class="text-h6 mb-2 empty-title">{{ t("institutions.noInstitutionsFound") }}</div>
-              <div class="text-body-1 empty-subtitle">{{ t("institutions.adjustSearchOrAdd") }}</div>
+              <div class="text-h6 mb-2 empty-title">
+                {{ t("institutions.noInstitutionsFound") }}
+              </div>
+              <div class="text-body-1 empty-subtitle">
+                {{ t("institutions.adjustSearchOrAdd") }}
+              </div>
             </div>
           </template>
 
           <template #item.name="{ item }">
-            <div class="d-flex align-center py-2 cursor-pointer" @click="viewInstitution(item)">
-              <v-avatar size="40" class="mr-4" :color="getInstitutionColor(item.type)" variant="tonal">
+            <div
+              class="d-flex align-center py-2 cursor-pointer"
+              @click="viewInstitution(item)"
+            >
+              <v-avatar
+                size="40"
+                class="mr-4"
+                :color="getInstitutionColor(item.type)"
+                variant="tonal"
+              >
                 <v-icon size="20">{{ getInstitutionIcon(item.type) }}</v-icon>
               </v-avatar>
               <div>
-                <div class="text-subtitle-1 font-weight-bold text-grey-darken-4">{{ item.name }}</div>
-                <div class="text-body-2 text-medium-emphasis">{{ formatInstitutionType(item.type) }}</div>
+                <div class="text-subtitle-1 font-weight-bold text-grey-darken-4">
+                  {{ item.name }}
+                </div>
+                <div class="text-body-2 text-medium-emphasis">
+                  {{ formatInstitutionType(item.type) }}
+                </div>
               </div>
             </div>
           </template>
@@ -238,33 +263,98 @@
             <div class="text-body-2 text-grey-darken-2">
               {{ item.address.city }}, {{ item.address.state }}
             </div>
-            <div class="text-caption text-medium-emphasis">{{ item.address.country }}</div>
+            <div class="text-caption text-medium-emphasis">
+              {{ item.address.country }}
+            </div>
           </template>
 
           <template #item.profile="{ item }">
             <div v-if="item.medicalProfile" class="d-flex flex-wrap gap-2">
-              <v-chip v-if="item.medicalProfile?.bedCapacity" size="small" variant="tonal" color="blue-grey" prepend-icon="mdi-bed">
+              <v-chip
+                v-if="item.medicalProfile?.bedCapacity"
+                size="small"
+                variant="tonal"
+                color="blue-grey"
+                prepend-icon="mdi-bed"
+              >
                 {{ item.medicalProfile.bedCapacity }}
               </v-chip>
-              <v-chip v-if="item.medicalProfile?.surgicalRooms" size="small" variant="tonal" color="blue-grey" prepend-icon="mdi-medical-bag">
+              <v-chip
+                v-if="item.medicalProfile?.surgicalRooms"
+                size="small"
+                variant="tonal"
+                color="blue-grey"
+                prepend-icon="mdi-medical-bag"
+              >
                 {{ item.medicalProfile.surgicalRooms }}
               </v-chip>
             </div>
-            <div v-else class="text-caption text-medium-emphasis">{{ t("institutions.noMedicalProfile") }}</div>
+            <div v-else class="text-caption text-medium-emphasis">
+              {{ t("institutions.noMedicalProfile") }}
+            </div>
           </template>
 
           <template #item.status="{ item }">
             <div class="d-flex align-center">
-              <v-chip :color="item.isActive ? 'success' : 'grey'" variant="flat" size="small">
-                {{ item.isActive ? t("institutions.active") : t("institutions.inactive") }}
+              <v-chip
+                :color="item.isActive ? 'success' : 'grey'"
+                variant="flat"
+                size="small"
+              >
+                {{
+                  item.isActive ? t("institutions.active") : t("institutions.inactive")
+                }}
               </v-chip>
             </div>
           </template>
 
+          <template #item.primaryContact="{ item }">
+            <div v-if="item.contactPersons && item.contactPersons.length > 0">
+              <!-- Contact principal -->
+              <template v-for="contact in item.contactPersons" :key="contact.id">
+                <div v-if="contact.isPrimary" class="contact-info">
+                  <div class="text-subtitle-2 font-weight-medium">
+                    {{ contact.firstName }} {{ contact.lastName }}
+                  </div>
+                  <div class="text-caption text-medium-emphasis">
+                    {{ contact.title }}
+                  </div>
+                </div>
+              </template>
+              <!-- Si pas de contact principal, prendre le premier -->
+              <div
+                v-if="!item.contactPersons.some((c) => c.isPrimary)"
+                class="contact-info"
+              >
+                <div class="text-subtitle-2 font-weight-medium">
+                  {{ item.contactPersons[0]?.firstName }}
+                  {{ item.contactPersons[0]?.lastName }}
+                </div>
+                <div class="text-caption text-medium-emphasis">
+                  {{ item.contactPersons[0]?.title }} (par défaut)
+                </div>
+              </div>
+            </div>
+            <div v-else class="text-caption text-medium-emphasis">Aucun contact</div>
+          </template>
+
           <template #item.actions="{ item }">
             <div class="actions-container">
-              <v-btn icon="mdi-pencil" variant="text" size="small" @click="editInstitution(item)" title="Modifier" />
-              <v-btn icon="mdi-delete" variant="text" color="error" size="small" @click="confirmDelete(item)" title="Supprimer" />
+              <v-btn
+                icon="mdi-pencil"
+                variant="text"
+                size="small"
+                @click="editInstitution(item)"
+                title="Modifier"
+              />
+              <v-btn
+                icon="mdi-delete"
+                variant="text"
+                color="error"
+                size="small"
+                @click="confirmDelete(item)"
+                title="Supprimer"
+              />
             </div>
           </template>
         </v-data-table>
@@ -276,38 +366,87 @@
           <div class="text-center py-12">
             <v-icon size="64" class="mb-4" color="grey-lighten-2">mdi-domain-off</v-icon>
             <h3 class="text-h6 mb-2">{{ t("institutions.noInstitutionsFound") }}</h3>
-            <p class="text-body-1 text-medium-emphasis">{{ t("institutions.adjustSearchOrAdd") }}</p>
+            <p class="text-body-1 text-medium-emphasis">
+              {{ t("institutions.adjustSearchOrAdd") }}
+            </p>
           </div>
         </div>
 
         <div class="mobile-cards-list">
-          <v-card v-for="institution in institutions" :key="institution.id" class="institution-card mb-3" variant="outlined" @click="viewInstitution(institution)">
+          <v-card
+            v-for="institution in institutions"
+            :key="institution.id"
+            class="institution-card mb-3"
+            variant="outlined"
+            @click="viewInstitution(institution)"
+          >
             <v-card-text class="pa-4">
               <div class="d-flex justify-space-between align-start">
                 <div class="d-flex align-start">
-                  <v-avatar size="48" :color="getInstitutionColor(institution.type)" variant="tonal" class="mr-4">
+                  <v-avatar
+                    size="48"
+                    :color="getInstitutionColor(institution.type)"
+                    variant="tonal"
+                    class="mr-4"
+                  >
                     <v-icon size="24">{{ getInstitutionIcon(institution.type) }}</v-icon>
                   </v-avatar>
                   <div>
                     <h3 class="institution-name">{{ institution.name }}</h3>
-                    <div class="text-body-2 text-medium-emphasis">{{ institution.address.city }}, {{ institution.address.state }}</div>
+                    <div class="text-body-2 text-medium-emphasis">
+                      {{ institution.address.city }}, {{ institution.address.state }}
+                    </div>
                   </div>
                 </div>
                 <v-menu>
                   <template v-slot:activator="{ props }">
-                    <v-btn v-bind="props" icon="mdi-dots-vertical" variant="text" size="small" @click.stop></v-btn>
+                    <v-btn
+                      v-bind="props"
+                      icon="mdi-dots-vertical"
+                      variant="text"
+                      size="small"
+                      @click.stop
+                    ></v-btn>
                   </template>
                   <v-list>
-                    <v-list-item @click.stop="editInstitution(institution)" prepend-icon="mdi-pencil">Modifier</v-list-item>
-                    <v-list-item @click.stop="confirmDelete(institution)" prepend-icon="mdi-delete" class="text-error">Supprimer</v-list-item>
+                    <v-list-item
+                      @click.stop="editInstitution(institution)"
+                      prepend-icon="mdi-pencil"
+                      >Modifier</v-list-item
+                    >
+                    <v-list-item
+                      @click.stop="confirmDelete(institution)"
+                      prepend-icon="mdi-delete"
+                      class="text-error"
+                      >Supprimer</v-list-item
+                    >
                   </v-list>
                 </v-menu>
               </div>
               <div class="d-flex flex-wrap gap-2 mt-3">
-                <v-chip size="small" variant="tonal" :color="getInstitutionColor(institution.type)">{{ formatInstitutionType(institution.type) }}</v-chip>
-                <v-chip :color="institution.isActive ? 'success' : 'grey'" variant="tonal" size="small">{{ institution.isActive ? 'Actif' : 'Inactif' }}</v-chip>
-                <v-chip v-if="institution.medicalProfile" :color="getComplianceSeverity(institution.medicalProfile.complianceStatus)" variant="tonal" size="small">
-                  {{ formatComplianceStatus(institution.medicalProfile.complianceStatus) }}
+                <v-chip
+                  size="small"
+                  variant="tonal"
+                  :color="getInstitutionColor(institution.type)"
+                  >{{ formatInstitutionType(institution.type) }}</v-chip
+                >
+                <v-chip
+                  :color="institution.isActive ? 'success' : 'grey'"
+                  variant="tonal"
+                  size="small"
+                  >{{ institution.isActive ? "Actif" : "Inactif" }}</v-chip
+                >
+                <v-chip
+                  v-if="institution.medicalProfile"
+                  :color="
+                    getComplianceSeverity(institution.medicalProfile.complianceStatus)
+                  "
+                  variant="tonal"
+                  size="small"
+                >
+                  {{
+                    formatComplianceStatus(institution.medicalProfile.complianceStatus)
+                  }}
                 </v-chip>
               </div>
             </v-card-text>
@@ -315,7 +454,17 @@
         </div>
 
         <div v-if="totalRecords > lazyParams.rows" class="mobile-pagination mt-4">
-          <v-pagination :model-value="Math.floor(lazyParams.first / lazyParams.rows) + 1" :length="Math.ceil(totalRecords / lazyParams.rows)" :total-visible="3" @update:model-value="(p) => { lazyParams.first = (p - 1) * lazyParams.rows; loadInstitutions(); }" />
+          <v-pagination
+            :model-value="Math.floor(lazyParams.first / lazyParams.rows) + 1"
+            :length="Math.ceil(totalRecords / lazyParams.rows)"
+            :total-visible="3"
+            @update:model-value="
+              (p) => {
+                lazyParams.first = (p - 1) * lazyParams.rows
+                loadInstitutions()
+              }
+            "
+          />
         </div>
       </div>
 
@@ -324,12 +473,18 @@
         <v-card>
           <v-card-title>{{ t("institutions.addNewInstitution") }}</v-card-title>
           <v-card-text>
-            <MedicalInstitutionForm @institution-saved="onInstitutionCreated" @cancel="showCreateDialog = false" />
+            <MedicalInstitutionForm
+              @institution-saved="onInstitutionCreated"
+              @cancel="showCreateDialog = false"
+            />
           </v-card-text>
         </v-card>
       </v-dialog>
 
-      <ImportInstitutionsDialog v-model="showImportDialog" @completed="onImportCompleted" />
+      <ImportInstitutionsDialog
+        v-model="showImportDialog"
+        @completed="onImportCompleted"
+      />
 
       <v-dialog v-model="confirmVisible" max-width="420">
         <v-card>
@@ -337,7 +492,9 @@
           <v-card-text>{{ confirmMessage }}</v-card-text>
           <v-card-actions>
             <v-spacer></v-spacer>
-            <v-btn variant="text" @click="confirmVisible = false">{{ t("common.cancel") }}</v-btn>
+            <v-btn variant="text" @click="confirmVisible = false">{{
+              t("common.cancel")
+            }}</v-btn>
             <v-btn color="error" @click="confirmAccept">{{ t("common.delete") }}</v-btn>
           </v-card-actions>
         </v-card>
@@ -354,22 +511,28 @@
 import ImportInstitutionsDialog from "@/components/institutions/ImportInstitutionsDialog.vue"
 import MedicalInstitutionForm from "@/components/institutions/MedicalInstitutionFormVuetify.vue"
 import AppLayout from "@/components/layout/AppLayout.vue"
-import { institutionsApi, usersApi } from "@/services/api"
+import { institutionsApi } from "@/services/api"
 import type {
-  ComplianceStatus,
-  InstitutionType,
   MedicalInstitution,
   MedicalInstitutionSearchFilters,
 } from "@medical-crm/shared"
-import { computed, onMounted, ref, watch } from "vue"
+import { ComplianceStatus, InstitutionType } from "@medical-crm/shared"
+import { computed, onMounted, onUnmounted, ref, watch } from "vue"
 import { useI18n } from "vue-i18n"
-import { useRouter } from "vue-router"
+import { useRouter, useRoute } from "vue-router"
 
 const router = useRouter()
+const route = useRoute()
 const { t } = useI18n()
 
-const snackbar = ref<{ visible: boolean; color: string; message: string }>({ visible: false, color: "info", message: "" })
-const showSnackbar = (message: string, color: string = "info") => { snackbar.value = { visible: true, color, message } }
+const snackbar = ref<{ visible: boolean; color: string; message: string }>({
+  visible: false,
+  color: "info",
+  message: "",
+})
+const showSnackbar = (message: string, color: string = "info") => {
+  snackbar.value = { visible: true, color, message }
+}
 const confirmVisible = ref(false)
 const confirmMessage = ref("")
 const confirmTarget = ref<MedicalInstitution | null>(null)
@@ -396,13 +559,36 @@ const lazyParams = ref({ first: 0, rows: 10, sortField: "name", sortOrder: 1 })
 
 const filters = ref<MedicalInstitutionSearchFilters>({})
 
-const institutionTypeOptions = computed(() => [ ... ]) // Keep existing options
-const complianceStatusOptions = computed(() => [ ... ])
-const specialtyOptions = computed(() => [ ... ])
+const institutionTypeOptions = computed(() => [
+  { label: "Hôpital Public", value: "public_hospital" },
+  { label: "Clinique Privée", value: "private_clinic" },
+  { label: "Centre de Santé", value: "health_center" },
+  { label: "Cabinet Médical", value: "medical_office" },
+  { label: "Laboratoire", value: "laboratory" },
+  { label: "Pharmacie", value: "pharmacy" },
+])
+
+const complianceStatusOptions = computed(() => [
+  { label: "Conforme", value: "compliant" },
+  { label: "Non Conforme", value: "non_compliant" },
+  { label: "En Attente", value: "pending" },
+  { label: "En Révision", value: "under_review" },
+])
+
+const specialtyOptions = computed(() => [
+  { label: "Cardiologie", value: "cardiology" },
+  { label: "Neurologie", value: "neurology" },
+  { label: "Orthopédie", value: "orthopedics" },
+  { label: "Pédiatrie", value: "pediatrics" },
+  { label: "Radiologie", value: "radiology" },
+  { label: "Urgences", value: "emergency" },
+])
 const userOptions = ref<Array<{ label: string; value: string }>>([])
 const loadingUsers = ref(false)
 
-const hasActiveFilters = computed(() => Object.values(filters.value).some(v => v) || searchQuery.value)
+const hasActiveFilters = computed(
+  () => Object.values(filters.value).some((v) => v) || searchQuery.value
+)
 
 const activeFilters = computed(() => {
   const active: MedicalInstitutionSearchFilters = { ...filters.value }
@@ -410,7 +596,39 @@ const activeFilters = computed(() => {
   return active
 })
 
-const loadUsers = async () => { ... } // Keep existing logic
+const loadUsers = async () => {
+  if (loadingUsers.value) return
+
+  loadingUsers.value = true
+  try {
+    // Simuler le chargement des utilisateurs depuis l'API
+    // TODO: Remplacer par un vrai appel API
+    const response = await new Promise((resolve) =>
+      setTimeout(
+        () =>
+          resolve({
+            data: [
+              { id: "1", firstName: "Jean", lastName: "Dupont" },
+              { id: "2", firstName: "Marie", lastName: "Martin" },
+              { id: "3", firstName: "Pierre", lastName: "Bernard" },
+            ],
+          }),
+        500
+      )
+    )
+
+    const users = (response as any).data || []
+    userOptions.value = users.map((user: any) => ({
+      label: `${user.firstName} ${user.lastName}`,
+      value: user.id,
+    }))
+  } catch (error) {
+    console.error("Erreur lors du chargement des utilisateurs:", error)
+    userOptions.value = []
+  } finally {
+    loadingUsers.value = false
+  }
+}
 
 const loadInstitutions = async () => {
   loading.value = true
@@ -462,16 +680,29 @@ const clearFilters = () => {
   applyFilters()
 }
 
-const refreshData = () => loadInstitutions()
+const refreshData = async () => {
+  await loadInstitutions()
+  showSnackbar("Données actualisées", "success")
+}
 
 const exportData = () => showSnackbar(t("institutions.exportComingSoon"), "info")
 
-const viewInstitution = (institution: MedicalInstitution) => router.push(`/institutions/${institution.id}`)
+const viewInstitution = (institution: MedicalInstitution) => {
+  // Marquer qu'on navigue pour pouvoir rafraîchir au retour
+  sessionStorage.setItem("needsRefresh", "true")
+  router.push(`/institutions/${institution.id}`)
+}
 
-const editInstitution = (institution: MedicalInstitution) => router.push(`/institutions/${institution.id}?edit=true`)
+const editInstitution = (institution: MedicalInstitution) => {
+  // Marquer qu'on navigue pour pouvoir rafraîchir au retour
+  sessionStorage.setItem("needsRefresh", "true")
+  router.push(`/institutions/${institution.id}?edit=true`)
+}
 
 const confirmDelete = (institution: MedicalInstitution) => {
-  confirmMessage.value = t("institutions.deleteConfirmMessage", { name: institution.name })
+  confirmMessage.value = t("institutions.deleteConfirmMessage", {
+    name: institution.name,
+  })
   confirmTarget.value = institution
   confirmVisible.value = true
 }
@@ -479,7 +710,10 @@ const confirmDelete = (institution: MedicalInstitution) => {
 const deleteInstitution = async (institution: MedicalInstitution) => {
   try {
     await institutionsApi.delete(institution.id)
-    showSnackbar(t("institutions.institutionDeleted", { name: institution.name }), "success")
+    showSnackbar(
+      t("institutions.institutionDeleted", { name: institution.name }),
+      "success"
+    )
     loadInstitutions()
   } catch (error) {
     console.error("Error deleting institution:", error)
@@ -490,22 +724,113 @@ const deleteInstitution = async (institution: MedicalInstitution) => {
 const onInstitutionCreated = (newInstitution: MedicalInstitution) => {
   showCreateDialog.value = false
   loadInstitutions()
-  showSnackbar(t("institutions.institutionCreated", { name: newInstitution.name }), "success")
+  showSnackbar(
+    t("institutions.institutionCreated", { name: newInstitution.name }),
+    "success"
+  )
 }
 
-// Utility functions (keep existing)
-const formatInstitutionType = (type: InstitutionType): string => { ... }
-const formatComplianceStatus = (status: ComplianceStatus): string => { ... }
-const getComplianceSeverity = (status: ComplianceStatus): string => { ... }
-const getInstitutionColor = (type: InstitutionType): string => { ... }
-const getInstitutionIcon = (type: InstitutionType): string => { ... }
+// Utility functions
+const formatInstitutionType = (type: InstitutionType): string => {
+  const typeMap: Record<InstitutionType, string> = {
+    [InstitutionType.HOSPITAL]: "Hôpital",
+    [InstitutionType.CLINIC]: "Clinique",
+    [InstitutionType.MEDICAL_CENTER]: "Centre Médical",
+    [InstitutionType.SPECIALTY_CLINIC]: "Clinique Spécialisée",
+  }
+  return typeMap[type] || type
+}
 
-const tableHeaders = computed(() => [ ... ] as const)
+const formatComplianceStatus = (status: ComplianceStatus): string => {
+  const statusMap: Record<ComplianceStatus, string> = {
+    [ComplianceStatus.COMPLIANT]: "Conforme",
+    [ComplianceStatus.NON_COMPLIANT]: "Non Conforme",
+    [ComplianceStatus.PENDING_REVIEW]: "En Attente de Révision",
+    [ComplianceStatus.EXPIRED]: "Expiré",
+  }
+  return statusMap[status] || status
+}
+
+const getComplianceSeverity = (status: ComplianceStatus): string => {
+  const severityMap: Record<ComplianceStatus, string> = {
+    [ComplianceStatus.COMPLIANT]: "success",
+    [ComplianceStatus.NON_COMPLIANT]: "error",
+    [ComplianceStatus.PENDING_REVIEW]: "warning",
+    [ComplianceStatus.EXPIRED]: "error",
+  }
+  return severityMap[status] || "default"
+}
+
+const getInstitutionColor = (type: InstitutionType): string => {
+  const colorMap: Record<InstitutionType, string> = {
+    [InstitutionType.HOSPITAL]: "blue",
+    [InstitutionType.CLINIC]: "green",
+    [InstitutionType.MEDICAL_CENTER]: "orange",
+    [InstitutionType.SPECIALTY_CLINIC]: "purple",
+  }
+  return colorMap[type] || "primary"
+}
+
+const getInstitutionIcon = (type: InstitutionType): string => {
+  const iconMap: Record<InstitutionType, string> = {
+    [InstitutionType.HOSPITAL]: "mdi-hospital-building",
+    [InstitutionType.CLINIC]: "mdi-medical-bag",
+    [InstitutionType.MEDICAL_CENTER]: "mdi-heart-pulse",
+    [InstitutionType.SPECIALTY_CLINIC]: "mdi-stethoscope",
+  }
+  return iconMap[type] || "mdi-hospital-building"
+}
+
+const tableHeaders = computed(
+  () =>
+    [
+      { title: "Nom", key: "name", sortable: true },
+      { title: "Localisation", key: "location", sortable: true },
+      { title: "Profil Médical", key: "profile", sortable: false },
+      { title: "Statut", key: "status", sortable: true },
+      { title: "Contact Principal", key: "primaryContact", sortable: false },
+      { title: "Actions", key: "actions", sortable: false },
+    ] as const
+)
 
 onMounted(() => {
+  // Vérifier si on revient d'une page d'édition/vue et qu'il faut rafraîchir
+  const needsRefresh = sessionStorage.getItem("needsRefresh")
+  if (needsRefresh) {
+    console.log("Rafraîchissement automatique après retour de navigation...")
+    sessionStorage.removeItem("needsRefresh")
+  }
+
   loadInstitutions()
   loadUsers()
+
+  // Rafraîchir les données quand la page redevient visible
+  const handleVisibilityChange = () => {
+    if (!document.hidden) {
+      console.log("Page redevenue visible, rafraîchissement des données...")
+      loadInstitutions()
+    }
+  }
+
+  document.addEventListener("visibilitychange", handleVisibilityChange)
+
+  // Nettoyer l'événement lors du démontage
+  onUnmounted(() => {
+    document.removeEventListener("visibilitychange", handleVisibilityChange)
+  })
 })
+
+// Watcher pour détecter les changements de route et rafraîchir
+watch(
+  () => route.fullPath,
+  (newPath, oldPath) => {
+    // Si on revient sur cette page depuis une autre page
+    if (newPath === "/institutions" && oldPath && oldPath !== newPath) {
+      console.log("Retour sur la page institutions, rafraîchissement des données...")
+      setTimeout(() => loadInstitutions(), 100) // Petit délai pour laisser la page se charger
+    }
+  }
+)
 </script>
 
 <style scoped>
@@ -540,12 +865,18 @@ onMounted(() => {
 }
 
 .header-subtitle {
-  color: rgb(var(--v-theme-on-surface-variant));
+  color: rgb(var(--v-theme-on-surface));
+  opacity: 0.7;
 }
 
 .header-actions {
   display: flex;
   gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.action-btn {
+  white-space: nowrap;
 }
 
 .stats-cards {
@@ -594,14 +925,31 @@ onMounted(() => {
   font-weight: 600;
 }
 
+.contact-info {
+  line-height: 1.3;
+}
+
+.contact-info .text-caption {
+  font-size: 0.75rem;
+}
+
 @media (max-width: 960px) {
   .medical-institutions-view {
     padding: 1rem;
   }
-  .header-main, .title-section {
+  .header-main,
+  .title-section {
     flex-direction: column;
     align-items: start;
     gap: 1rem;
+  }
+  .header-actions {
+    width: 100%;
+    justify-content: stretch;
+  }
+  .action-btn {
+    flex: 1;
+    min-width: 0;
   }
   .stats-cards {
     grid-template-columns: repeat(2, 1fr);
@@ -611,6 +959,13 @@ onMounted(() => {
 @media (max-width: 600px) {
   .stats-cards {
     grid-template-columns: 1fr;
+  }
+  .header-actions {
+    flex-direction: column;
+    width: 100%;
+  }
+  .action-btn {
+    width: 100%;
   }
 }
 </style>

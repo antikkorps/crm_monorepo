@@ -105,9 +105,11 @@ if (config.env === "test") {
     },
 
     // Logging configuration
+    // Note: Winston's console simple formatter ignores metadata args,
+    // so we must concatenate the SQL string into the message.
     logging:
       config.env === "development"
-        ? (msg: string) => logger.debug("Sequelize:", msg)
+        ? (msg: string) => logger.debug(`Sequelize: ${msg}`)
         : false,
 
     // Additional options

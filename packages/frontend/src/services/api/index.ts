@@ -416,3 +416,6 @@ export { webhooksApi } from "./webhooks"
 
 // Export plugins API
 export { PluginService } from "./plugins"
+
+// Export contacts API
+export { contactsApi } from "./contacts"

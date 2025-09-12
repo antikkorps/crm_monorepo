@@ -295,6 +295,12 @@ const mainNavigation = [
     value: "institutions",
   },
   {
+    title: "navigation.contacts",
+    icon: "mdi-account-box-outline",
+    to: "/contacts",
+    value: "contacts",
+  },
+  {
     title: "navigation.tasks",
     icon: "mdi-check-circle",
     to: "/tasks",

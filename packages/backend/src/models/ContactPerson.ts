@@ -1,6 +1,6 @@
 import { DataTypes, Model, Op, Optional } from "sequelize"
 import { sequelize } from "../config/database"
-import { MedicalInstitution } from "./MedicalInstitution"
+import type { MedicalInstitution } from "./MedicalInstitution"
 
 export interface ContactPersonAttributes {
   id: string

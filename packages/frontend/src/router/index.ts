@@ -21,6 +21,7 @@ const BillingAnalytics = () => import("@/views/billing/BillingAnalyticsView.vue"
 const Webhooks = () => import("@/views/webhooks/WebhooksView.vue")
 const ExportCenter = () => import("@/views/export/ExportCenterView.vue")
 const Segmentation = () => import("@/views/segmentation/SegmentationView.vue")
+const Contacts = () => import("@/views/contacts/ContactsView.vue")
 
 const routes: RouteRecordRaw[] = [
   {
@@ -176,6 +177,15 @@ const routes: RouteRecordRaw[] = [
        title: "Segmentation",
      },
    },
+  {
+    path: "/contacts",
+    name: "Contacts",
+    component: Contacts,
+    meta: {
+      requiresAuth: true,
+      title: "Contacts",
+    },
+  },
   {
     path: "/:pathMatch(.*)*",
     name: "NotFound",

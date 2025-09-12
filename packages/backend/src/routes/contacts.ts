@@ -1,59 +1,17 @@
 import Router from "@koa/router"
 import { ContactController } from "../controllers/ContactController"
 import { authenticate } from "../middleware/auth"
-import {
-  addPermissionsToContext,
-  requirePermission,
-} from "../middleware/permissions"
 
 const router = new Router({ prefix: "/api/contacts" })
 
-// Apply authentication middleware to all routes
-router.use(authenticate)
+router.post("/", authenticate, ContactController.create)
 
-// Add user permissions to context for all routes
-router.use(addPermissionsToContext())
+router.get("/", authenticate, ContactController.list)
 
-// GET /api/contacts - Get all contacts with filtering and pagination
-router.get(
-  "/",
-  requirePermission("canViewAllContacts"),
-  ContactController.getContacts
-)
+router.get("/:id", authenticate, ContactController.get)
 
-// GET /api/contacts/search - Advanced search for contacts
-router.get(
-  "/search",
-  requirePermission("canViewAllContacts"),
-  ContactController.searchContacts
-)
+router.put("/:id", authenticate, ContactController.update)
 
-// GET /api/contacts/:id - Get a specific contact
-router.get(
-  "/:id",
-  requirePermission("canViewAllContacts"),
-  ContactController.getContact
-)
-
-// POST /api/contacts - Create a new contact
-router.post(
-  "/",
-  requirePermission("canCreateContacts"),
-  ContactController.createContact
-)
-
-// PUT /api/contacts/:id - Update a contact
-router.put(
-  "/:id",
-  requirePermission("canEditAllContacts"),
-  ContactController.updateContact
-)
-
-// DELETE /api/contacts/:id - Soft delete a contact
-router.delete(
-  "/:id",
-  requirePermission("canDeleteContacts"),
-  ContactController.deleteContact
-)
+router.delete("/:id", authenticate, ContactController.delete)
 
 export default router

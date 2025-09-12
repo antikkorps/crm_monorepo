@@ -1,5 +1,5 @@
-import Router from "@koa/router"
 import multer from "@koa/multer"
+import Router from "@koa/router"
 import { MedicalInstitutionController } from "../controllers/MedicalInstitutionController"
 import { authenticate } from "../middleware/auth"
 import {
@@ -24,10 +24,13 @@ const uploadCsv = multer({
   limits: { fileSize: 10 * 1024 * 1024 }, // 10MB
   fileFilter: (req, file, cb) => {
     const allowed = ["text/csv", "application/vnd.ms-excel"]
-    if (allowed.includes(file.mimetype) || file.originalname.toLowerCase().endsWith(".csv")) {
+    if (
+      allowed.includes(file.mimetype) ||
+      file.originalname.toLowerCase().endsWith(".csv")
+    ) {
       cb(null, true)
     } else {
-      cb(new Error('Invalid file type. Only CSV files are allowed.'), false)
+      cb(new Error("Invalid file type. Only CSV files are allowed."), false)
     }
   },
 })

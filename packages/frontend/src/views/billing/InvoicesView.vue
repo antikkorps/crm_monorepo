@@ -1,247 +1,110 @@
 <template>
-  <div class="invoices-view">
-    <div class="header d-flex justify-between align-center mb-3">
-      <h1>Invoices</h1>
-      <div class="header-actions">
-        <v-btn color="primary" prepend-icon="mdi-plus" @click="showCreateDialog = true">New Invoice</v-btn>
-      </div>
-    </div>
-
-    <!-- Filters -->
-    <v-card class="filters-card mb-3">
-      <v-card-text>
-        <div class="filters-grid">
-          <div class="field">
-            <v-select v-model="filters.status" :items="statusOptions" item-title="label" item-value="value" label="Status" clearable @update:model-value="loadInvoices" />
-          </div>
-
-          <div class="field">
-            <v-select v-model="filters.institutionId" :items="institutions" item-title="name" item-value="id" label="Institution" clearable @update:model-value="loadInvoices" />
-          </div>
-
-          <div class="field">
-            <v-text-field v-model="dateFromStr" type="date" label="Date From" @update:model-value="onDateChange('from')" />
-          </div>
-
-          <div class="field">
-            <v-text-field v-model="dateToStr" type="date" label="Date To" @update:model-value="onDateChange('to')" />
-          </div>
-
-          <div class="field">
-            <v-text-field v-model="filters.search" label="Search" @input="debouncedSearch" />
-          </div>
+  <AppLayout>
+    <div class="invoices-view">
+      <div class="d-flex justify-space-between align-center mb-4 flex-wrap gap-4">
+        <div>
+          <h1 class="text-h4 font-weight-bold">Factures</h1>
+          <p class="text-medium-emphasis">Gérez vos factures et paiements</p>
         </div>
-      </v-card-text>
-    </v-card>
+        <v-btn color="primary" prepend-icon="mdi-plus" @click="showCreateDialog = true">Nouvelle Facture</v-btn>
+      </div>
 
-    <!-- Statistics Cards -->
-    <div class="stats-grid">
-      <Card class="stat-card">
-        <template #content>
-          <div class="stat-content">
-            <div class="stat-icon">
-              <i class="pi pi-file-o"></i>
-            </div>
-            <div class="stat-details">
-              <h3>{{ statistics.totalInvoices || 0 }}</h3>
-              <p>Total Invoices</p>
-            </div>
-          </div>
-        </template>
-      </Card>
+      <!-- Filters -->
+      <v-card class="mb-6" variant="outlined">
+        <v-card-text>
+          <v-row dense>
+            <v-col cols="12" md="4" sm="12">
+              <v-text-field v-model="filters.search" label="Rechercher..." prepend-inner-icon="mdi-magnify" variant="outlined" density="compact" hide-details @input="debouncedSearch" />
+            </v-col>
+            <v-col cols="12" md="3" sm="6">
+              <v-select v-model="filters.status" :items="statusOptions" label="Statut" variant="outlined" density="compact" clearable hide-details @update:model-value="loadInvoices" />
+            </v-col>
+            <v-col cols="12" md="3" sm="6">
+              <v-select v-model="filters.institutionId" :items="institutions" item-title="name" item-value="id" label="Institution" variant="outlined" density="compact" clearable hide-details @update:model-value="loadInvoices" />
+            </v-col>
+            <v-col cols="12" md="2" sm="12" class="d-flex justify-end">
+              <v-btn variant="text" @click="clearFilters" :disabled="!hasActiveFilters">Effacer</v-btn>
+            </v-col>
+          </v-row>
+        </v-card-text>
+      </v-card>
 
-      <Card class="stat-card">
-        <template #content>
-          <div class="stat-content">
-            <div class="stat-icon pending">
-              <i class="pi pi-clock"></i>
-            </div>
-            <div class="stat-details">
-              <h3>{{ statistics.pendingInvoices || 0 }}</h3>
-              <p>Pending Payment</p>
-            </div>
-          </div>
-        </template>
-      </Card>
-
-      <Card class="stat-card">
-        <template #content>
-          <div class="stat-content">
-            <div class="stat-icon overdue">
-              <i class="pi pi-exclamation-triangle"></i>
-            </div>
-            <div class="stat-details">
-              <h3>{{ statistics.overdueInvoices || 0 }}</h3>
-              <p>Overdue</p>
-            </div>
-          </div>
-        </template>
-      </Card>
-
-      <Card class="stat-card">
-        <template #content>
-          <div class="stat-content">
-            <div class="stat-icon paid">
-              <i class="pi pi-check-circle"></i>
-            </div>
-            <div class="stat-details">
-              <h3>${{ formatCurrency(statistics.totalRevenue || 0) }}</h3>
-              <p>Total Revenue</p>
-            </div>
-          </div>
-        </template>
-      </Card>
-    </div>
-
-    <!-- Invoices Table -->
-    <Card class="invoices-table-card">
-      <template #content>
-        <DataTable
-          :value="invoices"
-          :loading="loading"
-          paginator
-          :rows="20"
-          :total-records="totalRecords"
-          lazy
-          @page="onPageChange"
-          responsive-layout="scroll"
-          class="invoices-table"
-        >
-          <Column field="invoiceNumber" header="Invoice #" sortable>
-            <template #body="{ data }">
-              <router-link :to="`/invoices/${data.id}`" class="invoice-link">
-                {{ data.invoiceNumber }}
-              </router-link>
-            </template>
-          </Column>
-
-          <Column field="institution.name" header="Institution" sortable>
-            <template #body="{ data }">
-              <div class="institution-cell">
-                <span class="institution-name">{{ data.institution?.name }}</span>
-                <small class="institution-type">{{ data.institution?.type }}</small>
-              </div>
-            </template>
-          </Column>
-
-          <Column field="title" header="Title" sortable />
-
-          <Column field="status" header="Status" sortable>
-            <template #body="{ data }">
-              <Tag
-                :value="getStatusLabel(data.status)"
-                :severity="getStatusSeverity(data.status)"
-                :icon="getStatusIcon(data.status)"
-              />
-            </template>
-          </Column>
-
-          <Column field="total" header="Amount" sortable>
-            <template #body="{ data }">
-              <div class="amount-cell">
-                <span class="total-amount">${{ formatCurrency(data.total) }}</span>
-                <div v-if="data.totalPaid > 0" class="payment-info">
-                  <small class="paid-amount">
-                    Paid: ${{ formatCurrency(data.totalPaid) }}
-                  </small>
-                  <small v-if="data.remainingAmount > 0" class="remaining-amount">
-                    Remaining: ${{ formatCurrency(data.remainingAmount) }}
-                  </small>
+      <!-- Statistics Cards -->
+      <v-row>
+        <v-col v-for="(stat, i) in statisticsCards" :key="i" cols="12" sm="6" md="3">
+          <v-card :color="stat.color" variant="tonal" class="fill-height">
+            <v-card-text>
+              <div class="d-flex align-center gap-4">
+                <v-avatar :icon="stat.icon" :color="stat.color" variant="flat" size="40"></v-avatar>
+                <div>
+                  <div class="text-h5 font-weight-bold">{{ stat.value }}</div>
+                  <div class="text-body-2">{{ stat.label }}</div>
                 </div>
               </div>
-            </template>
-          </Column>
+            </v-card-text>
+          </v-card>
+        </v-col>
+      </v-row>
 
-          <Column field="dueDate" header="Due Date" sortable>
-            <template #body="{ data }">
-              <div class="due-date-cell">
-                <span :class="getDueDateClass(data)">
-                  {{ formatDate(data.dueDate) }}
-                </span>
-                <small v-if="data.daysOverdue" class="overdue-days">
-                  {{ data.daysOverdue }} days overdue
-                </small>
-                <small v-else-if="data.daysUntilDue !== null" class="days-until-due">
-                  {{ data.daysUntilDue }} days remaining
-                </small>
-              </div>
-            </template>
-          </Column>
+      <!-- Invoices Table -->
+      <v-card class="mt-6">
+        <v-data-table
+          :headers="tableHeaders"
+          :items="invoices"
+          :loading="loading"
+          :items-per-page="pagination.rowsPerPage"
+          :page="pagination.currentPage"
+          :items-length="totalRecords"
+          @update:options="onTableUpdate"
+          class="elevation-0"
+        >
+          <template #item.invoiceNumber="{ item }">
+            <router-link :to="`/invoices/${item.id}`" class="font-weight-bold text-decoration-none">{{ item.invoiceNumber }}</router-link>
+          </template>
+          <template #item.institution.name="{ item }">
+            <div>
+              <div class="font-weight-medium">{{ item.institution?.name }}</div>
+              <div class="text-caption text-medium-emphasis">{{ item.institution?.type }}</div>
+            </div>
+          </template>
+          <template #item.status="{ item }">
+            <v-chip :color="getStatusColor(item.status)" size="small" variant="flat">{{ getStatusLabel(item.status) }}</v-chip>
+          </template>
+          <template #item.total="{ item }">
+            <div class="font-weight-medium">{{ formatCurrency(item.total) }}</div>
+          </template>
+          <template #item.dueDate="{ item }">
+            <div :class="getDueDateClass(item)">{{ formatDate(item.dueDate) }}</div>
+          </template>
+          <template #item.actions="{ item }">
+            <div class="d-flex gap-1">
+              <v-btn icon="mdi-eye" variant="text" size="small" @click="viewInvoice(item.id)" title="Voir"></v-btn>
+              <v-btn v-if="item.canBeModified" icon="mdi-pencil" variant="text" size="small" @click="editInvoice(item.id)" title="Modifier"></v-btn>
+            </div>
+          </template>
+        </v-data-table>
+      </v-card>
 
-          <Column field="assignedUser.firstName" header="Assigned To" sortable>
-            <template #body="{ data }">
-              {{ data.assignedUser?.firstName }} {{ data.assignedUser?.lastName }}
-            </template>
-          </Column>
-
-          <Column header="Actions" :exportable="false">
-            <template #body="{ data }">
-              <div class="action-buttons">
-                <Button
-                  icon="pi pi-eye"
-                  class="p-button-text p-button-sm"
-                  @click="viewInvoice(data.id)"
-                  v-tooltip="'View Invoice'"
-                />
-                <Button
-                  v-if="data.canBeModified"
-                  icon="pi pi-pencil"
-                  class="p-button-text p-button-sm"
-                  @click="editInvoice(data.id)"
-                  v-tooltip="'Edit Invoice'"
-                />
-                <Button
-                  v-if="data.status === 'draft'"
-                  icon="pi pi-send"
-                  class="p-button-text p-button-sm"
-                  @click="sendInvoice(data.id)"
-                  v-tooltip="'Send Invoice'"
-                />
-                <Button
-                  v-if="data.canReceivePayments"
-                  icon="pi pi-dollar"
-                  class="p-button-text p-button-sm"
-                  @click="recordPayment(data)"
-                  v-tooltip="'Record Payment'"
-                />
-                <Button
-                  icon="pi pi-download"
-                  class="p-button-text p-button-sm"
-                  @click="downloadPdf(data.id)"
-                  v-tooltip="'Download PDF'"
-                />
-              </div>
-            </template>
-          </Column>
-        </DataTable>
-      </template>
-    </Card>
-
-    <!-- Create Invoice Dialog -->
-    <InvoiceForm v-model:visible="showCreateDialog" @invoice-created="onInvoiceCreated" />
-
-    <!-- Record Payment Dialog -->
-    <PaymentForm
-      v-model:visible="showPaymentDialog"
-      :invoice="selectedInvoice"
-      @payment-recorded="onPaymentRecorded"
-    />
-  </div>
+      <InvoiceForm v-model:visible="showCreateDialog" @invoice-created="onInvoiceCreated" @notify="({ message, color }) => showSnackbar(message, color)" />
+      <PaymentForm v-model:visible="showPaymentDialog" :invoice="selectedInvoice" @payment-recorded="onPaymentRecorded" />
+      <v-snackbar v-model="snackbar.visible" :color="snackbar.color" timeout="3000">{{ snackbar.message }}</v-snackbar>
+    </div>
+  </AppLayout>
 </template>
 
 <script setup lang="ts">
 import InvoiceForm from "@/components/billing/InvoiceForm.vue"
 import PaymentForm from "@/components/billing/PaymentForm.vue"
+import AppLayout from "@/components/layout/AppLayout.vue"
 import { institutionsApi, invoicesApi } from "@/services/api"
 import type { Invoice, InvoiceStatus } from "@medical-crm/shared"
-import { useToast } from "primevue/usetoast"
-import { onMounted, ref } from "vue"
+import { onMounted, ref, computed } from "vue"
+import { useI18n } from "vue-i18n"
 import { useRouter } from "vue-router"
 
 const router = useRouter()
-const toast = useToast()
+const { t } = useI18n()
 
-// Data
 const invoices = ref<Invoice[]>([])
 const institutions = ref<any[]>([])
 const statistics = ref<any>({})
@@ -250,64 +113,54 @@ const totalRecords = ref(0)
 const showCreateDialog = ref(false)
 const showPaymentDialog = ref(false)
 const selectedInvoice = ref<Invoice | null>(null)
+const snackbar = ref({ visible: false, message: '', color: 'info' })
 
-// Filters
-const filters = ref({
-  status: null as InvoiceStatus | null,
-  institutionId: null as string | null,
-  dateFrom: null as Date | null,
-  dateTo: null as Date | null,
-  search: "",
-})
+const filters = ref<{ status: InvoiceStatus | null; institutionId: string | null; search: string }>({ status: null, institutionId: null, search: "" })
+const pagination = ref({ currentPage: 1, rowsPerPage: 10 })
 
-// Status options
 const statusOptions = [
-  { label: "Draft", value: "draft" },
-  { label: "Sent", value: "sent" },
-  { label: "Partially Paid", value: "partially_paid" },
-  { label: "Paid", value: "paid" },
-  { label: "Overdue", value: "overdue" },
-  { label: "Cancelled", value: "cancelled" },
+  { label: "Brouillon", value: "draft" },
+  { label: "Envoyé", value: "sent" },
+  { label: "Partiellement Payé", value: "partially_paid" },
+  { label: "Payé", value: "paid" },
+  { label: "En Retard", value: "overdue" },
+  { label: "Annulé", value: "cancelled" },
 ]
 
-// Pagination
-const currentPage = ref(0)
-const rowsPerPage = ref(20)
+const statisticsCards = computed(() => [
+  { label: "Factures Totales", value: statistics.value.totalInvoices || 0, icon: "mdi-file-document-outline", color: "primary" },
+  { label: "En Attente", value: statistics.value.pendingInvoices || 0, icon: "mdi-clock-outline", color: "warning" },
+  { label: "En Retard", value: statistics.value.overdueInvoices || 0, icon: "mdi-alert-circle-outline", color: "error" },
+  { label: "Revenu Total", value: formatCurrency(statistics.value.totalRevenue || 0), icon: "mdi-cash-multiple", color: "success" },
+])
 
-// Debounced search
-let searchTimeout: NodeJS.Timeout
+const tableHeaders = computed(() => [
+  { title: t('invoices.table.invoiceNumber'), value: 'invoiceNumber', sortable: true },
+  { title: t('invoices.table.institution'), value: 'institution.name', sortable: true },
+  { title: t('invoices.table.title'), value: 'title', sortable: true },
+  { title: t('invoices.table.status'), value: 'status', sortable: true },
+  { title: t('invoices.table.amount'), value: 'total', align: 'end', sortable: true },
+  { title: t('invoices.table.dueDate'), value: 'dueDate', align: 'end', sortable: true },
+  { title: t('invoices.table.actions'), value: 'actions', align: 'end', sortable: false },
+])
+
+const hasActiveFilters = computed(() => !!(filters.value.status || filters.value.institutionId || filters.value.search))
+
+let searchTimeout: any
 const debouncedSearch = () => {
   clearTimeout(searchTimeout)
-  searchTimeout = setTimeout(() => {
-    loadInvoices()
-  }, 500)
+  searchTimeout = setTimeout(loadInvoices, 500)
 }
 
-// Methods
 const loadInvoices = async () => {
+  loading.value = true
   try {
-    loading.value = true
-
-    const filterParams = {
-      ...filters.value,
-      page: currentPage.value + 1,
-      limit: rowsPerPage.value,
-    }
-
-    const response = await invoicesApi.getAll(filterParams)
-
-    if (response.success) {
-      invoices.value = response.data
-      totalRecords.value = response.meta?.total || 0
-    }
-  } catch (error) {
-    console.error("Error loading invoices:", error)
-    toast.add({
-      severity: "error",
-      summary: "Error",
-      detail: "Failed to load invoices",
-      life: 3000,
-    })
+    const params = { ...filters.value, page: pagination.value.currentPage, limit: pagination.value.rowsPerPage }
+    const response = await invoicesApi.getAll(params)
+    invoices.value = response.data
+    totalRecords.value = response.meta?.total || 0
+  } catch (e) {
+    showSnackbar("Erreur lors du chargement des factures", "error")
   } finally {
     loading.value = false
   }
@@ -316,9 +169,7 @@ const loadInvoices = async () => {
 const loadInstitutions = async () => {
   try {
     const response = await institutionsApi.getAll()
-    if (response.success) {
-      institutions.value = response.data
-    }
+    institutions.value = response.data
   } catch (error) {
     console.error("Error loading institutions:", error)
   }
@@ -327,79 +178,33 @@ const loadInstitutions = async () => {
 const loadStatistics = async () => {
   try {
     const response = await invoicesApi.getStatistics()
-    if (response.success) {
-      statistics.value = response.data
-    }
+    statistics.value = response.data
   } catch (error) {
     console.error("Error loading statistics:", error)
   }
 }
 
-const onPageChange = (event: any) => {
-  currentPage.value = event.page
-  rowsPerPage.value = event.rows
+const onTableUpdate = (options: any) => {
+  pagination.value.currentPage = options.page
+  pagination.value.rowsPerPage = options.itemsPerPage
   loadInvoices()
 }
 
-const viewInvoice = (id: string) => {
-  router.push(`/invoices/${id}`)
+const clearFilters = () => {
+  filters.value = { status: null, institutionId: null, search: "" }
+  loadInvoices()
 }
 
-const editInvoice = (id: string) => {
-  router.push(`/invoices/${id}/edit`)
-}
+const viewInvoice = (id: string) => router.push(`/invoices/${id}`)
+const editInvoice = (id: string) => router.push(`/invoices/${id}/edit`)
 
 const sendInvoice = async (id: string) => {
   try {
-    const response = await invoicesApi.send(id)
-    if (response.success) {
-      toast.add({
-        severity: "success",
-        summary: "Success",
-        detail: "Invoice sent successfully",
-        life: 3000,
-      })
-      loadInvoices()
-    }
+    await invoicesApi.send(id)
+    showSnackbar("Facture envoyée avec succès", "success")
+    loadInvoices()
   } catch (error) {
-    console.error("Error sending invoice:", error)
-    toast.add({
-      severity: "error",
-      summary: "Error",
-      detail: "Failed to send invoice",
-      life: 3000,
-    })
-  }
-}
-
-const recordPayment = (invoice: Invoice) => {
-  selectedInvoice.value = invoice
-  showPaymentDialog.value = true
-}
-
-const downloadPdf = async (id: string) => {
-  try {
-    const response = await invoicesApi.generatePdf(id)
-
-    if (response.ok) {
-      const blob = await response.blob()
-      const url = window.URL.createObjectURL(blob)
-      const a = document.createElement("a")
-      a.href = url
-      a.download = `invoice-${id}.pdf`
-      document.body.appendChild(a)
-      a.click()
-      window.URL.revokeObjectURL(url)
-      document.body.removeChild(a)
-    }
-  } catch (error) {
-    console.error("Error downloading PDF:", error)
-    toast.add({
-      severity: "error",
-      summary: "Error",
-      detail: "Failed to download PDF",
-      life: 3000,
-    })
+    showSnackbar("Erreur lors de l'envoi de la facture", "error")
   }
 }
 
@@ -416,66 +221,21 @@ const onPaymentRecorded = () => {
   loadStatistics()
 }
 
-// Utility functions
-const getStatusLabel = (status: InvoiceStatus) => {
-  const statusMap = {
-    draft: "Draft",
-    sent: "Sent",
-    partially_paid: "Partially Paid",
-    paid: "Paid",
-    overdue: "Overdue",
-    cancelled: "Cancelled",
-  }
-  return statusMap[status] || status
+const showSnackbar = (message: string, color: string = 'info') => {
+  snackbar.value = { visible: true, message, color }
 }
 
-const getStatusSeverity = (status: InvoiceStatus) => {
-  const severityMap = {
-    draft: "secondary",
-    sent: "info",
-    partially_paid: "warning",
-    paid: "success",
-    overdue: "danger",
-    cancelled: "secondary",
-  }
-  return severityMap[status] || "secondary"
-}
-
-const getStatusIcon = (status: InvoiceStatus) => {
-  const iconMap = {
-    draft: "pi-file-edit",
-    sent: "pi-send",
-    partially_paid: "pi-clock",
-    paid: "pi-check-circle",
-    overdue: "pi-exclamation-triangle",
-    cancelled: "pi-times-circle",
-  }
-  return iconMap[status] || "pi-file"
-}
-
+const formatCurrency = (amount: number) => new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(amount || 0)
+const formatDate = (date: string | Date) => new Date(date).toLocaleDateString('fr-FR')
+const getStatusLabel = (status: InvoiceStatus) => ({ draft: "Brouillon", sent: "Envoyé", partially_paid: "Partiellement Payé", paid: "Payé", overdue: "En Retard", cancelled: "Annulé" }[status] || status)
+const getStatusColor = (status: InvoiceStatus) => ({ draft: "grey", sent: "info", partially_paid: "warning", paid: "success", overdue: "error", cancelled: "secondary" }[status] || "secondary")
 const getDueDateClass = (invoice: Invoice) => {
-  if (invoice.status === "paid") return "due-date-paid"
-  if (invoice.daysOverdue && invoice.daysOverdue > 0) return "due-date-overdue"
-  if (invoice.daysUntilDue !== null && invoice.daysUntilDue <= 7) return "due-date-soon"
-  return "due-date-normal"
+  if (invoice.status === "paid") return "text-success"
+  if (invoice.daysOverdue && invoice.daysOverdue > 0) return "text-error font-weight-bold"
+  if (invoice.daysUntilDue !== null && invoice.daysUntilDue <= 7) return "text-warning"
+  return ""
 }
 
-const formatCurrency = (amount: number) => {
-  return new Intl.NumberFormat("en-US", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(amount)
-}
-
-const formatDate = (date: string | Date) => {
-  return new Intl.DateTimeFormat("en-US", {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-  }).format(new Date(date))
-}
-
-// Lifecycle
 onMounted(() => {
   loadInvoices()
   loadInstitutions()
@@ -487,205 +247,5 @@ onMounted(() => {
 .invoices-view {
   padding: 1.5rem;
 }
-
-.header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1.5rem;
-}
-
-.header h1 {
-  margin: 0;
-  color: var(--text-color);
-}
-
-.filters-card {
-  margin-bottom: 1.5rem;
-}
-
-.filters-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 1rem;
-}
-
-.field {
-  display: flex;
-  flex-direction: column;
-}
-
-.field label {
-  margin-bottom: 0.5rem;
-  font-weight: 600;
-  color: var(--text-color);
-}
-
-.stats-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 1rem;
-  margin-bottom: 1.5rem;
-}
-
-.stat-card {
-  background: var(--surface-card);
-}
-
-.stat-content {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-
-.stat-icon {
-  width: 3rem;
-  height: 3rem;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--primary-color);
-  color: white;
-  font-size: 1.25rem;
-}
-
-.stat-icon.pending {
-  background: var(--orange-500);
-}
-
-.stat-icon.overdue {
-  background: var(--red-500);
-}
-
-.stat-icon.paid {
-  background: var(--green-500);
-}
-
-.stat-details h3 {
-  margin: 0 0 0.25rem 0;
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: var(--text-color);
-}
-
-.stat-details p {
-  margin: 0;
-  color: var(--text-color-secondary);
-  font-size: 0.875rem;
-}
-
-.invoices-table-card {
-  background: var(--surface-card);
-}
-
-.invoice-link {
-  color: var(--primary-color);
-  text-decoration: none;
-  font-weight: 600;
-}
-
-.invoice-link:hover {
-  text-decoration: underline;
-}
-
-.institution-cell {
-  display: flex;
-  flex-direction: column;
-}
-
-.institution-name {
-  font-weight: 600;
-  color: var(--text-color);
-}
-
-.institution-type {
-  color: var(--text-color-secondary);
-  text-transform: capitalize;
-}
-
-.amount-cell {
-  display: flex;
-  flex-direction: column;
-}
-
-.total-amount {
-  font-weight: 600;
-  color: var(--text-color);
-}
-
-.payment-info {
-  display: flex;
-  flex-direction: column;
-  gap: 0.125rem;
-}
-
-.paid-amount {
-  color: var(--green-600);
-  font-size: 0.75rem;
-}
-
-.remaining-amount {
-  color: var(--orange-600);
-  font-size: 0.75rem;
-}
-
-.due-date-cell {
-  display: flex;
-  flex-direction: column;
-}
-
-.due-date-normal {
-  color: var(--text-color);
-}
-
-.due-date-soon {
-  color: var(--orange-600);
-  font-weight: 600;
-}
-
-.due-date-overdue {
-  color: var(--red-600);
-  font-weight: 600;
-}
-
-.due-date-paid {
-  color: var(--green-600);
-}
-
-.overdue-days {
-  color: var(--red-600);
-  font-size: 0.75rem;
-  font-weight: 600;
-}
-
-.days-until-due {
-  color: var(--text-color-secondary);
-  font-size: 0.75rem;
-}
-
-.action-buttons {
-  display: flex;
-  gap: 0.25rem;
-}
-
-@media (max-width: 768px) {
-  .invoices-view {
-    padding: 1rem;
-  }
-
-  .header {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 1rem;
-  }
-
-  .filters-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .stats-grid {
-    grid-template-columns: 1fr;
-  }
-}
+.gap-4 { gap: 1rem; }
 </style>
