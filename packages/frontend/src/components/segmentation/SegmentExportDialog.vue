@@ -83,14 +83,14 @@
             <v-expansion-panels v-model="expandedPanels" multiple>
               <!-- Basic Information -->
               <v-expansion-panel>
-                <v-expansion-panel-header>
+                <v-expansion-panel-title>
                   <v-icon left>mdi-information</v-icon>
                   {{ $t('segmentation.export.fields.basicInfo') }}
                   <v-chip small class="ml-2">
                     {{ getSelectedCount('basic') }}/{{ basicFields.length }}
                   </v-chip>
-                </v-expansion-panel-header>
-                <v-expansion-panel-content>
+                </v-expansion-panel-title>
+                <v-expansion-panel-text>
                   <v-row>
                     <v-col
                       v-for="field in basicFields"
@@ -107,19 +107,19 @@
                       />
                     </v-col>
                   </v-row>
-                </v-expansion-panel-content>
+                </v-expansion-panel-text>
               </v-expansion-panel>
 
               <!-- Contact Information -->
               <v-expansion-panel v-if="segment?.type === 'institution'">
-                <v-expansion-panel-header>
+                <v-expansion-panel-title>
                   <v-icon left>mdi-account-multiple</v-icon>
                   {{ $t('segmentation.export.fields.contactInfo') }}
                   <v-chip small class="ml-2">
                     {{ getSelectedCount('contact') }}/{{ contactFields.length }}
                   </v-chip>
-                </v-expansion-panel-header>
-                <v-expansion-panel-content>
+                </v-expansion-panel-title>
+                <v-expansion-panel-text>
                   <v-row>
                     <v-col
                       v-for="field in contactFields"
@@ -136,19 +136,19 @@
                       />
                     </v-col>
                   </v-row>
-                </v-expansion-panel-content>
+                </v-expansion-panel-text>
               </v-expansion-panel>
 
               <!-- Medical Information -->
               <v-expansion-panel v-if="segment?.type === 'institution'">
-                <v-expansion-panel-header>
+                <v-expansion-panel-title>
                   <v-icon left>mdi-stethoscope</v-icon>
                   {{ $t('segmentation.export.fields.medicalInfo') }}
                   <v-chip small class="ml-2">
                     {{ getSelectedCount('medical') }}/{{ medicalFields.length }}
                   </v-chip>
-                </v-expansion-panel-header>
-                <v-expansion-panel-content>
+                </v-expansion-panel-title>
+                <v-expansion-panel-text>
                   <v-row>
                     <v-col
                       v-for="field in medicalFields"
@@ -165,19 +165,19 @@
                       />
                     </v-col>
                   </v-row>
-                </v-expansion-panel-content>
+                </v-expansion-panel-text>
               </v-expansion-panel>
 
               <!-- Activity Information -->
               <v-expansion-panel>
-                <v-expansion-panel-header>
+                <v-expansion-panel-title>
                   <v-icon left>mdi-chart-line</v-icon>
                   {{ $t('segmentation.export.fields.activityInfo') }}
                   <v-chip small class="ml-2">
                     {{ getSelectedCount('activity') }}/{{ activityFields.length }}
                   </v-chip>
-                </v-expansion-panel-header>
-                <v-expansion-panel-content>
+                </v-expansion-panel-title>
+                <v-expansion-panel-text>
                   <v-row>
                     <v-col
                       v-for="field in activityFields"
@@ -194,19 +194,19 @@
                       />
                     </v-col>
                   </v-row>
-                </v-expansion-panel-content>
+                </v-expansion-panel-text>
               </v-expansion-panel>
 
               <!-- Custom Fields -->
               <v-expansion-panel>
-                <v-expansion-panel-header>
+                <v-expansion-panel-title>
                   <v-icon left>mdi-cog</v-icon>
                   {{ $t('segmentation.export.fields.customFields') }}
                   <v-chip small class="ml-2">
                     {{ getSelectedCount('custom') }}/{{ customFields.length }}
                   </v-chip>
-                </v-expansion-panel-header>
-                <v-expansion-panel-content>
+                </v-expansion-panel-title>
+                <v-expansion-panel-text>
                   <v-row>
                     <v-col
                       v-for="field in customFields"
@@ -232,7 +232,7 @@
                   >
                     {{ $t('segmentation.export.fields.noCustomFields') }}
                   </v-alert>
-                </v-expansion-panel-content>
+                </v-expansion-panel-text>
               </v-expansion-panel>
             </v-expansion-panels>
           </v-card-text>

@@ -42,7 +42,7 @@
         <v-expansion-panels v-model="activePanels" multiple>
           <!-- Institution Filters -->
           <v-expansion-panel v-if="segmentType === 'institution'">
-            <v-expansion-panel-header>
+            <v-expansion-panel-title>
               <v-icon left>mdi-hospital-building</v-icon>
               {{ $t('segmentation.builder.institutionFilters') }}
               <v-chip
@@ -53,19 +53,19 @@
               >
                 {{ institutionFilters.length }}
               </v-chip>
-            </v-expansion-panel-header>
-            <v-expansion-panel-content>
+            </v-expansion-panel-title>
+            <v-expansion-panel-text>
               <InstitutionFilterBuilder
                 v-model="institutionFilters"
                 @filter-added="onFilterAdded"
                 @filter-removed="onFilterRemoved"
               />
-            </v-expansion-panel-content>
+            </v-expansion-panel-text>
           </v-expansion-panel>
 
           <!-- Contact Filters -->
           <v-expansion-panel v-if="segmentType === 'contact'">
-            <v-expansion-panel-header>
+            <v-expansion-panel-title>
               <v-icon left>mdi-account-multiple</v-icon>
               {{ $t('segmentation.builder.contactFilters') }}
               <v-chip
@@ -76,19 +76,19 @@
               >
                 {{ contactFilters.length }}
               </v-chip>
-            </v-expansion-panel-header>
-            <v-expansion-panel-content>
+            </v-expansion-panel-title>
+            <v-expansion-panel-text>
               <ContactFilterBuilder
                 v-model="contactFilters"
                 @filter-added="onFilterAdded"
                 @filter-removed="onFilterRemoved"
               />
-            </v-expansion-panel-content>
+            </v-expansion-panel-text>
           </v-expansion-panel>
 
           <!-- Combined Filters -->
           <v-expansion-panel>
-            <v-expansion-panel-header>
+            <v-expansion-panel-title>
               <v-icon left>mdi-link</v-icon>
               {{ $t('segmentation.builder.combinedFilters') }}
               <v-chip
@@ -99,14 +99,14 @@
               >
                 {{ combinedFilters.length }}
               </v-chip>
-            </v-expansion-panel-header>
-            <v-expansion-panel-content>
+            </v-expansion-panel-title>
+            <v-expansion-panel-text>
               <CombinedFilterBuilder
                 v-model="combinedFilters"
                 @filter-added="onFilterAdded"
                 @filter-removed="onFilterRemoved"
               />
-            </v-expansion-panel-content>
+            </v-expansion-panel-text>
           </v-expansion-panel>
         </v-expansion-panels>
       </div>
@@ -396,7 +396,7 @@ onMounted(() => {
   margin-bottom: 16px;
 }
 
-.v-expansion-panel-header {
+.v-expansion-panel-title {
   padding: 16px;
 }
 

@@ -62,7 +62,8 @@
                   @duplicate="handleDuplicateSegment"
                   @share="handleShareSegment"
                   @delete="handleDeleteSegment"
-                  @create-new="showCreateDialog = true"
+                  @bulk-action="onBulkAction"
+                  @create-new="startCreateSegment"
                 />
               </v-window-item>
 
@@ -121,6 +122,20 @@
         @action-completed="onBulkActionCompleted"
       />
     </v-dialog>
+
+    <!-- Confirm Delete Dialog -->
+    <ConfirmDialog
+      v-model="showDeleteDialog"
+      :title="$t('segmentation.confirmDelete', { name: deleteTargetNames.length === 1 ? deleteTargetNames[0] : deleteTargetNames.length + ' ' + $t('segmentation.records') })"
+      :message="deleteTargetNames.length > 1 ? deleteTargetNames.join(', ') : ''"
+      type="error"
+      :confirm-text="$t('common.delete')"
+      :cancel-text="$t('common.cancel')"
+      @confirm="confirmDelete"
+    />
+
+    <!-- Share Dialog Placeholder -->
+    <ShareSegmentDialog v-model="showShareDialog" :count="deleteTargetIds.length || 1" />
     </div>
   </AppLayout>
 </template>
@@ -145,9 +160,15 @@ const SegmentBuilder = defineAsyncComponent(() =>
 const SegmentComparisonTool = defineAsyncComponent(() => 
   import("@/components/segmentation/SegmentComparisonTool.vue")
 )
+const ConfirmDialog = defineAsyncComponent(() => 
+  import("@/components/common/ConfirmDialog.vue")
+)
+const ShareSegmentDialog = defineAsyncComponent(() => 
+  import("@/components/segmentation/ShareSegmentDialog.vue")
+)
 import { useSegmentation } from "@/composables/useSegmentation"
 import type { Segment } from "@medical-crm/shared"
-import { SegmentType } from "@medical-crm/shared"
+import { SegmentType, SegmentVisibility } from "@medical-crm/shared"
 import { onMounted, ref } from "vue"
 import { useI18n } from "vue-i18n"
 
@@ -162,6 +183,7 @@ const {
   deleteSegment,
   duplicateSegment,
   shareSegment,
+  exportSegment,
   clearError,
 } = useSegmentation()
 
@@ -169,9 +191,13 @@ const {
 const activeTab = ref("list")
 const showCreateDialog = ref(false)
 const showBulkDialog = ref(false)
+const showDeleteDialog = ref(false)
+const showShareDialog = ref(false)
 const editingSegment = ref<Segment | null>(null)
 const selectedSegment = ref<Segment | null>(null)
 const segmentBuilderRef = ref()
+const deleteTargetIds = ref<string[]>([])
+const deleteTargetNames = ref<string[]>([])
 
 // Load segments is now handled by the composable
 
@@ -194,33 +220,24 @@ const editSegment = (segment: Segment) => {
 const handleDuplicateSegment = async (segment: Segment) => {
   try {
     await duplicateSegment(segment.id)
+    try { showSnackbar('Segment dupliqué', 'success') } catch {}
   } catch (error) {
     console.error("Error duplicating segment:", error)
+    try { showSnackbar('Erreur lors de la duplication du segment', 'error') } catch {}
   }
 }
 
-const handleShareSegment = async (segment: Segment) => {
-  try {
-    // TODO: Open sharing dialog to collect share options
-    // For now, just a placeholder
-    await shareSegment(segment.id, [], "view")
-  } catch (error) {
-    console.error("Error sharing segment:", error)
-  }
+const handleShareSegment = async (_segment: Segment) => {
+  // Placeholder until sharing workflow is implemented
+  alert('Partage: fonctionnalité à venir')
 }
 
 // Bulk actions handler - removed as not used in template
 
-const handleDeleteSegment = async (segment: Segment) => {
-  if (!confirm(t("segmentation.confirmDelete", { name: segment.name }))) {
-    return
-  }
-
-  try {
-    await deleteSegment(segment.id)
-  } catch (error) {
-    console.error("Error deleting segment:", error)
-  }
+const handleDeleteSegment = (segment: Segment) => {
+  deleteTargetIds.value = [segment.id]
+  deleteTargetNames.value = [segment.name]
+  showDeleteDialog.value = true
 }
 
 const onSegmentSave = async (segmentData: {
@@ -232,15 +249,18 @@ const onSegmentSave = async (segmentData: {
     if (editingSegment.value) {
       // Update existing segment
       await updateSegment(editingSegment.value.id, segmentData)
+      try { showSnackbar('Segment mis à jour', 'success') } catch {}
     } else {
       // Create new segment
       await createSegment(segmentData)
+      try { showSnackbar('Segment créé', 'success') } catch {}
     }
 
     showCreateDialog.value = false
     editingSegment.value = null
   } catch (error) {
     console.error("Error saving segment:", error)
+    try { showSnackbar('Erreur lors de l\'enregistrement du segment', 'error') } catch {}
   }
 }
 
@@ -252,6 +272,52 @@ const onBulkActionCompleted = () => {
 const onSegmentsSelected = (_segmentIds: string[]) => {
   // Handle segments selected for comparison
   // This could trigger analytics or comparison view updates
+}
+
+// Confirm delete action
+const confirmDelete = async () => {
+  try {
+    for (const id of deleteTargetIds.value) {
+      try {
+        await deleteSegment(id)
+        try { showSnackbar('Segment supprimé', 'success') } catch {}
+      } catch (e) {
+        console.error('Delete failed', id, e)
+        try { showSnackbar('Suppression impossible pour un segment', 'error') } catch {}
+      }
+    }
+  } finally {
+    deleteTargetIds.value = []
+    deleteTargetNames.value = []
+  }
+}
+
+// Handle bulk actions emitted from SavedSegmentsManager
+const onBulkAction = async (action: string, segmentIds: string[]) => {
+  try {
+    if (segmentIds.length === 0) return
+    if (action === 'delete') {
+      deleteTargetIds.value = [...segmentIds]
+      deleteTargetNames.value = segments.value
+        .filter(s => segmentIds.includes(s.id))
+        .map(s => s.name)
+      showDeleteDialog.value = true
+    } else if (action === 'share') {
+      showShareDialog.value = true
+    } else if (action === 'export') {
+      for (const id of segmentIds) {
+        try {
+          await exportSegment(id, 'csv')
+          try { showSnackbar('Export CSV lancé', 'success') } catch {}
+        } catch (e) {
+          console.error('Export failed for segment', id, e)
+          try { showSnackbar('Export impossible pour un segment', 'error') } catch {}
+        }
+      }
+    }
+  } catch (e) {
+    console.error('Bulk action error:', e)
+  }
 }
 
 // Lifecycle

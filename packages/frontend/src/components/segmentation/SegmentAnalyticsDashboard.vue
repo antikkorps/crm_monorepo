@@ -10,6 +10,8 @@
             <v-select
               v-model="selectedTimeRange"
               :items="timeRangeOptions"
+              item-title="text"
+              item-value="value"
               outlined
               dense
               style="max-width: 200px"

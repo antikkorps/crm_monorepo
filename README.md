@@ -87,6 +87,32 @@ The application runs on:
 - Plugin architecture for extensibility
 - Medical-specific segmentation and analytics
 
+## DOCKER DATABASE
+
+pour se connecter, lister les conteneurs Docker en cours d'exécution avec la commande suivante :
+
+```bash
+docker ps
+```
+
+Ensuite, pour se connecter à la base de données PostgreSQL en cours d'exécution dans un conteneur Docker, utilisez la commande suivante :
+
+```bash
+docker exec -it <container_id> psql -U <username> -d <database>
+```
+
+ou
+
+```bash
+docker exec -it <container_id> bash
+```
+
+et une fois dans le container
+
+```bash
+psql -U <username> -d <database>
+```
+
 ## License
 
 Private - All rights reserved

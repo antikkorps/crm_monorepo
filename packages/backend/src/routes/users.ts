@@ -8,6 +8,11 @@ const router = new Router({ prefix: "/api/users" })
 // Apply authentication to all routes
 router.use(authenticate)
 
+// Current user profile management (no special permissions needed)
+router.get("/profile/me", UserController.getCurrentUserProfile)
+router.put("/profile/me", UserController.updateCurrentUserProfile)
+router.post("/profile/password", UserController.changePassword)
+
 // User management
 router.get("/", requirePermission("canViewAllTasks"), UserController.getUsers)
 router.get(

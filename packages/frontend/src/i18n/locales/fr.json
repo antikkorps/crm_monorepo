@@ -234,6 +234,7 @@
       }
     },
     "filters": {
+      "label": "Filtres",
       "addFilter": "Ajouter un Filtre",
       "activeContacts": {
         "label": "Contacts Actifs",
@@ -242,10 +243,13 @@
       },
       "medicalProfile": {
         "label": "Profil Médical",
-        "placeholder": "Sélectionner les critères du profil médical..."
+        "placeholder": "Sélectionner les critères du profil médical...",
+        "hasProfile": "A un profil médical",
+        "noProfile": "N'a pas de profil médical"
       },
       "teamAssignment": {
         "label": "Affectation d'Équipe",
+        "members": "Membres de l'Équipe",
         "teams": {
           "sales": "Équipe Ventes",
           "support": "Équipe Support",
@@ -423,7 +427,14 @@
         "title": "Aucun segment trouvé",
         "message": "Aucun segment ne correspond aux critères de recherche"
       },
-      "createFirst": "Créer votre premier segment"
+      "createFirst": "Créer votre premier segment",
+      "bulkActions": {
+        "title": "Actions en masse",
+        "export": "Exporter",
+        "share": "Partager",
+        "delete": "Supprimer"
+      },
+      "selected": "sélectionné(s)"
     },
     "preview": {
       "title": "Aperçu du Segment",
@@ -431,6 +442,7 @@
       "totalRecords": "Total des Enregistrements",
       "activeRecords": "Enregistrements Actifs",
       "matchPercentage": "Pourcentage de Correspondance",
+      "sampleRecords": "Échantillon d'Enregistrements",
       "loading": "Chargement des données d'aperçu...",
       "noResults": "Aucun enregistrement ne correspond aux critères de filtre actuels",
       "noData": "Aucune donnée disponible",
@@ -479,12 +491,24 @@
     "export": {
       "title": "Exporter le Segment",
       "subtitle": "Exporter les données du segment dans divers formats",
+      "description": "Exporter {count} enregistrements",
       "format": "Format d'Export",
+      "filename": "Nom du Fichier",
       "formats": {
         "csv": "CSV (Valeurs Séparées par des Virgules)",
         "excel": "Excel (.xlsx)",
         "pdf": "Rapport PDF",
         "json": "Données JSON"
+      },
+      "fields": {
+        "title": "Sélection des Champs",
+        "selectAll": "Tout Sélectionner",
+        "selectBasic": "Champs de Base",
+        "clear": "Tout Désélectionner",
+        "basicInfo": "Informations de Base",
+        "contactInfo": "Informations de Contact",
+        "medicalInfo": "Informations Médicales",
+        "activityInfo": "Informations d'Activité"
       },
       "includeFields": "Inclure les Champs",
       "selectAll": "Tout Sélectionner",
@@ -498,10 +522,21 @@
     "sharing": {
       "title": "Partager le Segment",
       "subtitle": "Partager le segment avec les membres de l'équipe",
+      "currentVisibility": "Visibilité Actuelle",
+      "changeVisibility": "Changer la Visibilité",
+      "selectTeam": "Sélectionner l'Équipe",
       "shareWith": "Partager Avec",
+      "shareWithUsers": "Partager avec des Utilisateurs",
+      "shareLink": "Lien de Partage",
+      "save": "Enregistrer les Paramètres",
       "teamMembers": "Membres de l'Équipe",
       "permissionLevel": "Niveau d'Autorisation",
       "permissions": {
+        "title": "Permissions",
+        "canView": "Peut Voir",
+        "canEdit": "Peut Modifier",
+        "canDelete": "Peut Supprimer",
+        "canShare": "Peut Partager",
         "view": "Vue Uniquement",
         "edit": "Peut Modifier",
         "admin": "Accès Complet"
@@ -515,9 +550,39 @@
       "title": "Comparer les Segments",
       "subtitle": "Comparer plusieurs segments côte à côte",
       "selectSegments": "Sélectionner les Segments à Comparer",
+      "chooseSegments": "Choisir les Segments",
+      "selectedCount": "{count} sur {max} segments sélectionnés",
       "addSegment": "Ajouter un Segment",
       "removeSegment": "Supprimer le Segment",
       "comparisonMetrics": "Métriques de Comparaison",
+      "records": "Enregistrements",
+      "overlap": {
+        "title": "Chevauchement des Segments"
+      },
+      "visualization": {
+        "title": "Visualisation"
+      },
+      "insights": {
+        "title": "Insights"
+      },
+      "details": {
+        "title": "Détails de la Comparaison",
+        "unique": "Uniques",
+        "shared": "Partagés",
+        "breakdown": "Répartition",
+        "segment": "Segment",
+        "uniqueCount": "Uniques",
+        "percentage": "Pourcentage",
+        "segmentPair": "Paire de Segments",
+        "sharedCount": "Partagés",
+        "overlapPercentage": "% de Chevauchement",
+        "selectAttribute": "Sélectionner un Attribut"
+      },
+      "empty": {
+        "title": "Aucun segment sélectionné",
+        "message": "Sélectionnez au moins 2 segments pour commencer la comparaison.",
+        "hint": "Utilisez le sélecteur ci-dessus pour choisir les segments."
+      },
       "metrics": {
         "size": "Taille du Segment",
         "growth": "Taux de Croissance",
@@ -527,6 +592,52 @@
       },
       "visualComparison": "Comparaison Visuelle",
       "exportComparison": "Exporter la Comparaison"
+    },
+    "bulk": {
+      "title": "Actions en Masse",
+      "description": "Effectuer des actions sur {count} enregistrements du segment",
+      "selectAction": "Sélectionner une Action",
+      "taskTitle": "Titre de la Tâche",
+      "taskDescription": "Description de la Tâche",
+      "taskPriority": "Priorité de la Tâche",
+      "taskDueDate": "Date d'échéance",
+      "assignTo": "Assigner à",
+      "communicationType": "Type de Communication",
+      "communicationSubject": "Sujet de la Communication",
+      "communicationMessage": "Message de Communication",
+      "includeAttachments": "Inclure les Pièces Jointes",
+      "statusField": "Champ de Statut",
+      "customFieldName": "Nom du Champ Personnalisé",
+      "newValue": "Nouvelle Valeur",
+      "exportFormat": "Format d'Export",
+      "exportFields": "Champs à Exporter",
+      "includeContacts": "Inclure les Contacts",
+      "execute": "Exécuter l'Action",
+      "actions": {
+        "assignTasks": "Assigner des Tâches",
+        "sendCommunications": "Envoyer des Communications",
+        "updateStatus": "Mettre à jour le Statut",
+        "exportData": "Exporter les Données"
+      },
+      "preview": {
+        "title": "Aperçu de l'Action",
+        "description": "Cette action affectera {count} enregistrements",
+        "affectedRecords": "Enregistrements Affectés",
+        "estimatedTime": "Temps Estimé"
+      },
+      "confirmation": {
+        "title": "Confirmer l'Action",
+        "assignTasks": "Assigner des tâches à {count} enregistrements",
+        "sendCommunications": "Envoyer des communications à {count} enregistrements",
+        "updateStatus": "Mettre à jour le statut de {count} enregistrements",
+        "exportData": "Exporter les données de {count} enregistrements"
+      },
+      "statusFields": {
+        "status": "Statut",
+        "priority": "Priorité",
+        "category": "Catégorie",
+        "custom": "Champ Personnalisé"
+      }
     },
     "bulkActions": {
       "title": "Actions en Masse",
@@ -548,7 +659,44 @@
       "cancel": "Annuler",
       "actionCompleted": "Action terminée avec succès",
       "actionError": "Erreur lors de l'exécution de l'action"
+    },
+    "records": "Enregistrements",
+    "selected": "sélectionnés",
+    "visibility": {
+      "private": "Privé",
+      "team": "Équipe",
+      "public": "Public"
     }
+  },
+  "task": {
+    "priority": {
+      "low": "Faible",
+      "medium": "Moyenne",
+      "high": "Élevée"
+    }
+  },
+  "communication": {
+    "type": {
+      "email": "Email",
+      "sms": "SMS"
+    }
+  },
+  "contact": {
+    "firstName": "Prénom",
+    "lastName": "Nom",
+    "email": "Email",
+    "phone": "Téléphone",
+    "title": "Titre",
+    "department": "Département"
+  },
+  "institution": {
+    "name": "Nom",
+    "type": "Type",
+    "address": "Adresse",
+    "phone": "Téléphone",
+    "email": "Email",
+    "specialties": "Spécialités",
+    "bedCapacity": "Capacité de Lits"
   },
   "validation": {
     "required": "Ce champ est requis",

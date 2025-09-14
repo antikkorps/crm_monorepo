@@ -41,6 +41,7 @@
 - Primary UI: Vuetify (Material Design 3), avoid PrimeVue
 - Notifications: Vuetify snackbar or Vue Toastification
 - Event handlers: `handle*` prefix
+- Avatars: DiceBear (@dicebear/core, @dicebear/collection) - generates SVG avatars from user data
 
 ### Backend
 - Koa.js framework with TypeScript

@@ -20,6 +20,7 @@ export interface UserAttributes {
   role: UserRole
   teamId?: string
   avatarSeed: string
+  avatarStyle: string
   isActive: boolean
   lastLoginAt?: Date
   createdAt: Date
@@ -41,6 +42,7 @@ export class User
   declare role: UserRole
   declare teamId?: string
   declare avatarSeed: string
+  declare avatarStyle: string
   declare isActive: boolean
   declare lastLoginAt?: Date
   declare readonly createdAt: Date
@@ -56,7 +58,9 @@ export class User
   }
 
   public getAvatarUrl(style?: string): string {
-    return AvatarService.generateAvatarFromSeed(this.avatarSeed, { style })
+    return AvatarService.generateAvatarFromSeed(this.avatarSeed, {
+      style: style || this.avatarStyle
+    })
   }
 
   public getAvatarMetadata(style?: string): {
@@ -64,7 +68,7 @@ export class User
     url: string
     style: string
   } {
-    return AvatarService.getAvatarMetadata(this.avatarSeed, style)
+    return AvatarService.getAvatarMetadata(this.avatarSeed, style || this.avatarStyle)
   }
 
   public async updateAvatarSeed(forceNew: boolean = false): Promise<void> {
@@ -134,6 +138,7 @@ export class User
       role: userData.role || UserRole.USER,
       teamId: userData.teamId,
       avatarSeed,
+      avatarStyle: "avataaars",
       isActive: true,
     })
   }
@@ -222,6 +227,12 @@ User.init(
       type: DataTypes.STRING,
       allowNull: false,
       field: "avatar_seed",
+    },
+    avatarStyle: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      defaultValue: "avataaars",
+      field: "avatar_style",
     },
     isActive: {
       type: DataTypes.BOOLEAN,

@@ -5,6 +5,8 @@
       :items="institutionTypeOptions"
       :label="$t('segmentation.filters.type.label')"
       :placeholder="$t('segmentation.filters.type.placeholder')"
+      item-title="text"
+      item-value="value"
       multiple
       outlined
       dense

@@ -110,6 +110,11 @@ export class Segment
       return true
     }
 
+    // Allow edits for public segments
+    if (this.visibility === SegmentVisibility.PUBLIC) {
+      return true
+    }
+
     return false
   }
 
@@ -314,7 +319,7 @@ Segment.init(
     visibility: {
       type: DataTypes.ENUM(...Object.values(SegmentVisibility)),
       allowNull: false,
-      defaultValue: SegmentVisibility.PRIVATE,
+      defaultValue: SegmentVisibility.PUBLIC,
     },
     ownerId: {
       type: DataTypes.UUID,

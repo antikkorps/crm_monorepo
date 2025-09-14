@@ -204,14 +204,24 @@ export class UserController {
   public static async updateUserAvatar(ctx: Context, next: Next): Promise<void> {
     try {
       const { id } = ctx.params
-      const { forceNew } = ctx.request.body as { forceNew?: boolean }
+      const { forceNew, avatarSeed } = ctx.request.body as {
+        forceNew?: boolean
+        avatarSeed?: string
+      }
 
       const user = await User.findByPk(id)
       if (!user) {
         throw createError("User not found", 404, "USER_NOT_FOUND", { userId: id })
       }
 
-      await user.updateAvatarSeed(forceNew || false)
+      if (avatarSeed) {
+        // Update with specific seed
+        user.avatarSeed = avatarSeed
+        await user.save()
+      } else {
+        // Generate new seed
+        await user.updateAvatarSeed(forceNew || false)
+      }
 
       const avatarMetadata = user.getAvatarMetadata()
 
@@ -227,6 +237,185 @@ export class UserController {
       throw createError("Failed to update user avatar", 500, "UPDATE_AVATAR_ERROR", {
         error,
       })
+    }
+  }
+
+  /**
+   * Update current user's profile
+   */
+  public static async updateCurrentUserProfile(ctx: Context, next: Next): Promise<void> {
+    try {
+      const userId = ctx.state.user?.id
+      if (!userId) {
+        throw createError("Unauthorized", 401, "UNAUTHORIZED")
+      }
+
+      const { firstName, lastName, email, avatarSeed, avatarStyle } = ctx.request.body as {
+        firstName?: string
+        lastName?: string
+        email?: string
+        avatarSeed?: string
+        avatarStyle?: string
+      }
+
+      const user = await User.findByPk(userId)
+      if (!user) {
+        throw createError("User not found", 404, "USER_NOT_FOUND", { userId })
+      }
+
+      // Check if email is being changed and if it conflicts
+      if (email && email.toLowerCase() !== user.email) {
+        const existingUser = await User.findByEmail(email)
+        if (existingUser) {
+          throw createError("Email already exists", 409, "EMAIL_EXISTS", { email })
+        }
+        user.email = email.toLowerCase()
+      }
+
+      // Update name fields and regenerate avatar seed if names changed (unless custom seed provided)
+      let nameChanged = false
+      if (firstName && firstName.trim() !== user.firstName) {
+        user.firstName = firstName.trim()
+        nameChanged = true
+      }
+      if (lastName && lastName.trim() !== user.lastName) {
+        user.lastName = lastName.trim()
+        nameChanged = true
+      }
+
+      // Update avatar seed and style
+      if (avatarSeed) {
+        user.avatarSeed = avatarSeed
+      } else if (nameChanged) {
+        user.avatarSeed = AvatarService.generateSeedFromName(
+          user.firstName,
+          user.lastName
+        )
+      }
+
+      if (avatarStyle && AvatarService.isValidStyle(avatarStyle)) {
+        user.avatarStyle = avatarStyle
+      }
+
+      await user.save()
+
+      // Get user with team info
+      const team = await user.getTeam()
+
+      ctx.body = {
+        success: true,
+        data: {
+          message: "Profile updated successfully",
+          user: {
+            ...user.toJSON(),
+            team,
+          },
+        },
+      }
+    } catch (error) {
+      if (error && typeof error === "object" && "statusCode" in error) throw error
+      throw createError("Failed to update profile", 500, "UPDATE_PROFILE_ERROR", { error })
+    }
+  }
+
+  /**
+   * Change current user's password
+   */
+  public static async changePassword(ctx: Context, next: Next): Promise<void> {
+    try {
+      const userId = ctx.state.user?.id
+      if (!userId) {
+        throw createError("Unauthorized", 401, "UNAUTHORIZED")
+      }
+
+      const { currentPassword, newPassword } = ctx.request.body as {
+        currentPassword: string
+        newPassword: string
+      }
+
+      if (!currentPassword || !newPassword) {
+        throw createError(
+          "Current password and new password are required",
+          400,
+          "VALIDATION_ERROR",
+          { field: "password" }
+        )
+      }
+
+      const user = await User.findByPk(userId)
+      if (!user) {
+        throw createError("User not found", 404, "USER_NOT_FOUND", { userId })
+      }
+
+      // Verify current password
+      const isCurrentPasswordValid = await user.validatePassword(currentPassword)
+      if (!isCurrentPasswordValid) {
+        throw createError(
+          "Current password is incorrect",
+          400,
+          "INVALID_CURRENT_PASSWORD",
+          { field: "currentPassword" }
+        )
+      }
+
+      // Validate new password strength
+      const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*(),.?":{}|<>])[A-Za-z\d!@#$%^&*(),.?":{}|<>]{8,}$/
+      if (!passwordRegex.test(newPassword)) {
+        throw createError(
+          "New password does not meet security requirements",
+          400,
+          "WEAK_PASSWORD",
+          { field: "newPassword" }
+        )
+      }
+
+      // Hash and save new password
+      user.passwordHash = await User.hashPassword(newPassword)
+      await user.save()
+
+      ctx.body = {
+        success: true,
+        data: {
+          message: "Password changed successfully",
+        },
+      }
+    } catch (error) {
+      if (error && typeof error === "object" && "statusCode" in error) throw error
+      throw createError("Failed to change password", 500, "CHANGE_PASSWORD_ERROR", { error })
+    }
+  }
+
+  /**
+   * Get current user's profile
+   */
+  public static async getCurrentUserProfile(ctx: Context, next: Next): Promise<void> {
+    try {
+      const userId = ctx.state.user?.id
+      if (!userId) {
+        throw createError("Unauthorized", 401, "UNAUTHORIZED")
+      }
+
+      const user = await User.findByPk(userId, {
+        attributes: { exclude: ["passwordHash"] },
+      })
+
+      if (!user) {
+        throw createError("User not found", 404, "USER_NOT_FOUND", { userId })
+      }
+
+      // Get user's team if they have one
+      const team = await user.getTeam()
+
+      ctx.body = {
+        success: true,
+        data: {
+          ...user.toJSON(),
+          team,
+        },
+      }
+    } catch (error) {
+      if (error && typeof error === "object" && "statusCode" in error) throw error
+      throw createError("Failed to fetch profile", 500, "FETCH_PROFILE_ERROR", { error })
     }
   }
 

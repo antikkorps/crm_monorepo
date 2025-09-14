@@ -18,7 +18,7 @@ export const useAuthStore = defineStore("auth", {
     isLoggedIn: (state) => state.isAuthenticated && !!state.token,
     userName: (state) =>
       state.user ? `${state.user.firstName} ${state.user.lastName}` : "User",
-    userAvatar: (state) => state.user?.avatarSeed || undefined,
+    userAvatar: (state) => state.user?.avatarUrl || undefined,
     userRole: (state) => state.user?.role,
     accessToken: (state) => state.token,
   },
@@ -80,6 +80,17 @@ export const useAuthStore = defineStore("auth", {
         this.user = updatedUser;
         localStorage.setItem("user", JSON.stringify(updatedUser));
         return updatedUser;
+      } catch (error) {
+        throw error;
+      }
+    },
+
+    async changePassword(data: { currentPassword: string; newPassword: string }) {
+      if (!this.user) throw new Error("No user logged in");
+
+      try {
+        await authApi.changePassword(data);
+        return true;
       } catch (error) {
         throw error;
       }

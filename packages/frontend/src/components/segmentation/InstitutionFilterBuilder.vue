@@ -87,22 +87,22 @@ const filters = ref<SegmentBuilderFilter[]>([...props.modelValue])
 
 // Computed
 const availableFilterTypes = computed(() => [
-  { value: "name", label: t("segmentation.filters.name"), icon: "mdi-text-box-outline" },
-  { value: "type", label: t("segmentation.filters.type"), icon: "mdi-hospital-building" },
+  { value: "name", label: t("segmentation.filters.name.label"), icon: "mdi-text-box-outline" },
+  { value: "type", label: t("segmentation.filters.type.label"), icon: "mdi-hospital-building" },
   {
     value: "location",
-    label: t("segmentation.filters.location"),
+    label: t("segmentation.filters.location.label"),
     icon: "mdi-map-marker",
   },
   {
     value: "specialty",
-    label: t("segmentation.filters.specialty"),
+    label: t("segmentation.filters.specialty.label"),
     icon: "mdi-stethoscope",
   },
-  { value: "capacity", label: t("segmentation.filters.capacity"), icon: "mdi-bed" },
+  { value: "capacity", label: t("segmentation.filters.capacity.label"), icon: "mdi-bed" },
   {
     value: "compliance",
-    label: t("segmentation.filters.compliance"),
+    label: t("segmentation.filters.compliance.label"),
     icon: "mdi-shield-check",
   },
 ])

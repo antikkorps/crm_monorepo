@@ -92,5 +92,116 @@
     "forbidden": "Forbidden action",
     "notFound": "Resource not found",
     "serverError": "Internal server error"
+  },
+  "segmentation": {
+    "builder": {
+      "title": "Segment Builder",
+      "activeFilters": "Active Filters",
+      "noFilters": "No filters added yet.",
+      "segmentName": "Segment Name",
+      "segmentType": "Segment Type",
+      "institutionFilters": "Institution Filters",
+      "contactFilters": "Contact Filters",
+      "combinedFilters": "Combined Filters",
+      "preview": { "title": "Results Preview" },
+      "saveSegment": "Save Segment"
+    },
+    "filters": {
+      "label": "Filters",
+      "addFilter": "Add Filter",
+      "name": { "label": "Name" },
+      "type": { "label": "Type" },
+      "location": {
+        "label": "Location",
+        "country": "Country",
+        "region": "Region/State",
+        "city": "City",
+        "countries": {
+          "us": "United States",
+          "ca": "Canada",
+          "fr": "France"
+        }
+      },
+      "specialty": {
+        "label": "Specialty",
+        "specialties": {
+          "cardiology": "Cardiology",
+          "neurology": "Neurology",
+          "orthopedics": "Orthopedics",
+          "pediatrics": "Pediatrics",
+          "oncology": "Oncology",
+          "radiology": "Radiology",
+          "surgery": "Surgery",
+          "emergency": "Emergency Medicine"
+        }
+      },
+      "capacity": {
+        "label": "Capacity",
+        "minCapacity": "Minimum Capacity",
+        "maxCapacity": "Maximum Capacity",
+        "type": "Capacity Type",
+        "types": {
+          "beds": "Beds",
+          "rooms": "Rooms",
+          "staff": "Staff",
+          "patients": "Patients"
+        }
+      },
+      "compliance": {
+        "label": "Compliance",
+        "type": "Compliance Type",
+        "status": "Compliance Status",
+        "types": {
+          "hipaa": "HIPAA",
+          "gdpr": "GDPR",
+          "sox": "SOX",
+          "iso27001": "ISO 27001"
+        },
+        "statuses": {
+          "compliant": "Compliant",
+          "nonCompliant": "Non-compliant",
+          "pending": "Pending Review",
+          "expired": "Expired"
+        }
+      },
+      "role": { "label": "Role" },
+      "department": { "label": "Department" },
+      "title": { "label": "Title" },
+      "primary": { "label": "Primary Contact", "primaryOnly": "Primary only", "nonPrimaryOnly": "Non-primary only" },
+      "contactMethod": { "label": "Contact Method" },
+      "activityLevel": { "label": "Activity Level" },
+      "dateRange": { "label": "Date Range", "startDate": "Start Date", "endDate": "End Date", "field": "Date Field" },
+      "teamAssignment": { "label": "Team Assignment" },
+      "medicalProfile": { "label": "Medical Profile" },
+      "activeContacts": { "label": "Active Contacts" }
+    },
+    "saved": {
+      "title": "Saved Segments",
+      "search": "Search segments...",
+      "tabs": {
+        "all": "All",
+        "mine": "My segments",
+        "team": "Team",
+        "shared": "Shared"
+      },
+      "empty": {
+        "title": "No segments found",
+        "message": "No segments match your search criteria"
+      },
+      "createFirst": "Create your first segment",
+      "bulkActions": {
+        "title": "Bulk Actions",
+        "export": "Export",
+        "share": "Share",
+        "delete": "Delete"
+      },
+      "selected": "selected"
+    },
+    "visibility": {
+      "private": "Private",
+      "team": "Team",
+      "public": "Public"
+    },
+    "records": "Records"
   }
 }

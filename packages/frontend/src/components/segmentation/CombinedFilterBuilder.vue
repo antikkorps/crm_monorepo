@@ -87,22 +87,22 @@ const filters = ref<SegmentBuilderFilter[]>([...props.modelValue])
 const availableFilterTypes = computed(() => [
   {
     value: "activeContacts",
-    label: t("segmentation.filters.activeContacts"),
+    label: t("segmentation.filters.activeContacts.label"),
     icon: "mdi-account-check",
   },
   {
     value: "medicalProfile",
-    label: t("segmentation.filters.medicalProfile"),
+    label: t("segmentation.filters.medicalProfile.label"),
     icon: "mdi-clipboard-account",
   },
   {
     value: "teamAssignment",
-    label: t("segmentation.filters.teamAssignment"),
+    label: t("segmentation.filters.teamAssignment.label"),
     icon: "mdi-account-group",
   },
   {
     value: "dateRange",
-    label: t("segmentation.filters.dateRange"),
+    label: t("segmentation.filters.dateRange.label"),
     icon: "mdi-calendar-range",
   },
 ])

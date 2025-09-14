@@ -3,33 +3,28 @@
     <v-card>
       <v-card-title class="d-flex align-center">
         <v-icon left>mdi-bookmark-multiple</v-icon>
-        {{ $t('segmentation.saved.title') }}
+        {{ $t("segmentation.saved.title") }}
         <v-spacer />
         <v-text-field
           v-model="searchQuery"
           :label="$t('segmentation.saved.search')"
           prepend-inner-icon="mdi-magnify"
           variant="outlined"
-          density="compact"
           class="mr-2"
           style="max-width: 300px"
         />
-        <v-btn
-          icon
-          @click="refreshSegments"
-          :loading="loading"
-        >
+        <v-btn icon @click="refreshSegments" :loading="loading" class="align-self-center">
           <v-icon>mdi-refresh</v-icon>
         </v-btn>
       </v-card-title>
 
       <v-card-text>
         <!-- Filter Tabs -->
-        <v-tabs v-model="activeTab" class="mb-4">
-          <v-tab value="all">{{ $t('segmentation.saved.tabs.all') }}</v-tab>
-          <v-tab value="mine">{{ $t('segmentation.saved.tabs.mine') }}</v-tab>
-          <v-tab value="team">{{ $t('segmentation.saved.tabs.team') }}</v-tab>
-          <v-tab value="shared">{{ $t('segmentation.saved.tabs.shared') }}</v-tab>
+        <v-tabs v-model="activeTab" class="mb-4" show-arrows>
+          <v-tab value="all">{{ $t("segmentation.saved.tabs.all") }}</v-tab>
+          <v-tab value="mine">{{ $t("segmentation.saved.tabs.mine") }}</v-tab>
+          <v-tab value="team">{{ $t("segmentation.saved.tabs.team") }}</v-tab>
+          <v-tab value="shared">{{ $t("segmentation.saved.tabs.shared") }}</v-tab>
         </v-tabs>
 
         <!-- Segments Grid -->
@@ -43,21 +38,20 @@
           >
             <v-card
               class="segment-card"
-              :class="{ 'selected': selectedSegments.includes(segment.id) }"
+              :class="{ selected: selectedSegments.includes(segment.id) }"
               @click="toggleSelection(segment.id)"
             >
               <v-card-title class="pb-2">
                 <div class="d-flex align-center">
-                  <v-icon
-                    :color="getTypeColor(segment.type)"
-                    left
-                    small
-                  >
+                  <v-icon :color="getTypeColor(segment.type)" left small>
                     {{ getTypeIcon(segment.type) }}
                   </v-icon>
                   <div class="flex-grow-1">
                     <div class="text-h6">{{ segment.name }}</div>
-                    <div class="text-caption text-medium-emphasis" v-if="segment.description">
+                    <div
+                      class="text-caption text-medium-emphasis"
+                      v-if="segment.description"
+                    >
                       {{ segment.description }}
                     </div>
                   </div>
@@ -71,7 +65,7 @@
                       <div class="text-h6 font-weight-bold primary--text">
                         {{ formatNumber(segment.stats?.totalCount || 0) }}
                       </div>
-                      <div class="text-caption">{{ $t('segmentation.records') }}</div>
+                      <div class="text-caption">{{ $t("segmentation.records") }}</div>
                     </div>
                   </v-col>
                   <v-col cols="6">
@@ -79,17 +73,15 @@
                       <div class="text-h6 font-weight-bold success--text">
                         {{ segment.filterCount }}
                       </div>
-                      <div class="text-caption">{{ $t('segmentation.filters') }}</div>
+                      <div class="text-caption">
+                        {{ $t("segmentation.filters.label") }}
+                      </div>
                     </div>
                   </v-col>
                 </v-row>
 
                 <div class="d-flex align-center justify-space-between mb-2">
-                  <v-chip
-                    small
-                    :color="getVisibilityColor(segment.visibility)"
-                    outlined
-                  >
+                  <v-chip small :color="getVisibilityColor(segment.visibility)" outlined>
                     {{ getVisibilityLabel(segment.visibility) }}
                   </v-chip>
                   <div class="text-caption text-medium-emphasis">
@@ -101,17 +93,14 @@
                   <v-avatar size="24" class="mr-2">
                     <v-img :src="segment.owner.avatar" />
                   </v-avatar>
-                  <div class="text-caption">{{ segment.owner.firstName }} {{ segment.owner.lastName }}</div>
+                  <div class="text-caption">
+                    {{ segment.owner.firstName }} {{ segment.owner.lastName }}
+                  </div>
                 </div>
               </v-card-text>
 
-              <v-card-actions class="pt-0">
-                <v-btn
-                  icon
-                  small
-                  @click.stop="viewSegment(segment)"
-                  title="View"
-                >
+              <v-card-actions class="pt-0 segment-actions">
+                <v-btn icon small @click.stop="viewSegment(segment)" title="View">
                   <v-icon>mdi-eye</v-icon>
                 </v-btn>
                 <v-btn
@@ -158,45 +147,48 @@
 
         <!-- Bulk Actions Bar -->
         <v-bottom-sheet v-model="showBulkActions" persistent>
-          <v-card>
-            <v-card-title>
-              {{ $t('segmentation.saved.bulkActions.title') }}
+          <v-card class="bulk-sheet">
+            <v-card-title class="bulk-title">
+              {{ $t("segmentation.saved.bulkActions.title") }}
               <v-spacer />
               <v-btn icon @click="showBulkActions = false">
                 <v-icon>mdi-close</v-icon>
               </v-btn>
             </v-card-title>
             <v-card-text>
-              <div class="d-flex align-center mb-4">
-                <v-chip class="mr-2">
-                  {{ selectedSegments.length }} {{ $t('segmentation.saved.selected') }}
+              <div class="d-flex align-center mb-4 bulk-bar">
+                <v-chip class="mr-2" size="small">
+                  {{ selectedSegments.length }} {{ $t("segmentation.saved.selected") }}
                 </v-chip>
                 <v-spacer />
                 <v-btn
                   color="primary"
+                  size="small"
                   @click="executeBulkAction('export')"
                   :disabled="selectedSegments.length === 0"
                 >
                   <v-icon left>mdi-download</v-icon>
-                  {{ $t('segmentation.saved.bulkActions.export') }}
+                  {{ $t("segmentation.saved.bulkActions.export") }}
                 </v-btn>
                 <v-btn
                   color="secondary"
+                  size="small"
                   @click="executeBulkAction('share')"
                   :disabled="selectedSegments.length === 0"
                   class="ml-2"
                 >
                   <v-icon left>mdi-share-variant</v-icon>
-                  {{ $t('segmentation.saved.bulkActions.share') }}
+                  {{ $t("segmentation.saved.bulkActions.share") }}
                 </v-btn>
                 <v-btn
                   color="error"
+                  size="small"
                   @click="executeBulkAction('delete')"
                   :disabled="selectedSegments.length === 0"
                   class="ml-2"
                 >
                   <v-icon left>mdi-delete</v-icon>
-                  {{ $t('segmentation.saved.bulkActions.delete') }}
+                  {{ $t("segmentation.saved.bulkActions.delete") }}
                 </v-btn>
               </div>
             </v-card-text>
@@ -206,13 +198,13 @@
         <!-- Empty State -->
         <v-card v-if="filteredSegments.length === 0" class="text-center pa-8" outlined>
           <v-icon size="64" color="grey lighten-1">mdi-bookmark-off</v-icon>
-          <div class="mt-4 text-h6">{{ $t('segmentation.saved.empty.title') }}</div>
+          <div class="mt-4 text-h6">{{ $t("segmentation.saved.empty.title") }}</div>
           <div class="text-body-1 text-medium-emphasis mb-4">
-            {{ $t('segmentation.saved.empty.message') }}
+            {{ $t("segmentation.saved.empty.message") }}
           </div>
           <v-btn color="primary" @click="$emit('create-new')">
             <v-icon left>mdi-plus</v-icon>
-            {{ $t('segmentation.saved.createFirst') }}
+            {{ $t("segmentation.saved.createFirst") }}
           </v-btn>
         </v-card>
       </v-card-text>
@@ -221,9 +213,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
-import { useI18n } from 'vue-i18n'
-import type { Segment, SegmentVisibility, SegmentType } from '@medical-crm/shared'
+import { ref, computed, watch } from "vue"
+import { useI18n } from "vue-i18n"
+import type { Segment, SegmentVisibility, SegmentType } from "@medical-crm/shared"
 
 const { t } = useI18n()
 
@@ -234,23 +226,23 @@ interface Props {
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  loading: false
+  loading: false,
 })
 
 // Emits
 const emit = defineEmits<{
-  'view': [segment: Segment]
-  'edit': [segment: Segment]
-  'duplicate': [segment: Segment]
-  'share': [segment: Segment]
-  'delete': [segment: Segment]
-  'create-new': []
-  'bulk-action': [action: string, segmentIds: string[]]
+  view: [segment: Segment]
+  edit: [segment: Segment]
+  duplicate: [segment: Segment]
+  share: [segment: Segment]
+  delete: [segment: Segment]
+  "create-new": []
+  "bulk-action": [action: string, segmentIds: string[]]
 }>()
 
 // Reactive data
-const searchQuery = ref('')
-const activeTab = ref('all')
+const searchQuery = ref("")
+const activeTab = ref("all")
 const selectedSegments = ref<string[]>([])
 const showBulkActions = ref(false)
 
@@ -260,23 +252,24 @@ const filteredSegments = computed(() => {
 
   // Filter by tab
   switch (activeTab.value) {
-    case 'mine':
-      filtered = filtered.filter(segment => segment.ownerId === 'current-user-id')
+    case "mine":
+      filtered = filtered.filter((segment) => segment.ownerId === "current-user-id")
       break
-    case 'team':
-      filtered = filtered.filter(segment => segment.visibility === 'team')
+    case "team":
+      filtered = filtered.filter((segment) => segment.visibility === "team")
       break
-    case 'shared':
-      filtered = filtered.filter(segment => segment.visibility === 'public')
+    case "shared":
+      filtered = filtered.filter((segment) => segment.visibility === "public")
       break
   }
 
   // Filter by search query
   if (searchQuery.value.trim()) {
     const query = searchQuery.value.toLowerCase()
-    filtered = filtered.filter(segment =>
-      segment.name.toLowerCase().includes(query) ||
-      (segment.description && segment.description.toLowerCase().includes(query))
+    filtered = filtered.filter(
+      (segment) =>
+        segment.name.toLowerCase().includes(query) ||
+        (segment.description && segment.description.toLowerCase().includes(query))
     )
   }
 
@@ -293,20 +286,20 @@ const formatDate = (date: Date | string): string => {
 }
 
 const getTypeIcon = (type: SegmentType): string => {
-  return type === 'institution' ? 'mdi-hospital-building' : 'mdi-account-multiple'
+  return type === "institution" ? "mdi-hospital-building" : "mdi-account-multiple"
 }
 
 const getTypeColor = (type: SegmentType): string => {
-  return type === 'institution' ? 'primary' : 'secondary'
+  return type === "institution" ? "primary" : "secondary"
 }
 
 const getVisibilityColor = (visibility: SegmentVisibility): string => {
   const colors: Record<SegmentVisibility, string> = {
-    'private': 'grey',
-    'team': 'warning',
-    'public': 'success'
+    private: "grey",
+    team: "warning",
+    public: "success",
   }
-  return colors[visibility] || 'grey'
+  return colors[visibility] || "grey"
 }
 
 const getVisibilityLabel = (visibility: SegmentVisibility): string => {
@@ -315,7 +308,7 @@ const getVisibilityLabel = (visibility: SegmentVisibility): string => {
 
 const canEdit = (segment: Segment): boolean => {
   // TODO: Implement proper permission checking
-  return segment.ownerId === 'current-user-id' || segment.visibility === 'team'
+  return segment.ownerId === "current-user-id" || segment.visibility === "team"
 }
 
 const canShare = (segment: Segment): boolean => {
@@ -334,46 +327,52 @@ const toggleSelection = (segmentId: string) => {
 }
 
 const viewSegment = (segment: Segment) => {
-  emit('view', segment)
+  emit("view", segment)
 }
 
 const editSegment = (segment: Segment) => {
-  emit('edit', segment)
+  emit("edit", segment)
 }
 
 const duplicateSegment = (segment: Segment) => {
-  emit('duplicate', segment)
+  emit("duplicate", segment)
 }
 
 const shareSegment = (segment: Segment) => {
-  emit('share', segment)
+  emit("share", segment)
 }
 
 const deleteSegment = (segment: Segment) => {
-  emit('delete', segment)
+  emit("delete", segment)
 }
 
 const refreshSegments = () => {
   // TODO: Implement refresh functionality
-  console.log('Refreshing segments...')
+  console.log("Refreshing segments...")
 }
 
 const executeBulkAction = (action: string) => {
-  emit('bulk-action', action, selectedSegments.value)
+  emit("bulk-action", action, selectedSegments.value)
   selectedSegments.value = []
   showBulkActions.value = false
 }
 
 // Watchers
-watch(() => activeTab.value, () => {
-  selectedSegments.value = []
-  showBulkActions.value = false
-})
+watch(
+  () => activeTab.value,
+  () => {
+    selectedSegments.value = []
+    showBulkActions.value = false
+  }
+)
 
-watch(() => searchQuery.value, () => {
-  selectedSegments.value = []
-  showBulkActions.value = false
-})
+watch(
+  () => searchQuery.value,
+  () => {
+    selectedSegments.value = []
+    showBulkActions.value = false
+  }
+)
 </script>
 
 <style scoped>
@@ -394,5 +393,34 @@ watch(() => searchQuery.value, () => {
 .segment-card.selected {
   border-color: var(--v-primary-base);
   border-width: 2px;
+}
+
+.segment-actions .v-btn {
+  opacity: 0.9;
+}
+
+@media (max-width: 600px) {
+  .mr-2 {
+    margin-right: 6px !important;
+  }
+  .segment-card {
+    padding-bottom: 6px;
+  }
+  .segment-actions {
+    justify-content: space-between;
+  }
+  .segment-actions .v-btn {
+    transform: scale(0.95);
+  }
+  .bulk-sheet {
+    padding-bottom: 6px;
+  }
+  .bulk-title {
+    padding: 8px 12px;
+  }
+  .bulk-bar {
+    gap: 6px;
+    flex-wrap: wrap;
+  }
 }
 </style>

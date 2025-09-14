@@ -64,7 +64,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import type { SegmentBuilderFilter } from '@medical-crm/shared'
 import RoleFilter from './filters/RoleFilter.vue'
@@ -96,12 +96,12 @@ const filters = ref<SegmentBuilderFilter[]>([...props.modelValue])
 
 // Computed
 const availableFilterTypes = computed(() => [
-  { value: 'role', label: t('segmentation.filters.role'), icon: 'mdi-account-star' },
-  { value: 'department', label: t('segmentation.filters.department'), icon: 'mdi-office-building' },
-  { value: 'title', label: t('segmentation.filters.title'), icon: 'mdi-card-account-details' },
-  { value: 'primary', label: t('segmentation.filters.primary'), icon: 'mdi-star' },
-  { value: 'contactMethod', label: t('segmentation.filters.contactMethod'), icon: 'mdi-phone' },
-  { value: 'activityLevel', label: t('segmentation.filters.activityLevel'), icon: 'mdi-chart-line' }
+  { value: 'role', label: t('segmentation.filters.role.label'), icon: 'mdi-account-star' },
+  { value: 'department', label: t('segmentation.filters.department.label'), icon: 'mdi-office-building' },
+  { value: 'title', label: t('segmentation.filters.title.label'), icon: 'mdi-card-account-details' },
+  { value: 'primary', label: t('segmentation.filters.primary.label'), icon: 'mdi-star' },
+  { value: 'contactMethod', label: t('segmentation.filters.contactMethod.label'), icon: 'mdi-phone' },
+  { value: 'activityLevel', label: t('segmentation.filters.activityLevel.label'), icon: 'mdi-chart-line' }
 ])
 
 const currentFilterComponent = computed(() => {

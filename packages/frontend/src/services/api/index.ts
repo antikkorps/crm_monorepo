@@ -72,9 +72,13 @@ export const authApi = {
 
   logout: () => apiClient.post("/auth/logout"),
 
-  getProfile: () => apiClient.get<User>("/auth/me"),
+  getProfile: () => apiClient.get<{ data: User }>("/users/profile/me").then(res => res.data),
 
-  updateProfile: (data: Partial<User>) => apiClient.put<User>("/auth/me", data),
+  updateProfile: (data: Partial<User>) =>
+    apiClient.put<{ data: { user: User } }>("/users/profile/me", data).then(res => res.data.user),
+
+  changePassword: (data: { currentPassword: string; newPassword: string }) =>
+    apiClient.post<{ data: { message: string } }>("/users/profile/password", data),
 }
 
 export const institutionsApi = {

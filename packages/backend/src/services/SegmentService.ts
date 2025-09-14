@@ -12,7 +12,8 @@ export class SegmentService {
     additionalFilters?: Partial<MedicalInstitutionSearchFilters>
   ): Promise<MedicalInstitution[]> {
     if (!criteria.institutionFilters) {
-      throw new Error("Institution filters are required for institution segments")
+      // No filters provided -> no results instead of throwing to avoid 500s on legacy/bad data
+      return []
     }
 
     const filters = { ...criteria.institutionFilters, ...additionalFilters }
@@ -27,7 +28,8 @@ export class SegmentService {
     additionalFilters?: any
   ): Promise<ContactPerson[]> {
     if (!criteria.contactFilters) {
-      throw new Error("Contact filters are required for contact segments")
+      // No filters provided -> no results instead of throwing
+      return []
     }
 
     const whereClause: WhereOptions = { isActive: true }

@@ -7,6 +7,8 @@ export interface User {
   lastName: string
   role: UserRole
   avatarSeed: string
+  avatarStyle: string
+  avatarUrl?: string // Generated avatar URL from DiceBear (computed property)
   isActive: boolean
   lastLoginAt?: Date
   teamId?: string
@@ -30,11 +32,15 @@ export interface UserUpdateAttributes {
   role?: UserRole
   teamId?: string
   isActive?: boolean
+  avatarSeed?: string
+  avatarStyle?: string
 }
 
 export enum UserRole {
   SUPER_ADMIN = "super_admin",
+  ADMIN = "admin",
   TEAM_ADMIN = "team_admin",
+  MANAGER = "manager",
   USER = "user",
 }
 

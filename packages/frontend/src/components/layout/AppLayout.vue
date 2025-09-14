@@ -95,13 +95,17 @@
           >
             <v-card-text class="pa-3">
               <div class="d-flex align-center">
-                <v-avatar size="40" class="me-3">
+                <UserAvatar
+                  v-if="authStore.user?.avatarSeed"
+                  :seed="authStore.user.avatarSeed"
+                  :style="authStore.user.avatarStyle"
+                  :size="40"
+                  class="me-3"
+                />
+                <v-avatar v-else size="40" class="me-3">
                   <v-img
-                    :src="
-                      authStore.userAvatar ||
-                      'https://randomuser.me/api/portraits/women/85.jpg'
-                    "
-                    alt="User Avatar"
+                    src="https://randomuser.me/api/portraits/women/85.jpg"
+                    alt="Default Avatar"
                   ></v-img>
                 </v-avatar>
                 <div class="flex-grow-1 text-truncate">
@@ -128,13 +132,16 @@
             hover
           >
             <v-card-text class="pa-2">
-              <v-avatar size="32">
+              <UserAvatar
+                v-if="authStore.user?.avatarSeed"
+                :seed="authStore.user.avatarSeed"
+                :style="authStore.user.avatarStyle"
+                size="small"
+              />
+              <v-avatar v-else size="32">
                 <v-img
-                  :src="
-                    authStore.userAvatar ||
-                    'https://randomuser.me/api/portraits/women/85.jpg'
-                  "
-                  alt="User Avatar"
+                  src="https://randomuser.me/api/portraits/women/85.jpg"
+                  alt="Default Avatar"
                 ></v-img>
               </v-avatar>
               <v-tooltip activator="parent" location="right">
@@ -193,13 +200,16 @@
       <v-menu>
         <template v-slot:activator="{ props }">
           <v-btn icon v-bind="props">
-            <v-avatar size="32">
+            <UserAvatar
+              v-if="authStore.user?.avatarSeed"
+              :seed="authStore.user.avatarSeed"
+              :style="authStore.user.avatarStyle"
+              size="small"
+            />
+            <v-avatar v-else size="32">
               <v-img
-                :src="
-                  authStore.userAvatar ||
-                  'https://randomuser.me/api/portraits/women/85.jpg'
-                "
-                alt="User Avatar"
+                src="https://randomuser.me/api/portraits/women/85.jpg"
+                alt="Default Avatar"
               ></v-img>
             </v-avatar>
           </v-btn>
@@ -261,6 +271,7 @@
 <script setup lang="ts">
 import LanguageSelector from "@/components/common/LanguageSelector.vue"
 import NotificationCenterVuetify from "@/components/common/NotificationCenterVuetify.vue"
+import UserAvatar from "@/components/common/UserAvatar.vue"
 import { useAuthStore } from "@/stores/auth"
 import { computed, ref } from "vue"
 import { useRouter } from "vue-router"
