@@ -442,7 +442,7 @@ const previewData = computed(() => {
 const loadInstitutions = async () => {
   try {
     const response = await institutionsApi.getAll()
-    institutions.value = response.data || []
+    institutions.value = Array.isArray(response.data) ? response.data : []
   } catch (error) {
     console.error("Failed to load institutions:", error)
     showSnackbar("Erreur lors du chargement des institutions médicales", "error")
