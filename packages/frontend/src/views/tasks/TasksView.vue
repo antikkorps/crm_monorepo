@@ -1,26 +1,29 @@
 <template>
   <AppLayout>
     <div class="tasks-view">
-      <!-- Header -->
-      <div class="tasks-header">
-        <div class="header-content">
-          <h1 class="page-title">
-            <i class="pi pi-check-square mr-2"></i>
-            Task Management
-          </h1>
-          <p class="page-description">
-            Manage and track team tasks, assignments, and deadlines
-          </p>
-        </div>
-        <div class="header-actions">
-          <Button
-            label="New Task"
-            icon="pi pi-plus"
-            @click="showCreateDialog = true"
-            class="create-task-btn"
-          />
-        </div>
-      </div>
+       <!-- Header -->
+       <div class="tasks-header">
+         <div class="header-content">
+            <h1 class="page-title">
+              <v-icon class="me-2">mdi-check-all</v-icon>
+              {{ t('task.title') }}
+            </h1>
+            <p class="page-description">
+              {{ t('task.subtitle') }}
+            </p>
+         </div>
+         <div class="header-actions">
+             <v-btn
+               color="primary"
+               variant="elevated"
+               prepend-icon="mdi-plus"
+               @click="showCreateDialog = true"
+               class="create-task-btn"
+             >
+               {{ t('task.createNew') }}
+             </v-btn>
+         </div>
+       </div>
 
       <!-- Task Statistics -->
       <TaskStats :stats="tasksStore.taskStats" />
@@ -31,87 +34,101 @@
         @update:filters="tasksStore.updateFilters"
       />
 
-      <!-- View Toggle -->
-      <div class="view-controls">
-        <div class="view-toggle">
-          <Button
-            label="List View"
-            icon="pi pi-list"
-            :severity="viewMode === 'list' ? 'primary' : 'secondary'"
-            :outlined="viewMode !== 'list'"
-            @click="viewMode = 'list'"
-            size="small"
-          />
-          <Button
-            label="Board View"
-            icon="pi pi-th-large"
-            :severity="viewMode === 'board' ? 'primary' : 'secondary'"
-            :outlined="viewMode !== 'board'"
-            @click="viewMode = 'board'"
-            size="small"
-          />
-        </div>
+       <!-- View Toggle -->
+       <div class="view-controls">
+         <div class="view-toggle">
+             <v-btn
+               :color="viewMode === 'list' ? 'primary' : 'secondary'"
+               :variant="viewMode === 'list' ? 'elevated' : 'outlined'"
+               prepend-icon="mdi-view-list"
+               @click="viewMode = 'list'"
+               size="small"
+             >
+               {{ t('task.listView') }}
+             </v-btn>
+             <v-btn
+               :color="viewMode === 'board' ? 'primary' : 'secondary'"
+               :variant="viewMode === 'board' ? 'elevated' : 'outlined'"
+               prepend-icon="mdi-view-grid"
+               @click="viewMode = 'board'"
+               size="small"
+             >
+               {{ t('task.boardView') }}
+             </v-btn>
+         </div>
 
-        <div class="sort-controls">
-          <Dropdown
-            v-model="sortBy"
-            :options="sortOptions"
-            optionLabel="label"
-            optionValue="value"
-            placeholder="Sort by"
-            @change="applySorting"
-            class="sort-dropdown"
-          />
-        </div>
-      </div>
+         <div class="sort-controls">
+             <v-select
+               v-model="sortBy"
+               :items="sortOptions"
+               item-title="label"
+               item-value="value"
+               :label="t('task.sortBy')"
+               @update:modelValue="applySorting"
+               class="sort-dropdown"
+               density="comfortable"
+               variant="outlined"
+             />
+         </div>
+       </div>
 
-      <!-- Loading State -->
-      <div v-if="tasksStore.loading" class="loading-container">
-        <ProgressSpinner />
-        <p>Loading tasks...</p>
-      </div>
+       <!-- Loading State -->
+       <div v-if="tasksStore.loading" class="loading-container">
+          <v-progress-circular indeterminate color="primary" />
+          <p>{{ t('task.loading') }}</p>
+       </div>
 
-      <!-- Error State -->
-      <Message
-        v-else-if="tasksStore.error"
-        severity="error"
-        :closable="false"
-        class="error-message"
-      >
-        {{ tasksStore.error }}
-        <template #icon>
-          <Button icon="pi pi-refresh" text @click="loadTasks" v-tooltip.top="'Retry'" />
-        </template>
-      </Message>
-
-      <!-- Empty State -->
-      <div v-else-if="tasksStore.filteredTasks.length === 0" class="empty-state">
-        <div class="empty-content">
-          <i class="pi pi-check-square empty-icon"></i>
-          <h3>No tasks found</h3>
-          <p v-if="hasActiveFilters">
-            No tasks match your current filters. Try adjusting your search criteria.
-          </p>
-          <p v-else>
-            Get started by creating your first task to track team activities and
-            deadlines.
-          </p>
-          <div class="empty-actions">
-            <Button
-              v-if="hasActiveFilters"
-              label="Clear Filters"
-              icon="pi pi-filter-slash"
-              outlined
-              @click="tasksStore.clearFilters"
+       <!-- Error State -->
+        <v-alert
+          v-else-if="tasksStore.error"
+          type="error"
+          class="error-message"
+          closable
+          variant="tonal"
+        >
+          {{ tasksStore.error }}
+          <template #append>
+            <v-btn
+              icon="mdi-refresh"
+              size="small"
+              variant="text"
+              @click="loadTasks"
             />
-            <Button
-              label="Create Task"
-              icon="pi pi-plus"
-              @click="showCreateDialog = true"
-            />
-          </div>
-        </div>
-      </div>
+          </template>
+        </v-alert>
+
+       <!-- Empty State -->
+       <div v-else-if="tasksStore.filteredTasks.length === 0" class="empty-state">
+         <div class="empty-content">
+            <v-icon class="empty-icon">mdi-check-all</v-icon>
+            <h3>{{ t('task.noTasksFound') }}</h3>
+            <p v-if="hasActiveFilters">
+              {{ t('task.noTasksMatchFilters') }}
+            </p>
+            <p v-else>
+              {{ t('task.getStarted') }}
+            </p>
+           <div class="empty-actions">
+               <v-btn
+                 v-if="hasActiveFilters"
+                 color="secondary"
+                 variant="outlined"
+                 prepend-icon="mdi-filter-off"
+                 @click="tasksStore.clearFilters"
+               >
+                 {{ t('task.clearFilters') }}
+               </v-btn>
+               <v-btn
+                 color="primary"
+                 variant="elevated"
+                 prepend-icon="mdi-plus"
+                 @click="showCreateDialog = true"
+               >
+                 {{ t('task.createTask') }}
+               </v-btn>
+           </div>
+         </div>
+       </div>
 
       <!-- Tasks Content -->
       <div v-else class="tasks-content">
@@ -137,10 +154,10 @@
               :key="status"
               class="board-column"
             >
-              <div class="column-header">
-                <h3 class="column-title">{{ getStatusLabel(status) }}</h3>
-                <Badge :value="tasks.length" class="column-count" />
-              </div>
+               <div class="column-header">
+                 <h3 class="column-title">{{ getStatusLabel(status) }}</h3>
+                  <v-chip variant="outlined" size="small" class="column-count">{{ tasks.length }}</v-chip>
+               </div>
               <div class="column-content">
                 <TaskCard
                   v-for="task in tasks"
@@ -157,24 +174,56 @@
         </div>
       </div>
 
-      <!-- Task Form Dialog -->
-      <TaskForm
-        v-model:visible="showCreateDialog"
-        :loading="formLoading"
-        @submit="createTask"
-        @cancel="showCreateDialog = false"
-      />
+       <!-- Task Form Dialog -->
+       <TaskForm
+         v-model="showCreateDialog"
+         :loading="formLoading"
+         @submit="createTask"
+         @cancel="showCreateDialog = false"
+       />
 
-      <TaskForm
-        v-model:visible="showEditDialog"
-        :task="selectedTask"
-        :loading="formLoading"
-        @submit="updateTask"
-        @cancel="showEditDialog = false"
-      />
+       <TaskForm
+         v-model="showEditDialog"
+         :task="selectedTask"
+         :loading="formLoading"
+         @submit="updateTask"
+         @cancel="showEditDialog = false"
+       />
 
-      <!-- Delete Confirmation Dialog -->
-      <ConfirmDialog />
+       <!-- Delete Confirmation Dialog -->
+       <v-dialog
+         v-model="showConfirmDialog"
+         max-width="400px"
+         persistent
+       >
+         <v-card>
+            <v-card-title class="text-h6">
+              {{ t('task.confirm.deleteTitle') }}
+            </v-card-title>
+
+            <v-card-text>
+              {{ t('task.confirm.deleteMessage', { title: taskToDelete?.title || '' }) }}
+            </v-card-text>
+
+            <v-card-actions>
+              <v-spacer />
+               <v-btn
+                 color="secondary"
+                 variant="outlined"
+                 @click="cancelDelete"
+               >
+                 {{ t('task.cancel') }}
+               </v-btn>
+               <v-btn
+                 color="error"
+                 variant="elevated"
+                 @click="confirmDelete"
+               >
+                 {{ t('task.delete') }}
+               </v-btn>
+            </v-card-actions>
+         </v-card>
+       </v-dialog>
     </div>
   </AppLayout>
 </template>
@@ -192,19 +241,13 @@ import type {
   TaskStatus,
   TaskUpdateRequest,
 } from "@medical-crm/shared"
-import Badge from "primevue/badge"
-import Button from "primevue/button"
-import ConfirmDialog from "primevue/confirmdialog"
-import Dropdown from "primevue/dropdown"
-import Message from "primevue/message"
-import ProgressSpinner from "primevue/progressspinner"
-import { useConfirm } from "primevue/useconfirm"
-import { useToast } from "primevue/usetoast"
+import { useSnackbar } from "@/composables/useSnackbar"
+import { useI18n } from "vue-i18n"
 import { computed, onMounted, ref } from "vue"
 
 const tasksStore = useTasksStore()
-const toast = useToast()
-const confirm = useConfirm()
+const { showSnackbar } = useSnackbar()
+const { t } = useI18n()
 
 // Component state
 const viewMode = ref<"list" | "board">("list")
@@ -214,13 +257,19 @@ const showEditDialog = ref(false)
 const selectedTask = ref<Task | null>(null)
 const formLoading = ref(false)
 
-const sortOptions = [
-  { label: "Due Date", value: "dueDate" },
-  { label: "Priority", value: "priority" },
-  { label: "Status", value: "status" },
-  { label: "Created Date", value: "createdAt" },
-  { label: "Title", value: "title" },
-]
+// Confirmation dialog state
+const showConfirmDialog = ref(false)
+const confirmMessage = ref("")
+const confirmHeader = ref("")
+const taskToDelete = ref<Task | null>(null)
+
+const sortOptions = computed(() => [
+  { label: t('task.sortOptions.dueDate'), value: "dueDate" },
+  { label: t('task.sortOptions.priority'), value: "priority" },
+  { label: t('task.sortOptions.status'), value: "status" },
+  { label: t('task.sortOptions.createdAt'), value: "createdAt" },
+  { label: t('task.sortOptions.title'), value: "title" },
+])
 
 const hasActiveFilters = computed(() => {
   return Object.keys(tasksStore.filters).some(
@@ -264,10 +313,10 @@ const sortedTasks = computed(() => {
 
 const getStatusLabel = (status: string) => {
   const labels = {
-    todo: "To Do",
-    in_progress: "In Progress",
-    completed: "Completed",
-    cancelled: "Cancelled",
+    todo: t('task.status.todo'),
+    in_progress: t('task.status.in_progress'),
+    completed: t('task.status.completed'),
+    cancelled: t('task.status.cancelled'),
   }
   return labels[status as keyof typeof labels] || status
 }
@@ -275,34 +324,19 @@ const getStatusLabel = (status: string) => {
 const loadTasks = async () => {
   try {
     await tasksStore.fetchTasks()
-  } catch (error) {
-    toast.add({
-      severity: "error",
-      summary: "Error",
-      detail: "Failed to load tasks",
-      life: 5000,
-    })
-  }
+   } catch (error) {
+     showSnackbar(t('task.messages.loadFailed'), "error")
+   }
 }
 
 const createTask = async (taskData: TaskCreateRequest) => {
   try {
     formLoading.value = true
     await tasksStore.createTask(taskData)
-    showCreateDialog.value = false
-    toast.add({
-      severity: "success",
-      summary: "Success",
-      detail: "Task created successfully",
-      life: 3000,
-    })
-  } catch (error) {
-    toast.add({
-      severity: "error",
-      summary: "Error",
-      detail: "Failed to create task",
-      life: 5000,
-    })
+     showCreateDialog.value = false
+     showSnackbar(t('task.messages.created'), "success")
+   } catch (error) {
+     showSnackbar(t('task.messages.createFailed'), "error")
   } finally {
     formLoading.value = false
   }
@@ -319,21 +353,11 @@ const updateTask = async (updates: TaskUpdateRequest) => {
   try {
     formLoading.value = true
     await tasksStore.updateTask(selectedTask.value.id, updates)
-    showEditDialog.value = false
-    selectedTask.value = null
-    toast.add({
-      severity: "success",
-      summary: "Success",
-      detail: "Task updated successfully",
-      life: 3000,
-    })
-  } catch (error) {
-    toast.add({
-      severity: "error",
-      summary: "Error",
-      detail: "Failed to update task",
-      life: 5000,
-    })
+     showEditDialog.value = false
+     selectedTask.value = null
+     showSnackbar(t('task.messages.updated'), "success")
+   } catch (error) {
+     showSnackbar(t('task.messages.updateFailed'), "error")
   } finally {
     formLoading.value = false
   }
@@ -342,56 +366,41 @@ const updateTask = async (updates: TaskUpdateRequest) => {
 const updateTaskStatus = async (task: Task, newStatus: TaskStatus) => {
   try {
     await tasksStore.updateTask(task.id, { status: newStatus })
-    toast.add({
-      severity: "success",
-      summary: "Success",
-      detail: `Task status updated to ${getStatusLabel(newStatus)}`,
-      life: 3000,
-    })
-  } catch (error) {
-    toast.add({
-      severity: "error",
-      summary: "Error",
-      detail: "Failed to update task status",
-      life: 5000,
-    })
+     showSnackbar(t('task.messages.statusUpdated', { status: getStatusLabel(newStatus) }), "success")
+   } catch (error) {
+     showSnackbar(t('task.messages.statusUpdateFailed'), "error")
   }
 }
 
 const confirmDeleteTask = (task: Task) => {
-  confirm.require({
-    message: `Are you sure you want to delete the task "${task.title}"?`,
-    header: "Delete Task",
-    icon: "pi pi-exclamation-triangle",
-    rejectClass: "p-button-secondary p-button-outlined",
-    rejectLabel: "Cancel",
-    acceptLabel: "Delete",
-    acceptClass: "p-button-danger",
-    accept: () => deleteTask(task),
-  })
+   taskToDelete.value = task
+   showConfirmDialog.value = true
 }
 
 const deleteTask = async (task: Task) => {
   try {
     await tasksStore.deleteTask(task.id)
-    toast.add({
-      severity: "success",
-      summary: "Success",
-      detail: "Task deleted successfully",
-      life: 3000,
-    })
-  } catch (error) {
-    toast.add({
-      severity: "error",
-      summary: "Error",
-      detail: "Failed to delete task",
-      life: 5000,
-    })
+     showSnackbar(t('task.messages.deleted'), "success")
+   } catch (error) {
+     showSnackbar(t('task.messages.deleteFailed'), "error")
   }
 }
 
 const applySorting = () => {
-  // Sorting is handled by the computed property
+   // Sorting is handled by the computed property
+}
+
+const confirmDelete = () => {
+   if (taskToDelete.value) {
+     deleteTask(taskToDelete.value)
+   }
+   showConfirmDialog.value = false
+   taskToDelete.value = null
+}
+
+const cancelDelete = () => {
+   showConfirmDialog.value = false
+   taskToDelete.value = null
 }
 
 onMounted(() => {
@@ -429,6 +438,7 @@ onMounted(() => {
   color: #1f2937;
   display: flex;
   align-items: center;
+  gap: 0.5rem;
 }
 
 .page-description {
@@ -589,8 +599,8 @@ onMounted(() => {
 }
 
 .column-count {
-  background: #e5e7eb;
-  color: #374151;
+  background: #e5e7eb !important;
+  color: #374151 !important;
 }
 
 .column-content {

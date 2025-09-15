@@ -1,75 +1,75 @@
 <template>
   <div class="task-stats">
     <div class="stats-grid">
-      <Card class="stat-card stat-total">
-        <template #content>
+      <v-card class="stat-card stat-total" variant="outlined">
+        <v-card-text>
           <div class="stat-content">
             <div class="stat-icon">
-              <i class="pi pi-list"></i>
+              <v-icon>mdi-format-list-bulleted</v-icon>
             </div>
             <div class="stat-info">
               <div class="stat-value">{{ stats.total }}</div>
               <div class="stat-label">Total Tasks</div>
             </div>
           </div>
-        </template>
-      </Card>
+        </v-card-text>
+      </v-card>
 
-      <Card class="stat-card stat-todo">
-        <template #content>
+      <v-card class="stat-card stat-todo" variant="outlined">
+        <v-card-text>
           <div class="stat-content">
             <div class="stat-icon">
-              <i class="pi pi-circle"></i>
+              <v-icon>mdi-circle-outline</v-icon>
             </div>
             <div class="stat-info">
               <div class="stat-value">{{ stats.todo }}</div>
               <div class="stat-label">To Do</div>
             </div>
           </div>
-        </template>
-      </Card>
+        </v-card-text>
+      </v-card>
 
-      <Card class="stat-card stat-progress">
-        <template #content>
+      <v-card class="stat-card stat-progress" variant="outlined">
+        <v-card-text>
           <div class="stat-content">
             <div class="stat-icon">
-              <i class="pi pi-clock"></i>
+              <v-icon>mdi-clock-outline</v-icon>
             </div>
             <div class="stat-info">
               <div class="stat-value">{{ stats.inProgress }}</div>
               <div class="stat-label">In Progress</div>
             </div>
           </div>
-        </template>
-      </Card>
+        </v-card-text>
+      </v-card>
 
-      <Card class="stat-card stat-completed">
-        <template #content>
+      <v-card class="stat-card stat-completed" variant="outlined">
+        <v-card-text>
           <div class="stat-content">
             <div class="stat-icon">
-              <i class="pi pi-check-circle"></i>
+              <v-icon>mdi-check-circle-outline</v-icon>
             </div>
             <div class="stat-info">
               <div class="stat-value">{{ stats.completed }}</div>
               <div class="stat-label">Completed</div>
             </div>
           </div>
-        </template>
-      </Card>
+        </v-card-text>
+      </v-card>
 
-      <Card class="stat-card stat-overdue" v-if="stats.overdue > 0">
-        <template #content>
+      <v-card class="stat-card stat-overdue" variant="outlined" v-if="stats.overdue > 0">
+        <v-card-text>
           <div class="stat-content">
             <div class="stat-icon">
-              <i class="pi pi-exclamation-triangle"></i>
+              <v-icon>mdi-alert-outline</v-icon>
             </div>
             <div class="stat-info">
               <div class="stat-value">{{ stats.overdue }}</div>
               <div class="stat-label">Overdue</div>
             </div>
           </div>
-        </template>
-      </Card>
+        </v-card-text>
+      </v-card>
     </div>
 
     <!-- Progress Bar -->
@@ -78,18 +78,18 @@
         <span class="progress-label">Completion Progress</span>
         <span class="progress-percentage">{{ completionPercentage }}%</span>
       </div>
-      <ProgressBar
+      <v-progress-linear
         :value="completionPercentage"
         class="completion-progress"
-        :showValue="false"
+        color="primary"
+        height="8"
       />
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import Card from "primevue/card"
-import ProgressBar from "primevue/progressbar"
+// Vuetify components are auto-imported
 import { computed } from "vue"
 
 interface TaskStats {

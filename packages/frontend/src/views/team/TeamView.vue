@@ -1,207 +1,216 @@
 <template>
   <AppLayout>
     <div class="team-view">
-      <!-- Header -->
-      <div class="team-header">
-        <div class="header-content">
-          <h1 class="page-title">
-            <i class="pi pi-users mr-2"></i>
-            Team Management
-          </h1>
-          <p class="page-description">
-            Manage team members, roles, and territory assignments
-          </p>
-        </div>
-        <div class="header-actions">
-          <Button
-            label="Add Member"
-            icon="pi pi-user-plus"
-            @click="showCreateUserDialog = true"
-            class="add-member-btn"
-          />
-        </div>
-      </div>
+       <!-- Header -->
+       <div class="team-header">
+         <div class="header-content">
+           <h1 class="page-title">
+             <v-icon>mdi-account-group</v-icon>
+             Team Management
+           </h1>
+           <p class="page-description">
+             Manage team members, roles, and territory assignments
+           </p>
+         </div>
+         <div class="header-actions">
+           <v-btn
+             color="primary"
+             prepend-icon="mdi-account-plus"
+             @click="showCreateUserDialog = true"
+             class="add-member-btn"
+           >
+             Add Member
+           </v-btn>
+         </div>
+       </div>
 
-      <!-- Team Statistics -->
-      <div class="team-stats">
-        <div class="stats-grid">
-          <Card class="stat-card">
-            <template #content>
-              <div class="stat-content">
-                <div class="stat-icon total-members">
-                  <i class="pi pi-users"></i>
-                </div>
-                <div class="stat-info">
-                  <div class="stat-value">{{ teamStore.teamStats.totalMembers }}</div>
-                  <div class="stat-label">Total Members</div>
-                </div>
-              </div>
-            </template>
-          </Card>
+       <!-- Team Statistics -->
+       <div class="team-stats">
+         <div class="stats-grid">
+           <v-card class="stat-card">
+             <v-card-text>
+               <div class="stat-content">
+                 <div class="stat-icon total-members">
+                   <v-icon>mdi-account-group</v-icon>
+                 </div>
+                 <div class="stat-info">
+                   <div class="stat-value">{{ teamStore.teamStats.totalMembers }}</div>
+                   <div class="stat-label">Total Members</div>
+                 </div>
+               </div>
+             </v-card-text>
+           </v-card>
 
-          <Card class="stat-card">
-            <template #content>
-              <div class="stat-content">
-                <div class="stat-icon active-members">
-                  <i class="pi pi-check-circle"></i>
-                </div>
-                <div class="stat-info">
-                  <div class="stat-value">{{ teamStore.teamStats.activeMembers }}</div>
-                  <div class="stat-label">Active Members</div>
-                </div>
-              </div>
-            </template>
-          </Card>
+           <v-card class="stat-card">
+             <v-card-text>
+               <div class="stat-content">
+                 <div class="stat-icon active-members">
+                   <v-icon>mdi-check-circle</v-icon>
+                 </div>
+                 <div class="stat-info">
+                   <div class="stat-value">{{ teamStore.teamStats.activeMembers }}</div>
+                   <div class="stat-label">Active Members</div>
+                 </div>
+               </div>
+             </v-card-text>
+           </v-card>
 
-          <Card class="stat-card">
-            <template #content>
-              <div class="stat-content">
-                <div class="stat-icon total-teams">
-                  <i class="pi pi-sitemap"></i>
-                </div>
-                <div class="stat-info">
-                  <div class="stat-value">{{ teamStore.teamStats.totalTeams }}</div>
-                  <div class="stat-label">Teams</div>
-                </div>
-              </div>
-            </template>
-          </Card>
+           <v-card class="stat-card">
+             <v-card-text>
+               <div class="stat-content">
+                 <div class="stat-icon total-teams">
+                   <v-icon>mdi-sitemap</v-icon>
+                 </div>
+                 <div class="stat-info">
+                   <div class="stat-value">{{ teamStore.teamStats.totalTeams }}</div>
+                   <div class="stat-label">Teams</div>
+                 </div>
+               </div>
+             </v-card-text>
+           </v-card>
 
-          <Card class="stat-card">
-            <template #content>
-              <div class="stat-content">
-                <div class="stat-icon admins">
-                  <i class="pi pi-shield"></i>
-                </div>
-                <div class="stat-info">
-                  <div class="stat-value">{{ adminCount }}</div>
-                  <div class="stat-label">Administrators</div>
-                </div>
-              </div>
-            </template>
-          </Card>
-        </div>
-      </div>
+           <v-card class="stat-card">
+             <v-card-text>
+               <div class="stat-content">
+                 <div class="stat-icon admins">
+                   <v-icon>mdi-shield-account</v-icon>
+                 </div>
+                 <div class="stat-info">
+                   <div class="stat-value">{{ adminCount }}</div>
+                   <div class="stat-label">Administrators</div>
+                 </div>
+               </div>
+             </v-card-text>
+           </v-card>
+         </div>
+       </div>
 
-      <!-- Filters and Controls -->
-      <div class="team-controls">
-        <div class="search-section">
-          <InputText
-            v-model="searchQuery"
-            placeholder="Search team members..."
-            class="search-input"
-          >
-            <template #prefix>
-              <i class="pi pi-search"></i>
-            </template>
-          </InputText>
-        </div>
+       <!-- Filters and Controls -->
+       <div class="team-controls">
+         <div class="search-section">
+           <v-text-field
+             v-model="searchQuery"
+             placeholder="Search team members..."
+             prepend-inner-icon="mdi-magnify"
+             class="search-input"
+             density="comfortable"
+           />
+         </div>
 
-        <div class="filter-section">
-          <Dropdown
-            v-model="selectedRole"
-            :options="roleFilterOptions"
-            optionLabel="label"
-            optionValue="value"
-            placeholder="Filter by role"
-            showClear
-            class="role-filter"
-          />
+         <div class="filter-section">
+           <v-select
+             v-model="selectedRole"
+             :items="roleFilterOptions"
+             item-title="label"
+             item-value="value"
+             placeholder="Filter by role"
+             clearable
+             class="role-filter"
+             density="comfortable"
+           />
 
-          <Dropdown
-            v-model="selectedTeam"
-            :options="teamFilterOptions"
-            optionLabel="label"
-            optionValue="value"
-            placeholder="Filter by team"
-            showClear
-            class="team-filter"
-            :loading="teamStore.loading"
-          />
+           <v-select
+             v-model="selectedTeam"
+             :items="teamFilterOptions"
+             item-title="label"
+             item-value="value"
+             placeholder="Filter by team"
+             clearable
+             class="team-filter"
+             :loading="teamStore.loading"
+             density="comfortable"
+           />
 
-          <Dropdown
-            v-model="selectedStatus"
-            :options="statusFilterOptions"
-            optionLabel="label"
-            optionValue="value"
-            placeholder="Filter by status"
-            showClear
-            class="status-filter"
-          />
-        </div>
+           <v-select
+             v-model="selectedStatus"
+             :items="statusFilterOptions"
+             item-title="label"
+             item-value="value"
+             placeholder="Filter by status"
+             clearable
+             class="status-filter"
+             density="comfortable"
+           />
+         </div>
 
-        <div class="view-controls">
-          <Button
-            label="Grid View"
-            icon="pi pi-th-large"
-            :severity="viewMode === 'grid' ? 'primary' : 'secondary'"
-            :outlined="viewMode !== 'grid'"
-            @click="viewMode = 'grid'"
-            size="small"
-          />
-          <Button
-            label="List View"
-            icon="pi pi-list"
-            :severity="viewMode === 'list' ? 'primary' : 'secondary'"
-            :outlined="viewMode !== 'list'"
-            @click="viewMode = 'list'"
-            size="small"
-          />
-        </div>
-      </div>
+         <div class="view-controls">
+           <v-btn
+             :color="viewMode === 'grid' ? 'primary' : 'secondary'"
+             :variant="viewMode === 'grid' ? 'flat' : 'outlined'"
+             prepend-icon="mdi-view-grid"
+             @click="viewMode = 'grid'"
+             size="small"
+           >
+             Grid View
+           </v-btn>
+           <v-btn
+             :color="viewMode === 'list' ? 'primary' : 'secondary'"
+             :variant="viewMode === 'list' ? 'flat' : 'outlined'"
+             prepend-icon="mdi-view-list"
+             @click="viewMode = 'list'"
+             size="small"
+           >
+             List View
+           </v-btn>
+         </div>
+       </div>
 
-      <!-- Loading State -->
-      <div v-if="teamStore.loading" class="loading-container">
-        <ProgressSpinner />
-        <p>Loading team members...</p>
-      </div>
+       <!-- Loading State -->
+       <div v-if="teamStore.loading" class="loading-container">
+         <v-progress-circular indeterminate color="primary" />
+         <p>Loading team members...</p>
+       </div>
 
-      <!-- Error State -->
-      <Message
-        v-else-if="teamStore.error"
-        severity="error"
-        :closable="false"
-        class="error-message"
-      >
-        {{ teamStore.error }}
-        <template #icon>
-          <Button
-            icon="pi pi-refresh"
-            text
-            @click="loadTeamData"
-            v-tooltip.top="'Retry'"
-          />
-        </template>
-      </Message>
+       <!-- Error State -->
+       <v-alert
+         v-else-if="teamStore.error"
+         type="error"
+         class="error-message"
+         closable
+       >
+         {{ teamStore.error }}
+         <template #append>
+           <v-btn
+             icon="mdi-refresh"
+             size="small"
+             variant="text"
+             @click="loadTeamData"
+           />
+         </template>
+       </v-alert>
 
-      <!-- Empty State -->
-      <div v-else-if="filteredMembers.length === 0" class="empty-state">
-        <div class="empty-content">
-          <i class="pi pi-users empty-icon"></i>
-          <h3>No team members found</h3>
-          <p v-if="hasActiveFilters">
-            No team members match your current filters. Try adjusting your search
-            criteria.
-          </p>
-          <p v-else>
-            Get started by adding your first team member to begin collaboration.
-          </p>
-          <div class="empty-actions">
-            <Button
-              v-if="hasActiveFilters"
-              label="Clear Filters"
-              icon="pi pi-filter-slash"
-              outlined
-              @click="clearFilters"
-            />
-            <Button
-              label="Add Member"
-              icon="pi pi-user-plus"
-              @click="showCreateUserDialog = true"
-            />
-          </div>
-        </div>
-      </div>
+       <!-- Empty State -->
+       <div v-else-if="filteredMembers.length === 0" class="empty-state">
+         <div class="empty-content">
+           <v-icon class="empty-icon">mdi-account-group</v-icon>
+           <h3>No team members found</h3>
+           <p v-if="hasActiveFilters">
+             No team members match your current filters. Try adjusting your search
+             criteria.
+           </p>
+           <p v-else>
+             Get started by adding your first team member to begin collaboration.
+           </p>
+           <div class="empty-actions">
+             <v-btn
+               v-if="hasActiveFilters"
+               color="secondary"
+               variant="outlined"
+               prepend-icon="mdi-filter-off"
+               @click="clearFilters"
+             >
+               Clear Filters
+             </v-btn>
+             <v-btn
+               color="primary"
+               prepend-icon="mdi-account-plus"
+               @click="showCreateUserDialog = true"
+             >
+               Add Member
+             </v-btn>
+           </div>
+         </div>
+       </div>
 
       <!-- Team Members Content -->
       <div v-else class="team-content">
@@ -226,93 +235,80 @@
               />
             </div>
 
-            <!-- List View -->
-            <div v-else class="members-list">
-              <DataTable
-                :value="filteredMembers"
-                :paginator="true"
-                :rows="10"
-                :rowsPerPageOptions="[5, 10, 20, 50]"
-                paginatorTemplate="RowsPerPageDropdown FirstPageLink PrevPageLink CurrentPageReport NextPageLink LastPageLink"
-                currentPageReportTemplate="{first} to {last} of {totalRecords}"
-                class="members-table"
-                stripedRows
-                responsiveLayout="scroll"
-              >
-                <Column field="firstName" header="Name" sortable>
-                  <template #body="{ data }">
-                    <div class="user-name-cell">
-                      <Avatar
-                        :image="getUserAvatar(data.id)"
-                        :label="getUserInitials(data)"
-                        size="normal"
-                        shape="circle"
-                        class="mr-2"
-                      />
-                      <div>
-                        <div class="name">{{ data.firstName }} {{ data.lastName }}</div>
-                        <div class="email">{{ data.email }}</div>
-                      </div>
-                    </div>
-                  </template>
-                </Column>
+             <!-- List View -->
+             <div v-else class="members-list">
+               <v-data-table
+                 :items="filteredMembers"
+                 :headers="tableHeaders"
+                 :items-per-page="10"
+                 :items-per-page-options="[5, 10, 20, 50]"
+                 class="members-table"
+               >
+                 <template #item.firstName="{ item }">
+                   <div class="user-name-cell">
+                     <v-avatar
+                       :image="getUserAvatar(item.id)"
+                       :alt="getUserInitials(item)"
+                       size="40"
+                       class="me-2"
+                     >
+                       {{ getUserInitials(item) }}
+                     </v-avatar>
+                     <div>
+                       <div class="name">{{ item.firstName }} {{ item.lastName }}</div>
+                       <div class="email">{{ item.email }}</div>
+                     </div>
+                   </div>
+                 </template>
 
-                <Column field="role" header="Role" sortable>
-                  <template #body="{ data }">
-                    <Tag
-                      :value="getRoleLabel(data.role)"
-                      :severity="getRoleSeverity(data.role)"
-                    />
-                  </template>
-                </Column>
+                 <template #item.role="{ item }">
+                   <v-chip
+                     :color="getRoleSeverity(item.role)"
+                     size="small"
+                   >
+                     {{ getRoleLabel(item.role) }}
+                   </v-chip>
+                 </template>
 
-                <Column field="teamId" header="Team" sortable>
-                  <template #body="{ data }">
-                    <span v-if="data.teamId">{{ getTeamName(data.teamId) }}</span>
-                    <span v-else class="no-team">No team assigned</span>
-                  </template>
-                </Column>
+                 <template #item.teamId="{ item }">
+                   <span v-if="item.teamId">{{ getTeamName(item.teamId) }}</span>
+                   <span v-else class="no-team">No team assigned</span>
+                 </template>
 
-                <Column field="isActive" header="Status" sortable>
-                  <template #body="{ data }">
-                    <Tag
-                      :value="data.isActive ? 'Active' : 'Inactive'"
-                      :severity="data.isActive ? 'success' : 'danger'"
-                    />
-                  </template>
-                </Column>
+                 <template #item.isActive="{ item }">
+                   <v-chip
+                     :color="item.isActive ? 'success' : 'error'"
+                     size="small"
+                   >
+                     {{ item.isActive ? 'Active' : 'Inactive' }}
+                   </v-chip>
+                 </template>
 
-                <Column field="lastLoginAt" header="Last Login" sortable>
-                  <template #body="{ data }">
-                    <span v-if="data.lastLoginAt">{{
-                      formatLastLogin(data.lastLoginAt)
-                    }}</span>
-                    <span v-else class="no-login">Never</span>
-                  </template>
-                </Column>
+                 <template #item.lastLoginAt="{ item }">
+                   <span v-if="item.lastLoginAt">{{
+                     formatLastLogin(item.lastLoginAt)
+                   }}</span>
+                   <span v-else class="no-login">Never</span>
+                 </template>
 
-                <Column header="Actions">
-                  <template #body="{ data }">
-                    <div class="table-actions">
-                      <Button
-                        icon="pi pi-pencil"
-                        size="small"
-                        text
-                        @click="editUser(data)"
-                        v-tooltip.top="'Edit'"
-                      />
-                      <Button
-                        icon="pi pi-cog"
-                        size="small"
-                        text
-                        @click="manageUser(data)"
-                        v-tooltip.top="'Manage'"
-                      />
-                    </div>
-                  </template>
-                </Column>
-              </DataTable>
-            </div>
+                 <template #item.actions="{ item }">
+                   <div class="table-actions">
+                     <v-btn
+                       icon="mdi-pencil"
+                       size="small"
+                       variant="text"
+                       @click="editUser(item)"
+                     />
+                     <v-btn
+                       icon="mdi-cog"
+                       size="small"
+                       variant="text"
+                       @click="manageUser(item)"
+                     />
+                   </div>
+                 </template>
+               </v-data-table>
+             </div>
           </div>
 
           <!-- Activity Feed Sidebar -->
@@ -322,92 +318,92 @@
         </div>
       </div>
 
-      <!-- User Profile Form Dialog -->
-      <UserProfileForm
-        v-model:visible="showCreateUserDialog"
-        :loading="formLoading"
-        @submit="createUser"
-        @cancel="showCreateUserDialog = false"
-      />
+       <!-- User Profile Form Dialog -->
+       <UserProfileForm
+         v-model="showCreateUserDialog"
+         :loading="formLoading"
+         @submit="createUser"
+         @cancel="showCreateUserDialog = false"
+       />
 
-      <UserProfileForm
-        v-model:visible="showEditUserDialog"
-        :user="selectedUser"
-        :loading="formLoading"
-        @submit="updateUser"
-        @cancel="showEditUserDialog = false"
-      />
+       <UserProfileForm
+         v-model="showEditUserDialog"
+         :user="selectedUser"
+         :loading="formLoading"
+         @submit="updateUser"
+         @cancel="showEditUserDialog = false"
+       />
 
-      <!-- User Management Dialog -->
-      <Dialog
-        v-model:visible="showManageUserDialog"
-        :modal="true"
-        :closable="true"
-        class="manage-user-dialog"
-      >
-        <template #header>
-          <h3>Manage User: {{ selectedUser?.firstName }} {{ selectedUser?.lastName }}</h3>
-        </template>
+       <!-- User Management Dialog -->
+       <v-dialog
+         v-model="showManageUserDialog"
+         max-width="500px"
+         persistent
+       >
+         <v-card>
+           <v-card-title>
+             Manage User: {{ selectedUser?.firstName }} {{ selectedUser?.lastName }}
+           </v-card-title>
 
-        <div class="manage-user-content">
-          <div class="management-section">
-            <h4>Team Assignment</h4>
-            <Dropdown
-              v-model="managementData.teamId"
-              :options="teamOptions"
-              optionLabel="label"
-              optionValue="value"
-              placeholder="Select team"
-              showClear
-              class="w-full"
-            />
-          </div>
+           <v-card-text class="manage-user-content">
+             <div class="management-section">
+               <h4>Team Assignment</h4>
+               <v-select
+                 v-model="managementData.teamId"
+                 :items="teamOptions"
+                 item-title="label"
+                 item-value="value"
+                 placeholder="Select team"
+                 clearable
+                 density="comfortable"
+               />
+             </div>
 
-          <div class="management-section">
-            <h4>Territory Assignment</h4>
-            <MultiSelect
-              v-model="managementData.assignedInstitutions"
-              :options="institutionOptions"
-              optionLabel="label"
-              optionValue="value"
-              placeholder="Select institutions"
-              class="w-full"
-              filter
-              :maxSelectedLabels="3"
-            />
-          </div>
+             <div class="management-section">
+               <h4>Territory Assignment</h4>
+               <v-select
+                 v-model="managementData.assignedInstitutions"
+                 :items="institutionOptions"
+                 item-title="label"
+                 item-value="value"
+                 placeholder="Select institutions"
+                 multiple
+                 density="comfortable"
+                 :menu-props="{ maxHeight: 200 }"
+               />
+             </div>
 
-          <div class="management-section">
-            <h4>User Status</h4>
-            <div class="status-controls">
-              <div class="status-item">
-                <Checkbox
-                  v-model="managementData.isActive"
-                  :binary="true"
-                  inputId="userActive"
-                />
-                <label for="userActive">Active User</label>
-              </div>
-            </div>
-          </div>
-        </div>
+             <div class="management-section">
+               <h4>User Status</h4>
+               <div class="status-controls">
+                 <v-checkbox
+                   v-model="managementData.isActive"
+                   label="Active User"
+                   density="comfortable"
+                 />
+               </div>
+             </div>
+           </v-card-text>
 
-        <template #footer>
-          <div class="dialog-footer">
-            <Button
-              label="Cancel"
-              severity="secondary"
-              outlined
-              @click="showManageUserDialog = false"
-            />
-            <Button
-              label="Save Changes"
-              :loading="formLoading"
-              @click="saveUserManagement"
-            />
-          </div>
-        </template>
-      </Dialog>
+           <v-card-actions class="dialog-footer">
+             <v-spacer />
+             <v-btn
+               color="secondary"
+               variant="outlined"
+               @click="showManageUserDialog = false"
+             >
+               Cancel
+             </v-btn>
+             <v-btn
+               color="primary"
+               :loading="formLoading"
+               @click="saveUserManagement"
+             >
+               Save Changes
+             </v-btn>
+           </v-card-actions>
+         </v-card>
+       </v-dialog>
     </div>
   </AppLayout>
 </template>
@@ -424,24 +420,11 @@ import type {
   UserCreationAttributes,
   UserUpdateAttributes,
 } from "@medical-crm/shared"
-import Avatar from "primevue/avatar"
-import Button from "primevue/button"
-import Card from "primevue/card"
-import Checkbox from "primevue/checkbox"
-import Column from "primevue/column"
-import DataTable from "primevue/datatable"
-import Dialog from "primevue/dialog"
-import Dropdown from "primevue/dropdown"
-import InputText from "primevue/inputtext"
-import Message from "primevue/message"
-import MultiSelect from "primevue/multiselect"
-import ProgressSpinner from "primevue/progressspinner"
-import Tag from "primevue/tag"
-import { useToast } from "primevue/usetoast"
+import { useSnackbar } from "@/composables/useSnackbar"
 import { computed, onMounted, ref } from "vue"
 
 const teamStore = useTeamStore()
-const toast = useToast()
+const { showSnackbar } = useSnackbar()
 
 // Component state
 const viewMode = ref<"grid" | "list">("grid")
@@ -477,6 +460,15 @@ const teamFilterOptions = computed(() => teamOptions.value)
 const statusFilterOptions = [
   { label: "Active", value: "active" },
   { label: "Inactive", value: "inactive" },
+]
+
+const tableHeaders = [
+  { title: "Name", key: "firstName", sortable: true },
+  { title: "Role", key: "role", sortable: true },
+  { title: "Team", key: "teamId", sortable: true },
+  { title: "Status", key: "isActive", sortable: true },
+  { title: "Last Login", key: "lastLoginAt", sortable: true },
+  { title: "Actions", key: "actions", sortable: false },
 ]
 
 const adminCount = computed(() => {
@@ -543,7 +535,7 @@ const getRoleLabel = (role: string) => {
 
 const getRoleSeverity = (role: string) => {
   const severities = {
-    super_admin: "danger",
+    super_admin: "error",
     team_admin: "warning",
     user: "info",
   }
@@ -589,14 +581,9 @@ const loadTeamData = async () => {
       teamStore.fetchTeamMembers(),
       loadOptions(),
     ])
-  } catch (error) {
-    toast.add({
-      severity: "error",
-      summary: "Error",
-      detail: "Failed to load team data",
-      life: 5000,
-    })
-  }
+   } catch (error) {
+     showSnackbar("Failed to load team data", "error")
+   }
 }
 
 const loadOptions = async () => {
@@ -604,20 +591,33 @@ const loadOptions = async () => {
     // Load teams
     const teamsResponse = await teamApi.getAll()
     const teams = teamsResponse.data || teamsResponse
-    teamOptions.value = teams.map((team: any) => ({
-      label: team.name,
-      value: team.id,
-    }))
+    if (Array.isArray(teams)) {
+      teamOptions.value = teams.map((team: any) => ({
+        label: team.name,
+        value: team.id,
+      }))
+    } else {
+      console.warn("Teams response is not an array:", teams)
+      teamOptions.value = []
+    }
 
     // Load institutions
     const institutionsResponse = await institutionsApi.getAll()
     const institutions = institutionsResponse.data || institutionsResponse
-    institutionOptions.value = institutions.map((institution: any) => ({
-      label: institution.name,
-      value: institution.id,
-    }))
+    if (Array.isArray(institutions)) {
+      institutionOptions.value = institutions.map((institution: any) => ({
+        label: institution.name,
+        value: institution.id,
+      }))
+    } else {
+      console.warn("Institutions response is not an array:", institutions)
+      institutionOptions.value = []
+    }
   } catch (error) {
     console.error("Error loading options:", error)
+    // Set empty arrays on error to prevent further issues
+    teamOptions.value = []
+    institutionOptions.value = []
   }
 }
 
@@ -626,21 +626,11 @@ const createUser = async (userData: UserCreationAttributes) => {
     formLoading.value = true
     // In real app, this would call a user creation API
     console.log("Creating user:", userData)
-    showCreateUserDialog.value = false
-    toast.add({
-      severity: "success",
-      summary: "Success",
-      detail: "User created successfully",
-      life: 3000,
-    })
+     showCreateUserDialog.value = false
+     showSnackbar("User created successfully", "success")
     await loadTeamData()
-  } catch (error) {
-    toast.add({
-      severity: "error",
-      summary: "Error",
-      detail: "Failed to create user",
-      life: 5000,
-    })
+   } catch (error) {
+     showSnackbar("Failed to create user", "error")
   } finally {
     formLoading.value = false
   }
@@ -657,21 +647,11 @@ const updateUser = async (updates: UserUpdateAttributes) => {
   try {
     formLoading.value = true
     await teamStore.updateUserProfile(selectedUser.value.id, updates)
-    showEditUserDialog.value = false
-    selectedUser.value = null
-    toast.add({
-      severity: "success",
-      summary: "Success",
-      detail: "User updated successfully",
-      life: 3000,
-    })
-  } catch (error) {
-    toast.add({
-      severity: "error",
-      summary: "Error",
-      detail: "Failed to update user",
-      life: 5000,
-    })
+     showEditUserDialog.value = false
+     selectedUser.value = null
+     showSnackbar("User updated successfully", "success")
+   } catch (error) {
+     showSnackbar("Failed to update user", "error")
   } finally {
     formLoading.value = false
   }
@@ -702,22 +682,12 @@ const saveUserManagement = async () => {
     // Handle territory assignment (would be separate API call)
     console.log("Assigning institutions:", managementData.value.assignedInstitutions)
 
-    showManageUserDialog.value = false
-    selectedUser.value = null
+     showManageUserDialog.value = false
+     selectedUser.value = null
 
-    toast.add({
-      severity: "success",
-      summary: "Success",
-      detail: "User management updated successfully",
-      life: 3000,
-    })
-  } catch (error) {
-    toast.add({
-      severity: "error",
-      summary: "Error",
-      detail: "Failed to update user management",
-      life: 5000,
-    })
+     showSnackbar("User management updated successfully", "success")
+   } catch (error) {
+     showSnackbar("Failed to update user management", "error")
   } finally {
     formLoading.value = false
   }
@@ -765,6 +735,7 @@ onMounted(() => {
   color: #1f2937;
   display: flex;
   align-items: center;
+  gap: 0.5rem;
 }
 
 .page-description {

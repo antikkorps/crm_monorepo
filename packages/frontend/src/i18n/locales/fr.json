@@ -668,13 +668,78 @@
       "public": "Public"
     }
   },
-  "task": {
-    "priority": {
-      "low": "Faible",
-      "medium": "Moyenne",
-      "high": "Élevée"
-    }
-  },
+   "task": {
+     "title": "Gestion des Tâches",
+     "subtitle": "Gérer et suivre les tâches d'équipe, les assignations et les délais",
+     "createNew": "Créer une Nouvelle Tâche",
+     "edit": "Modifier la Tâche",
+     "update": "Mettre à Jour la Tâche",
+     "create": "Créer la Tâche",
+     "delete": "Supprimer la Tâche",
+     "cancel": "Annuler",
+     "save": "Enregistrer",
+     "loading": "Chargement des tâches...",
+     "noTasksFound": "Aucune tâche trouvée",
+     "noTasksMatchFilters": "Aucune tâche ne correspond à vos filtres actuels. Essayez d'ajuster vos critères de recherche.",
+     "getStarted": "Commencez par créer votre première tâche pour suivre les activités et délais d'équipe.",
+     "clearFilters": "Effacer les Filtres",
+     "createTask": "Créer une Tâche",
+     "listView": "Vue Liste",
+     "boardView": "Vue Tableau",
+     "sortBy": "Trier par",
+     "sortOptions": {
+       "dueDate": "Date d'échéance",
+       "priority": "Priorité",
+       "status": "Statut",
+       "createdAt": "Date de création",
+       "title": "Titre"
+     },
+     "status": {
+       "todo": "À faire",
+       "in_progress": "En cours",
+       "completed": "Terminée",
+       "cancelled": "Annulée"
+     },
+     "priority": {
+       "low": "Faible",
+       "medium": "Moyenne",
+       "high": "Élevée",
+       "urgent": "Urgente"
+     },
+     "form": {
+       "title": "Titre",
+       "titlePlaceholder": "Saisir le titre de la tâche",
+       "titleRequired": "Le titre est requis",
+       "description": "Description",
+       "descriptionPlaceholder": "Saisir la description de la tâche (optionnel)",
+       "priority": "Priorité",
+       "priorityPlaceholder": "Sélectionner la priorité",
+       "status": "Statut",
+       "statusPlaceholder": "Sélectionner le statut",
+       "assignee": "Assigné à",
+       "assigneePlaceholder": "Sélectionner l'assigné",
+       "assigneeRequired": "L'assigné est requis",
+       "institution": "Institution",
+       "institutionPlaceholder": "Sélectionner l'institution (optionnel)",
+       "dueDate": "Date d'échéance",
+       "dueDatePlaceholder": "Sélectionner la date d'échéance (optionnel)"
+     },
+     "messages": {
+       "created": "Tâche créée avec succès",
+       "updated": "Tâche mise à jour avec succès",
+       "deleted": "Tâche supprimée avec succès",
+       "statusUpdated": "Statut de la tâche mis à jour vers {status}",
+       "createFailed": "Échec de la création de la tâche",
+       "updateFailed": "Échec de la mise à jour de la tâche",
+       "deleteFailed": "Échec de la suppression de la tâche",
+       "statusUpdateFailed": "Échec de la mise à jour du statut de la tâche",
+       "loadFailed": "Échec du chargement des tâches"
+     },
+     "confirm": {
+       "deleteTitle": "Supprimer la Tâche",
+       "deleteMessage": "Êtes-vous sûr de vouloir supprimer la tâche \"{title}\" ?"
+     }
+   },
   "communication": {
     "type": {
       "email": "Email",

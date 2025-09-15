@@ -1,87 +1,85 @@
 <template>
-  <Card class="task-card" :class="taskCardClass">
-    <template #header>
-      <div class="task-header">
-        <div class="task-priority">
-          <Tag :value="priorityLabel" :severity="prioritySeverity" :icon="priorityIcon" />
+  <v-card class="task-card" :class="taskCardClass" variant="outlined">
+    <v-card-title class="task-header">
+      <div class="task-priority">
+        <v-chip
+          :color="prioritySeverity"
+          :prepend-icon="priorityIcon"
+          size="small"
+          variant="flat"
+        >
+          {{ priorityLabel }}
+        </v-chip>
+      </div>
+      <div class="task-actions">
+        <v-btn
+          icon="mdi-pencil"
+          size="small"
+          variant="text"
+          @click="$emit('edit', task)"
+        />
+        <v-btn
+          icon="mdi-delete"
+          size="small"
+          variant="text"
+          color="error"
+          @click="$emit('delete', task)"
+        />
+      </div>
+    </v-card-title>
+
+    <v-card-text class="task-content">
+      <h4 class="task-title">{{ task.title }}</h4>
+
+      <p v-if="task.description" class="task-description">
+        {{ task.description }}
+      </p>
+
+      <div class="task-meta">
+        <div class="task-assignee" v-if="task.assignee">
+          <v-avatar
+            :image="getAvatarUrl(task.assignee.id)"
+            :alt="getInitials(task.assignee.firstName, task.assignee.lastName)"
+            size="24"
+            class="me-2"
+          >
+            {{ getInitials(task.assignee.firstName, task.assignee.lastName) }}
+          </v-avatar>
+          <span class="assignee-name">
+            {{ task.assignee.firstName }} {{ task.assignee.lastName }}
+          </span>
         </div>
-        <div class="task-actions">
-          <Button
-            icon="pi pi-pencil"
-            size="small"
-            text
-            rounded
-            @click="$emit('edit', task)"
-            v-tooltip.top="'Edit Task'"
-          />
-          <Button
-            icon="pi pi-trash"
-            size="small"
-            text
-            rounded
-            severity="danger"
-            @click="$emit('delete', task)"
-            v-tooltip.top="'Delete Task'"
-          />
+
+        <div class="task-institution" v-if="task.institution">
+          <v-icon class="me-1">mdi-office-building</v-icon>
+          <span>{{ task.institution.name }}</span>
+        </div>
+
+        <div class="task-due-date" v-if="task.dueDate" :class="dueDateClass">
+          <v-icon class="me-1">mdi-calendar</v-icon>
+          <span>{{ formatDueDate(task.dueDate) }}</span>
         </div>
       </div>
-    </template>
 
-    <template #content>
-      <div class="task-content">
-        <h4 class="task-title">{{ task.title }}</h4>
-
-        <p v-if="task.description" class="task-description">
-          {{ task.description }}
-        </p>
-
-        <div class="task-meta">
-          <div class="task-assignee" v-if="task.assignee">
-            <Avatar
-              :image="getAvatarUrl(task.assignee.id)"
-              :label="getInitials(task.assignee.firstName, task.assignee.lastName)"
-              size="small"
-              shape="circle"
-              class="mr-2"
-            />
-            <span class="assignee-name">
-              {{ task.assignee.firstName }} {{ task.assignee.lastName }}
-            </span>
-          </div>
-
-          <div class="task-institution" v-if="task.institution">
-            <i class="pi pi-building mr-1"></i>
-            <span>{{ task.institution.name }}</span>
-          </div>
-
-          <div class="task-due-date" v-if="task.dueDate" :class="dueDateClass">
-            <i class="pi pi-calendar mr-1"></i>
-            <span>{{ formatDueDate(task.dueDate) }}</span>
-          </div>
-        </div>
-
-        <div class="task-status-actions">
-          <Dropdown
-            v-model="localStatus"
-            :options="statusOptions"
-            optionLabel="label"
-            optionValue="value"
-            @change="onStatusChange"
-            class="status-dropdown"
-          />
-        </div>
+      <div class="task-status-actions">
+        <v-select
+          v-model="localStatus"
+          :items="statusOptions"
+          item-title="label"
+          item-value="value"
+          @update:modelValue="onStatusChange"
+          class="status-dropdown"
+          density="compact"
+          variant="outlined"
+        />
       </div>
-    </template>
-  </Card>
+    </v-card-text>
+  </v-card>
 </template>
 
 <script setup lang="ts">
 import type { Task, TaskStatus } from "@medical-crm/shared"
-import Avatar from "primevue/avatar"
-import Button from "primevue/button"
-import Card from "primevue/card"
-import Dropdown from "primevue/dropdown"
-import Tag from "primevue/tag"
+// Vuetify components are auto-imported
 import { computed, ref, watch } from "vue"
 
 interface Props {
@@ -107,10 +105,10 @@ watch(
 )
 
 const statusOptions = [
-  { label: "To Do", value: "todo", icon: "pi pi-circle" },
-  { label: "In Progress", value: "in_progress", icon: "pi pi-clock" },
-  { label: "Completed", value: "completed", icon: "pi pi-check-circle" },
-  { label: "Cancelled", value: "cancelled", icon: "pi pi-times-circle" },
+  { label: "To Do", value: "todo" },
+  { label: "In Progress", value: "in_progress" },
+  { label: "Completed", value: "completed" },
+  { label: "Cancelled", value: "cancelled" },
 ]
 
 const priorityLabel = computed(() => {
@@ -128,17 +126,17 @@ const prioritySeverity = computed(() => {
     low: "success",
     medium: "info",
     high: "warning",
-    urgent: "danger",
+    urgent: "error",
   }
-  return severities[props.task.priority] as any
+  return severities[props.task.priority]
 })
 
 const priorityIcon = computed(() => {
   const icons = {
-    low: "pi pi-arrow-down",
-    medium: "pi pi-minus",
-    high: "pi pi-arrow-up",
-    urgent: "pi pi-exclamation-triangle",
+    low: "mdi-arrow-down",
+    medium: "mdi-minus",
+    high: "mdi-arrow-up",
+    urgent: "mdi-alert",
   }
   return icons[props.task.priority]
 })
@@ -215,7 +213,8 @@ const onStatusChange = () => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 1rem 1rem 0;
+  padding: 0;
+  min-height: auto;
 }
 
 .task-actions {
@@ -224,7 +223,7 @@ const onStatusChange = () => {
 }
 
 .task-content {
-  padding: 0 1rem 1rem;
+  padding: 0;
 }
 
 .task-title {

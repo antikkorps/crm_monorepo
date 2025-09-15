@@ -1,62 +1,65 @@
 <template>
-  <Card class="task-filters">
-    <template #content>
-      <div class="filters-container">
+  <v-card class="task-filters" variant="outlined">
+    <v-card-text class="filters-container">
         <div class="filters-row">
           <!-- Search -->
           <div class="filter-group">
-            <label class="filter-label">Search</label>
-            <InputText
+            <v-text-field
               v-model="localFilters.search"
+              label="Search"
               placeholder="Search tasks..."
-              class="filter-input"
               @input="onFiltersChange"
+              density="comfortable"
+              variant="outlined"
             />
           </div>
 
           <!-- Status Filter -->
           <div class="filter-group">
-            <label class="filter-label">Status</label>
-            <Dropdown
+            <v-select
               v-model="localFilters.status"
-              :options="statusOptions"
-              optionLabel="label"
-              optionValue="value"
+              :items="statusOptions"
+              item-title="label"
+              item-value="value"
+              label="Status"
               placeholder="All Statuses"
-              class="filter-input"
-              @change="onFiltersChange"
-              showClear
+              @update:modelValue="onFiltersChange"
+              clearable
+              density="comfortable"
+              variant="outlined"
             />
           </div>
 
           <!-- Priority Filter -->
           <div class="filter-group">
-            <label class="filter-label">Priority</label>
-            <Dropdown
+            <v-select
               v-model="localFilters.priority"
-              :options="priorityOptions"
-              optionLabel="label"
-              optionValue="value"
+              :items="priorityOptions"
+              item-title="label"
+              item-value="value"
+              label="Priority"
               placeholder="All Priorities"
-              class="filter-input"
-              @change="onFiltersChange"
-              showClear
+              @update:modelValue="onFiltersChange"
+              clearable
+              density="comfortable"
+              variant="outlined"
             />
           </div>
 
           <!-- Assignee Filter -->
           <div class="filter-group">
-            <label class="filter-label">Assignee</label>
-            <Dropdown
+            <v-select
               v-model="localFilters.assigneeId"
-              :options="assigneeOptions"
-              optionLabel="label"
-              optionValue="value"
+              :items="assigneeOptions"
+              item-title="label"
+              item-value="value"
+              label="Assignee"
               placeholder="All Assignees"
-              class="filter-input"
-              @change="onFiltersChange"
-              showClear
+              @update:modelValue="onFiltersChange"
+              clearable
               :loading="loadingUsers"
+              density="comfortable"
+              variant="outlined"
             />
           </div>
         </div>
@@ -64,79 +67,76 @@
         <div class="filters-row">
           <!-- Institution Filter -->
           <div class="filter-group">
-            <label class="filter-label">Institution</label>
-            <Dropdown
+            <v-select
               v-model="localFilters.institutionId"
-              :options="institutionOptions"
-              optionLabel="label"
-              optionValue="value"
+              :items="institutionOptions"
+              item-title="label"
+              item-value="value"
+              label="Institution"
               placeholder="All Institutions"
-              class="filter-input"
-              @change="onFiltersChange"
-              showClear
+              @update:modelValue="onFiltersChange"
+              clearable
               :loading="loadingInstitutions"
+              density="comfortable"
+              variant="outlined"
             />
           </div>
 
           <!-- Due Date Range -->
           <div class="filter-group">
-            <label class="filter-label">Due Date From</label>
-            <Calendar
+            <v-text-field
               v-model="localFilters.dueDateFrom"
+              label="Due Date From"
               placeholder="From date"
-              class="filter-input"
-              @date-select="onFiltersChange"
-              showIcon
-              dateFormat="dd/mm/yy"
+              type="date"
+              @change="onFiltersChange"
+              density="comfortable"
+              variant="outlined"
             />
           </div>
 
           <div class="filter-group">
-            <label class="filter-label">Due Date To</label>
-            <Calendar
+            <v-text-field
               v-model="localFilters.dueDateTo"
+              label="Due Date To"
               placeholder="To date"
-              class="filter-input"
-              @date-select="onFiltersChange"
-              showIcon
-              dateFormat="dd/mm/yy"
+              type="date"
+              @change="onFiltersChange"
+              density="comfortable"
+              variant="outlined"
             />
           </div>
 
           <!-- Quick Filters -->
           <div class="filter-group">
-            <label class="filter-label">Quick Filters</label>
             <div class="quick-filters">
-              <Button
-                label="Overdue"
-                :severity="localFilters.overdue ? 'danger' : 'secondary'"
-                :outlined="!localFilters.overdue"
+              <v-btn
+                :color="localFilters.overdue ? 'error' : 'secondary'"
+                :variant="localFilters.overdue ? 'elevated' : 'outlined'"
                 size="small"
                 @click="toggleOverdueFilter"
-              />
-              <Button
-                label="Clear All"
-                severity="secondary"
-                outlined
+              >
+                Overdue
+              </v-btn>
+              <v-btn
+                color="secondary"
+                variant="outlined"
                 size="small"
                 @click="clearAllFilters"
-              />
+              >
+                Clear All
+              </v-btn>
             </div>
           </div>
         </div>
-      </div>
-    </template>
-  </Card>
+    </v-card-text>
+  </v-card>
 </template>
 
 <script setup lang="ts">
 import { institutionsApi, teamApi } from "@/services/api"
 import type { TaskSearchFilters } from "@medical-crm/shared"
-import Button from "primevue/button"
-import Calendar from "primevue/calendar"
-import Card from "primevue/card"
-import Dropdown from "primevue/dropdown"
-import InputText from "primevue/inputtext"
+// Vuetify components are auto-imported
 import { onMounted, ref, watch } from "vue"
 
 interface Props {
@@ -198,22 +198,27 @@ const loadUsers = async () => {
     const response = await teamApi.getAll()
     const teams = response.data || response
 
-    // Flatten team members into assignee options
-    const users: Array<{ label: string; value: string }> = []
-    teams.forEach((team: any) => {
-      if (team.members) {
-        team.members.forEach((member: any) => {
-          users.push({
-            label: `${member.firstName} ${member.lastName}`,
-            value: member.id,
+    if (Array.isArray(teams)) {
+      // Flatten team members into assignee options
+      const users: Array<{ label: string; value: string }> = []
+      teams.forEach((team: any) => {
+        if (team.members) {
+          team.members.forEach((member: any) => {
+            users.push({
+              label: `${member.firstName} ${member.lastName}`,
+              value: member.id,
+            })
           })
-        })
-      }
-    })
-
-    assigneeOptions.value = users
+        }
+      })
+      assigneeOptions.value = users
+    } else {
+      console.warn("Teams response is not an array:", teams)
+      assigneeOptions.value = []
+    }
   } catch (error) {
     console.error("Error loading users:", error)
+    assigneeOptions.value = []
   } finally {
     loadingUsers.value = false
   }
@@ -225,12 +230,18 @@ const loadInstitutions = async () => {
     const response = await institutionsApi.getAll()
     const institutions = response.data || response
 
-    institutionOptions.value = institutions.map((institution: any) => ({
-      label: institution.name,
-      value: institution.id,
-    }))
+    if (Array.isArray(institutions)) {
+      institutionOptions.value = institutions.map((institution: any) => ({
+        label: institution.name,
+        value: institution.id,
+      }))
+    } else {
+      console.warn("Institutions response is not an array:", institutions)
+      institutionOptions.value = []
+    }
   } catch (error) {
     console.error("Error loading institutions:", error)
+    institutionOptions.value = []
   } finally {
     loadingInstitutions.value = false
   }

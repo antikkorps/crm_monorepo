@@ -1,68 +1,67 @@
 <template>
-  <Dialog
-    :visible="visible"
-    :modal="true"
-    :closable="true"
-    :draggable="false"
-    class="task-form-dialog"
-    @update:visible="$emit('update:visible', $event)"
+  <v-dialog
+    v-model="visible"
+    max-width="600px"
+    persistent
   >
-    <template #header>
-      <h3>{{ isEditing ? "Edit Task" : "Create New Task" }}</h3>
-    </template>
+    <v-card>
+      <v-card-title>
+         {{ isEditing ? t('task.edit') : t('task.createNew') }}
+       </v-card-title>
+
+      <v-card-text class="task-form">
 
     <form @submit.prevent="handleSubmit" class="task-form">
       <!-- Title -->
       <div class="form-group">
-        <label for="title" class="form-label required">Title</label>
-        <InputText
+        <v-text-field
           id="title"
           v-model="formData.title"
-          :class="{ 'p-invalid': errors.title }"
-          placeholder="Enter task title"
-          class="form-input"
+          :error-messages="errors.title ? [errors.title] : []"
+          :label="t('task.form.title') + ' *'"
+          :placeholder="t('task.form.titlePlaceholder')"
+          density="comfortable"
         />
-        <small v-if="errors.title" class="p-error">{{ errors.title }}</small>
       </div>
 
       <!-- Description -->
       <div class="form-group">
-        <label for="description" class="form-label">Description</label>
-        <Textarea
+        <v-textarea
           id="description"
           v-model="formData.description"
-          placeholder="Enter task description (optional)"
-          class="form-input"
+          :label="t('task.form.description')"
+          :placeholder="t('task.form.descriptionPlaceholder')"
+          density="comfortable"
           rows="3"
-          autoResize
+          auto-grow
         />
       </div>
 
       <!-- Priority and Status Row -->
       <div class="form-row">
         <div class="form-group">
-          <label for="priority" class="form-label">Priority</label>
-          <Dropdown
+          <v-select
             id="priority"
             v-model="formData.priority"
-            :options="priorityOptions"
-            optionLabel="label"
-            optionValue="value"
-            placeholder="Select priority"
-            class="form-input"
+            :items="priorityOptions"
+            item-title="label"
+            item-value="value"
+            :label="t('task.form.priority')"
+            :placeholder="t('task.form.priorityPlaceholder')"
+            density="comfortable"
           />
         </div>
 
         <div class="form-group" v-if="isEditing">
-          <label for="status" class="form-label">Status</label>
-          <Dropdown
+          <v-select
             id="status"
             v-model="formData.status"
-            :options="statusOptions"
-            optionLabel="label"
-            optionValue="value"
-            placeholder="Select status"
-            class="form-input"
+            :items="statusOptions"
+            item-title="label"
+            item-value="value"
+            :label="t('task.form.status')"
+            :placeholder="t('task.form.statusPlaceholder')"
+            density="comfortable"
           />
         </div>
       </div>
@@ -70,67 +69,71 @@
       <!-- Assignee and Institution Row -->
       <div class="form-row">
         <div class="form-group">
-          <label for="assigneeId" class="form-label required">Assignee</label>
-          <Dropdown
+          <v-select
             id="assigneeId"
             v-model="formData.assigneeId"
-            :options="assigneeOptions"
-            optionLabel="label"
-            optionValue="value"
-            placeholder="Select assignee"
-            class="form-input"
-            :class="{ 'p-invalid': errors.assigneeId }"
+            :items="assigneeOptions"
+            item-title="label"
+            item-value="value"
+            :error-messages="errors.assigneeId ? [errors.assigneeId] : []"
+            :label="t('task.form.assignee') + ' *'"
+            :placeholder="t('task.form.assigneePlaceholder')"
             :loading="loadingUsers"
-            filter
+            density="comfortable"
           />
-          <small v-if="errors.assigneeId" class="p-error">{{ errors.assigneeId }}</small>
         </div>
 
         <div class="form-group">
-          <label for="institutionId" class="form-label">Institution</label>
-          <Dropdown
+          <v-select
             id="institutionId"
             v-model="formData.institutionId"
-            :options="institutionOptions"
-            optionLabel="label"
-            optionValue="value"
-            placeholder="Select institution (optional)"
-            class="form-input"
+            :items="institutionOptions"
+            item-title="label"
+            item-value="value"
+            :label="t('task.form.institution')"
+            :placeholder="t('task.form.institutionPlaceholder')"
+            clearable
             :loading="loadingInstitutions"
-            filter
-            showClear
+            density="comfortable"
           />
         </div>
       </div>
 
       <!-- Due Date -->
       <div class="form-group">
-        <label for="dueDate" class="form-label">Due Date</label>
-        <Calendar
+        <v-text-field
           id="dueDate"
           v-model="formData.dueDate"
-          placeholder="Select due date (optional)"
-          class="form-input"
-          showIcon
-          dateFormat="dd/mm/yy"
-          :minDate="new Date()"
-          showTime
-          hourFormat="24"
+          :label="t('task.form.dueDate')"
+          :placeholder="t('task.form.dueDatePlaceholder')"
+          type="datetime-local"
+          density="comfortable"
+          :min="new Date().toISOString().slice(0, 16)"
         />
       </div>
     </form>
 
-    <template #footer>
-      <div class="dialog-footer">
-        <Button label="Cancel" severity="secondary" outlined @click="handleCancel" />
-        <Button
-          :label="isEditing ? 'Update Task' : 'Create Task'"
+      </v-card-text>
+
+      <v-card-actions class="dialog-footer">
+        <v-spacer />
+        <v-btn
+          color="secondary"
+          variant="outlined"
+          @click="handleCancel"
+        >
+          {{ t('task.cancel') }}
+        </v-btn>
+        <v-btn
+          color="primary"
           :loading="loading"
           @click="handleSubmit"
-        />
-      </div>
-    </template>
-  </Dialog>
+        >
+          {{ isEditing ? t('task.update') : t('task.create') }}
+        </v-btn>
+      </v-card-actions>
+    </v-card>
+  </v-dialog>
 </template>
 
 <script setup lang="ts">
@@ -142,28 +145,31 @@ import type {
   TaskStatus,
   TaskUpdateRequest,
 } from "@medical-crm/shared"
-import Button from "primevue/button"
-import Calendar from "primevue/calendar"
-import Dialog from "primevue/dialog"
-import Dropdown from "primevue/dropdown"
-import InputText from "primevue/inputtext"
-import Textarea from "primevue/textarea"
+// Vuetify components are auto-imported
 import { computed, onMounted, ref, watch } from "vue"
+import { useI18n } from "vue-i18n"
 
 interface Props {
-  visible: boolean
+  modelValue: boolean
   task?: Task | null
   loading?: boolean
 }
 
 interface Emits {
-  (e: "update:visible", visible: boolean): void
+  (e: "update:modelValue", visible: boolean): void
   (e: "submit", data: TaskCreateRequest | TaskUpdateRequest): void
   (e: "cancel"): void
 }
 
 const props = defineProps<Props>()
 const emit = defineEmits<Emits>()
+
+const { t } = useI18n()
+
+const visible = computed({
+  get: () => props.modelValue,
+  set: (value) => emit("update:modelValue", value)
+})
 
 const formData = ref<TaskCreateRequest & { status?: TaskStatus }>({
   title: "",
@@ -183,24 +189,24 @@ const institutionOptions = ref<Array<{ label: string; value: string }>>([])
 
 const isEditing = computed(() => !!props.task)
 
-const priorityOptions = [
-  { label: "Low", value: "low" },
-  { label: "Medium", value: "medium" },
-  { label: "High", value: "high" },
-  { label: "Urgent", value: "urgent" },
-]
+const priorityOptions = computed(() => [
+  { label: t('task.priority.low'), value: "low" },
+  { label: t('task.priority.medium'), value: "medium" },
+  { label: t('task.priority.high'), value: "high" },
+  { label: t('task.priority.urgent'), value: "urgent" },
+])
 
-const statusOptions = [
-  { label: "To Do", value: "todo" },
-  { label: "In Progress", value: "in_progress" },
-  { label: "Completed", value: "completed" },
-  { label: "Cancelled", value: "cancelled" },
-]
+const statusOptions = computed(() => [
+  { label: t('task.status.todo'), value: "todo" },
+  { label: t('task.status.in_progress'), value: "in_progress" },
+  { label: t('task.status.completed'), value: "completed" },
+  { label: t('task.status.cancelled'), value: "cancelled" },
+])
 
 watch(
-  () => props.visible,
-  (visible) => {
-    if (visible) {
+  () => props.modelValue,
+  (isVisible) => {
+    if (isVisible) {
       resetForm()
       if (props.task) {
         populateForm(props.task)
@@ -238,11 +244,11 @@ const validateForm = (): boolean => {
   errors.value = {}
 
   if (!formData.value.title.trim()) {
-    errors.value.title = "Title is required"
+    errors.value.title = t('task.form.titleRequired')
   }
 
   if (!formData.value.assigneeId) {
-    errors.value.assigneeId = "Assignee is required"
+    errors.value.assigneeId = t('task.form.assigneeRequired')
   }
 
   return Object.keys(errors.value).length === 0
@@ -269,7 +275,7 @@ const handleSubmit = () => {
 
 const handleCancel = () => {
   emit("cancel")
-  emit("update:visible", false)
+  visible.value = false
 }
 
 const loadUsers = async () => {
@@ -278,22 +284,29 @@ const loadUsers = async () => {
     const response = await teamApi.getAll()
     const teams = response.data || response
 
-    // Flatten team members into assignee options
-    const users: Array<{ label: string; value: string }> = []
-    teams.forEach((team: any) => {
-      if (team.members) {
-        team.members.forEach((member: any) => {
-          users.push({
-            label: `${member.firstName} ${member.lastName}`,
-            value: member.id,
+    if (Array.isArray(teams)) {
+      // Flatten team members into assignee options
+      const users: Array<{ label: string; value: string }> = []
+      teams.forEach((team: any) => {
+        if (team.members && Array.isArray(team.members)) {
+          team.members.forEach((member: any) => {
+            if (member.firstName && member.lastName && member.id) {
+              users.push({
+                label: `${member.firstName} ${member.lastName}`,
+                value: member.id,
+              })
+            }
           })
-        })
-      }
-    })
-
-    assigneeOptions.value = users
+        }
+      })
+      assigneeOptions.value = users
+    } else {
+      console.warn("Teams response is not an array:", teams)
+      assigneeOptions.value = []
+    }
   } catch (error) {
     console.error("Error loading users:", error)
+    assigneeOptions.value = []
   } finally {
     loadingUsers.value = false
   }
@@ -305,12 +318,18 @@ const loadInstitutions = async () => {
     const response = await institutionsApi.getAll()
     const institutions = response.data || response
 
-    institutionOptions.value = institutions.map((institution: any) => ({
-      label: institution.name,
-      value: institution.id,
-    }))
+    if (Array.isArray(institutions)) {
+      institutionOptions.value = institutions.map((institution: any) => ({
+        label: institution.name,
+        value: institution.id,
+      }))
+    } else {
+      console.warn("Institutions response is not an array:", institutions)
+      institutionOptions.value = []
+    }
   } catch (error) {
     console.error("Error loading institutions:", error)
+    institutionOptions.value = []
   } finally {
     loadingInstitutions.value = false
   }
@@ -347,19 +366,8 @@ onMounted(() => {
   gap: 1rem;
 }
 
-.form-label {
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: #374151;
-}
-
-.form-label.required::after {
-  content: " *";
-  color: #ef4444;
-}
-
-.form-input {
-  width: 100%;
+.form-group {
+  margin-bottom: 1rem;
 }
 
 .dialog-footer {

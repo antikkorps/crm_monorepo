@@ -1,26 +1,27 @@
 <template>
-  <Dialog
-    :visible="visible"
-    :modal="true"
-    :closable="true"
-    :draggable="false"
-    class="user-profile-dialog"
-    @update:visible="$emit('update:visible', $event)"
+  <v-dialog
+    v-model="visible"
+    max-width="700px"
+    persistent
   >
-    <template #header>
-      <h3>{{ isEditing ? "Edit User Profile" : "Create New User" }}</h3>
-    </template>
+    <v-card>
+      <v-card-title>
+        {{ isEditing ? "Edit User Profile" : "Create New User" }}
+      </v-card-title>
+
+      <v-card-text class="user-profile-form">
 
     <form @submit.prevent="handleSubmit" class="user-profile-form">
       <!-- Avatar Preview -->
       <div class="avatar-section">
-        <Avatar
+        <v-avatar
           :image="avatarPreviewUrl"
-          :label="avatarInitials"
-          size="xlarge"
-          shape="circle"
+          :alt="avatarInitials"
+          size="80"
           class="avatar-preview"
-        />
+        >
+          {{ avatarInitials }}
+        </v-avatar>
         <div class="avatar-info">
           <p class="avatar-description">
             Avatar is automatically generated based on the user's name
@@ -34,41 +35,38 @@
 
         <div class="form-row">
           <div class="form-group">
-            <label for="firstName" class="form-label required">First Name</label>
-            <InputText
+            <v-text-field
               id="firstName"
               v-model="formData.firstName"
-              :class="{ 'p-invalid': errors.firstName }"
+              :error-messages="errors.firstName ? [errors.firstName] : []"
+              label="First Name *"
               placeholder="Enter first name"
-              class="form-input"
+              density="comfortable"
             />
-            <small v-if="errors.firstName" class="p-error">{{ errors.firstName }}</small>
           </div>
 
           <div class="form-group">
-            <label for="lastName" class="form-label required">Last Name</label>
-            <InputText
+            <v-text-field
               id="lastName"
               v-model="formData.lastName"
-              :class="{ 'p-invalid': errors.lastName }"
+              :error-messages="errors.lastName ? [errors.lastName] : []"
+              label="Last Name *"
               placeholder="Enter last name"
-              class="form-input"
+              density="comfortable"
             />
-            <small v-if="errors.lastName" class="p-error">{{ errors.lastName }}</small>
           </div>
         </div>
 
         <div class="form-group">
-          <label for="email" class="form-label required">Email</label>
-          <InputText
+          <v-text-field
             id="email"
             v-model="formData.email"
-            :class="{ 'p-invalid': errors.email }"
+            :error-messages="errors.email ? [errors.email] : []"
+            label="Email *"
             placeholder="Enter email address"
-            class="form-input"
             type="email"
+            density="comfortable"
           />
-          <small v-if="errors.email" class="p-error">{{ errors.email }}</small>
         </div>
       </div>
 
@@ -78,39 +76,41 @@
 
         <div class="form-row">
           <div class="form-group">
-            <label for="role" class="form-label">Role</label>
-            <Dropdown
+            <v-select
               id="role"
               v-model="formData.role"
-              :options="roleOptions"
-              optionLabel="label"
-              optionValue="value"
+              :items="roleOptions"
+              item-title="label"
+              item-value="value"
+              label="Role"
               placeholder="Select role"
-              class="form-input"
+              density="comfortable"
             />
           </div>
 
           <div class="form-group">
-            <label for="teamId" class="form-label">Team</label>
-            <Dropdown
+            <v-select
               id="teamId"
               v-model="formData.teamId"
-              :options="teamOptions"
-              optionLabel="label"
-              optionValue="value"
+              :items="teamOptions"
+              item-title="label"
+              item-value="value"
+              label="Team"
               placeholder="Select team (optional)"
-              class="form-input"
+              clearable
               :loading="loadingTeams"
-              showClear
+              density="comfortable"
             />
           </div>
         </div>
 
         <div class="form-group" v-if="isEditing">
-          <div class="form-checkbox">
-            <Checkbox id="isActive" v-model="formData.isActive" :binary="true" />
-            <label for="isActive" class="checkbox-label">Active User</label>
-          </div>
+          <v-checkbox
+            id="isActive"
+            v-model="formData.isActive"
+            label="Active User"
+            density="comfortable"
+          />
           <small class="form-help"> Inactive users cannot log in to the system </small>
         </div>
       </div>
@@ -120,18 +120,18 @@
         <h4 class="section-title">Territory Assignment</h4>
 
         <div class="form-group">
-          <label class="form-label">Assigned Medical Institutions</label>
-          <MultiSelect
+          <v-select
             v-model="formData.assignedInstitutions"
-            :options="institutionOptions"
-            optionLabel="label"
-            optionValue="value"
+            :items="institutionOptions"
+            item-title="label"
+            item-value="value"
+            label="Assigned Medical Institutions"
             placeholder="Select institutions"
-            class="form-input"
+            multiple
             :loading="loadingInstitutions"
-            filter
-            :maxSelectedLabels="3"
-            selectedItemsLabel="{0} institutions selected"
+            density="comfortable"
+            chips
+            closable-chips
           />
           <small class="form-help">
             Select medical institutions this user will manage
@@ -140,17 +140,27 @@
       </div>
     </form>
 
-    <template #footer>
-      <div class="dialog-footer">
-        <Button label="Cancel" severity="secondary" outlined @click="handleCancel" />
-        <Button
-          :label="isEditing ? 'Update Profile' : 'Create User'"
+      </v-card-text>
+
+      <v-card-actions class="dialog-footer">
+        <v-spacer />
+        <v-btn
+          color="secondary"
+          variant="outlined"
+          @click="handleCancel"
+        >
+          Cancel
+        </v-btn>
+        <v-btn
+          color="primary"
           :loading="loading"
           @click="handleSubmit"
-        />
-      </div>
-    </template>
-  </Dialog>
+        >
+          {{ isEditing ? 'Update Profile' : 'Create User' }}
+        </v-btn>
+      </v-card-actions>
+    </v-card>
+  </v-dialog>
 </template>
 
 <script setup lang="ts">
@@ -161,29 +171,28 @@ import type {
   UserRole,
   UserUpdateAttributes,
 } from "@medical-crm/shared"
-import Avatar from "primevue/avatar"
-import Button from "primevue/button"
-import Checkbox from "primevue/checkbox"
-import Dialog from "primevue/dialog"
-import Dropdown from "primevue/dropdown"
-import InputText from "primevue/inputtext"
-import MultiSelect from "primevue/multiselect"
+import { useSnackbar } from "@/composables/useSnackbar"
 import { computed, onMounted, ref, watch } from "vue"
 
 interface Props {
-  visible: boolean
+  modelValue: boolean
   user?: User | null
   loading?: boolean
 }
 
 interface Emits {
-  (e: "update:visible", visible: boolean): void
+  (e: "update:modelValue", visible: boolean): void
   (e: "submit", data: UserCreationAttributes | UserUpdateAttributes): void
   (e: "cancel"): void
 }
 
 const props = defineProps<Props>()
 const emit = defineEmits<Emits>()
+
+const visible = computed({
+  get: () => props.modelValue,
+  set: (value) => emit("update:modelValue", value)
+})
 
 const formData = ref<
   UserCreationAttributes & { isActive?: boolean; assignedInstitutions?: string[] }
@@ -224,9 +233,9 @@ const avatarInitials = computed(() => {
 })
 
 watch(
-  () => props.visible,
-  (visible) => {
-    if (visible) {
+  () => props.modelValue,
+  (isVisible) => {
+    if (isVisible) {
       resetForm()
       if (props.user) {
         populateForm(props.user)
@@ -309,7 +318,7 @@ const handleSubmit = () => {
 
 const handleCancel = () => {
   emit("cancel")
-  emit("update:visible", false)
+  visible.value = false
 }
 
 const loadTeams = async () => {
@@ -318,12 +327,18 @@ const loadTeams = async () => {
     const response = await teamApi.getAll()
     const teams = response.data || response
 
-    teamOptions.value = teams.map((team: any) => ({
-      label: team.name,
-      value: team.id,
-    }))
+    if (Array.isArray(teams)) {
+      teamOptions.value = teams.map((team: any) => ({
+        label: team.name,
+        value: team.id,
+      }))
+    } else {
+      console.warn("Teams response is not an array:", teams)
+      teamOptions.value = []
+    }
   } catch (error) {
     console.error("Error loading teams:", error)
+    teamOptions.value = []
   } finally {
     loadingTeams.value = false
   }
@@ -335,12 +350,18 @@ const loadInstitutions = async () => {
     const response = await institutionsApi.getAll()
     const institutions = response.data || response
 
-    institutionOptions.value = institutions.map((institution: any) => ({
-      label: institution.name,
-      value: institution.id,
-    }))
+    if (Array.isArray(institutions)) {
+      institutionOptions.value = institutions.map((institution: any) => ({
+        label: institution.name,
+        value: institution.id,
+      }))
+    } else {
+      console.warn("Institutions response is not an array:", institutions)
+      institutionOptions.value = []
+    }
   } catch (error) {
     console.error("Error loading institutions:", error)
+    institutionOptions.value = []
   } finally {
     loadingInstitutions.value = false
   }
