@@ -1,39 +1,39 @@
 <template>
-  <Dialog
-    :visible="visible"
-    :modal="true"
-    :closable="true"
-    :draggable="false"
-    class="quote-preview-dialog"
-    @update:visible="$emit('update:visible', $event)"
+  <v-dialog
+    :model-value="visible"
+    @update:model-value="$emit('update:visible', $event)"
+    max-width="900px"
+    max-height="90vh"
+    scrollable
   >
-    <template #header>
-      <div class="preview-header">
-        <h3>Quote Preview</h3>
+    <v-card>
+      <v-card-title class="d-flex justify-space-between align-center">
+        <span>Aperçu du devis</span>
         <div class="preview-actions">
-          <Button
-            icon="pi pi-download"
-            text
-            rounded
+          <v-btn
+            icon="mdi-download"
+            variant="text"
             @click="downloadPDF"
-            v-tooltip.top="'Download PDF'"
             :loading="downloading"
-          />
-          <Button
-            icon="pi pi-external-link"
-            text
-            rounded
+          >
+            <v-icon>mdi-download</v-icon>
+            <v-tooltip activator="parent" location="top">Télécharger PDF</v-tooltip>
+          </v-btn>
+          <v-btn
+            icon="mdi-open-in-new"
+            variant="text"
             @click="openInNewTab"
-            v-tooltip.top="'Open in New Tab'"
-          />
+          >
+            <v-icon>mdi-open-in-new</v-icon>
+            <v-tooltip activator="parent" location="top">Ouvrir dans un nouvel onglet</v-tooltip>
+          </v-btn>
         </div>
-      </div>
-    </template>
+      </v-card-title>
 
-    <div class="preview-content">
+    <v-card-text class="preview-content">
       <div v-if="!quoteData" class="no-data">
-        <i class="pi pi-file-o empty-icon"></i>
-        <p>No quote data to preview</p>
+        <v-icon size="64" color="grey-lighten-2">mdi-file-document-outline</v-icon>
+        <p>Aucune donnée de devis à prévisualiser</p>
       </div>
 
       <div v-else class="quote-document">
@@ -166,29 +166,31 @@
           </p>
         </div>
       </div>
-    </div>
+    </v-card-text>
 
-    <template #footer>
-      <div class="dialog-footer">
-        <Button
-          label="Close"
-          severity="secondary"
-          @click="$emit('update:visible', false)"
-        />
-        <Button
-          label="Download PDF"
-          icon="pi pi-download"
-          @click="downloadPDF"
-          :loading="downloading"
-        />
-      </div>
-    </template>
-  </Dialog>
+    <v-card-actions>
+      <v-spacer />
+      <v-btn
+        variant="outlined"
+        @click="$emit('update:visible', false)"
+      >
+        Fermer
+      </v-btn>
+      <v-btn
+        color="primary"
+        prepend-icon="mdi-download"
+        @click="downloadPDF"
+        :loading="downloading"
+      >
+        Télécharger PDF
+      </v-btn>
+    </v-card-actions>
+    </v-card>
+  </v-dialog>
 </template>
 
 <script setup lang="ts">
 import type { Quote } from "@medical-crm/shared"
-import { useToast } from "primevue/usetoast"
 import { ref } from "vue"
 
 interface Props {
@@ -206,9 +208,6 @@ const emit = defineEmits<{
 // Reactive state
 const downloading = ref(false)
 
-// Toast for notifications
-const toast = useToast()
-
 // Methods
 const formatDate = (date: Date | string) => {
   const d = new Date(date)
@@ -220,20 +219,15 @@ const formatDate = (date: Date | string) => {
 }
 
 const formatCurrency = (amount: number) => {
-  return new Intl.NumberFormat("en-US", {
+  return new Intl.NumberFormat("fr-FR", {
     style: "currency",
-    currency: "USD",
+    currency: "EUR",
   }).format(amount || 0)
 }
 
 const downloadPDF = async () => {
   if (!props.quoteData?.id || props.quoteData.id === "preview") {
-    toast.add({
-      severity: "warn",
-      summary: "Cannot Download",
-      detail: "Please save the quote first before downloading PDF",
-      life: 3000,
-    })
+    alert("Veuillez d'abord sauvegarder le devis avant de télécharger le PDF")
     return
   }
 
@@ -243,20 +237,10 @@ const downloadPDF = async () => {
     // This would call the API to generate and download PDF
     // const response = await quotesApi.downloadPDF(props.quoteData.id)
 
-    toast.add({
-      severity: "info",
-      summary: "PDF Download",
-      detail: "PDF download functionality coming soon",
-      life: 3000,
-    })
+    alert("Fonctionnalité de téléchargement PDF à venir")
   } catch (error) {
     console.error("Failed to download PDF:", error)
-    toast.add({
-      severity: "error",
-      summary: "Download Error",
-      detail: "Failed to download PDF",
-      life: 3000,
-    })
+    alert("Erreur lors du téléchargement du PDF")
   } finally {
     downloading.value = false
   }

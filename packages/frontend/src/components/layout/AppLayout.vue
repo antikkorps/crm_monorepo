@@ -5,7 +5,6 @@
       v-model="drawer"
       :rail="shouldShowRail"
       :permanent="isPermanent"
-      @click="mobile ? (drawer = false) : (rail = false)"
       class="sidebar-gradient"
       elevation="3"
     >
@@ -49,6 +48,7 @@
           :title="$t(item.title)"
           :to="item.to"
           :value="item.value"
+          @click="onNavigationClick"
         ></v-list-item>
 
         <!-- Billing Section -->
@@ -68,6 +68,7 @@
             :title="$t(item.title)"
             :to="item.to"
             :value="item.value"
+            @click="onNavigationClick"
           ></v-list-item>
         </v-list-group>
 
@@ -79,6 +80,7 @@
           :title="$t(item.title)"
           :to="item.to"
           :value="item.value"
+          @click="onNavigationClick"
         ></v-list-item>
       </v-list>
 
@@ -377,6 +379,13 @@ const additionalNavigation = [
 const handleLogout = async () => {
   await authStore.logout()
   router.push("/login")
+}
+
+// Handle navigation clicks - close sidebar on mobile
+const onNavigationClick = () => {
+  if (mobile.value) {
+    drawer.value = false
+  }
 }
 </script>
 

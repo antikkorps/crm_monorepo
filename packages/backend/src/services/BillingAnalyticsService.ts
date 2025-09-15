@@ -3,6 +3,7 @@ import { Op, QueryTypes } from "sequelize"
 import { sequelize } from "../config/database"
 import { Invoice } from "../models/Invoice"
 import { MedicalInstitution } from "../models/MedicalInstitution"
+import { MedicalProfile } from "../models/MedicalProfile"
 import { Payment } from "../models/Payment"
 
 export interface RevenueAnalytics {
@@ -383,7 +384,7 @@ export class BillingAnalyticsService {
           as: "institution",
           include: [
             {
-              model: sequelize.models.MedicalProfile,
+              model: MedicalProfile,
               as: "medicalProfile",
             },
           ],
@@ -718,12 +719,14 @@ export class BillingAnalyticsService {
   private static async calculateAveragePaymentTime(userId?: string): Promise<number> {
     const userFilter = userId ? `AND i.assigned_user_id = '${userId}'` : ""
 
+    // Note: Since sent_at and paid_at columns don't exist in the current schema,
+    // we'll calculate based on payment dates vs invoice creation dates
     const query = `
-      SELECT AVG(EXTRACT(DAY FROM (i.paid_at - i.sent_at))) as avg_payment_days
+      SELECT AVG(EXTRACT(DAY FROM (p.payment_date - i.created_at))) as avg_payment_days
       FROM invoices i
-      WHERE i.status = 'paid' 
-      AND i.sent_at IS NOT NULL 
-      AND i.paid_at IS NOT NULL
+      JOIN payments p ON p.invoice_id = i.id
+      WHERE i.status = 'paid'
+      AND p.status = 'confirmed'
       ${userFilter}
     `
 
@@ -978,16 +981,16 @@ export class BillingAnalyticsService {
     const userFilter = userId ? `AND assigned_user_id = '${userId}'` : ""
 
     const query = `
-      SELECT 
-        AVG(EXTRACT(DAY FROM (paid_at - sent_at))) as avg_collection_time,
-        CASE 
-          WHEN COUNT(*) = 0 THEN 0
-          ELSE COUNT(CASE WHEN status = 'paid' THEN 1 END)::float / COUNT(*) * 100
+      SELECT
+        AVG(EXTRACT(DAY FROM (p.payment_date - i.created_at))) as avg_collection_time,
+        CASE
+          WHEN COUNT(DISTINCT i.id) = 0 THEN 0
+          ELSE COUNT(DISTINCT CASE WHEN i.status = 'paid' THEN i.id END)::float / COUNT(DISTINCT i.id) * 100
         END as collection_rate,
-        AVG(total_paid / NULLIF(total, 0)) * 100 as customer_payment_score
-      FROM invoices
-      WHERE status != 'cancelled'
-      AND sent_at IS NOT NULL
+        AVG(i.total_paid / NULLIF(i.total, 0)) * 100 as customer_payment_score
+      FROM invoices i
+      LEFT JOIN payments p ON p.invoice_id = i.id AND p.status = 'confirmed'
+      WHERE i.status != 'cancelled'
       ${userFilter}
     `
 

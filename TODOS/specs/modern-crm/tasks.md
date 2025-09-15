@@ -604,3 +604,33 @@
 
   - [ ] 23.4 Conduct full accessibility (a11y) audit
     - Check color contrasts, keyboard navigation, and ARIA attributes across the application.
+
+## Issues Récurrents à Résoudre
+
+### ⚠️ JSONB Compatibility Issues - Problème Récurrent Critique
+
+**Problème:** Des erreurs récurrentes liées aux champs JSONB (particulièrement le champ `address`) dans les requêtes Sequelize avec includes.
+
+**Exemples d'erreurs observées:**
+- Erreurs lors d'includes de MedicalInstitution avec champs d'adresse JSONB
+- Incompatibilité entre les requêtes Sequelize et la structure JSONB PostgreSQL
+- Échecs de sérialisation/désérialisation des données d'adresse
+
+**Impact:**
+- Requêtes échouent fréquemment lors d'opérations complexes
+- Nécessité de contournements temporaires (suppression d'includes)
+- Dégradation de l'expérience utilisateur
+
+**Actions à entreprendre:**
+1. **Audit complet des champs JSONB** - Identifier tous les champs JSONB problématiques
+2. **Migration vers structure relationnelle** - Créer des tables séparées pour les adresses et autres structures complexes
+3. **Alternative: Normalisation JSONB** - Standardiser la structure et validation JSONB si conservation souhaitée
+4. **Tests de régression** - Créer des tests spécifiques pour les opérations JSONB avec includes
+5. **Documentation des bonnes pratiques** - Établir des guidelines pour éviter ces problèmes futurs
+
+**Priorité:** 🔴 HAUTE - À traiter en priorité pour stabiliser les opérations de base de données
+
+**Historique des occurrences:**
+- Analytics dashboard: Erreurs lors d'includes avec MedicalInstitution
+- Quotes system: Problèmes similaires nécessitant simplification temporaire
+- Multiple autres endpoints potentiellement affectés

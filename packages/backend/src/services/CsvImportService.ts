@@ -1,4 +1,5 @@
 import { ComplianceStatus, InstitutionType } from "@medical-crm/shared"
+import { Op, Sequelize } from "sequelize"
 import { ContactPerson, MedicalInstitution, MedicalProfile, User } from "../models"
 import { logger } from "../utils/logger"
 
@@ -422,13 +423,15 @@ export class CsvImportService {
       }) || null
     }
     
-    // In production, use JSONB operators
+    // In production, use JSONB-safe where with Sequelize.json
     return await MedicalInstitution.findOne({
       where: {
         name: data.name,
-        'address.street': data.street,
-        'address.city': data.city
-      }
+        [Op.and]: [
+          Sequelize.where(Sequelize.json("address.street"), data.street),
+          Sequelize.where(Sequelize.json("address.city"), data.city),
+        ],
+      },
     })
   }
 

@@ -80,8 +80,8 @@
 <script setup lang="ts">
 import type { Quote, QuoteStatus } from "@medical-crm/shared"
 import { onMounted, ref } from "vue"
-import { QuoteBuilder } from "@/components/billing"
-import { quotesApi, documentsApi } from "@/services/api"
+import QuoteBuilder from "@/components/billing/QuoteBuilder.vue"
+import { quotesApi } from "@/services/api"
 import AppLayout from "@/components/layout/AppLayout.vue"
 
 const quotes = ref<Quote[]>([])
@@ -144,10 +144,22 @@ const editQuote = (quote: Quote) => {
 
 const downloadQuotePDF = async (quote: Quote) => {
   try {
-    const blob = await documentsApi.generateQuotePdf(quote.id) as Blob
-    documentsApi.downloadBlob(blob, `Quote-${quote.quoteNumber}.pdf`)
+    const response = await quotesApi.generatePdf(quote.id)
+    const blob = await response.blob()
+
+    // Create download link
+    const url = window.URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `Quote-${quote.quoteNumber}.pdf`
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    window.URL.revokeObjectURL(url)
+
     showSnackbar("PDF du devis téléchargé", "success")
   } catch (error) {
+    console.error("Error downloading quote PDF:", error)
     showSnackbar("Erreur lors du téléchargement du PDF", "error")
   }
 }

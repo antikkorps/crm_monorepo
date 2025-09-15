@@ -221,11 +221,73 @@ export const tasksApi = {
 }
 
 export const quotesApi = {
-  getAll: () => apiClient.get("/quotes"),
+  getAll: (filters?: any) => {
+    const params = new URLSearchParams()
+    if (filters) {
+      Object.entries(filters).forEach(([key, value]) => {
+        if (value !== undefined && value !== null && value !== "") {
+          if (Array.isArray(value)) {
+            value.forEach((v) => params.append(key, v.toString()))
+          } else {
+            params.append(key, value.toString())
+          }
+        }
+      })
+    }
+    const queryString = params.toString()
+    return apiClient.get(`/quotes${queryString ? `?${queryString}` : ""}`)
+  },
   getById: (id: string) => apiClient.get(`/quotes/${id}`),
   create: (data: any) => apiClient.post("/quotes", data),
   update: (id: string, data: any) => apiClient.put(`/quotes/${id}`, data),
   delete: (id: string) => apiClient.delete(`/quotes/${id}`),
+
+  // Quote status workflow
+  send: (id: string) => apiClient.put(`/quotes/${id}/send`),
+  accept: (id: string) => apiClient.put(`/quotes/${id}/accept`),
+  reject: (id: string) => apiClient.put(`/quotes/${id}/reject`),
+  cancel: (id: string) => apiClient.put(`/quotes/${id}/cancel`),
+
+  // Quote lines
+  lines: {
+    getAll: (quoteId: string) => apiClient.get(`/quotes/${quoteId}/lines`),
+    create: (quoteId: string, data: any) =>
+      apiClient.post(`/quotes/${quoteId}/lines`, data),
+    update: (quoteId: string, lineId: string, data: any) =>
+      apiClient.put(`/quotes/${quoteId}/lines/${lineId}`, data),
+    delete: (quoteId: string, lineId: string) =>
+      apiClient.delete(`/quotes/${quoteId}/lines/${lineId}`),
+    reorder: (quoteId: string, lineIds: string[]) =>
+      apiClient.put(`/quotes/${quoteId}/lines/reorder`, { lineIds }),
+  },
+
+  // Statistics and reporting
+  getStatistics: (userId?: string) => {
+    const params = userId ? `?userId=${userId}` : ""
+    return apiClient.get(`/quotes/statistics${params}`)
+  },
+  getByInstitution: (institutionId: string) =>
+    apiClient.get(`/quotes/institution/${institutionId}`),
+  getByUser: (userId: string) => apiClient.get(`/quotes/user/${userId}`),
+  getByStatus: (status: string) => apiClient.get(`/quotes/status/${status}`),
+
+  // PDF generation
+  generatePdf: (id: string, templateId?: string, email?: boolean) => {
+    const params = new URLSearchParams()
+    if (templateId) params.append("templateId", templateId)
+    if (email) params.append("email", "true")
+    const queryString = params.toString()
+    return fetch(
+      `${API_BASE_URL}/quotes/${id}/pdf${queryString ? `?${queryString}` : ""}`,
+      {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      }
+    )
+  },
+  getVersions: (id: string) => apiClient.get(`/quotes/${id}/versions`),
 }
 
 export const invoicesApi = {

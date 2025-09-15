@@ -1,6 +1,7 @@
 import { InstitutionType } from "@medical-crm/shared"
-import { Association, DataTypes, Model, Op, Optional } from "sequelize"
+import { Association, DataTypes, Model, Op, Optional, Sequelize } from "sequelize"
 import { sequelize } from "../config/database"
+import { InstitutionAddress } from "./InstitutionAddress"
 import { ContactPerson } from "./ContactPerson"
 import { MedicalProfile } from "./MedicalProfile"
 import { User } from "./User"
@@ -58,7 +59,8 @@ export class MedicalInstitution
 
   // Instance methods
   public getFullAddress(): string {
-    const address = this.address || this.getDataValue('address')
+    const rel: any = (this as any).addressRel
+    const address = rel || this.address || this.getDataValue('address')
     const { street, city, state, zipCode, country } = address
     return `${street}, ${city}, ${state} ${zipCode}, ${country}`
   }
@@ -150,34 +152,46 @@ export class MedicalInstitution
     state?: string
   ): Promise<MedicalInstitution[]> {
     const whereClause: any = { isActive: true }
+    const useRelational = process.env.USE_RELATIONAL_ADDRESSES === "true"
+    const include: any[] = [
+      {
+        model: MedicalProfile,
+        as: "medicalProfile",
+      },
+      {
+        model: ContactPerson,
+        as: "contactPersons",
+        where: { isActive: true },
+        required: false,
+      },
+    ]
 
-    if (city) {
-      whereClause["address.city"] = {
-        [Op.iLike]: `%${city}%`,
+    if (useRelational && (city || state)) {
+      const addressWhere: any = {}
+      if (city) addressWhere.city = { [Op.iLike]: `%${city}%` }
+      if (state) addressWhere.state = { [Op.iLike]: `%${state}%` }
+      include.push({
+        model: InstitutionAddress,
+        as: "addressRel",
+        where: addressWhere,
+        required: true,
+      })
+    } else {
+      if (city) {
+        whereClause[Op.and] = [
+          ...(whereClause[Op.and] || []),
+          Sequelize.where(Sequelize.json("address.city"), { [Op.iLike]: `%${city}%` }),
+        ]
+      }
+      if (state) {
+        whereClause[Op.and] = [
+          ...(whereClause[Op.and] || []),
+          Sequelize.where(Sequelize.json("address.state"), { [Op.iLike]: `%${state}%` }),
+        ]
       }
     }
 
-    if (state) {
-      whereClause["address.state"] = {
-        [Op.iLike]: `%${state}%`,
-      }
-    }
-
-    return this.findAll({
-      where: whereClause,
-      include: [
-        {
-          model: MedicalProfile,
-          as: "medicalProfile",
-        },
-        {
-          model: ContactPerson,
-          as: "contactPersons",
-          where: { isActive: true },
-          required: false,
-        },
-      ],
-    })
+    return this.findAll({ where: whereClause, include })
   }
 
   public static async findByAssignedUser(userId: string): Promise<MedicalInstitution[]> {
@@ -290,6 +304,7 @@ export class MedicalInstitution
   }): Promise<MedicalInstitution[]> {
     const whereClause: any = { isActive: true }
     const profileWhere: any = {}
+    const useRelational = process.env.USE_RELATIONAL_ADDRESSES === "true"
 
     // Basic filters
     if (filters.name) {
@@ -302,15 +317,29 @@ export class MedicalInstitution
       whereClause.type = filters.type
     }
 
-    if (filters.city) {
-      whereClause["address.city"] = {
-        [Op.iLike]: `%${filters.city}%`,
+    const include: any[] = []
+    if (useRelational && (filters.city || filters.state)) {
+      const addressWhere: any = {}
+      if (filters.city) addressWhere.city = { [Op.iLike]: `%${filters.city}%` }
+      if (filters.state) addressWhere.state = { [Op.iLike]: `%${filters.state}%` }
+      include.push({
+        model: InstitutionAddress,
+        as: "addressRel",
+        where: addressWhere,
+        required: true,
+      })
+    } else {
+      if (filters.city) {
+        whereClause[Op.and] = [
+          ...(whereClause[Op.and] || []),
+          Sequelize.where(Sequelize.json("address.city"), { [Op.iLike]: `%${filters.city}%` }),
+        ]
       }
-    }
-
-    if (filters.state) {
-      whereClause["address.state"] = {
-        [Op.iLike]: `%${filters.state}%`,
+      if (filters.state) {
+        whereClause[Op.and] = [
+          ...(whereClause[Op.and] || []),
+          Sequelize.where(Sequelize.json("address.state"), { [Op.iLike]: `%${filters.state}%` }),
+        ]
       }
     }
 
@@ -383,6 +412,7 @@ export class MedicalInstitution
       where: whereClause,
       include: [
         includeProfile,
+        ...include,
         {
           model: ContactPerson,
           as: "contactPersons",

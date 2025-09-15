@@ -1,4 +1,5 @@
-import { DataTypes, Model, Op, Optional } from "sequelize"
+import { DataTypes, Model, Op, Optional, Sequelize } from "sequelize"
+import { InstitutionAddress } from "./InstitutionAddress"
 import { sequelize } from "../config/database"
 import { User } from "./User"
 import { Team } from "./Team"
@@ -164,6 +165,7 @@ export class Segment
     // Apply institution filters if specified
     let includeInstitution = false
     const institutionWhere: any = {}
+    let institutionNestedInclude: any[] | undefined
 
     if (this.criteria.institutionFilters) {
       includeInstitution = true
@@ -173,12 +175,32 @@ export class Segment
         institutionWhere.type = instFilters.type
       }
 
-      if (instFilters.city) {
-        institutionWhere["address.city"] = { [Op.iLike]: `%${instFilters.city}%` }
-      }
-
-      if (instFilters.state) {
-        institutionWhere["address.state"] = { [Op.iLike]: `%${instFilters.state}%` }
+      const useRelational = process.env.USE_RELATIONAL_ADDRESSES === 'true'
+      if (useRelational && (instFilters.city || instFilters.state)) {
+        const addrWhere: any = {}
+        if (instFilters.city) addrWhere.city = { [Op.iLike]: `%${instFilters.city}%` }
+        if (instFilters.state) addrWhere.state = { [Op.iLike]: `%${instFilters.state}%` }
+        institutionNestedInclude = [
+          {
+            model: InstitutionAddress,
+            as: 'addressRel',
+            where: addrWhere,
+            required: true,
+          },
+        ]
+      } else {
+        if (instFilters.city) {
+          institutionWhere[Op.and] = [
+            ...(institutionWhere[Op.and] || []),
+            Sequelize.where(Sequelize.json("institution.address.city"), { [Op.iLike]: `%${instFilters.city}%` }),
+          ]
+        }
+        if (instFilters.state) {
+          institutionWhere[Op.and] = [
+            ...(institutionWhere[Op.and] || []),
+            Sequelize.where(Sequelize.json("institution.address.state"), { [Op.iLike]: `%${instFilters.state}%` }),
+          ]
+        }
       }
 
       if (instFilters.assignedUserId) {
@@ -193,6 +215,7 @@ export class Segment
             as: "institution",
             where: institutionWhere,
             required: true,
+            ...(institutionNestedInclude ? { include: institutionNestedInclude } : {}),
           },
         ]
       : []

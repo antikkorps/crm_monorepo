@@ -8,6 +8,7 @@ import { Invoice } from "./Invoice"
 import { InvoiceLine } from "./InvoiceLine"
 import { MedicalInstitution } from "./MedicalInstitution"
 import { MedicalProfile } from "./MedicalProfile"
+import { InstitutionAddress } from "./InstitutionAddress"
 import { Meeting } from "./Meeting"
 import { MeetingParticipant } from "./MeetingParticipant"
 import { Note } from "./Note"
@@ -28,6 +29,18 @@ import { WebhookLog } from "./WebhookLog"
 MedicalInstitution.hasOne(MedicalProfile, {
   foreignKey: "institutionId",
   as: "medicalProfile",
+  onDelete: "CASCADE",
+})
+
+// Optional relational address (1:1)
+MedicalInstitution.hasOne(InstitutionAddress, {
+  foreignKey: "institutionId",
+  as: "addressRel",
+  onDelete: "CASCADE",
+})
+InstitutionAddress.belongsTo(MedicalInstitution, {
+  foreignKey: "institutionId",
+  as: "institution",
   onDelete: "CASCADE",
 })
 
@@ -561,6 +574,7 @@ export {
   InvoiceLine,
   MedicalInstitution,
   MedicalProfile,
+  InstitutionAddress,
   Meeting,
   MeetingParticipant,
   Note,
@@ -583,6 +597,7 @@ export default {
   Team,
   MedicalInstitution,
   MedicalProfile,
+  InstitutionAddress,
   ContactPerson,
   Task,
   Quote,

@@ -2,137 +2,141 @@
   <div class="quote-builder">
     <div class="quote-header">
       <div class="header-content">
-        <h2>{{ isEditing ? "Edit Quote" : "Create New Quote" }}</h2>
+        <h2>{{ isEditing ? "Modifier le devis" : "Créer un nouveau devis" }}</h2>
         <div class="quote-status" v-if="isEditing && quote">
-          <Badge :value="statusLabel" :severity="statusSeverity" />
+          <v-chip :color="statusSeverity" size="small">{{ statusLabel }}</v-chip>
         </div>
       </div>
       <div class="header-actions">
-        <Button
-          label="Save Draft"
-          icon="pi pi-save"
-          severity="secondary"
-          outlined
+        <v-btn
+          variant="outlined"
+          color="secondary"
+          prepend-icon="mdi-content-save"
           @click="saveDraft"
           :loading="saving"
           :disabled="!isFormValid"
-        />
-        <Button
-          label="Preview"
-          icon="pi pi-eye"
-          severity="info"
-          outlined
+        >
+          Sauvegarder brouillon
+        </v-btn>
+        <v-btn
+          variant="outlined"
+          color="info"
+          prepend-icon="mdi-eye"
           @click="previewQuote"
           :disabled="!isFormValid"
-        />
-        <Button
-          :label="isEditing ? 'Update Quote' : 'Create Quote'"
-          icon="pi pi-check"
+        >
+          Aperçu
+        </v-btn>
+        <v-btn
+          color="primary"
+          prepend-icon="mdi-check"
           @click="saveQuote"
           :loading="saving"
           :disabled="!isFormValid"
-        />
+        >
+          {{ isEditing ? 'Mettre à jour' : 'Créer le devis' }}
+        </v-btn>
       </div>
     </div>
 
     <div class="quote-form">
       <!-- Basic Information -->
-      <Card class="form-section">
-        <template #title>Basic Information</template>
-        <template #content>
-          <div class="form-grid">
-            <div class="form-group">
-              <label for="institution">Medical Institution *</label>
-              <Dropdown
-                id="institution"
+      <v-card class="form-section mb-6">
+        <v-card-title>Informations de base</v-card-title>
+        <v-card-text>
+          <v-row>
+            <v-col cols="12" md="6">
+              <v-select
                 v-model="formData.institutionId"
-                :options="institutions"
-                option-label="name"
-                option-value="id"
-                placeholder="Select institution"
-                filter
-                :class="{ 'p-invalid': errors.institutionId }"
-                @change="onInstitutionChange"
+                :items="institutions"
+                item-title="name"
+                item-value="id"
+                label="Institution médicale *"
+                variant="outlined"
+                :error-messages="errors.institutionId"
+                @update:model-value="onInstitutionChange"
               />
-              <small v-if="errors.institutionId" class="p-error">{{
-                errors.institutionId
-              }}</small>
-            </div>
+            </v-col>
 
-            <div class="form-group">
-              <label for="template">Document Template</label>
-              <Dropdown
-                id="template"
+            <v-col cols="12" md="6">
+              <v-select
                 v-model="formData.templateId"
-                :options="templates"
-                option-label="name"
-                option-value="id"
-                placeholder="Select template (optional)"
-                show-clear
+                :items="templates"
+                item-title="name"
+                item-value="id"
+                label="Modèle de document"
+                variant="outlined"
+                clearable
               />
-            </div>
+            </v-col>
 
-            <div class="form-group">
-              <label for="title">Quote Title *</label>
-              <InputText
-                id="title"
+            <v-col cols="12" md="6">
+              <v-text-field
                 v-model="formData.title"
-                placeholder="Enter quote title"
-                :class="{ 'p-invalid': errors.title }"
+                label="Titre du devis *"
+                variant="outlined"
+                :error-messages="errors.title"
               />
-              <small v-if="errors.title" class="p-error">{{ errors.title }}</small>
-            </div>
+            </v-col>
 
-            <div class="form-group">
-              <label for="valid-until">Valid Until *</label>
-              <Calendar
-                id="valid-until"
+            <v-col cols="12" md="6">
+              <v-text-field
                 v-model="formData.validUntil"
-                :min-date="new Date()"
-                date-format="mm/dd/yy"
-                :class="{ 'p-invalid': errors.validUntil }"
+                label="Valide jusqu'au *"
+                type="date"
+                variant="outlined"
+                :error-messages="errors.validUntil"
               />
-              <small v-if="errors.validUntil" class="p-error">{{
-                errors.validUntil
-              }}</small>
-            </div>
+            </v-col>
 
-            <div class="form-group full-width">
-              <label for="description">Description</label>
-              <Textarea
-                id="description"
+            <v-col cols="12">
+              <v-textarea
                 v-model="formData.description"
-                placeholder="Enter quote description"
+                label="Description"
+                variant="outlined"
                 rows="3"
               />
-            </div>
+            </v-col>
 
-            <div class="form-group full-width">
-              <label for="internal-notes">Internal Notes</label>
-              <Textarea
-                id="internal-notes"
+            <v-col cols="12">
+              <v-textarea
                 v-model="formData.internalNotes"
-                placeholder="Internal notes (not visible to client)"
+                label="Notes internes"
+                variant="outlined"
                 rows="2"
+                hint="Non visible par le client"
+                persistent-hint
               />
-            </div>
-          </div>
-        </template>
-      </Card>
+            </v-col>
+          </v-row>
+        </v-card-text>
+      </v-card>
 
       <!-- Line Items -->
-      <Card class="form-section">
-        <template #title>
-          <div class="section-header">
-            <span>Line Items</span>
-            <Button label="Add Line" icon="pi pi-plus" size="small" @click="addLine" />
-          </div>
-        </template>
-        <template #content>
+      <v-card class="form-section mb-6">
+        <v-card-title class="d-flex justify-space-between align-center">
+          <span>Lignes de devis</span>
+          <v-btn
+            color="primary"
+            variant="outlined"
+            prepend-icon="mdi-plus"
+            size="small"
+            @click="addLine"
+          >
+            Ajouter une ligne
+          </v-btn>
+        </v-card-title>
+        <v-card-text>
           <div v-if="formData.lines.length === 0" class="empty-lines">
-            <i class="pi pi-list empty-icon"></i>
-            <p>No line items added yet</p>
-            <Button label="Add First Line" icon="pi pi-plus" @click="addLine" />
+            <v-icon size="64" color="grey-lighten-2">mdi-format-list-bulleted</v-icon>
+            <p class="text-h6 mt-4">Aucune ligne ajoutée</p>
+            <v-btn
+              color="primary"
+              prepend-icon="mdi-plus"
+              @click="addLine"
+            >
+              Ajouter la première ligne
+            </v-btn>
           </div>
 
           <div v-else class="lines-container">
@@ -147,114 +151,123 @@
               @move-down="moveLineDown"
             />
           </div>
-        </template>
-      </Card>
+        </v-card-text>
+      </v-card>
 
       <!-- Totals Summary -->
-      <Card class="form-section totals-section">
-        <template #title>Quote Summary</template>
-        <template #content>
-          <div class="totals-grid">
-            <div class="totals-breakdown">
-              <div class="total-row">
-                <span>Subtotal:</span>
-                <span class="amount">{{
-                  formatCurrency(calculatedTotals.subtotal)
-                }}</span>
+      <v-card class="form-section totals-section">
+        <v-card-title>Résumé du devis</v-card-title>
+        <v-card-text>
+          <v-row>
+            <v-col cols="12" md="8">
+              <div class="totals-breakdown">
+                <v-row class="total-row">
+                  <v-col cols="6">Sous-total:</v-col>
+                  <v-col cols="6" class="text-right">
+                    <span class="amount">{{ formatCurrency(calculatedTotals.subtotal) }}</span>
+                  </v-col>
+                </v-row>
+                <v-row class="total-row">
+                  <v-col cols="6">Remise totale:</v-col>
+                  <v-col cols="6" class="text-right">
+                    <span class="amount discount">-{{ formatCurrency(calculatedTotals.totalDiscountAmount) }}</span>
+                  </v-col>
+                </v-row>
+                <v-row class="total-row">
+                  <v-col cols="6">Taxes totales:</v-col>
+                  <v-col cols="6" class="text-right">
+                    <span class="amount">{{ formatCurrency(calculatedTotals.totalTaxAmount) }}</span>
+                  </v-col>
+                </v-row>
+                <v-divider class="my-3" />
+                <v-row class="total-row final-total">
+                  <v-col cols="6"><strong>Total:</strong></v-col>
+                  <v-col cols="6" class="text-right">
+                    <span class="amount"><strong>{{ formatCurrency(calculatedTotals.total) }}</strong></span>
+                  </v-col>
+                </v-row>
               </div>
-              <div class="total-row">
-                <span>Total Discount:</span>
-                <span class="amount discount"
-                  >-{{ formatCurrency(calculatedTotals.totalDiscountAmount) }}</span
-                >
-              </div>
-              <div class="total-row">
-                <span>Total Tax:</span>
-                <span class="amount">{{
-                  formatCurrency(calculatedTotals.totalTaxAmount)
-                }}</span>
-              </div>
-              <div class="total-row final-total">
-                <span><strong>Total:</strong></span>
-                <span class="amount"
-                  ><strong>{{ formatCurrency(calculatedTotals.total) }}</strong></span
-                >
-              </div>
-            </div>
+            </v-col>
 
-            <div class="totals-actions">
-              <Button
-                label="Send to Client"
-                icon="pi pi-send"
-                severity="success"
-                @click="sendQuote"
-                :disabled="!canSendQuote"
-                :loading="sending"
-              />
-              <Button
-                label="Convert to Invoice"
-                icon="pi pi-arrow-right"
-                severity="warning"
-                outlined
-                @click="convertToInvoice"
-                :disabled="!canConvertToInvoice"
-              />
-            </div>
-          </div>
-        </template>
-      </Card>
+            <v-col cols="12" md="4">
+              <div class="totals-actions">
+                <v-btn
+                  color="success"
+                  prepend-icon="mdi-send"
+                  block
+                  @click="sendQuote"
+                  :disabled="!canSendQuote"
+                  :loading="sending"
+                  class="mb-3"
+                >
+                  Envoyer au client
+                </v-btn>
+                <v-btn
+                  color="warning"
+                  variant="outlined"
+                  prepend-icon="mdi-arrow-right"
+                  block
+                  @click="convertToInvoice"
+                  :disabled="!canConvertToInvoice"
+                >
+                  Convertir en facture
+                </v-btn>
+              </div>
+            </v-col>
+          </v-row>
+        </v-card-text>
+      </v-card>
     </div>
 
     <!-- Quote Preview Dialog -->
     <QuotePreview v-model:visible="showPreview" :quote-data="previewData" />
 
     <!-- Send Quote Dialog -->
-    <Dialog
-      v-model:visible="showSendDialog"
-      header="Send Quote to Client"
-      :modal="true"
-      class="send-dialog"
-    >
-      <div class="send-content">
-        <div class="recipient-info">
-          <h4>Recipient</h4>
-          <div class="recipient-details">
-            <div>
-              <strong>{{ selectedInstitution?.name }}</strong>
+    <v-dialog v-model="showSendDialog" max-width="500">
+      <v-card>
+        <v-card-title>Envoyer le devis au client</v-card-title>
+        <v-card-text>
+          <div class="send-content">
+            <div class="recipient-info mb-4">
+              <h4 class="text-h6 mb-2">Destinataire</h4>
+              <v-card variant="outlined" class="pa-3">
+                <div class="font-weight-bold">{{ selectedInstitution?.name }}</div>
+                <div class="text-medium-emphasis">{{ institutionContactEmail }}</div>
+              </v-card>
             </div>
-            <div>{{ institutionContactEmail }}</div>
+
+            <v-textarea
+              v-model="emailMessage"
+              label="Message personnalisé (optionnel)"
+              placeholder="Ajoutez un message personnel à inclure avec le devis..."
+              rows="4"
+              variant="outlined"
+            />
           </div>
-        </div>
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer />
+          <v-btn
+            variant="outlined"
+            @click="showSendDialog = false"
+          >
+            Annuler
+          </v-btn>
+          <v-btn
+            color="primary"
+            prepend-icon="mdi-send"
+            @click="confirmSendQuote"
+            :loading="sending"
+          >
+            Envoyer le devis
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
 
-        <div class="message-section">
-          <label for="email-message">Custom Message (Optional)</label>
-          <Textarea
-            id="email-message"
-            v-model="emailMessage"
-            placeholder="Add a personal message to include with the quote..."
-            rows="4"
-          />
-        </div>
-      </div>
-
-      <template #footer>
-        <Button
-          label="Cancel"
-          severity="secondary"
-          outlined
-          @click="showSendDialog = false"
-        />
-        <Button
-          label="Send Quote"
-          icon="pi pi-send"
-          @click="confirmSendQuote"
-          :loading="sending"
-        />
-      </template>
-    </Dialog>
-
-    <!-- Toast for notifications -->
-    <Toast />
+    <v-snackbar v-model="snackbar.visible" :color="snackbar.color" timeout="3000">
+      {{ snackbar.message }}
+    </v-snackbar>
   </div>
 </template>
 
@@ -267,7 +280,6 @@ import type {
   QuoteLine as QuoteLineType,
   QuoteStatus,
 } from "@medical-crm/shared"
-import { useToast } from "primevue/usetoast"
 import { computed, onMounted, ref, watch } from "vue"
 import { useRouter } from "vue-router"
 import { institutionsApi, quotesApi, templatesApi } from "../../services/api"
@@ -288,12 +300,12 @@ const emit = defineEmits<{
 
 // Reactive state
 const router = useRouter()
-const toast = useToast()
 const saving = ref(false)
 const sending = ref(false)
 const showPreview = ref(false)
 const showSendDialog = ref(false)
 const emailMessage = ref("")
+const snackbar = ref({ visible: false, message: '', color: 'info' })
 
 // Form data
 const formData = ref<
@@ -303,7 +315,7 @@ const formData = ref<
   templateId: "",
   title: "",
   description: "",
-  validUntil: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
+  validUntil: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 30 days from now
   internalNotes: "",
   lines: [],
 })
@@ -433,12 +445,7 @@ const loadInstitutions = async () => {
     institutions.value = response.data || []
   } catch (error) {
     console.error("Failed to load institutions:", error)
-    toast.add({
-      severity: "error",
-      summary: "Error",
-      detail: "Failed to load medical institutions",
-      life: 3000,
-    })
+    showSnackbar("Erreur lors du chargement des institutions médicales", "error")
   }
 }
 
@@ -523,21 +530,21 @@ const validateForm = () => {
   const newErrors: Record<string, string> = {}
 
   if (!formData.value.institutionId) {
-    newErrors.institutionId = "Medical institution is required"
+    newErrors.institutionId = "L'institution médicale est requise"
   }
 
   if (!formData.value.title.trim()) {
-    newErrors.title = "Quote title is required"
+    newErrors.title = "Le titre du devis est requis"
   }
 
   if (!formData.value.validUntil) {
-    newErrors.validUntil = "Valid until date is required"
-  } else if (formData.value.validUntil <= new Date()) {
-    newErrors.validUntil = "Valid until date must be in the future"
+    newErrors.validUntil = "La date de validité est requise"
+  } else if (new Date(formData.value.validUntil) <= new Date()) {
+    newErrors.validUntil = "La date de validité doit être dans le futur"
   }
 
   if (formData.value.lines.length === 0) {
-    newErrors.lines = "At least one line item is required"
+    newErrors.lines = "Au moins une ligne est requise"
   }
 
   errors.value = newErrors
@@ -552,6 +559,7 @@ const saveDraft = async () => {
 
     const quoteData = {
       ...formData.value,
+      validUntil: new Date(formData.value.validUntil),
       ...calculatedTotals.value,
     }
 
@@ -562,22 +570,12 @@ const saveDraft = async () => {
       savedQuote = await quotesApi.create(quoteData)
     }
 
-    toast.add({
-      severity: "success",
-      summary: "Success",
-      detail: "Quote saved as draft",
-      life: 3000,
-    })
+    showSnackbar("Devis sauvegardé comme brouillon", "success")
 
     emit("saved", savedQuote)
   } catch (error) {
     console.error("Failed to save quote:", error)
-    toast.add({
-      severity: "error",
-      summary: "Error",
-      detail: "Failed to save quote",
-      life: 3000,
-    })
+    showSnackbar("Erreur lors de la sauvegarde du devis", "error")
   } finally {
     saving.value = false
   }
@@ -607,23 +605,13 @@ const confirmSendQuote = async () => {
     // Then send it (this would be implemented in the API)
     // await quotesApi.send(props.quote.id, { emailMessage: emailMessage.value })
 
-    toast.add({
-      severity: "success",
-      summary: "Success",
-      detail: "Quote sent to client successfully",
-      life: 3000,
-    })
+    showSnackbar("Devis envoyé au client avec succès", "success")
 
     showSendDialog.value = false
     emailMessage.value = ""
   } catch (error) {
     console.error("Failed to send quote:", error)
-    toast.add({
-      severity: "error",
-      summary: "Error",
-      detail: "Failed to send quote",
-      life: 3000,
-    })
+    showSnackbar("Erreur lors de l'envoi du devis", "error")
   } finally {
     sending.value = false
   }
@@ -640,10 +628,14 @@ const convertToInvoice = () => {
 }
 
 const formatCurrency = (amount: number) => {
-  return new Intl.NumberFormat("en-US", {
+  return new Intl.NumberFormat("fr-FR", {
     style: "currency",
-    currency: "USD",
+    currency: "EUR",
   }).format(amount || 0)
+}
+
+const showSnackbar = (message: string, color: string = 'info') => {
+  snackbar.value = { visible: true, message, color }
 }
 
 // Load quote data for editing
@@ -654,7 +646,7 @@ const loadQuoteData = () => {
       templateId: props.quote.templateId || "",
       title: props.quote.title,
       description: props.quote.description || "",
-      validUntil: new Date(props.quote.validUntil),
+      validUntil: new Date(props.quote.validUntil).toISOString().split('T')[0],
       internalNotes: props.quote.internalNotes || "",
       lines: props.quote.lines || [],
     }
@@ -693,7 +685,6 @@ onMounted(async () => {
 
 .header-content h2 {
   margin: 0;
-  color: var(--text-color);
   font-size: 1.75rem;
   font-weight: 600;
 }
@@ -710,39 +701,6 @@ onMounted(async () => {
   gap: 2rem;
 }
 
-.form-section {
-  border: 1px solid var(--surface-border);
-}
-
-.section-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  width: 100%;
-}
-
-.form-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1.5rem;
-}
-
-.form-group {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.form-group.full-width {
-  grid-column: 1 / -1;
-}
-
-.form-group label {
-  font-weight: 500;
-  color: var(--text-color);
-  font-size: 0.875rem;
-}
-
 .empty-lines {
   display: flex;
   flex-direction: column;
@@ -750,35 +708,12 @@ onMounted(async () => {
   justify-content: center;
   padding: 3rem;
   text-align: center;
-  color: var(--text-color-secondary);
-}
-
-.empty-icon {
-  font-size: 3rem;
-  margin-bottom: 1rem;
-  color: var(--text-color-secondary);
-}
-
-.empty-lines p {
-  margin: 0 0 1.5rem 0;
-  font-size: 1rem;
 }
 
 .lines-container {
   display: flex;
   flex-direction: column;
   gap: 1rem;
-}
-
-.totals-section {
-  background: var(--surface-50);
-}
-
-.totals-grid {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 2rem;
-  align-items: start;
 }
 
 .totals-breakdown {
@@ -788,19 +723,10 @@ onMounted(async () => {
 }
 
 .total-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
   padding: 0.5rem 0;
-  border-bottom: 1px solid var(--surface-border);
-}
-
-.total-row:last-child {
-  border-bottom: none;
 }
 
 .final-total {
-  border-top: 2px solid var(--text-color);
   margin-top: 0.5rem;
   padding-top: 1rem;
   font-size: 1.125rem;
@@ -812,64 +738,13 @@ onMounted(async () => {
 }
 
 .amount.discount {
-  color: var(--red-500);
+  color: rgb(var(--v-theme-error));
 }
 
 .totals-actions {
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
-  min-width: 200px;
-}
-
-.send-dialog {
-  max-width: 500px;
-}
-
-.send-content {
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-  padding: 1rem 0;
-}
-
-.recipient-info h4 {
-  margin: 0 0 0.75rem 0;
-  color: var(--text-color);
-}
-
-.recipient-details {
-  padding: 1rem;
-  background: var(--surface-50);
-  border-radius: 6px;
-  border: 1px solid var(--surface-border);
-}
-
-.recipient-details div {
-  margin-bottom: 0.25rem;
-}
-
-.recipient-details div:last-child {
-  margin-bottom: 0;
-  color: var(--text-color-secondary);
-  font-size: 0.875rem;
-}
-
-.message-section {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.message-section label {
-  font-weight: 500;
-  color: var(--text-color);
-  font-size: 0.875rem;
-}
-
-.p-error {
-  color: var(--red-500);
-  font-size: 0.75rem;
 }
 
 /* Responsive design */
@@ -885,23 +760,6 @@ onMounted(async () => {
 
   .header-actions {
     justify-content: stretch;
-  }
-
-  .header-actions .p-button {
-    flex: 1;
-  }
-
-  .form-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .totals-grid {
-    grid-template-columns: 1fr;
-    gap: 1.5rem;
-  }
-
-  .totals-actions {
-    min-width: auto;
   }
 }
 </style>

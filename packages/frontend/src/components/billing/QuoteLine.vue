@@ -1,182 +1,200 @@
 <template>
-  <Card class="quote-line" :class="{ 'has-error': hasErrors }">
-    <template #content>
+  <v-card class="quote-line" :class="{ 'has-error': hasErrors }" variant="outlined">
+    <v-card-text>
       <div class="line-content">
         <!-- Line Header -->
         <div class="line-header">
           <div class="line-number">
-            <Badge :value="`${index + 1}`" severity="secondary" />
+            <v-chip color="grey" size="small">{{ index + 1 }}</v-chip>
           </div>
           <div class="line-actions">
-            <Button
-              icon="pi pi-arrow-up"
-              text
-              rounded
+            <v-btn
+              icon="mdi-arrow-up"
+              variant="text"
               size="small"
               @click="$emit('move-up', index)"
               :disabled="index === 0"
-              v-tooltip.top="'Move Up'"
-            />
-            <Button
-              icon="pi pi-arrow-down"
-              text
-              rounded
+            >
+              <v-icon>mdi-arrow-up</v-icon>
+              <v-tooltip activator="parent" location="top">Déplacer vers le haut</v-tooltip>
+            </v-btn>
+            <v-btn
+              icon="mdi-arrow-down"
+              variant="text"
               size="small"
               @click="$emit('move-down', index)"
               :disabled="isLast"
-              v-tooltip.top="'Move Down'"
-            />
-            <Button
-              icon="pi pi-trash"
-              text
-              rounded
+            >
+              <v-icon>mdi-arrow-down</v-icon>
+              <v-tooltip activator="parent" location="top">Déplacer vers le bas</v-tooltip>
+            </v-btn>
+            <v-btn
+              icon="mdi-delete"
+              variant="text"
               size="small"
-              severity="danger"
+              color="error"
               @click="$emit('remove', index)"
-              v-tooltip.top="'Remove Line'"
-            />
+            >
+              <v-icon>mdi-delete</v-icon>
+              <v-tooltip activator="parent" location="top">Supprimer la ligne</v-tooltip>
+            </v-btn>
           </div>
         </div>
 
         <!-- Line Form -->
         <div class="line-form">
           <!-- Description -->
-          <div class="form-group description-group">
-            <label>Description *</label>
-            <InputText
-              v-model="localLine.description"
-              placeholder="Enter item description"
-              :class="{ 'p-invalid': errors.description }"
-              @input="updateLine"
-            />
-            <small v-if="errors.description" class="p-error">{{
-              errors.description
-            }}</small>
-          </div>
+          <v-row class="mb-3">
+            <v-col cols="12">
+              <v-text-field
+                v-model="localLine.description"
+                label="Description *"
+                variant="outlined"
+                :error-messages="errors.description"
+                @input="updateLine"
+              />
+            </v-col>
+          </v-row>
 
           <!-- Quantity and Unit Price -->
-          <div class="form-row">
-            <div class="form-group">
-              <label>Quantity *</label>
-              <InputNumber
+          <v-row>
+            <v-col cols="12" md="4">
+              <v-text-field
                 v-model="localLine.quantity"
+                label="Quantité *"
+                type="number"
+                variant="outlined"
                 :min="0"
-                :max-fraction-digits="2"
-                :class="{ 'p-invalid': errors.quantity }"
+                step="0.01"
+                :error-messages="errors.quantity"
                 @input="updateLine"
               />
-              <small v-if="errors.quantity" class="p-error">{{ errors.quantity }}</small>
-            </div>
+            </v-col>
 
-            <div class="form-group">
-              <label>Unit Price *</label>
-              <InputNumber
+            <v-col cols="12" md="4">
+              <v-text-field
                 v-model="localLine.unitPrice"
-                mode="currency"
-                currency="USD"
+                label="Prix unitaire *"
+                type="number"
+                variant="outlined"
                 :min="0"
-                :max-fraction-digits="2"
-                :class="{ 'p-invalid': errors.unitPrice }"
+                step="0.01"
+                :error-messages="errors.unitPrice"
                 @input="updateLine"
               />
-              <small v-if="errors.unitPrice" class="p-error">{{
-                errors.unitPrice
-              }}</small>
-            </div>
+            </v-col>
 
-            <div class="form-group">
-              <label>Subtotal</label>
-              <div class="calculated-field">
-                {{ formatCurrency(calculatedValues.subtotal) }}
-              </div>
-            </div>
-          </div>
+            <v-col cols="12" md="4">
+              <v-text-field
+                :model-value="formatCurrency(calculatedValues.subtotal)"
+                label="Sous-total"
+                variant="outlined"
+                readonly
+                class="calculated-field"
+              />
+            </v-col>
+          </v-row>
 
           <!-- Discount Section -->
-          <div class="discount-section">
-            <div class="discount-header">
-              <h4>Discount</h4>
+          <v-card class="discount-section mt-4" variant="outlined">
+            <v-card-title class="d-flex justify-space-between align-center">
+              <span>Remise</span>
               <div class="discount-toggle">
-                <InputSwitch v-model="hasDiscount" @change="toggleDiscount" />
-                <label>Apply Discount</label>
-              </div>
-            </div>
-
-            <div v-if="hasDiscount" class="discount-controls">
-              <div class="form-row">
-                <div class="form-group">
-                  <label>Discount Type</label>
-                  <Dropdown
-                    v-model="localLine.discountType"
-                    :options="discountTypeOptions"
-                    option-label="label"
-                    option-value="value"
-                    @change="updateLine"
-                  />
-                </div>
-
-                <div class="form-group">
-                  <label>{{ discountValueLabel }}</label>
-                  <InputNumber
-                    v-model="localLine.discountValue"
-                    :mode="
-                      localLine.discountType === 'fixed_amount' ? 'currency' : 'decimal'
-                    "
-                    :currency="
-                      localLine.discountType === 'fixed_amount' ? 'USD' : undefined
-                    "
-                    :suffix="localLine.discountType === 'percentage' ? '%' : undefined"
-                    :min="0"
-                    :max="localLine.discountType === 'percentage' ? 100 : undefined"
-                    :max-fraction-digits="2"
-                    @input="updateLine"
-                  />
-                </div>
-
-                <div class="form-group">
-                  <label>Discount Amount</label>
-                  <div class="calculated-field discount-amount">
-                    -{{ formatCurrency(calculatedValues.discountAmount) }}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Tax Section -->
-          <div class="tax-section">
-            <div class="form-row">
-              <div class="form-group">
-                <label>Tax Rate (%)</label>
-                <InputNumber
-                  v-model="localLine.taxRate"
-                  suffix="%"
-                  :min="0"
-                  :max="100"
-                  :max-fraction-digits="2"
-                  @input="updateLine"
+                <v-switch
+                  v-model="hasDiscount"
+                  @update:model-value="toggleDiscount"
+                  label="Appliquer une remise"
+                  hide-details
                 />
               </div>
+            </v-card-title>
 
-              <div class="form-group">
-                <label>Tax Amount</label>
-                <div class="calculated-field">
-                  {{ formatCurrency(calculatedValues.taxAmount) }}
-                </div>
-              </div>
+            <v-card-text v-if="hasDiscount">
+              <v-row>
+                <v-col cols="12" md="4">
+                  <v-select
+                    v-model="localLine.discountType"
+                    :items="discountTypeOptions"
+                    item-title="label"
+                    item-value="value"
+                    label="Type de remise"
+                    variant="outlined"
+                    @update:model-value="updateLine"
+                  />
+                </v-col>
 
-              <div class="form-group">
-                <label><strong>Line Total</strong></label>
-                <div class="calculated-field line-total">
-                  <strong>{{ formatCurrency(calculatedValues.total) }}</strong>
-                </div>
-              </div>
-            </div>
-          </div>
+                <v-col cols="12" md="4">
+                  <v-text-field
+                    v-model="localLine.discountValue"
+                    :label="discountValueLabel"
+                    type="number"
+                    variant="outlined"
+                    :min="0"
+                    :max="localLine.discountType === 'percentage' ? 100 : undefined"
+                    step="0.01"
+                    :suffix="localLine.discountType === 'percentage' ? '%' : '€'"
+                    @input="updateLine"
+                  />
+                </v-col>
+
+                <v-col cols="12" md="4">
+                  <v-text-field
+                    :model-value="`-${formatCurrency(calculatedValues.discountAmount)}`"
+                    label="Montant de remise"
+                    variant="outlined"
+                    readonly
+                    class="calculated-field discount-amount"
+                  />
+                </v-col>
+              </v-row>
+            </v-card-text>
+          </v-card>
+
+          <!-- Tax Section -->
+          <v-card class="tax-section mt-4" variant="outlined">
+            <v-card-title>Taxes et total</v-card-title>
+            <v-card-text>
+              <v-row>
+                <v-col cols="12" md="4">
+                  <v-text-field
+                    v-model="localLine.taxRate"
+                    label="Taux de taxe (%)"
+                    type="number"
+                    variant="outlined"
+                    :min="0"
+                    :max="100"
+                    step="0.01"
+                    suffix="%"
+                    @input="updateLine"
+                  />
+                </v-col>
+
+                <v-col cols="12" md="4">
+                  <v-text-field
+                    :model-value="formatCurrency(calculatedValues.taxAmount)"
+                    label="Montant de taxe"
+                    variant="outlined"
+                    readonly
+                    class="calculated-field"
+                  />
+                </v-col>
+
+                <v-col cols="12" md="4">
+                  <v-text-field
+                    :model-value="formatCurrency(calculatedValues.total)"
+                    label="Total de la ligne"
+                    variant="outlined"
+                    readonly
+                    class="calculated-field line-total"
+                  />
+                </v-col>
+              </v-row>
+            </v-card-text>
+          </v-card>
         </div>
       </div>
-    </template>
-  </Card>
+    </v-card-text>
+  </v-card>
 </template>
 
 <script setup lang="ts">
@@ -206,15 +224,15 @@ const errors = ref<Record<string, string>>({})
 
 // Discount type options
 const discountTypeOptions = [
-  { label: "Percentage (%)", value: "percentage" },
-  { label: "Fixed Amount ($)", value: "fixed_amount" },
+  { label: "Pourcentage (%)", value: "percentage" },
+  { label: "Montant fixe (€)", value: "fixed_amount" },
 ]
 
 // Computed properties
 const discountValueLabel = computed(() => {
   return localLine.value.discountType === "percentage"
-    ? "Discount Percentage"
-    : "Discount Amount"
+    ? "Pourcentage de remise"
+    : "Montant de remise"
 })
 
 const calculatedValues = computed(() => {
@@ -256,15 +274,15 @@ const validateLine = () => {
   const newErrors: Record<string, string> = {}
 
   if (!localLine.value.description?.trim()) {
-    newErrors.description = "Description is required"
+    newErrors.description = "La description est requise"
   }
 
   if (!localLine.value.quantity || localLine.value.quantity <= 0) {
-    newErrors.quantity = "Quantity must be greater than 0"
+    newErrors.quantity = "La quantité doit être supérieure à 0"
   }
 
   if (localLine.value.unitPrice < 0) {
-    newErrors.unitPrice = "Unit price cannot be negative"
+    newErrors.unitPrice = "Le prix unitaire ne peut pas être négatif"
   }
 
   errors.value = newErrors
@@ -295,9 +313,9 @@ const toggleDiscount = () => {
 }
 
 const formatCurrency = (amount: number) => {
-  return new Intl.NumberFormat("en-US", {
+  return new Intl.NumberFormat("fr-FR", {
     style: "currency",
-    currency: "USD",
+    currency: "EUR",
   }).format(amount || 0)
 }
 
@@ -317,24 +335,18 @@ validateLine()
 
 <style scoped>
 .quote-line {
-  border: 1px solid var(--surface-border);
   transition: all 0.2s ease;
 }
 
 .quote-line.has-error {
-  border-color: var(--red-500);
-  box-shadow: 0 0 0 1px var(--red-500);
-}
-
-.line-content {
-  padding: 0;
+  border-color: rgb(var(--v-theme-error));
+  box-shadow: 0 0 0 1px rgb(var(--v-theme-error));
 }
 
 .line-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 1rem 1rem 0 1rem;
   margin-bottom: 1rem;
 }
 
@@ -349,102 +361,29 @@ validateLine()
 }
 
 .line-form {
-  padding: 0 1rem 1rem 1rem;
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
-}
-
-.form-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
   gap: 1rem;
 }
 
-.form-group {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.form-group.description-group {
-  margin-bottom: 0.5rem;
-}
-
-.form-group label {
-  font-weight: 500;
-  color: var(--text-color);
-  font-size: 0.875rem;
-}
-
 .calculated-field {
-  padding: 0.75rem;
-  background: var(--surface-50);
-  border: 1px solid var(--surface-border);
-  border-radius: 6px;
   font-family: "Courier New", monospace;
   font-weight: 500;
-  color: var(--text-color-secondary);
-  text-align: right;
 }
 
 .calculated-field.discount-amount {
-  color: var(--red-500);
+  color: rgb(var(--v-theme-error));
 }
 
 .calculated-field.line-total {
-  background: var(--primary-50);
-  border-color: var(--primary-200);
-  color: var(--primary-700);
-  font-size: 1.125rem;
-}
-
-.discount-section {
-  padding: 1rem;
-  background: var(--surface-50);
-  border: 1px solid var(--surface-border);
-  border-radius: 8px;
-}
-
-.discount-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1rem;
-}
-
-.discount-header h4 {
-  margin: 0;
-  color: var(--text-color);
-  font-size: 1rem;
+  color: rgb(var(--v-theme-primary));
+  font-weight: 600;
 }
 
 .discount-toggle {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-}
-
-.discount-toggle label {
-  font-size: 0.875rem;
-  color: var(--text-color);
-  cursor: pointer;
-}
-
-.discount-controls {
-  margin-top: 1rem;
-}
-
-.tax-section {
-  padding: 1rem;
-  background: var(--surface-100);
-  border: 1px solid var(--surface-border);
-  border-radius: 8px;
-}
-
-.p-error {
-  color: var(--red-500);
-  font-size: 0.75rem;
 }
 
 /* Responsive design */
@@ -457,31 +396,6 @@ validateLine()
 
   .line-actions {
     justify-content: center;
-  }
-
-  .form-row {
-    grid-template-columns: 1fr;
-  }
-
-  .discount-header {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 1rem;
-  }
-
-  .discount-toggle {
-    justify-content: center;
-  }
-}
-
-@media (max-width: 480px) {
-  .line-form {
-    padding: 0 0.5rem 1rem 0.5rem;
-  }
-
-  .discount-section,
-  .tax-section {
-    padding: 0.75rem;
   }
 }
 </style>

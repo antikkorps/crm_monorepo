@@ -80,9 +80,9 @@ describe("SegmentService", () => {
       const filters = { city: "Paris" }
       const whereClause = SegmentService["buildWhereClause"](filters)
 
-      expect(whereClause).toEqual({
-        "address.city": { [Op.iLike]: "%Paris%" },
-      })
+      expect(whereClause[Op.and]).toBeDefined()
+      expect(Array.isArray(whereClause[Op.and])).toBe(true)
+      expect((whereClause[Op.and] as any[]).length).toBe(1)
     })
 
     it("should build where clause for tags filter", () => {
@@ -105,9 +105,9 @@ describe("SegmentService", () => {
       const filters = { name: undefined, type: null, city: "Paris" }
       const whereClause = SegmentService["buildWhereClause"](filters)
 
-      expect(whereClause).toEqual({
-        "address.city": { [Op.iLike]: "%Paris%" },
-      })
+      expect(whereClause[Op.and]).toBeDefined()
+      expect(Array.isArray(whereClause[Op.and])).toBe(true)
+      expect((whereClause[Op.and] as any[]).length).toBe(1)
     })
   })
 

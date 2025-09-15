@@ -1,4 +1,5 @@
-import { Op, WhereOptions } from "sequelize"
+import { Op, WhereOptions, Sequelize } from "sequelize"
+import { InstitutionAddress } from "../models/InstitutionAddress"
 import { MedicalInstitution, ContactPerson, Segment } from "../models"
 import { SegmentCriteria, SegmentType } from "../models/Segment"
 import { MedicalInstitutionSearchFilters } from "@medical-crm/shared"
@@ -60,6 +61,7 @@ export class SegmentService {
 
     // Apply institution filters if specified
     let includeInstitution = false
+    let institutionNestedInclude: any[] | undefined
     if (criteria.institutionFilters) {
       includeInstitution = true
       const instFilters = criteria.institutionFilters
@@ -68,12 +70,32 @@ export class SegmentService {
         institutionWhere.type = instFilters.type
       }
 
-      if (instFilters.city) {
-        institutionWhere["address.city"] = { [Op.iLike]: `%${instFilters.city}%` }
-      }
-
-      if (instFilters.state) {
-        institutionWhere["address.state"] = { [Op.iLike]: `%${instFilters.state}%` }
+      const useRelational = process.env.USE_RELATIONAL_ADDRESSES === 'true'
+      if (useRelational && (instFilters.city || instFilters.state)) {
+        const addrWhere: any = {}
+        if (instFilters.city) addrWhere.city = { [Op.iLike]: `%${instFilters.city}%` }
+        if (instFilters.state) addrWhere.state = { [Op.iLike]: `%${instFilters.state}%` }
+        institutionNestedInclude = [
+          {
+            model: InstitutionAddress,
+            as: 'addressRel',
+            where: addrWhere,
+            required: true,
+          },
+        ]
+      } else {
+        if (instFilters.city) {
+          institutionWhere[Op.and] = [
+            ...(institutionWhere[Op.and] || []),
+            Sequelize.where(Sequelize.json("institution.address.city"), { [Op.iLike]: `%${instFilters.city}%` }),
+          ]
+        }
+        if (instFilters.state) {
+          institutionWhere[Op.and] = [
+            ...(institutionWhere[Op.and] || []),
+            Sequelize.where(Sequelize.json("institution.address.state"), { [Op.iLike]: `%${instFilters.state}%` }),
+          ]
+        }
       }
 
       if (instFilters.assignedUserId) {
@@ -120,6 +142,7 @@ export class SegmentService {
             as: "institution",
             where: institutionWhere,
             required: true,
+            ...(institutionNestedInclude ? { include: institutionNestedInclude } : {}),
           },
         ]
       : []
@@ -204,10 +227,16 @@ export class SegmentService {
           whereClause.type = value
           break
         case "city":
-          whereClause["address.city"] = { [Op.iLike]: `%${value}%` }
+          whereClause[Op.and] = [
+            ...(whereClause[Op.and] || []),
+            Sequelize.where(Sequelize.json("address.city"), { [Op.iLike]: `%${value}%` }),
+          ]
           break
         case "state":
-          whereClause["address.state"] = { [Op.iLike]: `%${value}%` }
+          whereClause[Op.and] = [
+            ...(whereClause[Op.and] || []),
+            Sequelize.where(Sequelize.json("address.state"), { [Op.iLike]: `%${value}%` }),
+          ]
           break
         case "assignedUserId":
           whereClause.assignedUserId = value

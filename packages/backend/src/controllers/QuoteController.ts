@@ -43,22 +43,26 @@ export class QuoteController {
       if (amountMax) filters.amountMax = parseFloat(amountMax as string)
       if (search) filters.search = search as string
 
-      const result = await QuoteService.searchQuotes(
-        filters,
-        user.id,
-        user.role,
-        Number(page),
-        Number(limit)
+      // Determine user filter based on role
+      const userId = user.role === UserRole.SUPER_ADMIN ? undefined : user.id
+
+      const result = await QuoteService.getQuotes(
+        {
+          ...filters,
+          page: Number(page),
+          limit: Number(limit)
+        },
+        userId
       )
 
       ctx.body = {
         success: true,
         data: result.quotes,
         meta: {
-          total: result.total,
+          total: result.pagination.total,
           page: Number(page),
           limit: Number(limit),
-          totalPages: result.pages,
+          totalPages: result.pagination.totalPages,
         },
       }
     } catch (error) {
@@ -861,4 +865,7 @@ export class QuoteController {
       }
     }
   }
+
+  // TODO: Implement email functionality later
+  // static async sendQuoteEmail(ctx: Context) { ... }
 }

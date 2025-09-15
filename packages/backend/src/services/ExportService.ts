@@ -1,4 +1,4 @@
-import { Op } from "sequelize"
+import { Op, Sequelize } from "sequelize"
 import ExcelJS from 'exceljs'
 import { logger } from "../utils/logger"
 import {
@@ -66,7 +66,7 @@ export class ExportService {
       if (options.searchQuery) {
         whereClause[Op.or] = [
           { name: { [Op.iLike]: `%${options.searchQuery}%` } },
-          { 'address.city': { [Op.iLike]: `%${options.searchQuery}%` } },
+          Sequelize.where(Sequelize.json("address.city"), { [Op.iLike]: `%${options.searchQuery}%` }),
         ]
       }
 
@@ -106,6 +106,16 @@ export class ExportService {
             as: "medicalProfile",
             required: false,
           },
+          // Optional relational address include (non-required; we fall back to JSONB)
+          ...(process.env.USE_RELATIONAL_ADDRESSES === 'true'
+            ? [
+                {
+                  model: (await import('../models')).InstitutionAddress,
+                  as: "addressRel",
+                  required: false,
+                } as any,
+              ]
+            : []),
           {
             model: ContactPerson,
             as: "contactPersons",
@@ -125,17 +135,19 @@ export class ExportService {
       })
 
       const data = institutions.map(institution => {
-        const address = institution.address || institution.getDataValue('address') || {}
+        // Prefer relational address if present, else fall back to JSONB
+        const rel: any = (institution as any).addressRel
+        const address = rel || institution.address || institution.getDataValue('address') || {}
         const tags = institution.tags || institution.getDataValue('tags') || []
         
         return {
           id: institution.id || institution.getDataValue('id'),
           name: institution.name || institution.getDataValue('name'),
           type: institution.type || institution.getDataValue('type'),
-          street: address.street || '',
-          city: address.city || '',
-          state: address.state || '',
-          zipCode: address.zipCode || '',
+          street: address.street || address.street || '',
+          city: address.city || address.city || '',
+          state: address.state || address.state || '',
+          zipCode: address.zipCode || address.zipCode || '',
           country: address.country || '',
           fullAddress: institution.getFullAddress(),
           assignedUser: institution.assignedUser 
