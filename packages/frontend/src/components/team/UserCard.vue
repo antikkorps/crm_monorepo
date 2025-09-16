@@ -1,57 +1,56 @@
 <template>
-  <Card class="user-card" :class="userCardClass">
-    <template #header>
+  <v-card class="user-card" :class="userCardClass">
+    <v-card-item>
       <div class="user-header">
         <div class="user-avatar-section">
-          <Avatar
-            :image="avatarUrl"
-            :label="userInitials"
-            size="large"
-            shape="circle"
+          <v-avatar
+            size="64"
             class="user-avatar"
-          />
+            :color="showImage ? undefined : avatarColor"
+          >
+            <img v-if="showImage" :src="avatarUrl" :alt="userInitials" @error="onImageError" />
+            <span v-else>{{ userInitials }}</span>
+          </v-avatar>
           <div class="user-status" :class="statusClass">
-            <i :class="statusIcon"></i>
+            <v-icon :icon="statusIcon" size="small" />
           </div>
         </div>
         <div class="user-actions">
-          <Button
-            icon="pi pi-pencil"
+          <v-btn
+            icon="mdi-pencil"
             size="small"
-            text
-            rounded
+            variant="text"
             @click="$emit('edit', user)"
-            v-tooltip.top="'Edit User'"
           />
-          <Button
-            icon="pi pi-cog"
+          <v-btn
+            icon="mdi-cog"
             size="small"
-            text
-            rounded
+            variant="text"
             @click="$emit('manage', user)"
-            v-tooltip.top="'Manage User'"
           />
         </div>
       </div>
-    </template>
+    </v-card-item>
 
-    <template #content>
+    <v-card-text>
       <div class="user-content">
         <h4 class="user-name">{{ user.firstName }} {{ user.lastName }}</h4>
         <p class="user-email">{{ user.email }}</p>
 
         <div class="user-meta">
           <div class="user-role">
-            <Tag :value="roleLabel" :severity="roleSeverity" :icon="roleIcon" />
+            <v-chip :color="roleSeverity" size="small" :prepend-icon="roleIcon">
+              {{ roleLabel }}
+            </v-chip>
           </div>
 
           <div class="user-team" v-if="user.teamId && teamName">
-            <i class="pi pi-users mr-1"></i>
+            <v-icon icon="mdi-account-group" size="small" class="me-1" />
             <span>{{ teamName }}</span>
           </div>
 
           <div class="user-last-login" v-if="user.lastLoginAt">
-            <i class="pi pi-clock mr-1"></i>
+            <v-icon icon="mdi-clock-outline" size="small" class="me-1" />
             <span>{{ formatLastLogin(user.lastLoginAt) }}</span>
           </div>
         </div>
@@ -67,41 +66,43 @@
           </div>
         </div>
       </div>
-    </template>
+    </v-card-text>
 
-    <template #footer>
+    <v-card-actions v-if="assignedInstitutions.length > 0">
       <div class="user-footer">
-        <div class="user-territory" v-if="assignedInstitutions.length > 0">
-          <small class="territory-label"
-            >Territory ({{ assignedInstitutions.length }})</small
-          >
+        <div class="user-territory">
+          <small class="territory-label">
+            Territory ({{ assignedInstitutions.length }})
+          </small>
           <div class="territory-list">
-            <Chip
+            <v-chip
               v-for="institution in assignedInstitutions.slice(0, 3)"
               :key="institution.id"
-              :label="institution.name"
+              size="small"
+              variant="outlined"
               class="territory-chip"
-            />
-            <Chip
+            >
+              {{ institution.name }}
+            </v-chip>
+            <v-chip
               v-if="assignedInstitutions.length > 3"
-              :label="`+${assignedInstitutions.length - 3} more`"
+              size="small"
+              variant="outlined"
               class="territory-chip territory-more"
-            />
+            >
+              +{{ assignedInstitutions.length - 3 }} more
+            </v-chip>
           </div>
         </div>
       </div>
-    </template>
-  </Card>
+    </v-card-actions>
+  </v-card>
 </template>
 
 <script setup lang="ts">
 import type { User } from "@medical-crm/shared"
-import Avatar from "primevue/avatar"
-import Button from "primevue/button"
-import Card from "primevue/card"
-import Chip from "primevue/chip"
-import Tag from "primevue/tag"
-import { computed } from "vue"
+import { AvatarService } from "@/services/avatarService"
+import { computed, ref } from "vue"
 
 interface Props {
   user: User
@@ -128,13 +129,48 @@ const props = withDefaults(defineProps<Props>(), {
 const emit = defineEmits<Emits>()
 
 const avatarUrl = computed(() => {
-  return `https://api.dicebear.com/7.x/initials/svg?seed=${
-    props.user.avatarSeed || props.user.id
-  }`
+  console.log('UserCard - User data:', props.user)
+  console.log('UserCard - avatarSeed:', props.user.avatarSeed)
+  console.log('UserCard - avatarStyle:', props.user.avatarStyle)
+
+  // Si l'utilisateur n'a pas de avatarSeed ou avatarStyle, générer à partir du nom
+  if (!props.user.avatarSeed || !props.user.avatarStyle) {
+    const fallbackUrl = AvatarService.generateUserAvatar(props.user.firstName, props.user.lastName, {
+      size: 64
+    })
+    console.log('UserCard - Using fallback avatar:', fallbackUrl)
+    return fallbackUrl
+  }
+
+  const avatarUrl = AvatarService.generateAvatarFromSeed(props.user.avatarSeed, {
+    style: props.user.avatarStyle,
+    size: 64
+  })
+  console.log('UserCard - Using seed avatar:', avatarUrl)
+  return avatarUrl
 })
 
 const userInitials = computed(() => {
   return `${props.user.firstName.charAt(0)}${props.user.lastName.charAt(0)}`.toUpperCase()
+})
+
+const showImage = ref(true)
+
+const onImageError = (event: Event) => {
+  console.log('Avatar image failed to load:', event)
+  console.log('Failed URL:', avatarUrl.value)
+  showImage.value = false
+}
+
+const avatarColor = computed(() => {
+  // Générer une couleur basée sur les initiales de l'utilisateur
+  const colors = [
+    'primary', 'secondary', 'success', 'info', 'warning', 'error',
+    'purple', 'pink', 'indigo', 'teal', 'cyan', 'orange'
+  ]
+  const name = `${props.user.firstName}${props.user.lastName}`
+  const index = name.length % colors.length
+  return colors[index]
 })
 
 const userCardClass = computed(() => ({
@@ -148,7 +184,7 @@ const statusClass = computed(() => ({
 }))
 
 const statusIcon = computed(() =>
-  props.user.isActive ? "pi pi-check-circle" : "pi pi-times-circle"
+  props.user.isActive ? "mdi-check-circle" : "mdi-close-circle"
 )
 
 const roleLabel = computed(() => {
@@ -162,18 +198,18 @@ const roleLabel = computed(() => {
 
 const roleSeverity = computed(() => {
   const severities = {
-    super_admin: "danger",
+    super_admin: "error",
     team_admin: "warning",
-    user: "info",
+    user: "primary",
   }
   return severities[props.user.role] as any
 })
 
 const roleIcon = computed(() => {
   const icons = {
-    super_admin: "pi pi-crown",
-    team_admin: "pi pi-shield",
-    user: "pi pi-user",
+    super_admin: "mdi-crown",
+    team_admin: "mdi-shield-account",
+    user: "mdi-account",
   }
   return icons[props.user.role]
 })

@@ -36,9 +36,12 @@ export class UserController {
         ],
       })
 
+      // Apply toJSON() to each user to include avatarUrl
+      const usersWithAvatar = users.map(user => user.toJSON())
+
       ctx.body = {
         success: true,
-        data: users,
+        data: usersWithAvatar,
       }
     } catch (error) {
       throw createError("Failed to fetch users", 500, "FETCH_USERS_ERROR", { error })

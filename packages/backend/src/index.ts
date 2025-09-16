@@ -3,6 +3,7 @@ import { createApp } from "./app"
 import config from "./config/environment"
 import { PluginService } from "./services/PluginService"
 import { SocketService } from "./services/SocketService"
+import { TaskNotificationService } from "./services/TaskNotificationService"
 import { WebhookJobProcessor } from "./services/WebhookJobProcessor"
 import { initializeDatabase } from "./utils/database-init"
 import { logger } from "./utils/logger"
@@ -46,6 +47,12 @@ async function startServer() {
     const webhookJobProcessor = WebhookJobProcessor.getInstance()
     webhookJobProcessor.start()
     console.log("Webhook job processor started")
+
+    // Start task notification processor
+    console.log("Starting task notification processor...")
+    const taskNotificationService = TaskNotificationService.getInstance()
+    taskNotificationService.start()
+    console.log("Task notification processor started")
 
     // Start server
     console.log("Starting server on port", config.port)

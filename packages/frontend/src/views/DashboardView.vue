@@ -140,6 +140,146 @@
         </v-col>
       </v-row>
 
+      <!-- Recent Tasks Widget -->
+      <v-row class="mb-6">
+        <v-col cols="12">
+          <v-card elevation="2">
+            <v-card-title class="d-flex align-center justify-space-between">
+              <div class="d-flex align-center">
+                <v-icon icon="mdi-check-circle" color="primary" class="mr-2" />
+                Tâches récentes
+              </div>
+              <v-btn
+                text="Voir tout"
+                prepend-icon="mdi-arrow-right"
+                color="primary"
+                variant="text"
+                @click="$router.push('/tasks')"
+              />
+            </v-card-title>
+
+            <v-card-text v-if="tasksStore.loading">
+              <div class="d-flex justify-center py-8">
+                <v-progress-circular indeterminate size="32" />
+              </div>
+            </v-card-text>
+
+            <v-card-text v-else-if="recentTasks.length === 0">
+              <div class="text-center py-8">
+                <v-icon size="48" color="grey-lighten-1" class="mb-4">mdi-check-all</v-icon>
+                <p class="text-h6 text-medium-emphasis mb-2">Aucune tâche en cours</p>
+                <p class="text-body-2 text-medium-emphasis">
+                  Toutes vos tâches sont terminées ou vous n'avez pas de tâches assignées.
+                </p>
+                <v-btn
+                  text="Créer une tâche"
+                  prepend-icon="mdi-plus"
+                  color="primary"
+                  variant="elevated"
+                  class="mt-4"
+                  @click="$router.push('/tasks')"
+                />
+              </div>
+            </v-card-text>
+
+            <v-card-text v-else>
+              <v-row>
+                <v-col
+                  v-for="task in recentTasks"
+                  :key="task.id"
+                  cols="12"
+                  md="6"
+                  class="mb-4"
+                >
+                  <v-card
+                    variant="outlined"
+                    class="task-widget-card"
+                    hover
+                    @click="$router.push('/tasks')"
+                  >
+                    <v-card-text class="pa-4">
+                      <!-- Priority and status badges -->
+                      <div class="d-flex justify-space-between align-start mb-3">
+                        <v-chip
+                          :color="getPriorityColor(task.priority)"
+                          :prepend-icon="getPriorityIcon(task.priority)"
+                          size="small"
+                          variant="flat"
+                          class="priority-chip"
+                        >
+                          {{ getPriorityLabel(task.priority) }}
+                        </v-chip>
+
+                        <div class="d-flex gap-1">
+                          <v-chip
+                            v-if="isOverdue(task)"
+                            color="error"
+                            size="small"
+                            variant="outlined"
+                          >
+                            <v-icon start size="small">mdi-alert-circle</v-icon>
+                            En retard
+                          </v-chip>
+                          <v-chip
+                            v-else-if="isDueSoon(task)"
+                            color="warning"
+                            size="small"
+                            variant="outlined"
+                          >
+                            <v-icon start size="small">mdi-clock-outline</v-icon>
+                            Bientôt
+                          </v-chip>
+                        </div>
+                      </div>
+
+                      <!-- Task title -->
+                      <h4 class="task-title text-h6 font-weight-medium mb-2">
+                        {{ task.title }}
+                      </h4>
+
+                      <!-- Task description (truncated) -->
+                      <p v-if="task.description" class="task-description text-body-2 text-medium-emphasis mb-3">
+                        {{ truncateText(task.description, 80) }}
+                      </p>
+
+                      <!-- Meta information -->
+                      <div class="task-meta d-flex flex-wrap gap-3">
+                        <!-- Assignee -->
+                        <div v-if="task.assignee" class="meta-item d-flex align-center">
+                          <v-avatar
+                            :image="getAvatarUrl(task.assignee.id)"
+                            :alt="getInitials(task.assignee.firstName, task.assignee.lastName)"
+                            size="24"
+                            class="mr-2"
+                          >
+                            <span class="avatar-text">{{ getInitials(task.assignee.firstName, task.assignee.lastName) }}</span>
+                          </v-avatar>
+                          <span class="text-caption">{{ task.assignee.firstName }} {{ task.assignee.lastName }}</span>
+                        </div>
+
+                        <!-- Due date -->
+                        <div v-if="task.dueDate" class="meta-item d-flex align-center">
+                          <v-icon size="16" :color="getDueDateColor(task)" class="mr-1">mdi-calendar</v-icon>
+                          <span class="text-caption" :class="getDueDateClass(task)">
+                            {{ formatDueDate(task.dueDate) }}
+                          </span>
+                        </div>
+
+                        <!-- Institution -->
+                        <div v-if="task.institution" class="meta-item d-flex align-center">
+                          <v-icon size="16" color="primary" class="mr-1">mdi-office-building</v-icon>
+                          <span class="text-caption">{{ task.institution.name }}</span>
+                        </div>
+                      </div>
+                    </v-card-text>
+                  </v-card>
+                </v-col>
+              </v-row>
+            </v-card-text>
+          </v-card>
+        </v-col>
+      </v-row>
+
       <!-- Development Notice -->
       <v-row>
         <v-col cols="12">
@@ -176,15 +316,64 @@
 <script setup lang="ts">
 import AppLayout from "@/components/layout/AppLayout.vue"
 import { useAuthStore } from "@/stores/auth"
+import { useInstitutionsStore } from "@/stores/institutions"
+import { useTasksStore } from "@/stores/tasks"
 import { computed, onMounted, ref } from "vue"
 import { useRouter } from "vue-router"
 
 const authStore = useAuthStore()
+const institutionsStore = useInstitutionsStore()
+const tasksStore = useTasksStore()
 const router = useRouter()
 
 // Check if user should be automatically redirected to billing analytics
 const shouldRedirectToBilling = computed(() => {
   return false
+})
+
+// Recent tasks for dashboard widget (max 4, prioritized by status and due date)
+const recentTasks = computed(() => {
+  const allTasks = tasksStore.tasks
+  const userId = authStore.user?.id
+
+  // Filter tasks assigned to current user or unassigned, exclude completed
+  const userTasks = allTasks.filter(task =>
+    (task.assigneeId === userId || !task.assigneeId) &&
+    task.status !== 'completed' &&
+    task.status !== 'cancelled'
+  )
+
+  // Sort by priority: overdue first, then due soon, then by due date, then by status
+  const sortedTasks = userTasks.sort((a, b) => {
+    const now = new Date()
+    const aDue = a.dueDate ? new Date(a.dueDate) : null
+    const bDue = b.dueDate ? new Date(b.dueDate) : null
+
+    // Overdue tasks first
+    const aOverdue = aDue && aDue < now
+    const bOverdue = bDue && bDue < now
+    if (aOverdue && !bOverdue) return -1
+    if (!aOverdue && bOverdue) return 1
+
+    // Due soon next (within 3 days)
+    const aDueSoon = aDue && !aOverdue && (aDue.getTime() - now.getTime()) / (1000 * 60 * 60 * 24) <= 3
+    const bDueSoon = bDue && !bOverdue && (bDue.getTime() - now.getTime()) / (1000 * 60 * 60 * 24) <= 3
+    if (aDueSoon && !bDueSoon) return -1
+    if (!aDueSoon && bDueSoon) return 1
+
+    // Then by due date (earliest first)
+    if (aDue && bDue) {
+      return aDue.getTime() - bDue.getTime()
+    }
+    if (aDue && !bDue) return -1
+    if (!aDue && bDue) return 1
+
+    // Finally by priority
+    const priorityOrder = { urgent: 4, high: 3, medium: 2, low: 1 }
+    return priorityOrder[b.priority] - priorityOrder[a.priority]
+  })
+
+  return sortedTasks.slice(0, 4)
 })
 
 // Get current date formatted
@@ -197,12 +386,99 @@ const getCurrentDate = () => {
   })
 }
 
-// Stats cards data - updated with Material Design Icons
-const statsCards = ref([
+// Task widget helper functions
+const getPriorityLabel = (priority: string) => {
+  const labels = {
+    low: "Faible",
+    medium: "Moyenne",
+    high: "Élevée",
+    urgent: "Urgente",
+  }
+  return labels[priority as keyof typeof labels] || priority
+}
+
+const getPriorityColor = (priority: string) => {
+  const colors = {
+    low: "success",
+    medium: "info",
+    high: "warning",
+    urgent: "error",
+  }
+  return colors[priority as keyof typeof colors] || "grey"
+}
+
+const getPriorityIcon = (priority: string) => {
+  const icons = {
+    low: "mdi-priority-low",
+    medium: "mdi-priority-medium",
+    high: "mdi-priority-high",
+    urgent: "mdi-alert-circle",
+  }
+  return icons[priority as keyof typeof icons] || "mdi-priority-medium"
+}
+
+const isOverdue = (task: any) => {
+  if (!task.dueDate || task.status === "completed") return false
+  return new Date(task.dueDate) < new Date()
+}
+
+const isDueSoon = (task: any) => {
+  if (!task.dueDate || task.status === "completed") return false
+  const dueDate = new Date(task.dueDate)
+  const now = new Date()
+  const diffTime = dueDate.getTime() - now.getTime()
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+  return diffDays <= 3 && diffDays > 0
+}
+
+const getDueDateColor = (task: any) => {
+  if (isOverdue(task)) return "error"
+  if (isDueSoon(task)) return "warning"
+  return "success"
+}
+
+const getDueDateClass = (task: any) => ({
+  "due-date-overdue": isOverdue(task),
+  "due-date-soon": isDueSoon(task) && !isOverdue(task),
+})
+
+const formatDueDate = (date: Date | string) => {
+  const dueDate = new Date(date)
+  const now = new Date()
+  const diffTime = dueDate.getTime() - now.getTime()
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+
+  if (diffDays === 0) return "Aujourd'hui"
+  if (diffDays === 1) return "Demain"
+  if (diffDays === -1) return "Hier"
+  if (diffDays < 0) return `En retard de ${Math.abs(diffDays)} j.`
+  if (diffDays <= 7) return `Dans ${diffDays} j.`
+
+  return dueDate.toLocaleDateString('fr-FR', {
+    day: 'numeric',
+    month: 'short'
+  })
+}
+
+const getAvatarUrl = (userId: string) => {
+  return `https://api.dicebear.com/7.x/initials/svg?seed=${userId}`
+}
+
+const getInitials = (firstName: string, lastName: string) => {
+  return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase()
+}
+
+const truncateText = (text: string, maxLength: number) => {
+  if (text.length <= maxLength) return text
+  return text.substring(0, maxLength) + "..."
+}
+
+// Stats cards data - updated with Material Design Icons and dynamic data
+const statsCards = computed(() => [
   {
     title: 'Institutions',
-    value: '12',
-    description: 'Institutions actives',
+    value: institutionsStore.institutions.length.toString(),
+    description: `${institutionsStore.institutions.filter(inst => inst.isActive).length} actives`,
     icon: 'mdi-domain',
     color: 'blue',
     actionLabel: 'Voir tout',
@@ -211,17 +487,17 @@ const statsCards = ref([
   },
   {
     title: 'Tâches',
-    value: '8',
-    description: 'Tâches en cours',
+    value: tasksStore.taskStats.total.toString(),
+    description: `${tasksStore.taskStats.inProgress} en cours, ${tasksStore.taskStats.overdue} en retard`,
     icon: 'mdi-check-circle',
-    color: 'green',
+    color: tasksStore.taskStats.overdue > 0 ? 'error' : 'green',
     actionLabel: 'Gérer',
     actionIcon: 'mdi-arrow-right',
     route: '/tasks'
   },
   {
     title: 'Équipe',
-    value: '5',
+    value: '5', // TODO: Connect to team store when available
     description: 'Membres actifs',
     icon: 'mdi-account-group',
     color: 'purple',
@@ -231,7 +507,7 @@ const statsCards = ref([
   },
   {
     title: 'Analytics',
-    value: '24',
+    value: '24', // TODO: Connect to analytics store when available
     description: 'Rapports générés',
     icon: 'mdi-chart-bar',
     color: 'orange',
@@ -288,7 +564,13 @@ const quickActions = ref([
 ])
 
 // Auto-redirect logic (if needed)
-onMounted(() => {
+onMounted(async () => {
+  // Fetch data for dashboard
+  await Promise.all([
+    tasksStore.fetchTasks(),
+    institutionsStore.fetchInstitutions()
+  ])
+
   if (shouldRedirectToBilling.value) {
     setTimeout(() => {
       router.push("/billing/analytics")
@@ -317,5 +599,109 @@ onMounted(() => {
 
 .quick-action-card:hover {
   transform: translateY(-2px);
+}
+
+.task-widget-card {
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  border-radius: 12px;
+}
+
+.task-widget-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.task-title {
+  line-height: 1.3;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.task-description {
+  line-height: 1.4;
+  margin-bottom: 0.75rem;
+}
+
+.task-meta {
+  margin-top: auto;
+}
+
+.meta-item {
+  opacity: 0.8;
+}
+
+.avatar-text {
+  font-size: 0.625rem;
+  font-weight: 600;
+  color: #374151;
+}
+
+.priority-chip {
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-size: 0.7rem;
+}
+
+.due-date-overdue {
+  color: #dc2626 !important;
+  font-weight: 600;
+}
+
+.due-date-soon {
+  color: #d97706 !important;
+  font-weight: 600;
+}
+
+/* Responsive design for task widget */
+@media (max-width: 768px) {
+  .task-widget-card .v-card-text {
+    padding: 1rem;
+  }
+
+  .task-title {
+    font-size: 1.1rem !important;
+    margin-bottom: 0.5rem;
+  }
+
+  .task-description {
+    font-size: 0.85rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .task-meta {
+    gap: 0.5rem;
+  }
+
+  .meta-item {
+    font-size: 0.75rem;
+  }
+
+  .meta-item .v-avatar {
+    margin-right: 0.25rem !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .task-widget-card .v-card-text {
+    padding: 0.875rem;
+  }
+
+  .task-title {
+    font-size: 1rem !important;
+  }
+
+  .task-meta {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.25rem;
+  }
+
+  .meta-item {
+    font-size: 0.7rem;
+  }
 }
 </style>

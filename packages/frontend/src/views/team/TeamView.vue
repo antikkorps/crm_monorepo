@@ -215,11 +215,31 @@
       <!-- Team Members Content -->
       <div v-else class="team-content">
         <div class="content-layout">
-          <!-- Members Section -->
-          <div class="members-section">
-            <div class="section-header">
-              <h3>Team Members ({{ filteredMembers.length }})</h3>
+          <div class="main-content">
+            <!-- Teams Section -->
+            <div class="teams-section">
+              <div class="section-header">
+                <h3>Teams ({{ teamStore.teams.length }})</h3>
+              </div>
+              <div class="teams-grid">
+                <TeamCard
+                  v-for="team in teamStore.teams"
+                  :key="team.id"
+                  :team="team"
+                  :team-members="teamStore.getTeamMembers(team.id)"
+                  @edit="editTeam"
+                  @manage="manageTeam"
+                  @add-member="addMemberToTeam"
+                  @view-details="viewTeamDetails"
+                />
+              </div>
             </div>
+
+            <!-- Members Section -->
+            <div class="members-section">
+              <div class="section-header">
+                <h3>Team Members ({{ filteredMembers.length }})</h3>
+              </div>
 
             <!-- Grid View -->
             <div v-if="viewMode === 'grid'" class="members-grid">
@@ -244,22 +264,21 @@
                  :items-per-page-options="[5, 10, 20, 50]"
                  class="members-table"
                >
-                 <template #item.firstName="{ item }">
-                   <div class="user-name-cell">
-                     <v-avatar
-                       :image="getUserAvatar(item.id)"
-                       :alt="getUserInitials(item)"
-                       size="40"
-                       class="me-2"
-                     >
-                       {{ getUserInitials(item) }}
-                     </v-avatar>
-                     <div>
-                       <div class="name">{{ item.firstName }} {{ item.lastName }}</div>
-                       <div class="email">{{ item.email }}</div>
-                     </div>
-                   </div>
-                 </template>
+                  <template #item.firstName="{ item }">
+                    <div class="user-name-cell">
+                      <v-avatar
+                        size="40"
+                        class="me-3"
+                        :color="getUserAvatarColor(item)"
+                      >
+                        <img :src="getUserAvatar(item)" :alt="getUserInitials(item)" />
+                      </v-avatar>
+                      <div>
+                        <div class="name">{{ item.firstName }} {{ item.lastName }}</div>
+                        <div class="email">{{ item.email }}</div>
+                      </div>
+                    </div>
+                  </template>
 
                  <template #item.role="{ item }">
                    <v-chip
@@ -309,6 +328,7 @@
                  </template>
                </v-data-table>
              </div>
+            </div>
           </div>
 
           <!-- Activity Feed Sidebar -->
@@ -411,9 +431,11 @@
 <script setup lang="ts">
 import AppLayout from "@/components/layout/AppLayout.vue"
 import TeamActivityFeed from "@/components/team/TeamActivityFeed.vue"
+import TeamCard from "@/components/team/TeamCard.vue"
 import UserCard from "@/components/team/UserCard.vue"
 import UserProfileForm from "@/components/team/UserProfileForm.vue"
 import { institutionsApi, teamApi } from "@/services/api"
+import { AvatarService } from "@/services/avatarService"
 import { useTeamStore } from "@/stores/team"
 import type {
   User,
@@ -516,12 +538,40 @@ const filteredMembers = computed(() => {
   return members
 })
 
-const getUserAvatar = (userId: string) => {
-  return `https://api.dicebear.com/7.x/initials/svg?seed=${userId}`
+const getUserAvatar = (user: User) => {
+  console.log('TeamView - User data:', user)
+  console.log('TeamView - avatarSeed:', user.avatarSeed)
+  console.log('TeamView - avatarStyle:', user.avatarStyle)
+
+  // Si l'utilisateur n'a pas de avatarSeed ou avatarStyle, générer à partir du nom
+  if (!user.avatarSeed || !user.avatarStyle) {
+    const fallbackUrl = AvatarService.generateUserAvatar(user.firstName, user.lastName, {
+      size: 40
+    })
+    console.log('TeamView - Using fallback avatar:', fallbackUrl)
+    return fallbackUrl
+  }
+
+  const avatarUrl = AvatarService.generateAvatarFromSeed(user.avatarSeed, {
+    style: user.avatarStyle,
+    size: 40
+  })
+  console.log('TeamView - Using seed avatar:', avatarUrl)
+  return avatarUrl
 }
 
 const getUserInitials = (user: User) => {
   return `${user.firstName.charAt(0)}${user.lastName.charAt(0)}`.toUpperCase()
+}
+
+const getUserAvatarColor = (user: User) => {
+  const colors = [
+    'primary', 'secondary', 'success', 'info', 'warning', 'error',
+    'purple', 'pink', 'indigo', 'teal', 'cyan', 'orange'
+  ]
+  const name = `${user.firstName}${user.lastName}`
+  const index = name.length % colors.length
+  return colors[index]
 }
 
 const getRoleLabel = (role: string) => {
@@ -603,16 +653,23 @@ const loadOptions = async () => {
 
     // Load institutions
     const institutionsResponse = await institutionsApi.getAll()
-    const institutions = institutionsResponse.data || institutionsResponse
-    if (Array.isArray(institutions)) {
-      institutionOptions.value = institutions.map((institution: any) => ({
-        label: institution.name,
-        value: institution.id,
-      }))
+    const institutionsData = institutionsResponse.data || institutionsResponse
+
+    // Handle paginated response: {institutions: [...], pagination: {...}}
+    let institutionsArray: any[] = []
+    if (Array.isArray(institutionsData)) {
+      institutionsArray = institutionsData
+    } else if (institutionsData && Array.isArray(institutionsData.institutions)) {
+      institutionsArray = institutionsData.institutions
     } else {
-      console.warn("Institutions response is not an array:", institutions)
-      institutionOptions.value = []
+      console.warn("Institutions response format unexpected:", institutionsData)
+      institutionsArray = []
     }
+
+    institutionOptions.value = institutionsArray.map((institution: any) => ({
+      label: institution.name,
+      value: institution.id,
+    }))
   } catch (error) {
     console.error("Error loading options:", error)
     // Set empty arrays on error to prevent further issues
@@ -698,6 +755,23 @@ const clearFilters = () => {
   selectedRole.value = ""
   selectedTeam.value = ""
   selectedStatus.value = ""
+}
+
+const editTeam = (team: any) => {
+  console.log("Edit team:", team)
+}
+
+const manageTeam = (team: any) => {
+  console.log("Manage team:", team)
+}
+
+const addMemberToTeam = (team: any) => {
+  console.log("Add member to team:", team)
+  showCreateUserDialog.value = true
+}
+
+const viewTeamDetails = (team: any) => {
+  console.log("View team details:", team)
 }
 
 onMounted(() => {
@@ -933,9 +1007,27 @@ onMounted(() => {
   min-height: 600px;
 }
 
+.main-content {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+/* Teams Section */
+.teams-section {
+  padding: 1.5rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.teams-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 1.5rem;
+  margin-top: 1rem;
+}
+
 .members-section {
   padding: 1.5rem;
-  border-right: 1px solid #e5e7eb;
 }
 
 .activity-section {
@@ -970,6 +1062,7 @@ onMounted(() => {
 .user-name-cell {
   display: flex;
   align-items: center;
+  gap: 0.75rem;
 }
 
 .name {

@@ -30,7 +30,7 @@ export class AvatarService {
       params.append('backgroundColor', backgroundColor)
     }
 
-    return `${this.BASE_URL}/${style}/svg?${params.toString()}`
+    return `${this.BASE_URL}/${style}/png?${params.toString()}`
   }
 
   /**

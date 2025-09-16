@@ -20,7 +20,8 @@
                @click="showCreateDialog = true"
                class="create-task-btn"
              >
-               {{ t('task.createNew') }}
+               <span class="btn-text-desktop">{{ t('task.createNew') }}</span>
+               <span class="btn-text-mobile">{{ t('task.createShort') }}</span>
              </v-btn>
          </div>
        </div>
@@ -123,8 +124,10 @@
                  variant="elevated"
                  prepend-icon="mdi-plus"
                  @click="showCreateDialog = true"
+                 class="create-task-btn"
                >
-                 {{ t('task.createTask') }}
+                 <span class="btn-text-desktop">{{ t('task.createTask') }}</span>
+                 <span class="btn-text-mobile">{{ t('task.createShort') }}</span>
                </v-btn>
            </div>
          </div>
@@ -243,11 +246,15 @@ import type {
 } from "@medical-crm/shared"
 import { useSnackbar } from "@/composables/useSnackbar"
 import { useI18n } from "vue-i18n"
-import { computed, onMounted, ref } from "vue"
+import { taskNotificationService } from "@/services/taskNotificationService"
+import { computed, onMounted, ref, watch } from "vue"
+import { useRoute, useRouter } from "vue-router"
 
 const tasksStore = useTasksStore()
 const { showSnackbar } = useSnackbar()
 const { t } = useI18n()
+const route = useRoute()
+const router = useRouter()
 
 // Component state
 const viewMode = ref<"list" | "board">("list")
@@ -403,15 +410,52 @@ const cancelDelete = () => {
    taskToDelete.value = null
 }
 
-onMounted(() => {
-  loadTasks()
+
+const handleTaskIdFromRoute = async () => {
+  const taskId = route.query.taskId as string
+  if (taskId) {
+    // Wait for tasks to be loaded
+    await loadTasks()
+
+    // Find the task
+    const task = tasksStore.filteredTasks.find(t => t.id === taskId)
+    if (task) {
+      // Open the task for editing
+      selectedTask.value = task
+      showEditDialog.value = true
+
+      // Clear the taskId from the URL to avoid reopening on refresh
+      const newQuery = { ...route.query }
+      delete newQuery.taskId
+      router.replace({ query: newQuery })
+
+      showSnackbar(`Opened task: ${task.title}`, "info")
+    } else {
+      showSnackbar("Task not found", "warning")
+    }
+  }
+}
+
+onMounted(async () => {
+  await loadTasks()
+  handleTaskIdFromRoute()
 })
+
+// Watch for route changes to handle direct links to tasks
+watch(
+  () => route.query.taskId,
+  (newTaskId) => {
+    if (newTaskId) {
+      handleTaskIdFromRoute()
+    }
+  }
+)
 </script>
 
 <style scoped>
 .tasks-view {
-  padding: 1.5rem;
-  background: #f8f9fa;
+  padding: 2rem;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
   min-height: 100vh;
 }
 
@@ -422,9 +466,22 @@ onMounted(() => {
   align-items: flex-start;
   margin-bottom: 2rem;
   background: white;
-  padding: 1.5rem;
-  border-radius: 8px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  padding: 2rem;
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  border: 1px solid rgba(0, 0, 0, 0.04);
+  position: relative;
+  overflow: hidden;
+}
+
+.tasks-header::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #3b82f6, #8b5cf6, #10b981);
 }
 
 .header-content {
@@ -456,16 +513,26 @@ onMounted(() => {
   white-space: nowrap;
 }
 
+/* Button text responsive */
+.btn-text-mobile {
+  display: none;
+}
+
+.btn-text-desktop {
+  display: inline;
+}
+
 /* View Controls */
 .view-controls {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 1.5rem;
+  margin-bottom: 2rem;
   background: white;
-  padding: 1rem;
-  border-radius: 8px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  padding: 1.5rem;
+  border-radius: 12px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+  border: 1px solid rgba(0, 0, 0, 0.04);
 }
 
 .view-toggle {
@@ -489,27 +556,33 @@ onMounted(() => {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 3rem;
+  padding: 4rem 2rem;
   background: white;
-  border-radius: 8px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  border: 1px solid rgba(0, 0, 0, 0.04);
+  text-align: center;
 }
 
 .loading-container p {
   margin-top: 1rem;
   color: #6b7280;
+  font-size: 1.1rem;
 }
 
 .error-message {
-  margin-bottom: 1.5rem;
+  margin-bottom: 2rem;
+  border-radius: 12px;
 }
 
 /* Empty State */
 .empty-state {
   background: white;
-  border-radius: 8px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  padding: 3rem;
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  border: 1px solid rgba(0, 0, 0, 0.04);
+  padding: 4rem 2rem;
+  text-align: center;
 }
 
 .empty-content {
@@ -547,25 +620,26 @@ onMounted(() => {
 /* Tasks Content */
 .tasks-content {
   background: white;
-  border-radius: 8px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  border: 1px solid rgba(0, 0, 0, 0.04);
   overflow: hidden;
 }
 
 /* List View */
 .tasks-list {
-  padding: 1.5rem;
+  padding: 2rem;
 }
 
 .tasks-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
   gap: 1.5rem;
 }
 
 /* Board View */
 .tasks-board {
-  padding: 1.5rem;
+  padding: 2rem;
   overflow-x: auto;
 }
 
@@ -576,38 +650,44 @@ onMounted(() => {
 }
 
 .board-column {
-  flex: 0 0 300px;
-  background: #f9fafb;
-  border-radius: 8px;
-  padding: 1rem;
+  flex: 0 0 320px;
+  background: #f8fafc;
+  border-radius: 12px;
+  padding: 1.5rem;
+  border: 1px solid #e2e8f0;
+  min-height: 600px;
 }
 
 .column-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 1rem;
-  padding-bottom: 0.75rem;
-  border-bottom: 2px solid #e5e7eb;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid #e2e8f0;
 }
 
 .column-title {
   margin: 0;
-  font-size: 1rem;
+  font-size: 1.1rem;
   font-weight: 600;
-  color: #374151;
+  color: #1e293b;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .column-count {
-  background: #e5e7eb !important;
-  color: #374151 !important;
+  background: linear-gradient(135deg, #e2e8f0, #cbd5e1) !important;
+  color: #475569 !important;
+  font-weight: 600;
+  border: 1px solid #cbd5e1;
 }
 
 .column-content {
   display: flex;
   flex-direction: column;
   gap: 1rem;
-  min-height: 200px;
+  min-height: 500px;
 }
 
 .board-task-card {
@@ -615,9 +695,23 @@ onMounted(() => {
 }
 
 /* Responsive Design */
-@media (max-width: 1024px) {
+@media (max-width: 1200px) {
   .tasks-grid {
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  }
+
+  .board-column {
+    flex: 0 0 300px;
+  }
+}
+
+@media (max-width: 1024px) {
+  .tasks-view {
+    padding: 1.5rem;
+  }
+
+  .tasks-grid {
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
   }
 
   .board-column {
@@ -627,49 +721,196 @@ onMounted(() => {
 
 @media (max-width: 768px) {
   .tasks-view {
-    padding: 1rem;
+    padding: 0.75rem;
   }
 
   .tasks-header {
+    padding: 1.25rem;
+    margin-bottom: 1.25rem;
     flex-direction: column;
     gap: 1rem;
-    align-items: stretch;
+    text-align: center;
+  }
+
+  .tasks-header::before {
+    height: 3px;
   }
 
   .header-actions {
-    justify-content: flex-end;
+    justify-content: center;
+    width: 100%;
+  }
+
+  .create-task-btn {
+    width: 100%;
+    max-width: 250px;
+  }
+
+  .page-title {
+    font-size: 1.5rem;
+  }
+
+  .tasks-list,
+  .tasks-board {
+    padding: 1.25rem;
+  }
+
+  .tasks-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .board-columns {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .board-column {
+    flex: none;
+    min-height: 400px;
   }
 
   .view-controls {
+    padding: 1rem;
+    margin-bottom: 1.25rem;
     flex-direction: column;
     gap: 1rem;
-    align-items: stretch;
   }
 
   .view-toggle {
     justify-content: center;
   }
 
-  .tasks-grid {
-    grid-template-columns: 1fr;
+  .sort-controls {
+    justify-content: center;
+  }
+}
+
+@media (max-width: 640px) {
+  .tasks-view {
+    padding: 0.5rem;
   }
 
-  .board-columns {
+  .tasks-header {
+    padding: 1rem;
+    border-radius: 12px;
     flex-direction: column;
+    gap: 1rem;
+    text-align: center;
   }
 
-  .board-column {
-    flex: none;
+  .header-content {
+    order: 1;
+  }
+
+  .header-actions {
+    order: 2;
+    justify-content: center;
+    width: 100%;
+  }
+
+  .create-task-btn {
+    width: 100%;
+    max-width: 200px;
+  }
+
+  /* Switch button text on mobile */
+  .btn-text-desktop {
+    display: none;
+  }
+
+  .btn-text-mobile {
+    display: inline;
+  }
+
+  .tasks-list,
+  .tasks-board {
+    padding: 0.75rem;
+  }
+
+  .loading-container,
+  .empty-state {
+    padding: 2rem 1rem;
+    border-radius: 12px;
+  }
+
+  .view-controls {
+    flex-direction: column;
+    gap: 1rem;
+    padding: 1rem;
+  }
+
+  .view-toggle {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .sort-controls {
+    width: 100%;
+    justify-content: center;
   }
 }
 
 @media (max-width: 480px) {
+  .tasks-view {
+    padding: 0.25rem;
+  }
+
   .empty-actions {
     flex-direction: column;
+    gap: 0.75rem;
   }
 
   .view-toggle {
     flex-direction: column;
+    width: 100%;
+    gap: 0.5rem;
+  }
+
+  .view-toggle .v-btn {
+    width: 100%;
+  }
+
+  .sort-controls {
+    width: 100%;
+  }
+
+  .sort-dropdown {
+    width: 100%;
+    min-width: auto;
+  }
+
+  .tasks-header {
+    padding: 0.75rem;
+    margin-bottom: 1rem;
+  }
+
+  .page-title {
+    font-size: 1.25rem;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  .page-description {
+    font-size: 0.9rem;
+  }
+
+  .loading-container,
+  .empty-state {
+    padding: 1.5rem 0.75rem;
+  }
+
+  .tasks-content {
+    border-radius: 12px;
+  }
+
+  .tasks-grid {
+    gap: 0.75rem;
+  }
+
+  .create-task-btn {
+    font-size: 0.9rem;
+    padding: 0.75rem 1rem;
   }
 }
 </style>

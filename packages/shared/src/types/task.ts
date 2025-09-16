@@ -23,6 +23,7 @@ export interface Task {
   assigneeId: string
   creatorId: string
   institutionId?: string
+  contactId?: string
   dueDate?: Date
   completedAt?: Date
   createdAt: Date
@@ -50,6 +51,12 @@ export interface Task {
     name: string
     type: string
   }
+  contact?: {
+    id: string
+    firstName: string
+    lastName: string
+    title?: string
+  }
 }
 
 export interface TaskCreateRequest {
@@ -58,6 +65,7 @@ export interface TaskCreateRequest {
   priority?: TaskPriority
   assigneeId: string
   institutionId?: string
+  contactId?: string
   dueDate?: Date
 }
 
@@ -68,6 +76,7 @@ export interface TaskUpdateRequest {
   priority?: TaskPriority
   assigneeId?: string
   institutionId?: string
+  contactId?: string
   dueDate?: Date
 }
 

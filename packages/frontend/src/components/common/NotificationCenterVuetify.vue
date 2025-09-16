@@ -6,6 +6,7 @@
       @click="toggleNotifications"
       :color="hasUnreadNotifications ? 'warning' : 'default'"
       size="small"
+      class="notification-button"
     >
       <v-badge
         v-if="unreadCount > 0"
@@ -22,16 +23,10 @@
       </v-icon>
     </v-btn>
 
-    <!-- Notifications Menu -->
-    <v-menu
-      v-model="menuVisible"
-      :close-on-content-click="false"
-      location="bottom end"
-      offset="8"
-      max-width="400"
-      max-height="500"
-    >
-      <v-card>
+    <!-- Notifications Dropdown -->
+    <transition name="dropdown">
+      <div v-if="menuVisible" class="notification-dropdown" @click.stop>
+        <v-card>
         <!-- Header -->
         <v-card-title class="d-flex justify-space-between align-center">
           <div class="d-flex align-center">
@@ -79,48 +74,58 @@
 
         <v-divider />
 
-        <!-- Empty State -->
-        <div v-if="displayNotifications.length === 0" class="text-center pa-8">
-          <v-icon size="48" color="grey-lighten-2" class="mb-4">
-            mdi-bell-off
-          </v-icon>
-          <p class="text-body-2 text-medium-emphasis">{{ $t('notifications.empty') }}</p>
-        </div>
-
-        <!-- Notifications List -->
-        <v-list v-else class="notification-list" max-height="300">
-          <v-list-item
-            v-for="(notification, index) in displayNotifications"
-            :key="`${notification.timestamp}-${index}`"
-            :class="{ 'notification-unread': !notification.read }"
-            @click="handleNotificationClick(notification)"
-            class="notification-item"
-          >
-            <template #prepend>
-              <v-icon :color="getNotificationColor(notification.type)">
-                {{ getNotificationIcon(notification.type) }}
+        <!-- Content Container with fixed width -->
+        <div class="notification-content" style="min-width: 400px;">
+          <!-- Notifications List Container - Always present -->
+          <div class="notification-list" style="max-height: 300px; overflow-y: auto; width: 100%;">
+            <!-- Empty State -->
+            <div v-if="displayNotifications.length === 0" class="text-center pa-8">
+              <v-icon size="48" color="grey-lighten-2" class="mb-4">
+                mdi-bell-off
               </v-icon>
-            </template>
+              <p class="text-body-2 text-medium-emphasis">{{ $t('notifications.empty') }}</p>
+            </div>
 
-            <v-list-item-title class="notification-message">
-              {{ notification.message }}
-            </v-list-item-title>
-            
-            <v-list-item-subtitle class="notification-time">
-              {{ formatTime(notification.timestamp) }}
-            </v-list-item-subtitle>
+            <!-- Notifications with transition-group -->
+            <transition-group v-else name="notification" tag="div" class="notification-container">
+              <div
+                v-for="notification in displayNotifications"
+                :key="notification.id"
+                class="notification-wrapper"
+              >
+                <v-list-item
+                  :class="{ 'notification-unread': !notification.read }"
+                  @click="handleNotificationClick(notification)"
+                  class="notification-item"
+                >
+                  <template #prepend>
+                    <v-icon :color="getNotificationColor(notification.type)">
+                      {{ getNotificationIcon(notification.type) }}
+                    </v-icon>
+                  </template>
 
-            <template #append>
-              <v-btn
-                icon="mdi-close"
-                size="x-small"
-                variant="text"
-                @click.stop="removeNotification(index)"
-                :title="$t('notifications.dismiss')"
-              />
-            </template>
-          </v-list-item>
-        </v-list>
+                  <v-list-item-title class="notification-message">
+                    {{ notification.message }}
+                  </v-list-item-title>
+
+                  <v-list-item-subtitle class="notification-time">
+                    {{ formatTime(notification.timestamp) }}
+                  </v-list-item-subtitle>
+
+                  <template #append>
+                    <v-btn
+                      icon="mdi-close"
+                      size="x-small"
+                      variant="text"
+                      @click.stop="removeNotification(notification.id)"
+                      :title="$t('notifications.dismiss')"
+                    />
+                  </template>
+                </v-list-item>
+              </div>
+            </transition-group>
+          </div>
+        </div>
 
         <v-divider v-if="displayNotifications.length > 0" />
 
@@ -134,8 +139,9 @@
             {{ $t('notifications.viewAll') }}
           </v-btn>
         </v-card-actions>
-      </v-card>
-    </v-menu>
+        </v-card>
+      </div>
+    </transition>
   </div>
 </template>
 
@@ -143,6 +149,7 @@
 import { useSocket, type SocketNotification } from "@/composables/useSocket"
 import { useAuthStore } from "@/stores/auth"
 import { useNotificationStore } from "@/stores/notifications"
+import { taskNotificationService } from "@/services/taskNotificationService"
 import { computed, onMounted, onUnmounted, ref, watch } from "vue"
 import { useRouter } from "vue-router"
 import { useI18n } from "vue-i18n"
@@ -213,8 +220,10 @@ watch(
   (isAuth) => {
     if (isAuth) {
       connect()
+      taskNotificationService.startMonitoring()
     } else {
       disconnect()
+      taskNotificationService.stopMonitoring()
     }
   },
   { immediate: true }
@@ -248,10 +257,9 @@ const clearAllNotifications = () => {
   clearSocketNotifications()
 }
 
-const removeNotification = (index: number) => {
-  const notification = displayNotifications.value[index]
-  if (notification) {
-    notificationStore.removeNotification(notification.id)
+const removeNotification = (notificationId: string) => {
+  if (notificationId) {
+    notificationStore.removeNotification(notificationId)
   }
 }
 
@@ -269,6 +277,13 @@ const handleNotificationClick = (notification: ExtendedNotification) => {
 const navigateFromNotification = (notification: ExtendedNotification) => {
   switch (notification.type) {
     case "task-assigned":
+      if (notification.data?.task?.id) {
+        router.push(`/tasks?taskId=${notification.data.task.id}`)
+      } else {
+        router.push("/tasks")
+      }
+      break
+    case "task-overdue":
       if (notification.data?.task?.id) {
         router.push(`/tasks?taskId=${notification.data.task.id}`)
       } else {
@@ -302,6 +317,8 @@ const getNotificationIcon = (type: string): string => {
   switch (type) {
     case "task-assigned":
       return "mdi-check-circle"
+    case "task-overdue":
+      return "mdi-clock-alert"
     case "institution-updated":
       return "mdi-domain"
     case "team-activity":
@@ -323,6 +340,8 @@ const getNotificationColor = (type: string): string => {
   switch (type) {
     case "task-assigned":
       return "blue"
+    case "task-overdue":
+      return "red"
     case "institution-updated":
       return "green"
     case "team-activity":
@@ -360,23 +379,63 @@ const formatTime = (timestamp: Date): string => {
   }
 }
 
+// Click outside handler
+const handleClickOutside = (event: Event) => {
+  const target = event.target as Element
+  const notificationCenter = document.querySelector('.notification-center')
+
+  if (notificationCenter && !notificationCenter.contains(target)) {
+    menuVisible.value = false
+  }
+}
+
 // Initialize notification store and connection on mount
 onMounted(async () => {
   await notificationStore.initializePreferences()
   if (authStore.isAuthenticated) {
     connect()
+    // Start monitoring for overdue tasks
+    taskNotificationService.startMonitoring()
+  }
+})
+
+// Watch menu visibility to add/remove click outside listener
+watch(menuVisible, (isVisible) => {
+  if (isVisible) {
+    // Add click outside listener after a short delay
+    setTimeout(() => {
+      document.addEventListener('click', handleClickOutside)
+    }, 100)
+  } else {
+    // Remove click outside listener
+    document.removeEventListener('click', handleClickOutside)
   }
 })
 
 // Clean up on unmount
 onUnmounted(() => {
   disconnect()
+  taskNotificationService.stopMonitoring()
+  document.removeEventListener('click', handleClickOutside)
 })
 </script>
 
 <style scoped>
 .notification-center {
   position: relative;
+}
+
+.notification-dropdown {
+  position: fixed;
+  top: 60px;
+  right: 20px;
+  z-index: 9999;
+  width: 400px;
+  max-width: 90vw;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+  border-radius: 8px;
+  overflow: hidden;
+  background: white;
 }
 
 .notification-pulse {
@@ -440,5 +499,103 @@ onUnmounted(() => {
 .notification-time {
   font-size: 0.75rem;
   opacity: 0.7;
+}
+
+/* Notification container */
+.notification-container {
+  width: 100%;
+  position: relative;
+  min-height: 0;
+}
+
+.notification-wrapper {
+  width: 100%;
+  overflow: hidden;
+  will-change: transform, opacity, max-height;
+}
+
+/* Notification animations */
+.notification-enter-active {
+  transition: all 0.4s ease-out;
+}
+
+.notification-leave-active {
+  transition: all 0.4s ease-in;
+}
+
+.notification-enter-from {
+  opacity: 0;
+  transform: translateX(-30px);
+  max-height: 0;
+}
+
+.notification-enter-to {
+  opacity: 1;
+  transform: translateX(0);
+  max-height: 200px;
+}
+
+.notification-leave-from {
+  opacity: 1;
+  transform: translateX(0);
+  max-height: 200px;
+}
+
+.notification-leave-to {
+  opacity: 0;
+  transform: translateX(30px);
+  max-height: 0;
+}
+
+.notification-move {
+  transition: transform 0.4s ease;
+}
+
+/* Dropdown animations */
+.dropdown-enter-active {
+  transition: all 0.3s ease-out;
+}
+
+.dropdown-leave-active {
+  transition: all 0.2s ease-in;
+}
+
+.dropdown-enter-from {
+  opacity: 0;
+  transform: translateY(-10px) scale(0.95);
+}
+
+.dropdown-enter-to {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+.dropdown-leave-from {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+.dropdown-leave-to {
+  opacity: 0;
+  transform: translateY(-10px) scale(0.95);
+}
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+  .notification-dropdown {
+    top: 60px;
+    left: 8px;
+    right: 8px;
+    width: auto;
+    max-width: none;
+  }
+
+  .notification-content {
+    min-width: unset !important;
+  }
+
+  .notification-list {
+    max-height: 60vh !important;
+  }
 }
 </style>

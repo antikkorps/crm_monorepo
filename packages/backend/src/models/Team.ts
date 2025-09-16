@@ -34,7 +34,7 @@ export class Team
 
   public async getMembers(): Promise<any[]> {
     const { User } = await import("./User")
-    return User.findAll({
+    const users = await User.findAll({
       where: { teamId: this.id },
       attributes: { exclude: ["passwordHash"] },
       order: [
@@ -42,11 +42,13 @@ export class Team
         ["lastName", "ASC"],
       ],
     })
+    // Apply toJSON() to each user to include avatarUrl
+    return users.map(user => user.toJSON())
   }
 
   public async getActiveMembers(): Promise<any[]> {
     const { User } = await import("./User")
-    return User.findAll({
+    const users = await User.findAll({
       where: { teamId: this.id, isActive: true },
       attributes: { exclude: ["passwordHash"] },
       order: [
@@ -54,6 +56,8 @@ export class Team
         ["lastName", "ASC"],
       ],
     })
+    // Apply toJSON() to each user to include avatarUrl
+    return users.map(user => user.toJSON())
   }
 
   // Static methods

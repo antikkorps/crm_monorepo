@@ -1,4 +1,4 @@
-import { authApi, teamApi } from "@/services/api"
+import { teamApi, usersApi } from "@/services/api"
 import type {
   Team,
   TeamCreationAttributes,
@@ -44,10 +44,24 @@ export const useTeamStore = defineStore("team", () => {
       loading.value = true
       error.value = null
       const response = await teamApi.getAll()
-      teams.value = response.data || response
+      const data = (response as any).data || response
+
+      // Handle paginated response: {teams: [...], pagination: {...}}
+      let teamsArray: any[] = []
+      if (Array.isArray(data)) {
+        teamsArray = data
+      } else if (data && Array.isArray(data.teams)) {
+        teamsArray = data.teams
+      } else {
+        console.warn("Teams API response format unexpected:", data)
+        teamsArray = []
+      }
+
+      teams.value = teamsArray
     } catch (err) {
       error.value = err instanceof Error ? err.message : "Failed to fetch teams"
       console.error("Error fetching teams:", err)
+      teams.value = []
     } finally {
       loading.value = false
     }
@@ -60,21 +74,25 @@ export const useTeamStore = defineStore("team", () => {
 
       if (teamId) {
         const response = await teamApi.getById(teamId)
-        const team = response.data || response
-        teamMembers.value = team.members || []
+        const team = (response as any).data || response
+        teamMembers.value = Array.isArray(team.members) ? team.members : []
       } else {
-        // Fetch all team members across teams
-        const teamsResponse = await teamApi.getAll()
-        const allTeams = teamsResponse.data || teamsResponse
+        // Fetch all users (simpler approach)
+        const usersResponse = await usersApi.getAll()
+        const usersData = (usersResponse as any).data || usersResponse
 
-        const allMembers: User[] = []
-        allTeams.forEach((team: any) => {
-          if (team.members) {
-            allMembers.push(...team.members)
-          }
-        })
+        // Handle paginated response for users
+        let usersArray: User[] = []
+        if (Array.isArray(usersData)) {
+          usersArray = usersData
+        } else if (usersData && Array.isArray(usersData.users)) {
+          usersArray = usersData.users
+        } else {
+          console.warn("Users API response format unexpected:", usersData)
+          usersArray = []
+        }
 
-        teamMembers.value = allMembers
+        teamMembers.value = usersArray
       }
     } catch (err) {
       error.value = err instanceof Error ? err.message : "Failed to fetch team members"
@@ -89,7 +107,7 @@ export const useTeamStore = defineStore("team", () => {
       loading.value = true
       error.value = null
       const response = await teamApi.create(teamData)
-      const newTeam = response.data || response
+      const newTeam = (response as any).data || response
       teams.value.push(newTeam)
       return newTeam
     } catch (err) {
@@ -105,7 +123,7 @@ export const useTeamStore = defineStore("team", () => {
       loading.value = true
       error.value = null
       const response = await teamApi.update(teamId, updates)
-      const updatedTeam = response.data || response
+      const updatedTeam = (response as any).data || response
 
       const index = teams.value.findIndex((team) => team.id === teamId)
       if (index !== -1) {
@@ -143,8 +161,8 @@ export const useTeamStore = defineStore("team", () => {
     try {
       loading.value = true
       error.value = null
-      const response = await authApi.updateProfile(updates)
-      const updatedUser = response.data || response
+      const response = await usersApi.update(userId, updates)
+      const updatedUser = (response as any).data || response
 
       const index = teamMembers.value.findIndex((member) => member.id === userId)
       if (index !== -1) {
@@ -208,6 +226,10 @@ export const useTeamStore = defineStore("team", () => {
     return teamMembers.value.find((member) => member.id === userId)
   }
 
+  const getTeamMembers = (teamId: string) => {
+    return teamMembers.value.filter((member) => member.teamId === teamId)
+  }
+
   return {
     // State
     teams,
@@ -233,5 +255,6 @@ export const useTeamStore = defineStore("team", () => {
     setSelectedTeam,
     getTeamById,
     getUserById,
+    getTeamMembers,
   }
 })

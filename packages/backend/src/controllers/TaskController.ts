@@ -205,6 +205,7 @@ export class TaskController {
         assigneeId: taskData.assigneeId,
         creatorId: user.id,
         institutionId: taskData.institutionId,
+        contactId: taskData.contactId,
         dueDate: taskData.dueDate,
       })
 
@@ -329,6 +330,9 @@ export class TaskController {
         ...(updateData.assigneeId && { assigneeId: updateData.assigneeId }),
         ...(updateData.institutionId !== undefined && {
           institutionId: updateData.institutionId,
+        }),
+        ...(updateData.contactId !== undefined && {
+          contactId: updateData.contactId,
         }),
         ...(updateData.dueDate !== undefined && { dueDate: updateData.dueDate }),
       })

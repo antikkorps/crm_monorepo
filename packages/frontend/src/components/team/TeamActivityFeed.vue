@@ -1,122 +1,119 @@
 <template>
-  <Card class="activity-feed">
-    <template #header>
+  <v-card class="activity-feed">
+    <v-card-item>
       <div class="feed-header">
         <h3 class="feed-title">
-          <i class="pi pi-history mr-2"></i>
+          <v-icon icon="mdi-history" class="me-2" />
           Team Activity
         </h3>
         <div class="feed-controls">
-          <Button
-            icon="pi pi-refresh"
+          <v-btn
+            icon="mdi-refresh"
             size="small"
-            text
-            rounded
+            variant="text"
             @click="refreshFeed"
             :loading="loading"
-            v-tooltip.top="'Refresh'"
           />
-          <Dropdown
+          <v-select
             v-model="selectedFilter"
-            :options="filterOptions"
-            optionLabel="label"
-            optionValue="value"
-            @change="applyFilter"
+            :items="filterOptions"
+            item-title="label"
+            item-value="value"
+            @update:model-value="applyFilter"
+            density="compact"
             class="filter-dropdown"
+            hide-details
           />
         </div>
       </div>
-    </template>
+    </v-card-item>
 
-    <template #content>
+    <v-card-text>
       <div class="activity-content">
         <!-- Loading State -->
         <div v-if="loading" class="loading-state">
-          <ProgressSpinner size="small" />
+          <v-progress-circular indeterminate size="small" />
           <span>Loading activities...</span>
         </div>
 
         <!-- Empty State -->
         <div v-else-if="filteredActivities.length === 0" class="empty-state">
-          <i class="pi pi-history empty-icon"></i>
+          <v-icon icon="mdi-history" class="empty-icon" />
           <p>No recent activities found</p>
         </div>
 
         <!-- Activity Timeline -->
-        <Timeline v-else :value="filteredActivities" class="activity-timeline">
-          <template #marker="{ item }">
-            <div class="activity-marker" :class="getMarkerClass(item.type)">
-              <i :class="getActivityIcon(item.type)"></i>
-            </div>
-          </template>
-
-          <template #content="{ item }">
-            <div class="activity-item">
-              <div class="activity-header">
-                <div class="activity-user">
-                  <Avatar
-                    :image="getUserAvatar(item.userId)"
-                    :label="getUserInitials(item.user)"
-                    size="small"
-                    shape="circle"
-                    class="user-avatar"
-                  />
-                  <span class="user-name"
-                    >{{ item.user?.firstName }} {{ item.user?.lastName }}</span
-                  >
+        <div v-else class="activity-timeline">
+          <v-timeline
+            :items="timelineItems"
+            class="activity-timeline"
+            size="small"
+          >
+            <template #item="{ item }">
+              <div class="activity-item">
+                <div class="activity-header">
+                  <div class="activity-user">
+                    <v-avatar
+                      :image="getUserAvatar(item.userId)"
+                      :alt="getUserInitials(item.user)"
+                      size="32"
+                      class="user-avatar"
+                    >
+                      {{ getUserInitials(item.user) }}
+                    </v-avatar>
+                    <span class="user-name">
+                      {{ item.user?.firstName }} {{ item.user?.lastName }}
+                    </span>
+                  </div>
+                  <div class="activity-time">
+                    <small>{{ formatTime(item.timestamp) }}</small>
+                  </div>
                 </div>
-                <div class="activity-time">
-                  <small>{{ formatTime(item.timestamp) }}</small>
+
+                <div class="activity-content">
+                  <p class="activity-description">{{ item.description }}</p>
+
+                  <div v-if="item.metadata" class="activity-metadata">
+                    <div v-if="item.metadata.taskTitle" class="metadata-item">
+                      <v-icon icon="mdi-check-square" size="small" class="me-1" />
+                      <span>{{ item.metadata.taskTitle }}</span>
+                    </div>
+
+                    <div v-if="item.metadata.institutionName" class="metadata-item">
+                      <v-icon icon="mdi-office-building" size="small" class="me-1" />
+                      <span>{{ item.metadata.institutionName }}</span>
+                    </div>
+
+                    <div v-if="item.metadata.amount" class="metadata-item">
+                      <v-icon icon="mdi-currency-usd" size="small" class="me-1" />
+                      <span>${{ formatAmount(item.metadata.amount) }}</span>
+                    </div>
+                  </div>
                 </div>
               </div>
-
-              <div class="activity-content">
-                <p class="activity-description">{{ item.description }}</p>
-
-                <div v-if="item.metadata" class="activity-metadata">
-                  <div v-if="item.metadata.taskTitle" class="metadata-item">
-                    <i class="pi pi-check-square mr-1"></i>
-                    <span>{{ item.metadata.taskTitle }}</span>
-                  </div>
-
-                  <div v-if="item.metadata.institutionName" class="metadata-item">
-                    <i class="pi pi-building mr-1"></i>
-                    <span>{{ item.metadata.institutionName }}</span>
-                  </div>
-
-                  <div v-if="item.metadata.amount" class="metadata-item">
-                    <i class="pi pi-dollar mr-1"></i>
-                    <span>${{ formatAmount(item.metadata.amount) }}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </template>
-        </Timeline>
+            </template>
+          </v-timeline>
+        </div>
 
         <!-- Load More Button -->
         <div v-if="hasMore" class="load-more-section">
-          <Button
-            label="Load More"
-            icon="pi pi-angle-down"
-            outlined
+          <v-btn
+            prepend-icon="mdi-chevron-down"
+            variant="outlined"
             @click="loadMore"
             :loading="loadingMore"
+            block
             class="load-more-btn"
-          />
+          >
+            Load More
+          </v-btn>
         </div>
       </div>
-    </template>
-  </Card>
+    </v-card-text>
+  </v-card>
 </template>
 
 <script setup lang="ts">
-import Avatar from "primevue/avatar"
-import Button from "primevue/button"
-import Card from "primevue/card"
-import Dropdown from "primevue/dropdown"
-import ProgressSpinner from "primevue/progressspinner"
-import Timeline from "primevue/timeline"
 import { computed, onMounted, ref } from "vue"
 
 interface ActivityItem {
@@ -187,6 +184,14 @@ const filteredActivities = computed(() => {
   return activities.value.filter((activity) => allowedTypes.includes(activity.type))
 })
 
+const timelineItems = computed(() =>
+  filteredActivities.value.map((activity) => ({
+    ...activity,
+    dotColor: getMarkerClass(activity.type).replace('marker-', ''),
+    icon: getActivityIcon(activity.type).replace('pi pi-', 'mdi-'),
+  }))
+)
+
 const getMarkerClass = (type: string) => {
   const classMap = {
     task_created: "marker-task",
@@ -203,16 +208,16 @@ const getMarkerClass = (type: string) => {
 
 const getActivityIcon = (type: string) => {
   const iconMap = {
-    task_created: "pi pi-plus",
-    task_completed: "pi pi-check",
-    task_assigned: "pi pi-user-plus",
-    institution_created: "pi pi-building",
-    institution_updated: "pi pi-pencil",
-    quote_created: "pi pi-file-edit",
-    invoice_paid: "pi pi-dollar",
-    user_login: "pi pi-sign-in",
+    task_created: "mdi-plus",
+    task_completed: "mdi-check",
+    task_assigned: "mdi-account-plus",
+    institution_created: "mdi-office-building",
+    institution_updated: "mdi-pencil",
+    quote_created: "mdi-file-edit",
+    invoice_paid: "mdi-currency-usd",
+    user_login: "mdi-login",
   }
-  return iconMap[type as keyof typeof iconMap] || "pi pi-circle"
+  return iconMap[type as keyof typeof iconMap] || "mdi-circle"
 }
 
 const getUserAvatar = (userId: string) => {

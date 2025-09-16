@@ -228,17 +228,23 @@ const loadInstitutions = async () => {
   try {
     loadingInstitutions.value = true
     const response = await institutionsApi.getAll()
-    const institutions = response.data || response
+    const data = response.data || response
 
-    if (Array.isArray(institutions)) {
-      institutionOptions.value = institutions.map((institution: any) => ({
-        label: institution.name,
-        value: institution.id,
-      }))
+    // Handle paginated response: {institutions: [...], pagination: {...}}
+    let institutionsArray: any[] = []
+    if (Array.isArray(data)) {
+      institutionsArray = data
+    } else if (data && Array.isArray(data.institutions)) {
+      institutionsArray = data.institutions
     } else {
-      console.warn("Institutions response is not an array:", institutions)
-      institutionOptions.value = []
+      console.warn("Institutions API response format unexpected:", data)
+      institutionsArray = []
     }
+
+    institutionOptions.value = institutionsArray.map((institution: any) => ({
+      label: institution.name,
+      value: institution.id,
+    }))
   } catch (error) {
     console.error("Error loading institutions:", error)
     institutionOptions.value = []

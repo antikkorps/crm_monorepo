@@ -496,12 +496,67 @@
     - Provide request/response examples and parameter descriptions
     - _Requirements: 7.1, 7.4, 11.1_
 
-  - [x] 20.6 Frontend integration on Institution detail
-    - Add collaboration summary panel (stats + recent items)
-    - Add timeline tab with pagination
-    - Add unified search tab with `scope=own|team|all` selector
-    - Wire API services for collaboration, timeline, and unified search
-    - _Requirements: 5.1, 5.3_
+- [x] 20.6 Frontend integration on Institution detail
+
+  - Add collaboration summary panel (stats + recent items)
+  - Add timeline tab with pagination
+  - Add unified search tab with `scope=own|team|all` selector
+  - Wire API services for collaboration, timeline, and unified search
+  - _Requirements: 5.1, 5.3_
+
+- [ ] 25. Enhance main dashboard with dynamic metrics and Digiforma integration insights
+
+  - [ ] 25.1 Implement dynamic CRM metrics (Phase 1 - Independent of Digiforma)
+
+    - Replace hardcoded stats with real-time API data (institutions count, active tasks, team members, reports)
+    - Add performance indicators (revenue growth, new clients this month, conversion rates)
+    - Implement role-based metric filtering (SUPER_ADMIN sees all, USER sees team data)
+    - Create metric caching for better performance
+    - Connect to existing CRM data (institutions, contacts, tasks, billing) without Digiforma dependency
+    - _Requirements: 7.1, 8.1, 10.1_
+
+  - [ ] 25.2 Add Digiforma synchronization status widget (Phase 2 - After Digiforma integration)
+
+    - Display last sync timestamp and status for each data type (clients, quotes, invoices)
+    - Show sync statistics (new records, updated records, errors)
+    - Add quick sync trigger button with progress indicator
+    - Implement sync health monitoring (success rate, average sync time)
+    - _Requirements: 6.4, 6.5_
+
+  - [ ] 25.3 Create recent activities timeline
+
+    - Build unified activity feed (new clients, created quotes/invoices, task assignments, Digiforma syncs)
+    - Add activity filtering by type, date range, and user/team
+    - Implement real-time updates via WebSocket for new activities
+    - Create activity detail modals with quick actions
+    - Start with existing CRM activities, add Digiforma events later
+    - _Requirements: 3.1, 5.1, 9.3_
+
+  - [ ] 25.4 Implement smart alerts and notifications panel
+
+    - Add critical alerts (overdue tasks, unpaid invoices, sync failures)
+    - Create priority-based alert system with dismissible notifications
+    - Implement alert history and management
+    - Add alert configuration preferences per user
+    - Include alerts for Digiforma sync issues when integration is ready
+    - _Requirements: 3.2, 3.3, 11.1_
+
+  - [ ] 25.5 Build personalized quick actions based on user behavior
+
+    - Track user actions and suggest relevant shortcuts
+    - Add frequently used features to quick actions dynamically
+    - Implement contextual actions based on current metrics (e.g., "Create invoice" if revenue is low)
+    - Create role-specific action recommendations
+    - _Requirements: 10.1, 10.2_
+
+  - [ ] 25.6 Add performance charts and KPIs overview
+
+    - Create mini-charts for key metrics (revenue trend, client growth, task completion rate)
+    - Implement chart drill-down to detailed analytics views
+    - Add period comparison (this month vs last month)
+    - Create visual KPI indicators with color coding
+    - Use existing billing analytics data as foundation
+    - _Requirements: 2.5, 8.2_
 
 - [ ] 21. Implement comprehensive data export and segmentation system
 
@@ -590,20 +645,52 @@
 - [ ] 23. Frontend Harmonization and Polish
 
   - [ ] 23.1 Refine and complete Quotes/Invoices UI
+
     - Ensure consistent design between Quotes and Invoices views.
     - Improve forms for creating/editing lines.
     - Add missing UI elements for actions (e.g., email tracking, history).
 
   - [ ] 23.2 Refine and complete Notifications UI
+
     - Improve the notification center component.
     - Ensure all user-facing notifications are clear, translatable, and actionable.
     - Review real-time updates for notifications.
 
   - [ ] 23.3 Implement enhanced loading states
+
     - Replace spinners with `v-skeleton-loader` where appropriate for a better perceived performance.
 
   - [ ] 23.4 Conduct full accessibility (a11y) audit
     - Check color contrasts, keyboard navigation, and ARIA attributes across the application.
+
+- [ ] 24. Implement Digiforma read-only data synchronization via GraphQL API (Customer Management Only)
+
+  - [ ] 24.1 Set up Digiforma GraphQL API read-only integration
+
+    - Configure GraphQL client with authentication (Bearer token from Digiforma)
+    - Set up API connection management and error handling for read operations
+    - Implement rate limiting and retry logic for API calls
+    - Create data mapping for Digiforma entities (companies, trainees, quotes, invoices) to CRM contacts/institutions/quotes/invoices
+    - _Requirements: 6.4, 6.5_
+
+  - [ ] 24.2 Implement customer and billing data synchronization logic (read-only)
+
+    - Build GraphQL queries for retrieving companies, trainees, quotes, and invoices data
+    - Add pagination support for large datasets
+    - Implement duplicate detection and merge logic for existing CRM customers/billing data
+    - Create incremental sync with status tracking and error handling
+    - Add data transformation and validation rules for read-only operations
+    - Write integration tests for data synchronization (read-only)
+    - _Requirements: 6.4, 6.5_
+
+  - [ ] 24.3 Build Digiforma sync management interface (read-only focus)
+
+    - Create Digiforma API connection configuration dashboard
+    - Implement sync status monitoring and error reporting for read operations
+    - Add manual sync trigger and history viewing for imported data
+    - Build data mapping configuration interface for CRM integration
+    - Create sync testing and validation tools (read-only)
+    - _Requirements: 6.3, 6.4_
 
 ## Issues Récurrents à Résoudre
 
@@ -612,16 +699,19 @@
 **Problème:** Des erreurs récurrentes liées aux champs JSONB (particulièrement le champ `address`) dans les requêtes Sequelize avec includes.
 
 **Exemples d'erreurs observées:**
+
 - Erreurs lors d'includes de MedicalInstitution avec champs d'adresse JSONB
 - Incompatibilité entre les requêtes Sequelize et la structure JSONB PostgreSQL
 - Échecs de sérialisation/désérialisation des données d'adresse
 
 **Impact:**
+
 - Requêtes échouent fréquemment lors d'opérations complexes
 - Nécessité de contournements temporaires (suppression d'includes)
 - Dégradation de l'expérience utilisateur
 
 **Actions à entreprendre:**
+
 1. **Audit complet des champs JSONB** - Identifier tous les champs JSONB problématiques
 2. **Migration vers structure relationnelle** - Créer des tables séparées pour les adresses et autres structures complexes
 3. **Alternative: Normalisation JSONB** - Standardiser la structure et validation JSONB si conservation souhaitée
@@ -631,6 +721,7 @@
 **Priorité:** 🔴 HAUTE - À traiter en priorité pour stabiliser les opérations de base de données
 
 **Historique des occurrences:**
+
 - Analytics dashboard: Erreurs lors d'includes avec MedicalInstitution
 - Quotes system: Problèmes similaires nécessitant simplification temporaire
 - Multiple autres endpoints potentiellement affectés

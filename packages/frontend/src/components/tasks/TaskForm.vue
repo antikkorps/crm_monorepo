@@ -12,105 +12,132 @@
       <v-card-text class="task-form">
 
     <form @submit.prevent="handleSubmit" class="task-form">
-      <!-- Title -->
-      <div class="form-group">
-        <v-text-field
-          id="title"
-          v-model="formData.title"
-          :error-messages="errors.title ? [errors.title] : []"
-          :label="t('task.form.title') + ' *'"
-          :placeholder="t('task.form.titlePlaceholder')"
-          density="comfortable"
-        />
-      </div>
+       <!-- Title -->
+       <div class="form-group">
+         <v-text-field
+           id="title"
+           v-model="formData.title"
+           :error-messages="errors.title ? [errors.title] : []"
+           :label="t('task.form.title') + ' *'"
+           :placeholder="t('task.form.titlePlaceholder')"
+           density="comfortable"
+           hide-details="auto"
+         />
+       </div>
 
-      <!-- Description -->
-      <div class="form-group">
-        <v-textarea
-          id="description"
-          v-model="formData.description"
-          :label="t('task.form.description')"
-          :placeholder="t('task.form.descriptionPlaceholder')"
-          density="comfortable"
-          rows="3"
-          auto-grow
-        />
-      </div>
+       <!-- Description -->
+       <div class="form-group">
+         <v-textarea
+           id="description"
+           v-model="formData.description"
+           :label="t('task.form.description')"
+           :placeholder="t('task.form.descriptionPlaceholder')"
+           density="comfortable"
+           :rows="$vuetify.display.mobile ? 2 : 3"
+           auto-grow
+           hide-details="auto"
+         />
+       </div>
 
-      <!-- Priority and Status Row -->
-      <div class="form-row">
-        <div class="form-group">
-          <v-select
-            id="priority"
-            v-model="formData.priority"
-            :items="priorityOptions"
-            item-title="label"
-            item-value="value"
-            :label="t('task.form.priority')"
-            :placeholder="t('task.form.priorityPlaceholder')"
-            density="comfortable"
-          />
-        </div>
+       <!-- Priority and Assignee Row -->
+       <div class="form-row">
+         <div class="form-group">
+           <v-select
+             id="priority"
+             v-model="formData.priority"
+             :items="priorityOptions"
+             item-title="label"
+             item-value="value"
+             :label="t('task.form.priority')"
+             :placeholder="t('task.form.priorityPlaceholder')"
+             density="comfortable"
+             hide-details="auto"
+           />
+         </div>
 
-        <div class="form-group" v-if="isEditing">
-          <v-select
-            id="status"
-            v-model="formData.status"
-            :items="statusOptions"
-            item-title="label"
-            item-value="value"
-            :label="t('task.form.status')"
-            :placeholder="t('task.form.statusPlaceholder')"
-            density="comfortable"
-          />
-        </div>
-      </div>
+         <div class="form-group">
+           <v-select
+             id="assigneeId"
+             v-model="formData.assigneeId"
+             :items="assigneeOptions"
+             item-title="label"
+             item-value="value"
+             :error-messages="errors.assigneeId ? [errors.assigneeId] : []"
+             :label="t('task.form.assignee') + ' *'"
+             :placeholder="t('task.form.assigneePlaceholder')"
+             :loading="loadingUsers"
+             density="comfortable"
+             hide-details="auto"
+           />
+         </div>
+       </div>
 
-      <!-- Assignee and Institution Row -->
-      <div class="form-row">
-        <div class="form-group">
-          <v-select
-            id="assigneeId"
-            v-model="formData.assigneeId"
-            :items="assigneeOptions"
-            item-title="label"
-            item-value="value"
-            :error-messages="errors.assigneeId ? [errors.assigneeId] : []"
-            :label="t('task.form.assignee') + ' *'"
-            :placeholder="t('task.form.assigneePlaceholder')"
-            :loading="loadingUsers"
-            density="comfortable"
-          />
-        </div>
+       <!-- Status Row (only in edit mode) -->
+       <div class="form-row" v-if="isEditing">
+         <div class="form-group full-width">
+           <v-select
+             id="status"
+             v-model="formData.status"
+             :items="statusOptions"
+             item-title="label"
+             item-value="value"
+             :label="t('task.form.status')"
+             :placeholder="t('task.form.statusPlaceholder')"
+             density="comfortable"
+             hide-details="auto"
+           />
+         </div>
+       </div>
 
-        <div class="form-group">
-          <v-select
-            id="institutionId"
-            v-model="formData.institutionId"
-            :items="institutionOptions"
-            item-title="label"
-            item-value="value"
-            :label="t('task.form.institution')"
-            :placeholder="t('task.form.institutionPlaceholder')"
-            clearable
-            :loading="loadingInstitutions"
-            density="comfortable"
-          />
-        </div>
-      </div>
+       <!-- Institution and Contact Row -->
+       <div class="form-row">
+         <div class="form-group">
+           <v-select
+             id="institutionId"
+             v-model="formData.institutionId"
+             :items="institutionOptions"
+             item-title="label"
+             item-value="value"
+             :label="t('task.form.institution')"
+             :placeholder="t('task.form.institutionPlaceholder')"
+             clearable
+             :loading="loadingInstitutions"
+             density="comfortable"
+             hide-details="auto"
+             @update:model-value="onInstitutionChange"
+           />
+         </div>
 
-      <!-- Due Date -->
-      <div class="form-group">
-        <v-text-field
-          id="dueDate"
-          v-model="formData.dueDate"
-          :label="t('task.form.dueDate')"
-          :placeholder="t('task.form.dueDatePlaceholder')"
-          type="datetime-local"
-          density="comfortable"
-          :min="new Date().toISOString().slice(0, 16)"
-        />
-      </div>
+         <div class="form-group" v-if="formData.institutionId">
+           <v-select
+             id="contactId"
+             v-model="formData.contactId"
+             :items="contactOptions"
+             item-title="label"
+             item-value="value"
+             :label="t('task.form.contact')"
+             :placeholder="t('task.form.contactPlaceholder')"
+             clearable
+             :loading="loadingContacts"
+             density="comfortable"
+             hide-details="auto"
+           />
+         </div>
+       </div>
+
+       <!-- Due Date -->
+       <div class="form-group">
+         <v-text-field
+           id="dueDate"
+           v-model="formData.dueDate"
+           :label="t('task.form.dueDate')"
+           :placeholder="t('task.form.dueDatePlaceholder')"
+           type="datetime-local"
+           density="comfortable"
+           hide-details="auto"
+           :min="new Date().toISOString().slice(0, 16)"
+         />
+       </div>
     </form>
 
       </v-card-text>
@@ -137,7 +164,8 @@
 </template>
 
 <script setup lang="ts">
-import { institutionsApi, teamApi } from "@/services/api"
+import { useInstitutionsStore } from "@/stores/institutions"
+import { useTeamStore } from "@/stores/team"
 import type {
   Task,
   TaskCreateRequest,
@@ -166,26 +194,35 @@ const emit = defineEmits<Emits>()
 
 const { t } = useI18n()
 
+// Stores
+const teamStore = useTeamStore()
+const institutionsStore = useInstitutionsStore()
+
 const visible = computed({
   get: () => props.modelValue,
   set: (value) => emit("update:modelValue", value)
 })
 
-const formData = ref<TaskCreateRequest & { status?: TaskStatus }>({
+const formData = ref<TaskCreateRequest & { status?: TaskStatus; contactId?: string; dueDate: string }>({
   title: "",
   description: "",
   priority: "medium" as TaskPriority,
   assigneeId: "",
   institutionId: "",
-  dueDate: undefined,
+  contactId: "",
+  dueDate: "",
   status: "todo" as TaskStatus,
 })
 
 const errors = ref<Record<string, string>>({})
-const loadingUsers = ref(false)
-const loadingInstitutions = ref(false)
 const assigneeOptions = ref<Array<{ label: string; value: string }>>([])
 const institutionOptions = ref<Array<{ label: string; value: string }>>([])
+const contactOptions = ref<Array<{ label: string; value: string }>>([])
+const loadingContacts = ref(false)
+
+// Computed loading states from stores
+const loadingUsers = computed(() => teamStore.loading)
+const loadingInstitutions = computed(() => institutionsStore.loading)
 
 const isEditing = computed(() => !!props.task)
 
@@ -222,10 +259,12 @@ const resetForm = () => {
     priority: "medium" as TaskPriority,
     assigneeId: "",
     institutionId: "",
-    dueDate: undefined,
+    contactId: "",
+    dueDate: "",
     status: "todo" as TaskStatus,
   }
   errors.value = {}
+  contactOptions.value = []
 }
 
 const populateForm = (task: Task) => {
@@ -235,8 +274,14 @@ const populateForm = (task: Task) => {
     priority: task.priority,
     assigneeId: task.assigneeId,
     institutionId: task.institutionId || "",
-    dueDate: task.dueDate ? new Date(task.dueDate) : undefined,
+    contactId: (task as any).contactId || "",
+    dueDate: task.dueDate ? formatDateForInput(new Date(task.dueDate)) : "",
     status: task.status,
+  }
+
+  // Load contacts if institution is selected
+  if (formData.value.institutionId) {
+    loadContacts(formData.value.institutionId)
   }
 }
 
@@ -266,8 +311,14 @@ const handleSubmit = () => {
   if (!submitData.institutionId) {
     delete submitData.institutionId
   }
+  if (!submitData.contactId) {
+    delete submitData.contactId
+  }
   if (!submitData.dueDate) {
     delete submitData.dueDate
+  } else {
+    // Convert string to Date for API
+    (submitData as any).dueDate = new Date(submitData.dueDate)
   }
 
   emit("submit", submitData)
@@ -278,61 +329,88 @@ const handleCancel = () => {
   visible.value = false
 }
 
+const onInstitutionChange = async (institutionId: string) => {
+  formData.value.contactId = "" // Reset contact when institution changes
+  if (institutionId) {
+    await loadContacts(institutionId)
+  } else {
+    contactOptions.value = []
+  }
+}
+
+const loadContacts = async (institutionId: string) => {
+  try {
+    loadingContacts.value = true
+    const institution = institutionsStore.getInstitutionById(institutionId)
+
+    if (institution && Array.isArray(institution.contactPersons)) {
+      contactOptions.value = institution.contactPersons.map((contact: any) => ({
+        label: `${contact.firstName} ${contact.lastName}${contact.title ? ` (${contact.title})` : ''}`,
+        value: contact.id,
+      }))
+    } else {
+      contactOptions.value = []
+    }
+  } catch (error) {
+    console.error("Error loading contacts:", error)
+    contactOptions.value = []
+  } finally {
+    loadingContacts.value = false
+  }
+}
+
 const loadUsers = async () => {
   try {
-    loadingUsers.value = true
-    const response = await teamApi.getAll()
-    const teams = response.data || response
+    await teamStore.fetchTeamMembers()
 
-    if (Array.isArray(teams)) {
-      // Flatten team members into assignee options
-      const users: Array<{ label: string; value: string }> = []
-      teams.forEach((team: any) => {
-        if (team.members && Array.isArray(team.members)) {
-          team.members.forEach((member: any) => {
-            if (member.firstName && member.lastName && member.id) {
-              users.push({
-                label: `${member.firstName} ${member.lastName}`,
-                value: member.id,
-              })
-            }
+    // Convert team members to assignee options
+    const users: Array<{ label: string; value: string }> = []
+    if (Array.isArray(teamStore.teamMembers)) {
+      teamStore.teamMembers.forEach((member) => {
+        if (member.firstName && member.lastName && member.id) {
+          users.push({
+            label: `${member.firstName} ${member.lastName}`,
+            value: member.id,
           })
         }
       })
-      assigneeOptions.value = users
     } else {
-      console.warn("Teams response is not an array:", teams)
-      assigneeOptions.value = []
+      console.warn("Team members is not an array:", teamStore.teamMembers)
     }
+    assigneeOptions.value = users
   } catch (error) {
     console.error("Error loading users:", error)
     assigneeOptions.value = []
-  } finally {
-    loadingUsers.value = false
   }
 }
 
 const loadInstitutions = async () => {
   try {
-    loadingInstitutions.value = true
-    const response = await institutionsApi.getAll()
-    const institutions = response.data || response
+    await institutionsStore.fetchInstitutions()
 
-    if (Array.isArray(institutions)) {
-      institutionOptions.value = institutions.map((institution: any) => ({
+    if (Array.isArray(institutionsStore.institutions)) {
+      institutionOptions.value = institutionsStore.institutions.map((institution) => ({
         label: institution.name,
         value: institution.id,
       }))
     } else {
-      console.warn("Institutions response is not an array:", institutions)
+      console.warn("Institutions response is not an array:", institutionsStore.institutions)
       institutionOptions.value = []
     }
   } catch (error) {
     console.error("Error loading institutions:", error)
     institutionOptions.value = []
-  } finally {
-    loadingInstitutions.value = false
   }
+}
+
+// Helper function to format date for datetime-local input
+const formatDateForInput = (date: Date): string => {
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  const hours = String(date.getHours()).padStart(2, '0')
+  const minutes = String(date.getMinutes()).padStart(2, '0')
+  return `${year}-${month}-${day}T${hours}:${minutes}`
 }
 
 onMounted(() => {
@@ -364,25 +442,78 @@ onMounted(() => {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 1rem;
+  margin-bottom: 1rem;
 }
 
 .form-group {
-  margin-bottom: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.form-group.full-width {
+  grid-column: 1 / -1;
 }
 
 .dialog-footer {
   display: flex;
   justify-content: flex-end;
   gap: 0.75rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(var(--v-theme-surface-variant), 0.2);
 }
 
 @media (max-width: 768px) {
   .task-form-dialog {
     width: 95vw;
+    max-width: none;
+  }
+
+  .task-form {
+    gap: 1rem;
+    padding: 0.5rem 0;
   }
 
   .form-row {
     grid-template-columns: 1fr;
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .dialog-footer {
+    flex-direction: column-reverse;
+    gap: 0.5rem;
+    padding-top: 1.5rem;
+
+    .v-btn {
+      width: 100%;
+    }
+  }
+}
+
+@media (max-width: 480px) {
+  .task-form-dialog {
+    width: 98vw;
+    margin: 1rem;
+  }
+
+  .task-form {
+    gap: 0.75rem;
+    padding: 0.25rem 0;
+  }
+
+  .form-row {
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .v-card-text {
+    padding: 1rem !important;
+  }
+
+  .v-card-title {
+    padding: 1rem 1rem 0.5rem 1rem !important;
+    font-size: 1.25rem;
   }
 }
 </style>

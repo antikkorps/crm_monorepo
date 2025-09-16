@@ -26,6 +26,7 @@ export interface TaskAttributes {
   assigneeId: string
   creatorId: string
   institutionId?: string
+  contactId?: string
   dueDate?: Date
   completedAt?: Date
   createdAt: Date
@@ -47,6 +48,7 @@ export class Task
   declare assigneeId: string
   declare creatorId: string
   declare institutionId?: string
+  declare contactId?: string
   declare dueDate?: Date
   declare completedAt?: Date
   declare readonly createdAt: Date
@@ -376,6 +378,11 @@ Task.init(
       type: DataTypes.UUID,
       allowNull: true,
       field: "institution_id",
+    },
+    contactId: {
+      type: DataTypes.UUID,
+      allowNull: true,
+      field: "contact_id",
     },
     dueDate: {
       type: DataTypes.DATE,

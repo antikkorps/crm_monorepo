@@ -4,6 +4,7 @@ export interface NotificationPreferences {
   enableSound: boolean
   enableDesktop: boolean
   enableTaskAssignments: boolean
+  enableTaskOverdue: boolean
   enableInstitutionUpdates: boolean
   enableTeamActivity: boolean
   enableWebhookEvents: boolean
@@ -27,6 +28,7 @@ export const useNotificationStore = defineStore("notifications", {
       enableSound: true,
       enableDesktop: false,
       enableTaskAssignments: true,
+      enableTaskOverdue: true,
       enableInstitutionUpdates: true,
       enableTeamActivity: true,
       enableWebhookEvents: false,
@@ -216,6 +218,8 @@ export const useNotificationStore = defineStore("notifications", {
       switch (type) {
         case "task-assigned":
           return this.preferences.enableTaskAssignments
+        case "task-overdue":
+          return this.preferences.enableTaskOverdue
         case "institution-updated":
           return this.preferences.enableInstitutionUpdates
         case "team-activity":
@@ -298,6 +302,7 @@ export const useNotificationStore = defineStore("notifications", {
         thisWeek: this.history.filter((n) => n.timestamp >= thisWeek).length,
         byType: {
           taskAssigned: this.history.filter((n) => n.type === "task-assigned").length,
+          taskOverdue: this.history.filter((n) => n.type === "task-overdue").length,
           institutionUpdated: this.history.filter((n) => n.type === "institution-updated")
             .length,
           teamActivity: this.history.filter((n) => n.type === "team-activity").length,
