@@ -1,7 +1,7 @@
 <template>
-  <div class="templates-view">
+  <v-container fluid class="templates-view pa-0">
     <TemplateManager />
-  </div>
+  </v-container>
 </template>
 
 <script setup lang="ts">
@@ -11,6 +11,6 @@ import { TemplateManager } from "../../components/templates"
 <style scoped>
 .templates-view {
   min-height: 100vh;
-  background: var(--surface-ground);
+  background: rgb(var(--v-theme-surface));
 }
 </style>

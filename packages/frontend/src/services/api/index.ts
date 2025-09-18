@@ -453,8 +453,26 @@ export const templatesApi = {
     apiClient.post(`/templates/${id}/duplicate`, { name }),
   preview: (id: string, sampleData?: any) =>
     sampleData
-      ? apiClient.post(`/templates/${id}/preview`, sampleData)
-      : apiClient.get(`/templates/${id}/preview`),
+      ? fetch(`${API_BASE_URL}/templates/${id}/preview`, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(sampleData),
+        }).then(async (res) => {
+          if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`)
+          return res.text()
+        })
+      : fetch(`${API_BASE_URL}/templates/${id}/preview`, {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }).then(async (res) => {
+          if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`)
+          return res.text()
+        }),
   uploadLogo: (file: File, templateId?: string) => {
     const formData = new FormData()
     formData.append("logo", file)
@@ -469,6 +487,7 @@ export const templatesApi = {
       body: formData,
     }).then((response) => response.json())
   },
+  listLogos: () => apiClient.get(`/templates/logos`),
 }
 
 // Export documents API

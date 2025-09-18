@@ -1,119 +1,113 @@
 <template>
-  <Dialog
-    :visible="visible"
-    :modal="true"
-    :closable="true"
-    :draggable="false"
-    class="template-preview-dialog"
-    @update:visible="$emit('update:visible', $event)"
+  <v-dialog
+    :model-value="visible"
+    @update:model-value="$emit('update:visible', $event)"
+    max-width="1200px"
+    persistent
+    scrollable
   >
-    <template #header>
-      <div class="preview-header">
-        <h3>Template Preview</h3>
+    <v-card class="template-preview-dialog">
+      <v-card-title class="d-flex align-center justify-space-between">
+        <span>Template Preview</span>
         <div class="preview-actions">
-          <Button
-            icon="pi pi-refresh"
-            text
-            rounded
+          <v-btn
+            icon="mdi-refresh"
+            variant="text"
+            size="small"
             @click="refreshPreview"
-            v-tooltip.top="'Refresh Preview'"
-            :loading="loading"
-          />
-          <Button
-            icon="pi pi-external-link"
-            text
-            rounded
+          >
+            <v-icon>mdi-refresh</v-icon>
+            <v-tooltip activator="parent" location="top">Refresh Preview</v-tooltip>
+          </v-btn>
+          <v-btn
+            icon="mdi-open-in-new"
+            variant="text"
+            size="small"
             @click="openInNewTab"
-            v-tooltip.top="'Open in New Tab'"
-            :disabled="!previewHtml"
-          />
+          >
+            <v-icon>mdi-open-in-new</v-icon>
+            <v-tooltip activator="parent" location="top">Open in New Tab</v-tooltip>
+          </v-btn>
+          <v-btn
+            icon="mdi-close"
+            variant="text"
+            size="small"
+            @click="$emit('update:visible', false)"
+          >
+            <v-icon>mdi-close</v-icon>
+          </v-btn>
         </div>
-      </div>
-    </template>
+      </v-card-title>
 
-    <div class="preview-content">
-      <!-- Loading State -->
-      <div v-if="loading" class="loading-state">
-        <ProgressSpinner />
-        <p>Generating preview...</p>
-      </div>
+      <v-card-text class="preview-content pa-0">
 
-      <!-- Error State -->
-      <div v-else-if="error" class="error-state">
-        <Message severity="error" :closable="false">
-          <div class="error-content">
-            <h4>Preview Error</h4>
-            <p>{{ error }}</p>
-            <Button
-              label="Retry"
-              icon="pi pi-refresh"
-              @click="loadPreview"
-              class="retry-button"
-            />
+        <!-- Preview Frame -->
+        <div v-if="template" class="preview-frame-container">
+          <div class="preview-toolbar">
+            <div class="preview-info">
+              <span class="template-name">{{ template?.name }}</span>
+              <v-chip :color="templateTypeColor" size="small" variant="elevated">
+                {{ templateTypeLabel }}
+              </v-chip>
+            </div>
+            <div class="preview-controls">
+              <v-btn
+                :icon="isFullscreen ? 'mdi-fullscreen-exit' : 'mdi-fullscreen'"
+                variant="text"
+                size="small"
+                @click="toggleFullscreen"
+              >
+                <v-icon>{{ isFullscreen ? 'mdi-fullscreen-exit' : 'mdi-fullscreen' }}</v-icon>
+                <v-tooltip activator="parent" location="top">
+                  {{ isFullscreen ? 'Exit Fullscreen' : 'Fullscreen' }}
+                </v-tooltip>
+              </v-btn>
+            </div>
           </div>
-        </Message>
-      </div>
 
-      <!-- Preview Frame -->
-      <div v-else-if="previewHtml" class="preview-frame-container">
-        <div class="preview-toolbar">
-          <div class="preview-info">
-            <span class="template-name">{{ template?.name }}</span>
-            <Badge :value="templateTypeLabel" :severity="templateTypeSeverity" />
-          </div>
-          <div class="preview-controls">
-            <Button
-              :icon="isFullscreen ? 'pi pi-window-minimize' : 'pi pi-window-maximize'"
-              text
-              rounded
-              @click="toggleFullscreen"
-              v-tooltip.top="isFullscreen ? 'Exit Fullscreen' : 'Fullscreen'"
-            />
+          <div class="preview-frame" :class="{ fullscreen: isFullscreen }">
+            <TemplatePreviewRenderer :template-data="templateAsCreateRequest" />
           </div>
         </div>
 
-        <div class="preview-frame" :class="{ fullscreen: isFullscreen }">
-          <iframe
-            ref="previewFrame"
-            :srcdoc="previewHtml"
-            class="preview-iframe"
-            sandbox="allow-same-origin"
-            @load="handleFrameLoad"
-          ></iframe>
+        <!-- No Template State -->
+        <div v-else class="no-template-state">
+          <v-icon size="64" class="mb-4 empty-icon">mdi-file-document-outline</v-icon>
+          <h4>No Template Selected</h4>
+          <p>Select a template to preview its appearance.</p>
         </div>
-      </div>
+      </v-card-text>
 
-      <!-- No Template State -->
-      <div v-else class="no-template-state">
-        <i class="pi pi-file-o empty-icon"></i>
-        <h4>No Template Selected</h4>
-        <p>Select a template to preview its appearance.</p>
-      </div>
-    </div>
-
-    <template #footer>
-      <div class="dialog-footer">
-        <Button
-          label="Close"
-          severity="secondary"
+      <v-card-actions class="justify-end">
+        <v-btn
+          variant="text"
           @click="$emit('update:visible', false)"
-        />
-        <Button
-          label="Edit Template"
-          severity="primary"
+        >
+          Close
+        </v-btn>
+        <v-btn
+          color="primary"
+          variant="elevated"
           @click="editTemplate"
           :disabled="!template"
-        />
-      </div>
-    </template>
-  </Dialog>
+        >
+          Edit Template
+        </v-btn>
+      </v-card-actions>
+    </v-card>
+
+    <!-- Snackbar for notifications -->
+    <v-snackbar v-model="snackbar.visible" :color="snackbar.color" timeout="5000">
+      {{ snackbar.message }}
+    </v-snackbar>
+  </v-dialog>
 </template>
 
 <script setup lang="ts">
 import type { DocumentTemplate } from "@medical-crm/shared"
-import { useToast } from "primevue/usetoast"
 import { computed, ref, watch } from "vue"
 import { templatesApi } from "../../services/api"
+import TemplatePreviewRenderer from "./TemplatePreviewRenderer.vue"
 
 interface Props {
   visible: boolean
@@ -129,14 +123,18 @@ const emit = defineEmits<{
 }>()
 
 // Reactive state
-const loading = ref(false)
-const error = ref("")
-const previewHtml = ref("")
 const isFullscreen = ref(false)
-const previewFrame = ref<HTMLIFrameElement>()
 
-// Toast for notifications
-const toast = useToast()
+// Snackbar state
+const snackbar = ref<{ visible: boolean; color: string; message: string }>({
+  visible: false,
+  color: "info",
+  message: "",
+})
+
+const showSnackbar = (message: string, color: string = "info") => {
+  snackbar.value = { visible: true, color, message }
+}
 
 // Computed properties
 const templateTypeLabel = computed(() => {
@@ -154,8 +152,8 @@ const templateTypeLabel = computed(() => {
   }
 })
 
-const templateTypeSeverity = computed(() => {
-  if (!props.template) return "secondary"
+const templateTypeColor = computed(() => {
+  if (!props.template) return "grey"
 
   switch (props.template.type) {
     case "quote":
@@ -165,92 +163,72 @@ const templateTypeSeverity = computed(() => {
     case "both":
       return "success"
     default:
-      return "secondary"
+      return "grey"
   }
 })
 
-// Watch for template changes
-watch(
-  () => props.template,
-  (newTemplate) => {
-    if (newTemplate && props.visible) {
-      loadPreview()
-    }
-  },
-  { immediate: true }
-)
+// Convert DocumentTemplate to DocumentTemplateCreateRequest for the renderer
+const templateAsCreateRequest = computed(() => {
+  if (!props.template) return null
+
+  return {
+    name: props.template.name,
+    type: props.template.type,
+    companyName: props.template.companyName,
+    companyAddress: props.template.companyAddress,
+    companyEmail: props.template.companyEmail || "",
+    companyPhone: props.template.companyPhone || "",
+    companyWebsite: props.template.companyWebsite || "",
+    taxNumber: props.template.taxNumber || "",
+    vatNumber: props.template.vatNumber || "",
+    siretNumber: props.template.siretNumber || "",
+    registrationNumber: props.template.registrationNumber || "",
+    logoUrl: props.template.logoUrl || "",
+    logoPosition: props.template.logoPosition,
+    logoSize: props.template.logoSize || "medium",
+    primaryColor: props.template.primaryColor || "#3f51b5",
+    secondaryColor: props.template.secondaryColor || "#2196f3",
+    headerHeight: props.template.headerHeight,
+    footerHeight: props.template.footerHeight,
+    marginTop: props.template.marginTop,
+    marginBottom: props.template.marginBottom,
+    marginLeft: props.template.marginLeft,
+    marginRight: props.template.marginRight,
+    customHeader: props.template.customHeader || "",
+    customFooter: props.template.customFooter || "",
+    termsAndConditions: props.template.termsAndConditions || "",
+    paymentInstructions: props.template.paymentInstructions || "",
+    htmlTemplate: props.template.htmlTemplate || "",
+    styles: props.template.styles || ""
+  }
+})
 
 // Watch for visibility changes
 watch(
   () => props.visible,
   (visible) => {
-    if (visible && props.template) {
-      loadPreview()
-    } else if (!visible) {
+    if (!visible) {
       // Reset state when dialog closes
       isFullscreen.value = false
-      error.value = ""
     }
   }
 )
 
-// Load preview
-const loadPreview = async () => {
-  if (!props.template) return
-
-  try {
-    loading.value = true
-    error.value = ""
-
-    const response = await templatesApi.preview(props.template.id)
-
-    if (typeof response === "string") {
-      previewHtml.value = response
-    } else if (response.success) {
-      previewHtml.value = response.data
-    } else {
-      throw new Error(response.error || "Failed to generate preview")
-    }
-  } catch (err) {
-    console.error("Failed to load preview:", err)
-    error.value = err instanceof Error ? err.message : "Failed to load preview"
-
-    toast.add({
-      severity: "error",
-      summary: "Preview Error",
-      detail: error.value,
-      life: 5000,
-    })
-  } finally {
-    loading.value = false
-  }
-}
-
-// Refresh preview
-const refreshPreview = () => {
-  loadPreview()
-}
-
 // Open in new tab
 const openInNewTab = () => {
-  if (!previewHtml.value) return
+  if (!templateAsCreateRequest.value) return
 
-  const newWindow = window.open("", "_blank")
-  if (newWindow) {
-    newWindow.document.write(previewHtml.value)
-    newWindow.document.close()
-  }
+  showSnackbar("Opening in new tab is not available in component mode", "info")
+}
+
+// Refresh preview (no-op since we use reactive component)
+const refreshPreview = () => {
+  showSnackbar("Preview refreshed", "success")
 }
 
 // Toggle fullscreen
 const toggleFullscreen = () => {
   isFullscreen.value = !isFullscreen.value
-}
-
-// Handle frame load
-const handleFrameLoad = () => {
-  // Frame loaded successfully
-  console.log("Preview frame loaded")
 }
 
 // Edit template
@@ -276,22 +254,7 @@ if (typeof window !== "undefined") {
 
 <style scoped>
 .template-preview-dialog {
-  width: 90vw;
-  max-width: 1200px;
-  height: 90vh;
-  max-height: 90vh;
-}
-
-.preview-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  width: 100%;
-}
-
-.preview-header h3 {
-  margin: 0;
-  color: var(--text-color);
+  height: 80vh;
 }
 
 .preview-actions {
@@ -300,7 +263,7 @@ if (typeof window !== "undefined") {
 }
 
 .preview-content {
-  height: 70vh;
+  height: 60vh;
   display: flex;
   flex-direction: column;
 }
@@ -316,7 +279,7 @@ if (typeof window !== "undefined") {
 
 .loading-state p {
   margin: 0;
-  color: var(--text-color-secondary);
+  color: rgb(var(--v-theme-on-surface-variant));
 }
 
 .error-state {
@@ -333,23 +296,19 @@ if (typeof window !== "undefined") {
 
 .error-content h4 {
   margin: 0 0 0.5rem 0;
-  color: var(--text-color);
+  color: rgb(var(--v-theme-on-surface));
 }
 
 .error-content p {
   margin: 0 0 1rem 0;
-  color: var(--text-color-secondary);
-}
-
-.retry-button {
-  margin-top: 0.5rem;
+  color: rgb(var(--v-theme-on-surface-variant));
 }
 
 .preview-frame-container {
   display: flex;
   flex-direction: column;
   height: 100%;
-  border: 1px solid var(--surface-border);
+  border: 1px solid rgb(var(--v-theme-outline-variant));
   border-radius: 8px;
   overflow: hidden;
 }
@@ -359,8 +318,8 @@ if (typeof window !== "undefined") {
   justify-content: space-between;
   align-items: center;
   padding: 0.75rem 1rem;
-  background: var(--surface-100);
-  border-bottom: 1px solid var(--surface-border);
+  background: rgb(var(--v-theme-surface-variant));
+  border-bottom: 1px solid rgb(var(--v-theme-outline-variant));
 }
 
 .preview-info {
@@ -371,7 +330,7 @@ if (typeof window !== "undefined") {
 
 .template-name {
   font-weight: 600;
-  color: var(--text-color);
+  color: rgb(var(--v-theme-on-surface));
 }
 
 .preview-controls {
@@ -409,43 +368,27 @@ if (typeof window !== "undefined") {
   justify-content: center;
   height: 100%;
   text-align: center;
-  color: var(--text-color-secondary);
+  color: rgb(var(--v-theme-on-surface-variant));
+  padding: 3rem;
 }
 
 .empty-icon {
-  font-size: 3rem;
-  margin-bottom: 1rem;
-  color: var(--text-color-secondary);
+  color: rgb(var(--v-theme-on-surface-variant));
 }
 
 .no-template-state h4 {
   margin: 0 0 0.5rem 0;
-  color: var(--text-color);
+  color: rgb(var(--v-theme-on-surface));
 }
 
 .no-template-state p {
   margin: 0;
 }
 
-.dialog-footer {
-  display: flex;
-  justify-content: flex-end;
-  gap: 0.75rem;
-  padding: 1rem 0 0 0;
-  border-top: 1px solid var(--surface-border);
-}
-
 /* Responsive design */
 @media (max-width: 768px) {
   .template-preview-dialog {
-    width: 95vw;
-    height: 95vh;
-  }
-
-  .preview-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.5rem;
+    height: 90vh;
   }
 
   .preview-toolbar {
@@ -458,14 +401,6 @@ if (typeof window !== "undefined") {
     flex-direction: column;
     align-items: flex-start;
     gap: 0.5rem;
-  }
-
-  .dialog-footer {
-    flex-direction: column-reverse;
-  }
-
-  .dialog-footer .p-button {
-    width: 100%;
   }
 }
 </style>

@@ -1,134 +1,142 @@
 <template>
-  <Card class="template-card" :class="{ 'default-template': template.isDefault }">
-    <template #header>
-      <div class="template-header">
-        <div class="template-logo">
-          <img
-            v-if="template.logoUrl"
-            :src="template.logoUrl"
-            :alt="`${template.companyName} logo`"
-            class="logo-image"
-          />
-          <div v-else class="logo-placeholder">
-            <i class="pi pi-image"></i>
-          </div>
-        </div>
-        <div class="template-badges">
-          <Badge
-            v-if="template.isDefault"
-            value="Default"
-            severity="success"
-            class="default-badge"
-          />
-          <Badge
-            :value="templateTypeLabel"
-            :severity="templateTypeSeverity"
-            class="type-badge"
-          />
+  <v-card class="template-card" :class="{ 'default-template': template.isDefault }" elevation="2">
+    <div class="template-header">
+      <div class="template-logo">
+        <LogoThumb
+          v-if="template.logoUrl"
+          :url="template.logoUrl"
+          class="logo-image"
+        />
+        <div v-else class="logo-placeholder">
+          <v-icon>mdi-image</v-icon>
         </div>
       </div>
-    </template>
+      <div class="template-badges">
+        <v-chip
+          v-if="template.isDefault"
+          text="Default"
+          color="success"
+          size="small"
+          class="default-badge"
+        />
+        <v-chip
+          :text="templateTypeLabel"
+          :color="templateTypeColor"
+          size="small"
+          class="type-badge"
+        />
+      </div>
+    </div>
 
-    <template #content>
-      <div class="template-content">
-        <div class="template-info">
-          <h3 class="template-name">{{ template.name }}</h3>
-          <p class="company-name">{{ template.companyName }}</p>
-          <div class="template-details">
-            <div class="detail-item">
-              <i class="pi pi-calendar"></i>
-              <span>Version {{ template.version }}</span>
-            </div>
-            <div class="detail-item">
-              <i class="pi pi-user"></i>
-              <span>{{ creatorName }}</span>
-            </div>
-            <div class="detail-item">
-              <i class="pi pi-clock"></i>
-              <span>{{ formatDate(template.updatedAt) }}</span>
-            </div>
+    <v-card-text class="template-content">
+      <div class="template-info">
+        <h3 class="template-name">{{ template.name }}</h3>
+        <p class="company-name">{{ template.companyName }}</p>
+        <div class="template-details">
+          <div class="detail-item">
+            <v-icon size="small">mdi-numeric</v-icon>
+            <span>Version {{ template.version }}</span>
+          </div>
+          <div class="detail-item">
+            <v-icon size="small">mdi-account</v-icon>
+            <span>{{ creatorName }}</span>
+          </div>
+          <div class="detail-item">
+            <v-icon size="small">mdi-clock</v-icon>
+            <span>{{ formatDate(template.updatedAt) }}</span>
           </div>
         </div>
+      </div>
 
-        <div
-          class="template-colors"
-          v-if="template.primaryColor || template.secondaryColor"
+      <div
+        class="template-colors"
+        v-if="template.primaryColor || template.secondaryColor"
+      >
+        <div class="color-preview">
+          <div
+            v-if="template.primaryColor"
+            class="color-swatch primary"
+            :style="{ backgroundColor: template.primaryColor }"
+            :title="`Primary: ${template.primaryColor}`"
+          ></div>
+          <div
+            v-if="template.secondaryColor"
+            class="color-swatch secondary"
+            :style="{ backgroundColor: template.secondaryColor }"
+            :title="`Secondary: ${template.secondaryColor}`"
+          ></div>
+        </div>
+      </div>
+    </v-card-text>
+
+    <v-card-actions class="template-actions">
+      <div class="primary-actions">
+        <v-btn
+          icon="mdi-eye"
+          variant="text"
+          size="small"
+          color="info"
+          @click="$emit('preview', template)"
         >
-          <div class="color-preview">
-            <div
-              v-if="template.primaryColor"
-              class="color-swatch primary"
-              :style="{ backgroundColor: template.primaryColor }"
-              :title="`Primary: ${template.primaryColor}`"
-            ></div>
-            <div
-              v-if="template.secondaryColor"
-              class="color-swatch secondary"
-              :style="{ backgroundColor: template.secondaryColor }"
-              :title="`Secondary: ${template.secondaryColor}`"
-            ></div>
-          </div>
-        </div>
+          <v-icon>mdi-eye</v-icon>
+          <v-tooltip activator="parent" location="top">Preview</v-tooltip>
+        </v-btn>
+        <v-btn
+          icon="mdi-pencil"
+          variant="text"
+          size="small"
+          color="primary"
+          @click="$emit('edit', template)"
+        >
+          <v-icon>mdi-pencil</v-icon>
+          <v-tooltip activator="parent" location="top">Edit</v-tooltip>
+        </v-btn>
+        <v-btn
+          icon="mdi-content-copy"
+          variant="text"
+          size="small"
+          color="secondary"
+          @click="$emit('duplicate', template)"
+        >
+          <v-icon>mdi-content-copy</v-icon>
+          <v-tooltip activator="parent" location="top">Duplicate</v-tooltip>
+        </v-btn>
       </div>
-    </template>
 
-    <template #footer>
-      <div class="template-actions">
-        <div class="primary-actions">
-          <Button
-            icon="pi pi-eye"
-            text
-            rounded
-            severity="info"
-            @click="$emit('preview', template)"
-            v-tooltip.top="'Preview'"
-          />
-          <Button
-            icon="pi pi-pencil"
-            text
-            rounded
-            severity="secondary"
-            @click="$emit('edit', template)"
-            v-tooltip.top="'Edit'"
-          />
-          <Button
-            icon="pi pi-copy"
-            text
-            rounded
-            severity="secondary"
-            @click="$emit('duplicate', template)"
-            v-tooltip.top="'Duplicate'"
-          />
-        </div>
+      <v-spacer />
 
-        <div class="secondary-actions">
-          <Button
-            v-if="!template.isDefault"
-            icon="pi pi-star"
-            text
-            rounded
-            severity="warning"
-            @click="$emit('set-default', template)"
-            v-tooltip.top="'Set as Default'"
-          />
-          <Button
-            v-if="!template.isDefault"
-            icon="pi pi-trash"
-            text
-            rounded
-            severity="danger"
-            @click="$emit('delete', template)"
-            v-tooltip.top="'Delete'"
-          />
-        </div>
+      <div class="secondary-actions">
+        <v-btn
+          v-if="!template.isDefault"
+          icon="mdi-star"
+          variant="text"
+          size="small"
+          color="warning"
+          @click="$emit('set-default', template)"
+        >
+          <v-icon>mdi-star</v-icon>
+          <v-tooltip activator="parent" location="top">Set as Default</v-tooltip>
+        </v-btn>
+        <v-btn
+          v-if="!template.isDefault"
+          icon="mdi-delete"
+          variant="text"
+          size="small"
+          color="error"
+          @click="$emit('delete', template)"
+        >
+          <v-icon>mdi-delete</v-icon>
+          <v-tooltip activator="parent" location="top">Delete</v-tooltip>
+        </v-btn>
       </div>
-    </template>
-  </Card>
+    </v-card-actions>
+  </v-card>
 </template>
 
 <script setup lang="ts">
 import type { DocumentTemplate } from "@medical-crm/shared"
 import { computed } from "vue"
+import LogoThumb from "./LogoThumb.vue"
 
 interface Props {
   template: DocumentTemplate
@@ -159,7 +167,7 @@ const templateTypeLabel = computed(() => {
   }
 })
 
-const templateTypeSeverity = computed(() => {
+const templateTypeColor = computed(() => {
   switch (props.template.type) {
     case "quote":
       return "info"

@@ -48,11 +48,13 @@ export const createApp = (): Koa => {
     })
   )
 
-  // CORS configuration
+  // CORS configuration - simplified to allow all origins in development
   app.use(
     cors({
-      origin: config.cors.origin,
-      credentials: true,
+      origin: config.env === 'development' ? '*' : config.cors.origin,
+      credentials: config.env !== 'development', // Only credentials in prod
+      allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+      allowHeaders: ["Origin", "X-Requested-With", "Content-Type", "Accept", "Authorization"],
     })
   )
 
@@ -68,6 +70,7 @@ export const createApp = (): Koa => {
       },
     })
   )
+
 
   // Health check endpoint
   router.get("/health", async (ctx) => {

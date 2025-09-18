@@ -28,14 +28,28 @@ const upload = multer({
 // Create controller instance
 const templateController = new DocumentTemplateController()
 
-// All template routes require authentication
+// Public route for serving logo images (logos are not sensitive data)
+router.get("/logos/:filename", templateController.serveLogo.bind(templateController))
+
+// All other template routes require authentication
 router.use(authenticate)
 
 // GET /api/templates - Get all templates with optional type filter
 router.get("/", templateController.getTemplates.bind(templateController))
 
+// GET /api/templates/logos - List uploaded logos (must be before parameterized routes)
+router.get("/logos", templateController.listLogos.bind(templateController))
+
 // GET /api/templates/:id - Get a specific template
 router.get("/:id", templateController.getTemplate.bind(templateController))
+
+// POST /api/templates/upload-logo - Upload logo (without template association)
+router.post(
+  "/upload-logo",
+  requirePermission("canManageSystem"),
+  upload.single("logo"),
+  templateController.uploadLogo.bind(templateController)
+)
 
 // POST /api/templates - Create a new template
 router.post(
@@ -70,14 +84,6 @@ router.post(
   "/:id/duplicate",
   requirePermission("canManageSystem"),
   templateController.duplicateTemplate.bind(templateController)
-)
-
-// POST /api/templates/upload-logo - Upload logo (without template association)
-router.post(
-  "/upload-logo",
-  requirePermission("canManageSystem"),
-  upload.single("logo"),
-  templateController.uploadLogo.bind(templateController)
 )
 
 // POST /api/templates/:id/upload-logo - Upload logo for specific template

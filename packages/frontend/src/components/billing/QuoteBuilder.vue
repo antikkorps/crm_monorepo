@@ -280,6 +280,7 @@ import type {
   QuoteLine as QuoteLineType,
   QuoteStatus,
 } from "@medical-crm/shared"
+import { DiscountType } from "@medical-crm/shared"
 import { computed, onMounted, ref, watch } from "vue"
 import { useRouter } from "vue-router"
 import { institutionsApi, quotesApi, templatesApi } from "../../services/api"
@@ -315,7 +316,7 @@ const formData = ref<
   templateId: "",
   title: "",
   description: "",
-  validUntil: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 30 days from now
+  validUntil: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
   internalNotes: "",
   lines: [],
 })
@@ -395,16 +396,16 @@ const calculatedTotals = computed(() => {
 
     // Calculate discount
     let discountAmount = 0
-    if (line.discountType === "percentage") {
+    if (line.discountType === "percentage" && line.discountValue) {
       discountAmount = lineSubtotal * (line.discountValue / 100)
-    } else if (line.discountType === "fixed_amount") {
+    } else if (line.discountType === "fixed_amount" && line.discountValue) {
       discountAmount = line.discountValue
     }
     totalDiscountAmount += discountAmount
 
     // Calculate tax on discounted amount
     const taxableAmount = lineSubtotal - discountAmount
-    const taxAmount = taxableAmount * (line.taxRate / 100)
+    const taxAmount = taxableAmount * ((line.taxRate || 0) / 100)
     totalTaxAmount += taxAmount
   })
 
@@ -442,7 +443,7 @@ const previewData = computed(() => {
 const loadInstitutions = async () => {
   try {
     const response = await institutionsApi.getAll()
-    institutions.value = Array.isArray(response.data) ? response.data : []
+    institutions.value = Array.isArray((response as any)?.data) ? (response as any).data : []
   } catch (error) {
     console.error("Failed to load institutions:", error)
     showSnackbar("Erreur lors du chargement des institutions médicales", "error")
@@ -452,7 +453,7 @@ const loadInstitutions = async () => {
 const loadTemplates = async () => {
   try {
     const response = await templatesApi.getAll({ type: "quote" })
-    templates.value = response.data || []
+    templates.value = (response as any)?.data || []
   } catch (error) {
     console.error("Failed to load templates:", error)
   }
@@ -464,14 +465,15 @@ const onInstitutionChange = () => {
 }
 
 const addLine = () => {
-  const newLine = {
+  const newLine: QuoteLineType & { tempId?: string } = {
+    id: `temp-${Date.now()}`, // temporary ID
     tempId: `temp-${Date.now()}`,
     quoteId: props.quote?.id || "",
     orderIndex: formData.value.lines.length,
     description: "",
     quantity: 1,
     unitPrice: 0,
-    discountType: "percentage" as const,
+    discountType: DiscountType.PERCENTAGE,
     discountValue: 0,
     discountAmount: 0,
     taxRate: 0,
@@ -493,7 +495,7 @@ const updateLine = (index: number, updatedLine: QuoteLineType & { tempId?: strin
 const removeLine = (index: number) => {
   formData.value.lines.splice(index, 1)
   // Update order indexes
-  formData.value.lines.forEach((line, idx) => {
+  formData.value.lines.forEach((line: QuoteLineType & { tempId?: string }, idx) => {
     line.orderIndex = idx
   })
 }
@@ -565,9 +567,9 @@ const saveDraft = async () => {
 
     let savedQuote: Quote
     if (isEditing.value && props.quote) {
-      savedQuote = await quotesApi.update(props.quote.id, quoteData)
+      savedQuote = (await quotesApi.update(props.quote.id, quoteData)) as Quote
     } else {
-      savedQuote = await quotesApi.create(quoteData)
+      savedQuote = (await quotesApi.create(quoteData)) as Quote
     }
 
     showSnackbar("Devis sauvegardé comme brouillon", "success")
@@ -646,7 +648,7 @@ const loadQuoteData = () => {
       templateId: props.quote.templateId || "",
       title: props.quote.title,
       description: props.quote.description || "",
-      validUntil: new Date(props.quote.validUntil).toISOString().split('T')[0],
+      validUntil: new Date(props.quote.validUntil),
       internalNotes: props.quote.internalNotes || "",
       lines: props.quote.lines || [],
     }

@@ -100,7 +100,11 @@
     />
 
     <!-- Template Preview Dialog -->
-    <TemplatePreview v-model:visible="showPreviewDialog" :template="previewingTemplate" />
+    <TemplatePreview
+      v-model:visible="showPreviewDialog"
+      :template="previewingTemplate"
+      @edit-template="editTemplateFromPreview"
+    />
 
     <!-- Delete Confirmation Dialog -->
     <v-dialog v-model="showDeleteDialog" max-width="500">
@@ -290,6 +294,13 @@ const handleTemplateSaved = () => {
   showCreateDialog.value = false
   selectedTemplate.value = null
   loadTemplates()
+}
+
+// Edit template from preview
+const editTemplateFromPreview = (template: DocumentTemplate) => {
+  showPreviewDialog.value = false
+  previewingTemplate.value = null
+  editTemplate(template)
 }
 
 // Load templates on mount

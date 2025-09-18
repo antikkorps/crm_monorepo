@@ -16,20 +16,62 @@ export class DocumentTemplateController {
   public async createTemplate(ctx: Context): Promise<void> {
     try {
       const userId = ctx.state?.user?.id || ctx.state
-      const templateData = ctx.request.body
+      const templateData = ctx.request.body as any
 
-      if (typeof userId === "string") {
-        const template = await this.templateService.createTemplate(
-          templateData as DocumentTemplateCreationAttributes,
-          userId
-        )
-        ctx.status = 201
-        ctx.body = {
-          success: true,
-          data: template,
-        }
-      } else {
+      if (typeof userId !== "string") {
         throw new Error("User ID not found in context")
+      }
+
+      // Validate required fields
+      if (!templateData?.name || typeof templateData.name !== 'string' || !templateData.name.trim()) {
+        throw new Error("Template name is required")
+      }
+
+      if (!templateData?.type || typeof templateData.type !== 'string') {
+        throw new Error("Template type is required")
+      }
+
+      if (!templateData?.companyName || typeof templateData.companyName !== 'string' || !templateData.companyName.trim()) {
+        throw new Error("Company name is required")
+      }
+
+      if (!templateData?.companyAddress || typeof templateData.companyAddress !== 'object') {
+        throw new Error("Company address is required")
+      }
+
+      // Validate address fields
+      const address = templateData.companyAddress
+      const requiredAddressFields = ["street", "city", "state", "zipCode", "country"]
+      for (const field of requiredAddressFields) {
+        if (!address?.[field] || typeof address[field] !== 'string' || !address[field].trim()) {
+          throw new Error(`Address ${field} is required`)
+        }
+      }
+
+      // Clean optional fields (remove empty strings)
+      const cleanData: any = { ...templateData }
+      const optionalStringFields = [
+        "companyPhone", "companyEmail", "companyWebsite",
+        "taxNumber", "vatNumber", "siretNumber", "registrationNumber",
+        "customHeader", "customFooter", "termsAndConditions", "paymentInstructions",
+        "htmlTemplate", "styles"
+      ]
+
+      for (const field of optionalStringFields) {
+        if (cleanData[field] === "" || cleanData[field] === null || cleanData[field] === undefined) {
+          delete cleanData[field]
+        }
+      }
+
+      const template = await this.templateService.createTemplate(
+        cleanData as DocumentTemplateCreationAttributes,
+        userId
+      )
+
+      ctx.status = 201
+      ctx.body = {
+        success: true,
+        data: template,
       }
     } catch (error) {
       logger.error("Error creating document template:", error)
@@ -98,6 +140,8 @@ export class DocumentTemplateController {
       const { id } = ctx.params
       const userId = ctx.state?.user?.id || ctx.state
       const updates = ctx.request.body
+
+      logger.info("Updating template", { templateId: id, userId, updates: JSON.stringify(updates, null, 2) })
 
       if (typeof userId !== "string") {
         throw new Error("User ID not found in context")
@@ -249,6 +293,39 @@ export class DocumentTemplateController {
         success: false,
         error: (error as Error).message,
       }
+    }
+  }
+
+  public async listLogos(ctx: Context): Promise<void> {
+    try {
+      const logos = await this.templateService.listLogos()
+      ctx.status = 200
+      ctx.body = { success: true, data: logos }
+    } catch (error) {
+      logger.error("Error listing logos:", error)
+      ctx.status = 500
+      ctx.body = { success: false, error: (error as Error).message }
+    }
+  }
+
+  public async serveLogo(ctx: Context): Promise<void> {
+    try {
+      const { filename } = ctx.params
+
+      // Set CORS headers explicitly for logo serving
+      ctx.set("Access-Control-Allow-Origin", "*")
+      ctx.set("Access-Control-Allow-Methods", "GET, OPTIONS")
+      ctx.set("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept")
+
+      const logoData = await this.templateService.serveLogo(filename)
+
+      ctx.set("Cache-Control", "public, max-age=86400") // Cache for 1 day
+      ctx.type = logoData.contentType
+      ctx.body = logoData.buffer
+    } catch (error) {
+      logger.error("Error serving logo:", error)
+      ctx.status = 404
+      ctx.body = { success: false, error: "Logo not found" }
     }
   }
 }

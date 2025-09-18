@@ -323,6 +323,40 @@
     - Create cash flow projections based on partial payments
     - _Requirements: 2.5, 8.2_
 
+  - [ ] 12.6 Implement product/service catalog system for quote and invoice lines
+
+    - [ ] 12.6.1 Create catalog backend models and services
+      - Create Item/Product model with description, unit price, tax rate, category
+      - Implement item CRUD operations with validation and search
+      - Add item category management and hierarchical organization
+      - Create item versioning and price history tracking
+      - Write unit tests for catalog service functionality
+      - _Requirements: 2.1, 2.2_
+
+    - [ ] 12.6.2 Build catalog CSV import functionality
+      - Create CSV import service for bulk item creation/updates
+      - Implement item duplicate detection and merge logic
+      - Add validation and error reporting for catalog imports
+      - Create import templates and format documentation
+      - Write integration tests for CSV import operations
+      - _Requirements: 1.5, 2.1_
+
+    - [ ] 12.6.3 Develop catalog management frontend interface
+      - Create item catalog dashboard with search and filtering
+      - Build item creation and editing forms with category selection
+      - Implement item search and selection for quote/invoice lines
+      - Add CSV import interface with preview and validation
+      - Create item usage analytics and reporting
+      - _Requirements: 2.1, 2.3_
+
+    - [ ] 12.6.4 Integrate catalog with quote and invoice line creation
+      - Update quote line forms to use catalog item selection
+      - Implement auto-completion and item search in line creation
+      - Add custom item creation option for non-catalog items
+      - Update invoice line creation with same catalog integration
+      - Maintain backward compatibility with existing quote/invoice data
+      - _Requirements: 2.1, 2.2, 2.4_
+
 - [x] 13. Implement webhook management system
 
   - [x] 13.1 Create webhook registration and management backend
@@ -691,6 +725,43 @@
     - Build data mapping configuration interface for CRM integration
     - Create sync testing and validation tools (read-only)
     - _Requirements: 6.3, 6.4_
+
+  - [ ] 24.4 Implement Digiforma quotes/invoices visual tracking system
+
+    - [ ] 24.4.1 Create Digiforma document tracking models
+      - Create DigiformaDocument model to track external quotes/invoices
+      - Store Digiforma document ID, type (quote/invoice), status, amount, date
+      - Link to CRM institutions/contacts for relationship tracking
+      - Add metadata fields for Qualiopi compliance tracking
+      - Implement document synchronization status and last sync date
+      - _Requirements: 6.4, 6.5, 2.1_
+
+    - [ ] 24.4.2 Implement Digiforma document sync and tracking logic
+      - Build GraphQL queries to retrieve Digiforma quotes and invoices
+      - Create sync service to import document metadata (not full content)
+      - Implement document status tracking (draft, sent, paid, cancelled)
+      - Add relationship mapping between Digiforma docs and CRM entities
+      - Create audit trail for document lifecycle changes
+      - Write integration tests for document tracking
+      - _Requirements: 6.4, 6.5_
+
+    - [ ] 24.4.3 Build visual tracking interface in CRM
+      - Add Digiforma documents section to institution detail view
+      - Create visual indicators for document status (badges, colors)
+      - Implement document timeline showing Digiforma activity
+      - Add filtering by document type, status, date range
+      - Create quick stats dashboard for Digiforma vs CRM billing comparison
+      - Build document reconciliation tools for dual-tracking visibility
+      - _Requirements: 6.3, 2.3, 5.1_
+
+    - [ ] 24.4.4 Implement dual billing system dashboard
+      - Create unified billing overview showing both CRM and Digiforma documents
+      - Add revenue comparison between CRM billing and Digiforma tracking
+      - Implement compliance status indicators for Qualiopi requirements
+      - Create alerts for missing or inconsistent document tracking
+      - Build reporting tools for dual-source billing analysis
+      - Add export functionality for compliance and audit purposes
+      - _Requirements: 2.5, 6.3, 6.4_
 
 ## Issues Récurrents à Résoudre
 

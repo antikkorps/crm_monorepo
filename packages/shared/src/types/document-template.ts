@@ -38,6 +38,7 @@ export interface DocumentTemplate extends BaseEntity {
   // Logo and Branding
   logoUrl?: string
   logoPosition: LogoPosition
+  logoSize?: 'small' | 'medium' | 'large'
   primaryColor?: string
   secondaryColor?: string
 
@@ -85,7 +86,10 @@ export interface DocumentTemplateCreateRequest {
   vatNumber?: string
   siretNumber?: string
   registrationNumber?: string
+  // Allow providing a logo that was uploaded beforehand
+  logoUrl?: string
   logoPosition?: LogoPosition
+  logoSize?: 'small' | 'medium' | 'large'
   primaryColor?: string
   secondaryColor?: string
   headerHeight?: number
@@ -116,6 +120,7 @@ export interface DocumentTemplateUpdateRequest {
   registrationNumber?: string
   logoUrl?: string
   logoPosition?: LogoPosition
+  logoSize?: 'small' | 'medium' | 'large'
   primaryColor?: string
   secondaryColor?: string
   headerHeight?: number

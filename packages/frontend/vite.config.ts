@@ -16,6 +16,20 @@ export default defineConfig({
       "/api": {
         target: "http://localhost:3001",
         changeOrigin: true,
+        configure: (proxy, _options) => {
+          proxy.on('proxyRes', (proxyRes, _req, res) => {
+            // Preserve CORS headers for all API responses, especially images
+            if (proxyRes.headers['access-control-allow-origin']) {
+              res.setHeader('Access-Control-Allow-Origin', proxyRes.headers['access-control-allow-origin']);
+            }
+            if (proxyRes.headers['access-control-allow-methods']) {
+              res.setHeader('Access-Control-Allow-Methods', proxyRes.headers['access-control-allow-methods']);
+            }
+            if (proxyRes.headers['access-control-allow-headers']) {
+              res.setHeader('Access-Control-Allow-Headers', proxyRes.headers['access-control-allow-headers']);
+            }
+          });
+        }
       },
       "/socket.io": {
         target: "http://localhost:3001",
