@@ -2,9 +2,9 @@
   <div class="template-manager">
     <div class="template-header">
       <div class="header-content">
-        <h2>Document Templates</h2>
+        <h2>{{ t('templates.title') }}</h2>
         <p class="header-description">
-          Manage your document templates for quotes and invoices
+          {{ t('templates.subtitle') }}
         </p>
       </div>
       <div class="header-actions">
@@ -14,7 +14,7 @@
           variant="elevated"
           @click="showCreateDialog = true"
         >
-          Create Template
+          {{ t('templates.createTemplate') }}
         </v-btn>
       </div>
     </div>
@@ -29,7 +29,7 @@
                 :items="templateTypeOptions"
                 item-title="label"
                 item-value="value"
-                label="Type"
+                :label="t('templates.form.templateType')"
                 variant="outlined"
                 density="compact"
                 clearable
@@ -40,7 +40,7 @@
             <v-col cols="12" sm="6" md="9">
               <v-text-field
                 v-model="filters.search"
-                label="Search templates..."
+                :label="t('templates.searchTemplates')"
                 prepend-inner-icon="mdi-magnify"
                 variant="outlined"
                 density="compact"
@@ -58,14 +58,14 @@
       <!-- Loading State -->
       <div v-if="loading" class="loading-state">
         <v-progress-circular indeterminate color="primary" size="64" />
-        <p class="mt-4">Loading templates...</p>
+        <p class="mt-4">{{ t('templates.loadingTemplates') }}</p>
       </div>
 
       <!-- Empty State -->
       <div v-else-if="templates.length === 0" class="empty-state">
         <v-icon size="64" class="mb-4 empty-icon">mdi-file-document-outline</v-icon>
-        <h3>No Templates Found</h3>
-        <p>Create your first document template to get started.</p>
+        <h3>{{ t('templates.noTemplatesFound') }}</h3>
+        <p>{{ t('templates.createFirstTemplate') }}</p>
         <v-btn
           color="primary"
           prepend-icon="mdi-plus"
@@ -73,7 +73,7 @@
           @click="showCreateDialog = true"
           class="mt-4"
         >
-          Create Template
+          {{ t('templates.createTemplate') }}
         </v-btn>
       </div>
 
@@ -111,15 +111,14 @@
       <v-card>
         <v-card-title class="d-flex align-center">
           <v-icon color="warning" class="mr-3">mdi-alert-circle</v-icon>
-          Confirm Delete
+          {{ t('templates.delete.confirmDelete') }}
         </v-card-title>
 
         <v-card-text>
           <div class="delete-content">
-            <h4 class="mb-3">Delete Template</h4>
+            <h4 class="mb-3">{{ t('templates.delete.deleteTemplate') }}</h4>
             <p class="mb-3">
-              Are you sure you want to delete the template "{{ templateToDelete?.name }}"?
-              This action cannot be undone.
+              {{ t('templates.delete.confirmDeleteMessage', { templateName: templateToDelete?.name }) }}
             </p>
             <v-alert
               v-if="templateToDelete?.isDefault"
@@ -127,22 +126,21 @@
               variant="tonal"
               class="mb-0"
             >
-              <strong>Warning:</strong> This is a default template. You should set another
-              template as default before deleting this one.
+              <strong>{{ t('common.warning') }}:</strong> {{ t('templates.delete.warningDefaultTemplate') }}
             </v-alert>
           </div>
         </v-card-text>
 
         <v-card-actions>
           <v-spacer />
-          <v-btn variant="text" @click="showDeleteDialog = false"> Cancel </v-btn>
+          <v-btn variant="text" @click="showDeleteDialog = false"> {{ t('common.cancel') }} </v-btn>
           <v-btn
             color="error"
             variant="elevated"
             :loading="deleting"
             @click="deleteTemplate"
           >
-            Delete
+            {{ t('common.delete') }}
           </v-btn>
         </v-card-actions>
       </v-card>
@@ -157,11 +155,14 @@
 
 <script setup lang="ts">
 import type { DocumentTemplate, TemplateType } from "@medical-crm/shared"
-import { onMounted, ref } from "vue"
+import { computed, onMounted, ref } from "vue"
+import { useI18n } from "vue-i18n"
 import { templatesApi } from "../../services/api"
 import TemplateCard from "./TemplateCard.vue"
 import TemplateForm from "./TemplateForm.vue"
 import TemplatePreview from "./TemplatePreview.vue"
+
+const { t } = useI18n()
 
 // Reactive state
 const templates = ref<DocumentTemplate[]>([])
@@ -192,11 +193,11 @@ const filters = ref({
 })
 
 // Template type options for dropdown
-const templateTypeOptions = [
-  { label: "Quote Templates", value: "quote" },
-  { label: "Invoice Templates", value: "invoice" },
-  { label: "Both Types", value: "both" },
-]
+const templateTypeOptions = computed(() => [
+  { label: t("templates.types.quoteTemplates"), value: "quote" },
+  { label: t("templates.types.invoiceTemplates"), value: "invoice" },
+  { label: t("templates.types.bothTypes"), value: "both" },
+])
 
 // Debounced search
 let searchTimeout: NodeJS.Timeout
@@ -215,7 +216,7 @@ const loadTemplates = async () => {
     templates.value = response.data || []
   } catch (error) {
     console.error("Failed to load templates:", error)
-    showSnackbar("Failed to load templates", "error")
+    showSnackbar(t("templates.failedToLoadTemplates"), "error")
   } finally {
     loading.value = false
   }
@@ -241,14 +242,14 @@ const deleteTemplate = async () => {
     deleting.value = true
     await templatesApi.delete(templateToDelete.value.id)
 
-    showSnackbar("Template deleted successfully", "success")
+    showSnackbar(t("templates.templateDeleted"), "success")
 
     await loadTemplates()
     showDeleteDialog.value = false
     templateToDelete.value = null
   } catch (error) {
     console.error("Failed to delete template:", error)
-    showSnackbar("Failed to delete template", "error")
+    showSnackbar(t("templates.failedToDeleteTemplate"), "error")
   } finally {
     deleting.value = false
   }
@@ -257,15 +258,15 @@ const deleteTemplate = async () => {
 // Duplicate template
 const duplicateTemplate = async (template: DocumentTemplate) => {
   try {
-    const newName = `${template.name} (Copy)`
+    const newName = `${template.name} (${t('common.copy')})`
     await templatesApi.duplicate(template.id, newName)
 
-    showSnackbar("Template duplicated successfully", "success")
+    showSnackbar(t("templates.templateDuplicated"), "success")
 
     await loadTemplates()
   } catch (error) {
     console.error("Failed to duplicate template:", error)
-    showSnackbar("Failed to duplicate template", "error")
+    showSnackbar(t("templates.failedToDuplicateTemplate"), "error")
   }
 }
 
@@ -274,12 +275,12 @@ const setDefaultTemplate = async (template: DocumentTemplate) => {
   try {
     await templatesApi.setDefault(template.id)
 
-    showSnackbar("Default template updated", "success")
+    showSnackbar(t("templates.defaultTemplateUpdated"), "success")
 
     await loadTemplates()
   } catch (error) {
     console.error("Failed to set default template:", error)
-    showSnackbar("Failed to set default template", "error")
+    showSnackbar(t("templates.failedToSetDefaultTemplate"), "error")
   }
 }
 
@@ -333,7 +334,8 @@ onMounted(() => {
 
 .header-description {
   margin: 0;
-  color: rgb(var(--v-theme-on-surface-variant));
+  color: rgb(var(--v-theme-on-surface));
+  opacity: 0.7;
   font-size: 1rem;
 }
 

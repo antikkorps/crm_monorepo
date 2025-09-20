@@ -221,6 +221,13 @@ export class DocumentTemplate
 
     return this.findAll({
       where,
+      include: [
+        {
+          model: User,
+          as: "creator",
+          attributes: ["id", "firstName", "lastName", "email"],
+        },
+      ],
       order: [
         ["isDefault", "DESC"],
         ["name", "ASC"],

@@ -14,7 +14,7 @@
       <div class="template-badges">
         <v-chip
           v-if="template.isDefault"
-          text="Default"
+          :text="t('templates.card.default')"
           color="success"
           size="small"
           class="default-badge"
@@ -35,7 +35,7 @@
         <div class="template-details">
           <div class="detail-item">
             <v-icon size="small">mdi-numeric</v-icon>
-            <span>Version {{ template.version }}</span>
+            <span>{{ t('templates.card.version') }} {{ template.version }}</span>
           </div>
           <div class="detail-item">
             <v-icon size="small">mdi-account</v-icon>
@@ -79,7 +79,7 @@
           @click="$emit('preview', template)"
         >
           <v-icon>mdi-eye</v-icon>
-          <v-tooltip activator="parent" location="top">Preview</v-tooltip>
+          <v-tooltip activator="parent" location="top">{{ t('templates.actions.preview') }}</v-tooltip>
         </v-btn>
         <v-btn
           icon="mdi-pencil"
@@ -89,7 +89,7 @@
           @click="$emit('edit', template)"
         >
           <v-icon>mdi-pencil</v-icon>
-          <v-tooltip activator="parent" location="top">Edit</v-tooltip>
+          <v-tooltip activator="parent" location="top">{{ t('templates.actions.edit') }}</v-tooltip>
         </v-btn>
         <v-btn
           icon="mdi-content-copy"
@@ -99,7 +99,7 @@
           @click="$emit('duplicate', template)"
         >
           <v-icon>mdi-content-copy</v-icon>
-          <v-tooltip activator="parent" location="top">Duplicate</v-tooltip>
+          <v-tooltip activator="parent" location="top">{{ t('templates.actions.duplicate') }}</v-tooltip>
         </v-btn>
       </div>
 
@@ -115,7 +115,7 @@
           @click="$emit('set-default', template)"
         >
           <v-icon>mdi-star</v-icon>
-          <v-tooltip activator="parent" location="top">Set as Default</v-tooltip>
+          <v-tooltip activator="parent" location="top">{{ t('templates.actions.setAsDefault') }}</v-tooltip>
         </v-btn>
         <v-btn
           v-if="!template.isDefault"
@@ -126,7 +126,7 @@
           @click="$emit('delete', template)"
         >
           <v-icon>mdi-delete</v-icon>
-          <v-tooltip activator="parent" location="top">Delete</v-tooltip>
+          <v-tooltip activator="parent" location="top">{{ t('templates.actions.delete') }}</v-tooltip>
         </v-btn>
       </div>
     </v-card-actions>
@@ -136,7 +136,10 @@
 <script setup lang="ts">
 import type { DocumentTemplate } from "@medical-crm/shared"
 import { computed } from "vue"
+import { useI18n } from "vue-i18n"
 import LogoThumb from "./LogoThumb.vue"
+
+const { t } = useI18n()
 
 interface Props {
   template: DocumentTemplate
@@ -157,13 +160,13 @@ defineEmits<{
 const templateTypeLabel = computed(() => {
   switch (props.template.type) {
     case "quote":
-      return "Quote"
+      return t("templates.types.quote")
     case "invoice":
-      return "Invoice"
+      return t("templates.types.invoice")
     case "both":
-      return "Quote & Invoice"
+      return t("templates.types.both")
     default:
-      return "Unknown"
+      return t("templates.types.unknown")
   }
 })
 
@@ -184,13 +187,13 @@ const creatorName = computed(() => {
   if (props.template.creator) {
     return `${props.template.creator.firstName} ${props.template.creator.lastName}`
   }
-  return "Unknown"
+  return t("templates.card.unknown")
 })
 
 // Format date helper
 const formatDate = (date: Date | string) => {
   const d = new Date(date)
-  return new Intl.DateTimeFormat("en-US", {
+  return new Intl.DateTimeFormat("fr-FR", {
     year: "numeric",
     month: "short",
     day: "numeric",

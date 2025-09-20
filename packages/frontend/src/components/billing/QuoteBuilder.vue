@@ -48,7 +48,7 @@
             <v-col cols="12" md="6">
               <v-select
                 v-model="formData.institutionId"
-                :items="institutions"
+                :items="institutionsStore.institutions"
                 item-title="name"
                 item-value="id"
                 label="Institution médicale *"
@@ -283,7 +283,8 @@ import type {
 import { DiscountType } from "@medical-crm/shared"
 import { computed, onMounted, ref, watch } from "vue"
 import { useRouter } from "vue-router"
-import { institutionsApi, quotesApi, templatesApi } from "../../services/api"
+import { quotesApi, templatesApi } from "../../services/api"
+import { useInstitutionsStore } from "@/stores/institutions"
 import QuoteLine from "./QuoteLine.vue"
 import QuotePreview from "./QuotePreview.vue"
 
@@ -301,6 +302,7 @@ const emit = defineEmits<{
 
 // Reactive state
 const router = useRouter()
+const institutionsStore = useInstitutionsStore()
 const saving = ref(false)
 const sending = ref(false)
 const showPreview = ref(false)
@@ -322,7 +324,6 @@ const formData = ref<
 })
 
 // Data sources
-const institutions = ref<MedicalInstitution[]>([])
 const templates = ref<DocumentTemplate[]>([])
 const errors = ref<Record<string, string>>({})
 
@@ -342,7 +343,7 @@ const isFormValid = computed(() => {
 })
 
 const selectedInstitution = computed(() => {
-  return institutions.value.find((inst) => inst.id === formData.value.institutionId)
+  return institutionsStore.institutions.find((inst) => inst.id === formData.value.institutionId)
 })
 
 const institutionContactEmail = computed(() => {
@@ -440,15 +441,6 @@ const previewData = computed(() => {
 })
 
 // Methods
-const loadInstitutions = async () => {
-  try {
-    const response = await institutionsApi.getAll()
-    institutions.value = Array.isArray((response as any)?.data) ? (response as any).data : []
-  } catch (error) {
-    console.error("Failed to load institutions:", error)
-    showSnackbar("Erreur lors du chargement des institutions médicales", "error")
-  }
-}
 
 const loadTemplates = async () => {
   try {
@@ -660,7 +652,7 @@ watch(() => props.quote, loadQuoteData, { immediate: true })
 
 // Initialize component
 onMounted(async () => {
-  await Promise.all([loadInstitutions(), loadTemplates()])
+  await Promise.all([institutionsStore.fetchInstitutions(), loadTemplates()])
 })
 </script>
 

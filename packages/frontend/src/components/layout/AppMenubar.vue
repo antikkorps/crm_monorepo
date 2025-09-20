@@ -73,7 +73,7 @@
     </Drawer>
 
     <!-- Top MenuBar - Clean and minimal -->
-    <div class="top-menubar" :class="{ 'sidebar-open': sidebarVisible }">
+    <div class="top-menubar">
       <div class="menubar-content">
         <div class="menubar-start">
           <!-- Toggle Sidebar Button -->
@@ -189,7 +189,7 @@ const authStore = useAuthStore()
 const { t } = useI18n()
 
 // Reactive state
-const sidebarVisible = ref(true) // Open by default on desktop
+const sidebarVisible = ref(false) // Closed by default
 const showSearchDialog = ref(false)
 const searchQuery = ref("")
 const profileMenu = ref()
@@ -249,11 +249,7 @@ const toggleProfileMenu = (event: Event) => {
 // Handle window resize
 const checkMobile = () => {
   isMobile.value = window.innerWidth <= 768
-  if (isMobile.value) {
-    sidebarVisible.value = false
-  } else {
-    sidebarVisible.value = true
-  }
+  // Keep sidebar closed by default on all screen sizes
 }
 
 // Handle logout
@@ -305,6 +301,12 @@ onUnmounted(() => {
   left: 0 !important;
   top: 0 !important;
   z-index: 1000 !important;
+  transform: translateX(-100%);
+  transition: transform 0.3s ease;
+}
+
+.sidebar-drawer :deep(.p-drawer.p-drawer-visible) {
+  transform: translateX(0);
 }
 
 .sidebar-drawer :deep(.p-drawer-content) {
@@ -416,9 +418,7 @@ onUnmounted(() => {
   margin-left: 0;
 }
 
-.top-menubar.sidebar-open {
-  margin-left: 280px;
-}
+/* Remove sidebar-open margin behavior for desktop */
 
 .menubar-content {
   display: flex;
@@ -510,13 +510,8 @@ onUnmounted(() => {
 
 /* Responsive Design */
 @media (max-width: 768px) {
-  .sidebar-drawer {
-    width: 100vw;
-    transform: translateX(-100%);
-  }
-
-  .sidebar-drawer.visible {
-    transform: translateX(0);
+  .sidebar-drawer :deep(.p-drawer) {
+    width: 100vw !important;
   }
 
   .top-menubar {
@@ -529,13 +524,9 @@ onUnmounted(() => {
 }
 
 @media (min-width: 769px) {
-  .sidebar-drawer :deep(.p-drawer-mask) {
-    display: none;
-  }
-  
+  /* Keep drawer behavior consistent across all screen sizes */
   .sidebar-drawer {
     position: fixed;
-    transform: none;
   }
 }
 

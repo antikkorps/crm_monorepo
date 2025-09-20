@@ -1,10 +1,11 @@
 <template>
-  <v-container fluid class="templates-view pa-0">
+  <AppLayout>
     <TemplateManager />
-  </v-container>
+  </AppLayout>
 </template>
 
 <script setup lang="ts">
+import AppLayout from "@/components/layout/AppLayout.vue"
 import { TemplateManager } from "../../components/templates"
 </script>
 

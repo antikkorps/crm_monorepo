@@ -11,10 +11,10 @@
         <v-icon class="mr-3" color="primary">mdi-file-document-edit</v-icon>
         <div class="flex-grow-1">
           <div class="text-h6">
-            {{ isEditing ? "Edit Template" : "Create New Template" }}
+            {{ isEditing ? t('templates.editTemplate') : t('templates.createNewTemplate') }}
           </div>
           <div class="text-caption text-medium-emphasis">
-            Configure your document template settings
+            {{ t('templates.configureSettings') }}
           </div>
         </div>
         <v-btn icon="mdi-close" variant="text" size="small" @click="handleCancel" />
@@ -30,11 +30,11 @@
         >
           <v-tab value="form" class="flex-grow-1">
             <v-icon start>mdi-form-select</v-icon>
-            <span class="d-none d-sm-inline">Template </span>Form
+            <span class="d-none d-sm-inline">{{ t('templates.tabs.templateForm') }}</span><span class="d-sm-none">{{ t('templates.tabs.form') }}</span>
           </v-tab>
           <v-tab value="preview" :disabled="!canPreview" class="flex-grow-1">
             <v-icon start>mdi-eye</v-icon>
-            <span class="d-none d-sm-inline">Live </span>Preview
+            <span class="d-none d-sm-inline">{{ t('templates.tabs.livePreview') }}</span><span class="d-sm-none">{{ t('templates.tabs.preview') }}</span>
           </v-tab>
         </v-tabs>
 
@@ -44,30 +44,30 @@
           <v-window-item value="form" class="form-tab-content">
             <v-form @submit.prevent="handleSubmit" ref="formRef" class="pa-4">
               <div class="text-caption text-medium-emphasis mb-4">
-                Fields marked with <span class="required-asterisk">*</span> are required.
+                {{ t('templates.form.fieldsRequired') }} <span class="required-asterisk">*</span> {{ t('templates.form.areRequired') }}
               </div>
               <!-- Basic Information -->
               <div class="form-section mb-6">
                 <v-card variant="tonal" class="section-card pa-4">
                   <div class="d-flex align-center mb-4">
                     <v-icon class="mr-3" color="primary">mdi-information</v-icon>
-                    <h4 class="section-title">Basic Information</h4>
+                    <h4 class="section-title">{{ t('templates.sections.basicInformation') }}</h4>
                   </div>
 
                   <v-row>
                     <v-col cols="12" md="6">
                       <v-text-field
                         v-model="formData.name"
-                        label="Template Name *"
-                        placeholder="Enter template name"
+                        :label="t('templates.form.templateName')"
+                        :placeholder="t('templates.form.templateNamePlaceholder')"
                         variant="outlined"
                         density="compact"
                         :error-messages="errors.name"
-                        hint="Used to identify this template"
+                        :hint="t('templates.form.templateNameHint')"
                         persistent-hint
                         :rules="[
                           (v) =>
-                            !!(v && v.toString().trim()) || 'Template Name is required',
+                            !!(v && v.toString().trim()) || t('templates.form.templateNameRequired'),
                         ]"
                         required
                       />
@@ -79,14 +79,14 @@
                         :items="templateTypeOptions"
                         item-title="label"
                         item-value="value"
-                        label="Template Type *"
-                        placeholder="Select template type"
+                        :label="t('templates.form.templateType')"
+                        :placeholder="t('templates.form.templateTypePlaceholder')"
                         variant="outlined"
                         density="compact"
                         :error-messages="errors.type"
-                        hint="Quote, invoice, or both"
+                        :hint="t('templates.form.templateTypeHint')"
                         persistent-hint
-                        :rules="[(v) => !!v || 'Template Type is required']"
+                        :rules="[(v) => !!v || t('templates.form.templateTypeRequired')]"
                         required
                       />
                     </v-col>
@@ -99,7 +99,7 @@
                 <v-card variant="tonal" class="section-card pa-4">
                   <div class="d-flex align-center mb-4">
                     <v-icon class="mr-3" color="primary">mdi-domain</v-icon>
-                    <h4 class="section-title">Company Information</h4>
+                    <h4 class="section-title">{{ t('templates.sections.companyInformation') }}</h4>
                   </div>
 
                   <v-row>
@@ -107,14 +107,14 @@
                       <v-text-field
                         id="company-name"
                         v-model="formData.companyName"
-                        label="Company Name *"
-                        placeholder="Enter company name"
+                        :label="t('templates.form.companyName')"
+                        :placeholder="t('templates.form.companyNamePlaceholder')"
                         :error-messages="errors.companyName"
-                        hint="Shown in the document header"
+                        :hint="t('templates.form.companyNameHint')"
                         persistent-hint
                         :rules="[
                           (v) =>
-                            !!(v && v.toString().trim()) || 'Company Name is required',
+                            !!(v && v.toString().trim()) || t('templates.form.companyNameRequired'),
                         ]"
                         required
                         variant="outlined"
@@ -129,8 +129,8 @@
                         id="company-email"
                         v-model="formData.companyEmail"
                         type="email"
-                        label="Email"
-                        placeholder="company@example.com"
+                        :label="t('templates.form.email')"
+                        :placeholder="t('templates.form.emailPlaceholder')"
                         :error-messages="errors.companyEmail"
                         :rules="[emailRule]"
                         variant="outlined"
@@ -142,8 +142,8 @@
                       <v-text-field
                         id="company-phone"
                         v-model="formData.companyPhone"
-                        label="Phone"
-                        placeholder="+1 (555) 123-4567"
+                        :label="t('templates.form.phone')"
+                        :placeholder="t('templates.form.phonePlaceholder')"
                         variant="outlined"
                         density="compact"
                       />
@@ -155,10 +155,10 @@
                       <v-text-field
                         id="company-website"
                         v-model="formData.companyWebsite"
-                        label="Website"
-                        placeholder="https://www.company.com"
+                        :label="t('templates.form.website')"
+                        :placeholder="t('templates.form.websitePlaceholder')"
                         :error-messages="errors.companyWebsite"
-                        hint="Must start with http(s)"
+                        :hint="t('templates.form.websiteHint')"
                         persistent-hint
                         :rules="[urlRule]"
                         variant="outlined"
@@ -171,20 +171,20 @@
                   <div class="address-section">
                     <div class="d-flex align-center mb-3">
                       <v-icon class="mr-2" size="small">mdi-map-marker</v-icon>
-                      <h5>Company Address</h5>
+                      <h5>{{ t('templates.sections.companyAddress') }}</h5>
                     </div>
                     <v-row>
                       <v-col cols="12">
                         <v-text-field
                           id="address-street"
                           v-model="formData.companyAddress.street"
-                          label="Street Address *"
-                          placeholder="123 Business Street"
+                          :label="t('templates.form.streetAddress')"
+                          :placeholder="t('templates.form.streetAddressPlaceholder')"
                           :error-messages="errors['companyAddress.street']"
                           :rules="[
                             (v) =>
                               !!(v && v.toString().trim()) ||
-                              'Street Address is required',
+                              t('templates.form.streetAddressRequired'),
                           ]"
                           required
                           variant="outlined"
@@ -198,11 +198,11 @@
                         <v-text-field
                           id="address-city"
                           v-model="formData.companyAddress.city"
-                          label="City *"
-                          placeholder="Business City"
+                          :label="t('templates.form.city')"
+                          :placeholder="t('templates.form.cityPlaceholder')"
                           :error-messages="errors['companyAddress.city']"
                           :rules="[
-                            (v) => !!(v && v.toString().trim()) || 'City is required',
+                            (v) => !!(v && v.toString().trim()) || t('templates.form.cityRequired'),
                           ]"
                           required
                           variant="outlined"
@@ -214,11 +214,11 @@
                         <v-text-field
                           id="address-state"
                           v-model="formData.companyAddress.state"
-                          label="State/Province *"
-                          placeholder="State"
+                          :label="t('templates.form.state')"
+                          :placeholder="t('templates.form.statePlaceholder')"
                           :error-messages="errors['companyAddress.state']"
                           :rules="[
-                            (v) => !!(v && v.toString().trim()) || 'State is required',
+                            (v) => !!(v && v.toString().trim()) || t('templates.form.stateRequired'),
                           ]"
                           required
                           variant="outlined"
@@ -232,11 +232,11 @@
                         <v-text-field
                           id="address-zip"
                           v-model="formData.companyAddress.zipCode"
-                          label="ZIP/Postal Code *"
-                          placeholder="12345"
+                          :label="t('templates.form.zipCode')"
+                          :placeholder="t('templates.form.zipCodePlaceholder')"
                           :error-messages="errors['companyAddress.zipCode']"
                           :rules="[
-                            (v) => !!(v && v.toString().trim()) || 'ZIP code is required',
+                            (v) => !!(v && v.toString().trim()) || t('templates.form.zipCodeRequired'),
                           ]"
                           required
                           variant="outlined"
@@ -248,11 +248,11 @@
                         <v-text-field
                           id="address-country"
                           v-model="formData.companyAddress.country"
-                          label="Country *"
-                          placeholder="United States"
+                          :label="t('templates.form.country')"
+                          :placeholder="t('templates.form.countryPlaceholder')"
                           :error-messages="errors['companyAddress.country']"
                           :rules="[
-                            (v) => !!(v && v.toString().trim()) || 'Country is required',
+                            (v) => !!(v && v.toString().trim()) || t('templates.form.countryRequired'),
                           ]"
                           required
                           variant="outlined"
@@ -269,7 +269,7 @@
                 <v-card variant="tonal" class="section-card pa-4">
                   <div class="d-flex align-center mb-4">
                     <v-icon class="mr-3" color="primary">mdi-file-document</v-icon>
-                    <h4 class="section-title">Legal Information</h4>
+                    <h4 class="section-title">{{ t('templates.sections.legalInformation') }}</h4>
                   </div>
 
                   <v-row>
@@ -277,8 +277,8 @@
                       <v-text-field
                         id="tax-number"
                         v-model="formData.taxNumber"
-                        label="Tax Number"
-                        placeholder="Tax ID"
+                        :label="t('templates.form.taxNumber')"
+                        :placeholder="t('templates.form.taxNumberPlaceholder')"
                         variant="outlined"
                         density="compact"
                       />
@@ -288,8 +288,8 @@
                       <v-text-field
                         id="vat-number"
                         v-model="formData.vatNumber"
-                        label="VAT Number"
-                        placeholder="VAT ID"
+                        :label="t('templates.form.vatNumber')"
+                        :placeholder="t('templates.form.vatNumberPlaceholder')"
                         variant="outlined"
                         density="compact"
                       />
@@ -301,8 +301,8 @@
                       <v-text-field
                         id="siret-number"
                         v-model="formData.siretNumber"
-                        label="SIRET Number"
-                        placeholder="SIRET"
+                        :label="t('templates.form.siretNumber')"
+                        :placeholder="t('templates.form.siretPlaceholder')"
                         variant="outlined"
                         density="compact"
                       />
@@ -312,8 +312,8 @@
                       <v-text-field
                         id="registration-number"
                         v-model="formData.registrationNumber"
-                        label="Registration Number"
-                        placeholder="Business Registration"
+                        :label="t('templates.form.registrationNumber')"
+                        :placeholder="t('templates.form.registrationPlaceholder')"
                         variant="outlined"
                         density="compact"
                       />
@@ -327,7 +327,7 @@
                 <v-card variant="tonal" class="section-card pa-4">
                   <div class="d-flex align-center mb-4">
                     <v-icon class="mr-3" color="primary">mdi-palette</v-icon>
-                    <h4 class="section-title">Logo and Branding</h4>
+                    <h4 class="section-title">{{ t('templates.sections.logoAndBranding') }}</h4>
                   </div>
 
                   <LogoUploader
@@ -343,8 +343,8 @@
                         :items="logoPositionOptions"
                         item-title="label"
                         item-value="value"
-                        label="Logo Position"
-                        placeholder="Select logo position"
+                        :label="t('templates.form.logoPosition')"
+                        :placeholder="t('templates.form.logoPositionPlaceholder')"
                         variant="outlined"
                         density="compact"
                         :disabled="!formData.logoUrl"
@@ -358,8 +358,8 @@
                         :items="logoSizeOptions"
                         item-title="label"
                         item-value="value"
-                        label="Logo Size"
-                        placeholder="Select logo size"
+                        :label="t('templates.form.logoSize')"
+                        :placeholder="t('templates.form.logoSizePlaceholder')"
                         variant="outlined"
                         density="compact"
                         :disabled="!formData.logoUrl"
@@ -372,7 +372,7 @@
                       <v-text-field
                         :model-value="formData.primaryColor || '#000000'"
                         @update:model-value="(value) => (formData.primaryColor = value)"
-                        label="Primary Color"
+                        :label="t('templates.form.primaryColor')"
                         variant="outlined"
                         density="compact"
                         :error-messages="errors.primaryColor"
@@ -384,7 +384,7 @@
                       <v-text-field
                         :model-value="formData.secondaryColor || '#000000'"
                         @update:model-value="(value) => (formData.secondaryColor = value)"
-                        label="Secondary Color"
+                        :label="t('templates.form.secondaryColor')"
                         variant="outlined"
                         density="compact"
                         :error-messages="errors.secondaryColor"
@@ -400,7 +400,7 @@
                 <v-card variant="tonal" class="section-card pa-4">
                   <div class="d-flex align-center mb-4">
                     <v-icon class="mr-3" color="primary">mdi-view-dashboard</v-icon>
-                    <h4 class="section-title">Layout Settings</h4>
+                    <h4 class="section-title">{{ t('templates.sections.layoutSettings') }}</h4>
                   </div>
 
                   <v-row>
@@ -409,7 +409,7 @@
                         id="header-height"
                         v-model.number="formData.headerHeight"
                         type="number"
-                        label="Header Height (px)"
+                        :label="t('templates.form.headerHeight')"
                         min="0"
                         max="200"
                         suffix="px"
@@ -423,7 +423,7 @@
                         id="footer-height"
                         v-model.number="formData.footerHeight"
                         type="number"
-                        label="Footer Height (px)"
+                        :label="t('templates.form.footerHeight')"
                         min="0"
                         max="200"
                         suffix="px"
@@ -439,7 +439,7 @@
                         id="margin-top"
                         v-model.number="formData.marginTop"
                         type="number"
-                        label="Top Margin (px)"
+                        :label="t('templates.form.topMargin')"
                         min="0"
                         max="100"
                         suffix="px"
@@ -453,7 +453,7 @@
                         id="margin-bottom"
                         v-model.number="formData.marginBottom"
                         type="number"
-                        label="Bottom Margin (px)"
+                        :label="t('templates.form.bottomMargin')"
                         min="0"
                         max="100"
                         suffix="px"
@@ -469,7 +469,7 @@
                         id="margin-left"
                         v-model.number="formData.marginLeft"
                         type="number"
-                        label="Left Margin (px)"
+                        :label="t('templates.form.leftMargin')"
                         min="0"
                         max="100"
                         suffix="px"
@@ -483,7 +483,7 @@
                         id="margin-right"
                         v-model.number="formData.marginRight"
                         type="number"
-                        label="Right Margin (px)"
+                        :label="t('templates.form.rightMargin')"
                         min="0"
                         max="100"
                         suffix="px"
@@ -500,7 +500,7 @@
                 <v-card variant="tonal" class="section-card pa-4">
                   <div class="d-flex align-center mb-4">
                     <v-icon class="mr-3" color="primary">mdi-text-box</v-icon>
-                    <h4 class="section-title">Custom Content</h4>
+                    <h4 class="section-title">{{ t('templates.sections.customContent') }}</h4>
                   </div>
 
                   <v-row>
@@ -508,8 +508,8 @@
                       <v-textarea
                         id="custom-header"
                         v-model="formData.customHeader"
-                        label="Custom Header Text"
-                        placeholder="Custom header content..."
+                        :label="t('templates.form.customHeader')"
+                        :placeholder="t('templates.form.customHeaderPlaceholder')"
                         rows="3"
                         variant="outlined"
                         density="compact"
@@ -522,8 +522,8 @@
                       <v-textarea
                         id="custom-footer"
                         v-model="formData.customFooter"
-                        label="Custom Footer Text"
-                        placeholder="Custom footer content..."
+                        :label="t('templates.form.customFooter')"
+                        :placeholder="t('templates.form.customFooterPlaceholder')"
                         rows="3"
                         variant="outlined"
                         density="compact"
@@ -536,8 +536,8 @@
                       <v-textarea
                         id="terms-conditions"
                         v-model="formData.termsAndConditions"
-                        label="Terms and Conditions"
-                        placeholder="Terms and conditions..."
+                        :label="t('templates.form.termsAndConditions')"
+                        :placeholder="t('templates.form.termsAndConditionsPlaceholder')"
                         rows="4"
                         variant="outlined"
                         density="compact"
@@ -550,8 +550,8 @@
                       <v-textarea
                         id="payment-instructions"
                         v-model="formData.paymentInstructions"
-                        label="Payment Instructions"
-                        placeholder="Payment instructions..."
+                        :label="t('templates.form.paymentInstructions')"
+                        :placeholder="t('templates.form.paymentInstructionsPlaceholder')"
                         rows="3"
                         variant="outlined"
                         density="compact"
@@ -572,9 +572,9 @@
                 <div class="d-flex align-center">
                   <v-icon class="mr-3" color="primary">mdi-eye</v-icon>
                   <div>
-                    <h4 class="section-title mb-1">Live Preview</h4>
+                    <h4 class="section-title mb-1">{{ t('templates.preview.livePreview') }}</h4>
                     <div class="text-caption text-medium-emphasis">
-                      See how your template will look
+                      {{ t('templates.preview.seeHowLooks') }}
                     </div>
                   </div>
                 </div>
@@ -608,8 +608,8 @@
                   <v-icon size="64" color="grey-lighten-1" class="mb-4"
                     >mdi-file-document-outline</v-icon
                   >
-                  <h4 class="mb-2">No Preview Available</h4>
-                  <p class="mb-4">Fill out the form to see a preview</p>
+                  <h4 class="mb-2">{{ t('templates.preview.noPreviewAvailable') }}</h4>
+                  <p class="mb-4">{{ t('templates.preview.fillFormToPreview') }}</p>
                 </div>
               </div>
             </div>
@@ -621,7 +621,7 @@
 
       <v-card-actions>
         <div class="dialog-footer">
-          <v-btn variant="text" @click="handleCancel"> Cancel </v-btn>
+          <v-btn variant="text" @click="handleCancel"> {{ t('common.cancel') }} </v-btn>
 
           <v-spacer />
 
@@ -634,7 +634,7 @@
               :disabled="!canPreview"
               class="d-none d-sm-flex"
             >
-              Preview
+              {{ t('templates.actions.preview') }}
             </v-btn>
 
             <v-btn
@@ -645,7 +645,7 @@
               :loading="saving"
               :disabled="!canPreview"
             >
-              <span class="d-none d-sm-inline">Save </span>Draft
+              <span class="d-none d-sm-inline">{{ t('templates.actions.save') }} </span>{{ t('templates.actions.saveDraft') }}
             </v-btn>
 
             <v-btn
@@ -655,8 +655,8 @@
               :loading="saving"
               :disabled="!isFormValid"
             >
-              {{ isEditing ? "Update" : "Create" }}
-              <span class="d-none d-sm-inline"> Template</span>
+              {{ isEditing ? t('templates.actions.update') : t('templates.actions.create') }}
+              <span class="d-none d-sm-inline"> {{ t('common.template') }}</span>
             </v-btn>
           </div>
         </div>
@@ -669,10 +669,13 @@
 import type { DocumentTemplate, DocumentTemplateCreateRequest } from "@medical-crm/shared"
 import { LogoPosition } from "@medical-crm/shared"
 import { computed, onMounted, ref, watch } from "vue"
+import { useI18n } from "vue-i18n"
 import { templatesApi } from "../../services/api"
 import { useSnackbar } from "../../composables/useSnackbar"
 import LogoUploader from "./LogoUploader.vue"
 import TemplatePreviewRenderer from "./TemplatePreviewRenderer.vue"
+
+const { t } = useI18n()
 
 interface Props {
   visible: boolean
@@ -735,25 +738,25 @@ const formData = ref<DocumentTemplateCreateRequest>({
 })
 
 // Options
-const templateTypeOptions = [
-  { label: "Quote Template", value: "quote" },
-  { label: "Invoice Template", value: "invoice" },
-  { label: "Both Quote & Invoice", value: "both" },
-]
+const templateTypeOptions = computed(() => [
+  { label: t("templates.types.quoteTemplate"), value: "quote" },
+  { label: t("templates.types.invoiceTemplate"), value: "invoice" },
+  { label: t("templates.types.bothQuoteInvoice"), value: "both" },
+])
 
-const logoPositionOptions = [
-  { label: "Top Left", value: LogoPosition.TOP_LEFT },
-  { label: "Top Center", value: LogoPosition.TOP_CENTER },
-  { label: "Top Right", value: LogoPosition.TOP_RIGHT },
-  { label: "Header Left", value: LogoPosition.HEADER_LEFT },
-  { label: "Header Right", value: LogoPosition.HEADER_RIGHT },
-]
+const logoPositionOptions = computed(() => [
+  { label: t("templates.logoPositions.topLeft"), value: LogoPosition.TOP_LEFT },
+  { label: t("templates.logoPositions.topCenter"), value: LogoPosition.TOP_CENTER },
+  { label: t("templates.logoPositions.topRight"), value: LogoPosition.TOP_RIGHT },
+  { label: t("templates.logoPositions.headerLeft"), value: LogoPosition.HEADER_LEFT },
+  { label: t("templates.logoPositions.headerRight"), value: LogoPosition.HEADER_RIGHT },
+])
 
-const logoSizeOptions = [
-  { label: "Small", value: "small" },
-  { label: "Medium", value: "medium" },
-  { label: "Large", value: "large" },
-]
+const logoSizeOptions = computed(() => [
+  { label: t("templates.logoSizes.small"), value: "small" },
+  { label: t("templates.logoSizes.medium"), value: "medium" },
+  { label: t("templates.logoSizes.large"), value: "large" },
+])
 
 // Notification system
 const { showSnackbar } = useSnackbar()
@@ -780,9 +783,9 @@ const isFormValid = computed(() => {
 
 // Field validation helpers (avoid complex regex in template)
 const emailRule = (v: string) =>
-  !v || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v) || "Invalid email format"
+  !v || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v) || t("templates.form.invalidEmailFormat")
 const urlRule = (v: string) =>
-  !v || /^https?:\/\/.+/.test(v) || "URL must start with http(s)"
+  !v || /^https?:\/\/.+/.test(v) || t("templates.form.websiteValidation")
 
 // Reset form
 const resetForm = () => {
@@ -877,63 +880,63 @@ const validateForm = () => {
   const newErrors: Record<string, string> = {}
 
   if (!formData.value.name.trim()) {
-    newErrors.name = "Template name is required"
+    newErrors.name = t("templates.validation.templateNameRequired")
   }
 
   if (!formData.value.type) {
-    newErrors.type = "Template type is required"
+    newErrors.type = t("templates.validation.templateTypeRequired")
   }
 
   if (!formData.value.companyName.trim()) {
-    newErrors.companyName = "Company name is required"
+    newErrors.companyName = t("templates.validation.companyNameRequired")
   }
 
   if (
     formData.value.companyEmail &&
     !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.value.companyEmail)
   ) {
-    newErrors.companyEmail = "Invalid email format"
+    newErrors.companyEmail = t("templates.validation.invalidEmailFormat")
   }
 
   if (
     formData.value.companyWebsite &&
     !/^https?:\/\/.+/.test(formData.value.companyWebsite)
   ) {
-    newErrors.companyWebsite = "Website must start with http:// or https://"
+    newErrors.companyWebsite = t("templates.validation.websiteMustStartWithHttp")
   }
 
   if (!formData.value.companyAddress.street.trim()) {
-    newErrors["companyAddress.street"] = "Street address is required"
+    newErrors["companyAddress.street"] = t("templates.validation.streetAddressRequired")
   }
 
   if (!formData.value.companyAddress.city.trim()) {
-    newErrors["companyAddress.city"] = "City is required"
+    newErrors["companyAddress.city"] = t("templates.validation.cityRequired")
   }
 
   if (!formData.value.companyAddress.state.trim()) {
-    newErrors["companyAddress.state"] = "State is required"
+    newErrors["companyAddress.state"] = t("templates.validation.stateRequired")
   }
 
   if (!formData.value.companyAddress.zipCode.trim()) {
-    newErrors["companyAddress.zipCode"] = "ZIP code is required"
+    newErrors["companyAddress.zipCode"] = t("templates.validation.zipCodeRequired")
   }
 
   if (!formData.value.companyAddress.country.trim()) {
-    newErrors["companyAddress.country"] = "Country is required"
+    newErrors["companyAddress.country"] = t("templates.validation.countryRequired")
   }
 
   if (
     formData.value.primaryColor &&
     !/^#[0-9A-F]{6}$/i.test(formData.value.primaryColor)
   ) {
-    newErrors.primaryColor = "Invalid color format"
+    newErrors.primaryColor = t("templates.validation.invalidColorFormat")
   }
 
   if (
     formData.value.secondaryColor &&
     !/^#[0-9A-F]{6}$/i.test(formData.value.secondaryColor)
   ) {
-    newErrors.secondaryColor = "Invalid color format"
+    newErrors.secondaryColor = t("templates.validation.invalidColorFormat")
   }
 
   errors.value = newErrors
@@ -953,7 +956,7 @@ const handleTabChange = (newTab: string) => {
 // Handle save draft (allow partial form; fill placeholders for required backend fields)
 const handleSaveDraft = async () => {
   if (!canPreview.value) {
-    showSnackbar("Please fill name and company before saving", "warning")
+    showSnackbar(t("templates.validation.fillNameAndCompanyBeforeSaving"), "warning")
     return
   }
 
@@ -997,16 +1000,16 @@ const handleSaveDraft = async () => {
 
     if (isEditing.value && props.template) {
       await templatesApi.update(props.template.id, draftData)
-      showSnackbar("Draft saved successfully", "success")
+      showSnackbar(t("templates.templateUpdated"), "success")
     } else {
       await templatesApi.create(draftData)
-      showSnackbar("Draft saved successfully", "success")
+      showSnackbar(t("templates.templateCreated"), "success")
     }
 
     emit("saved")
   } catch (error) {
     console.error("Failed to save draft:", error)
-    showSnackbar("Failed to save draft", "error")
+    showSnackbar(t("templates.failedToSaveTemplate"), "error")
   } finally {
     saving.value = false
   }
@@ -1015,7 +1018,7 @@ const handleSaveDraft = async () => {
 // Handle form submission
 const handleSubmit = async () => {
   if (!validateForm()) {
-    showSnackbar("Please correct the errors before saving", "warning")
+    showSnackbar(t("templates.validation.correctErrorsBeforeSaving"), "warning")
     return
   }
 
@@ -1072,16 +1075,16 @@ const handleSubmit = async () => {
 
     if (isEditing.value && props.template) {
       await templatesApi.update(props.template.id, templateData)
-      showSnackbar("Template updated successfully", "success")
+      showSnackbar(t("templates.templateUpdated"), "success")
     } else {
       await templatesApi.create(templateData)
-      showSnackbar("Template created successfully", "success")
+      showSnackbar(t("templates.templateCreated"), "success")
     }
 
     emit("saved")
   } catch (error) {
     console.error("Failed to save template:", error)
-    showSnackbar("Failed to save template", "error")
+    showSnackbar(t("templates.failedToSaveTemplate"), "error")
   } finally {
     saving.value = false
   }
