@@ -22,6 +22,7 @@ const Webhooks = () => import("@/views/webhooks/WebhooksView.vue")
 const ExportCenter = () => import("@/views/export/ExportCenterView.vue")
 const Segmentation = () => import("@/views/segmentation/SegmentationView.vue")
 const Contacts = () => import("@/views/contacts/ContactsView.vue")
+const Catalog = () => import("@/views/catalog/CatalogView.vue")
 
 const routes: RouteRecordRaw[] = [
   {
@@ -139,6 +140,15 @@ const routes: RouteRecordRaw[] = [
     meta: {
       requiresAuth: true,
       title: "Document Templates",
+    },
+  },
+  {
+    path: "/catalog",
+    name: "Catalog",
+    component: Catalog,
+    meta: {
+      requiresAuth: true,
+      title: "Catalog",
     },
   },
   {

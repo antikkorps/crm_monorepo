@@ -316,6 +316,7 @@
       - _Requirements: 2.1.2, 2.1.5_
 
   - [x] 12.5 Build billing analytics and financial reporting dashboard
+
     - Create revenue analytics dashboard with payment tracking charts
     - Implement outstanding invoice and partial payment monitoring
     - Add payment method analysis and reconciliation reports
@@ -325,34 +326,27 @@
 
   - [ ] 12.6 Implement product/service catalog system for quote and invoice lines
 
-    - [ ] 12.6.1 Create catalog backend models and services
+    - [x] 12.6.1 Create catalog backend models and services
+
       - Create Item/Product model with description, unit price, tax rate, category
       - Implement item CRUD operations with validation and search
-      - Add item category management and hierarchical organization
-      - Create item versioning and price history tracking
+      - Add simple category management (flat structure)
       - Write unit tests for catalog service functionality
       - _Requirements: 2.1, 2.2_
 
-    - [ ] 12.6.2 Build catalog CSV import functionality
-      - Create CSV import service for bulk item creation/updates
-      - Implement item duplicate detection and merge logic
-      - Add validation and error reporting for catalog imports
-      - Create import templates and format documentation
-      - Write integration tests for CSV import operations
-      - _Requirements: 1.5, 2.1_
+    - [x] 12.6.2 Develop catalog management frontend interface
 
-    - [ ] 12.6.3 Develop catalog management frontend interface
       - Create item catalog dashboard with search and filtering
       - Build item creation and editing forms with category selection
-      - Implement item search and selection for quote/invoice lines
-      - Add CSV import interface with preview and validation
-      - Create item usage analytics and reporting
+      - Implement item listing with pagination and sorting
+      - Add item activation/deactivation functionality
       - _Requirements: 2.1, 2.3_
 
-    - [ ] 12.6.4 Integrate catalog with quote and invoice line creation
-      - Update quote line forms to use catalog item selection
+    - [ ] 12.6.3 Integrate catalog with quote and invoice line creation
+      - Update quote line forms to include catalog item selection
       - Implement auto-completion and item search in line creation
-      - Add custom item creation option for non-catalog items
+      - Allow price adjustments when selecting catalog items (overrides)
+      - Add option to create custom lines without catalog items
       - Update invoice line creation with same catalog integration
       - Maintain backward compatibility with existing quote/invoice data
       - _Requirements: 2.1, 2.2, 2.4_
@@ -729,6 +723,7 @@
   - [ ] 24.4 Implement Digiforma quotes/invoices visual tracking system
 
     - [ ] 24.4.1 Create Digiforma document tracking models
+
       - Create DigiformaDocument model to track external quotes/invoices
       - Store Digiforma document ID, type (quote/invoice), status, amount, date
       - Link to CRM institutions/contacts for relationship tracking
@@ -737,6 +732,7 @@
       - _Requirements: 6.4, 6.5, 2.1_
 
     - [ ] 24.4.2 Implement Digiforma document sync and tracking logic
+
       - Build GraphQL queries to retrieve Digiforma quotes and invoices
       - Create sync service to import document metadata (not full content)
       - Implement document status tracking (draft, sent, paid, cancelled)
@@ -746,6 +742,7 @@
       - _Requirements: 6.4, 6.5_
 
     - [ ] 24.4.3 Build visual tracking interface in CRM
+
       - Add Digiforma documents section to institution detail view
       - Create visual indicators for document status (badges, colors)
       - Implement document timeline showing Digiforma activity

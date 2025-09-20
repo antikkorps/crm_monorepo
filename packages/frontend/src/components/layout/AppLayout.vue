@@ -341,6 +341,12 @@ const billingNavigation = [
     value: "templates",
   },
   {
+    title: "navigation.catalog",
+    icon: "mdi-package-variant",
+    to: "/catalog",
+    value: "catalog",
+  },
+  {
     title: "navigation.analytics",
     icon: "mdi-chart-bar",
     to: "/billing/analytics",

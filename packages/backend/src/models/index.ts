@@ -1,5 +1,6 @@
 // Model exports and associations setup
 import { Call } from "./Call"
+import { CatalogItem } from "./CatalogItem"
 import { Comment } from "./Comment"
 import { ContactPerson } from "./ContactPerson"
 import { DocumentTemplate } from "./DocumentTemplate"
@@ -563,9 +564,24 @@ Team.hasMany(Segment, {
   onDelete: "SET NULL",
 })
 
+// CatalogItem associations
+CatalogItem.belongsTo(User, {
+  foreignKey: "createdBy",
+  as: "creator",
+  onDelete: "CASCADE",
+})
+
+// User catalog item associations
+User.hasMany(CatalogItem, {
+  foreignKey: "createdBy",
+  as: "createdCatalogItems",
+  onDelete: "CASCADE",
+})
+
 // Export all models
 export {
   Call,
+  CatalogItem,
   Comment,
   ContactPerson,
   DocumentTemplate,
@@ -613,6 +629,7 @@ export default {
   NoteShare,
   Comment,
   Call,
+  CatalogItem,
   Reminder,
   Segment,
   Webhook,

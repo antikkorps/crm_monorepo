@@ -22,7 +22,9 @@
     "copy": "Copie",
     "warning": "Attention",
     "type": "Type",
-    "template": "Modèle"
+    "template": "Modèle",
+    "create": "Créer",
+    "retry": "Réessayer"
   },
   "navigation": {
     "dashboard": "Tableau de bord",
@@ -38,6 +40,7 @@
     "webhooks": "Webhooks",
     "export": "Exporter",
     "exportCenter": "Centre d'Export",
+    "catalog": "Catalogue",
     "profile": "Profil",
     "logout": "Se déconnecter"
   },
@@ -1005,6 +1008,58 @@
       "urlRequired": "L'URL est requise",
       "invalidUrlProtocol": "Protocole d'URL invalide",
       "invalidUrl": "URL invalide"
+    }
+  },
+  "catalog": {
+    "title": "Catalogue d'Articles",
+    "subtitle": "Gérez votre catalogue d'articles et de services",
+    "addItem": "Ajouter un Article",
+    "addFirstItem": "Ajouter votre premier article",
+    "editItem": "Modifier l'Article",
+    "createItem": "Créer un Article",
+    "search": "Rechercher des articles...",
+    "category": "Catégorie",
+    "status": "Statut",
+    "sortBy": "Trier par",
+    "allCategories": "Toutes les catégories",
+    "allStatuses": "Tous les statuts",
+    "active": "Actif",
+    "inactive": "Inactif",
+    "activate": "Activer",
+    "deactivate": "Désactiver",
+    "sortByName": "Nom",
+    "sortByCategory": "Catégorie",
+    "sortByPrice": "Prix",
+    "sortByCreated": "Date de création",
+    "noItems": "Aucun article trouvé",
+    "noItemsSubtitle": "Commencez par ajouter votre premier article au catalogue",
+    "confirmDelete": "Confirmer la suppression",
+    "confirmDeleteMessage": "Êtes-vous sûr de vouloir supprimer l'article \"{name}\" ?",
+    "sku": "Référence",
+    "unit": "Unité",
+    "unitPrice": "Prix unitaire",
+    "taxRate": "Taux de TVA",
+    "createdBy": "Créé par",
+    "unknown": "Inconnu",
+    "form": {
+      "name": "Nom",
+      "description": "Description",
+      "category": "Catégorie",
+      "sku": "Référence (SKU)",
+      "unit": "Unité de mesure",
+      "unitPlaceholder": "ex: heure, pièce, kg, jour",
+      "unitPrice": "Prix unitaire",
+      "taxRate": "Taux de TVA (%)",
+      "isActive": "Article actif",
+      "validation": {
+        "nameRequired": "Le nom est requis",
+        "nameTooLong": "Le nom ne peut pas dépasser 255 caractères",
+        "skuTooLong": "La référence ne peut pas dépasser 50 caractères",
+        "priceRequired": "Le prix est requis",
+        "pricePositive": "Le prix doit être positif",
+        "taxRateMin": "Le taux de TVA doit être positif",
+        "taxRateMax": "Le taux de TVA ne peut pas dépasser 100%"
+      }
     }
   }
 }

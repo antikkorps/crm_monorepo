@@ -38,7 +38,22 @@ class ApiClient {
       throw new Error(`HTTP error! status: ${response.status}`)
     }
 
-    return response.json()
+    // Handle empty responses (e.g., 204 No Content)
+    if (response.status === 204 || response.status === 205) {
+      return undefined as unknown as T
+    }
+
+    const contentType = response.headers.get("content-type") || ""
+    if (!contentType.includes("application/json")) {
+      // If server didn't return JSON, try to read text; if empty, return undefined
+      const text = await response.text().catch(() => "")
+      return (text ? (text as unknown as T) : (undefined as unknown as T))
+    }
+
+    // Parse JSON safely; treat empty body as undefined
+    const text = await response.text()
+    if (!text) return undefined as unknown as T
+    return JSON.parse(text) as T
   }
 
   async get<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
@@ -59,12 +74,21 @@ class ApiClient {
     })
   }
 
+  async patch<T>(endpoint: string, data?: any): Promise<T> {
+    return this.request<T>(endpoint, {
+      method: "PATCH",
+      body: data ? JSON.stringify(data) : undefined,
+    })
+  }
+
   async delete<T>(endpoint: string): Promise<T> {
     return this.request<T>(endpoint, { method: "DELETE" })
   }
 }
 
 export const apiClient = new ApiClient(API_BASE_URL)
+// Backwards-compatible alias for modules importing `{ api }`
+export const api = apiClient
 
 export const authApi = {
   login: (credentials: LoginCredentials) =>

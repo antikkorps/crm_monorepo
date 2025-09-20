@@ -110,6 +110,12 @@ interface RolePermissions {
   canDeleteReminders: boolean
   canViewAllReminders: boolean
   canViewOwnReminders: boolean
+
+  // Catalog Management
+  canCreateCatalogItems: boolean
+  canEditCatalogItems: boolean
+  canDeleteCatalogItems: boolean
+  canViewCatalogItems: boolean
 }
 
 /**
@@ -221,6 +227,12 @@ export const ROLE_PERMISSIONS: Record<UserRole, RolePermissions> = {
     canDeleteReminders: true,
     canViewAllReminders: true,
     canViewOwnReminders: true,
+
+    // Catalog Management - Full Access
+    canCreateCatalogItems: true,
+    canEditCatalogItems: true,
+    canDeleteCatalogItems: true,
+    canViewCatalogItems: true,
   },
 
   [UserRole.TEAM_ADMIN]: {
@@ -328,6 +340,12 @@ export const ROLE_PERMISSIONS: Record<UserRole, RolePermissions> = {
     canDeleteReminders: true,
     canViewAllReminders: true,
     canViewOwnReminders: true,
+
+    // Catalog Management - Full Access
+    canCreateCatalogItems: true,
+    canEditCatalogItems: true,
+    canDeleteCatalogItems: true,
+    canViewCatalogItems: true,
   },
 
   [UserRole.USER]: {
@@ -435,6 +453,12 @@ export const ROLE_PERMISSIONS: Record<UserRole, RolePermissions> = {
     canDeleteReminders: false,
     canViewAllReminders: false,
     canViewOwnReminders: true,
+
+    // Catalog Management - Basic Access
+    canCreateCatalogItems: false,
+    canEditCatalogItems: false,
+    canDeleteCatalogItems: false,
+    canViewCatalogItems: true,
   },
 
   [UserRole.ADMIN]: {
@@ -544,6 +568,12 @@ export const ROLE_PERMISSIONS: Record<UserRole, RolePermissions> = {
     canDeleteReminders: true,
     canViewAllReminders: true,
     canViewOwnReminders: true,
+
+    // Catalog Management - Full Access
+    canCreateCatalogItems: true,
+    canEditCatalogItems: true,
+    canDeleteCatalogItems: true,
+    canViewCatalogItems: true,
   },
 
   [UserRole.MANAGER]: {
@@ -653,6 +683,12 @@ export const ROLE_PERMISSIONS: Record<UserRole, RolePermissions> = {
     canDeleteReminders: false,
     canViewAllReminders: true,
     canViewOwnReminders: true,
+
+    // Catalog Management - Limited Access
+    canCreateCatalogItems: true,
+    canEditCatalogItems: true,
+    canDeleteCatalogItems: false,
+    canViewCatalogItems: true,
   },
 }
 
