@@ -20,6 +20,16 @@
             <v-tooltip activator="parent" location="top">Télécharger PDF</v-tooltip>
           </v-btn>
           <v-btn
+            v-if="String(quoteData?.status || '') === 'ordered'"
+            icon="mdi-clipboard-text"
+            variant="text"
+            @click="downloadOrderPDF"
+            :loading="downloading"
+          >
+            <v-icon>mdi-clipboard-text</v-icon>
+            <v-tooltip activator="parent" location="top">Télécharger Bon de commande</v-tooltip>
+          </v-btn>
+          <v-btn
             icon="mdi-open-in-new"
             variant="text"
             @click="openInNewTab"
@@ -233,11 +243,28 @@ const downloadPDF = async () => {
 
   try {
     downloading.value = true
-
-    // This would call the API to generate and download PDF
-    // const response = await quotesApi.downloadPDF(props.quoteData.id)
-
-    alert("Fonctionnalité de téléchargement PDF à venir")
+    if (!props.quoteData?.id) {
+      alert("Aucun devis à télécharger")
+      return
+    }
+    // Use selected template if present in form
+    const templateId = (props as any)?.quoteData?.templateId as string | undefined
+    const response = await (await import("@/services/api")).quotesApi.generatePdf(
+      props.quoteData.id,
+      templateId
+    )
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`)
+    }
+    const blob = await response.blob()
+    const url = window.URL.createObjectURL(blob)
+    const link = document.createElement("a")
+    link.href = url
+    link.download = `Quote-${props.quoteData?.quoteNumber || "devis"}.pdf`
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    window.URL.revokeObjectURL(url)
   } catch (error) {
     console.error("Failed to download PDF:", error)
     alert("Erreur lors du téléchargement du PDF")
@@ -280,6 +307,36 @@ const openInNewTab = () => {
       `)
       printWindow.document.close()
     }
+  }
+}
+
+const downloadOrderPDF = async () => {
+  try {
+    downloading.value = true
+    if (!props.quoteData?.id) {
+      alert("Aucun devis à télécharger")
+      return
+    }
+    const templateId = (props as any)?.quoteData?.templateId as string | undefined
+    const response = await (await import("@/services/api")).quotesApi.generateOrderPdf(
+      props.quoteData.id,
+      templateId
+    )
+    if (!response.ok) throw new Error(`HTTP ${response.status}`)
+    const blob = await response.blob()
+    const url = window.URL.createObjectURL(blob)
+    const link = document.createElement("a")
+    link.href = url
+    link.download = `Order-${props.quoteData?.orderNumber || props.quoteData?.quoteNumber || 'order'}.pdf`
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    window.URL.revokeObjectURL(url)
+  } catch (error) {
+    console.error("Failed to download Order PDF:", error)
+    alert("Erreur lors du téléchargement du bon de commande")
+  } finally {
+    downloading.value = false
   }
 }
 </script>

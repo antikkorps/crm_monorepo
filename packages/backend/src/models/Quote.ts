@@ -48,28 +48,30 @@ export class Quote
   extends Model<QuoteAttributes, QuoteCreationAttributes>
   implements QuoteAttributes
 {
-  public id!: string
-  public quoteNumber!: string
-  public institutionId!: string
-  public assignedUserId!: string
-  public templateId?: string
-  public title!: string
-  public description?: string
-  public validUntil!: Date
-  public status!: QuoteStatus
-  public acceptedAt?: Date
-  public rejectedAt?: Date
-  public clientComments?: string
-  public internalNotes?: string
+  declare id: string
+  declare quoteNumber: string
+  declare institutionId: string
+  declare assignedUserId: string
+  declare templateId?: string
+  declare orderNumber?: string
+  declare title: string
+  declare description?: string
+  declare validUntil: Date
+  declare status: QuoteStatus
+  declare acceptedAt?: Date
+  declare rejectedAt?: Date
+  declare orderedAt?: Date
+  declare clientComments?: string
+  declare internalNotes?: string
 
   // Financial totals
-  public subtotal!: number
-  public totalDiscountAmount!: number
-  public totalTaxAmount!: number
-  public total!: number
+  declare subtotal: number
+  declare totalDiscountAmount: number
+  declare totalTaxAmount: number
+  declare total: number
 
-  public readonly createdAt!: Date
-  public readonly updatedAt!: Date
+  declare readonly createdAt: Date
+  declare readonly updatedAt: Date
 
   // Associations
   public lines?: QuoteLine[]
@@ -139,6 +141,18 @@ export class Quote
     await this.save()
   }
 
+  public async confirmOrder(): Promise<void> {
+    const status = this.status || this.getDataValue('status')
+    if (![QuoteStatus.DRAFT, QuoteStatus.SENT].includes(status)) {
+      throw new Error("Quote cannot be ordered in its current state")
+    }
+    const number = await (this.constructor as typeof Quote).generateOrderNumber()
+    this.orderNumber = number
+    this.orderedAt = new Date()
+    this.status = QuoteStatus.ORDERED as any
+    await this.save()
+  }
+
   public async cancel(): Promise<void> {
     if (![QuoteStatus.DRAFT, QuoteStatus.SENT].includes(this.status)) {
       throw new Error("Quote cannot be cancelled in its current state")
@@ -148,24 +162,25 @@ export class Quote
     await this.save()
   }
 
-  public async recalculateTotals(): Promise<void> {
-    const lines = await this.getLines()
+  public async recalculateTotals(transaction?: any): Promise<void> {
+    const lines = await this.getLines(transaction)
 
     this.subtotal = lines.reduce((sum, line) => sum + line.subtotal, 0)
     this.totalDiscountAmount = lines.reduce((sum, line) => sum + line.discountAmount, 0)
     this.totalTaxAmount = lines.reduce((sum, line) => sum + line.taxAmount, 0)
     this.total = lines.reduce((sum, line) => sum + line.total, 0)
 
-    await this.save()
+    await this.save({ transaction })
   }
 
-  public async getLines(): Promise<QuoteLine[]> {
+  public async getLines(transaction?: any): Promise<QuoteLine[]> {
     if (this.lines) {
       return this.lines
     }
     return QuoteLine.findAll({
       where: { quoteId: this.id },
       order: [["orderIndex", "ASC"]],
+      transaction,
     })
   }
 
@@ -197,24 +212,36 @@ export class Quote
   public static async generateQuoteNumber(): Promise<string> {
     const year = new Date().getFullYear()
     const month = String(new Date().getMonth() + 1).padStart(2, "0")
+    const basePattern = `Q${year}${month}`
 
-    // Find the highest quote number for this month
-    const lastQuote = await this.findOne({
-      where: {
-        quoteNumber: {
-          [Op.like]: `Q${year}${month}%`,
-        },
-      },
-      order: [["quoteNumber", "DESC"]],
-    })
+    console.log("=== DEBUG: generateQuoteNumber ===")
+    console.log("Base pattern:", basePattern)
+
+    // Use raw query to avoid transaction issues
+    const sequelize = this.sequelize!
+    const result = await sequelize.query(
+      `SELECT quote_number FROM quotes
+       WHERE quote_number LIKE $1
+       ORDER BY quote_number DESC
+       LIMIT 1`,
+      {
+        bind: [`${basePattern}%`],
+        type: (sequelize.constructor as any).QueryTypes.SELECT,
+      }
+    ) as Array<{ quote_number: string }>
+
+    console.log("Raw query result:", result)
 
     let sequence = 1
-    if (lastQuote) {
-      const lastSequence = parseInt(lastQuote.quoteNumber.slice(-4))
+    if (result.length > 0 && result[0].quote_number) {
+      const lastSequence = parseInt(result[0].quote_number.slice(-4))
+      console.log("Last sequence:", lastSequence)
       sequence = lastSequence + 1
     }
 
-    return `Q${year}${month}${String(sequence).padStart(4, "0")}`
+    const newNumber = `${basePattern}${String(sequence).padStart(4, "0")}`
+    console.log("Generated number:", newNumber)
+    return newNumber
   }
 
   public static async createQuote(data: QuoteCreationAttributes): Promise<Quote> {
@@ -229,6 +256,31 @@ export class Quote
       totalTaxAmount: 0,
       total: 0,
     })
+  }
+
+  public static async generateOrderNumber(): Promise<string> {
+    const year = new Date().getFullYear()
+    const month = String(new Date().getMonth() + 1).padStart(2, "0")
+    const basePattern = `O${year}${month}`
+
+    const sequelize = this.sequelize!
+    const rows = (await sequelize.query(
+      `SELECT order_number FROM quotes
+       WHERE order_number LIKE $1
+       ORDER BY order_number DESC
+       LIMIT 1`,
+      {
+        bind: [`${basePattern}%`],
+        type: (sequelize.constructor as any).QueryTypes.SELECT,
+      }
+    )) as Array<{ order_number: string }>
+
+    let sequence = 1
+    if (rows.length > 0 && rows[0].order_number) {
+      const lastSequence = parseInt(rows[0].order_number.slice(-4))
+      sequence = lastSequence + 1
+    }
+    return `${basePattern}${String(sequence).padStart(4, "0")}`
   }
 
   public static async findByInstitution(institutionId: string): Promise<Quote[]> {
@@ -381,6 +433,15 @@ Quote.init(
       allowNull: true,
       field: "template_id",
     },
+    orderNumber: {
+      type: DataTypes.STRING,
+      allowNull: true,
+      unique: false,
+      field: "order_number",
+      validate: {
+        len: [0, 50],
+      },
+    },
     title: {
       type: DataTypes.STRING,
       allowNull: false,
@@ -403,9 +464,15 @@ Quote.init(
       },
     },
     status: {
-      type: DataTypes.ENUM(...Object.values(QuoteStatus)),
+      type:
+        process.env.NODE_ENV === "test" || process.env.NODE_ENV === "development"
+          ? DataTypes.STRING
+          : DataTypes.ENUM(...Object.values(QuoteStatus)),
       allowNull: false,
       defaultValue: QuoteStatus.DRAFT,
+      ...(process.env.NODE_ENV !== "production" && {
+        validate: { isIn: [Object.values(QuoteStatus)] },
+      }),
     },
     acceptedAt: {
       type: DataTypes.DATE,
@@ -416,6 +483,11 @@ Quote.init(
       type: DataTypes.DATE,
       allowNull: true,
       field: "rejected_at",
+    },
+    orderedAt: {
+      type: DataTypes.DATE,
+      allowNull: true,
+      field: "ordered_at",
     },
     clientComments: {
       type: DataTypes.TEXT,

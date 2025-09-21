@@ -36,15 +36,17 @@ export class MedicalInstitution
   extends Model<MedicalInstitutionAttributes, MedicalInstitutionCreationAttributes>
   implements MedicalInstitutionAttributes
 {
-  public id!: string
-  public name!: string
-  public type!: InstitutionType
-  public address!: AddressAttributes
-  public assignedUserId?: string
-  public tags!: string[]
-  public isActive!: boolean
-  public readonly createdAt!: Date
-  public readonly updatedAt!: Date
+  // Sequelize automatically creates getters/setters for these fields
+  // Declaring them as public fields shadows Sequelize's functionality
+  declare id: string
+  declare name: string
+  declare type: InstitutionType
+  declare address: AddressAttributes
+  declare assignedUserId?: string
+  declare tags: string[]
+  declare isActive: boolean
+  declare readonly createdAt: Date
+  declare readonly updatedAt: Date
 
   // Associations
   public medicalProfile?: MedicalProfile
@@ -61,8 +63,14 @@ export class MedicalInstitution
   public getFullAddress(): string {
     const rel: any = (this as any).addressRel
     const address = rel || this.address || this.getDataValue('address')
-    const { street, city, state, zipCode, country } = address
-    return `${street}, ${city}, ${state} ${zipCode}, ${country}`
+
+    if (!address) {
+      return 'Adresse non disponible'
+    }
+
+    const { street = '', city = '', state = '', zipCode = '', country = '' } = address
+    const parts = [street, city, state, zipCode, country].filter(part => part && part.trim())
+    return parts.length > 0 ? parts.join(', ') : 'Adresse incomplète'
   }
 
   public hasTag(tag: string): boolean {
@@ -180,13 +188,13 @@ export class MedicalInstitution
       if (city) {
         whereClause[Op.and] = [
           ...(whereClause[Op.and] || []),
-          Sequelize.where(Sequelize.json("address.city"), { [Op.iLike]: `%${city}%` }),
+          Sequelize.where(Sequelize.json("address.city") as any, { [Op.iLike]: `%${city}%` }),
         ]
       }
       if (state) {
         whereClause[Op.and] = [
           ...(whereClause[Op.and] || []),
-          Sequelize.where(Sequelize.json("address.state"), { [Op.iLike]: `%${state}%` }),
+          Sequelize.where(Sequelize.json("address.state") as any, { [Op.iLike]: `%${state}%` }),
         ]
       }
     }
@@ -332,13 +340,13 @@ export class MedicalInstitution
       if (filters.city) {
         whereClause[Op.and] = [
           ...(whereClause[Op.and] || []),
-          Sequelize.where(Sequelize.json("address.city"), { [Op.iLike]: `%${filters.city}%` }),
+          Sequelize.where(Sequelize.json("address.city") as any, { [Op.iLike]: `%${filters.city}%` }),
         ]
       }
       if (filters.state) {
         whereClause[Op.and] = [
           ...(whereClause[Op.and] || []),
-          Sequelize.where(Sequelize.json("address.state"), { [Op.iLike]: `%${filters.state}%` }),
+          Sequelize.where(Sequelize.json("address.state") as any, { [Op.iLike]: `%${filters.state}%` }),
         ]
       }
     }

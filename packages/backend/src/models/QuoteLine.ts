@@ -52,31 +52,31 @@ export class QuoteLine
   extends Model<QuoteLineAttributes, QuoteLineCreationAttributes>
   implements QuoteLineAttributes
 {
-  public id!: string
-  public quoteId!: string
-  public orderIndex!: number
+  declare id: string
+  declare quoteId: string
+  declare orderIndex: number
 
   // Product/Service details
-  public description!: string
-  public quantity!: number
-  public unitPrice!: number
+  declare description: string
+  declare quantity: number
+  declare unitPrice: number
 
   // Discount per line
-  public discountType!: DiscountType
-  public discountValue!: number
-  public discountAmount!: number
+  declare discountType: DiscountType
+  declare discountValue: number
+  declare discountAmount: number
 
   // Tax per line
-  public taxRate!: number
-  public taxAmount!: number
+  declare taxRate: number
+  declare taxAmount: number
 
   // Calculated totals
-  public subtotal!: number
-  public totalAfterDiscount!: number
-  public total!: number
+  declare subtotal: number
+  declare totalAfterDiscount: number
+  declare total: number
 
-  public readonly createdAt!: Date
-  public readonly updatedAt!: Date
+  declare readonly createdAt: Date
+  declare readonly updatedAt: Date
 
   // Associations
   public quote?: Quote
@@ -163,6 +163,9 @@ export class QuoteLine
     data: QuoteLineCreationAttributes,
     options?: { transaction?: any }
   ): Promise<QuoteLine> {
+    console.log("=== DEBUG: QuoteLine.createLine ===")
+    console.log("Input data:", data)
+
     // Set default values
     const lineData = {
       ...data,
@@ -170,6 +173,8 @@ export class QuoteLine
       discountValue: data.discountValue || 0,
       taxRate: data.taxRate || 0,
     }
+
+    console.log("Line data after defaults:", lineData)
 
     // Get the next order index if not provided
     if (lineData.orderIndex === undefined) {
@@ -180,8 +185,13 @@ export class QuoteLine
       lineData.orderIndex = (maxOrderIndex || 0) + 1
     }
 
+    console.log("Line data after orderIndex:", lineData)
+
     const line = this.build(lineData)
+    console.log("After build - quoteId:", line.quoteId)
+
     line.calculateTotals()
+    console.log("After calculateTotals - quoteId:", line.quoteId)
 
     return line.save(options)
   }
@@ -214,9 +224,10 @@ export class QuoteLine
     })
   }
 
-  public static async deleteByQuote(quoteId: string): Promise<number> {
+  public static async deleteByQuote(quoteId: string, options?: { transaction?: any }): Promise<number> {
     return this.destroy({
       where: { quoteId },
+      transaction: options?.transaction,
     })
   }
 

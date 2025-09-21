@@ -17,7 +17,18 @@
                 <v-text-field v-model="filters.search" label="Rechercher..." prepend-inner-icon="mdi-magnify" variant="outlined" density="compact" hide-details @input="debouncedSearch" />
               </v-col>
               <v-col cols="12" md="3" sm="6">
-                <v-select v-model="filters.status" :items="statusOptions" label="Statut" variant="outlined" density="compact" clearable hide-details @update:model-value="loadQuotes" />
+                <v-select
+                  v-model="filters.status"
+                  :items="statusOptions"
+                  item-title="label"
+                  item-value="value"
+                  label="Statut"
+                  variant="outlined"
+                  density="compact"
+                  clearable
+                  hide-details
+                  @update:model-value="loadQuotes"
+                />
               </v-col>
             </v-row>
           </v-card-text>
@@ -61,7 +72,24 @@
               <div class="d-flex gap-1">
                 <v-btn icon="mdi-eye" variant="text" size="small" @click="viewQuote(item)" title="Voir"></v-btn>
                 <v-btn icon="mdi-pencil" variant="text" size="small" @click="editQuote(item)" title="Modifier"></v-btn>
-                <v-btn icon="mdi-download" variant="text" size="small" @click="downloadQuotePDF(item)" title="Télécharger"></v-btn>
+                <v-btn icon="mdi-download" variant="text" size="small" @click="downloadQuotePDF(item)" title="Télécharger le devis"></v-btn>
+                <v-btn
+                  v-if="String((item as any).status || '') === 'ordered'"
+                  icon="mdi-clipboard-text"
+                  variant="text"
+                  size="small"
+                  @click="downloadOrderPDF(item)"
+                  title="Télécharger le bon de commande"
+                />
+                <v-btn
+                  v-if="canDeleteQuote(item)"
+                  icon="mdi-delete"
+                  variant="text"
+                  color="error"
+                  size="small"
+                  @click="deleteQuote(item)"
+                  title="Supprimer"
+                />
               </div>
             </template>
           </v-data-table>
@@ -83,6 +111,7 @@ import { onMounted, ref } from "vue"
 import QuoteBuilder from "@/components/billing/QuoteBuilder.vue"
 import { quotesApi } from "@/services/api"
 import AppLayout from "@/components/layout/AppLayout.vue"
+import { useAuthStore } from "@/stores/auth"
 
 const quotes = ref<Quote[]>([])
 const loading = ref(false)
@@ -90,10 +119,12 @@ const showBuilder = ref(false)
 const selectedQuote = ref<Quote | null>(null)
 const filters = ref({ status: null as QuoteStatus | null, search: "" })
 const snackbar = ref({ visible: false, message: '', color: 'info' })
+const authStore = useAuthStore()
 
 const statusOptions = [
   { label: "Brouillon", value: "draft" },
   { label: "Envoyé", value: "sent" },
+  { label: "Bon de commande", value: "ordered" },
   { label: "Accepté", value: "accepted" },
   { label: "Rejeté", value: "rejected" },
   { label: "Expiré", value: "expired" },
@@ -132,14 +163,46 @@ const createNewQuote = () => {
   showBuilder.value = true
 }
 
-const viewQuote = (quote: Quote) => {
-  selectedQuote.value = quote
-  showBuilder.value = true
+const viewQuote = async (quote: Quote) => {
+  try {
+    // Load the complete quote with lines
+    const response = await quotesApi.getById(quote.id)
+    const fullQuote = ((response as any).data || (response as any)) as Quote
+    // Ensure lines are populated (fallback to lines endpoint)
+    try {
+      const linesResp = await quotesApi.lines.getAll(quote.id)
+      const lines = (linesResp as any).data || []
+      ;(fullQuote as any).lines = lines
+    } catch (e) {
+      // ignore; use whatever came back
+      console.warn('Failed to fetch quote lines separately:', e)
+    }
+    selectedQuote.value = fullQuote
+    showBuilder.value = true
+  } catch (error) {
+    console.error('Error loading quote for viewing:', error)
+    showSnackbar('Erreur lors du chargement du devis', 'error')
+  }
 }
 
-const editQuote = (quote: Quote) => {
-  selectedQuote.value = quote
-  showBuilder.value = true
+const editQuote = async (quote: Quote) => {
+  try {
+    // Load the complete quote with lines
+    const response = await quotesApi.getById(quote.id)
+    const fullQuote = ((response as any).data || (response as any)) as Quote
+    try {
+      const linesResp = await quotesApi.lines.getAll(quote.id)
+      const lines = (linesResp as any).data || []
+      ;(fullQuote as any).lines = lines
+    } catch (e) {
+      console.warn('Failed to fetch quote lines separately:', e)
+    }
+    selectedQuote.value = fullQuote
+    showBuilder.value = true
+  } catch (error) {
+    console.error('Error loading quote for editing:', error)
+    showSnackbar('Erreur lors du chargement du devis', 'error')
+  }
 }
 
 const downloadQuotePDF = async (quote: Quote) => {
@@ -164,6 +227,45 @@ const downloadQuotePDF = async (quote: Quote) => {
   }
 }
 
+const downloadOrderPDF = async (quote: Quote) => {
+  try {
+    const response = await quotesApi.generateOrderPdf(quote.id, (quote as any).templateId)
+    const blob = await response.blob()
+    const url = window.URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `Order-${(quote as any).orderNumber || quote.quoteNumber}.pdf`
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    window.URL.revokeObjectURL(url)
+    showSnackbar("Bon de commande téléchargé", "success")
+  } catch (error) {
+    console.error("Error downloading order PDF:", error)
+    showSnackbar("Erreur lors du téléchargement du bon de commande", "error")
+  }
+}
+
+const canDeleteQuote = (quote: Quote) => {
+  const role = authStore.userRole
+  const isPrivileged = role === 'super_admin' || role === 'team_admin' || role === 'manager'
+  // Backend only allows deleting drafts; mirror that for UX
+  return isPrivileged && quote.status === 'draft'
+}
+
+const deleteQuote = async (quote: Quote) => {
+  if (!canDeleteQuote(quote)) return
+  if (!confirm(`Supprimer le devis ${quote.quoteNumber} ?`)) return
+  try {
+    await quotesApi.delete(quote.id)
+    showSnackbar('Devis supprimé', 'success')
+    loadQuotes()
+  } catch (e) {
+    console.error('Delete quote failed:', e)
+    showSnackbar("Impossible de supprimer le devis", 'error')
+  }
+}
+
 const handleQuoteSaved = (quote: Quote) => {
   showBuilder.value = false
   selectedQuote.value = null
@@ -178,8 +280,8 @@ const handleBuilderCancelled = () => {
 
 const formatCurrency = (amount: number) => new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(amount || 0)
 const formatDate = (date: Date | string) => new Date(date).toLocaleDateString('fr-FR')
-const getStatusLabel = (status: QuoteStatus) => ({ draft: "Brouillon", sent: "Envoyé", accepted: "Accepté", rejected: "Rejeté", expired: "Expiré", cancelled: "Annulé" }[status] || "Inconnu")
-const getStatusColor = (status: QuoteStatus) => ({ draft: "grey", sent: "info", accepted: "success", rejected: "error", expired: "warning", cancelled: "secondary" }[status] || "secondary")
+const getStatusLabel = (status: QuoteStatus) => ({ draft: "Brouillon", sent: "Envoyé", ordered: "Bon de commande", accepted: "Accepté", rejected: "Rejeté", expired: "Expiré", cancelled: "Annulé" }[status] || "Inconnu")
+const getStatusColor = (status: QuoteStatus) => ({ draft: "grey", sent: "info", ordered: "purple", accepted: "success", rejected: "error", expired: "warning", cancelled: "secondary" }[status] || "secondary")
 
 const showSnackbar = (message: string, color: string = 'info') => {
   snackbar.value = { visible: true, message, color }

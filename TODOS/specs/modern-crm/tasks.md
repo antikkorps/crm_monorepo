@@ -342,7 +342,7 @@
       - Add item activation/deactivation functionality
       - _Requirements: 2.1, 2.3_
 
-    - [ ] 12.6.3 Integrate catalog with quote and invoice line creation
+    - [x] 12.6.3 Integrate catalog with quote and invoice line creation
       - Update quote line forms to include catalog item selection
       - Implement auto-completion and item search in line creation
       - Allow price adjustments when selecting catalog items (overrides)

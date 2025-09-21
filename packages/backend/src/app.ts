@@ -54,10 +54,27 @@ export const createApp = (): Koa => {
     cors({
       origin: config.env === 'development' ? '*' : config.cors.origin,
       credentials: config.env !== 'development', // Only credentials in prod
-      allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-      allowHeaders: ["Origin", "X-Requested-With", "Content-Type", "Accept", "Authorization"],
+      allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
+      allowHeaders: ["Origin", "X-Requested-With", "Content-Type", "Accept", "Authorization", "X-Request-ID"],
+      exposeHeaders: ["X-Request-ID"],
+      maxAge: 86400, // 24 hours
     })
   )
+
+  // Additional CORS handling for preflight requests
+  app.use(async (ctx, next) => {
+    if (ctx.method === 'OPTIONS') {
+      ctx.set('Access-Control-Allow-Origin', '*')
+      ctx.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH')
+      ctx.set('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization, X-Request-ID')
+      ctx.status = 200
+      return
+    }
+
+    // Ensure CORS headers are set for all responses
+    ctx.set('Access-Control-Allow-Origin', '*')
+    await next()
+  })
 
   // Body parser with size limits
   app.use(

@@ -47,12 +47,10 @@ export class QuoteController {
       const userId = user.role === UserRole.SUPER_ADMIN ? undefined : user.id
 
       const result = await QuoteService.getQuotes(
-        {
-          ...filters,
-          page: Number(page),
-          limit: Number(limit)
-        },
-        userId
+        filters,
+        userId,
+        Number(page),
+        Number(limit)
       )
 
       ctx.body = {
@@ -60,12 +58,13 @@ export class QuoteController {
         data: result.quotes,
         meta: {
           total: result.pagination.total,
-          page: Number(page),
-          limit: Number(limit),
+          page: result.pagination.page,
+          limit: result.pagination.limit,
           totalPages: result.pagination.totalPages,
         },
       }
     } catch (error) {
+      console.error('GET /api/quotes failed:', error)
       ctx.status = 500
       ctx.body = {
         success: false,
@@ -116,11 +115,15 @@ export class QuoteController {
   // POST /api/quotes - Create a new quote
   static async createQuote(ctx: Context) {
     try {
+      console.log("=== DEBUG: Creating quote ===")
       const user = ctx.state.user as User
+      console.log("User:", user?.id)
       const quoteData = ctx.request.body as QuoteCreateRequest
+      console.log("Quote data:", JSON.stringify(quoteData, null, 2))
 
       // Validate required fields
       if (!quoteData.institutionId || !quoteData.title || !quoteData.validUntil) {
+        console.log("=== DEBUG: Validation failed ===")
         ctx.status = 400
         ctx.body = {
           success: false,
@@ -132,10 +135,16 @@ export class QuoteController {
         return
       }
 
-      // Validate quote data
-      QuoteService.validateQuoteData(quoteData)
+      console.log("=== DEBUG: Basic validation passed ===")
 
+      // Validate quote data
+      console.log("=== DEBUG: About to validate quote data ===")
+      QuoteService.validateQuoteData(quoteData)
+      console.log("=== DEBUG: Quote validation passed ===")
+
+      console.log("=== DEBUG: About to create quote ===")
       const quote = await QuoteService.createQuote(quoteData, user.id)
+      console.log("=== DEBUG: Quote created successfully ===", quote.id)
 
       ctx.status = 201
       ctx.body = {
@@ -143,6 +152,7 @@ export class QuoteController {
         data: quote,
       }
     } catch (error) {
+      console.log("=== DEBUG: Error creating quote ===", error)
       if (error && typeof error === "object" && "code" in error) {
         ctx.status = (error as any).status || 500
         ctx.body = {
@@ -395,6 +405,41 @@ export class QuoteController {
           error: {
             code: "QUOTE_CANCEL_ERROR",
             message: "Failed to cancel quote",
+            details: error instanceof Error ? error.message : "Unknown error",
+          },
+        }
+      }
+    }
+  }
+
+  // PUT /api/quotes/:id/order - Confirm order
+  static async confirmOrder(ctx: Context) {
+    try {
+      const user = ctx.state.user as User
+      const { id } = ctx.params
+
+      const quote = await QuoteService.confirmOrder(id, user.id)
+      ctx.body = {
+        success: true,
+        data: quote,
+      }
+    } catch (error) {
+      if (error && typeof error === "object" && "code" in error) {
+        ctx.status = (error as any).status || 500
+        ctx.body = {
+          success: false,
+          error: {
+            code: (error as any).code,
+            message: (error as any).message,
+          },
+        }
+      } else {
+        ctx.status = 500
+        ctx.body = {
+          success: false,
+          error: {
+            code: "QUOTE_ORDER_ERROR",
+            message: "Failed to confirm order",
             details: error instanceof Error ? error.message : "Unknown error",
           },
         }
@@ -814,8 +859,17 @@ export class QuoteController {
         }
       } else {
         // Return PDF as download
-        ctx.set("Content-Type", "application/pdf")
-        ctx.set("Content-Disposition", `attachment; filename="Quote-${id}.pdf"`)
+        ctx.status = 200
+        ctx.type = "application/pdf"
+        // Try to use quote number in filename if available
+        let fileName = `Quote-${id}.pdf`
+        try {
+          const { Quote } = await import("../models/Quote")
+          const q = await Quote.findByPk(id)
+          if (q?.quoteNumber) fileName = `Quote-${q.quoteNumber}.pdf`
+        } catch {}
+        ctx.set("Content-Disposition", `attachment; filename="${fileName}"`)
+        ctx.length = result.buffer.length
         ctx.body = result.buffer
       }
 
@@ -827,6 +881,49 @@ export class QuoteController {
         error: {
           code: "PDF_GENERATION_ERROR",
           message: "Failed to generate quote PDF",
+          details: error instanceof Error ? error.message : "Unknown error",
+        },
+      }
+    }
+  }
+
+  // GET /api/quotes/:id/order-pdf - Generate and download order PDF
+  static async generateOrderPdf(ctx: Context) {
+    try {
+      const { id } = ctx.params
+      const { templateId } = ctx.query
+      const user = ctx.state.user as User
+
+      const { PdfService } = await import("../services/PdfService")
+      const pdfService = new PdfService()
+
+      const result = await pdfService.generateOrderPdf(
+        id,
+        user.id,
+        templateId as string,
+        { saveToFile: true }
+      )
+
+      ctx.status = 200
+      ctx.type = "application/pdf"
+      let fileName = `Order-${id}.pdf`
+      try {
+        const { Quote } = await import("../models/Quote")
+        const q = await Quote.findByPk(id)
+        if (q?.orderNumber || q?.quoteNumber) fileName = `Order-${q.orderNumber || q.quoteNumber}.pdf`
+      } catch {}
+      ctx.set("Content-Disposition", `attachment; filename="${fileName}"`)
+      ctx.length = result.buffer.length
+      ctx.body = result.buffer
+
+      await pdfService.cleanup()
+    } catch (error) {
+      ctx.status = 500
+      ctx.body = {
+        success: false,
+        error: {
+          code: "ORDER_PDF_GENERATION_ERROR",
+          message: "Failed to generate order PDF",
           details: error instanceof Error ? error.message : "Unknown error",
         },
       }

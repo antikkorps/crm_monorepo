@@ -53,31 +53,24 @@
 
           <div v-if="form.lines.length === 0" class="text-center text-medium-emphasis py-4">Aucune ligne ajoutée.</div>
 
-          <div v-else>
-            <div v-for="(line, index) in form.lines" :key="line.tempId" class="line-item mb-4 pa-4 border rounded">
-              <v-row dense>
-                <v-col cols="12" md="4">
-                  <v-text-field v-model="line.description" label="Description *" :error-messages="lineErrors[index]?.description" density="compact" />
-                </v-col>
-                <v-col cols="6" md="2">
-                  <v-text-field v-model.number="line.quantity" label="Quantité *" type="number" :error-messages="lineErrors[index]?.quantity" density="compact" @update:model-value="calculateLineTotal(line)" />
-                </v-col>
-                <v-col cols="6" md="2">
-                  <v-text-field v-model.number="line.unitPrice" label="Prix Unitaire *" type="number" :error-messages="lineErrors[index]?.unitPrice" density="compact" @update:model-value="calculateLineTotal(line)" prefix="€" />
-                </v-col>
-                <v-col cols="12" md="3">
-                  <v-text-field v-model.number="line.taxRate" label="TVA (%)" type="number" density="compact" @update:model-value="calculateLineTotal(line)" suffix="%" />
-                </v-col>
-                <v-col cols="12" md="1" class="d-flex justify-end align-center">
-                  <v-btn icon="mdi-delete" variant="text" color="error" @click="removeLine(index)" />
-                </v-col>
-              </v-row>
-            </div>
+          <div v-else class="lines-container">
+            <InvoiceLine
+              v-for="(line, index) in form.lines"
+              :key="line.tempId || line.id"
+              :line="line"
+              :index="index"
+              :is-last="index === form.lines.length - 1"
+              @update="updateLine"
+              @remove="removeLine"
+              @move-up="moveLineUp"
+              @move-down="moveLineDown"
+            />
           </div>
 
           <div v-if="form.lines.length > 0" class="d-flex justify-end mt-4">
             <div style="width: 300px">
               <div class="d-flex justify-space-between"><span class="text-medium-emphasis">Sous-total</span><span>{{ formatCurrency(invoiceTotals.subtotal) }}</span></div>
+              <div class="d-flex justify-space-between"><span class="text-medium-emphasis">Remise totale</span><span class="text-error">-{{ formatCurrency(invoiceTotals.totalDiscountAmount) }}</span></div>
               <div class="d-flex justify-space-between"><span class="text-medium-emphasis">TVA</span><span>{{ formatCurrency(invoiceTotals.totalTaxAmount) }}</span></div>
               <v-divider class="my-2"></v-divider>
               <div class="d-flex justify-space-between font-weight-bold text-h6"><span>Total</span><span>{{ formatCurrency(invoiceTotals.total) }}</span></div>
@@ -97,7 +90,10 @@
 <script setup lang="ts">
 import { institutionsApi, invoicesApi } from "@/services/api"
 import type { Invoice, InvoiceCreateRequest, InvoiceLineCreateRequest } from "@medical-crm/shared"
+import { DiscountType } from "@medical-crm/shared"
 import { computed, onMounted, ref, watch } from "vue"
+import { createInvoiceLineDefaults, calculateTotals, type LineWithCatalog } from "@/utils/billing"
+import InvoiceLine from "./InvoiceLine.vue"
 
 const props = defineProps<{ visible: boolean, invoice?: Invoice | null }>()
 const emit = defineEmits<{
@@ -116,17 +112,27 @@ const isEditing = computed(() => !!props.invoice)
 const submitting = ref(false)
 
 const form = ref<InvoiceCreateRequest>({ institutionId: "", title: "", dueDate: new Date(), lines: [] })
-interface InvoiceLineForm extends InvoiceLineCreateRequest { tempId: string, total?: number }
+type InvoiceLineForm = LineWithCatalog<InvoiceLineCreateRequest & {
+  id?: string
+  invoiceId?: string
+  orderIndex?: number
+  discountType?: string
+  discountValue?: number
+  discountAmount?: number
+  taxAmount?: number
+  subtotal?: number
+  totalAfterDiscount?: number
+  total?: number
+  createdAt?: Date
+  updatedAt?: Date
+}>
 
 const institutions = ref<any[]>([])
 const errors = ref<Record<string, string>>({})
 const lineErrors = ref<Record<number, Record<string, string>>>({})
 
 const invoiceTotals = computed(() => {
-  const lines = form.value.lines as InvoiceLineForm[]
-  const subtotal = lines.reduce((sum, line) => sum + (line.quantity * line.unitPrice), 0)
-  const totalTaxAmount = lines.reduce((sum, line) => sum + (line.quantity * line.unitPrice * (line.taxRate || 0) / 100), 0)
-  return { subtotal, totalTaxAmount, total: subtotal + totalTaxAmount }
+  return calculateTotals(form.value.lines)
 })
 
 const isFormValid = computed(() => form.value.institutionId && form.value.title && form.value.dueDate && form.value.lines.length > 0 && Object.keys(errors.value).length === 0 && Object.keys(lineErrors.value).length === 0)
@@ -139,16 +145,55 @@ const loadInstitutions = async () => {
 }
 
 const addLine = () => {
-  (form.value.lines as InvoiceLineForm[]).push({ tempId: `temp_${Date.now()}`, description: "", quantity: 1, unitPrice: 0, taxRate: 20 })
+  const newLine = createInvoiceLineDefaults({
+    invoiceId: props.invoice?.id || "",
+    orderIndex: form.value.lines.length,
+    taxRate: 20, // Default tax rate
+  }) as InvoiceLineForm
+
+  form.value.lines.push(newLine)
+}
+
+const updateLine = (index: number, updatedLine: InvoiceLineForm) => {
+  form.value.lines[index] = { ...updatedLine }
 }
 
 const removeLine = (index: number) => {
   form.value.lines.splice(index, 1)
+  // Update order indexes
+  form.value.lines.forEach((line, idx) => {
+    line.orderIndex = idx
+  })
 }
 
-const calculateLineTotal = (line: InvoiceLineForm) => {
-  line.total = (line.quantity * line.unitPrice) * (1 + (line.taxRate || 0) / 100)
+const moveLineUp = (index: number) => {
+  if (index > 0) {
+    const lines = [...form.value.lines]
+    ;[lines[index - 1], lines[index]] = [lines[index], lines[index - 1]]
+
+    // Update order indexes
+    lines.forEach((line, idx) => {
+      line.orderIndex = idx
+    })
+
+    form.value.lines = lines
+  }
 }
+
+const moveLineDown = (index: number) => {
+  if (index < form.value.lines.length - 1) {
+    const lines = [...form.value.lines]
+    ;[lines[index], lines[index + 1]] = [lines[index + 1], lines[index]]
+
+    // Update order indexes
+    lines.forEach((line, idx) => {
+      line.orderIndex = idx
+    })
+
+    form.value.lines = lines
+  }
+}
+
 
 const validateForm = () => {
   errors.value = {}
@@ -219,6 +264,12 @@ onMounted(loadInstitutions)
 </script>
 
 <style scoped>
+.lines-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
 .line-item {
   background-color: #f9f9f9;
 }

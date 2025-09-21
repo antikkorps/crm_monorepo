@@ -26,20 +26,20 @@ export class MedicalProfile
   extends Model<MedicalProfileAttributes, MedicalProfileCreationAttributes>
   implements MedicalProfileAttributes
 {
-  public id!: string
-  public institutionId!: string
-  public bedCapacity?: number
-  public surgicalRooms?: number
-  public specialties!: string[]
-  public departments!: string[]
-  public equipmentTypes!: string[]
-  public certifications!: string[]
-  public complianceStatus!: ComplianceStatus
-  public lastAuditDate?: Date
-  public complianceExpirationDate?: Date
-  public complianceNotes?: string
-  public readonly createdAt!: Date
-  public readonly updatedAt!: Date
+  declare id: string
+  declare institutionId: string
+  declare bedCapacity?: number
+  declare surgicalRooms?: number
+  declare specialties: string[]
+  declare departments: string[]
+  declare equipmentTypes: string[]
+  declare certifications: string[]
+  declare complianceStatus: ComplianceStatus
+  declare lastAuditDate?: Date
+  declare complianceExpirationDate?: Date
+  declare complianceNotes?: string
+  declare readonly createdAt: Date
+  declare readonly updatedAt: Date
 
   // Instance methods
   public isCompliant(): boolean {

@@ -85,54 +85,54 @@ export class DocumentTemplate
   extends Model<DocumentTemplateAttributes, DocumentTemplateCreationAttributes>
   implements DocumentTemplateAttributes
 {
-  public id!: string
-  public name!: string
-  public type!: TemplateType
-  public isDefault!: boolean
-  public isActive!: boolean
+  declare id: string
+  declare name: string
+  declare type: TemplateType
+  declare isDefault: boolean
+  declare isActive: boolean
 
   // Company Information
-  public companyName!: string
-  public companyAddress!: Address
-  public companyPhone?: string
-  public companyEmail?: string
-  public companyWebsite?: string
+  declare companyName: string
+  declare companyAddress: Address
+  declare companyPhone?: string
+  declare companyEmail?: string
+  declare companyWebsite?: string
 
   // Tax and Legal Information
-  public taxNumber?: string
-  public vatNumber?: string
-  public siretNumber?: string
-  public registrationNumber?: string
+  declare taxNumber?: string
+  declare vatNumber?: string
+  declare siretNumber?: string
+  declare registrationNumber?: string
 
   // Logo and Branding
-  public logoUrl?: string
-  public logoPosition!: LogoPosition
-  public primaryColor?: string
-  public secondaryColor?: string
+  declare logoUrl?: string
+  declare logoPosition: LogoPosition
+  declare primaryColor?: string
+  declare secondaryColor?: string
 
   // Template Layout Settings
-  public headerHeight!: number
-  public footerHeight!: number
-  public marginTop!: number
-  public marginBottom!: number
-  public marginLeft!: number
-  public marginRight!: number
+  declare headerHeight: number
+  declare footerHeight: number
+  declare marginTop: number
+  declare marginBottom: number
+  declare marginLeft: number
+  declare marginRight: number
 
   // Custom Fields and Text
-  public customHeader?: string
-  public customFooter?: string
-  public termsAndConditions?: string
-  public paymentInstructions?: string
+  declare customHeader?: string
+  declare customFooter?: string
+  declare termsAndConditions?: string
+  declare paymentInstructions?: string
 
   // HTML Template Content
-  public htmlTemplate?: string
-  public styles?: string
+  declare htmlTemplate?: string
+  declare styles?: string
 
   // Metadata
-  public createdBy!: string
-  public version!: number
-  public readonly createdAt!: Date
-  public readonly updatedAt!: Date
+  declare createdBy: string
+  declare version: number
+  declare readonly createdAt: Date
+  declare readonly updatedAt: Date
 
   // Associations
   public creator?: User

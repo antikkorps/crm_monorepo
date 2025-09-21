@@ -6,6 +6,7 @@ import { User } from "./User"
 export enum DocumentVersionType {
   QUOTE_PDF = "quote_pdf",
   INVOICE_PDF = "invoice_pdf",
+  ORDER_PDF = "order_pdf",
 }
 
 export interface DocumentVersionAttributes {
@@ -45,30 +46,30 @@ export class DocumentVersion
   extends Model<DocumentVersionAttributes, DocumentVersionCreationAttributes>
   implements DocumentVersionAttributes
 {
-  public id!: string
-  public documentId!: string
-  public documentType!: DocumentVersionType
-  public templateId?: string
-  public version!: number
-  public fileName!: string
-  public filePath!: string
-  public fileSize!: number
-  public mimeType!: string
+  declare id: string
+  declare documentId: string
+  declare documentType: DocumentVersionType
+  declare templateId?: string
+  declare version: number
+  declare fileName: string
+  declare filePath: string
+  declare fileSize: number
+  declare mimeType: string
 
   // Generation metadata
-  public generatedBy!: string
-  public generatedAt!: Date
+  declare generatedBy: string
+  declare generatedAt: Date
 
   // Email tracking
-  public emailedTo?: string[]
-  public emailedAt?: Date
-  public emailSubject?: string
+  declare emailedTo?: string[]
+  declare emailedAt?: Date
+  declare emailSubject?: string
 
   // Template snapshot for audit
-  public templateSnapshot?: any
+  declare templateSnapshot?: any
 
-  public readonly createdAt!: Date
-  public readonly updatedAt!: Date
+  declare readonly createdAt: Date
+  declare readonly updatedAt: Date
 
   // Associations
   public template?: DocumentTemplate
@@ -207,9 +208,15 @@ DocumentVersion.init(
       field: "document_id",
     },
     documentType: {
-      type: DataTypes.ENUM(...Object.values(DocumentVersionType)),
+      type:
+        process.env.NODE_ENV === "test" || process.env.NODE_ENV === "development"
+          ? DataTypes.STRING
+          : DataTypes.ENUM(...Object.values(DocumentVersionType)),
       allowNull: false,
       field: "document_type",
+      ...(process.env.NODE_ENV !== "production" && {
+        validate: { isIn: [Object.values(DocumentVersionType) as unknown as string[]] },
+      }),
     },
     templateId: {
       type: DataTypes.UUID,

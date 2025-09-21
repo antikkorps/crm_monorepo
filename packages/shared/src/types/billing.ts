@@ -5,6 +5,7 @@ import { BaseEntity } from "./common"
 export enum QuoteStatus {
   DRAFT = "draft",
   SENT = "sent",
+  ORDERED = "ordered",
   ACCEPTED = "accepted",
   REJECTED = "rejected",
   EXPIRED = "expired",
@@ -45,12 +46,14 @@ export interface Quote extends BaseEntity {
   institutionId: string
   assignedUserId: string
   templateId?: string
+  orderNumber?: string
   title: string
   description?: string
   validUntil: Date
   status: QuoteStatus
   acceptedAt?: Date
   rejectedAt?: Date
+  orderedAt?: Date
   clientComments?: string
   internalNotes?: string
 

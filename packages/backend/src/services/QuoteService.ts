@@ -46,13 +46,28 @@ export class QuoteService {
 
       // Create quote lines if provided
       if (data.lines && data.lines.length > 0) {
+        console.log("=== DEBUG: Creating quote lines in QuoteService ===")
+        console.log("Quote ID:", quote.id)
+        console.log("Quote object:", { id: quote.id, quoteNumber: quote.quoteNumber })
+
         for (let i = 0; i < data.lines.length; i++) {
           const lineData = data.lines[i]
-          await QuoteLine.createLine({
-            ...lineData,
+          // Clean line data and ensure correct quoteId
+          const cleanLineData = { ...lineData } as any
+          delete cleanLineData.id // Remove temporary id
+          delete cleanLineData.quoteId // Remove any existing quoteId
+          delete cleanLineData.createdAt
+          delete cleanLineData.updatedAt
+
+          const finalLineData = {
+            ...cleanLineData,
             quoteId: quote.id,
             orderIndex: i + 1,
-          })
+          }
+
+          console.log("Final line data being sent to createLine:", finalLineData)
+
+          await QuoteLine.createLine(finalLineData, { transaction })
         }
 
         // Recalculate quote totals
@@ -76,14 +91,10 @@ export class QuoteService {
     const quote = await Quote.findByPk(quoteId, {
       include: [
         {
-          model: QuoteLine,
-          as: "lines",
-        },
-        {
           model: MedicalInstitution,
           as: "institution",
           attributes: ["id", "name", "type"],
-          include: [], // Avoid nested includes that might cause JSONB issues
+          include: [],
         },
         {
           model: User,
@@ -97,6 +108,10 @@ export class QuoteService {
       throw createError("Quote not found", 404, "QUOTE_NOT_FOUND")
     }
 
+    // Fetch lines separately to avoid any include-related quirks
+    const lines = await QuoteLine.findByQuote(quoteId)
+    ;(quote as any).setDataValue("lines", lines)
+
     return quote
   }
 
@@ -105,7 +120,9 @@ export class QuoteService {
    */
   public static async getQuotes(
     filters: BillingSearchFilters = {},
-    userId?: string
+    userId?: string,
+    page: number = 1,
+    limit: number = 20
   ): Promise<{
     quotes: Quote[]
     pagination: {
@@ -115,7 +132,7 @@ export class QuoteService {
       totalPages: number
     }
   }> {
-    const { page = 1, limit = 20, search, status, institutionId } = filters
+    const { search, status, institutionId } = filters
 
     // Build where clause
     const whereClause: any = {}
@@ -147,13 +164,28 @@ export class QuoteService {
     // Calculate offset
     const offset = (page - 1) * limit
 
-    // Get quotes and total count (simplified for now to avoid JSONB issues)
+    // Get quotes and total count with minimal includes
     const { rows: quotes, count: total } = await Quote.findAndCountAll({
       where: whereClause,
       limit,
       offset,
       order: [["createdAt", "DESC"]],
+      include: [
+        {
+          model: MedicalInstitution,
+          as: "institution",
+          attributes: ["id", "name", "type"],
+          include: [],
+        },
+        {
+          model: User,
+          as: "assignedUser",
+          attributes: ["id", "firstName", "lastName", "email"],
+        },
+      ],
     })
+
+    // Totals now persisted on create/update; no need to derive from lines here
 
     const totalPages = Math.ceil(total / limit)
 
@@ -199,10 +231,49 @@ export class QuoteService {
       )
     }
 
-    // Update quote
-    await quote.update(data)
+    const transaction = await sequelize.transaction()
+    try {
+      // Separate lines from quote fields
+      const { lines, ...quoteFields } = data as any
 
-    return this.getQuoteById(quoteId)
+      // Update quote basic fields
+      await quote.update(quoteFields, { transaction })
+
+      // If lines provided, replace existing with provided set
+      if (Array.isArray(lines)) {
+        // Validate each line
+        for (const line of lines) {
+          this.validateQuoteLineData(line)
+        }
+
+        // Delete existing lines
+        await QuoteLine.deleteByQuote(quoteId, { transaction })
+
+        // Recreate lines in provided order
+        for (let i = 0; i < lines.length; i++) {
+          const cleanLineData: any = { ...lines[i] }
+          delete cleanLineData.id
+          delete cleanLineData.createdAt
+          delete cleanLineData.updatedAt
+          delete cleanLineData.quoteId
+          const finalLineData = {
+            ...cleanLineData,
+            quoteId: quoteId,
+            orderIndex: i + 1,
+          }
+          await QuoteLine.createLine(finalLineData, { transaction })
+        }
+
+        // Recalculate totals based on new lines
+        await this.recalculateQuoteTotals(quoteId, transaction)
+      }
+
+      await transaction.commit()
+      return this.getQuoteById(quoteId)
+    } catch (error) {
+      await transaction.rollback()
+      throw error
+    }
   }
 
   /**
@@ -311,6 +382,37 @@ export class QuoteService {
 
     await quote.cancel()
     return this.getQuoteById(quoteId)
+  }
+
+  /**
+   * Confirm order (bon de commande)
+   */
+  public static async confirmOrder(quoteId: string, userId: string): Promise<Quote> {
+    const quote = await Quote.findByPk(quoteId)
+    if (!quote) {
+      throw createError("Quote not found", 404, "QUOTE_NOT_FOUND")
+    }
+
+    // Check permissions
+    if (!(await this.canUserModifyQuote(quote, userId))) {
+      throw createError(
+        "Insufficient permissions to confirm order",
+        403,
+        "INSUFFICIENT_PERMISSIONS"
+      )
+    }
+
+    // Only draft or sent quotes can be ordered
+    if (![QuoteStatus.DRAFT, QuoteStatus.SENT].includes(quote.status)) {
+      throw createError(
+        "Quote cannot be ordered in its current state",
+        400,
+        "QUOTE_NOT_ORDERABLE"
+      )
+    }
+
+    await quote.confirmOrder()
+    return this.getQuoteById(quote.id)
   }
 
   /**
@@ -772,7 +874,7 @@ export class QuoteService {
   ): Promise<void> {
     const quote = await Quote.findByPk(quoteId, { transaction })
     if (quote) {
-      await quote.recalculateTotals()
+      await quote.recalculateTotals(transaction)
     }
   }
 
@@ -784,8 +886,8 @@ export class QuoteService {
     const user = await User.findByPk(userId)
     if (!user) return false
 
-    // Super admins can modify any quote
-    if (user.role === "super_admin") {
+    // Super admins, team admins, and managers can modify any quote
+    if (user.role === "super_admin" || user.role === "team_admin" || user.role === "manager") {
       return true
     }
 

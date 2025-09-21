@@ -271,6 +271,7 @@ export const quotesApi = {
   accept: (id: string) => apiClient.put(`/quotes/${id}/accept`),
   reject: (id: string) => apiClient.put(`/quotes/${id}/reject`),
   cancel: (id: string) => apiClient.put(`/quotes/${id}/cancel`),
+  order: (id: string) => apiClient.put(`/quotes/${id}/order`),
 
   // Quote lines
   lines: {
@@ -303,6 +304,20 @@ export const quotesApi = {
     const queryString = params.toString()
     return fetch(
       `${API_BASE_URL}/quotes/${id}/pdf${queryString ? `?${queryString}` : ""}`,
+      {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      }
+    )
+  },
+  generateOrderPdf: (id: string, templateId?: string) => {
+    const params = new URLSearchParams()
+    if (templateId) params.append("templateId", templateId)
+    const queryString = params.toString()
+    return fetch(
+      `${API_BASE_URL}/quotes/${id}/order-pdf${queryString ? `?${queryString}` : ""}`,
       {
         method: "GET",
         headers: {
@@ -528,3 +543,26 @@ export { PluginService } from "./plugins"
 
 // Export contacts API
 export { contactsApi } from "./contacts"
+
+// Export catalog API
+export const catalogApi = {
+  getAll: (filters?: any) => {
+    const params = new URLSearchParams()
+    if (filters) {
+      Object.entries(filters).forEach(([key, value]) => {
+        if (value !== undefined && value !== null && value !== "") {
+          params.append(key, value.toString())
+        }
+      })
+    }
+    const queryString = params.toString()
+    return apiClient.get(`/catalog${queryString ? `?${queryString}` : ""}`)
+  },
+  getById: (id: string) => apiClient.get(`/catalog/${id}`),
+  create: (data: any) => apiClient.post("/catalog", data),
+  update: (id: string, data: any) => apiClient.put(`/catalog/${id}`, data),
+  delete: (id: string) => apiClient.delete(`/catalog/${id}`),
+  toggle: (id: string) => apiClient.patch(`/catalog/${id}/toggle`),
+  search: (query: string) => apiClient.get(`/catalog/search?q=${encodeURIComponent(query)}`),
+  getCategories: () => apiClient.get("/catalog/categories"),
+}

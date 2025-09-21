@@ -48,6 +48,9 @@ router.put("/:id/reject", QuoteController.rejectQuote)
 // PUT /api/quotes/:id/cancel - Cancel quote
 router.put("/:id/cancel", QuoteController.cancelQuote)
 
+// PUT /api/quotes/:id/order - Confirm order (bon de commande)
+router.put("/:id/order", QuoteController.confirmOrder)
+
 // Quote line management endpoints
 // GET /api/quotes/:id/lines - Get quote lines
 router.get("/:id/lines", QuoteController.getQuoteLines)
@@ -67,6 +70,9 @@ router.put("/:id/lines/reorder", QuoteController.reorderQuoteLines)
 // PDF generation and document management endpoints
 // GET /api/quotes/:id/pdf - Generate and download quote PDF
 router.get("/:id/pdf", QuoteController.generateQuotePdf)
+
+// GET /api/quotes/:id/order-pdf - Generate and download order PDF
+router.get("/:id/order-pdf", QuoteController.generateOrderPdf)
 
 // GET /api/quotes/:id/versions - Get document versions for quote
 router.get("/:id/versions", QuoteController.getQuoteVersions)

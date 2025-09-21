@@ -27,18 +27,18 @@ export class ContactPerson
   extends Model<ContactPersonAttributes, ContactPersonCreationAttributes>
   implements ContactPersonAttributes
 {
-  public id!: string
-  public institutionId!: string
-  public firstName!: string
-  public lastName!: string
-  public email!: string
-  public phone?: string
-  public title?: string
-  public department?: string
-  public isPrimary!: boolean
-  public isActive!: boolean
-  public readonly createdAt!: Date
-  public readonly updatedAt!: Date
+  declare id: string
+  declare institutionId: string
+  declare firstName: string
+  declare lastName: string
+  declare email: string
+  declare phone?: string
+  declare title?: string
+  declare department?: string
+  declare isPrimary: boolean
+  declare isActive: boolean
+  declare readonly createdAt: Date
+  declare readonly updatedAt: Date
 
   // Associations
   public institution?: MedicalInstitution

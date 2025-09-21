@@ -18,7 +18,8 @@ export async function initializeDatabase(
     // Sync database schema if requested
     if (sync) {
       logger.info("Synchronizing database schema...")
-      await DatabaseManager.sync({ force })
+      // In development, prefer alter to add new columns without dropping data
+      await DatabaseManager.sync({ force, alter: !force })
       logger.info("Database schema synchronized")
     }
 

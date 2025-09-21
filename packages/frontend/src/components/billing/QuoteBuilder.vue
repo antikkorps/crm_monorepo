@@ -8,6 +8,9 @@
         </div>
       </div>
       <div class="header-actions">
+        <v-btn variant="text" prepend-icon="mdi-arrow-left" @click="emit('cancelled')">
+          Retour à la liste
+        </v-btn>
         <v-btn
           variant="outlined"
           color="secondary"
@@ -34,7 +37,7 @@
           :loading="saving"
           :disabled="!isFormValid"
         >
-          {{ isEditing ? 'Mettre à jour' : 'Créer le devis' }}
+          {{ isEditing ? "Mettre à jour" : "Créer le devis" }}
         </v-btn>
       </div>
     </div>
@@ -130,11 +133,7 @@
           <div v-if="formData.lines.length === 0" class="empty-lines">
             <v-icon size="64" color="grey-lighten-2">mdi-format-list-bulleted</v-icon>
             <p class="text-h6 mt-4">Aucune ligne ajoutée</p>
-            <v-btn
-              color="primary"
-              prepend-icon="mdi-plus"
-              @click="addLine"
-            >
+            <v-btn color="primary" prepend-icon="mdi-plus" @click="addLine">
               Ajouter la première ligne
             </v-btn>
           </div>
@@ -164,26 +163,34 @@
                 <v-row class="total-row">
                   <v-col cols="6">Sous-total:</v-col>
                   <v-col cols="6" class="text-right">
-                    <span class="amount">{{ formatCurrency(calculatedTotals.subtotal) }}</span>
+                    <span class="amount">{{
+                      formatCurrency(calculatedTotals.subtotal)
+                    }}</span>
                   </v-col>
                 </v-row>
                 <v-row class="total-row">
                   <v-col cols="6">Remise totale:</v-col>
                   <v-col cols="6" class="text-right">
-                    <span class="amount discount">-{{ formatCurrency(calculatedTotals.totalDiscountAmount) }}</span>
+                    <span class="amount discount"
+                      >-{{ formatCurrency(calculatedTotals.totalDiscountAmount) }}</span
+                    >
                   </v-col>
                 </v-row>
                 <v-row class="total-row">
                   <v-col cols="6">Taxes totales:</v-col>
                   <v-col cols="6" class="text-right">
-                    <span class="amount">{{ formatCurrency(calculatedTotals.totalTaxAmount) }}</span>
+                    <span class="amount">{{
+                      formatCurrency(calculatedTotals.totalTaxAmount)
+                    }}</span>
                   </v-col>
                 </v-row>
                 <v-divider class="my-3" />
                 <v-row class="total-row final-total">
                   <v-col cols="6"><strong>Total:</strong></v-col>
                   <v-col cols="6" class="text-right">
-                    <span class="amount"><strong>{{ formatCurrency(calculatedTotals.total) }}</strong></span>
+                    <span class="amount"
+                      ><strong>{{ formatCurrency(calculatedTotals.total) }}</strong></span
+                    >
                   </v-col>
                 </v-row>
               </div>
@@ -201,6 +208,17 @@
                   class="mb-3"
                 >
                   Envoyer au client
+                </v-btn>
+                <v-btn
+                  v-if="isEditing && ['draft','sent'].includes(String(props.quote?.status || ''))"
+                  color="secondary"
+                  variant="tonal"
+                  prepend-icon="mdi-clipboard-check"
+                  block
+                  class="mb-3"
+                  @click="confirmOrder"
+                >
+                  Confirmer bon de commande
                 </v-btn>
                 <v-btn
                   color="warning"
@@ -247,12 +265,7 @@
         </v-card-text>
         <v-card-actions>
           <v-spacer />
-          <v-btn
-            variant="outlined"
-            @click="showSendDialog = false"
-          >
-            Annuler
-          </v-btn>
+          <v-btn variant="outlined" @click="showSendDialog = false"> Annuler </v-btn>
           <v-btn
             color="primary"
             prepend-icon="mdi-send"
@@ -272,19 +285,21 @@
 </template>
 
 <script setup lang="ts">
+import { useInstitutionsStore } from "@/stores/institutions"
+import {
+  calculateTotals,
+  cleanLineForSubmission,
+  createQuoteLineDefaults,
+} from "@/utils/billing"
 import type {
   DocumentTemplate,
-  MedicalInstitution,
   Quote,
-  QuoteCreateRequest,
   QuoteLine as QuoteLineType,
   QuoteStatus,
 } from "@medical-crm/shared"
-import { DiscountType } from "@medical-crm/shared"
 import { computed, onMounted, ref, watch } from "vue"
 import { useRouter } from "vue-router"
 import { quotesApi, templatesApi } from "../../services/api"
-import { useInstitutionsStore } from "@/stores/institutions"
 import QuoteLine from "./QuoteLine.vue"
 import QuotePreview from "./QuotePreview.vue"
 
@@ -308,17 +323,31 @@ const sending = ref(false)
 const showPreview = ref(false)
 const showSendDialog = ref(false)
 const emailMessage = ref("")
-const snackbar = ref({ visible: false, message: '', color: 'info' })
+const snackbar = ref({ visible: false, message: "", color: "info" })
 
-// Form data
-const formData = ref<
-  QuoteCreateRequest & { lines: (QuoteLineType & { tempId?: string })[] }
->({
+// Form data interface for the UI (validUntil as string for HTML date input)
+interface QuoteFormData {
+  institutionId: string
+  templateId?: string
+  title: string
+  description?: string
+  validUntil: string
+  internalNotes?: string
+  lines: (QuoteLineType & {
+    tempId?: string
+    catalogItemId?: string | null
+    isCustomLine?: boolean
+    originalCatalogPrice?: number | null
+    originalCatalogTaxRate?: number | null
+  })[]
+}
+
+const formData = ref<QuoteFormData>({
   institutionId: "",
   templateId: "",
   title: "",
   description: "",
-  validUntil: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
+  validUntil: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0], // 30 days from now
   internalNotes: "",
   lines: [],
 })
@@ -337,13 +366,19 @@ const isFormValid = computed(() => {
     formData.value.validUntil &&
     formData.value.lines.length > 0 &&
     formData.value.lines.every(
-      (line) => line.description.trim() && line.quantity > 0 && line.unitPrice >= 0
+      (line: any) =>
+        line.description &&
+        line.description.trim() &&
+        line.quantity > 0 &&
+        line.unitPrice >= 0
     )
   )
 })
 
 const selectedInstitution = computed(() => {
-  return institutionsStore.institutions.find((inst) => inst.id === formData.value.institutionId)
+  return institutionsStore.institutions.find(
+    (inst) => inst.id === formData.value.institutionId
+  )
 })
 
 const institutionContactEmail = computed(() => {
@@ -359,9 +394,10 @@ const institutionContactEmail = computed(() => {
 const statusLabel = computed(() => {
   if (!props.quote) return ""
 
-  const statusLabels: Record<QuoteStatus, string> = {
+  const statusLabels: Record<string, string> = {
     draft: "Draft",
     sent: "Sent",
+    ordered: "Ordered",
     accepted: "Accepted",
     rejected: "Rejected",
     expired: "Expired",
@@ -374,9 +410,10 @@ const statusLabel = computed(() => {
 const statusSeverity = computed(() => {
   if (!props.quote) return "secondary"
 
-  const severities: Record<QuoteStatus, string> = {
+  const severities: Record<string, string> = {
     draft: "secondary",
     sent: "info",
+    ordered: "purple",
     accepted: "success",
     rejected: "danger",
     expired: "warning",
@@ -387,37 +424,7 @@ const statusSeverity = computed(() => {
 })
 
 const calculatedTotals = computed(() => {
-  let subtotal = 0
-  let totalDiscountAmount = 0
-  let totalTaxAmount = 0
-
-  formData.value.lines.forEach((line) => {
-    const lineSubtotal = line.quantity * line.unitPrice
-    subtotal += lineSubtotal
-
-    // Calculate discount
-    let discountAmount = 0
-    if (line.discountType === "percentage" && line.discountValue) {
-      discountAmount = lineSubtotal * (line.discountValue / 100)
-    } else if (line.discountType === "fixed_amount" && line.discountValue) {
-      discountAmount = line.discountValue
-    }
-    totalDiscountAmount += discountAmount
-
-    // Calculate tax on discounted amount
-    const taxableAmount = lineSubtotal - discountAmount
-    const taxAmount = taxableAmount * ((line.taxRate || 0) / 100)
-    totalTaxAmount += taxAmount
-  })
-
-  const total = subtotal - totalDiscountAmount + totalTaxAmount
-
-  return {
-    subtotal,
-    totalDiscountAmount,
-    totalTaxAmount,
-    total,
-  }
+  return calculateTotals(formData.value.lines as any[])
 })
 
 const canSendQuote = computed(() => {
@@ -425,12 +432,15 @@ const canSendQuote = computed(() => {
 })
 
 const canConvertToInvoice = computed(() => {
-  return isEditing.value && props.quote?.status === "accepted"
+  const status = String(props.quote?.status || '')
+  return isEditing.value && ["accepted", "ordered"].includes(status)
 })
 
 const previewData = computed(() => {
   return {
     ...formData.value,
+    validUntil: new Date(formData.value.validUntil),
+    lines: formData.value.lines as any,
     ...calculatedTotals.value,
     institution: selectedInstitution.value,
     status: "draft" as QuoteStatus,
@@ -457,38 +467,23 @@ const onInstitutionChange = () => {
 }
 
 const addLine = () => {
-  const newLine: QuoteLineType & { tempId?: string } = {
-    id: `temp-${Date.now()}`, // temporary ID
-    tempId: `temp-${Date.now()}`,
+  const newLine = createQuoteLineDefaults({
     quoteId: props.quote?.id || "",
     orderIndex: formData.value.lines.length,
-    description: "",
-    quantity: 1,
-    unitPrice: 0,
-    discountType: DiscountType.PERCENTAGE,
-    discountValue: 0,
-    discountAmount: 0,
-    taxRate: 0,
-    taxAmount: 0,
-    subtotal: 0,
-    totalAfterDiscount: 0,
-    total: 0,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  }
+  })
 
   formData.value.lines.push(newLine)
 }
 
 const updateLine = (index: number, updatedLine: QuoteLineType & { tempId?: string }) => {
-  formData.value.lines[index] = { ...updatedLine }
+  formData.value.lines[index] = updatedLine as any
 }
 
 const removeLine = (index: number) => {
   formData.value.lines.splice(index, 1)
   // Update order indexes
-  formData.value.lines.forEach((line: QuoteLineType & { tempId?: string }, idx) => {
-    line.orderIndex = idx
+  formData.value.lines.forEach((line, idx) => {
+    ;(line as any).orderIndex = idx
   })
 }
 
@@ -499,7 +494,7 @@ const moveLineUp = (index: number) => {
 
     // Update order indexes
     lines.forEach((line, idx) => {
-      line.orderIndex = idx
+      ;(line as any).orderIndex = idx
     })
 
     formData.value.lines = lines
@@ -513,7 +508,7 @@ const moveLineDown = (index: number) => {
 
     // Update order indexes
     lines.forEach((line, idx) => {
-      line.orderIndex = idx
+      ;(line as any).orderIndex = idx
     })
 
     formData.value.lines = lines
@@ -551,9 +546,19 @@ const saveDraft = async () => {
   try {
     saving.value = true
 
+    // Clean line data for API submission
+    const cleanedLines = formData.value.lines.map((line) => {
+      return cleanLineForSubmission(line as any)
+    })
+
     const quoteData = {
-      ...formData.value,
+      institutionId: formData.value.institutionId,
+      templateId: formData.value.templateId,
+      title: formData.value.title,
+      description: formData.value.description,
       validUntil: new Date(formData.value.validUntil),
+      internalNotes: formData.value.internalNotes,
+      lines: cleanedLines,
       ...calculatedTotals.value,
     }
 
@@ -621,6 +626,21 @@ const convertToInvoice = () => {
   })
 }
 
+const confirmOrder = async () => {
+  if (!isEditing.value || !props.quote) return
+  try {
+    saving.value = true
+    const updated = await quotesApi.order(props.quote.id)
+    showSnackbar("Bon de commande confirmé", "success")
+    emit("saved", updated as any)
+  } catch (e) {
+    console.error("Confirm order failed:", e)
+    showSnackbar("Impossible de confirmer le bon de commande", "error")
+  } finally {
+    saving.value = false
+  }
+}
+
 const formatCurrency = (amount: number) => {
   return new Intl.NumberFormat("fr-FR", {
     style: "currency",
@@ -628,22 +648,34 @@ const formatCurrency = (amount: number) => {
   }).format(amount || 0)
 }
 
-const showSnackbar = (message: string, color: string = 'info') => {
+const showSnackbar = (message: string, color: string = "info") => {
   snackbar.value = { visible: true, message, color }
 }
 
 // Load quote data for editing
 const loadQuoteData = () => {
   if (props.quote) {
+    console.log("Loading quote data:", props.quote)
+    console.log("Quote lines:", props.quote.lines)
+
     formData.value = {
       institutionId: props.quote.institutionId,
       templateId: props.quote.templateId || "",
       title: props.quote.title,
       description: props.quote.description || "",
-      validUntil: new Date(props.quote.validUntil),
+      validUntil: new Date(props.quote.validUntil).toISOString().split("T")[0],
       internalNotes: props.quote.internalNotes || "",
-      lines: props.quote.lines || [],
+      lines: (props.quote.lines || []).map((line) => ({
+        ...line,
+        tempId: `existing-${line.id}`,
+        catalogItemId: null,
+        isCustomLine: true,
+        originalCatalogPrice: null,
+        originalCatalogTaxRate: null,
+      })),
     }
+
+    console.log("Loaded lines:", formData.value.lines)
   }
 }
 
@@ -666,9 +698,10 @@ onMounted(async () => {
 .quote-header {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
+  align-items: center;
   margin-bottom: 2rem;
   gap: 1rem;
+  flex-wrap: wrap;
 }
 
 .header-content {
@@ -686,7 +719,7 @@ onMounted(async () => {
 .header-actions {
   display: flex;
   gap: 0.75rem;
-  flex-shrink: 0;
+  flex-wrap: wrap;
 }
 
 .quote-form {
@@ -753,7 +786,9 @@ onMounted(async () => {
   }
 
   .header-actions {
-    justify-content: stretch;
+    width: 100%;
+    justify-content: flex-start;
+    gap: 0.5rem;
   }
 }
 </style>

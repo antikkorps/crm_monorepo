@@ -90,7 +90,7 @@ export class PdfService {
     options: PdfGenerationOptions = {}
   ): Promise<PdfGenerationResult> {
     try {
-      // Fetch quote with all related data
+      // Fetch quote with all related data (including lines)
       const quote = await Quote.findByPk(quoteId, {
         include: [
           {
@@ -101,6 +101,11 @@ export class PdfService {
             model: User,
             as: "assignedUser",
           },
+          {
+            // Include lines to ensure we have them for rendering
+            model: (await import("../models/QuoteLine")).QuoteLine,
+            as: "lines",
+          },
         ],
       })
 
@@ -108,13 +113,36 @@ export class PdfService {
         throw new Error(`Quote with ID ${quoteId} not found`)
       }
 
-      const lines = await quote.getLines()
+      const linesRaw = quote.lines && quote.lines.length > 0 ? quote.lines : await quote.getLines()
+      const lines = linesRaw.map((l: any) => (typeof l.toJSON === 'function' ? l.toJSON() : l))
 
-      // Get template from database or use default
-      const template = await this.getTemplate(templateId, TemplateType.QUOTE)
+      // Get template from database or use quote.templateId or default
+      const resolvedTemplateId = templateId || (quote as any).templateId
+      let template
+      try {
+        template = await this.getTemplate(resolvedTemplateId, TemplateType.QUOTE)
+      } catch (err) {
+        // If incompatible or not found, fall back to default QUOTE template
+        template = await this.getTemplate(undefined, TemplateType.QUOTE)
+      }
+
+      // Compute totals fallback if missing
+      const computed = {
+        subtotal: lines.reduce((s: number, l: any) => s + Number(l.subtotal || 0), 0),
+        totalDiscountAmount: lines.reduce((s: number, l: any) => s + Number(l.discountAmount || 0), 0),
+        totalTaxAmount: lines.reduce((s: number, l: any) => s + Number(l.taxAmount || 0), 0),
+        total: lines.reduce((s: number, l: any) => s + Number(l.total || 0), 0),
+      }
+      const quoteForRender: any = { ...quote.toJSON?.() || quote }
+      if (!Number(quoteForRender.total)) {
+        quoteForRender.subtotal = computed.subtotal
+        quoteForRender.totalDiscountAmount = computed.totalDiscountAmount
+        quoteForRender.totalTaxAmount = computed.totalTaxAmount
+        quoteForRender.total = computed.total
+      }
 
       const html = await this.renderTemplate(template, {
-        quote,
+        quote: quoteForRender,
         lines,
         institution: quote.institution,
         assignedUser: quote.assignedUser,
@@ -187,6 +215,88 @@ export class PdfService {
     } catch (error) {
       logger.error("Error generating quote PDF:", error)
       throw new Error(`Failed to generate quote PDF: ${(error as Error).message}`)
+    }
+  }
+
+  public async generateOrderPdf(
+    quoteId: string,
+    generatedBy: string,
+    templateId?: string,
+    options: PdfGenerationOptions = {}
+  ): Promise<PdfGenerationResult> {
+    try {
+      // Fetch quote with institution, user, and lines
+      const quote = await Quote.findByPk(quoteId, {
+        include: [
+          { model: MedicalInstitution, as: "institution" },
+          { model: User, as: "assignedUser" },
+          { model: (await import("../models/QuoteLine")).QuoteLine, as: "lines" },
+        ],
+      })
+      if (!quote) throw new Error(`Quote with ID ${quoteId} not found`)
+
+      // Ensure lines
+      const linesRaw = quote.lines && quote.lines.length > 0 ? quote.lines : await quote.getLines()
+      const lines = linesRaw.map((l: any) => (typeof l.toJSON === 'function' ? l.toJSON() : l))
+
+      // Template selection: use provided or quote.templateId; fallback to default QUOTE template
+      const resolvedTemplateId = templateId || (quote as any).templateId
+      let template
+      try {
+        template = await this.getTemplate(resolvedTemplateId, TemplateType.QUOTE)
+      } catch {
+        template = await this.getTemplate(undefined, TemplateType.QUOTE)
+      }
+
+      // Compute totals fallback
+      const computed = {
+        subtotal: lines.reduce((s: number, l: any) => s + Number(l.subtotal || 0), 0),
+        totalDiscountAmount: lines.reduce((s: number, l: any) => s + Number(l.discountAmount || 0), 0),
+        totalTaxAmount: lines.reduce((s: number, l: any) => s + Number(l.taxAmount || 0), 0),
+        total: lines.reduce((s: number, l: any) => s + Number(l.total || 0), 0),
+      }
+      const quoteForRender: any = { ...quote.toJSON?.() || quote }
+      if (!Number(quoteForRender.total)) Object.assign(quoteForRender, computed)
+
+      // Render using same template but with a different heading context
+      const html = await this.renderTemplate(template, {
+        order: true,
+        quote: quoteForRender,
+        lines,
+        institution: quote.institution,
+        assignedUser: quote.assignedUser,
+        generatedAt: new Date(),
+      })
+
+      const pdfBuffer = await this.generatePdfFromHtml(html, options)
+
+      let filePath: string | undefined
+      let version: DocumentVersion | undefined
+      if (options.saveToFile !== false) {
+        const seq = await DocumentVersion.getNextVersion(quoteId, DocumentVersionType.ORDER_PDF)
+        const fileName = `Order-${quote.orderNumber || quote.quoteNumber}-v${seq}.pdf`
+        filePath = join(this.documentsPath, "quotes", fileName)
+        await this.ensureDirectoryExists(dirname(filePath))
+        await writeFile(filePath, pdfBuffer)
+        version = await DocumentVersion.create({
+          documentId: quoteId,
+          documentType: DocumentVersionType.ORDER_PDF as any,
+          templateId: template.id,
+          fileName,
+          filePath,
+          fileSize: pdfBuffer.length,
+          mimeType: "application/pdf",
+          generatedBy,
+          generatedAt: new Date(),
+          templateSnapshot: template.toJSON(),
+          version: seq,
+        } as any)
+      }
+
+      return { buffer: pdfBuffer, filePath, version }
+    } catch (error) {
+      logger.error("Error generating order PDF:", error)
+      throw new Error(`Failed to generate order PDF: ${(error as Error).message}`)
     }
   }
 
@@ -337,10 +447,18 @@ export class PdfService {
   private async renderTemplate(template: DocumentTemplate, data: any): Promise<string> {
     // Use custom HTML template if available, otherwise use default
     const htmlTemplate = template.htmlTemplate || this.getDefaultTemplate(template.type)
-    const styles = template.styles || this.getDefaultStyles()
+    // Always include defaults; allow template styles to override
+    const styles = `${this.getDefaultStyles()}\n${template.styles || ''}`
 
     // Register Handlebars helpers
     this.registerHandlebarsHelpers()
+
+    // Allow styles to use Handlebars variables (e.g., brand colors)
+    const styleTemplate = Handlebars.compile(styles)
+    const styleHtml = styleTemplate({
+      ...data,
+      template: template.toJSON(),
+    })
 
     const compiledTemplate = Handlebars.compile(htmlTemplate)
     const html = compiledTemplate({
@@ -353,7 +471,7 @@ export class PdfService {
       <html>
         <head>
           <meta charset="utf-8">
-          <style>${styles}</style>
+          <style>${styleHtml}</style>
         </head>
         <body>
           ${html}
@@ -491,9 +609,14 @@ export class PdfService {
         </header>
 
         <div class="document-info">
-          <h2>QUOTE</h2>
+          <h2>{{#if order}}ORDER{{else}}QUOTE{{/if}}</h2>
           <table class="info-table">
-            <tr><td><strong>Quote Number:</strong></td><td>{{quote.quoteNumber}}</td></tr>
+            {{#if order}}
+              <tr><td><strong>Order Number:</strong></td><td>{{quote.orderNumber}}</td></tr>
+              <tr><td><strong>Quote Ref:</strong></td><td>{{quote.quoteNumber}}</td></tr>
+            {{else}}
+              <tr><td><strong>Quote Number:</strong></td><td>{{quote.quoteNumber}}</td></tr>
+            {{/if}}
             <tr><td><strong>Date:</strong></td><td>{{date quote.createdAt}}</td></tr>
             <tr><td><strong>Valid Until:</strong></td><td>{{date quote.validUntil}}</td></tr>
           </table>

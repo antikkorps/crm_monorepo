@@ -1,5 +1,5 @@
 <template>
-  <v-card class="quote-line" :class="{ 'has-error': hasErrors }" variant="outlined">
+  <v-card class="invoice-line" :class="{ 'has-error': hasErrors }" variant="outlined">
     <v-card-text>
       <div class="line-content">
         <!-- Line Header -->
@@ -63,7 +63,7 @@
                 variant="outlined"
                 :error-messages="errors.description"
                 @input="updateLine"
-                :readonly="!isCustomLine && !!selectedCatalogItem"
+                :readonly="!isCustomLine && selectedCatalogItem"
               />
             </v-col>
           </v-row>
@@ -242,13 +242,13 @@
 </template>
 
 <script setup lang="ts">
-import type { QuoteLine as QuoteLineType } from "@medical-crm/shared"
+import type { InvoiceLine as InvoiceLineType } from "@medical-crm/shared"
 import { computed, ref, watch } from "vue"
 import { type CatalogItem } from "@/stores/catalog"
 import CatalogItemSelector from "./CatalogItemSelector.vue"
 
 interface Props {
-  line: QuoteLineType & { tempId?: string }
+  line: InvoiceLineType & { tempId?: string }
   index: number
   isLast?: boolean
 }
@@ -257,14 +257,14 @@ const props = defineProps<Props>()
 
 // Emits
 const emit = defineEmits<{
-  update: [index: number, line: QuoteLineType & { tempId?: string }]
+  update: [index: number, line: InvoiceLineType & { tempId?: string }]
   remove: [index: number]
   "move-up": [index: number]
   "move-down": [index: number]
 }>()
 
 // Local state
-const localLine = ref<QuoteLineType & { tempId?: string }>({ ...props.line })
+const localLine = ref<InvoiceLineType & { tempId?: string }>({ ...props.line })
 const hasDiscount = ref((props.line.discountValue || 0) > 0)
 const errors = ref<Record<string, string>>({})
 
@@ -389,9 +389,8 @@ const updateLine = () => {
   emit("update", props.index, { ...localLine.value })
 }
 
-const toggleDiscount = (value: boolean) => {
-  hasDiscount.value = value
-  if (!value) {
+const toggleDiscount = () => {
+  if (!hasDiscount.value) {
     // Reset discount values when disabled
     localLine.value.discountType = "percentage"
     localLine.value.discountValue = 0
@@ -422,11 +421,11 @@ validateLine()
 </script>
 
 <style scoped>
-.quote-line {
+.invoice-line {
   transition: all 0.2s ease;
 }
 
-.quote-line.has-error {
+.invoice-line.has-error {
   border-color: rgb(var(--v-theme-error));
   box-shadow: 0 0 0 1px rgb(var(--v-theme-error));
 }
