@@ -3,76 +3,82 @@
     <div class="header">
       <h3>Payment History</h3>
       <div class="header-actions">
-        <Button
+        <v-btn
           v-if="canRecordPayments"
-          icon="pi pi-plus"
-          label="Record Payment"
-          class="p-button-sm p-button-primary"
+          prepend-icon="mdi-plus"
+          color="primary"
+          size="small"
           @click="$emit('record-payment')"
-        />
-        <Button
-          icon="pi pi-refresh"
-          class="p-button-sm p-button-outlined"
+        >
+          Record Payment
+        </v-btn>
+        <v-btn
+          icon="mdi-refresh"
+          variant="outlined"
+          size="small"
           @click="loadPayments"
           :loading="loading"
-          v-tooltip="'Refresh'"
-        />
+        >
+          <v-icon>mdi-refresh</v-icon>
+          <v-tooltip activator="parent" location="top">Refresh</v-tooltip>
+        </v-btn>
       </div>
     </div>
 
     <!-- Payment Summary -->
     <div v-if="invoice" class="payment-summary">
       <div class="summary-cards">
-        <Card class="summary-card">
-          <template #content>
+        <v-card class="summary-card">
+          <v-card-text>
             <div class="summary-content">
-              <div class="summary-icon total">
-                <i class="pi pi-file-o"></i>
-              </div>
+              <v-avatar color="blue" size="40">
+                <v-icon color="white">mdi-file-document-outline</v-icon>
+              </v-avatar>
               <div class="summary-details">
-                <h4>${{ formatCurrency(invoice.total) }}</h4>
+                <h4>{{ formatCurrency(invoice.total) }}</h4>
                 <p>Invoice Total</p>
               </div>
             </div>
-          </template>
-        </Card>
+          </v-card-text>
+        </v-card>
 
-        <Card class="summary-card">
-          <template #content>
+        <v-card class="summary-card">
+          <v-card-text>
             <div class="summary-content">
-              <div class="summary-icon paid">
-                <i class="pi pi-check-circle"></i>
-              </div>
+              <v-avatar color="green" size="40">
+                <v-icon color="white">mdi-check-circle</v-icon>
+              </v-avatar>
               <div class="summary-details">
-                <h4>${{ formatCurrency(invoice.totalPaid) }}</h4>
+                <h4>{{ formatCurrency(invoice.totalPaid) }}</h4>
                 <p>Total Paid</p>
               </div>
             </div>
-          </template>
-        </Card>
+          </v-card-text>
+        </v-card>
 
-        <Card class="summary-card">
-          <template #content>
+        <v-card class="summary-card">
+          <v-card-text>
             <div class="summary-content">
-              <div class="summary-icon remaining">
-                <i class="pi pi-clock"></i>
-              </div>
+              <v-avatar color="orange" size="40">
+                <v-icon color="white">mdi-clock-outline</v-icon>
+              </v-avatar>
               <div class="summary-details">
-                <h4>${{ formatCurrency(invoice.remainingAmount) }}</h4>
+                <h4>{{ formatCurrency(invoice.remainingAmount) }}</h4>
                 <p>Remaining</p>
               </div>
             </div>
-          </template>
-        </Card>
+          </v-card-text>
+        </v-card>
       </div>
 
       <!-- Payment Progress -->
       <div class="payment-progress">
         <label>Payment Progress</label>
-        <ProgressBar
-          :value="paymentPercentage"
-          :show-value="true"
-          :class="getProgressClass()"
+        <v-progress-linear
+          :model-value="paymentPercentage"
+          :color="getProgressColor()"
+          height="10"
+          rounded
         />
         <small class="progress-text">
           {{ formatCurrency(invoice.totalPaid) }} of
@@ -82,273 +88,276 @@
     </div>
 
     <!-- Filters -->
-    <div class="filters">
-      <div class="filter-group">
-        <label for="status-filter">Status</label>
-        <Dropdown
-          id="status-filter"
-          v-model="filters.status"
-          :options="statusOptions"
-          option-label="label"
-          option-value="value"
-          placeholder="All Statuses"
-          show-clear
-          @change="loadPayments"
-        />
-      </div>
+    <v-card class="filters">
+      <v-card-text>
+        <v-row>
+          <v-col cols="12" md="3">
+            <v-select
+              v-model="filters.status"
+              :items="statusOptions"
+              item-title="label"
+              item-value="value"
+              label="Status"
+              variant="outlined"
+              clearable
+              @update:model-value="loadPayments"
+            />
+          </v-col>
 
-      <div class="filter-group">
-        <label for="method-filter">Payment Method</label>
-        <Dropdown
-          id="method-filter"
-          v-model="filters.paymentMethod"
-          :options="methodOptions"
-          option-label="label"
-          option-value="value"
-          placeholder="All Methods"
-          show-clear
-          @change="loadPayments"
-        />
-      </div>
+          <v-col cols="12" md="3">
+            <v-select
+              v-model="filters.paymentMethod"
+              :items="methodOptions"
+              item-title="label"
+              item-value="value"
+              label="Payment Method"
+              variant="outlined"
+              clearable
+              @update:model-value="loadPayments"
+            />
+          </v-col>
 
-      <div class="filter-group">
-        <label for="date-from">Date From</label>
-        <Calendar
-          id="date-from"
-          v-model="filters.dateFrom"
-          placeholder="Select date"
-          show-clear
-          @date-select="loadPayments"
-        />
-      </div>
+          <v-col cols="12" md="3">
+            <v-text-field
+              v-model="filters.dateFrom"
+              label="Date From"
+              type="date"
+              variant="outlined"
+              clearable
+              @update:model-value="loadPayments"
+            />
+          </v-col>
 
-      <div class="filter-group">
-        <label for="date-to">Date To</label>
-        <Calendar
-          id="date-to"
-          v-model="filters.dateTo"
-          placeholder="Select date"
-          show-clear
-          @date-select="loadPayments"
-        />
-      </div>
-    </div>
+          <v-col cols="12" md="3">
+            <v-text-field
+              v-model="filters.dateTo"
+              label="Date To"
+              type="date"
+              variant="outlined"
+              clearable
+              @update:model-value="loadPayments"
+            />
+          </v-col>
+        </v-row>
+      </v-card-text>
+    </v-card>
 
     <!-- Payments Table -->
-    <Card class="payments-table-card">
-      <template #content>
-        <DataTable
-          :value="payments"
-          :loading="loading"
-          responsive-layout="scroll"
-          class="payments-table"
-          :empty-message="emptyMessage"
+    <v-card class="payments-table-card">
+      <v-card-title>Payments</v-card-title>
+      <v-card-text>
+        <div v-if="loading" class="text-center py-4">
+          <v-progress-circular indeterminate></v-progress-circular>
+        </div>
+        <div v-else-if="payments.length === 0" class="text-center py-4 text-medium-emphasis">
+          {{ emptyMessage }}
+        </div>
+        <v-data-table
+          v-else
+          :headers="paymentHeaders"
+          :items="payments"
+          item-value="id"
+          class="elevation-0"
         >
-          <Column field="paymentDate" header="Date" sortable>
-            <template #body="{ data }">
-              <div class="date-cell">
-                <span>{{ formatDate(data.paymentDate) }}</span>
-                <Tag
-                  v-if="data.isRecent"
-                  value="Recent"
-                  severity="info"
-                  class="recent-tag"
-                />
-              </div>
-            </template>
-          </Column>
+          <template #item.paymentDate="{ item }">
+            <div class="date-cell">
+              <v-icon size="small" color="grey">mdi-calendar</v-icon>
+              <span>{{ formatDate(item.paymentDate) }}</span>
+            </div>
+          </template>
 
-          <Column field="amount" header="Amount" sortable>
-            <template #body="{ data }">
-              <span class="amount">${{ formatCurrency(data.amount) }}</span>
-            </template>
-          </Column>
+          <template #item.amount="{ item }">
+            <span class="amount">{{ formatCurrency(item.amount) }}</span>
+          </template>
 
-          <Column field="paymentMethod" header="Method" sortable>
-            <template #body="{ data }">
-              <div class="method-cell">
-                <i :class="getMethodIcon(data.paymentMethod)"></i>
-                <span>{{ getMethodLabel(data.paymentMethod) }}</span>
-              </div>
-            </template>
-          </Column>
+          <template #item.paymentMethod="{ item }">
+            <div class="method-cell">
+              <v-icon size="small" :icon="getMethodVuetifyIcon(item.paymentMethod)"></v-icon>
+              <span>{{ getMethodLabel(item.paymentMethod) }}</span>
+            </div>
+          </template>
 
-          <Column field="reference" header="Reference">
-            <template #body="{ data }">
-              <span class="reference">
-                {{ data.reference || data.formattedReference }}
-              </span>
-            </template>
-          </Column>
-
-          <Column field="status" header="Status" sortable>
-            <template #body="{ data }">
-              <Tag
-                :value="getStatusLabel(data.status)"
-                :severity="getStatusSeverity(data.status)"
-                :icon="getStatusIcon(data.status)"
-              />
-            </template>
-          </Column>
-
-          <Column field="recordedByUser" header="Recorded By">
-            <template #body="{ data }">
-              <div v-if="data.recordedByUser" class="user-cell">
-                <span
-                  >{{ data.recordedByUser.firstName }}
-                  {{ data.recordedByUser.lastName }}</span
-                >
-              </div>
-            </template>
-          </Column>
-
-          <Column field="notes" header="Notes">
-            <template #body="{ data }">
-              <span v-if="data.notes" class="notes" v-tooltip="data.notes">
-                {{ truncateText(data.notes, 30) }}
-              </span>
-            </template>
-          </Column>
-
-          <Column header="Actions" :exportable="false">
-            <template #body="{ data }">
-              <div class="action-buttons">
-                <Button
-                  v-if="data.canBeConfirmed"
-                  icon="pi pi-check"
-                  class="p-button-text p-button-sm p-button-success"
-                  @click="confirmPayment(data.id)"
-                  v-tooltip="'Confirm Payment'"
-                />
-                <Button
-                  v-if="data.canBeCancelled"
-                  icon="pi pi-times"
-                  class="p-button-text p-button-sm p-button-danger"
-                  @click="cancelPayment(data)"
-                  v-tooltip="'Cancel Payment'"
-                />
-                <Button
-                  icon="pi pi-eye"
-                  class="p-button-text p-button-sm"
-                  @click="viewPaymentDetails(data)"
-                  v-tooltip="'View Details'"
-                />
-              </div>
-            </template>
-          </Column>
-        </DataTable>
-      </template>
-    </Card>
-
-    <!-- Payment Details Dialog -->
-    <Dialog
-      v-model:visible="showDetailsDialog"
-      header="Payment Details"
-      :modal="true"
-      :closable="true"
-      :style="{ width: '500px' }"
-    >
-      <div v-if="selectedPayment" class="payment-details">
-        <div class="detail-grid">
-          <div class="detail-item">
-            <label>Payment Date:</label>
-            <span>{{ formatDate(selectedPayment.paymentDate) }}</span>
-          </div>
-          <div class="detail-item">
-            <label>Amount:</label>
-            <span class="amount">${{ formatCurrency(selectedPayment.amount) }}</span>
-          </div>
-          <div class="detail-item">
-            <label>Payment Method:</label>
-            <span>{{ getMethodLabel(selectedPayment.paymentMethod) }}</span>
-          </div>
-          <div class="detail-item">
-            <label>Reference:</label>
-            <span>{{
-              selectedPayment.reference || selectedPayment.formattedReference
-            }}</span>
-          </div>
-          <div class="detail-item">
-            <label>Status:</label>
-            <Tag
-              :value="getStatusLabel(selectedPayment.status)"
-              :severity="getStatusSeverity(selectedPayment.status)"
-            />
-          </div>
-          <div class="detail-item">
-            <label>Recorded By:</label>
-            <span v-if="selectedPayment.recordedByUser">
-              {{ selectedPayment.recordedByUser.firstName }}
-              {{ selectedPayment.recordedByUser.lastName }}
+          <template #item.reference="{ item }">
+            <span class="reference">
+              {{ item.reference || '-' }}
             </span>
-          </div>
-          <div class="detail-item">
-            <label>Recorded At:</label>
-            <span>{{ formatDateTime(selectedPayment.createdAt) }}</span>
-          </div>
-        </div>
+          </template>
 
-        <div v-if="selectedPayment.notes" class="notes-section">
-          <label>Notes:</label>
-          <p class="notes-content">{{ selectedPayment.notes }}</p>
-        </div>
-      </div>
+          <template #item.status="{ item }">
+            <v-chip
+              :color="getStatusColor(item.status)"
+              size="small"
+              variant="tonal"
+            >
+              {{ getStatusLabel(item.status) }}
+            </v-chip>
+          </template>
 
-      <template #footer>
-        <Button
-          label="Close"
-          icon="pi pi-times"
-          class="p-button-text"
-          @click="showDetailsDialog = false"
-        />
-      </template>
-    </Dialog>
+          <template #item.recordedBy="{ item }">
+            <div v-if="item.recordedBy" class="user-cell">
+              <span>
+                {{ item.recordedBy }}
+              </span>
+            </div>
+          </template>
+
+          <template #item.notes="{ item }">
+            <span v-if="item.notes" class="notes">
+              <v-tooltip :text="item.notes" location="top">
+                <template #activator="{ props }">
+                  <span v-bind="props">{{ truncateText(item.notes, 30) }}</span>
+                </template>
+              </v-tooltip>
+            </span>
+          </template>
+
+          <template #item.actions="{ item }">
+            <div class="action-buttons">
+              <v-btn
+                v-if="item.status === 'pending'"
+                icon="mdi-check"
+                variant="text"
+                size="small"
+                color="success"
+                @click="confirmPayment(item.id)"
+              >
+                <v-icon>mdi-check</v-icon>
+                <v-tooltip activator="parent" location="top">Confirm Payment</v-tooltip>
+              </v-btn>
+              <v-btn
+                v-if="item.status === 'pending' || item.status === 'confirmed'"
+                icon="mdi-close"
+                variant="text"
+                size="small"
+                color="error"
+                @click="cancelPayment(item)"
+              >
+                <v-icon>mdi-close</v-icon>
+                <v-tooltip activator="parent" location="top">Cancel Payment</v-tooltip>
+              </v-btn>
+              <v-btn
+                icon="mdi-eye"
+                variant="text"
+                size="small"
+                @click="viewPaymentDetails(item)"
+              >
+                <v-icon>mdi-eye</v-icon>
+                <v-tooltip activator="parent" location="top">View Details</v-tooltip>
+              </v-btn>
+            </div>
+          </template>
+        </v-data-table>
+      </v-card-text>
+    </v-card>
+    <!-- Payment Details Dialog -->
+    <v-dialog
+      v-model="showDetailsDialog"
+      max-width="500"
+    >
+      <v-card>
+        <v-card-title>Payment Details</v-card-title>
+        <v-card-text>
+          <div v-if="selectedPayment" class="payment-details">
+            <div class="detail-grid">
+              <div class="detail-item">
+                <label>Payment Date:</label>
+                <span>{{ formatDate(selectedPayment.paymentDate) }}</span>
+              </div>
+              <div class="detail-item">
+                <label>Amount:</label>
+                <span class="amount">{{ formatCurrency(selectedPayment.amount) }}</span>
+              </div>
+              <div class="detail-item">
+                <label>Payment Method:</label>
+                <span>{{ getMethodLabel(selectedPayment.paymentMethod) }}</span>
+              </div>
+              <div class="detail-item">
+                <label>Reference:</label>
+                <span>{{
+                  selectedPayment.reference || '-'
+                }}</span>
+              </div>
+              <div class="detail-item">
+                <label>Status:</label>
+                <v-chip
+                  :color="getStatusColor(selectedPayment.status)"
+                  size="small"
+                  variant="tonal"
+                >
+                  {{ getStatusLabel(selectedPayment.status) }}
+                </v-chip>
+              </div>
+              <div class="detail-item">
+                <label>Recorded By:</label>
+                <span v-if="selectedPayment.recordedBy">
+                  {{ selectedPayment.recordedBy }}
+                </span>
+              </div>
+              <div class="detail-item">
+                <label>Recorded At:</label>
+                <span>{{ formatDateTime(selectedPayment.createdAt) }}</span>
+              </div>
+            </div>
+
+            <div v-if="selectedPayment.notes" class="notes-section">
+              <label>Notes:</label>
+              <p class="notes-content">{{ selectedPayment.notes }}</p>
+            </div>
+          </div>
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn
+            text="Close"
+            variant="text"
+            @click="showDetailsDialog = false"
+          />
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
 
     <!-- Cancel Payment Dialog -->
-    <Dialog
-      v-model:visible="showCancelDialog"
-      header="Cancel Payment"
-      :modal="true"
-      :closable="true"
-      :style="{ width: '400px' }"
+    <v-dialog
+      v-model="showCancelDialog"
+      max-width="400"
     >
-      <div class="cancel-form">
-        <p>Are you sure you want to cancel this payment?</p>
+      <v-card>
+        <v-card-title>Cancel Payment</v-card-title>
+        <v-card-text>
+          <div class="cancel-form">
+            <p>Are you sure you want to cancel this payment?</p>
 
-        <div class="field">
-          <label for="cancel-reason">Reason for cancellation:</label>
-          <Textarea
-            id="cancel-reason"
-            v-model="cancelReason"
-            placeholder="Enter reason for cancellation"
-            rows="3"
+            <v-textarea
+              v-model="cancelReason"
+              label="Reason for cancellation"
+              placeholder="Enter reason for cancellation"
+              rows="3"
+              variant="outlined"
+            />
+          </div>
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn
+            text="Cancel"
+            variant="text"
+            @click="showCancelDialog = false"
           />
-        </div>
-      </div>
-
-      <template #footer>
-        <Button
-          label="Cancel"
-          icon="pi pi-times"
-          class="p-button-text"
-          @click="showCancelDialog = false"
-        />
-        <Button
-          label="Confirm Cancellation"
-          icon="pi pi-check"
-          class="p-button-danger"
-          @click="confirmCancelPayment"
-          :loading="cancelling"
-        />
-      </template>
-    </Dialog>
+          <v-btn
+            text="Confirm Cancellation"
+            color="error"
+            @click="confirmCancelPayment"
+            :loading="cancelling"
+          />
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
   </div>
 </template>
 
 <script setup lang="ts">
 import { invoicesApi } from "@/services/api"
 import type { Invoice, Payment, PaymentMethod, PaymentStatus } from "@medical-crm/shared"
-import { useToast } from "primevue/usetoast"
 import { computed, onMounted, ref, watch } from "vue"
 
 interface Props {
@@ -359,11 +368,12 @@ interface Props {
 interface Emits {
   (e: "record-payment"): void
   (e: "payment-updated"): void
+  (e: "notify", payload: { message: string, color: string }): void
 }
 
 const props = defineProps<Props>()
 const emit = defineEmits<Emits>()
-const toast = useToast()
+// const toast = useToast() // Replaced with emit notifications
 
 // Data
 const payments = ref<Payment[]>([])
@@ -398,6 +408,17 @@ const methodOptions = [
   { label: "Other", value: "other" },
 ]
 
+const paymentHeaders = [
+  { title: "Date", value: "paymentDate", sortable: true },
+  { title: "Amount", value: "amount", sortable: true, align: "end" },
+  { title: "Method", value: "paymentMethod", sortable: true },
+  { title: "Reference", value: "reference" },
+  { title: "Status", value: "status", sortable: true },
+  { title: "Recorded By", value: "recordedBy" },
+  { title: "Notes", value: "notes" },
+  { title: "Actions", value: "actions", sortable: false },
+] as const
+
 // Computed
 const paymentPercentage = computed(() => {
   if (!props.invoice || props.invoice.total === 0) return 0
@@ -415,24 +436,14 @@ const loadPayments = async () => {
   try {
     loading.value = true
 
-    const filterParams = {
-      invoiceId: props.invoice.id,
-      ...filters.value,
-    }
-
-    const response = await invoicesApi.payments.getAll(props.invoice.id)
+    const response = await invoicesApi.payments.getAll(props.invoice.id) as any
 
     if (response.success) {
       payments.value = response.data
     }
   } catch (error) {
     console.error("Error loading payments:", error)
-    toast.add({
-      severity: "error",
-      summary: "Error",
-      detail: "Failed to load payments",
-      life: 3000,
-    })
+    emit("notify", { message: "Failed to load payments", color: "error" })
   } finally {
     loading.value = false
   }
@@ -440,26 +451,16 @@ const loadPayments = async () => {
 
 const confirmPayment = async (paymentId: string) => {
   try {
-    const response = await invoicesApi.payments.confirm(paymentId)
+    const response = await invoicesApi.payments.confirm(paymentId) as any
 
     if (response.success) {
-      toast.add({
-        severity: "success",
-        summary: "Success",
-        detail: "Payment confirmed successfully",
-        life: 3000,
-      })
+      emit("notify", { message: "Payment confirmed successfully", color: "success" })
       loadPayments()
       emit("payment-updated")
     }
   } catch (error) {
     console.error("Error confirming payment:", error)
-    toast.add({
-      severity: "error",
-      summary: "Error",
-      detail: "Failed to confirm payment",
-      life: 3000,
-    })
+    emit("notify", { message: "Failed to confirm payment", color: "error" })
   }
 }
 
@@ -478,27 +479,17 @@ const confirmCancelPayment = async () => {
     const response = await invoicesApi.payments.cancel(
       selectedPayment.value.id,
       cancelReason.value
-    )
+    ) as any
 
     if (response.success) {
-      toast.add({
-        severity: "success",
-        summary: "Success",
-        detail: "Payment cancelled successfully",
-        life: 3000,
-      })
+      emit("notify", { message: "Payment cancelled successfully", color: "success" })
       showCancelDialog.value = false
       loadPayments()
       emit("payment-updated")
     }
   } catch (error) {
     console.error("Error cancelling payment:", error)
-    toast.add({
-      severity: "error",
-      summary: "Error",
-      detail: "Failed to cancel payment",
-      life: 3000,
-    })
+    emit("notify", { message: "Failed to cancel payment", color: "error" })
   } finally {
     cancelling.value = false
   }
@@ -509,22 +500,22 @@ const viewPaymentDetails = (payment: Payment) => {
   showDetailsDialog.value = true
 }
 
-const getProgressClass = () => {
+const getProgressColor = () => {
   const percentage = paymentPercentage.value
-  if (percentage >= 100) return "progress-complete"
-  if (percentage >= 50) return "progress-partial"
-  return "progress-minimal"
+  if (percentage >= 100) return "success"
+  if (percentage >= 50) return "warning"
+  return "error"
 }
 
-const getMethodIcon = (method: PaymentMethod) => {
+const getMethodVuetifyIcon = (method: PaymentMethod) => {
   const iconMap = {
-    bank_transfer: "pi-building",
-    check: "pi-file-edit",
-    cash: "pi-money-bill",
-    credit_card: "pi-credit-card",
-    other: "pi-ellipsis-h",
+    bank_transfer: "mdi-bank",
+    check: "mdi-checkbook",
+    cash: "mdi-cash",
+    credit_card: "mdi-credit-card",
+    other: "mdi-dots-horizontal",
   }
-  return iconMap[method] || "pi-ellipsis-h"
+  return iconMap[method] || "mdi-dots-horizontal"
 }
 
 const getMethodLabel = (method: PaymentMethod) => {
@@ -548,31 +539,21 @@ const getStatusLabel = (status: PaymentStatus) => {
   return labelMap[status] || status
 }
 
-const getStatusSeverity = (status: PaymentStatus) => {
-  const severityMap = {
+const getStatusColor = (status: PaymentStatus) => {
+  const colorMap = {
     pending: "warning",
     confirmed: "success",
-    failed: "danger",
+    failed: "error",
     cancelled: "secondary",
   }
-  return severityMap[status] || "secondary"
-}
-
-const getStatusIcon = (status: PaymentStatus) => {
-  const iconMap = {
-    pending: "pi-clock",
-    confirmed: "pi-check-circle",
-    failed: "pi-times-circle",
-    cancelled: "pi-ban",
-  }
-  return iconMap[status] || "pi-circle"
+  return colorMap[status] || "secondary"
 }
 
 const formatCurrency = (amount: number) => {
-  return new Intl.NumberFormat("en-US", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(amount)
+  return new Intl.NumberFormat("fr-FR", {
+    style: "currency",
+    currency: "EUR",
+  }).format(amount || 0)
 }
 
 const formatDate = (date: string | Date) => {
@@ -634,7 +615,6 @@ onMounted(() => {
 
 .header h3 {
   margin: 0;
-  color: var(--text-color);
 }
 
 .header-actions {
@@ -654,50 +634,22 @@ onMounted(() => {
   gap: 1rem;
 }
 
-.summary-card {
-  background: var(--surface-card);
-}
-
 .summary-content {
   display: flex;
   align-items: center;
   gap: 1rem;
 }
 
-.summary-icon {
-  width: 2.5rem;
-  height: 2.5rem;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  font-size: 1rem;
-}
-
-.summary-icon.total {
-  background: var(--blue-500);
-}
-
-.summary-icon.paid {
-  background: var(--green-500);
-}
-
-.summary-icon.remaining {
-  background: var(--orange-500);
-}
-
 .summary-details h4 {
   margin: 0 0 0.25rem 0;
   font-size: 1.25rem;
   font-weight: 700;
-  color: var(--text-color);
 }
 
 .summary-details p {
   margin: 0;
-  color: var(--text-color-secondary);
   font-size: 0.875rem;
+  opacity: 0.7;
 }
 
 .payment-progress {
@@ -708,39 +660,14 @@ onMounted(() => {
 
 .payment-progress label {
   font-weight: 600;
-  color: var(--text-color);
 }
 
 .progress-text {
-  color: var(--text-color-secondary);
   font-size: 0.875rem;
+  opacity: 0.7;
 }
 
-.filters {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 1rem;
-  padding: 1rem;
-  background: var(--surface-card);
-  border: 1px solid var(--surface-border);
-  border-radius: 6px;
-}
 
-.filter-group {
-  display: flex;
-  flex-direction: column;
-}
-
-.filter-group label {
-  margin-bottom: 0.5rem;
-  font-weight: 600;
-  color: var(--text-color);
-  font-size: 0.875rem;
-}
-
-.payments-table-card {
-  background: var(--surface-card);
-}
 
 .date-cell {
   display: flex;
@@ -755,7 +682,6 @@ onMounted(() => {
 .amount {
   font-family: "Courier New", monospace;
   font-weight: 600;
-  color: var(--text-color);
 }
 
 .method-cell {
@@ -767,15 +693,12 @@ onMounted(() => {
 .reference {
   font-family: "Courier New", monospace;
   font-size: 0.875rem;
-  color: var(--text-color-secondary);
+  opacity: 0.7;
 }
 
-.user-cell span {
-  color: var(--text-color);
-}
 
 .notes {
-  color: var(--text-color-secondary);
+  opacity: 0.7;
   font-style: italic;
 }
 
@@ -801,7 +724,7 @@ onMounted(() => {
   justify-content: space-between;
   align-items: center;
   padding: 0.5rem 0;
-  border-bottom: 1px solid var(--surface-border);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.12);
 }
 
 .detail-item:last-child {
@@ -810,11 +733,7 @@ onMounted(() => {
 
 .detail-item label {
   font-weight: 600;
-  color: var(--text-color-secondary);
-}
-
-.detail-item span {
-  color: var(--text-color);
+  opacity: 0.7;
 }
 
 .notes-section {
@@ -825,16 +744,14 @@ onMounted(() => {
 
 .notes-section label {
   font-weight: 600;
-  color: var(--text-color);
 }
 
 .notes-content {
   margin: 0;
   padding: 0.75rem;
-  background: var(--surface-50);
-  border: 1px solid var(--surface-border);
+  background: rgba(0, 0, 0, 0.05);
+  border: 1px solid rgba(0, 0, 0, 0.12);
   border-radius: 4px;
-  color: var(--text-color);
   font-style: italic;
 }
 
@@ -852,31 +769,14 @@ onMounted(() => {
 .field label {
   margin-bottom: 0.5rem;
   font-weight: 600;
-  color: var(--text-color);
 }
 
-/* Progress bar styling */
-:deep(.progress-complete .p-progressbar-value) {
-  background: var(--green-500);
-}
-
-:deep(.progress-partial .p-progressbar-value) {
-  background: var(--orange-500);
-}
-
-:deep(.progress-minimal .p-progressbar-value) {
-  background: var(--red-500);
-}
 
 @media (max-width: 768px) {
   .header {
     flex-direction: column;
     align-items: stretch;
     gap: 1rem;
-  }
-
-  .filters {
-    grid-template-columns: 1fr;
   }
 
   .summary-cards {

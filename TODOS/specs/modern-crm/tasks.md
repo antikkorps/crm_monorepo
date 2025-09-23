@@ -678,6 +678,30 @@
     - Improve forms for creating/editing lines.
     - Add missing UI elements for actions (e.g., email tracking, history).
 
+  - [ ] 23.1.1 Implement Invoice Edit Mode in InvoiceDetailView
+
+    **Problem**: Currently, when clicking "Modifier" on an invoice, the user is redirected to `/invoices/:id/edit` but the page doesn't handle edit mode properly. The route exists but the component doesn't show an edit form.
+
+    **Requirements**:
+    - Add `editMode` prop handling in InvoiceDetailView.vue
+    - When `editMode=true`, show InvoiceForm component instead of detail view
+    - Ensure smooth transition between view and edit modes
+    - Handle save/cancel actions properly
+    - Maintain navigation consistency
+
+    **Technical Tasks**:
+    1. Add `editMode` prop to InvoiceDetailView component props
+    2. Conditionally render InvoiceForm when in edit mode
+    3. Pass current invoice data to InvoiceForm for editing
+    4. Handle form submission and navigation back to detail view
+    5. Add proper loading states and error handling
+
+    **Components to modify**:
+    - `InvoiceDetailView.vue`: Add edit mode logic
+    - Router already configured with `editMode: true` prop
+
+    **Priority**: High (UX issue affecting invoice management workflow)
+
   - [ ] 23.2 Refine and complete Notifications UI
 
     - Improve the notification center component.
@@ -793,3 +817,87 @@
 - Analytics dashboard: Erreurs lors d'includes avec MedicalInstitution
 - Quotes system: Problèmes similaires nécessitant simplification temporaire
 - Multiple autres endpoints potentiellement affectés
+
+---
+
+## 🔔 Système de Relances Automatiques pour Devis - NOUVELLE FONCTIONNALITÉ
+
+### Description
+Implémentation d'un système de relance automatique pour les devis arrivant à échéance afin d'optimiser le taux de conversion et éviter la perte de prospects.
+
+### Fonctionnalités principales
+
+#### 1. Notifications de relance intelligentes
+- [ ] **Alerte 7 jours avant échéance** : Notification dans l'interface pour l'utilisateur assigné
+- [ ] **Alerte 3 jours avant échéance** : Notification plus urgente + email optionnel
+- [ ] **Alerte jour J** : Notification critique + proposition d'extension automatique
+- [ ] **Alerte après échéance** : Notification pour relance post-échéance avec suggestions d'actions
+
+#### 2. Création automatique de tâches de relance
+- [ ] **Tâche de relance auto-générée** à J-7 : "Relancer le client pour le devis #XXX"
+- [ ] **Tâche de suivi post-échéance** : "Proposer une extension ou nouveau devis pour #XXX"
+- [ ] **Assignation intelligente** : Assignée à l'utilisateur responsable du devis
+- [ ] **Priorité dynamique** : Priorité qui augmente à mesure que l'échéance approche
+- [ ] **Templates de tâches** personnalisables par type d'institution ou montant
+
+#### 3. Actions rapides intégrées
+- [ ] **Bouton "Relancer le client"** depuis la vue devis avec templates d'emails
+- [ ] **Extension rapide de date** d'échéance (+15j, +30j, +60j) avec un clic
+- [ ] **Conversion en nouveau devis** si échéance dépassée avec reprise des données
+- [ ] **Historique des relances** pour traçabilité et suivi des actions
+
+#### 4. Dashboard des échéances et alertes
+- [ ] **Widget "Devis à échéance"** sur le dashboard principal avec indicateurs visuels
+- [ ] **Vue calendrier** des échéances à venir avec filtrage par utilisateur/équipe
+- [ ] **Statistiques de conversion** par période d'échéance et efficacité des relances
+- [ ] **Alertes groupées** par utilisateur avec récapitulatif hebdomadaire
+
+### Implémentation technique
+
+#### Backend
+- [ ] **Job scheduler** (cron job) pour vérifier les échéances quotidiennement
+- [ ] **Service QuoteReminderService** pour logique de génération des rappels
+- [ ] **Service de notification** intégré avec le système existant pour créer les alertes
+- [ ] **Service de tâches** pour la génération automatique avec templates
+- [ ] **API endpoints** pour les actions de relance rapide et gestion des échéances
+- [ ] **Modèle QuoteReminder** pour tracer l'historique des relances
+
+#### Frontend
+- [ ] **Composant NotificationCenter** étendu pour afficher les alertes d'échéances
+- [ ] **Composant QuoteExpiryWidget** pour le dashboard avec actions rapides
+- [ ] **Modal de relance rapide** avec templates d'emails et actions prédéfinies
+- [ ] **Badge d'urgence** sur les devis proches d'échéance dans les listes
+- [ ] **Vue calendrier des échéances** intégrée aux vues de gestion
+- [ ] **Composant d'extension rapide** de date avec justification
+
+#### Base de données
+- [ ] **Table quote_reminders** pour stocker l'historique des rappels envoyés
+- [ ] **Index optimisé sur validUntil** pour requêtes d'échéance performantes
+- [ ] **Champ lastReminderSent** sur les devis pour éviter les doublons
+- [ ] **Table reminder_templates** pour personnaliser les messages par type
+- [ ] **Configuration des délais** de relance par utilisateur/équipe/institution
+
+### Valeur métier et ROI
+- **Impact direct sur CA** : Réduction de 15-25% de perte de devis par oubli d'échéance
+- **Efficacité commerciale** : Automatisation des relances = +30% de temps disponible pour prospection
+- **Taux de conversion** : Relances systématiques = +20% de conversion devis → commande
+- **Satisfaction client** : Suivi proactif = meilleure image professionnelle
+
+### Priorité et planning
+**Priorité:** 🟡 HAUTE - Impact direct sur le chiffre d'affaires
+
+**Estimation de développement:**
+- Backend (scheduler, services, API) : 4-5 jours
+- Frontend (composants, vues, intégrations) : 3-4 jours
+- Tests et intégration : 2 jours
+- **Total estimé : 2 semaines**
+
+**Dépendances:**
+- Système de notifications existant ✅
+- Système de tâches existant ✅
+- Système de devis existant ✅
+
+### Phase d'implémentation suggérée
+1. **Phase 1** : Notifications de base et tâches automatiques (1 semaine)
+2. **Phase 2** : Dashboard et actions rapides (1 semaine)
+3. **Phase 3** : Templates personnalisés et analytics (optionnel, +1 semaine)

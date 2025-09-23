@@ -8,6 +8,9 @@ export interface QuoteLineAttributes {
   quoteId: string
   orderIndex: number
 
+  // Catalog integration
+  catalogItemId?: string | null
+
   // Product/Service details
   description: string
   quantity: number
@@ -36,6 +39,7 @@ export interface QuoteLineCreationAttributes
     QuoteLineAttributes,
     | "id"
     | "orderIndex"
+    | "catalogItemId"
     | "discountType"
     | "discountValue"
     | "discountAmount"
@@ -55,6 +59,9 @@ export class QuoteLine
   declare id: string
   declare quoteId: string
   declare orderIndex: number
+
+  // Catalog integration
+  declare catalogItemId?: string | null
 
   // Product/Service details
   declare description: string
@@ -277,6 +284,11 @@ QuoteLine.init(
       validate: {
         min: 1,
       },
+    },
+    catalogItemId: {
+      type: DataTypes.UUID,
+      allowNull: true,
+      field: "catalog_item_id",
     },
     description: {
       type: DataTypes.TEXT,

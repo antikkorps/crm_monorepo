@@ -11,12 +11,14 @@ export interface QuoteAttributes {
   institutionId: string
   assignedUserId: string
   templateId?: string
+  orderNumber?: string
   title: string
   description?: string
   validUntil: Date
   status: QuoteStatus
   acceptedAt?: Date
   rejectedAt?: Date
+  orderedAt?: Date
   clientComments?: string
   internalNotes?: string
 
@@ -165,10 +167,26 @@ export class Quote
   public async recalculateTotals(transaction?: any): Promise<void> {
     const lines = await this.getLines(transaction)
 
-    this.subtotal = lines.reduce((sum, line) => sum + line.subtotal, 0)
-    this.totalDiscountAmount = lines.reduce((sum, line) => sum + line.discountAmount, 0)
-    this.totalTaxAmount = lines.reduce((sum, line) => sum + line.taxAmount, 0)
-    this.total = lines.reduce((sum, line) => sum + line.total, 0)
+    // Convert all line values to numbers to ensure proper arithmetic
+    this.subtotal = lines.reduce((sum, line) => {
+      const lineSubtotal = Number(line.subtotal) || 0
+      return sum + lineSubtotal
+    }, 0)
+
+    this.totalDiscountAmount = lines.reduce((sum, line) => {
+      const lineDiscount = Number(line.discountAmount) || 0
+      return sum + lineDiscount
+    }, 0)
+
+    this.totalTaxAmount = lines.reduce((sum, line) => {
+      const lineTax = Number(line.taxAmount) || 0
+      return sum + lineTax
+    }, 0)
+
+    this.total = lines.reduce((sum, line) => {
+      const lineTotal = Number(line.total) || 0
+      return sum + lineTotal
+    }, 0)
 
     await this.save({ transaction })
   }
@@ -228,7 +246,7 @@ export class Quote
         bind: [`${basePattern}%`],
         type: (sequelize.constructor as any).QueryTypes.SELECT,
       }
-    ) as Array<{ quote_number: string }>
+    ) as unknown as Array<{ quote_number: string }>
 
     console.log("Raw query result:", result)
 
@@ -273,7 +291,7 @@ export class Quote
         bind: [`${basePattern}%`],
         type: (sequelize.constructor as any).QueryTypes.SELECT,
       }
-    )) as Array<{ order_number: string }>
+    )) as unknown as Array<{ order_number: string }>
 
     let sequence = 1
     if (rows.length > 0 && rows[0].order_number) {

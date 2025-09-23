@@ -79,7 +79,8 @@
           <template #item.actions="{ item }">
             <div class="d-flex gap-1">
               <v-btn icon="mdi-eye" variant="text" size="small" @click="viewInvoice(item.id)" title="Voir"></v-btn>
-              <v-btn v-if="item.canBeModified" icon="mdi-pencil" variant="text" size="small" @click="editInvoice(item.id)" title="Modifier"></v-btn>
+              <v-btn v-if="canModifyInvoice(item)" icon="mdi-pencil" variant="text" size="small" @click="editInvoice(item.id)" title="Modifier"></v-btn>
+              <v-btn v-if="item.status === 'draft'" icon="mdi-send" variant="text" size="small" color="primary" @click="sendInvoice(item.id)" title="Envoyer par email"></v-btn>
             </div>
           </template>
         </v-data-table>
@@ -139,9 +140,9 @@ const tableHeaders = computed(() => [
   { title: t('invoices.table.institution'), value: 'institution.name', sortable: true },
   { title: t('invoices.table.title'), value: 'title', sortable: true },
   { title: t('invoices.table.status'), value: 'status', sortable: true },
-  { title: t('invoices.table.amount'), value: 'total', align: 'end', sortable: true },
-  { title: t('invoices.table.dueDate'), value: 'dueDate', align: 'end', sortable: true },
-  { title: t('invoices.table.actions'), value: 'actions', align: 'end', sortable: false },
+  { title: t('invoices.table.amount'), value: 'total', align: 'end' as const, sortable: true },
+  { title: t('invoices.table.dueDate'), value: 'dueDate', align: 'end' as const, sortable: true },
+  { title: t('invoices.table.actions'), value: 'actions', align: 'end' as const, sortable: false },
 ])
 
 const hasActiveFilters = computed(() => !!(filters.value.status || filters.value.institutionId || filters.value.search))
@@ -157,8 +158,10 @@ const loadInvoices = async () => {
   try {
     const params = { ...filters.value, page: pagination.value.currentPage, limit: pagination.value.rowsPerPage }
     const response = await invoicesApi.getAll(params)
-    invoices.value = response.data
-    totalRecords.value = response.meta?.total || 0
+    const data = (response as any).data
+    const meta = (response as any).meta
+    invoices.value = data
+    totalRecords.value = meta?.total || 0
   } catch (e) {
     showSnackbar("Erreur lors du chargement des factures", "error")
   } finally {
@@ -169,7 +172,8 @@ const loadInvoices = async () => {
 const loadInstitutions = async () => {
   try {
     const response = await institutionsApi.getAll()
-    institutions.value = response.data
+    const data = (response as any).data
+    institutions.value = data?.institutions || data || []
   } catch (error) {
     console.error("Error loading institutions:", error)
   }
@@ -178,7 +182,7 @@ const loadInstitutions = async () => {
 const loadStatistics = async () => {
   try {
     const response = await invoicesApi.getStatistics()
-    statistics.value = response.data
+    statistics.value = (response as any).data
   } catch (error) {
     console.error("Error loading statistics:", error)
   }
@@ -231,9 +235,20 @@ const getStatusLabel = (status: InvoiceStatus) => ({ draft: "Brouillon", sent: "
 const getStatusColor = (status: InvoiceStatus) => ({ draft: "grey", sent: "info", partially_paid: "warning", paid: "success", overdue: "error", cancelled: "secondary" }[status] || "secondary")
 const getDueDateClass = (invoice: Invoice) => {
   if (invoice.status === "paid") return "text-success"
-  if (invoice.daysOverdue && invoice.daysOverdue > 0) return "text-error font-weight-bold"
-  if (invoice.daysUntilDue !== null && invoice.daysUntilDue <= 7) return "text-warning"
+
+  const today = new Date()
+  const dueDate = new Date(invoice.dueDate)
+  const diffTime = dueDate.getTime() - today.getTime()
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+
+  if (diffDays < 0) return "text-error font-weight-bold" // Overdue
+  if (diffDays <= 7) return "text-warning" // Due soon
   return ""
+}
+
+const canModifyInvoice = (invoice: Invoice) => {
+  // Une facture peut être modifiée si elle est en brouillon ou envoyée (pas encore payée)
+  return invoice.status === 'draft' || invoice.status === 'sent'
 }
 
 onMounted(() => {

@@ -82,6 +82,9 @@ export interface QuoteLine extends BaseEntity {
   quoteId: string
   orderIndex: number
 
+  // Catalog integration
+  catalogItemId?: string | null
+
   // Product/Service details
   description: string
   quantity: number
@@ -198,6 +201,7 @@ export interface QuoteCreateRequest {
 }
 
 export interface QuoteLineCreateRequest {
+  catalogItemId?: string | null
   description: string
   quantity: number
   unitPrice: number
@@ -216,6 +220,7 @@ export interface QuoteUpdateRequest {
 }
 
 export interface QuoteLineUpdateRequest {
+  catalogItemId?: string | null
   description?: string
   quantity?: number
   unitPrice?: number

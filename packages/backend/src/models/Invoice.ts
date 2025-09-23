@@ -102,7 +102,11 @@ export class Invoice
 
   // Instance methods
   public isOverdue(): boolean {
-    return this.status !== InvoiceStatus.PAID && new Date() > this.dueDate
+    const dueDate = this.dueDate || this.getDataValue('dueDate')
+    if (!dueDate) {
+      return false
+    }
+    return this.status !== InvoiceStatus.PAID && new Date() > new Date(dueDate)
   }
 
   public canBeModified(): boolean {
@@ -269,8 +273,13 @@ export class Invoice
       return null
     }
 
+    const dueDate = this.dueDate || this.getDataValue('dueDate')
+    if (!dueDate) {
+      return null
+    }
+
     const now = new Date()
-    const diffTime = now.getTime() - this.dueDate.getTime()
+    const diffTime = now.getTime() - new Date(dueDate).getTime()
     return Math.ceil(diffTime / (1000 * 60 * 60 * 24))
   }
 
@@ -279,8 +288,13 @@ export class Invoice
       return null
     }
 
+    const dueDate = this.dueDate || this.getDataValue('dueDate')
+    if (!dueDate) {
+      return null
+    }
+
     const now = new Date()
-    const diffTime = this.dueDate.getTime() - now.getTime()
+    const diffTime = new Date(dueDate).getTime() - now.getTime()
     return Math.ceil(diffTime / (1000 * 60 * 60 * 24))
   }
 

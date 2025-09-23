@@ -151,6 +151,11 @@ export class InvoiceController {
         data: invoice,
       }
     } catch (error) {
+      console.error("=== INVOICE CREATION ERROR ===")
+      console.error("Error details:", error)
+      console.error("Stack trace:", (error as any)?.stack)
+      console.error("Request body:", JSON.stringify(ctx.request.body, null, 2))
+
       if (error && typeof error === "object" && "code" in error) {
         ctx.status = (error as any).status || 500
         ctx.body = {

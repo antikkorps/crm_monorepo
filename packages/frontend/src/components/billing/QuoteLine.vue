@@ -129,7 +129,7 @@
               <span>Remise</span>
               <div class="discount-toggle">
                 <v-switch
-                  v-model="hasDiscount"
+                  :model-value="hasDiscount"
                   @update:model-value="toggleDiscount"
                   label="Appliquer une remise"
                   hide-details
@@ -158,9 +158,9 @@
                     type="number"
                     variant="outlined"
                     :min="0"
-                    :max="localLine.discountType === 'percentage' ? 100 : undefined"
+                    :max="localLine.discountType === DiscountType.PERCENTAGE ? 100 : undefined"
                     step="0.01"
-                    :suffix="localLine.discountType === 'percentage' ? '%' : '€'"
+                    :suffix="localLine.discountType === DiscountType.PERCENTAGE ? '%' : '€'"
                     @input="updateLine"
                   />
                 </v-col>
@@ -243,6 +243,7 @@
 
 <script setup lang="ts">
 import type { QuoteLine as QuoteLineType } from "@medical-crm/shared"
+import { DiscountType } from "@medical-crm/shared"
 import { computed, ref, watch } from "vue"
 import { type CatalogItem } from "@/stores/catalog"
 import CatalogItemSelector from "./CatalogItemSelector.vue"
@@ -265,24 +266,33 @@ const emit = defineEmits<{
 
 // Local state
 const localLine = ref<QuoteLineType & { tempId?: string }>({ ...props.line })
-const hasDiscount = ref((props.line.discountValue || 0) > 0)
+// Track if discount section is open (independent of value)
+const hasDiscount = ref(
+  // Consider discount section open if there's an actual discount value > 0 OR if it was explicitly enabled
+  (props.line.discountValue !== undefined &&
+   props.line.discountValue !== null &&
+   props.line.discountValue > 0 &&
+   props.line.discountType !== undefined) ||
+  // Or if we have the field indicating discount was enabled (for new implementation)
+  (props.line as any).hasDiscountEnabled === true
+)
 const errors = ref<Record<string, string>>({})
 
 // Catalog integration
-const selectedCatalogItem = ref<string | null>(null)
-const isCustomLine = ref(true)
-const originalCatalogPrice = ref<number | null>(null)
-const originalCatalogTaxRate = ref<number | null>(null)
+const selectedCatalogItem = ref<string | null>((props.line as any).catalogItemId || null)
+const isCustomLine = ref(!(props.line as any).catalogItemId)
+const originalCatalogPrice = ref<number | null>((props.line as any).originalCatalogPrice || null)
+const originalCatalogTaxRate = ref<number | null>((props.line as any).originalCatalogTaxRate || null)
 
 // Discount type options
 const discountTypeOptions = [
-  { label: "Pourcentage (%)", value: "percentage" },
-  { label: "Montant fixe (€)", value: "fixed_amount" },
+  { label: "Pourcentage (%)", value: DiscountType.PERCENTAGE },
+  { label: "Montant fixe (€)", value: DiscountType.FIXED_AMOUNT },
 ]
 
 // Computed properties
 const discountValueLabel = computed(() => {
-  return localLine.value.discountType === "percentage"
+  return localLine.value.discountType === DiscountType.PERCENTAGE
     ? "Pourcentage de remise"
     : "Montant de remise"
 })
@@ -295,9 +305,9 @@ const calculatedValues = computed(() => {
   // Calculate discount
   let discountAmount = 0
   if (hasDiscount.value && (localLine.value.discountValue || 0) > 0) {
-    if (localLine.value.discountType === "percentage") {
+    if (localLine.value.discountType === DiscountType.PERCENTAGE) {
       discountAmount = subtotal * ((localLine.value.discountValue || 0) / 100)
-    } else if (localLine.value.discountType === "fixed_amount") {
+    } else if (localLine.value.discountType === DiscountType.FIXED_AMOUNT) {
       discountAmount = Math.min((localLine.value.discountValue || 0), subtotal) // Can't discount more than subtotal
     }
   }
@@ -325,12 +335,14 @@ const hasErrors = computed(() => {
 const onCatalogItemSelect = (item: CatalogItem | null) => {
   if (!item) {
     // Clear selection
+    (localLine.value as any).catalogItemId = null
     originalCatalogPrice.value = null
     originalCatalogTaxRate.value = null
     return
   }
 
   // Populate line with catalog item data
+  ;(localLine.value as any).catalogItemId = item.id
   localLine.value.description = item.name + (item.description ? ` - ${item.description}` : '')
   localLine.value.unitPrice = item.unitPrice
   localLine.value.taxRate = item.taxRate
@@ -389,13 +401,28 @@ const updateLine = () => {
   emit("update", props.index, { ...localLine.value })
 }
 
-const toggleDiscount = (value: boolean) => {
-  hasDiscount.value = value
-  if (!value) {
+const toggleDiscount = (value: boolean | null) => {
+  console.log('toggleDiscount called with:', value)
+  const booleanValue = Boolean(value)
+  hasDiscount.value = booleanValue
+
+  // Store the enabled state in the line object
+  ;(localLine.value as any).hasDiscountEnabled = booleanValue
+
+  if (!booleanValue) {
     // Reset discount values when disabled
-    localLine.value.discountType = "percentage"
+    localLine.value.discountType = DiscountType.PERCENTAGE
     localLine.value.discountValue = 0
     localLine.value.discountAmount = 0
+  } else {
+    // When enabling discount, set a default value if none exists
+    if (!localLine.value.discountValue || localLine.value.discountValue === 0) {
+      localLine.value.discountValue = 10 // Default 10%
+    }
+    // Ensure discount type is set
+    if (!localLine.value.discountType) {
+      localLine.value.discountType = DiscountType.PERCENTAGE
+    }
   }
   updateLine()
 }
@@ -412,7 +439,14 @@ watch(
   () => props.line,
   (newLine) => {
     localLine.value = { ...newLine }
-    hasDiscount.value = (newLine.discountValue || 0) > 0
+    hasDiscount.value =
+      // Consider discount section open if there's an actual discount value > 0 OR if it was explicitly enabled
+      (newLine.discountValue !== undefined &&
+       newLine.discountValue !== null &&
+       newLine.discountValue > 0 &&
+       newLine.discountType !== undefined) ||
+      // Or if we have the field indicating discount was enabled
+      (newLine as any).hasDiscountEnabled === true
   },
   { deep: true }
 )

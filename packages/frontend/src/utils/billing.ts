@@ -18,6 +18,7 @@ export function createQuoteLineDefaults(overrides: Partial<QuoteLine> = {}): Lin
     id: `temp-${Date.now()}`,
     quoteId: "",
     orderIndex: 0,
+    catalogItemId: null,
     description: "",
     quantity: 1,
     unitPrice: 0,
@@ -153,9 +154,8 @@ export function cleanLineForSubmission<T extends QuoteLine | InvoiceLine>(
 ): Omit<T, 'id' | 'createdAt' | 'updatedAt'> {
   const cleanLine = { ...line }
 
-  // Remove catalog-specific fields
+  // Remove temporary catalog-specific fields (keep catalogItemId as it's persisted)
   delete (cleanLine as any).tempId
-  delete (cleanLine as any).catalogItemId
   delete (cleanLine as any).isCustomLine
   delete (cleanLine as any).originalCatalogPrice
   delete (cleanLine as any).originalCatalogTaxRate

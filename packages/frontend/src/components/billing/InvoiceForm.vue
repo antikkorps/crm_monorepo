@@ -54,10 +54,10 @@
           <div v-if="form.lines.length === 0" class="text-center text-medium-emphasis py-4">Aucune ligne ajoutée.</div>
 
           <div v-else class="lines-container">
-            <InvoiceLine
+            <QuoteLine
               v-for="(line, index) in form.lines"
-              :key="line.tempId || line.id"
-              :line="line"
+              :key="(line as any).tempId || (line as any).id"
+              :line="line as any"
               :index="index"
               :is-last="index === form.lines.length - 1"
               @update="updateLine"
@@ -90,10 +90,9 @@
 <script setup lang="ts">
 import { institutionsApi, invoicesApi } from "@/services/api"
 import type { Invoice, InvoiceCreateRequest, InvoiceLineCreateRequest } from "@medical-crm/shared"
-import { DiscountType } from "@medical-crm/shared"
 import { computed, onMounted, ref, watch } from "vue"
 import { createInvoiceLineDefaults, calculateTotals, type LineWithCatalog } from "@/utils/billing"
-import InvoiceLine from "./InvoiceLine.vue"
+import QuoteLine from "./QuoteLine.vue"
 
 const props = defineProps<{ visible: boolean, invoice?: Invoice | null }>()
 const emit = defineEmits<{
@@ -111,7 +110,7 @@ const dialogVisible = computed({
 const isEditing = computed(() => !!props.invoice)
 const submitting = ref(false)
 
-const form = ref<InvoiceCreateRequest>({ institutionId: "", title: "", dueDate: new Date(), lines: [] })
+const form = ref<InvoiceCreateRequest>({ institutionId: "", title: "", dueDate: new Date().toISOString().split('T')[0] as any, lines: [] })
 type InvoiceLineForm = LineWithCatalog<InvoiceLineCreateRequest & {
   id?: string
   invoiceId?: string
@@ -140,18 +139,22 @@ const isFormValid = computed(() => form.value.institutionId && form.value.title 
 const loadInstitutions = async () => {
   try {
     const response = await institutionsApi.getAll()
-    institutions.value = response.data
+    const data = (response as any).data
+    institutions.value = data?.institutions || data || []
   } catch (error) { console.error("Error loading institutions:", error) }
 }
 
 const addLine = () => {
-  const newLine = createInvoiceLineDefaults({
-    invoiceId: props.invoice?.id || "",
-    orderIndex: form.value.lines.length,
-    taxRate: 20, // Default tax rate
-  }) as InvoiceLineForm
+  const newLine = {
+    ...createInvoiceLineDefaults({
+      invoiceId: props.invoice?.id || "",
+      orderIndex: form.value.lines.length,
+      taxRate: 20, // Default tax rate
+    }),
+    tempId: `temp_${Date.now()}_${Math.random()}`
+  } as InvoiceLineForm
 
-  form.value.lines.push(newLine)
+  form.value.lines.push(newLine as any)
 }
 
 const updateLine = (index: number, updatedLine: InvoiceLineForm) => {
@@ -162,7 +165,7 @@ const removeLine = (index: number) => {
   form.value.lines.splice(index, 1)
   // Update order indexes
   form.value.lines.forEach((line, idx) => {
-    line.orderIndex = idx
+    (line as any).orderIndex = idx
   })
 }
 
@@ -173,7 +176,7 @@ const moveLineUp = (index: number) => {
 
     // Update order indexes
     lines.forEach((line, idx) => {
-      line.orderIndex = idx
+      (line as any).orderIndex = idx
     })
 
     form.value.lines = lines
@@ -187,7 +190,7 @@ const moveLineDown = (index: number) => {
 
     // Update order indexes
     lines.forEach((line, idx) => {
-      line.orderIndex = idx
+      (line as any).orderIndex = idx
     })
 
     form.value.lines = lines
@@ -218,11 +221,11 @@ const handleSubmit = async () => {
     const invoiceData = { ...form.value }
     if (isEditing.value && props.invoice) {
       const response = await invoicesApi.update(props.invoice.id, invoiceData)
-      emit("invoice-updated", response.data)
+      emit("invoice-updated", (response as any).data)
       emit("notify", { message: "Facture mise à jour avec succès", color: "success" })
     } else {
       const response = await invoicesApi.create(invoiceData)
-      emit("invoice-created", response.data)
+      emit("invoice-created", (response as any).data)
       emit("notify", { message: "Facture créée avec succès", color: "success" })
     }
     closeDialog()
@@ -239,7 +242,7 @@ const resetForm = () => {
   form.value = {
     institutionId: "",
     title: "",
-    dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+    dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] as any,
     lines: [],
   }
   errors.value = {}
@@ -252,7 +255,7 @@ watch(() => props.invoice, (invoice) => {
   if (invoice) {
     form.value = {
       ...invoice,
-      dueDate: new Date(invoice.dueDate).toISOString().split('T')[0],
+      dueDate: new Date(invoice.dueDate).toISOString().split('T')[0] as any,
       lines: invoice.lines?.map(line => ({ ...line, tempId: `id_${line.id}` })) || [],
     }
   } else {

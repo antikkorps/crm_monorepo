@@ -106,7 +106,7 @@
           </v-col>
         </v-row>
 
-        <PaymentHistory :invoice="invoice" class="mt-6" @record-payment="showPaymentDialog = true" @payment-updated="refreshInvoice" />
+        <PaymentHistory :invoice="invoice" class="mt-6" @record-payment="showPaymentDialog = true" @payment-updated="refreshInvoice" @notify="({ message, color }) => showSnackbar(message, color)" />
       </div>
 
       <PaymentForm v-model:visible="showPaymentDialog" :invoice="invoice" @payment-recorded="onPaymentRecorded" @notify="({ message, color }) => showSnackbar(message, color)" />

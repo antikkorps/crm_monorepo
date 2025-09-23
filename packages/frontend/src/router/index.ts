@@ -107,6 +107,16 @@ const routes: RouteRecordRaw[] = [
     },
   },
   {
+    path: "/invoices/:id/edit",
+    name: "InvoiceEdit",
+    component: InvoiceDetail,
+    meta: {
+      requiresAuth: true,
+      title: "Edit Invoice",
+    },
+    props: route => ({ ...route.params, editMode: true })
+  },
+  {
     path: "/team",
     name: "Team",
     component: Team,

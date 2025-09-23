@@ -668,8 +668,8 @@ const loadQuoteData = () => {
       lines: (props.quote.lines || []).map((line) => ({
         ...line,
         tempId: `existing-${line.id}`,
-        catalogItemId: null,
-        isCustomLine: true,
+        catalogItemId: line.catalogItemId || null,
+        isCustomLine: !line.catalogItemId,
         originalCatalogPrice: null,
         originalCatalogTaxRate: null,
       })),
