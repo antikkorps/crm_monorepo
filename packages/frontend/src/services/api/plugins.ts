@@ -83,32 +83,32 @@ export interface PluginDiscoveryResponse {
 export class PluginService {
   // Get all plugins
   static async getPlugins(): Promise<PluginListResponse> {
-    const response = await apiClient.get("/plugins")
-    return response.data
+    const response = await apiClient.get<PluginListResponse>("/plugins")
+    return response
   }
 
   // Get specific plugin
   static async getPlugin(
     name: string
   ): Promise<{ plugin: PluginInstance; timestamp: string }> {
-    const response = await apiClient.get(`/plugins/${name}`)
-    return response.data
+    const response = await apiClient.get<{ plugin: PluginInstance; timestamp: string }>(`/plugins/${name}`)
+    return response
   }
 
   // Install plugin
   static async installPlugin(
     pluginPath: string
   ): Promise<{ message: string; plugin: PluginInstance; timestamp: string }> {
-    const response = await apiClient.post("/plugins/install", { pluginPath })
-    return response.data
+    const response = await apiClient.post<{ message: string; plugin: PluginInstance; timestamp: string }>("/plugins/install", { pluginPath })
+    return response
   }
 
   // Uninstall plugin
   static async uninstallPlugin(
     name: string
   ): Promise<{ message: string; pluginName: string; timestamp: string }> {
-    const response = await apiClient.delete(`/plugins/${name}`)
-    return response.data
+    const response = await apiClient.delete<{ message: string; pluginName: string; timestamp: string }>(`/plugins/${name}`)
+    return response
   }
 
   // Enable plugin
@@ -120,8 +120,8 @@ export class PluginService {
     status: PluginStatus
     timestamp: string
   }> {
-    const response = await apiClient.put(`/plugins/${name}/enable`)
-    return response.data
+    const response = await apiClient.put<{ message: string; pluginName: string; status: PluginStatus; timestamp: string }>(`/plugins/${name}/enable`)
+    return response
   }
 
   // Disable plugin
@@ -133,8 +133,8 @@ export class PluginService {
     status: PluginStatus
     timestamp: string
   }> {
-    const response = await apiClient.put(`/plugins/${name}/disable`)
-    return response.data
+    const response = await apiClient.put<{ message: string; pluginName: string; status: PluginStatus; timestamp: string }>(`/plugins/${name}/disable`)
+    return response
   }
 
   // Configure plugin
@@ -147,23 +147,23 @@ export class PluginService {
     config: Record<string, any>
     timestamp: string
   }> {
-    const response = await apiClient.put(`/plugins/${name}/configure`, { config })
-    return response.data
+    const response = await apiClient.put<{ message: string; pluginName: string; config: Record<string, any>; timestamp: string }>(`/plugins/${name}/configure`, { config })
+    return response
   }
 
   // Get plugin configuration
   static async getPluginConfig(
     name: string
   ): Promise<{ pluginName: string; config: Record<string, any>; timestamp: string }> {
-    const response = await apiClient.get(`/plugins/${name}/config`)
-    return response.data
+    const response = await apiClient.get<{ pluginName: string; config: Record<string, any>; timestamp: string }>(`/plugins/${name}/config`)
+    return response
   }
 
   // Health check
   static async healthCheck(name?: string): Promise<PluginHealthResponse> {
     const url = name ? `/plugins/health/${name}` : "/plugins/health"
-    const response = await apiClient.get(url)
-    return response.data
+    const response = await apiClient.get<PluginHealthResponse>(url)
+    return response
   }
 
   // Discover plugins
@@ -171,8 +171,8 @@ export class PluginService {
     const url = directory
       ? `/plugins/discover/${encodeURIComponent(directory)}`
       : "/plugins/discover"
-    const response = await apiClient.get(url)
-    return response.data
+    const response = await apiClient.get<PluginDiscoveryResponse>(url)
+    return response
   }
 
   // Utility methods

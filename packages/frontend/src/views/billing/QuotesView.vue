@@ -207,7 +207,8 @@ const editQuote = async (quote: Quote) => {
 
 const downloadQuotePDF = async (quote: Quote) => {
   try {
-    const response = await quotesApi.generatePdf(quote.id)
+    // Pass the selected templateId so the backend applies the custom template
+    const response = await quotesApi.generatePdf(quote.id, (quote as any).templateId)
     const blob = await response.blob()
 
     // Create download link

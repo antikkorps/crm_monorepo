@@ -81,7 +81,7 @@ export class TaskNotificationService {
 
       // Fetch all tasks without status filter first, then filter client-side
       // This avoids the API issue with multiple status parameters
-      const response = await tasksApi.getAll({
+      const response: any = await tasksApi.getAll({
         limit: 1000 // Ensure we get all relevant tasks
       })
 

@@ -407,12 +407,14 @@ const confirmEmailDocument = async () => {
         templateId: selectedTemplateId.value || undefined,
         email: true,
         customMessage: emailMessage.value,
+        recipients: emailRecipients.value,
       })
     } else {
       result = await documentsApi.generateInvoicePdf(props.documentId, {
         templateId: selectedTemplateId.value || undefined,
         email: true,
         customMessage: emailMessage.value,
+        recipients: emailRecipients.value,
       })
     }
 

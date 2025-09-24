@@ -5,6 +5,7 @@ export interface DocumentGenerationOptions {
   templateId?: string
   email?: boolean
   customMessage?: string
+  recipients?: string[]
 }
 
 export interface DocumentVersionResponse {
@@ -19,6 +20,12 @@ export interface DocumentGenerationResponse {
     emailSent?: boolean
     emailError?: string
   }
+  message?: string
+}
+
+export interface PaymentReminderResponse {
+  success: boolean
+  data: any
   message?: string
 }
 
@@ -40,22 +47,19 @@ export const documentsApi = {
       // When emailing, send custom message in body and expect JSON response
       const response = await apiClient.post<DocumentGenerationResponse>(url, {
         customMessage: options.customMessage,
+        recipients: options.recipients,
       })
-      return response.data
+      return response
     } else {
       // When downloading, expect blob response
-      const response = await apiClient.get(url, {
-        responseType: "blob",
-      })
-      return response.data
+      const blob = await apiClient.get<Blob>(url, { responseType: "blob" } as any)
+      return blob
     }
   },
 
   async getQuoteVersions(quoteId: string): Promise<DocumentVersion[]> {
-    const response = await apiClient.get<DocumentVersionResponse>(
-      `/quotes/${quoteId}/versions`
-    )
-    return response.data.data
+    const response = await apiClient.get<any>(`/quotes/${quoteId}/versions`)
+    return (response?.data ?? response) as DocumentVersion[]
   },
 
   // Invoice PDF operations
@@ -75,37 +79,31 @@ export const documentsApi = {
       // When emailing, send custom message in body and expect JSON response
       const response = await apiClient.post<DocumentGenerationResponse>(url, {
         customMessage: options.customMessage,
+        recipients: options.recipients,
       })
-      return response.data
+      return response
     } else {
       // When downloading, expect blob response
-      console.log("Making blob request to:", url)
-      const blob = await apiClient.get(url, {
-        responseType: "blob",
-      }) as Blob
-      console.log("Blob received:", {
-        dataType: typeof blob,
-        isBlob: blob instanceof Blob,
-        size: blob?.size,
-        type: blob?.type
-      })
+      const blob = await apiClient.get<Blob>(url, { responseType: "blob" } as any)
       return blob
     }
   },
 
   async getInvoiceVersions(invoiceId: string): Promise<DocumentVersion[]> {
-    const response = await apiClient.get<DocumentVersionResponse>(
-      `/invoices/${invoiceId}/versions`
-    )
-    return response.data.data
+    const response = await apiClient.get<any>(`/invoices/${invoiceId}/versions`)
+    return (response?.data ?? response) as DocumentVersion[]
   },
 
   // Payment reminder
-  async sendPaymentReminder(invoiceId: string, customMessage?: string): Promise<any> {
-    const response = await apiClient.post(`/invoices/${invoiceId}/payment-reminder`, {
-      customMessage,
-    })
-    return response.data
+  async sendPaymentReminder(
+    invoiceId: string,
+    customMessage?: string
+  ): Promise<PaymentReminderResponse> {
+    const response = await apiClient.post<PaymentReminderResponse>(
+      `/invoices/${invoiceId}/payment-reminder`,
+      { customMessage }
+    )
+    return response
   },
 
   // Utility functions

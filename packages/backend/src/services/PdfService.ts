@@ -212,11 +212,15 @@ export class PdfService {
 
       let emailResult
       if (options.emailOptions && invoice.institution) {
-        // Send email with PDF attachment
-        const contactEmail = this.getInstitutionContactEmail(invoice.institution)
-        if (contactEmail) {
+        const providedRecipients = options.emailOptions.recipients || []
+        const fallbackEmail = this.getInstitutionContactEmail(invoice.institution)
+        const recipients = providedRecipients.length > 0
+          ? providedRecipients
+          : (fallbackEmail ? [fallbackEmail] : [])
+
+        if (recipients.length > 0) {
           emailResult = await this.emailService.sendInvoiceEmail(
-            contactEmail,
+            recipients,
             invoice.institution.name,
             invoice.invoiceNumber,
             template.companyName,
@@ -229,7 +233,7 @@ export class PdfService {
           // Update version record with email info
           if (version && emailResult.success) {
             await version.markAsEmailed(
-              options.emailOptions.recipients,
+              Array.isArray((emailResult as any).recipients) ? (emailResult as any).recipients : recipients,
               `Invoice ${invoice.invoiceNumber} from ${template.companyName}`
             )
           }
@@ -402,10 +406,15 @@ export class PdfService {
 
       let emailResult
       if (kind === "QUOTE" && options.emailOptions && quote.institution) {
-        const contactEmail = this.getInstitutionContactEmail(quote.institution)
-        if (contactEmail) {
+        const providedRecipients = options.emailOptions.recipients || []
+        const fallbackEmail = this.getInstitutionContactEmail(quote.institution)
+        const recipients = providedRecipients.length > 0
+          ? providedRecipients
+          : (fallbackEmail ? [fallbackEmail] : [])
+
+        if (recipients.length > 0) {
           emailResult = await this.emailService.sendQuoteEmail(
-            contactEmail,
+            recipients,
             quote.institution.name,
             (quote as any).quoteNumber,
             template.companyName,
@@ -415,7 +424,7 @@ export class PdfService {
 
           if (version && (emailResult as any).success) {
             await version.markAsEmailed(
-              options.emailOptions.recipients,
+              Array.isArray((emailResult as any).recipients) ? (emailResult as any).recipients : recipients,
               `Quote ${(quote as any).quoteNumber} from ${template.companyName}`
             )
           }

@@ -87,7 +87,7 @@ export const useTasksStore = defineStore("tasks", () => {
       loading.value = true
       error.value = null
       const response = await tasksApi.getAll()
-      tasks.value = response.data || response
+      tasks.value = (response as any)?.data || (response as any)
     } catch (err) {
       error.value = err instanceof Error ? err.message : "Failed to fetch tasks"
       console.error("Error fetching tasks:", err)
@@ -101,7 +101,7 @@ export const useTasksStore = defineStore("tasks", () => {
       loading.value = true
       error.value = null
       const response = await tasksApi.create(taskData)
-      const newTask = response.data || response
+      const newTask = (response as any)?.data || (response as any)
       tasks.value.push(newTask)
       return newTask
     } catch (err) {
@@ -117,7 +117,7 @@ export const useTasksStore = defineStore("tasks", () => {
       loading.value = true
       error.value = null
       const response = await tasksApi.update(taskId, updates)
-      const updatedTask = response.data || response
+      const updatedTask = (response as any)?.data || (response as any)
 
       const index = tasks.value.findIndex((task) => task.id === taskId)
       if (index !== -1) {

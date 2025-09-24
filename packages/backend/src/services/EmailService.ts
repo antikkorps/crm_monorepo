@@ -92,7 +92,7 @@ export class EmailService {
   }
 
   public async sendQuoteEmail(
-    recipientEmail: string,
+    recipientEmail: string | string[],
     recipientName: string,
     quoteNumber: string,
     companyName: string,
@@ -131,7 +131,7 @@ export class EmailService {
   }
 
   public async sendInvoiceEmail(
-    recipientEmail: string,
+    recipientEmail: string | string[],
     recipientName: string,
     invoiceNumber: string,
     companyName: string,

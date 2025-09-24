@@ -69,7 +69,7 @@ export const useCatalogStore = defineStore('catalog', () => {
       if (filters.page) params.append('page', filters.page.toString())
       if (filters.limit) params.append('limit', filters.limit.toString())
 
-      const response = await api.get(`/catalog?${params.toString()}`)
+      const response = await api.get<{ items: CatalogItem[]; pagination: CatalogPagination }>(`/catalog?${params.toString()}`)
       items.value = response.items
       pagination.value = response.pagination
     } catch (err: any) {
@@ -82,7 +82,7 @@ export const useCatalogStore = defineStore('catalog', () => {
 
   const fetchCategories = async () => {
     try {
-      const response = await api.get('/catalog/categories')
+      const response = await api.get<{ categories: string[] }>("/catalog/categories")
       categories.value = response.categories
     } catch (err: any) {
       error.value = err.response?.data?.error || 'Failed to fetch categories'
@@ -92,7 +92,7 @@ export const useCatalogStore = defineStore('catalog', () => {
 
   const searchItems = async (query: string) => {
     try {
-      const response = await api.get(`/catalog/search?q=${encodeURIComponent(query)}`)
+      const response = await api.get<{ items: CatalogItem[] }>(`/catalog/search?q=${encodeURIComponent(query)}`)
       return response.items
     } catch (err: any) {
       error.value = err.response?.data?.error || 'Failed to search items'
@@ -102,7 +102,7 @@ export const useCatalogStore = defineStore('catalog', () => {
 
   const getItemById = async (id: string) => {
     try {
-      const response = await api.get(`/catalog/${id}`)
+      const response = await api.get<CatalogItem>(`/catalog/${id}`)
       return response
     } catch (err: any) {
       error.value = err.response?.data?.error || 'Failed to fetch item'
@@ -114,7 +114,7 @@ export const useCatalogStore = defineStore('catalog', () => {
     loading.value = true
     error.value = null
     try {
-      const newItem = (await api.post('/catalog', itemData)) as CatalogItem
+      const newItem = await api.post<CatalogItem>("/catalog", itemData)
       if (!newItem) throw new Error('Empty response creating item')
       items.value.unshift(newItem)
       return newItem
@@ -130,7 +130,7 @@ export const useCatalogStore = defineStore('catalog', () => {
     loading.value = true
     error.value = null
     try {
-      const updatedItem = (await api.put(`/catalog/${id}`, itemData)) as CatalogItem
+      const updatedItem = await api.put<CatalogItem>(`/catalog/${id}`, itemData)
       if (!updatedItem) throw new Error('Empty response updating item')
       const index = items.value.findIndex(item => item.id === id)
       if (index !== -1) {
@@ -149,7 +149,7 @@ export const useCatalogStore = defineStore('catalog', () => {
     loading.value = true
     error.value = null
     try {
-      const updatedItem = (await api.patch(`/catalog/${id}/toggle`)) as CatalogItem
+      const updatedItem = await api.patch<CatalogItem>(`/catalog/${id}/toggle`)
       if (!updatedItem) throw new Error('Empty response toggling item')
       const index = items.value.findIndex(item => item.id === id)
       if (index !== -1) {

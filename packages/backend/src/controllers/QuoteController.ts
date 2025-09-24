@@ -830,7 +830,9 @@ export class QuoteController {
       const emailOptions =
         email === "true"
           ? {
-              recipients: [email as string],
+              recipients: Array.isArray((ctx.request.body as any)?.recipients)
+                ? (ctx.request.body as any).recipients
+                : undefined,
               customMessage: (ctx.request.body as EmailOptionsBody).customMessage,
             }
           : undefined
