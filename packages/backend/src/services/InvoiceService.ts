@@ -47,8 +47,25 @@ export class InvoiceService {
         }
       }
 
+      // Create invoice within the transaction
+      let invoiceNumber: string
+      let attempts = 0
+      const maxAttempts = 5
+
+      while (attempts < maxAttempts) {
+        try {
+          invoiceNumber = await Invoice.generateInvoiceNumber()
+          break
+        } catch (error) {
+          attempts++
+          if (attempts >= maxAttempts) {
+            throw new Error('Failed to generate invoice number after multiple attempts')
+          }
+        }
+      }
+
       // Create invoice
-      const invoice = await Invoice.createInvoice({
+      const invoice = await Invoice.create({
         institutionId: invoiceData.institutionId,
         assignedUserId,
         quoteId: invoiceData.quoteId,
@@ -56,32 +73,100 @@ export class InvoiceService {
         title: invoiceData.title,
         description: invoiceData.description,
         dueDate: invoiceData.dueDate,
-      })
+        invoiceNumber: invoiceNumber!,
+        status: InvoiceStatus.DRAFT,
+        totalPaid: 0,
+        remainingAmount: 0,
+        subtotal: 0,
+        totalDiscountAmount: 0,
+        totalTaxAmount: 0,
+        total: 0,
+      }, { transaction })
+
+      // Get the raw data which contains the actual values
+      const invoiceRawData = invoice.get({ plain: true }) as any
+
+      // Verify invoice was created with an ID (check both instance and raw data)
+      const invoiceId = invoice.id || invoiceRawData.id
+      if (!invoiceId) {
+        throw new Error('Failed to create invoice - no ID generated')
+      }
 
       // Add invoice lines if provided
       if (invoiceData.lines && invoiceData.lines.length > 0) {
         for (let i = 0; i < invoiceData.lines.length; i++) {
           const lineData = invoiceData.lines[i]
-          await InvoiceLine.createLine({
-            invoiceId: invoice.id,
+
+          const processedData = {
+            invoiceId: invoiceId,
             orderIndex: i + 1,
             description: lineData.description,
-            quantity: lineData.quantity,
-            unitPrice: lineData.unitPrice,
-            discountType: lineData.discountType,
-            discountValue: lineData.discountValue,
-            taxRate: lineData.taxRate,
+            quantity: Number(lineData.quantity),
+            unitPrice: Number(lineData.unitPrice),
+            discountType: lineData.discountType || DiscountType.PERCENTAGE,
+            discountValue: Number(lineData.discountValue) || 0,
+            taxRate: Number(lineData.taxRate) || 0,
+          }
+
+          // Create without hooks to avoid timing issues, then calculate totals manually
+          const createdLine = await InvoiceLine.create(processedData, {
+            transaction,
+            hooks: false // Disable hooks to avoid timing issues
           })
+
+          // Now manually calculate and update totals
+          const quantity = Number(processedData.quantity) || 0
+          const unitPrice = Number(processedData.unitPrice) || 0
+          const discountValue = Number(processedData.discountValue) || 0
+          const taxRate = Number(processedData.taxRate) || 0
+
+          const subtotal = quantity * unitPrice
+          const discountAmount = processedData.discountType === DiscountType.PERCENTAGE
+            ? subtotal * (discountValue / 100)
+            : Math.min(discountValue, subtotal)
+          const totalAfterDiscount = subtotal - discountAmount
+          const taxAmount = totalAfterDiscount * (taxRate / 100)
+          const total = totalAfterDiscount + taxAmount
+
+          // Update with calculated values
+          await createdLine.update({
+            subtotal,
+            discountAmount,
+            totalAfterDiscount,
+            taxAmount,
+            total
+          }, { transaction })
         }
 
-        // Recalculate totals
-        await invoice.recalculateTotals()
+        // Recalculate totals manually since the instance has ID issues
+        const lines = await InvoiceLine.findAll({
+          where: { invoiceId: invoiceId },
+          transaction
+        })
+
+        // Use getDataValue to access real values, not shadowed properties
+        const subtotal = lines.reduce((sum, line) => sum + (Number(line.getDataValue('subtotal')) || 0), 0)
+        const totalDiscountAmount = lines.reduce((sum, line) => sum + (Number(line.getDataValue('discountAmount')) || 0), 0)
+        const totalTaxAmount = lines.reduce((sum, line) => sum + (Number(line.getDataValue('taxAmount')) || 0), 0)
+        const total = lines.reduce((sum, line) => sum + (Number(line.getDataValue('total')) || 0), 0)
+
+        // Update the invoice with calculated totals
+        await Invoice.update({
+          subtotal,
+          totalDiscountAmount,
+          totalTaxAmount,
+          total,
+          remainingAmount: total
+        }, {
+          where: { id: invoiceId },
+          transaction
+        })
       }
 
       await transaction.commit()
 
-      // Return invoice with associations
-      return this.getInvoiceById(invoice.id)
+      // Return invoice with associations using the correct ID
+      return this.getInvoiceById(invoiceId)
     } catch (error) {
       await transaction.rollback()
       throw error

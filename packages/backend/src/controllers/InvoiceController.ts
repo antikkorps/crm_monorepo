@@ -1012,12 +1012,13 @@ export class InvoiceController {
         user.id,
         templateId as string,
         {
-          saveToFile: true,
+          saveToFile: !!emailOptions,
           emailOptions,
         }
       )
 
       if (emailOptions && result.emailResult) {
+        console.log("Returning email result instead of PDF download")
         ctx.body = {
           success: true,
           data: {
@@ -1031,9 +1032,22 @@ export class InvoiceController {
         }
       } else {
         // Return PDF as download
+        console.log("Returning PDF for download, buffer size:", result.buffer?.length)
         ctx.set("Content-Type", "application/pdf")
         ctx.set("Content-Disposition", `attachment; filename="Invoice-${id}.pdf"`)
         ctx.body = result.buffer
+
+        // Clean up: delete the PDF file from storage after serving it
+        if (result.filePath) {
+          try {
+            const fs = await import("fs/promises")
+            await fs.unlink(result.filePath)
+            console.log("PDF file deleted from storage:", result.filePath)
+          } catch (error) {
+            console.warn("Could not delete PDF file:", error)
+            // Don't throw error - the download was successful
+          }
+        }
       }
 
       await pdfService.cleanup()

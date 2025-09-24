@@ -32,7 +32,7 @@ export const documentsApi = {
     if (options.templateId) params.append("templateId", options.templateId)
     if (options.email) params.append("email", "true")
 
-    const url = `/api/quotes/${quoteId}/pdf${
+    const url = `/quotes/${quoteId}/pdf${
       params.toString() ? `?${params.toString()}` : ""
     }`
 
@@ -53,7 +53,7 @@ export const documentsApi = {
 
   async getQuoteVersions(quoteId: string): Promise<DocumentVersion[]> {
     const response = await apiClient.get<DocumentVersionResponse>(
-      `/api/quotes/${quoteId}/versions`
+      `/quotes/${quoteId}/versions`
     )
     return response.data.data
   },
@@ -67,7 +67,7 @@ export const documentsApi = {
     if (options.templateId) params.append("templateId", options.templateId)
     if (options.email) params.append("email", "true")
 
-    const url = `/api/invoices/${invoiceId}/pdf${
+    const url = `/invoices/${invoiceId}/pdf${
       params.toString() ? `?${params.toString()}` : ""
     }`
 
@@ -79,23 +79,30 @@ export const documentsApi = {
       return response.data
     } else {
       // When downloading, expect blob response
-      const response = await apiClient.get(url, {
+      console.log("Making blob request to:", url)
+      const blob = await apiClient.get(url, {
         responseType: "blob",
+      }) as Blob
+      console.log("Blob received:", {
+        dataType: typeof blob,
+        isBlob: blob instanceof Blob,
+        size: blob?.size,
+        type: blob?.type
       })
-      return response.data
+      return blob
     }
   },
 
   async getInvoiceVersions(invoiceId: string): Promise<DocumentVersion[]> {
     const response = await apiClient.get<DocumentVersionResponse>(
-      `/api/invoices/${invoiceId}/versions`
+      `/invoices/${invoiceId}/versions`
     )
     return response.data.data
   },
 
   // Payment reminder
   async sendPaymentReminder(invoiceId: string, customMessage?: string): Promise<any> {
-    const response = await apiClient.post(`/api/invoices/${invoiceId}/payment-reminder`, {
+    const response = await apiClient.post(`/invoices/${invoiceId}/payment-reminder`, {
       customMessage,
     })
     return response.data

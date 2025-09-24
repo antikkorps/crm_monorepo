@@ -86,14 +86,20 @@ export class InvoiceLine
 
   // Instance methods
   public calculateTotals(): void {
+    // Ensure numeric values
+    const quantity = Number(this.quantity) || 0
+    const unitPrice = Number(this.unitPrice) || 0
+    const discountValue = Number(this.discountValue) || 0
+    const taxRate = Number(this.taxRate) || 0
+
     // Calculate subtotal
-    this.subtotal = this.quantity * this.unitPrice
+    this.subtotal = quantity * unitPrice
 
     // Calculate discount amount
     if (this.discountType === DiscountType.PERCENTAGE) {
-      this.discountAmount = this.subtotal * (this.discountValue / 100)
+      this.discountAmount = this.subtotal * (discountValue / 100)
     } else if (this.discountType === DiscountType.FIXED_AMOUNT) {
-      this.discountAmount = Math.min(this.discountValue, this.subtotal)
+      this.discountAmount = Math.min(discountValue, this.subtotal)
     } else {
       this.discountAmount = 0
     }
@@ -102,7 +108,7 @@ export class InvoiceLine
     this.totalAfterDiscount = this.subtotal - this.discountAmount
 
     // Calculate tax amount
-    this.taxAmount = this.totalAfterDiscount * (this.taxRate / 100)
+    this.taxAmount = this.totalAfterDiscount * (taxRate / 100)
 
     // Calculate final total
     this.total = this.totalAfterDiscount + this.taxAmount
@@ -139,6 +145,11 @@ export class InvoiceLine
   public static async createLine(
     data: InvoiceLineCreationAttributes
   ): Promise<InvoiceLine> {
+    // Validate that invoiceId is provided and not empty
+    if (!data.invoiceId || data.invoiceId.trim() === '') {
+      throw new Error(`invoiceId is required for creating an invoice line. Received: ${JSON.stringify(data.invoiceId)}`)
+    }
+
     // Set default values
     const lineData = {
       ...data,
@@ -155,10 +166,10 @@ export class InvoiceLine
       lineData.orderIndex = (maxOrderIndex || 0) + 1
     }
 
-    const line = this.build(lineData)
-    line.calculateTotals()
+    // Create the line directly instead of using build + save
+    const line = await this.create(lineData)
 
-    return line.save()
+    return line
   }
 
   public static async reorderLines(invoiceId: string, lineIds: string[]): Promise<void> {
@@ -373,6 +384,9 @@ InvoiceLine.init(
     timestamps: true,
     underscored: true,
     hooks: {
+      beforeCreate: (line: InvoiceLine) => {
+        line.calculateTotals()
+      },
       beforeSave: (line: InvoiceLine) => {
         line.calculateTotals()
       },

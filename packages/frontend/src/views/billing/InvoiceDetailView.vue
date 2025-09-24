@@ -171,9 +171,27 @@ const sendInvoice = async () => {
 const downloadPdf = async () => {
   if (!invoice.value) return
   try {
-    const blob = await documentsApi.generateInvoicePdf(invoice.value.id) as Blob
+    console.log("Downloading PDF for invoice:", invoice.value.id)
+    const result = await documentsApi.generateInvoicePdf(invoice.value.id)
+    console.log("Raw API result:", result)
+    console.log("Result type:", typeof result)
+    console.log("Is result a Blob?", result instanceof Blob)
+
+    if (!result) {
+      console.error("API returned null/undefined")
+      showSnackbar("No PDF data received", "error")
+      return
+    }
+
+    const blob = result as Blob
+    console.log("Received blob:", {
+      type: blob.type,
+      size: blob.size,
+      isBlob: blob instanceof Blob
+    })
     documentsApi.downloadBlob(blob, `Invoice-${invoice.value.invoiceNumber}.pdf`)
   } catch (error) {
+    console.error("PDF download error:", error)
     showSnackbar("Failed to download PDF", "error")
   }
 }

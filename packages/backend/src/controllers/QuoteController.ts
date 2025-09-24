@@ -840,7 +840,7 @@ export class QuoteController {
         user.id,
         templateId as string,
         {
-          saveToFile: true,
+          saveToFile: !!emailOptions,
           emailOptions,
         }
       )
@@ -871,6 +871,17 @@ export class QuoteController {
         ctx.set("Content-Disposition", `attachment; filename="${fileName}"`)
         ctx.length = result.buffer.length
         ctx.body = result.buffer
+
+        // Clean up: delete the PDF file from storage after serving it
+        if (result.filePath) {
+          try {
+            const fs = await import("fs/promises")
+            await fs.unlink(result.filePath)
+            console.log("PDF file deleted from storage:", result.filePath)
+          } catch (error) {
+            console.warn("Could not delete PDF file:", error)
+          }
+        }
       }
 
       await pdfService.cleanup()
@@ -901,7 +912,7 @@ export class QuoteController {
         id,
         user.id,
         templateId as string,
-        { saveToFile: true }
+        { saveToFile: false }
       )
 
       ctx.status = 200
@@ -915,6 +926,17 @@ export class QuoteController {
       ctx.set("Content-Disposition", `attachment; filename="${fileName}"`)
       ctx.length = result.buffer.length
       ctx.body = result.buffer
+
+      // Clean up: delete the PDF file from storage after serving it
+      if (result.filePath) {
+        try {
+          const fs = await import("fs/promises")
+          await fs.unlink(result.filePath)
+          console.log("PDF file deleted from storage:", result.filePath)
+        } catch (error) {
+          console.warn("Could not delete PDF file:", error)
+        }
+      }
 
       await pdfService.cleanup()
     } catch (error) {

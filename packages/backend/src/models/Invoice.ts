@@ -250,10 +250,10 @@ export class Invoice
     if (this.lines) {
       return this.lines
     }
-    const { InvoiceLine } = require("./InvoiceLine")
+    const InvoiceLine = sequelize.models.InvoiceLine
     return InvoiceLine.findAll({
-      where: { invoiceId: this.id },
-      order: [["orderIndex", "ASC"]],
+      where: { invoice_id: this.id },
+      order: [["order_index", "ASC"]],
     })
   }
 
@@ -261,10 +261,10 @@ export class Invoice
     if (this.payments) {
       return this.payments
     }
-    const { Payment } = require("./Payment")
+    const Payment = sequelize.models.Payment
     return Payment.findAll({
-      where: { invoiceId: this.id },
-      order: [["paymentDate", "DESC"]],
+      where: { invoice_id: this.id },
+      order: [["payment_date", "DESC"]],
     })
   }
 
@@ -317,40 +317,94 @@ export class Invoice
   public static async generateInvoiceNumber(): Promise<string> {
     const year = new Date().getFullYear()
     const month = String(new Date().getMonth() + 1).padStart(2, "0")
+    const prefix = `INV${year}${month}`
 
-    // Find the highest invoice number for this month
-    const lastInvoice = await this.findOne({
+    // Find all invoices for this month to get the highest sequence number
+    const invoices = await this.findAll({
       where: {
         invoiceNumber: {
-          [Op.like]: `INV${year}${month}%`,
+          [Op.like]: `${prefix}%`,
         },
       },
-      order: [["invoiceNumber", "DESC"]],
+      attributes: ['invoiceNumber'],
+      order: [["invoiceNumber", "ASC"]],
     })
 
     let sequence = 1
-    if (lastInvoice) {
-      const lastSequence = parseInt(lastInvoice.invoiceNumber.slice(-4))
-      sequence = lastSequence + 1
+    if (invoices.length > 0) {
+      // Extract sequence numbers and find the highest + 1
+      const sequences = invoices
+        .map(invoice => {
+          if (!invoice.invoiceNumber || invoice.invoiceNumber.length < prefix.length + 4) {
+            return 0
+          }
+          const seqStr = invoice.invoiceNumber.slice(-4)
+          const seqNum = parseInt(seqStr, 10)
+          return isNaN(seqNum) ? 0 : seqNum
+        })
+        .filter(seq => seq > 0)
+        .sort((a, b) => b - a) // Sort descending
+
+      if (sequences.length > 0) {
+        sequence = sequences[0] + 1
+      }
     }
 
-    return `INV${year}${month}${String(sequence).padStart(4, "0")}`
+    let attempts = 0
+    while (attempts < 100) {
+      const invoiceNumber = `${prefix}${String(sequence).padStart(4, "0")}`
+
+      // Check if this number already exists
+      const existing = await this.findOne({
+        where: { invoiceNumber },
+        attributes: ['id']
+      })
+
+      if (!existing) {
+        return invoiceNumber
+      }
+
+      sequence++
+      attempts++
+    }
+
+    // Fallback with timestamp if we can't find a unique number
+    const timestamp = Date.now().toString().slice(-6)
+    return `${prefix}${timestamp}`
   }
 
   public static async createInvoice(data: InvoiceCreationAttributes): Promise<Invoice> {
-    const invoiceNumber = await this.generateInvoiceNumber()
+    let attempts = 0
+    while (attempts < 5) {
+      try {
+        const invoiceNumber = await this.generateInvoiceNumber()
 
-    return this.create({
-      ...data,
-      invoiceNumber,
-      status: InvoiceStatus.DRAFT,
-      totalPaid: 0,
-      remainingAmount: 0,
-      subtotal: 0,
-      totalDiscountAmount: 0,
-      totalTaxAmount: 0,
-      total: 0,
-    })
+        return await this.create({
+          ...data,
+          invoiceNumber,
+          status: InvoiceStatus.DRAFT,
+          totalPaid: 0,
+          remainingAmount: 0,
+          subtotal: 0,
+          totalDiscountAmount: 0,
+          totalTaxAmount: 0,
+          total: 0,
+        })
+      } catch (error: any) {
+        // Check if it's a unique constraint violation on invoice_number
+        if (error.code === '23505' && error.constraint?.includes('invoice_number')) {
+          attempts++
+          console.log(`Invoice number collision, retrying (attempt ${attempts}/5)`)
+          if (attempts >= 5) {
+            throw new Error('Unable to generate unique invoice number after multiple attempts')
+          }
+          continue
+        }
+        // If it's any other error, rethrow immediately
+        throw error
+      }
+    }
+    throw new Error('Maximum retry attempts exceeded')
   }
 
   public static async createFromQuote(quote: Quote): Promise<Invoice> {

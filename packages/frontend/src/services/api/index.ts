@@ -57,7 +57,38 @@ class ApiClient {
   }
 
   async get<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
+    // Special handling for blob requests
+    if ((options as any).responseType === "blob") {
+      console.log("Using blob handler for:", endpoint)
+      return this.requestBlob(endpoint, { method: "GET", ...options }) as unknown as T
+    }
+    console.log("Using regular handler for:", endpoint)
     return this.request<T>(endpoint, { method: "GET", ...options })
+  }
+
+  private async requestBlob(endpoint: string, options: RequestInit = {}): Promise<Blob> {
+    const token = localStorage.getItem("token")
+
+    const config: RequestInit = {
+      headers: {
+        ...(token && { Authorization: `Bearer ${token}` }),
+        ...options.headers,
+      },
+      ...options,
+    }
+
+    const response = await fetch(`${this.baseURL}${endpoint}`, config)
+
+    if (!response.ok) {
+      if (response.status === 401) {
+        localStorage.removeItem("token")
+        window.location.href = "/login"
+        throw new Error("Unauthorized")
+      }
+      throw new Error(`HTTP error! status: ${response.status}`)
+    }
+
+    return response.blob()
   }
 
   async post<T>(endpoint: string, data?: any): Promise<T> {

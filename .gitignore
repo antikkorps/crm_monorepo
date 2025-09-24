@@ -13,6 +13,14 @@ pids
 *.seed
 *.pid.lock
 
+# Factures
+./packages/backend/storage/documents/invoices
+*.pdf
+
+# Devis
+./packages/backend/storage/documents/quotes
+*.pdf
+
 # Coverage directory used by tools like istanbul
 coverage/
 *.lcov

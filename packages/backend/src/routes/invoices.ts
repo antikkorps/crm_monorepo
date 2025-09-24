@@ -64,7 +64,7 @@ router.delete(
 
 // Invoice status workflow endpoints
 // PUT /api/invoices/:id/send - Send invoice to client
-router.put("/:id/send", InvoiceController.sendInvoice)
+router.put("/:id/send", requirePermission("canViewAllBilling"), InvoiceController.sendInvoice)
 
 // PUT /api/invoices/:id/cancel - Cancel invoice
 router.put("/:id/cancel", InvoiceController.cancelInvoice)
@@ -135,12 +135,15 @@ router.get(
 // GET /api/invoices/:id/pdf - Generate and download invoice PDF
 router.get("/:id/pdf", InvoiceController.generateInvoicePdf)
 
+// POST /api/invoices/:id/pdf - Generate invoice PDF with email options
+router.post("/:id/pdf", InvoiceController.generateInvoicePdf)
+
 // GET /api/invoices/:id/versions - Get document versions for invoice
 router.get("/:id/versions", InvoiceController.getInvoiceVersions)
 
-// POST /api/invoices/:id/send-reminder - Send payment reminder email
+// POST /api/invoices/:id/payment-reminder - Send payment reminder email
 router.post(
-  "/:id/send-reminder",
+  "/:id/payment-reminder",
   requirePermission("canViewAllBilling"),
   InvoiceController.sendPaymentReminder
 )

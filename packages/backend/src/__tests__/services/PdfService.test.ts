@@ -76,6 +76,7 @@ vi.mock("../../models/DocumentVersion", () => ({
   DocumentVersionType: {
     QUOTE_PDF: "quote_pdf",
     INVOICE_PDF: "invoice_pdf",
+    ORDER_PDF: "order_pdf",
   },
 }))
 
@@ -255,6 +256,16 @@ describe("PdfService", () => {
         pdfService.generateQuotePdf("nonexistent-quote", "user-1")
       ).rejects.toThrow("Quote with ID nonexistent-quote not found")
     })
+
+    it("should not save PDF when saveToFile is false", async () => {
+      const result = await pdfService.generateQuotePdf("quote-1", "user-1", undefined, {
+        saveToFile: false,
+      })
+
+      expect(result.filePath).toBeUndefined()
+      expect(result.version).toBeUndefined()
+      expect(mockDocumentVersionCreateVersion).not.toHaveBeenCalled()
+    })
   })
 
   describe("generateInvoicePdf", () => {
@@ -272,6 +283,25 @@ describe("PdfService", () => {
       await expect(
         pdfService.generateInvoicePdf("nonexistent-invoice", "user-1")
       ).rejects.toThrow("Invoice with ID nonexistent-invoice not found")
+    })
+  })
+
+  describe("generateOrderPdf", () => {
+    it("should generate an order PDF successfully (no save)", async () => {
+      const result = await pdfService.generateOrderPdf("quote-1", "user-1", undefined, { saveToFile: false })
+
+      expect(result.buffer).toBeInstanceOf(Buffer)
+      expect(result.filePath).toBeUndefined()
+      expect(mockQuoteFindByPk).toHaveBeenCalledWith("quote-1", expect.any(Object))
+      expect(mockDocumentVersionCreateVersion).not.toHaveBeenCalled()
+    })
+
+    it("should save order PDF when saveToFile is true", async () => {
+      const result = await pdfService.generateOrderPdf("quote-1", "user-1", undefined, { saveToFile: true })
+
+      expect(result.filePath).toBeDefined()
+      expect(result.version).toBeDefined()
+      expect(mockDocumentVersionCreateVersion).toHaveBeenCalled()
     })
   })
 

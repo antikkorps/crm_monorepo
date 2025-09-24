@@ -3,6 +3,8 @@ import { mkdir, writeFile } from "fs/promises"
 import Handlebars from "handlebars"
 import { dirname, join } from "path"
 import puppeteer, { Browser, PDFOptions } from "puppeteer"
+import { v4 as uuidv4 } from "uuid"
+import { sequelize } from "../config/database"
 import { DocumentTemplate, TemplateType } from "../models/DocumentTemplate"
 import { DocumentVersion, DocumentVersionType } from "../models/DocumentVersion"
 import { Invoice } from "../models/Invoice"
@@ -89,133 +91,7 @@ export class PdfService {
     templateId?: string,
     options: PdfGenerationOptions = {}
   ): Promise<PdfGenerationResult> {
-    try {
-      // Fetch quote with all related data (including lines)
-      const quote = await Quote.findByPk(quoteId, {
-        include: [
-          {
-            model: MedicalInstitution,
-            as: "institution",
-          },
-          {
-            model: User,
-            as: "assignedUser",
-          },
-          {
-            // Include lines to ensure we have them for rendering
-            model: (await import("../models/QuoteLine")).QuoteLine,
-            as: "lines",
-          },
-        ],
-      })
-
-      if (!quote) {
-        throw new Error(`Quote with ID ${quoteId} not found`)
-      }
-
-      const linesRaw = quote.lines && quote.lines.length > 0 ? quote.lines : await quote.getLines()
-      const lines = linesRaw.map((l: any) => (typeof l.toJSON === 'function' ? l.toJSON() : l))
-
-      // Get template from database or use quote.templateId or default
-      const resolvedTemplateId = templateId || (quote as any).templateId
-      let template
-      try {
-        template = await this.getTemplate(resolvedTemplateId, TemplateType.QUOTE)
-      } catch (err) {
-        // If incompatible or not found, fall back to default QUOTE template
-        template = await this.getTemplate(undefined, TemplateType.QUOTE)
-      }
-
-      // Compute totals fallback if missing
-      const computed = {
-        subtotal: lines.reduce((s: number, l: any) => s + Number(l.subtotal || 0), 0),
-        totalDiscountAmount: lines.reduce((s: number, l: any) => s + Number(l.discountAmount || 0), 0),
-        totalTaxAmount: lines.reduce((s: number, l: any) => s + Number(l.taxAmount || 0), 0),
-        total: lines.reduce((s: number, l: any) => s + Number(l.total || 0), 0),
-      }
-      const quoteForRender: any = { ...quote.toJSON?.() || quote }
-      if (!Number(quoteForRender.total)) {
-        quoteForRender.subtotal = computed.subtotal
-        quoteForRender.totalDiscountAmount = computed.totalDiscountAmount
-        quoteForRender.totalTaxAmount = computed.totalTaxAmount
-        quoteForRender.total = computed.total
-      }
-
-      const html = await this.renderTemplate(template, {
-        quote: quoteForRender,
-        lines,
-        institution: quote.institution,
-        assignedUser: quote.assignedUser,
-        generatedAt: new Date(),
-      })
-
-      const pdfBuffer = await this.generatePdfFromHtml(html, options)
-
-      let filePath: string | undefined
-      let version: DocumentVersion | undefined
-
-      if (options.saveToFile !== false) {
-        // Save to file and create version record
-        const fileName = `Quote-${
-          quote.quoteNumber
-        }-v${await DocumentVersion.getNextVersion(
-          quoteId,
-          DocumentVersionType.QUOTE_PDF
-        )}.pdf`
-        filePath = join(this.documentsPath, "quotes", fileName)
-
-        await this.ensureDirectoryExists(dirname(filePath))
-        await writeFile(filePath, pdfBuffer)
-
-        // Create document version record
-        version = await DocumentVersion.createVersion({
-          documentId: quoteId,
-          documentType: DocumentVersionType.QUOTE_PDF,
-          templateId: template.id,
-          fileName,
-          filePath,
-          fileSize: pdfBuffer.length,
-          mimeType: "application/pdf",
-          generatedBy,
-          generatedAt: new Date(),
-          templateSnapshot: template.toJSON(),
-        })
-      }
-
-      let emailResult
-      if (options.emailOptions && quote.institution) {
-        // Send email with PDF attachment
-        const contactEmail = this.getInstitutionContactEmail(quote.institution)
-        if (contactEmail) {
-          emailResult = await this.emailService.sendQuoteEmail(
-            contactEmail,
-            quote.institution.name,
-            quote.quoteNumber,
-            template.companyName,
-            pdfBuffer,
-            options.emailOptions.customMessage
-          )
-
-          // Update version record with email info
-          if (version && emailResult.success) {
-            await version.markAsEmailed(
-              options.emailOptions.recipients,
-              `Quote ${quote.quoteNumber} from ${template.companyName}`
-            )
-          }
-        }
-      }
-
-      return {
-        buffer: pdfBuffer,
-        filePath,
-        version,
-        emailResult,
-      }
-    } catch (error) {
-      logger.error("Error generating quote PDF:", error)
-      throw new Error(`Failed to generate quote PDF: ${(error as Error).message}`)
-    }
+    return this.generateQuoteLikePdf("QUOTE", quoteId, generatedBy, templateId, options)
   }
 
   public async generateOrderPdf(
@@ -224,80 +100,7 @@ export class PdfService {
     templateId?: string,
     options: PdfGenerationOptions = {}
   ): Promise<PdfGenerationResult> {
-    try {
-      // Fetch quote with institution, user, and lines
-      const quote = await Quote.findByPk(quoteId, {
-        include: [
-          { model: MedicalInstitution, as: "institution" },
-          { model: User, as: "assignedUser" },
-          { model: (await import("../models/QuoteLine")).QuoteLine, as: "lines" },
-        ],
-      })
-      if (!quote) throw new Error(`Quote with ID ${quoteId} not found`)
-
-      // Ensure lines
-      const linesRaw = quote.lines && quote.lines.length > 0 ? quote.lines : await quote.getLines()
-      const lines = linesRaw.map((l: any) => (typeof l.toJSON === 'function' ? l.toJSON() : l))
-
-      // Template selection: use provided or quote.templateId; fallback to default QUOTE template
-      const resolvedTemplateId = templateId || (quote as any).templateId
-      let template
-      try {
-        template = await this.getTemplate(resolvedTemplateId, TemplateType.QUOTE)
-      } catch {
-        template = await this.getTemplate(undefined, TemplateType.QUOTE)
-      }
-
-      // Compute totals fallback
-      const computed = {
-        subtotal: lines.reduce((s: number, l: any) => s + Number(l.subtotal || 0), 0),
-        totalDiscountAmount: lines.reduce((s: number, l: any) => s + Number(l.discountAmount || 0), 0),
-        totalTaxAmount: lines.reduce((s: number, l: any) => s + Number(l.taxAmount || 0), 0),
-        total: lines.reduce((s: number, l: any) => s + Number(l.total || 0), 0),
-      }
-      const quoteForRender: any = { ...quote.toJSON?.() || quote }
-      if (!Number(quoteForRender.total)) Object.assign(quoteForRender, computed)
-
-      // Render using same template but with a different heading context
-      const html = await this.renderTemplate(template, {
-        order: true,
-        quote: quoteForRender,
-        lines,
-        institution: quote.institution,
-        assignedUser: quote.assignedUser,
-        generatedAt: new Date(),
-      })
-
-      const pdfBuffer = await this.generatePdfFromHtml(html, options)
-
-      let filePath: string | undefined
-      let version: DocumentVersion | undefined
-      if (options.saveToFile !== false) {
-        const seq = await DocumentVersion.getNextVersion(quoteId, DocumentVersionType.ORDER_PDF)
-        const fileName = `Order-${quote.orderNumber || quote.quoteNumber}-v${seq}.pdf`
-        filePath = join(this.documentsPath, "quotes", fileName)
-        await this.ensureDirectoryExists(dirname(filePath))
-        await writeFile(filePath, pdfBuffer)
-        version = await DocumentVersion.create({
-          documentId: quoteId,
-          documentType: DocumentVersionType.ORDER_PDF as any,
-          templateId: template.id,
-          fileName,
-          filePath,
-          fileSize: pdfBuffer.length,
-          mimeType: "application/pdf",
-          generatedBy,
-          generatedAt: new Date(),
-          templateSnapshot: template.toJSON(),
-          version: seq,
-        } as any)
-      }
-
-      return { buffer: pdfBuffer, filePath, version }
-    } catch (error) {
-      logger.error("Error generating order PDF:", error)
-      throw new Error(`Failed to generate order PDF: ${(error as Error).message}`)
-    }
+    return this.generateQuoteLikePdf("ORDER", quoteId, generatedBy, templateId, options)
   }
 
   public async generateInvoicePdf(
@@ -325,21 +128,55 @@ export class PdfService {
         throw new Error(`Invoice with ID ${invoiceId} not found`)
       }
 
-      const lines = await invoice.getLines()
-      const payments = await invoice.getPayments()
+      // Query lines and payments directly to avoid instance method issues
+      const InvoiceLine = sequelize.models.InvoiceLine
+      const Payment = sequelize.models.Payment
 
-      // Get template from database or use default
-      const template = await this.getTemplate(templateId, TemplateType.INVOICE)
-
-      const html = await this.renderTemplate(template, {
-        invoice,
-        lines,
-        payments,
-        institution: invoice.institution,
-        assignedUser: invoice.assignedUser,
-        generatedAt: new Date(),
+      const lines = await InvoiceLine.findAll({
+        where: { invoice_id: invoiceId },
+        order: [["order_index", "ASC"]],
       })
 
+      const payments = await Payment.findAll({
+        where: { invoice_id: invoiceId },
+        order: [["payment_date", "DESC"]],
+      })
+
+      // Get template from database or use default
+      const templateResult = await this.getTemplateWithFallbackFlag(templateId, TemplateType.INVOICE)
+      const template = templateResult.template
+      const isFallbackTemplate = templateResult.isFallback
+
+      // Convert to plain objects to avoid Sequelize getter/setter issues
+      const invoiceData = invoice.toJSON ? invoice.toJSON() : invoice
+      const linesData = lines.map(line => line.toJSON ? line.toJSON() : line)
+      const paymentsData = payments.map(payment => payment.toJSON ? payment.toJSON() : payment)
+      const institutionData = invoice.institution?.toJSON ? invoice.institution.toJSON() : invoice.institution
+      const assignedUserData = invoice.assignedUser?.toJSON ? invoice.assignedUser.toJSON() : invoice.assignedUser
+
+      console.log("Template data for rendering:", {
+        invoiceId: invoiceData.id,
+        invoiceNumber: invoiceData.invoiceNumber,
+        title: invoiceData.title,
+        total: invoiceData.total,
+        linesCount: linesData.length,
+        paymentsCount: paymentsData.length,
+        institutionName: institutionData?.name,
+        assignedUserName: assignedUserData ? `${assignedUserData.firstName} ${assignedUserData.lastName}` : null
+      })
+
+      const html = await this.renderTemplate(template, {
+        invoice: invoiceData,
+        lines: linesData,
+        payments: paymentsData,
+        institution: institutionData,
+        assignedUser: assignedUserData,
+        generatedAt: new Date(),
+        companyName: template.companyName,
+        companyAddress: template.companyAddress,
+      })
+
+      console.log("Rendered HTML preview:", html.substring(0, 500) + "...")
       const pdfBuffer = await this.generatePdfFromHtml(html, options)
 
       let filePath: string | undefined
@@ -362,7 +199,7 @@ export class PdfService {
         version = await DocumentVersion.createVersion({
           documentId: invoiceId,
           documentType: DocumentVersionType.INVOICE_PDF,
-          templateId: template.id,
+          templateId: isFallbackTemplate ? undefined : template.id,
           fileName,
           filePath,
           fileSize: pdfBuffer.length,
@@ -480,6 +317,119 @@ export class PdfService {
     `
   }
 
+  // DRY: Shared generator for quote and order PDFs
+  private async generateQuoteLikePdf(
+    kind: "QUOTE" | "ORDER",
+    quoteId: string,
+    generatedBy: string,
+    templateId?: string,
+    options: PdfGenerationOptions = {}
+  ): Promise<PdfGenerationResult> {
+    try {
+      const quote = await Quote.findByPk(quoteId, {
+        include: [
+          { model: MedicalInstitution, as: "institution" },
+          { model: User, as: "assignedUser" },
+          { model: (await import("../models/QuoteLine")).QuoteLine, as: "lines" },
+        ],
+      })
+      if (!quote) {
+        throw new Error(`Quote with ID ${quoteId} not found`)
+      }
+
+      const linesRaw = quote.lines && quote.lines.length > 0 ? quote.lines : await quote.getLines()
+      const lines = linesRaw.map((l: any) => (typeof l.toJSON === "function" ? l.toJSON() : l))
+
+      const resolvedTemplateId = templateId || (quote as any).templateId
+      let templateResult
+      try {
+        templateResult = await this.getTemplateWithFallbackFlag(resolvedTemplateId, TemplateType.QUOTE)
+      } catch {
+        templateResult = await this.getTemplateWithFallbackFlag(undefined, TemplateType.QUOTE)
+      }
+      const template = templateResult.template
+      const isFallbackTemplate = templateResult.isFallback
+
+      const computed = {
+        subtotal: lines.reduce((s: number, l: any) => s + Number(l.subtotal || 0), 0),
+        totalDiscountAmount: lines.reduce((s: number, l: any) => s + Number(l.discountAmount || 0), 0),
+        totalTaxAmount: lines.reduce((s: number, l: any) => s + Number(l.taxAmount || 0), 0),
+        total: lines.reduce((s: number, l: any) => s + Number(l.total || 0), 0),
+      }
+      const quoteForRender: any = { ...(quote.toJSON?.() || quote) }
+      if (!Number(quoteForRender.total)) Object.assign(quoteForRender, computed)
+
+      const institutionData = quote.institution?.toJSON ? quote.institution.toJSON() : quote.institution
+      const assignedUserData = quote.assignedUser?.toJSON ? quote.assignedUser.toJSON() : quote.assignedUser
+
+      const html = await this.renderTemplate(template, {
+        order: kind === "ORDER",
+        quote: quoteForRender,
+        lines,
+        institution: institutionData,
+        assignedUser: assignedUserData,
+        generatedAt: new Date(),
+        companyName: template.companyName,
+        companyAddress: template.companyAddress,
+      })
+
+      const pdfBuffer = await this.generatePdfFromHtml(html, options)
+
+      let filePath: string | undefined
+      let version: DocumentVersion | undefined
+      if (options.saveToFile !== false) {
+        const versionType = kind === "ORDER" ? DocumentVersionType.ORDER_PDF : DocumentVersionType.QUOTE_PDF
+        const next = await DocumentVersion.getNextVersion(quoteId, versionType)
+        const baseName = kind === "ORDER" ? `Order-${quote.orderNumber || (quote as any).quoteNumber}` : `Quote-${(quote as any).quoteNumber}`
+        const fileName = `${baseName}-v${next}.pdf`
+        filePath = join(this.documentsPath, "quotes", fileName)
+        await this.ensureDirectoryExists(dirname(filePath))
+        await writeFile(filePath, pdfBuffer)
+
+        version = await DocumentVersion.createVersion({
+          documentId: quoteId,
+          documentType: versionType,
+          templateId: isFallbackTemplate ? undefined : template.id,
+          fileName,
+          filePath,
+          fileSize: pdfBuffer.length,
+          mimeType: "application/pdf",
+          generatedBy,
+          generatedAt: new Date(),
+          templateSnapshot: template.toJSON(),
+        })
+      }
+
+      let emailResult
+      if (kind === "QUOTE" && options.emailOptions && quote.institution) {
+        const contactEmail = this.getInstitutionContactEmail(quote.institution)
+        if (contactEmail) {
+          emailResult = await this.emailService.sendQuoteEmail(
+            contactEmail,
+            quote.institution.name,
+            (quote as any).quoteNumber,
+            template.companyName,
+            pdfBuffer,
+            options.emailOptions.customMessage
+          )
+
+          if (version && (emailResult as any).success) {
+            await version.markAsEmailed(
+              options.emailOptions.recipients,
+              `Quote ${(quote as any).quoteNumber} from ${template.companyName}`
+            )
+          }
+        }
+      }
+
+      return { buffer: pdfBuffer, filePath, version, emailResult }
+    } catch (error) {
+      const scope = kind === "ORDER" ? "order" : "quote"
+      logger.error(`Error generating ${scope} PDF:`, error)
+      throw new Error(`Failed to generate ${scope} PDF: ${(error as Error).message}`)
+    }
+  }
+
   private async getTemplate(
     templateId?: string,
     type?: TemplateType
@@ -507,10 +457,139 @@ export class PdfService {
     return this.createFallbackTemplate(type || TemplateType.BOTH)
   }
 
+  private async getTemplateWithFallbackFlag(
+    templateId?: string,
+    type?: TemplateType
+  ): Promise<{ template: DocumentTemplate; isFallback: boolean }> {
+    if (templateId) {
+      const template = await DocumentTemplate.findByPk(templateId)
+      if (!template) {
+        throw new Error(`Template with ID ${templateId} not found`)
+      }
+      if (type && template.type !== type && template.type !== TemplateType.BOTH) {
+        throw new Error(`Template ${templateId} is not compatible with type ${type}`)
+      }
+      return { template, isFallback: false }
+    }
+
+    // Get default template for the type
+    if (type) {
+      const defaultTemplate = await DocumentTemplate.getDefaultTemplate(type)
+      if (defaultTemplate) {
+        return { template: defaultTemplate, isFallback: false }
+      }
+    }
+
+    // Create a fallback template if none exists
+    const fallbackTemplate = this.createFallbackTemplate(type || TemplateType.BOTH)
+    return { template: fallbackTemplate, isFallback: true }
+  }
+
   private createFallbackTemplate(type: TemplateType): DocumentTemplate {
+    const basicInvoiceTemplate = `
+        <div class="header">
+            <div class="company">{{companyName}}</div>
+            <div class="company-details">
+                {{companyAddress.street}}<br>
+                {{companyAddress.city}}, {{companyAddress.state}} {{companyAddress.zipCode}}<br>
+                {{companyAddress.country}}
+            </div>
+        </div>
+
+        <div class="document-title">
+            {{#if invoice}}INVOICE{{else}}QUOTE{{/if}}
+        </div>
+
+        <div class="document-info">
+            <p><strong>{{#if invoice}}Invoice{{else}}Quote{{/if}} Number:</strong> {{#if invoice}}{{invoice.invoiceNumber}}{{else}}{{quote.quoteNumber}}{{/if}}</p>
+            <p><strong>Date:</strong> {{formatDate generatedAt}}</p>
+            {{#if invoice.dueDate}}<p><strong>Due Date:</strong> {{formatDate invoice.dueDate}}</p>{{/if}}
+        </div>
+
+        <div class="client-info">
+            <h3>Bill To:</h3>
+            {{#if institution}}
+                <p><strong>{{institution.name}}</strong></p>
+                {{#if institution.address}}
+                    <p>{{institution.address.street}}<br>
+                    {{institution.address.city}}, {{institution.address.state}} {{institution.address.zipCode}}<br>
+                    {{institution.address.country}}</p>
+                {{/if}}
+            {{/if}}
+        </div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Description</th>
+                    <th style="text-align: center;">Quantity</th>
+                    <th class="amount">Unit Price</th>
+                    <th class="amount">Total</th>
+                </tr>
+            </thead>
+            <tbody>
+                {{#each lines}}
+                <tr>
+                    <td>{{this.description}}</td>
+                    <td style="text-align: center;">{{this.quantity}}</td>
+                    <td class="amount">{{currency this.unitPrice}}</td>
+                    <td class="amount">{{currency this.total}}</td>
+                </tr>
+                {{/each}}
+            </tbody>
+        </table>
+
+        <div class="totals">
+            <table>
+                {{#if invoice}}
+                    <tr><td>Subtotal:</td><td class="amount">{{currency invoice.subtotal}}</td></tr>
+                    {{#if invoice.totalDiscountAmount}}
+                        <tr><td>Discount:</td><td class="amount">-{{currency invoice.totalDiscountAmount}}</td></tr>
+                    {{/if}}
+                    {{#if invoice.totalTaxAmount}}
+                        <tr><td>Tax:</td><td class="amount">{{currency invoice.totalTaxAmount}}</td></tr>
+                    {{/if}}
+                    <tr class="total-row"><td><strong>Total:</strong></td><td class="amount"><strong>{{currency invoice.total}}</strong></td></tr>
+                {{else}}
+                    <tr><td>Subtotal:</td><td class="amount">{{currency quote.subtotal}}</td></tr>
+                    {{#if quote.totalDiscountAmount}}
+                        <tr><td>Discount:</td><td class="amount">-{{currency quote.totalDiscountAmount}}</td></tr>
+                    {{/if}}
+                    {{#if quote.totalTaxAmount}}
+                        <tr><td>Tax:</td><td class="amount">{{currency quote.totalTaxAmount}}</td></tr>
+                    {{/if}}
+                    <tr class="total-row"><td><strong>Total:</strong></td><td class="amount"><strong>{{currency quote.total}}</strong></td></tr>
+                {{/if}}
+            </table>
+        </div>
+
+        <div class="footer">
+            <p>Generated on {{formatDate generatedAt}} by {{companyName}}</p>
+        </div>
+    `
+
+    const basicStyles = `
+        body { font-family: Arial, sans-serif; margin: 40px; color: #333; }
+        .header { border-bottom: 3px solid #007bff; padding-bottom: 20px; margin-bottom: 30px; }
+        .company { font-size: 24px; font-weight: bold; color: #007bff; margin-bottom: 5px; }
+        .company-details { color: #666; font-size: 14px; }
+        .document-title { font-size: 32px; font-weight: bold; margin: 30px 0; }
+        .document-info { margin-bottom: 30px; }
+        .client-info { background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 30px; }
+        .client-info h3 { margin: 0 0 10px 0; color: #007bff; }
+        table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
+        th { background-color: #f8f9fa; font-weight: bold; }
+        .amount { text-align: right; font-family: monospace; }
+        .totals { margin-top: 20px; }
+        .totals table { width: 300px; margin-left: auto; }
+        .total-row { font-weight: bold; font-size: 18px; background-color: #007bff; color: white; }
+        .footer { margin-top: 40px; padding-top: 20px; border-top: 1px solid #ddd; font-size: 12px; color: #666; }
+    `
+
     // Create a minimal template object (not saved to database)
     const template = new DocumentTemplate({
-      id: `fallback-${type}`,
+      id: uuidv4(),
       name: `Fallback ${type} Template`,
       type,
       isDefault: false,
@@ -530,6 +609,8 @@ export class PdfService {
       marginBottom: 20,
       marginLeft: 15,
       marginRight: 15,
+      htmlTemplate: basicInvoiceTemplate,
+      styles: basicStyles,
       createdBy: "system",
       version: 1,
     } as any)
@@ -540,10 +621,20 @@ export class PdfService {
   private registerHandlebarsHelpers(): void {
     // Currency formatting helper
     Handlebars.registerHelper("currency", function (amount: number) {
-      return new Intl.NumberFormat("en-US", {
+      return new Intl.NumberFormat("fr-FR", {
         style: "currency",
-        currency: "USD",
+        currency: "EUR",
       }).format(amount || 0)
+    })
+
+    // Date formatting helper
+    Handlebars.registerHelper("formatDate", function (date: Date) {
+      if (!date) return ""
+      return new Intl.DateTimeFormat("en-US", {
+        year: "numeric",
+        month: "long",
+        day: "numeric"
+      }).format(new Date(date))
     })
 
     // Date formatting helper
