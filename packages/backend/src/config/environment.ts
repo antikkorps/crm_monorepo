@@ -1,8 +1,17 @@
 import dotenv from "dotenv"
+import path from "path"
 import Joi from "joi"
 
 // Load environment variables
+// 1) Load from current working directory (e.g., packages/backend/.env)
 dotenv.config()
+// 2) Additionally attempt to load monorepo root .env if available
+try {
+  const rootEnvPath = path.resolve(process.cwd(), "../../.env")
+  dotenv.config({ path: rootEnvPath })
+} catch (_) {
+  // Ignore if not present
+}
 
 // Environment validation schema
 const envSchema = Joi.object({

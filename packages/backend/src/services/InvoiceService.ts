@@ -278,7 +278,7 @@ export class InvoiceService {
     const invoice = await this.getInvoiceById(id)
 
     // Check permissions
-    if (!this.canUserModifyInvoice(invoice, userId)) {
+    if (!(await this.canUserModifyInvoice(invoice, userId))) {
       throw {
         code: "INSUFFICIENT_PERMISSIONS",
         message: "You don't have permission to modify this invoice",
@@ -310,7 +310,7 @@ export class InvoiceService {
     const invoice = await this.getInvoiceById(id)
 
     // Check permissions
-    if (!this.canUserModifyInvoice(invoice, userId)) {
+    if (!(await this.canUserModifyInvoice(invoice, userId))) {
       throw {
         code: "INSUFFICIENT_PERMISSIONS",
         message: "You don't have permission to delete this invoice",
@@ -335,7 +335,7 @@ export class InvoiceService {
     const invoice = await this.getInvoiceById(id)
 
     // Check permissions
-    if (!this.canUserModifyInvoice(invoice, userId)) {
+    if (!(await this.canUserModifyInvoice(invoice, userId))) {
       throw {
         code: "INSUFFICIENT_PERMISSIONS",
         message: "You don't have permission to send this invoice",
@@ -343,7 +343,30 @@ export class InvoiceService {
       }
     }
 
-    await invoice.send()
+    // Flexible behavior:
+    // - If draft: mark as sent
+    // - If already sent/partially_paid/overdue/paid: allow re-send (do not change status)
+    // - If cancelled: block
+    if (invoice.status === InvoiceStatus.DRAFT) {
+      await invoice.send()
+    } else if (
+      [
+        InvoiceStatus.SENT,
+        InvoiceStatus.PARTIALLY_PAID,
+        InvoiceStatus.OVERDUE,
+        InvoiceStatus.PAID,
+      ].includes(invoice.status as any)
+    ) {
+      // Update last sent timestamp (reuse sentAt to reflect latest send time)
+      invoice.sentAt = new Date()
+      await invoice.save()
+    } else if (invoice.status === InvoiceStatus.CANCELLED) {
+      throw {
+        code: "INVOICE_CANCELLED",
+        message: "Cancelled invoice cannot be sent",
+        status: 400,
+      }
+    }
 
     return this.getInvoiceById(id)
   }
@@ -353,7 +376,7 @@ export class InvoiceService {
     const invoice = await this.getInvoiceById(id)
 
     // Check permissions
-    if (!this.canUserModifyInvoice(invoice, userId)) {
+    if (!(await this.canUserModifyInvoice(invoice, userId))) {
       throw {
         code: "INSUFFICIENT_PERMISSIONS",
         message: "You don't have permission to cancel this invoice",
@@ -375,7 +398,7 @@ export class InvoiceService {
     const invoice = await this.getInvoiceById(invoiceId)
 
     // Check permissions
-    if (!this.canUserModifyInvoice(invoice, userId)) {
+    if (!(await this.canUserModifyInvoice(invoice, userId))) {
       throw {
         code: "INSUFFICIENT_PERMISSIONS",
         message: "You don't have permission to modify this invoice",
@@ -436,7 +459,7 @@ export class InvoiceService {
     const invoice = await this.getInvoiceById(line.invoiceId)
 
     // Check permissions
-    if (!this.canUserModifyInvoice(invoice, userId)) {
+    if (!(await this.canUserModifyInvoice(invoice, userId))) {
       throw {
         code: "INSUFFICIENT_PERMISSIONS",
         message: "You don't have permission to modify this invoice",
@@ -496,7 +519,7 @@ export class InvoiceService {
     const invoice = await this.getInvoiceById(line.invoiceId)
 
     // Check permissions
-    if (!this.canUserModifyInvoice(invoice, userId)) {
+    if (!(await this.canUserModifyInvoice(invoice, userId))) {
       throw {
         code: "INSUFFICIENT_PERMISSIONS",
         message: "You don't have permission to modify this invoice",
@@ -540,7 +563,7 @@ export class InvoiceService {
     const invoice = await this.getInvoiceById(invoiceId)
 
     // Check permissions
-    if (!this.canUserModifyInvoice(invoice, userId)) {
+    if (!(await this.canUserModifyInvoice(invoice, userId))) {
       throw {
         code: "INSUFFICIENT_PERMISSIONS",
         message: "You don't have permission to modify this invoice",
@@ -945,7 +968,7 @@ export class InvoiceService {
     const invoice = await this.getInvoiceById(invoiceId)
 
     // Check permissions
-    if (!this.canUserModifyInvoice(invoice, userId)) {
+    if (!(await this.canUserModifyInvoice(invoice, userId))) {
       throw {
         code: "INSUFFICIENT_PERMISSIONS",
         message: "You don't have permission to reconcile this invoice",
@@ -1218,9 +1241,15 @@ export class InvoiceService {
   }
 
   // Permission helper
-  private static canUserModifyInvoice(invoice: Invoice, userId: string): boolean {
-    // For now, only the assigned user can modify
-    // TODO: Add role-based permissions
+  private static async canUserModifyInvoice(invoice: Invoice, userId: string): Promise<boolean> {
+    // Allow elevated roles to modify any invoice, otherwise only assigned user
+    const user = await User.findByPk(userId)
+    if (!user) return false
+
+    if (user.role === "super_admin" || user.role === "team_admin" || user.role === "manager") {
+      return true
+    }
+
     return invoice.assignedUserId === userId
   }
 }

@@ -1014,7 +1014,8 @@ export class InvoiceController {
         user.id,
         templateId as string,
         {
-          saveToFile: !!emailOptions,
+          // Do not persist PDFs when emailing; persist for download only
+          saveToFile: !emailOptions,
           emailOptions,
         }
       )
@@ -1035,8 +1036,16 @@ export class InvoiceController {
       } else {
         // Return PDF as download
         console.log("Returning PDF for download, buffer size:", result.buffer?.length)
+        let filename = `Invoice-${id}.pdf`
+        try {
+          const { Invoice } = await import("../models/Invoice")
+          const inv = await Invoice.findByPk(id)
+          if (inv?.invoiceNumber) {
+            filename = `Invoice-${inv.invoiceNumber}.pdf`
+          }
+        } catch (_) {}
         ctx.set("Content-Type", "application/pdf")
-        ctx.set("Content-Disposition", `attachment; filename="Invoice-${id}.pdf"`)
+        ctx.set("Content-Disposition", `attachment; filename="${filename}"`)
         ctx.body = result.buffer
 
         // Clean up: delete the PDF file from storage after serving it

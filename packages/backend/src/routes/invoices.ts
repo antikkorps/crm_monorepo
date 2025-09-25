@@ -1,7 +1,7 @@
 import Router from "@koa/router"
 import { InvoiceController } from "../controllers/InvoiceController"
 import { authenticate } from "../middleware/auth"
-import { requirePermission } from "../middleware/permissions"
+import { requirePermission, requireTeamPermission } from "../middleware/permissions"
 
 const router = new Router({ prefix: "/api/invoices" })
 
@@ -64,7 +64,8 @@ router.delete(
 
 // Invoice status workflow endpoints
 // PUT /api/invoices/:id/send - Send invoice to client
-router.put("/:id/send", requirePermission("canViewAllBilling"), InvoiceController.sendInvoice)
+// Align with quotes: allow users with invoice-edit permission; service enforces ownership
+router.put("/:id/send", requireTeamPermission("canEditOwnInvoices"), InvoiceController.sendInvoice)
 
 // PUT /api/invoices/:id/cancel - Cancel invoice
 router.put("/:id/cancel", InvoiceController.cancelInvoice)

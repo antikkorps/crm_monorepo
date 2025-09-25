@@ -24,7 +24,12 @@
           </div>
           <div class="d-flex flex-wrap gap-2">
             <v-btn v-if="invoice.canBeModified" prepend-icon="mdi-pencil" variant="outlined" @click="editInvoice">Modifier</v-btn>
-            <v-btn v-if="invoice.status === 'draft'" prepend-icon="mdi-send" color="primary" @click="sendInvoice">Envoyer</v-btn>
+            <v-btn
+              v-if="['draft','sent','overdue','partially_paid','paid'].includes(invoice.status)"
+              prepend-icon="mdi-send"
+              color="primary"
+              @click="openSendDialog"
+            >{{ invoice.status === 'draft' ? 'Envoyer' : 'Renvoyer' }}</v-btn>
             <v-btn v-if="invoice.canReceivePayments" prepend-icon="mdi-currency-usd" color="success" @click="showPaymentDialog = true">Encaisser</v-btn>
             <v-menu>
               <template v-slot:activator="{ props }">
@@ -41,6 +46,46 @@
             </v-menu>
           </div>
         </div>
+
+        <!-- Send/Rsend Dialog -->
+        <v-dialog v-model="sendDialog.visible" max-width="560">
+          <v-card>
+            <v-card-title class="text-h6">{{ invoice?.status === 'draft' ? 'Envoyer la facture' : 'Renvoyer la facture' }}</v-card-title>
+            <v-card-text>
+              <div class="d-flex flex-column gap-4">
+                <div>
+                  <div class="text-subtitle-2 mb-1">Destinataires</div>
+                  <v-combobox
+                    v-model="sendDialog.recipients"
+                    :items="contactOptions"
+                    item-title="label"
+                    item-value="value"
+                    chips
+                    multiple
+                    closable-chips
+                    :disabled="sendDialog.loading"
+                    variant="outlined"
+                    density="comfortable"
+                    placeholder="Sélectionnez un ou plusieurs contacts"
+                  />
+                </div>
+                <div>
+                  <div class="text-subtitle-2 mb-1">Message (optionnel)</div>
+                  <v-textarea v-model="sendDialog.message" :disabled="sendDialog.loading" variant="outlined" rows="4" placeholder="Ajoutez un message personnalisé" />
+                </div>
+                <div class="d-flex align-center mt-2">
+                  <v-checkbox v-model="sendDialog.sendCopyToSelf" :disabled="sendDialog.loading" density="compact" hide-details class="mr-2" />
+                  <span>M'envoyer une copie ({{ authStore.user?.email || '—' }})</span>
+                </div>
+              </div>
+            </v-card-text>
+            <v-card-actions>
+              <v-spacer />
+              <v-btn variant="text" @click="sendDialog.visible = false" :disabled="sendDialog.loading">Annuler</v-btn>
+              <v-btn color="primary" @click="confirmSend" :loading="sendDialog.loading" :disabled="!sendDialog.recipients.length">Envoyer</v-btn>
+            </v-card-actions>
+          </v-card>
+        </v-dialog>
 
         <!-- Content Grid -->
         <v-row>
@@ -118,18 +163,26 @@
 <script setup lang="ts">
 import { PaymentForm, PaymentHistory } from "@/components/billing"
 import AppLayout from "@/components/layout/AppLayout.vue"
-import { invoicesApi, documentsApi } from "@/services/api"
+import { invoicesApi, documentsApi, institutionsApi } from "@/services/api"
+import { useAuthStore } from "@/stores/auth"
 import type { Invoice, InvoiceStatus } from "@medical-crm/shared"
 import { computed, onMounted, ref } from "vue"
 import { useRoute, useRouter } from "vue-router"
 
 const route = useRoute()
 const router = useRouter()
+const authStore = useAuthStore()
 
 const invoice = ref<Invoice | null>(null)
 const loading = ref(false)
 const showPaymentDialog = ref(false)
 const snackbar = ref({ visible: false, message: '', color: 'info' })
+const sendDialog = ref({ visible: false, recipients: [] as string[], message: '', loading: false, sendCopyToSelf: true })
+const contacts = ref<{ id: string; firstName: string; lastName: string; email: string; isPrimary: boolean }[]>([])
+const contactOptions = computed(() => contacts.value
+  .filter(c => !!c.email)
+  .map(c => ({ label: `${c.firstName} ${c.lastName} <${c.email}>`, value: c.email }))
+)
 
 const lineHeaders = [
   { title: 'Description', value: 'description' },
@@ -157,14 +210,60 @@ const refreshInvoice = () => loadInvoice()
 const goBack = () => router.push("/invoices")
 const editInvoice = () => router.push(`/invoices/${invoice.value?.id}/edit`)
 
-const sendInvoice = async () => {
+const openSendDialog = async () => {
   if (!invoice.value) return
   try {
+    const instId = (invoice.value as any).institutionId || (invoice.value.institution as any)?.id
+    if (instId) {
+      const resp = await institutionsApi.getById(instId)
+      const payload = (resp as any).data || resp
+      const inst = payload?.institution || payload
+      contacts.value = inst?.contactPersons || []
+    } else {
+      contacts.value = []
+    }
+  } catch (e) {
+    contacts.value = []
+  }
+  sendDialog.value.visible = true
+}
+
+const confirmSend = async () => {
+  if (!invoice.value) return
+  sendDialog.value.loading = true
+  try {
     await invoicesApi.send(invoice.value.id)
-    showSnackbar("Invoice sent successfully", "success")
+    const rawRecipients = [
+      ...sendDialog.value.recipients,
+      ...(sendDialog.value.sendCopyToSelf && authStore.user?.email ? [authStore.user.email] : []),
+    ] as any[]
+    const normalizedRecipients = Array.from(new Set(
+      rawRecipients
+        .map((r: any) => (typeof r === 'string' ? r : r?.value || r?.email || ''))
+        .filter((e: string) => !!e)
+    ))
+    const resp = await documentsApi.generateInvoicePdf(invoice.value.id, {
+      email: true,
+      recipients: normalizedRecipients,
+      customMessage: sendDialog.value.message || undefined,
+    }) as any
+    const emailSent = resp?.data?.emailSent ?? false
+    if (emailSent) {
+      showSnackbar("Facture envoyée par email", "success")
+    } else {
+      const err = resp?.data?.emailError || 'Envoi non confirmé par le serveur'
+      showSnackbar(`Envoi email non confirmé: ${err}`, "warning")
+    }
+    sendDialog.value.visible = false
+    sendDialog.value.recipients = []
+    sendDialog.value.message = ''
+    sendDialog.value.sendCopyToSelf = false
     refreshInvoice()
-  } catch (error) {
-    showSnackbar("Failed to send invoice", "error")
+  } catch (error: any) {
+    const msg = error?.message ? `Erreur: ${error.message}` : "Échec de l'envoi de la facture"
+    showSnackbar(msg, "error")
+  } finally {
+    sendDialog.value.loading = false
   }
 }
 

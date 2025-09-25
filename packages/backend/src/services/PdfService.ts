@@ -116,6 +116,14 @@ export class PdfService {
           {
             model: MedicalInstitution,
             as: "institution",
+            include: [
+              // Include contacts to resolve recipient display name from email
+              {
+                model: sequelize.models.ContactPerson,
+                as: "contactPersons",
+                required: false,
+              },
+            ],
           },
           {
             model: User,
@@ -148,7 +156,7 @@ export class PdfService {
       const isFallbackTemplate = templateResult.isFallback
 
       // Convert to plain objects to avoid Sequelize getter/setter issues
-      const invoiceData = invoice.toJSON ? invoice.toJSON() : invoice
+      const invoiceData = invoice.toJSON ? invoice.toJSON() : (invoice as any)
       const linesData = lines.map(line => line.toJSON ? line.toJSON() : line)
       const paymentsData = payments.map(payment => payment.toJSON ? payment.toJSON() : payment)
       const institutionData = invoice.institution?.toJSON ? invoice.institution.toJSON() : invoice.institution
@@ -211,21 +219,55 @@ export class PdfService {
       }
 
       let emailResult
-      if (options.emailOptions && invoice.institution) {
+      if (options.emailOptions) {
         const providedRecipients = options.emailOptions.recipients || []
-        const fallbackEmail = this.getInstitutionContactEmail(invoice.institution)
-        const recipients = providedRecipients.length > 0
+        const fallbackEmail = invoiceData.institution ? this.getInstitutionContactEmail(invoiceData.institution) : null
+        let recipients: any[] = providedRecipients.length > 0
           ? providedRecipients
           : (fallbackEmail ? [fallbackEmail] : [])
+
+        // Normalize recipients to string emails
+        recipients = recipients
+          .map((r: any) => (typeof r === 'string' ? r : r?.value || r?.email || ''))
+          .filter((e: string) => !!e)
+
+        // Determine display name: prefer first matching contact full name, fallback to institution name, else "Client"
+        const firstRecipientEmail = Array.isArray(recipients) && recipients.length > 0 ? String(recipients[0]) : ""
+        const contacts = (invoiceData.institution && (invoiceData.institution as any).contactPersons) || []
+        let matchedContact = contacts.find((c: any) => (c?.email || '').toLowerCase() === firstRecipientEmail.toLowerCase())
+
+        // If not found in loaded contacts, try fetching contact by email from DB (with institution)
+        if (!matchedContact && firstRecipientEmail) {
+          try {
+            const ContactPerson = sequelize.models.ContactPerson
+            const cp = await ContactPerson.findOne({
+              where: { email: firstRecipientEmail },
+              include: [
+                { model: MedicalInstitution, as: 'institution', required: false },
+              ],
+            })
+            if (cp) {
+              matchedContact = cp.toJSON ? cp.toJSON() : cp
+            }
+          } catch (_) {}
+        }
+
+        const recipientDisplayName = matchedContact
+          ? `${matchedContact.firstName || ''} ${matchedContact.lastName || ''}`.trim()
+          : (
+              invoiceData.institution?.name ||
+              (matchedContact?.institution?.name) ||
+              "Client"
+            )
 
         if (recipients.length > 0) {
           emailResult = await this.emailService.sendInvoiceEmail(
             recipients,
-            invoice.institution.name,
-            invoice.invoiceNumber,
+            recipientDisplayName,
+            invoiceData.invoiceNumber,
             template.companyName,
-            invoice.dueDate,
-            invoice.total,
+            invoiceData.dueDate,
+            invoiceData.total,
             pdfBuffer,
             options.emailOptions.customMessage
           )
@@ -234,7 +276,7 @@ export class PdfService {
           if (version && emailResult.success) {
             await version.markAsEmailed(
               Array.isArray((emailResult as any).recipients) ? (emailResult as any).recipients : recipients,
-              `Invoice ${invoice.invoiceNumber} from ${template.companyName}`
+              `Invoice ${invoiceData.invoiceNumber} from ${template.companyName}`
             )
           }
         }

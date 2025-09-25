@@ -46,6 +46,26 @@ export class EmailService {
         rejectUnauthorized: process.env.NODE_ENV === "production",
       },
     })
+
+    // Optional verification to help diagnose SMTP setup at runtime
+    this.transporter
+      .verify()
+      .then(() => {
+        logger.info("SMTP transporter verified", {
+          host: process.env.SMTP_HOST,
+          port: process.env.SMTP_PORT,
+          secure: process.env.SMTP_SECURE,
+          from: `${this.fromName} <${this.fromAddress}>`,
+        })
+      })
+      .catch((err) => {
+        logger.error("SMTP transporter verification failed", {
+          error: (err as Error).message,
+          host: process.env.SMTP_HOST,
+          port: process.env.SMTP_PORT,
+          secure: process.env.SMTP_SECURE,
+        })
+      })
   }
 
   public async sendEmail(options: EmailOptions): Promise<EmailDeliveryResult> {
@@ -65,14 +85,19 @@ export class EmailService {
 
       const result = await this.transporter.sendMail(mailOptions)
 
-      logger.info("Email sent successfully", {
+      const accepted = (result as any).accepted || []
+      const rejected = (result as any).rejected || []
+
+      logger.info("Email send attempt completed", {
         messageId: result.messageId,
         recipients,
+        accepted,
+        rejected,
         subject: options.subject,
       })
 
       return {
-        success: true,
+        success: Array.isArray(accepted) ? accepted.length > 0 : true,
         messageId: result.messageId,
         recipients,
       }
@@ -102,15 +127,15 @@ export class EmailService {
     const subject = `Quote ${quoteNumber} from ${companyName}`
 
     const defaultMessage = `
-      <p>Dear ${recipientName},</p>
-      
-      <p>Please find attached our quote ${quoteNumber} for your review.</p>
-      
-      <p>If you have any questions or need clarification on any items, please don't hesitate to contact us.</p>
-      
-      <p>We look forward to working with you.</p>
-      
-      <p>Best regards,<br>
+      <p>Cher(e) ${recipientName},</p>
+
+      <p>Veuillez trouver ci-joint notre devis ${quoteNumber}.</p>
+
+      <p>Si vous avez des questions ou si vous avez besoin de clarifications sur des éléments, n'hésitez pas à nous contacter.</p>
+
+      <p>En attendant d'avoir le plaisir de travailler avec vous.</p>
+
+      <p>Cordialement,<br>
       ${companyName}</p>
     `
 
@@ -133,37 +158,63 @@ export class EmailService {
   public async sendInvoiceEmail(
     recipientEmail: string | string[],
     recipientName: string,
-    invoiceNumber: string,
-    companyName: string,
-    dueDate: Date,
-    totalAmount: number,
+    invoiceNumber: string | undefined,
+    companyName: string | undefined,
+    dueDate: Date | string | undefined,
+    totalAmount: number | string,
     pdfBuffer: Buffer,
     customMessage?: string
   ): Promise<EmailDeliveryResult> {
-    const subject = `Invoice ${invoiceNumber} from ${companyName}`
+    const safeCompany = companyName || process.env.EMAIL_FROM_NAME || "MVO"
+    const safeNumber = invoiceNumber || "N/A"
+    const safeRecipient = recipientName || "Client"
 
-    const formattedDueDate = dueDate.toLocaleDateString()
-    const formattedAmount = new Intl.NumberFormat("en-US", {
+    const subject = `Invoice ${safeNumber} from ${safeCompany}`
+
+    const formattedDueDate = dueDate
+      ? new Date(dueDate as any).toLocaleDateString()
+      : "N/A"
+    const amountNumber =
+      typeof totalAmount === "number" ? totalAmount : Number(totalAmount || 0)
+    const formattedAmount = new Intl.NumberFormat("fr-FR", {
       style: "currency",
-      currency: "USD",
-    }).format(totalAmount)
+      currency: "EUR",
+    }).format(amountNumber)
 
     const defaultMessage = `
-      <p>Dear ${recipientName},</p>
-      
-      <p>Please find attached invoice ${invoiceNumber} in the amount of ${formattedAmount}.</p>
-      
-      <p><strong>Payment is due by ${formattedDueDate}.</strong></p>
-      
-      <p>If you have any questions about this invoice or need to discuss payment arrangements, please contact us as soon as possible.</p>
-      
-      <p>Thank you for your business.</p>
-      
-      <p>Best regards,<br>
-      ${companyName}</p>
+      <p>Cher(e) ${safeRecipient},</p>
+
+      <p>Veuillez trouver ci-joint la facture ${safeNumber} d'un montant de ${formattedAmount}.</p>
+
+      <p><strong>Le paiement est dû avant le ${formattedDueDate}.</strong></p>
+
+      <p>Si vous avez des questions concernant cette facture ou si vous devez discuter des modalités de paiement, veuillez nous contacter dès que possible.</p>
+
+      <p>Merci pour votre confiance.</p>
+
+      <p>Cordialement,<br>
+      ${safeCompany}</p>
     `
 
-    const html = customMessage || defaultMessage
+    const customBlock = customMessage
+      ? `
+        <hr>
+        <p><strong>Message à votre attention:</strong></p>
+        <p>${(customMessage || "").replace(/\n/g, "<br>")}</p>
+      `
+      : ""
+
+    const html = `${defaultMessage}${customBlock}`
+
+    // Diagnostic log (without leaking body)
+    logger.info("Preparing invoice email", {
+      subject,
+      recipients: Array.isArray(recipientEmail) ? recipientEmail : [recipientEmail],
+      invoiceNumber: safeNumber,
+      dueDate: formattedDueDate,
+      amount: formattedAmount,
+      recipientName: safeRecipient,
+    })
 
     return this.sendEmail({
       to: recipientEmail,
@@ -171,7 +222,7 @@ export class EmailService {
       html,
       attachments: [
         {
-          filename: `Invoice-${invoiceNumber}.pdf`,
+          filename: `Invoice-${safeNumber}.pdf`,
           content: pdfBuffer,
           contentType: "application/pdf",
         },
@@ -192,23 +243,23 @@ export class EmailService {
     const subject = `Payment Reminder: Invoice ${invoiceNumber} - ${daysOverdue} days overdue`
 
     const formattedDueDate = dueDate.toLocaleDateString()
-    const formattedAmount = new Intl.NumberFormat("en-US", {
+    const formattedAmount = new Intl.NumberFormat("fr-FR", {
       style: "currency",
-      currency: "USD",
+      currency: "EUR",
     }).format(remainingAmount)
 
     const defaultMessage = `
-      <p>Dear ${recipientName},</p>
-      
-      <p>This is a friendly reminder that invoice ${invoiceNumber} in the amount of ${formattedAmount} was due on ${formattedDueDate} and is now ${daysOverdue} days overdue.</p>
-      
-      <p>If payment has already been sent, please disregard this notice. Otherwise, please arrange payment as soon as possible.</p>
-      
-      <p>If you have any questions or need to discuss payment arrangements, please contact us immediately.</p>
-      
-      <p>Thank you for your prompt attention to this matter.</p>
-      
-      <p>Best regards,<br>
+      <p>Cher(e) ${recipientName},</p>
+
+      <p>Ceci est un rappel amical que la facture ${invoiceNumber} d'un montant de ${formattedAmount} était due le ${formattedDueDate} et est maintenant en retard de ${daysOverdue} jours.</p>
+
+      <p>Si le paiement a déjà été envoyé, veuillez ignorer cet avis. Sinon, veuillez organiser le paiement dès que possible.</p>
+
+      <p>Si vous avez des questions ou si vous devez discuter des modalités de paiement, veuillez nous contacter immédiatement.</p>
+
+      <p>Merci pour votre retour rapide.</p>
+
+      <p>Cordialement,<br>
       ${companyName}</p>
     `
 

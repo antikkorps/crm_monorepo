@@ -35,7 +35,25 @@ class ApiClient {
         window.location.href = "/login"
         throw new Error("Unauthorized")
       }
-      throw new Error(`HTTP error! status: ${response.status}`)
+      // Try to extract error message from JSON body if available
+      try {
+        const contentType = response.headers.get("content-type") || ""
+        if (contentType.includes("application/json")) {
+          const errJson = await response.json().catch(() => null)
+          const serverMsg = (errJson?.error?.message) || (errJson?.message) || null
+          if (serverMsg) {
+            const e = new Error(serverMsg)
+            ;(e as any).status = response.status
+            ;(e as any).code = errJson?.error?.code || errJson?.code
+            throw e
+          }
+        }
+      } catch (_) {
+        // fallthrough to generic error
+      }
+      const e = new Error(`HTTP error ${response.status}`)
+      ;(e as any).status = response.status
+      throw e
     }
 
     // Handle empty responses (e.g., 204 No Content)

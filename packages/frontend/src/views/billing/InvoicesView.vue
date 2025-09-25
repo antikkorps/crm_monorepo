@@ -80,13 +80,62 @@
             <div class="d-flex gap-1">
               <v-btn icon="mdi-eye" variant="text" size="small" @click="viewInvoice(item.id)" title="Voir"></v-btn>
               <v-btn v-if="canModifyInvoice(item)" icon="mdi-pencil" variant="text" size="small" @click="editInvoice(item.id)" title="Modifier"></v-btn>
-              <v-btn v-if="item.status === 'draft'" icon="mdi-send" variant="text" size="small" color="primary" @click="sendInvoice(item.id)" title="Envoyer par email"></v-btn>
+              <v-btn
+                v-if="['draft','sent','overdue','partially_paid','paid'].includes(item.status)"
+                :icon="'mdi-send'"
+                variant="text"
+                size="small"
+                color="primary"
+                @click="openSendDialog(item)"
+                :title="item.status === 'draft' ? 'Envoyer' : 'Renvoyer'"
+              ></v-btn>
             </div>
           </template>
         </v-data-table>
       </v-card>
 
       <InvoiceForm v-model:visible="showCreateDialog" @invoice-created="onInvoiceCreated" @notify="({ message, color }) => showSnackbar(message, color)" />
+      
+      <!-- Send/Rsend Dialog -->
+      <v-dialog v-model="sendDialog.visible" max-width="560">
+        <v-card>
+          <v-card-title class="text-h6">{{ sendDialog.context?.status === 'draft' ? 'Envoyer la facture' : 'Renvoyer la facture' }}</v-card-title>
+          <v-card-text>
+            <div class="d-flex flex-column gap-4">
+              <div>
+                <div class="text-subtitle-2 mb-1">Destinataires</div>
+                <v-combobox
+                  v-model="sendDialog.recipients"
+                  :items="contactOptions"
+                  item-title="label"
+                  item-value="value"
+                  chips
+                  multiple
+                  closable-chips
+                  :disabled="sendDialog.loading"
+                  variant="outlined"
+                  density="comfortable"
+                  placeholder="Sélectionnez un ou plusieurs contacts"
+                />
+                <div class="mt-3">
+                  <div class="text-subtitle-2 mb-1">Message (optionnel)</div>
+                  <v-textarea v-model="sendDialog.message" :disabled="sendDialog.loading" variant="outlined" rows="4" placeholder="Ajoutez un message personnalisé" />
+                </div>
+                <div class="d-flex align-center mt-2">
+                  <v-checkbox v-model="sendDialog.sendCopyToSelf" :disabled="sendDialog.loading" density="compact" hide-details class="mr-2" />
+                  <span>M'envoyer une copie ({{ authStore.user?.email || '—' }})</span>
+                </div>
+              </div>
+              
+            </div>
+          </v-card-text>
+          <v-card-actions>
+            <v-spacer />
+            <v-btn variant="text" @click="sendDialog.visible = false" :disabled="sendDialog.loading">Annuler</v-btn>
+            <v-btn color="primary" @click="confirmSend" :loading="sendDialog.loading" :disabled="!sendDialog.recipients.length">Envoyer</v-btn>
+          </v-card-actions>
+        </v-card>
+      </v-dialog>
       <PaymentForm v-model:visible="showPaymentDialog" :invoice="selectedInvoice" @payment-recorded="onPaymentRecorded" />
       <v-snackbar v-model="snackbar.visible" :color="snackbar.color" timeout="3000">{{ snackbar.message }}</v-snackbar>
     </div>
@@ -97,13 +146,15 @@
 import InvoiceForm from "@/components/billing/InvoiceForm.vue"
 import PaymentForm from "@/components/billing/PaymentForm.vue"
 import AppLayout from "@/components/layout/AppLayout.vue"
-import { institutionsApi, invoicesApi } from "@/services/api"
+import { institutionsApi, invoicesApi, documentsApi } from "@/services/api"
+import { useAuthStore } from "@/stores/auth"
 import type { Invoice, InvoiceStatus } from "@medical-crm/shared"
 import { onMounted, ref, computed } from "vue"
 import { useI18n } from "vue-i18n"
 import { useRouter } from "vue-router"
 
 const router = useRouter()
+const authStore = useAuthStore()
 const { t } = useI18n()
 
 const invoices = ref<Invoice[]>([])
@@ -115,6 +166,12 @@ const showCreateDialog = ref(false)
 const showPaymentDialog = ref(false)
 const selectedInvoice = ref<Invoice | null>(null)
 const snackbar = ref({ visible: false, message: '', color: 'info' })
+const sendDialog = ref({ visible: false, recipients: [] as string[], message: '', loading: false, sendCopyToSelf: true, context: null as Invoice | null })
+const contacts = ref<{ id: string; firstName: string; lastName: string; email: string; isPrimary: boolean }[]>([])
+const contactOptions = computed(() => contacts.value
+  .filter(c => !!c.email)
+  .map(c => ({ label: `${c.firstName} ${c.lastName} <${c.email}>`, value: c.email }))
+)
 
 const filters = ref<{ status: InvoiceStatus | null; institutionId: string | null; search: string }>({ status: null, institutionId: null, search: "" })
 const pagination = ref({ currentPage: 1, rowsPerPage: 10 })
@@ -202,13 +259,62 @@ const clearFilters = () => {
 const viewInvoice = (id: string) => router.push(`/invoices/${id}`)
 const editInvoice = (id: string) => router.push(`/invoices/${id}/edit`)
 
-const sendInvoice = async (id: string) => {
+const openSendDialog = async (item: Invoice) => {
   try {
-    await invoicesApi.send(id)
-    showSnackbar("Facture envoyée avec succès", "success")
+    sendDialog.value.context = item
+    const instId = (item as any).institutionId || (item.institution as any)?.id
+    if (instId) {
+      const resp = await institutionsApi.getById(instId)
+      const payload = (resp as any).data || resp
+      const inst = payload?.institution || payload
+      contacts.value = inst?.contactPersons || []
+    } else {
+      contacts.value = []
+    }
+    sendDialog.value.visible = true
+  } catch (e) {
+    contacts.value = []
+    sendDialog.value.visible = true
+  }
+}
+
+const confirmSend = async () => {
+  if (!sendDialog.value.context) return
+  sendDialog.value.loading = true
+  try {
+    await invoicesApi.send(sendDialog.value.context.id)
+    const rawRecipients = [
+      ...sendDialog.value.recipients,
+      ...(sendDialog.value.sendCopyToSelf && authStore.user?.email ? [authStore.user.email] : []),
+    ] as any[]
+    const normalizedRecipients = Array.from(new Set(
+      rawRecipients
+        .map((r: any) => (typeof r === 'string' ? r : r?.value || r?.email || ''))
+        .filter((e: string) => !!e)
+    ))
+    const resp = await documentsApi.generateInvoicePdf(sendDialog.value.context.id, {
+      email: true,
+      recipients: normalizedRecipients,
+      customMessage: sendDialog.value.message || undefined,
+    }) as any
+    const emailSent = resp?.data?.emailSent ?? false
+    if (emailSent) {
+      showSnackbar("Facture envoyée par email", "success")
+    } else {
+      const err = resp?.data?.emailError || 'Envoi non confirmé par le serveur'
+      showSnackbar(`Envoi email non confirmé: ${err}` , "warning")
+    }
+    sendDialog.value.visible = false
+    sendDialog.value.recipients = []
+    sendDialog.value.message = ''
+    sendDialog.value.sendCopyToSelf = false
+    sendDialog.value.context = null
     loadInvoices()
-  } catch (error) {
-    showSnackbar("Erreur lors de l'envoi de la facture", "error")
+  } catch (error: any) {
+    const msg = error?.message ? `Erreur: ${error.message}` : "Échec de l'envoi de la facture"
+    showSnackbar(msg, "error")
+  } finally {
+    sendDialog.value.loading = false
   }
 }
 
