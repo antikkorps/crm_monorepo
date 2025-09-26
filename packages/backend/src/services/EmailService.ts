@@ -172,7 +172,7 @@ export class EmailService {
     const subject = `Invoice ${safeNumber} from ${safeCompany}`
 
     const formattedDueDate = dueDate
-      ? new Date(dueDate as any).toLocaleDateString()
+      ? new Date(dueDate as any).toLocaleDateString("fr-FR")
       : "N/A"
     const amountNumber =
       typeof totalAmount === "number" ? totalAmount : Number(totalAmount || 0)
@@ -242,7 +242,7 @@ export class EmailService {
   ): Promise<EmailDeliveryResult> {
     const subject = `Payment Reminder: Invoice ${invoiceNumber} - ${daysOverdue} days overdue`
 
-    const formattedDueDate = dueDate.toLocaleDateString()
+    const formattedDueDate = dueDate.toLocaleDateString("fr-FR")
     const formattedAmount = new Intl.NumberFormat("fr-FR", {
       style: "currency",
       currency: "EUR",
