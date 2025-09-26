@@ -131,6 +131,7 @@ export interface Invoice extends BaseEntity {
   // Metadata
   sentAt?: Date
   paidAt?: Date
+  archived?: boolean
 
   // Associated data
   lines?: InvoiceLine[]

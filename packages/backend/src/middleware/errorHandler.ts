@@ -1,5 +1,6 @@
 import { Context, Next } from "../types/koa"
 import { logger } from "../utils/logger"
+import config from "../config/environment"
 
 export interface AppError extends Error {
   status?: number
@@ -43,6 +44,17 @@ export const errorHandler = async (ctx: Context, next: Next) => {
       errorResponse.error.message = "Internal server error"
       errorResponse.error.details = null
     }
+
+    // Ensure CORS headers on error responses (especially useful in development)
+    try {
+      const allowOrigin = config.env === "development" ? "*" : config.cors.origin
+      ctx.set("Access-Control-Allow-Origin", allowOrigin)
+      ctx.set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS, PATCH")
+      ctx.set(
+        "Access-Control-Allow-Headers",
+        "Origin, X-Requested-With, Content-Type, Accept, Authorization, X-Request-ID"
+      )
+    } catch {}
 
     ctx.body = errorResponse
 

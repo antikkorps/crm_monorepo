@@ -70,6 +70,13 @@ router.put("/:id/send", requireTeamPermission("canEditOwnInvoices"), InvoiceCont
 // PUT /api/invoices/:id/cancel - Cancel invoice
 router.put("/:id/cancel", InvoiceController.cancelInvoice)
 
+// PUT /api/invoices/:id/status - Update invoice status
+router.put("/:id/status", InvoiceController.updateInvoiceStatus)
+
+// Archive/unarchive
+router.put("/:id/archive", InvoiceController.archiveInvoice)
+router.put("/:id/unarchive", InvoiceController.unarchiveInvoice)
+
 // Invoice line management endpoints
 // GET /api/invoices/:id/lines - Get invoice lines
 router.get("/:id/lines", InvoiceController.getInvoiceLines)

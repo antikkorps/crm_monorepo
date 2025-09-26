@@ -194,9 +194,9 @@
           </template>
 
           <template #item.recordedBy="{ item }">
-            <div v-if="item.recordedBy" class="user-cell">
+            <div v-if="item.recordedBy || item.recordedByUser" class="user-cell">
               <span>
-                {{ item.recordedBy }}
+                {{ item.recordedByUser ? `${item.recordedByUser.firstName} ${item.recordedByUser.lastName}` : item.recordedBy }}
               </span>
             </div>
           </template>
@@ -225,7 +225,7 @@
                 <v-tooltip activator="parent" location="top">Confirm Payment</v-tooltip>
               </v-btn>
               <v-btn
-                v-if="item.status === 'pending' || item.status === 'confirmed'"
+                v-if="item.status === 'pending'"
                 icon="mdi-close"
                 variant="text"
                 size="small"
@@ -233,7 +233,7 @@
                 @click="cancelPayment(item)"
               >
                 <v-icon>mdi-close</v-icon>
-                <v-tooltip activator="parent" location="top">Cancel Payment</v-tooltip>
+                <v-tooltip activator="parent" location="top">Cancel Pending Payment</v-tooltip>
               </v-btn>
               <v-btn
                 icon="mdi-eye"
@@ -289,8 +289,8 @@
               </div>
               <div class="detail-item">
                 <label>Recorded By:</label>
-                <span v-if="selectedPayment.recordedBy">
-                  {{ selectedPayment.recordedBy }}
+                <span v-if="selectedPayment.recordedBy || selectedPayment.recordedByUser">
+                  {{ selectedPayment.recordedByUser ? `${selectedPayment.recordedByUser.firstName} ${selectedPayment.recordedByUser.lastName}` : selectedPayment.recordedBy }}
                 </span>
               </div>
               <div class="detail-item">

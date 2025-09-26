@@ -10,6 +10,7 @@ import {
 } from "@medical-crm/shared"
 import { Op } from "sequelize"
 import { sequelize } from "../config/database"
+import { logger } from "../utils/logger"
 import { Invoice } from "../models/Invoice"
 import { InvoiceLine } from "../models/InvoiceLine"
 import { MedicalInstitution } from "../models/MedicalInstitution"
@@ -343,24 +344,44 @@ export class InvoiceService {
       }
     }
 
+    // Access raw value to avoid class-field shadowing issues
+    const currentStatus = (invoice as any).getDataValue
+      ? (invoice as any).getDataValue('status')
+      : (invoice as any).status
+    logger.debug("InvoiceService.sendInvoice: current status", { id, status: currentStatus })
+
     // Flexible behavior:
     // - If draft: mark as sent
     // - If already sent/partially_paid/overdue/paid: allow re-send (do not change status)
     // - If cancelled: block
-    if (invoice.status === InvoiceStatus.DRAFT) {
-      await invoice.send()
+    if (currentStatus === InvoiceStatus.DRAFT) {
+      // Persist status change explicitly using raw SQL to avoid any ORM quirks
+      logger.debug("InvoiceService.sendInvoice: forcing status to SENT via SQL", { id })
+      await sequelize.query(
+        'UPDATE "invoices" SET "status" = :status WHERE "id" = :id',
+        { replacements: { status: InvoiceStatus.SENT, id } }
+      )
     } else if (
       [
         InvoiceStatus.SENT,
         InvoiceStatus.PARTIALLY_PAID,
         InvoiceStatus.OVERDUE,
         InvoiceStatus.PAID,
-      ].includes(invoice.status as any)
+      ].includes(currentStatus as any)
     ) {
-      // Update last sent timestamp (reuse sentAt to reflect latest send time)
-      invoice.sentAt = new Date()
-      await invoice.save()
-    } else if (invoice.status === InvoiceStatus.CANCELLED) {
+      // Best-effort: update last sent timestamp if column exists (non-blocking)
+      try {
+        logger.debug("InvoiceService.sendInvoice: updating sentAt timestamp", { id })
+        await Invoice.update(
+          // @ts-expect-error sentAt may not exist in some DB schemas
+          { sentAt: new Date() },
+          { where: { id } }
+        )
+      } catch (e) {
+        logger.debug("InvoiceService.sendInvoice: sentAt update failed/ignored", { id, error: (e as any)?.message })
+        // Ignore if column doesn't exist; main goal is not blocked
+      }
+    } else if (currentStatus === InvoiceStatus.CANCELLED) {
       throw {
         code: "INVOICE_CANCELLED",
         message: "Cancelled invoice cannot be sent",
@@ -368,7 +389,10 @@ export class InvoiceService {
       }
     }
 
-    return this.getInvoiceById(id)
+    const updated = await this.getInvoiceById(id)
+    const updatedStatus = (updated as any).getDataValue ? (updated as any).getDataValue('status') : (updated as any).status
+    logger.debug("InvoiceService.sendInvoice: status after operation", { id, status: updatedStatus })
+    return updated
   }
 
   // Cancel invoice
@@ -386,6 +410,72 @@ export class InvoiceService {
 
     await invoice.cancel()
 
+    return this.getInvoiceById(id)
+  }
+
+  // Update invoice status
+  static async updateInvoiceStatus(id: string, status: string, userId: string, reason?: string): Promise<Invoice> {
+    const invoice = await this.getInvoiceById(id)
+
+    // Check permissions
+    if (!(await this.canUserModifyInvoice(invoice, userId))) {
+      throw {
+        code: "INSUFFICIENT_PERMISSIONS",
+        message: "You don't have permission to modify this invoice",
+        status: 403,
+      }
+    }
+
+    // Map string status to enum value
+    const statusMap: Record<string, InvoiceStatus> = {
+      'draft': InvoiceStatus.DRAFT,
+      'sent': InvoiceStatus.SENT,
+      'partially_paid': InvoiceStatus.PARTIALLY_PAID,
+      'paid': InvoiceStatus.PAID,
+      'overdue': InvoiceStatus.OVERDUE,
+      'cancelled': InvoiceStatus.CANCELLED,
+    }
+
+    const mappedStatus = statusMap[status]
+    if (!mappedStatus) {
+      throw {
+        code: "VALIDATION_ERROR",
+        message: `Invalid status: ${status}. Valid statuses are: ${Object.keys(statusMap).join(', ')}`,
+        status: 400,
+      }
+    }
+
+    // Persist status explicitly to avoid unexpected field updates
+    logger.debug("InvoiceService.updateInvoiceStatus: forcing status via SQL", { id, mappedStatus })
+    await sequelize.query(
+      'UPDATE "invoices" SET "status" = :status WHERE "id" = :id',
+      { replacements: { status: mappedStatus, id } }
+    )
+
+    return this.getInvoiceById(id)
+  }
+
+  // Archive invoice
+  static async archiveInvoice(id: string, userId: string): Promise<Invoice> {
+    const invoice = await this.getInvoiceById(id)
+
+    if (!(await this.canUserModifyInvoice(invoice, userId))) {
+      throw { code: "INSUFFICIENT_PERMISSIONS", message: "You don't have permission to modify this invoice", status: 403 }
+    }
+
+    await Invoice.update({ archived: true }, { where: { id } })
+    return this.getInvoiceById(id)
+  }
+
+  // Unarchive invoice
+  static async unarchiveInvoice(id: string, userId: string): Promise<Invoice> {
+    const invoice = await this.getInvoiceById(id)
+
+    if (!(await this.canUserModifyInvoice(invoice, userId))) {
+      throw { code: "INSUFFICIENT_PERMISSIONS", message: "You don't have permission to modify this invoice", status: 403 }
+    }
+
+    await Invoice.update({ archived: false }, { where: { id } })
     return this.getInvoiceById(id)
   }
 
@@ -636,7 +726,22 @@ export class InvoiceService {
       await transaction.commit()
 
       // Return payment with associations
-      return this.getPaymentById(payment.id)
+      const paymentId = (payment as any).getDataValue ? (payment as any).getDataValue('id') : (payment as any).id
+      if (!paymentId) {
+        // As a fallback, fetch latest payment for invoiceId and amount/date combo
+        const fetched = await Payment.findOne({
+          where: {
+            invoiceId: paymentData.invoiceId,
+            amount: paymentData.amount,
+            paymentDate: paymentData.paymentDate,
+          },
+          order: [["created_at", "DESC"]],
+        })
+        if (fetched) {
+          return this.getPaymentById((fetched as any).getDataValue ? (fetched as any).getDataValue('id') : (fetched as any).id)
+        }
+      }
+      return this.getPaymentById(paymentId)
     } catch (error) {
       await transaction.rollback()
       throw error
@@ -648,13 +753,27 @@ export class InvoiceService {
     const payment = await this.getPaymentById(paymentId)
 
     // Check permissions (only the recorder or admin can confirm)
-    if (payment.recordedBy !== userId) {
+    const recordedBy = (payment as any).getDataValue ? (payment as any).getDataValue('recordedBy') : (payment as any).recordedBy
+    if (recordedBy !== userId) {
       // TODO: Add role-based permission check
     }
 
-    await payment.confirm()
-
-    return this.getPaymentById(paymentId)
+    try {
+      const currStatus = (payment as any).getDataValue ? (payment as any).getDataValue('status') : (payment as any).status
+      logger.debug("InvoiceService.confirmPayment: before confirm", { paymentId, status: currStatus })
+      await payment.confirm()
+      const updated = await this.getPaymentById(paymentId)
+      const updStatus = (updated as any).getDataValue ? (updated as any).getDataValue('status') : (updated as any).status
+      logger.debug("InvoiceService.confirmPayment: after confirm", { paymentId, status: updStatus })
+      return updated
+    } catch (e: any) {
+      logger.error("InvoiceService.confirmPayment failed", { paymentId, error: e?.message, stack: e?.stack })
+      throw {
+        code: "PAYMENT_CONFIRM_ERROR",
+        message: e?.message || "Failed to confirm payment",
+        status: e?.status || 500,
+      }
+    }
   }
 
   // Cancel payment
@@ -666,7 +785,8 @@ export class InvoiceService {
     const payment = await this.getPaymentById(paymentId)
 
     // Check permissions (only the recorder or admin can cancel)
-    if (payment.recordedBy !== userId) {
+    const recordedBy = (payment as any).getDataValue ? (payment as any).getDataValue('recordedBy') : (payment as any).recordedBy
+    if (recordedBy !== userId) {
       // TODO: Add role-based permission check
     }
 
@@ -738,6 +858,17 @@ export class InvoiceService {
     ]
 
     // Apply filters
+    const includeArchived = (filters as any).includeArchived
+    const archivedFilter = (filters as any).archived
+    // Apply explicit archived filter if provided; otherwise default to active only
+    if (archivedFilter === true) {
+      where.archived = true
+    } else if (archivedFilter === false) {
+      where.archived = false
+    } else if (!includeArchived) {
+      // Default behavior: exclude archived unless explicitly included
+      where.archived = false
+    }
     if (filters.institutionId) {
       where.institutionId = filters.institutionId
     }
@@ -838,8 +969,42 @@ export class InvoiceService {
           where: { status: PaymentStatus.CONFIRMED },
           required: false,
         },
+        {
+          model: sequelize.models.InvoiceLine,
+          as: "lines",
+          required: false,
+        },
       ],
     })
+
+    // Calculate statistics directly from database values
+    const totalInvoices = invoices.length
+
+    // Use the stored total values directly from database
+    let totalAmount = 0
+    let paidAmount = 0
+    let pendingAmount = 0
+    let overdueAmount = 0
+
+    for (const invoice of invoices) {
+      const invoiceTotal = Number(invoice.getDataValue('total')) || 0
+      const invoicePaid = Number(invoice.getDataValue('totalPaid')) || 0
+      const invoiceStatus = invoice.getDataValue('status')
+
+      totalAmount += invoiceTotal
+      paidAmount += invoicePaid
+
+      if ([InvoiceStatus.SENT, InvoiceStatus.PARTIALLY_PAID].includes(invoiceStatus)) {
+        const remaining = invoiceTotal - invoicePaid
+        if (remaining > 0) {
+          pendingAmount += remaining
+        }
+      }
+
+      if (invoiceStatus === InvoiceStatus.OVERDUE) {
+        overdueAmount += (invoiceTotal - invoicePaid)
+      }
+    }
 
     const payments = await Payment.findAll({
       include: [
@@ -850,17 +1015,6 @@ export class InvoiceService {
         },
       ],
     })
-
-    // Calculate statistics
-    const totalInvoices = invoices.length
-    const totalAmount = invoices.reduce((sum, inv) => sum + inv.total, 0)
-    const paidAmount = invoices.reduce((sum, inv) => sum + inv.totalPaid, 0)
-    const pendingAmount = invoices
-      .filter((inv) => inv.status === InvoiceStatus.SENT)
-      .reduce((sum, inv) => sum + inv.remainingAmount, 0)
-    const overdueAmount = invoices
-      .filter((inv) => inv.status === InvoiceStatus.OVERDUE)
-      .reduce((sum, inv) => sum + inv.remainingAmount, 0)
 
     // Status breakdown
     const statusBreakdown: Record<InvoiceStatus, number> = {
@@ -873,7 +1027,10 @@ export class InvoiceService {
     }
 
     invoices.forEach((invoice) => {
-      statusBreakdown[invoice.status]++
+      const status = invoice.getDataValue('status')
+      if (status && statusBreakdown[status] !== undefined) {
+        statusBreakdown[status]++
+      }
     })
 
     // Payment method breakdown

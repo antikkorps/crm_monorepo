@@ -23,14 +23,17 @@
             </div>
           </div>
           <div class="d-flex flex-wrap gap-2">
-            <v-btn v-if="invoice.canBeModified" prepend-icon="mdi-pencil" variant="outlined" @click="editInvoice">Modifier</v-btn>
+            <v-btn :disabled="!canModifyInvoice(invoice)" :class="!canModifyInvoice(invoice) ? 'invisible-placeholder' : ''" prepend-icon="mdi-pencil" variant="outlined" @click="editInvoice">Modifier</v-btn>
             <v-btn
               v-if="['draft','sent','overdue','partially_paid','paid'].includes(invoice.status)"
               prepend-icon="mdi-send"
               color="primary"
               @click="openSendDialog"
             >{{ invoice.status === 'draft' ? 'Envoyer' : 'Renvoyer' }}</v-btn>
-            <v-btn v-if="invoice.canReceivePayments" prepend-icon="mdi-currency-usd" color="success" @click="showPaymentDialog = true">Encaisser</v-btn>
+            <v-btn :disabled="!canReceivePayment(invoice)" prepend-icon="mdi-currency-usd" color="success" @click="showPaymentDialog = true">Encaisser</v-btn>
+            <v-btn v-if="!(invoice as any).archived" prepend-icon="mdi-archive-outline" variant="outlined" color="secondary" @click="handleArchive">Archiver</v-btn>
+            <v-btn v-else prepend-icon="mdi-archive-arrow-up-outline" variant="outlined" color="secondary" @click="handleUnarchive">Désarchiver</v-btn>
+            <v-btn prepend-icon="mdi-swap-horizontal" variant="outlined" @click="statusDialog.visible = true">Changer Statut</v-btn>
             <v-menu>
               <template v-slot:activator="{ props }">
                 <v-btn v-bind="props" icon="mdi-dots-vertical" variant="text"></v-btn>
@@ -40,8 +43,8 @@
                 <v-list-item @click="printInvoice" prepend-icon="mdi-printer">Imprimer</v-list-item>
                 <v-divider />
                 <v-list-item @click="duplicateInvoice" prepend-icon="mdi-content-copy">Dupliquer</v-list-item>
-                <v-list-item @click="cancelInvoice" :disabled="!invoice.canBeModified" prepend-icon="mdi-cancel">Annuler</v-list-item>
-                <v-list-item @click="deleteInvoice" :disabled="!invoice.canBeDeleted" class="text-error" prepend-icon="mdi-delete">Supprimer</v-list-item>
+                <v-list-item @click="cancelInvoice" :disabled="!canModifyInvoice(invoice)" prepend-icon="mdi-cancel">Annuler</v-list-item>
+                <v-list-item @click="deleteInvoice" :disabled="!canModifyInvoice(invoice)" class="text-error" prepend-icon="mdi-delete">Supprimer</v-list-item>
               </v-list>
             </v-menu>
           </div>
@@ -83,6 +86,43 @@
               <v-spacer />
               <v-btn variant="text" @click="sendDialog.visible = false" :disabled="sendDialog.loading">Annuler</v-btn>
               <v-btn color="primary" @click="confirmSend" :loading="sendDialog.loading" :disabled="!sendDialog.recipients.length">Envoyer</v-btn>
+            </v-card-actions>
+          </v-card>
+        </v-dialog>
+
+        <!-- Status Change Dialog -->
+        <v-dialog v-model="statusDialog.visible" max-width="500">
+          <v-card>
+            <v-card-title class="text-h6">Modifier le statut de la facture</v-card-title>
+            <v-card-text>
+              <div class="mb-4">
+                <div class="text-subtitle-2 mb-2">Statut actuel :</div>
+                <v-chip :color="getStatusColor(invoice?.status)" variant="tonal" size="small">{{ getStatusLabel(invoice?.status) }}</v-chip>
+              </div>
+              <v-select
+                v-model="statusDialog.newStatus"
+                :items="availableStatuses"
+                item-title="label"
+                item-value="value"
+                label="Nouveau statut"
+                variant="outlined"
+                :disabled="statusDialog.loading"
+              />
+              <div v-if="statusDialog.newStatus" class="mt-3">
+                <div class="text-subtitle-2 mb-1">Raison du changement (optionnel)</div>
+                <v-textarea
+                  v-model="statusDialog.reason"
+                  variant="outlined"
+                  rows="3"
+                  :disabled="statusDialog.loading"
+                  placeholder="Expliquez pourquoi vous changez le statut..."
+                />
+              </div>
+            </v-card-text>
+            <v-card-actions>
+              <v-spacer />
+              <v-btn variant="text" @click="statusDialog.visible = false" :disabled="statusDialog.loading">Annuler</v-btn>
+              <v-btn color="primary" @click="() => { console.log('Status change button clicked'); confirmStatusChange(); }" :loading="statusDialog.loading" :disabled="!statusDialog.newStatus || statusDialog.newStatus === invoice?.status">Modifier</v-btn>
             </v-card-actions>
           </v-card>
         </v-dialog>
@@ -136,8 +176,8 @@
                   <span class="font-weight-bold">{{ formatCurrency(invoice.remainingAmount) }}</span>
                 </div>
                 <v-progress-linear :model-value="paymentPercentage" :color="getProgressColor()" height="10" rounded class="my-4"></v-progress-linear>
-                <div v-if="invoice.daysOverdue" class="text-error d-flex align-center gap-2"><v-icon>mdi-alert-circle-outline</v-icon><span>{{ invoice.daysOverdue }} jours de retard</span></div>
-                <div v-else-if="invoice.daysUntilDue !== null && invoice.daysUntilDue <= 7" class="text-warning d-flex align-center gap-2"><v-icon>mdi-clock-alert-outline</v-icon><span>Échéance dans {{ invoice.daysUntilDue }} jours</span></div>
+                <div v-if="(invoice as any)?.daysOverdue" class="text-error d-flex align-center gap-2"><v-icon>mdi-alert-circle-outline</v-icon><span>{{ (invoice as any).daysOverdue }} jours de retard</span></div>
+                <div v-else-if="(invoice as any)?.daysUntilDue !== null && (invoice as any)?.daysUntilDue <= 7" class="text-warning d-flex align-center gap-2"><v-icon>mdi-clock-alert-outline</v-icon><span>Échéance dans {{ (invoice as any).daysUntilDue }} jours</span></div>
               </v-card-text>
             </v-card>
             <v-card>
@@ -166,7 +206,7 @@ import AppLayout from "@/components/layout/AppLayout.vue"
 import { invoicesApi, documentsApi, institutionsApi } from "@/services/api"
 import { useAuthStore } from "@/stores/auth"
 import type { Invoice, InvoiceStatus } from "@medical-crm/shared"
-import { computed, onMounted, ref } from "vue"
+import { computed, onMounted, ref, watch } from "vue"
 import { useRoute, useRouter } from "vue-router"
 
 const route = useRoute()
@@ -178,17 +218,33 @@ const loading = ref(false)
 const showPaymentDialog = ref(false)
 const snackbar = ref({ visible: false, message: '', color: 'info' })
 const sendDialog = ref({ visible: false, recipients: [] as string[], message: '', loading: false, sendCopyToSelf: true })
+const statusDialog = ref({ visible: false, newStatus: '', reason: '', loading: false })
 const contacts = ref<{ id: string; firstName: string; lastName: string; email: string; isPrimary: boolean }[]>([])
 const contactOptions = computed(() => contacts.value
   .filter(c => !!c.email)
   .map(c => ({ label: `${c.firstName} ${c.lastName} <${c.email}>`, value: c.email }))
 )
 
+const availableStatuses = computed(() => {
+  if (!invoice.value) return []
+  const current = invoice.value.status
+  const allStatuses = [
+    { label: "Brouillon", value: "draft" },
+    { label: "Envoyé", value: "sent" },
+    { label: "Partiellement Payé", value: "partially_paid" },
+    { label: "Payé", value: "paid" },
+    { label: "En Retard", value: "overdue" },
+    { label: "Annulé", value: "cancelled" },
+  ]
+  // Remove current status from available options
+  return allStatuses.filter(s => s.value !== current)
+})
+
 const lineHeaders = [
   { title: 'Description', value: 'description' },
-  { title: 'Qté', value: 'quantity', align: 'end' },
-  { title: 'Prix Unitaire', value: 'unitPrice', align: 'end' },
-  { title: 'Total', value: 'total', align: 'end' },
+  { title: 'Qté', value: 'quantity', align: 'end' as const },
+  { title: 'Prix Unitaire', value: 'unitPrice', align: 'end' as const },
+  { title: 'Total', value: 'total', align: 'end' as const },
 ]
 
 const paymentPercentage = computed(() => invoice.value && invoice.value.total > 0 ? (invoice.value.totalPaid / invoice.value.total) * 100 : 0)
@@ -197,7 +253,7 @@ const loadInvoice = async () => {
   loading.value = true
   try {
     const response = await invoicesApi.getById(route.params.id as string)
-    invoice.value = response.data
+    invoice.value = (response as any).data
   } catch (error) {
     console.error("Failed to load invoice:", error)
     showSnackbar("Failed to load invoice", "error")
@@ -315,8 +371,8 @@ const getStatusColor = (status: InvoiceStatus) => ({ draft: "grey", sent: "info"
 const getDueDateClass = () => {
   if (!invoice.value) return ''
   if (invoice.value.status === "paid") return 'text-success'
-  if (invoice.value.daysOverdue && invoice.value.daysOverdue > 0) return 'text-error font-weight-bold'
-  if (invoice.value.daysUntilDue !== null && invoice.value.daysUntilDue <= 7) return 'text-warning'
+  if ((invoice.value as any)?.daysOverdue && (invoice.value as any).daysOverdue > 0) return 'text-error font-weight-bold'
+  if ((invoice.value as any)?.daysUntilDue !== null && (invoice.value as any).daysUntilDue <= 7) return 'text-warning'
   return ''
 }
 const getProgressColor = () => {
@@ -329,14 +385,132 @@ const getProgressColor = () => {
 const formatCurrency = (amount: number) => new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(amount || 0)
 const formatDate = (date: string | Date) => new Date(date).toLocaleDateString('fr-FR')
 
+const canModifyInvoice = (invoice: Invoice | null) => {
+  if (!invoice) return false
+  // Une facture peut être modifiée si :
+  // - elle est en brouillon (modification complète)
+  // - elle est envoyée mais pas encore payée (modification limitée)
+  // - elle est en retard mais pas encore payée (modification limitée)
+  return ['draft', 'sent', 'overdue'].includes(invoice.status) &&
+         (invoice.totalPaid === 0 || invoice.totalPaid < invoice.total)
+}
+
+const canReceivePayment = (invoice: Invoice | null) => {
+  if (!invoice) {
+    console.log("canReceivePayment: no invoice")
+    return false
+  }
+
+  // Convertir les strings en numbers si nécessaire
+  const remainingAmount = typeof invoice.remainingAmount === 'string'
+    ? parseFloat(invoice.remainingAmount)
+    : invoice.remainingAmount
+
+  // Règle alignée backend: uniquement sent / partially_paid / overdue
+  const allowedStatus = ['sent', 'partially_paid', 'overdue']
+  const archived = (invoice as any).archived === true
+  const result = allowedStatus.includes(invoice.status) && remainingAmount > 0 && !archived
+
+  console.log("canReceivePayment:", {
+    status: invoice.status,
+    remainingAmount: invoice.remainingAmount,
+    remainingAmountParsed: remainingAmount,
+    total: invoice.total,
+    totalPaid: invoice.totalPaid,
+    result
+  })
+
+  return result
+}
+
+const handleArchive = async () => {
+  if (!invoice.value) return
+  try {
+    await invoicesApi.archive(invoice.value.id)
+    showSnackbar('Facture archivée', 'info')
+    refreshInvoice()
+  } catch (e) {
+    showSnackbar("Échec de l'archivage", 'error')
+  }
+}
+
+const handleUnarchive = async () => {
+  if (!invoice.value) return
+  try {
+    await invoicesApi.unarchive(invoice.value.id)
+    showSnackbar('Facture désarchivée', 'info')
+    refreshInvoice()
+  } catch (e) {
+    showSnackbar("Échec du désarchivage", 'error')
+  }
+}
+
 const showSnackbar = (message: string, color: string) => {
   snackbar.value = { visible: true, message, color }
+}
+
+const confirmStatusChange = async () => {
+  console.log("confirmStatusChange called", {
+    hasInvoice: !!invoice.value,
+    invoiceId: invoice.value?.id,
+    newStatus: statusDialog.value.newStatus,
+    reason: statusDialog.value.reason
+  })
+
+  if (!invoice.value || !statusDialog.value.newStatus) {
+    console.log("Early return: missing invoice or status")
+    return
+  }
+
+  console.log("Proceeding with status change...")
+  statusDialog.value.loading = true
+  try {
+    console.log("About to call updateStatus API...")
+
+    // Utiliser l'endpoint approprié selon le statut
+    let result
+    if (statusDialog.value.newStatus === 'sent' && invoice.value.status === 'draft') {
+      console.log("Using send API for draft->sent transition")
+      result = await invoicesApi.send(invoice.value.id)
+    } else if (statusDialog.value.newStatus === 'cancelled') {
+      console.log("Using cancel API")
+      result = await invoicesApi.cancel(invoice.value.id)
+    } else {
+      console.log("Using generic updateStatus API")
+      result = await invoicesApi.updateStatus(
+        invoice.value.id,
+        statusDialog.value.newStatus,
+        statusDialog.value.reason || undefined
+      )
+    }
+
+    console.log("Status change result:", result)
+    showSnackbar(`Statut mis à jour vers "${getStatusLabel(statusDialog.value.newStatus as InvoiceStatus)}"`, "success")
+    statusDialog.value.visible = false
+    statusDialog.value.newStatus = ''
+    statusDialog.value.reason = ''
+    refreshInvoice()
+  } catch (error: any) {
+    console.error("Status update error:", error)
+    const msg = error?.message ? `Erreur: ${error.message}` : "Échec de la mise à jour du statut"
+    showSnackbar(msg, "error")
+  } finally {
+    console.log("Status update finally block")
+    statusDialog.value.loading = false
+  }
 }
 
 // Placeholder for actions not yet implemented
 const duplicateInvoice = () => showSnackbar("Fonctionnalité à venir", "info")
 const cancelInvoice = () => showSnackbar("Fonctionnalité à venir", "info")
 const deleteInvoice = () => showSnackbar("Fonctionnalité à venir", "info")
+
+watch(() => statusDialog.value.visible, (visible: boolean) => {
+  if (!visible) {
+    statusDialog.value.newStatus = ''
+    statusDialog.value.reason = ''
+  }
+})
 
 onMounted(loadInvoice)
 </script>
@@ -351,4 +525,5 @@ onMounted(loadInvoice)
 }
 .gap-2 { gap: 0.5rem; }
 .gap-4 { gap: 1rem; }
+.invisible-placeholder { visibility: hidden; }
 </style>

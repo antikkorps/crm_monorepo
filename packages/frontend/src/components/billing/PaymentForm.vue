@@ -23,6 +23,8 @@
                 :max="invoice.remainingAmount"
                 :error-messages="errors.amount"
                 prefix="€"
+                :hint="`Montant restant: ${formatCurrency(invoice.remainingAmount)}. Vous pouvez saisir un montant partiel.`"
+                persistent-hint
               />
             </v-col>
             <v-col cols="12" sm="6">
@@ -70,7 +72,7 @@
 
 <script setup lang="ts">
 import { invoicesApi } from "@/services/api"
-import type { Invoice, PaymentCreateRequest, PaymentMethod } from "@medical-crm/shared"
+import type { Invoice, PaymentCreateRequest } from "@medical-crm/shared"
 import { computed, ref, watch } from "vue"
 
 const props = defineProps<{ visible: boolean, invoice?: Invoice | null }>()
@@ -83,7 +85,7 @@ const emit = defineEmits<{
 const dialogVisible = computed({ get: () => props.visible, set: (value) => emit("update:visible", value) })
 
 const submitting = ref(false)
-const form = ref<Omit<PaymentCreateRequest, "invoiceId">>({ amount: 0, paymentDate: new Date(), paymentMethod: "bank_transfer", reference: "", notes: "" })
+const form = ref<Omit<PaymentCreateRequest, "invoiceId">>({ amount: 0, paymentDate: new Date().toISOString().split('T')[0] as any, paymentMethod: "bank_transfer" as any, reference: "", notes: "" })
 const errors = ref<Record<string, string>>({})
 
 const paymentMethods = [
@@ -111,11 +113,13 @@ const handleSubmit = async () => {
   try {
     const paymentData: PaymentCreateRequest = { ...form.value, invoiceId: props.invoice.id }
     const response = await invoicesApi.payments.create(props.invoice.id, paymentData)
-    emit("payment-recorded", response.data)
+    emit("payment-recorded", (response as any).data)
     emit("notify", { message: "Paiement enregistré avec succès", color: "success" })
     closeDialog()
-  } catch (error) {
-    emit("notify", { message: "Erreur lors de l'enregistrement du paiement", color: "error" })
+  } catch (error: any) {
+    console.error("Payment creation error:", error)
+    const errorMessage = error?.message || error?.response?.data?.error?.message || "Erreur lors de l'enregistrement du paiement"
+    emit("notify", { message: errorMessage, color: "error" })
   } finally {
     submitting.value = false
   }
@@ -125,9 +129,9 @@ const closeDialog = () => { dialogVisible.value = false }
 
 const resetForm = () => {
   form.value = {
-    amount: props.invoice?.remainingAmount || 0,
+    amount: 0, // Ne pas pré-remplir le montant pour permettre les paiements partiels
     paymentDate: new Date().toISOString().split('T')[0] as any,
-    paymentMethod: "bank_transfer",
+    paymentMethod: "bank_transfer" as any,
     reference: "",
     notes: "",
   }

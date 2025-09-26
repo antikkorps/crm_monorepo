@@ -22,6 +22,19 @@
             <v-col cols="12" md="3" sm="6">
               <v-select v-model="filters.institutionId" :items="institutions" item-title="name" item-value="id" label="Institution" variant="outlined" density="compact" clearable hide-details @update:model-value="loadInvoices" />
             </v-col>
+            <v-col cols="12" md="3" sm="6">
+              <v-select
+                v-model="archivageFilter"
+                :items="archivageOptions"
+                item-title="label"
+                item-value="value"
+                label="Archivage"
+                variant="outlined"
+                density="compact"
+                hide-details
+                @update:model-value="onArchivageChange"
+              />
+            </v-col>
             <v-col cols="12" md="2" sm="12" class="d-flex justify-end">
               <v-btn variant="text" @click="clearFilters" :disabled="!hasActiveFilters">Effacer</v-btn>
             </v-col>
@@ -77,18 +90,12 @@
             <div :class="getDueDateClass(item)">{{ formatDate(item.dueDate) }}</div>
           </template>
           <template #item.actions="{ item }">
-            <div class="d-flex gap-1">
+            <div class="d-flex gap-1 action-buttons">
               <v-btn icon="mdi-eye" variant="text" size="small" @click="viewInvoice(item.id)" title="Voir"></v-btn>
-              <v-btn v-if="canModifyInvoice(item)" icon="mdi-pencil" variant="text" size="small" @click="editInvoice(item.id)" title="Modifier"></v-btn>
-              <v-btn
-                v-if="['draft','sent','overdue','partially_paid','paid'].includes(item.status)"
-                :icon="'mdi-send'"
-                variant="text"
-                size="small"
-                color="primary"
-                @click="openSendDialog(item)"
-                :title="item.status === 'draft' ? 'Envoyer' : 'Renvoyer'"
-              ></v-btn>
+              <v-btn :class="!canModifyInvoice(item) ? 'invisible-placeholder' : ''" :disabled="!canModifyInvoice(item)" icon="mdi-pencil" variant="text" size="small" @click="editInvoice(item.id)" title="Modifier"></v-btn>
+              <v-btn :class="!canSend(item) ? 'invisible-placeholder' : ''" :disabled="!canSend(item)" :icon="'mdi-send'" variant="text" size="small" color="primary" @click="openSendDialog(item)" :title="item.status === 'draft' ? 'Envoyer' : 'Renvoyer'"></v-btn>
+              <v-btn :class="'invisible-placeholder'" v-if="!item.archived" icon="mdi-archive-outline" variant="text" size="small" color="secondary" @click="archiveInvoice(item)" title="Archiver"></v-btn>
+              <v-btn :class="'invisible-placeholder'" v-else icon="mdi-archive-arrow-up-outline" variant="text" size="small" color="secondary" @click="unarchiveInvoice(item)" title="Désarchiver"></v-btn>
             </div>
           </template>
         </v-data-table>
@@ -173,7 +180,29 @@ const contactOptions = computed(() => contacts.value
   .map(c => ({ label: `${c.firstName} ${c.lastName} <${c.email}>`, value: c.email }))
 )
 
-const filters = ref<{ status: InvoiceStatus | null; institutionId: string | null; search: string }>({ status: null, institutionId: null, search: "" })
+const filters = ref<{ status: InvoiceStatus | null; institutionId: string | null; search: string; includeArchived?: boolean; archived?: boolean | null }>({ status: null, institutionId: null, search: "", includeArchived: false, archived: null })
+const archivageOptions = [
+  { label: 'Actives', value: 'active' },
+  { label: 'Archivées', value: 'archived' },
+  { label: 'Toutes', value: 'all' },
+]
+const archivageFilter = ref<'active' | 'archived' | 'all'>('active')
+
+const onArchivageChange = () => {
+  if (archivageFilter.value === 'active') {
+    filters.value.includeArchived = false
+    filters.value.archived = false
+  } else if (archivageFilter.value === 'archived') {
+    // Explicitly request only archived
+    filters.value.includeArchived = false
+    filters.value.archived = true
+  } else {
+    // all
+    filters.value.includeArchived = true
+    filters.value.archived = null
+  }
+  loadInvoices()
+}
 const pagination = ref({ currentPage: 1, rowsPerPage: 10 })
 
 const statusOptions = [
@@ -185,11 +214,13 @@ const statusOptions = [
   { label: "Annulé", value: "cancelled" },
 ]
 
+// Map backend stats to cards (backend returns amounts + counts)
+// Backend fields: totalInvoices, totalAmount, paidAmount, pendingAmount, overdueAmount
 const statisticsCards = computed(() => [
   { label: "Factures Totales", value: statistics.value.totalInvoices || 0, icon: "mdi-file-document-outline", color: "primary" },
-  { label: "En Attente", value: statistics.value.pendingInvoices || 0, icon: "mdi-clock-outline", color: "warning" },
-  { label: "En Retard", value: statistics.value.overdueInvoices || 0, icon: "mdi-alert-circle-outline", color: "error" },
-  { label: "Revenu Total", value: formatCurrency(statistics.value.totalRevenue || 0), icon: "mdi-cash-multiple", color: "success" },
+  { label: "Montant en attente", value: formatCurrency(statistics.value.pendingAmount || 0), icon: "mdi-clock-outline", color: "warning" },
+  { label: "Montant en retard", value: formatCurrency(statistics.value.overdueAmount || 0), icon: "mdi-alert-circle-outline", color: "error" },
+  { label: "Montant payé", value: formatCurrency(statistics.value.paidAmount || 0), icon: "mdi-cash-multiple", color: "success" },
 ])
 
 const tableHeaders = computed(() => [
@@ -202,7 +233,7 @@ const tableHeaders = computed(() => [
   { title: t('invoices.table.actions'), value: 'actions', align: 'end' as const, sortable: false },
 ])
 
-const hasActiveFilters = computed(() => !!(filters.value.status || filters.value.institutionId || filters.value.search))
+const hasActiveFilters = computed(() => !!(filters.value.status || filters.value.institutionId || filters.value.search || archivageFilter.value !== 'active'))
 
 let searchTimeout: any
 const debouncedSearch = () => {
@@ -213,7 +244,7 @@ const debouncedSearch = () => {
 const loadInvoices = async () => {
   loading.value = true
   try {
-    const params = { ...filters.value, page: pagination.value.currentPage, limit: pagination.value.rowsPerPage }
+  const params = { ...filters.value, page: pagination.value.currentPage, limit: pagination.value.rowsPerPage }
     const response = await invoicesApi.getAll(params)
     const data = (response as any).data
     const meta = (response as any).meta
@@ -252,12 +283,34 @@ const onTableUpdate = (options: any) => {
 }
 
 const clearFilters = () => {
-  filters.value = { status: null, institutionId: null, search: "" }
+  filters.value = { status: null, institutionId: null, search: "", includeArchived: false, archived: null }
+  archivageFilter.value = 'active'
   loadInvoices()
 }
 
 const viewInvoice = (id: string) => router.push(`/invoices/${id}`)
 const editInvoice = (id: string) => router.push(`/invoices/${id}/edit`)
+const canSend = (item: Invoice) => ['draft','sent','overdue','partially_paid','paid'].includes(item.status)
+
+const archiveInvoice = async (item: Invoice) => {
+  try {
+    await invoicesApi.archive(item.id)
+    showSnackbar('Facture archivée', 'info')
+    loadInvoices(); loadStatistics()
+  } catch (e) {
+    showSnackbar("Échec de l'archivage", 'error')
+  }
+}
+
+const unarchiveInvoice = async (item: Invoice) => {
+  try {
+    await invoicesApi.unarchive(item.id)
+    showSnackbar('Facture désarchivée', 'info')
+    loadInvoices(); loadStatistics()
+  } catch (e) {
+    showSnackbar("Échec du désarchivage", 'error')
+  }
+}
 
 const openSendDialog = async (item: Invoice) => {
   try {
@@ -353,8 +406,12 @@ const getDueDateClass = (invoice: Invoice) => {
 }
 
 const canModifyInvoice = (invoice: Invoice) => {
-  // Une facture peut être modifiée si elle est en brouillon ou envoyée (pas encore payée)
-  return invoice.status === 'draft' || invoice.status === 'sent'
+  // Une facture peut être modifiée si :
+  // - elle est en brouillon (modification complète)
+  // - elle est envoyée mais pas encore payée (modification limitée)
+  // - elle est en retard mais pas encore payée (modification limitée)
+  return ['draft', 'sent', 'overdue'].includes(invoice.status) &&
+         (invoice.totalPaid === 0 || invoice.totalPaid < invoice.total)
 }
 
 onMounted(() => {
@@ -368,5 +425,7 @@ onMounted(() => {
 .invoices-view {
   padding: 1.5rem;
 }
+.invisible-placeholder { visibility: hidden; }
+.action-buttons { min-width: 120px; justify-content: flex-end; }
 .gap-4 { gap: 1rem; }
 </style>

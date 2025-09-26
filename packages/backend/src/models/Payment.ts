@@ -71,20 +71,38 @@ export class Payment
   }
 
   public canBeConfirmed(): boolean {
-    return this.status === PaymentStatus.PENDING
+    const status = (this as any).getDataValue ? (this as any).getDataValue('status') : this.status
+    return status === PaymentStatus.PENDING
   }
 
   public canBeCancelled(): boolean {
-    return [PaymentStatus.PENDING].includes(this.status)
+    const status = (this as any).getDataValue ? (this as any).getDataValue('status') : this.status
+    return [PaymentStatus.PENDING].includes(status)
   }
 
   public async confirm(): Promise<void> {
     if (!this.canBeConfirmed()) {
-      throw new Error("Payment cannot be confirmed in its current state")
+      throw {
+        code: "PAYMENT_NOT_CONFIRMABLE",
+        message: "Payment cannot be confirmed in its current state",
+        status: 400,
+      }
     }
 
-    this.status = PaymentStatus.CONFIRMED
-    await this.save()
+    // Persist status change explicitly
+    const paymentId = (this as any).getDataValue ? (this as any).getDataValue('id') : (this as any).id
+    if (!paymentId) {
+      throw {
+        code: "PAYMENT_ID_MISSING",
+        message: "Payment ID is missing on instance",
+        status: 500,
+      }
+    }
+    await (this.constructor as typeof Payment).update(
+      { status: PaymentStatus.CONFIRMED },
+      { where: { id: paymentId } }
+    )
+    await this.reload()
 
     // Update the invoice payment status
     const invoice = await this.getInvoice()
@@ -113,16 +131,32 @@ export class Payment
 
   public async cancel(reason?: string): Promise<void> {
     if (!this.canBeCancelled()) {
-      throw new Error("Payment cannot be cancelled in its current state")
+      throw {
+        code: "PAYMENT_NOT_CANCELLABLE",
+        message: "Payment cannot be cancelled in its current state",
+        status: 400,
+      }
     }
 
-    this.status = PaymentStatus.CANCELLED
+    // Build new notes if provided
+    let newNotes = this.notes || undefined
     if (reason) {
-      this.notes = this.notes
-        ? `${this.notes}\nCancelled: ${reason}`
-        : `Cancelled: ${reason}`
+      newNotes = newNotes ? `${newNotes}\nCancelled: ${reason}` : `Cancelled: ${reason}`
     }
-    await this.save()
+
+    const paymentId = (this as any).getDataValue ? (this as any).getDataValue('id') : (this as any).id
+    if (!paymentId) {
+      throw {
+        code: "PAYMENT_ID_MISSING",
+        message: "Payment ID is missing on instance",
+        status: 500,
+      }
+    }
+    await (this.constructor as typeof Payment).update(
+      { status: PaymentStatus.CANCELLED, notes: newNotes },
+      { where: { id: paymentId } }
+    )
+    await this.reload()
 
     // Update the invoice payment status
     const invoice = await this.getInvoice()
@@ -136,19 +170,26 @@ export class Payment
       return this.invoice
     }
     const { Invoice } = require("./Invoice")
-    return Invoice.findByPk(this.invoiceId)
+    const invId = (this as any).getDataValue ? (this as any).getDataValue('invoiceId') : (this as any).invoiceId
+    return Invoice.findByPk(invId)
   }
 
   public isRecent(): boolean {
-    const daysSincePayment = Math.floor(
-      (Date.now() - this.paymentDate.getTime()) / (1000 * 60 * 60 * 24)
-    )
+    const date: Date | undefined = (this as any).getDataValue
+      ? (this as any).getDataValue('paymentDate')
+      : (this as any).paymentDate
+    if (!date) return false
+    const daysSincePayment = Math.floor((Date.now() - new Date(date).getTime()) / (1000 * 60 * 60 * 24))
     return daysSincePayment <= 7
   }
 
   public getFormattedReference(): string {
     if (!this.reference) {
-      return `${this.paymentMethod.toUpperCase()}-${this.id.slice(-8)}`
+      const method = (this as any).getDataValue
+        ? (this as any).getDataValue('paymentMethod')
+        : (this as any).paymentMethod
+      const methodStr = method ? String(method).toUpperCase() : 'PAYMENT'
+      return `${methodStr}-${(this.id || '').slice(-8)}`
     }
     return this.reference
   }

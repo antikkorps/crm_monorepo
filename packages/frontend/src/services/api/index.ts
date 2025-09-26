@@ -403,6 +403,10 @@ export const invoicesApi = {
   send: (id: string) => apiClient.put(`/invoices/${id}/send`),
   cancel: (id: string) => apiClient.put(`/invoices/${id}/cancel`),
   reconcile: (id: string) => apiClient.put(`/invoices/${id}/reconcile`),
+  updateStatus: (id: string, status: string, reason?: string) =>
+    apiClient.put(`/invoices/${id}/status`, { status, reason }),
+  archive: (id: string) => apiClient.put(`/invoices/${id}/archive`),
+  unarchive: (id: string) => apiClient.put(`/invoices/${id}/unarchive`),
 
   // Invoice lines
   lines: {

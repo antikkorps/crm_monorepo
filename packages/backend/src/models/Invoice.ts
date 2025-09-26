@@ -82,6 +82,7 @@ export class Invoice
   // Metadata
   public sentAt?: Date
   public paidAt?: Date
+  public archived?: boolean
   public readonly createdAt!: Date
   public readonly updatedAt!: Date
 
@@ -110,19 +111,23 @@ export class Invoice
   }
 
   public canBeModified(): boolean {
-    return [InvoiceStatus.DRAFT].includes(this.status)
+    const status = (this as any).getDataValue ? (this as any).getDataValue('status') : this.status
+    return [InvoiceStatus.DRAFT].includes(status)
   }
 
   public canBeDeleted(): boolean {
-    return [InvoiceStatus.DRAFT].includes(this.status)
+    const status = (this as any).getDataValue ? (this as any).getDataValue('status') : this.status
+    return [InvoiceStatus.DRAFT].includes(status)
   }
 
   public canReceivePayments(): boolean {
+    const status = (this as any).getDataValue ? (this as any).getDataValue('status') : this.status
+    const archived = (this as any).getDataValue ? (this as any).getDataValue('archived') : (this as any).archived
     return [
       InvoiceStatus.SENT,
       InvoiceStatus.PARTIALLY_PAID,
       InvoiceStatus.OVERDUE,
-    ].includes(this.status)
+    ].includes(status) && !archived
   }
 
   public isFullyPaid(): boolean {
@@ -138,9 +143,24 @@ export class Invoice
       throw new Error("Only draft invoices can be sent")
     }
 
-    this.status = InvoiceStatus.SENT
-    this.sentAt = new Date()
-    await this.save()
+    // First, ensure status is persisted even if optional columns are missing
+    await (this.constructor as typeof Invoice).update(
+      { status: InvoiceStatus.SENT },
+      { where: { id: this.id } }
+    )
+
+    // Best-effort update of sentAt; ignore if column doesn't exist
+    try {
+      await (this.constructor as typeof Invoice).update(
+        // @ts-expect-error sentAt may not exist on some DB schemas
+        { sentAt: new Date() },
+        { where: { id: this.id } }
+      )
+    } catch {
+      // no-op
+    }
+
+    await this.reload()
   }
 
   public async cancel(): Promise<void> {
@@ -156,33 +176,56 @@ export class Invoice
     const payments = await this.getPayments()
 
     // Calculate total paid from confirmed payments only
-    this.totalPaid = payments
-      .filter((payment) => payment.status === "confirmed")
-      .reduce((sum, payment) => sum + payment.amount, 0)
-
-    this.remainingAmount = this.total - this.totalPaid
+    const totalPaid = payments
+      .filter((payment) => {
+        const status = (payment as any).getDataValue ? (payment as any).getDataValue('status') : (payment as any).status
+        return status === "confirmed"
+      })
+      .reduce((sum, payment) => sum + (Number((payment as any).getDataValue ? (payment as any).getDataValue('amount') : (payment as any).amount) || 0), 0)
+    const total = Number((this as any).getDataValue ? (this as any).getDataValue('total') : (this as any).total) || 0
+    const remainingAmount = total - totalPaid
 
     // Find the latest payment date
-    const confirmedPayments = payments.filter((payment) => payment.status === "confirmed")
+    const confirmedPayments = payments
+      .filter((payment) => {
+        const status = (payment as any).getDataValue ? (payment as any).getDataValue('status') : (payment as any).status
+        return status === "confirmed"
+      })
+      .map((p) => {
+        const d = (p as any).getDataValue ? (p as any).getDataValue('paymentDate') : (p as any).paymentDate
+        return d ? { p, d: new Date(d) } : null
+      })
+      .filter((x) => !!x)
+      .map((x: any) => x)
+    let lastPaymentDate: Date | undefined
     if (confirmedPayments.length > 0) {
-      this.lastPaymentDate = confirmedPayments.sort(
-        (a, b) => b.paymentDate.getTime() - a.paymentDate.getTime()
-      )[0].paymentDate
+      confirmedPayments.sort((a: any, b: any) => b.d.getTime() - a.d.getTime())
+      lastPaymentDate = confirmedPayments[0].d
     }
 
     // Update status based on payment amount
-    if (this.isFullyPaid()) {
-      this.status = InvoiceStatus.PAID
-      this.paidAt = this.lastPaymentDate || new Date()
-    } else if (this.isPartiallyPaid()) {
-      this.status = InvoiceStatus.PARTIALLY_PAID
-      this.paidAt = undefined
-    } else if (this.isOverdue() && this.status !== InvoiceStatus.CANCELLED) {
-      this.status = InvoiceStatus.OVERDUE
-      this.paidAt = undefined
+    let newStatus = (this as any).getDataValue ? (this as any).getDataValue('status') : (this as any).status
+    let paidAt: Date | undefined
+    const isFullyPaid = totalPaid >= total
+    const isPartiallyPaid = totalPaid > 0 && totalPaid < total
+    const overdue = this.isOverdue() && newStatus !== InvoiceStatus.CANCELLED
+    if (isFullyPaid) {
+      newStatus = InvoiceStatus.PAID
+      paidAt = lastPaymentDate || new Date()
+    } else if (isPartiallyPaid) {
+      newStatus = InvoiceStatus.PARTIALLY_PAID
+      paidAt = undefined
+    } else if (overdue) {
+      newStatus = InvoiceStatus.OVERDUE
+      paidAt = undefined
     }
 
-    await this.save()
+    const invoiceId = (this as any).getDataValue ? (this as any).getDataValue('id') : (this as any).id
+    await (this.constructor as typeof Invoice).update(
+      { totalPaid, remainingAmount, lastPaymentDate: lastPaymentDate as any, status: newStatus, paidAt: paidAt as any },
+      { where: { id: invoiceId } }
+    )
+    await this.reload()
   }
 
   public async recalculatePaymentTotals(): Promise<void> {
@@ -190,17 +233,29 @@ export class Invoice
 
     // Calculate total paid from confirmed payments only
     this.totalPaid = payments
-      .filter((payment) => payment.status === "confirmed")
-      .reduce((sum, payment) => sum + payment.amount, 0)
+      .filter((payment) => {
+        const status = (payment as any).getDataValue ? (payment as any).getDataValue('status') : (payment as any).status
+        return status === "confirmed"
+      })
+      .reduce((sum, payment) => sum + (Number((payment as any).getDataValue ? (payment as any).getDataValue('amount') : (payment as any).amount) || 0), 0)
 
     this.remainingAmount = this.total - this.totalPaid
 
     // Find the latest payment date
-    const confirmedPayments = payments.filter((payment) => payment.status === "confirmed")
+    const confirmedPayments = payments
+      .filter((payment) => {
+        const status = (payment as any).getDataValue ? (payment as any).getDataValue('status') : (payment as any).status
+        return status === "confirmed"
+      })
+      .map((p) => {
+        const d = (p as any).getDataValue ? (p as any).getDataValue('paymentDate') : (p as any).paymentDate
+        return d ? { p, d: new Date(d) } : null
+      })
+      .filter((x) => !!x)
+      .map((x: any) => x)
     if (confirmedPayments.length > 0) {
-      this.lastPaymentDate = confirmedPayments.sort(
-        (a, b) => b.paymentDate.getTime() - a.paymentDate.getTime()
-      )[0].paymentDate
+      confirmedPayments.sort((a: any, b: any) => b.d.getTime() - a.d.getTime())
+      this.lastPaymentDate = confirmedPayments[0].d
     } else {
       this.lastPaymentDate = undefined
     }
@@ -209,27 +264,32 @@ export class Invoice
   }
 
   public async updateStatusFromPayments(): Promise<void> {
-    // Update status based on payment amount
-    if (this.isFullyPaid()) {
-      this.status = InvoiceStatus.PAID
-      this.paidAt = this.lastPaymentDate || new Date()
-    } else if (this.isPartiallyPaid()) {
-      this.status = InvoiceStatus.PARTIALLY_PAID
-      this.paidAt = undefined
-    } else if (this.isOverdue() && this.status !== InvoiceStatus.CANCELLED) {
-      this.status = InvoiceStatus.OVERDUE
-      this.paidAt = undefined
-    } else if (this.status === InvoiceStatus.PAID && !this.isFullyPaid()) {
-      // If status was paid but now it's not fully paid, revert to appropriate status
-      if (this.isPartiallyPaid()) {
-        this.status = InvoiceStatus.PARTIALLY_PAID
-      } else {
-        this.status = InvoiceStatus.SENT
-      }
-      this.paidAt = undefined
+    const totalPaid = Number((this as any).getDataValue ? (this as any).getDataValue('totalPaid') : (this as any).totalPaid) || 0
+    const total = Number((this as any).getDataValue ? (this as any).getDataValue('total') : (this as any).total) || 0
+    let newStatus = (this as any).getDataValue ? (this as any).getDataValue('status') : (this as any).status
+    let paidAt: Date | undefined = (this as any).getDataValue ? (this as any).getDataValue('paidAt') : (this as any).paidAt
+
+    if (totalPaid >= total) {
+      newStatus = InvoiceStatus.PAID
+      const lastDate = (this as any).getDataValue ? (this as any).getDataValue('lastPaymentDate') : (this as any).lastPaymentDate
+      paidAt = lastDate || new Date()
+    } else if (totalPaid > 0) {
+      newStatus = InvoiceStatus.PARTIALLY_PAID
+      paidAt = undefined
+    } else if (this.isOverdue() && newStatus !== InvoiceStatus.CANCELLED) {
+      newStatus = InvoiceStatus.OVERDUE
+      paidAt = undefined
+    } else if (newStatus === InvoiceStatus.PAID && totalPaid < total) {
+      newStatus = totalPaid > 0 ? InvoiceStatus.PARTIALLY_PAID : InvoiceStatus.SENT
+      paidAt = undefined
     }
 
-    await this.save()
+    const invoiceId = (this as any).getDataValue ? (this as any).getDataValue('id') : (this as any).id
+    await (this.constructor as typeof Invoice).update(
+      { status: newStatus, paidAt: paidAt as any },
+      { where: { id: invoiceId } }
+    )
+    await this.reload()
   }
 
   public async recalculateTotals(): Promise<void> {
@@ -251,8 +311,9 @@ export class Invoice
       return this.lines
     }
     const InvoiceLine = sequelize.models.InvoiceLine
+    const invoiceId = (this as any).getDataValue ? (this as any).getDataValue('id') : (this as any).id
     return InvoiceLine.findAll({
-      where: { invoice_id: this.id },
+      where: { invoice_id: invoiceId },
       order: [["order_index", "ASC"]],
     })
   }
@@ -262,8 +323,9 @@ export class Invoice
       return this.payments
     }
     const Payment = sequelize.models.Payment
+    const invoiceId = (this as any).getDataValue ? (this as any).getDataValue('id') : (this as any).id
     return Payment.findAll({
-      where: { invoice_id: this.id },
+      where: { invoice_id: invoiceId },
       order: [["payment_date", "DESC"]],
     })
   }
@@ -647,7 +709,8 @@ Invoice.init(
       type: DataTypes.DECIMAL(10, 2),
       allowNull: false,
       defaultValue: 0,
-      field: "total_paid",
+      // Align to existing dev DB column name without migration
+      field: "paid_amount",
       validate: {
         min: 0,
       },
@@ -709,6 +772,11 @@ Invoice.init(
       type: DataTypes.DATE,
       allowNull: true,
       field: "paid_at",
+    },
+    archived: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: false,
     },
     createdAt: {
       type: DataTypes.DATE,

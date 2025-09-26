@@ -371,6 +371,91 @@ export class InvoiceController {
     }
   }
 
+  // PUT /api/invoices/:id/status - Update invoice status
+  static async updateInvoiceStatus(ctx: Context) {
+    try {
+      const user = ctx.state.user as User
+      const { id } = ctx.params
+      const { status, reason } = ctx.request.body as { status: string; reason?: string }
+
+      if (!status) {
+        ctx.status = 400
+        ctx.body = {
+          success: false,
+          error: {
+            code: "VALIDATION_ERROR",
+            message: "Status is required",
+          },
+        }
+        return
+      }
+
+      const invoice = await InvoiceService.updateInvoiceStatus(id, status, user.id, reason)
+      ctx.body = {
+        success: true,
+        data: invoice,
+        message: `Invoice status updated to ${status}`,
+      }
+    } catch (error) {
+      if (error && typeof error === "object" && "code" in error) {
+        ctx.status = (error as any).status || 500
+        ctx.body = {
+          success: false,
+          error: {
+            code: (error as any).code,
+            message: (error as any).message,
+          },
+        }
+      } else {
+        ctx.status = 500
+        ctx.body = {
+          success: false,
+          error: {
+            code: "INVOICE_STATUS_UPDATE_ERROR",
+            message: "Failed to update invoice status",
+            details: error instanceof Error ? error.message : "Unknown error",
+          },
+        }
+      }
+    }
+  }
+
+  // PUT /api/invoices/:id/archive - Archive invoice
+  static async archiveInvoice(ctx: Context) {
+    try {
+      const user = ctx.state.user as User
+      const { id } = ctx.params
+      const invoice = await InvoiceService.archiveInvoice(id, user.id)
+      ctx.body = { success: true, data: invoice, message: "Invoice archived" }
+    } catch (error) {
+      if (error && typeof error === "object" && "code" in error) {
+        ctx.status = (error as any).status || 500
+        ctx.body = { success: false, error: { code: (error as any).code, message: (error as any).message } }
+      } else {
+        ctx.status = 500
+        ctx.body = { success: false, error: { code: "INVOICE_ARCHIVE_ERROR", message: "Failed to archive invoice" } }
+      }
+    }
+  }
+
+  // PUT /api/invoices/:id/unarchive - Unarchive invoice
+  static async unarchiveInvoice(ctx: Context) {
+    try {
+      const user = ctx.state.user as User
+      const { id } = ctx.params
+      const invoice = await InvoiceService.unarchiveInvoice(id, user.id)
+      ctx.body = { success: true, data: invoice, message: "Invoice unarchived" }
+    } catch (error) {
+      if (error && typeof error === "object" && "code" in error) {
+        ctx.status = (error as any).status || 500
+        ctx.body = { success: false, error: { code: (error as any).code, message: (error as any).message } }
+      } else {
+        ctx.status = 500
+        ctx.body = { success: false, error: { code: "INVOICE_UNARCHIVE_ERROR", message: "Failed to unarchive invoice" } }
+      }
+    }
+  }
+
   // GET /api/invoices/:id/lines - Get invoice lines
   static async getInvoiceLines(ctx: Context) {
     try {
