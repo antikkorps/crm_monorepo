@@ -1001,7 +1001,8 @@ export class InvoiceService {
         }
       }
 
-      if (invoiceStatus === InvoiceStatus.OVERDUE) {
+      // Check if invoice is overdue using the isOverdue method, not just status
+      if (invoice.isOverdue() && invoiceStatus !== InvoiceStatus.PAID && invoiceStatus !== InvoiceStatus.CANCELLED) {
         overdueAmount += (invoiceTotal - invoicePaid)
       }
     }
