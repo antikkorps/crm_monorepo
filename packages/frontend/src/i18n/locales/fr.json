@@ -782,6 +782,27 @@
     "positive": "La valeur doit être positive"
   },
   "invoices": {
+    "title": "Factures",
+    "subtitle": "Gérez vos factures et paiements",
+    "createNew": "Nouvelle Facture",
+    "searchPlaceholder": "Rechercher...",
+    "filters": {
+      "status": "Statut",
+      "institution": "Institution",
+      "archiving": "Archivage",
+      "clear": "Effacer",
+      "options": {
+        "active": "Actives",
+        "archived": "Archivées",
+        "all": "Toutes"
+      }
+    },
+    "statistics": {
+      "total": "Factures Totales",
+      "pending": "Montant en attente",
+      "overdue": "Montant en retard",
+      "paid": "Montant payé"
+    },
     "table": {
       "invoiceNumber": "Facture #",
       "institution": "Institution",
@@ -790,6 +811,118 @@
       "amount": "Montant",
       "dueDate": "Échéance",
       "actions": "Actions"
+    },
+    "status": {
+      "draft": "Brouillon",
+      "sent": "Envoyé",
+      "partially_paid": "Partiellement Payé",
+      "paid": "Payé",
+      "overdue": "En Retard",
+      "cancelled": "Annulé"
+    },
+    "actions": {
+      "view": "Voir",
+      "edit": "Modifier",
+      "send": "Envoyer",
+      "resend": "Renvoyer",
+      "receive": "Encaisser",
+      "archive": "Archiver",
+      "unarchive": "Désarchiver",
+      "downloadPdf": "Télécharger PDF",
+      "print": "Imprimer",
+      "duplicate": "Dupliquer",
+      "cancel": "Annuler",
+      "delete": "Supprimer",
+      "changeStatus": "Changer Statut",
+      "moreActions": "Plus d'actions"
+    },
+    "detail": {
+      "title": "Détails de la facture",
+      "notFound": "Facture non trouvée",
+      "invoiceNumber": "Numéro",
+      "invoiceTitle": "Titre",
+      "dueDate": "Date d'échéance",
+      "description": "Description",
+      "billingLines": "Lignes de facturation",
+      "subtotal": "Sous-total",
+      "discount": "Remise",
+      "tax": "Taxe",
+      "total": "Total",
+      "paymentStatus": "Statut du paiement",
+      "amountPaid": "Payé:",
+      "amountRemaining": "Restant:",
+      "daysOverdue": "{count} jours de retard",
+      "dueInDays": "Échéance dans {count} jours",
+      "institution": "Institution",
+      "assignedTo": "Assigné à"
+    },
+    "dialog": {
+      "send": {
+        "title": "Envoyer la facture",
+        "titleResend": "Renvoyer la facture",
+        "recipients": "Destinataires",
+        "recipientsPlaceholder": "Sélectionnez un ou plusieurs contacts",
+        "message": "Message (optionnel)",
+        "messagePlaceholder": "Ajoutez un message personnalisé",
+        "sendCopy": "M'envoyer une copie",
+        "send": "Envoyer",
+        "sending": "Envoi en cours..."
+      },
+      "statusChange": {
+        "title": "Modifier le statut de la facture",
+        "currentStatus": "Statut actuel :",
+        "newStatus": "Nouveau statut",
+        "reason": "Raison du changement (optionnel)",
+        "reasonPlaceholder": "Expliquez pourquoi vous changez le statut...",
+        "change": "Modifier"
+      }
+    },
+    "messages": {
+      "created": "Facture créée avec succès",
+      "updated": "Facture mise à jour avec succès",
+      "deleted": "Facture supprimée avec succès",
+      "sent": "Facture envoyée par email",
+      "sendFailed": "Échec de l'envoi de la facture",
+      "sendNotConfirmed": "Envoi email non confirmé: {error}",
+      "archived": "Facture archivée",
+      "unarchived": "Facture désarchivée",
+      "archiveFailed": "Échec de l'archivage",
+      "unarchiveFailed": "Échec du désarchivage",
+      "statusUpdated": "Statut mis à jour vers \"{status}\"",
+      "statusUpdateFailed": "Échec de la mise à jour du statut",
+      "loadFailed": "Erreur lors du chargement des factures",
+      "pdfDownloadFailed": "Failed to download PDF",
+      "pdfPrintFailed": "Failed to open invoice for printing",
+      "comingSoon": "Fonctionnalité à venir"
+    }
+  },
+  "billing": {
+    "payment": {
+      "form": {
+        "title": "Enregistrer un paiement",
+        "amount": "Montant",
+        "paymentDate": "Date de paiement",
+        "paymentMethod": "Méthode de paiement",
+        "reference": "Référence",
+        "notes": "Notes",
+        "methods": {
+          "cash": "Espèces",
+          "check": "Chèque",
+          "bank_transfer": "Virement bancaire",
+          "credit_card": "Carte de crédit",
+          "other": "Autre"
+        }
+      },
+      "history": {
+        "title": "Historique des paiements",
+        "noPayments": "Aucun paiement enregistré",
+        "recordPayment": "Enregistrer un paiement",
+        "amount": "Montant",
+        "date": "Date",
+        "method": "Méthode",
+        "reference": "Référence",
+        "status": "Statut"
+      }
     }
   },
   "templates": {

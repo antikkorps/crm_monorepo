@@ -13,17 +13,21 @@
       </div>
 
       <div v-else class="invoice-content">
-        <!-- Header -->
-        <div class="d-flex flex-wrap justify-space-between align-center gap-4 mb-6">
-          <div class="d-flex align-center gap-4">
+        <!-- Header (2 lignes desktop, stack mobile) -->
+        <div class="invoice-header mb-6">
+          <!-- Ligne 1: Titre + statut -->
+          <div class="d-flex align-center gap-3 flex-wrap">
             <v-btn icon="mdi-arrow-left" variant="text" @click="goBack" />
             <div>
-              <h1 class="text-h4 font-weight-bold">{{ invoice.invoiceNumber }}</h1>
+              <h1 class="text-h5 text-sm-h4 font-weight-bold mb-1">{{ invoice.invoiceNumber }}</h1>
               <v-chip :color="getStatusColor(invoice.status)" variant="tonal" size="small">{{ getStatusLabel(invoice.status) }}</v-chip>
             </div>
           </div>
-          <div class="d-flex flex-wrap gap-2">
-            <v-btn :disabled="!canModifyInvoice(invoice)" :class="!canModifyInvoice(invoice) ? 'invisible-placeholder' : ''" prepend-icon="mdi-pencil" variant="outlined" @click="editInvoice">Modifier</v-btn>
+
+          <!-- Ligne 2 desktop: toutes les actions, en wrap -->
+          <div class="d-none d-sm-flex align-center flex-wrap gap-2 mt-3">
+            <!-- Primaire -->
+            <v-btn :disabled="!canModifyInvoice(invoice)" prepend-icon="mdi-pencil" variant="outlined" @click="editInvoice">Modifier</v-btn>
             <v-btn
               v-if="['draft','sent','overdue','partially_paid','paid'].includes(invoice.status)"
               prepend-icon="mdi-send"
@@ -31,6 +35,10 @@
               @click="openSendDialog"
             >{{ invoice.status === 'draft' ? 'Envoyer' : 'Renvoyer' }}</v-btn>
             <v-btn :disabled="!canReceivePayment(invoice)" prepend-icon="mdi-currency-usd" color="success" @click="showPaymentDialog = true">Encaisser</v-btn>
+
+            <v-divider vertical class="mx-1" />
+
+            <!-- Secondaire -->
             <v-btn v-if="!(invoice as any).archived" prepend-icon="mdi-archive-outline" variant="outlined" color="secondary" @click="handleArchive">Archiver</v-btn>
             <v-btn v-else prepend-icon="mdi-archive-arrow-up-outline" variant="outlined" color="secondary" @click="handleUnarchive">Désarchiver</v-btn>
             <v-btn prepend-icon="mdi-swap-horizontal" variant="outlined" @click="statusDialog.visible = true">Changer Statut</v-btn>
@@ -39,6 +47,52 @@
                 <v-btn v-bind="props" icon="mdi-dots-vertical" variant="text"></v-btn>
               </template>
               <v-list>
+                <v-list-item @click="downloadPdf" prepend-icon="mdi-download">Télécharger PDF</v-list-item>
+                <v-list-item @click="printInvoice" prepend-icon="mdi-printer">Imprimer</v-list-item>
+                <v-divider />
+                <v-list-item @click="duplicateInvoice" prepend-icon="mdi-content-copy">Dupliquer</v-list-item>
+                <v-list-item @click="cancelInvoice" :disabled="!canModifyInvoice(invoice)" prepend-icon="mdi-cancel">Annuler</v-list-item>
+                <v-list-item @click="deleteInvoice" :disabled="!canModifyInvoice(invoice)" class="text-error" prepend-icon="mdi-delete">Supprimer</v-list-item>
+              </v-list>
+            </v-menu>
+          </div>
+
+          <!-- Ligne actions mobile: boutons en pleine largeur + menu -->
+          <div class="d-flex d-sm-none flex-column gap-2 mt-3">
+            <v-btn
+              v-if="['draft','sent','overdue','partially_paid','paid'].includes(invoice.status)"
+              prepend-icon="mdi-send"
+              color="primary"
+              @click="openSendDialog"
+              block
+              size="large"
+            >{{ invoice.status === 'draft' ? 'Envoyer' : 'Renvoyer' }}</v-btn>
+            <v-btn
+              v-if="canReceivePayment(invoice)"
+              prepend-icon="mdi-currency-usd"
+              color="success"
+              @click="showPaymentDialog = true"
+              block
+              size="large"
+            >Encaisser</v-btn>
+            <v-btn
+              :disabled="!canModifyInvoice(invoice)"
+              prepend-icon="mdi-pencil"
+              variant="outlined"
+              @click="editInvoice"
+              block
+              size="large"
+            >Modifier</v-btn>
+
+            <v-menu location="bottom start">
+              <template #activator="{ props }">
+                <v-btn v-bind="props" variant="outlined" block prepend-icon="mdi-dots-vertical">Plus d'actions</v-btn>
+              </template>
+              <v-list>
+                <v-list-item v-if="!(invoice as any).archived" prepend-icon="mdi-archive-outline" @click="handleArchive">Archiver</v-list-item>
+                <v-list-item v-else prepend-icon="mdi-archive-arrow-up-outline" @click="handleUnarchive">Désarchiver</v-list-item>
+                <v-list-item prepend-icon="mdi-swap-horizontal" @click="statusDialog.visible = true">Changer Statut</v-list-item>
+                <v-divider />
                 <v-list-item @click="downloadPdf" prepend-icon="mdi-download">Télécharger PDF</v-list-item>
                 <v-list-item @click="printInvoice" prepend-icon="mdi-printer">Imprimer</v-list-item>
                 <v-divider />
@@ -519,6 +573,8 @@ onMounted(loadInvoice)
 .invoice-detail-view {
   padding: 1.5rem;
 }
+.invoice-header { width: 100%; }
+.invoice-header .v-btn { white-space: nowrap; }
 .totals-summary {
   width: 100%;
   max-width: 350px;
@@ -526,4 +582,5 @@ onMounted(loadInvoice)
 .gap-2 { gap: 0.5rem; }
 .gap-4 { gap: 1rem; }
 .invisible-placeholder { visibility: hidden; }
+.flex-1-1-0 { flex: 1 1 0%; }
 </style>
