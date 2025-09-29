@@ -3,6 +3,7 @@ import { InstitutionAddress } from "../models/InstitutionAddress"
 import { MedicalInstitution, ContactPerson, Segment } from "../models"
 import { SegmentCriteria, SegmentType } from "../models/Segment"
 import { MedicalInstitutionSearchFilters } from "@medical-crm/shared"
+import { logger } from "../utils/logger"
 
 export class SegmentService {
   /**
@@ -30,6 +31,7 @@ export class SegmentService {
   ): Promise<ContactPerson[]> {
     if (!criteria.contactFilters) {
       // No filters provided -> no results instead of throwing
+      logger.warn('applyContactFilters: No contactFilters in criteria')
       return []
     }
 
@@ -38,9 +40,18 @@ export class SegmentService {
 
     const contactFilters = criteria.contactFilters
 
+    logger.info('applyContactFilters: Processing filters', {
+      contactFilters,
+      criteriaRaw: JSON.stringify(criteria, null, 2)
+    })
+
     // Apply contact-specific filters
     if (contactFilters.role && contactFilters.role.length > 0) {
       whereClause.title = { [Op.in]: contactFilters.role }
+      logger.info('applyContactFilters: Applied role filter', {
+        roleFilter: contactFilters.role,
+        whereTitleClause: whereClause.title
+      })
     }
 
     if (contactFilters.department && contactFilters.department.length > 0) {
@@ -135,23 +146,47 @@ export class SegmentService {
       Object.assign(whereClause, additionalFilters)
     }
 
-    const include = includeInstitution
-      ? [
-          {
-            model: MedicalInstitution,
-            as: "institution",
-            where: institutionWhere,
-            required: true,
-            ...(institutionNestedInclude ? { include: institutionNestedInclude } : {}),
-          },
-        ]
-      : []
+    // Always include institution for contacts (for export purposes)
+    const institutionInclude = includeInstitution
+      ? {
+          model: MedicalInstitution,
+          as: "institution",
+          where: institutionWhere,
+          required: true,
+          ...(institutionNestedInclude ? { include: institutionNestedInclude } : {}),
+        }
+      : {
+          model: MedicalInstitution,
+          as: "institution",
+          required: false,  // Don't filter by institution if no institution filters
+          attributes: ["id", "name", "type"]  // Only fetch basic info
+        }
 
-    return ContactPerson.findAll({
+    const include = [institutionInclude]
+
+    logger.info('applyContactFilters: Executing query', {
+      whereClause: JSON.stringify(whereClause, null, 2),
+      includeInstitution
+    })
+
+    const results = await ContactPerson.findAll({
       where: whereClause,
       include,
       order: [["firstName", "ASC"], ["lastName", "ASC"]],
     })
+
+    logger.info('applyContactFilters: Query results', {
+      resultCount: results.length,
+      firstResult: results[0] ? {
+        id: results[0].id,
+        firstName: results[0].firstName,
+        lastName: results[0].lastName,
+        title: results[0].title,
+        department: results[0].department
+      } : 'No results'
+    })
+
+    return results
   }
 
   /**
@@ -179,16 +214,34 @@ export class SegmentService {
   static async countSegmentResults(segment: Segment): Promise<number> {
     const criteria = segment.criteria
 
+    logger.info('countSegmentResults called', {
+      segmentId: segment.id,
+      segmentType: segment.type,
+      criteria: JSON.stringify(criteria, null, 2)
+    })
+
     switch (segment.type) {
       case SegmentType.INSTITUTION:
-        if (!criteria.institutionFilters) return 0
+        if (!criteria.institutionFilters) {
+          logger.warn('countSegmentResults: No institutionFilters')
+          return 0
+        }
         const institutions = await MedicalInstitution.searchInstitutions(criteria.institutionFilters)
+        logger.info('countSegmentResults: Institution count', { count: institutions.length })
         return institutions.length
       case SegmentType.CONTACT:
-        if (!criteria.contactFilters) return 0
+        if (!criteria.contactFilters) {
+          logger.warn('countSegmentResults: No contactFilters in criteria', {
+            criteriaKeys: Object.keys(criteria),
+            criteriaRaw: criteria
+          })
+          return 0
+        }
         const contacts = await this.applyContactFilters(criteria)
+        logger.info('countSegmentResults: Contact count', { count: contacts.length })
         return contacts.length
       default:
+        logger.warn('countSegmentResults: Unknown segment type', { type: segment.type })
         return 0
     }
   }
@@ -465,5 +518,291 @@ export class SegmentService {
     return {
       contactStats: stats,
     }
+  }
+
+  /**
+   * Get engagement metrics (tasks, meetings) for a segment
+   */
+  static async getEngagementMetrics(segment: Segment): Promise<{
+    tasks: {
+      total: number
+      completed: number
+      completionRate: number
+    }
+    meetings: {
+      total: number
+      completed: number
+      attendanceRate: number
+    }
+  }> {
+    const { Task } = await import("../models/Task")
+    const { Meeting } = await import("../models/Meeting")
+    const { MeetingParticipant } = await import("../models/MeetingParticipant")
+    const { TaskStatus } = await import("../models/Task")
+    const { MeetingStatus, ParticipantStatus } = await import("@medical-crm/shared")
+
+    let institutionIds: string[] = []
+    let contactIds: string[] = []
+
+    if (segment.type === "institution") {
+      const institutions = await this.applyInstitutionFilters(segment.criteria)
+      institutionIds = institutions.map(i => i.id)
+    } else {
+      const contacts = await this.applyContactFilters(segment.criteria)
+      contactIds = contacts.map(c => c.id)
+    }
+
+    // Get tasks
+    const taskWhere: any = {}
+    if (institutionIds.length > 0) {
+      taskWhere.institutionId = institutionIds
+    }
+    if (contactIds.length > 0) {
+      taskWhere.contactId = contactIds
+    }
+
+    const totalTasks = await Task.count({ where: taskWhere })
+    const completedTasks = await Task.count({
+      where: {
+        ...taskWhere,
+        status: TaskStatus.COMPLETED
+      }
+    })
+
+    // Get meetings
+    const meetingWhere: any = {}
+    if (institutionIds.length > 0) {
+      meetingWhere.institutionId = institutionIds
+    }
+
+    const totalMeetings = await Meeting.count({ where: meetingWhere })
+    const completedMeetings = await Meeting.count({
+      where: {
+        ...meetingWhere,
+        status: MeetingStatus.COMPLETED
+      }
+    })
+
+    // Calculate attendance rate from participants
+    let attendedCount = 0
+    let totalParticipants = 0
+
+    if (totalMeetings > 0) {
+      const meetings = await Meeting.findAll({
+        where: meetingWhere,
+        include: [{ model: MeetingParticipant, as: 'participants' }]
+      })
+
+      for (const meeting of meetings) {
+        if (meeting.participants) {
+          totalParticipants += meeting.participants.length
+          attendedCount += meeting.participants.filter(
+            p => p.status === ParticipantStatus.ACCEPTED
+          ).length
+        }
+      }
+    }
+
+    return {
+      tasks: {
+        total: totalTasks,
+        completed: completedTasks,
+        completionRate: totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0
+      },
+      meetings: {
+        total: totalMeetings,
+        completed: completedMeetings,
+        attendanceRate: totalParticipants > 0 ? (attendedCount / totalParticipants) * 100 : 0
+      }
+    }
+  }
+
+  /**
+   * Get top performers (users with most completed tasks) for a segment
+   */
+  static async getTopPerformers(segment: Segment, limit: number = 5): Promise<Array<{
+    id: string
+    firstName: string
+    lastName: string
+    email: string
+    avatarSeed?: string
+    tasksCompleted: number
+  }>> {
+    const { Task } = await import("../models/Task")
+    const { User } = await import("../models/User")
+    const { TaskStatus } = await import("../models/Task")
+
+    let institutionIds: string[] = []
+    let contactIds: string[] = []
+
+    if (segment.type === "institution") {
+      const institutions = await this.applyInstitutionFilters(segment.criteria)
+      institutionIds = institutions.map(i => i.id)
+    } else {
+      const contacts = await this.applyContactFilters(segment.criteria)
+      contactIds = contacts.map(c => c.id)
+    }
+
+    // Get tasks
+    const taskWhere: any = {}
+    if (institutionIds.length > 0) {
+      taskWhere.institutionId = institutionIds
+    }
+    if (contactIds.length > 0) {
+      taskWhere.contactId = contactIds
+    }
+
+    const tasks = await Task.findAll({
+      where: {
+        ...taskWhere,
+        status: TaskStatus.COMPLETED
+      },
+      include: [{
+        model: User,
+        as: 'assignee',
+        attributes: ['id', 'firstName', 'lastName', 'email', 'avatarSeed']
+      }]
+    })
+
+    // Count tasks per user
+    const userTaskCounts = new Map<string, { user: any, count: number }>()
+
+    for (const task of tasks) {
+      if (task.assignee) {
+        const userId = task.assignee.id
+        if (userTaskCounts.has(userId)) {
+          userTaskCounts.get(userId)!.count++
+        } else {
+          userTaskCounts.set(userId, { user: task.assignee, count: 1 })
+        }
+      }
+    }
+
+    // Sort by count and return top performers
+    const topPerformers = Array.from(userTaskCounts.values())
+      .sort((a, b) => b.count - a.count)
+      .slice(0, limit)
+      .map(({ user, count }) => ({
+        id: user.id,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        email: user.email,
+        avatarSeed: user.avatarSeed,
+        tasksCompleted: count
+      }))
+
+    return topPerformers
+  }
+
+  /**
+   * Get recent activity for a segment
+   */
+  static async getRecentActivity(segment: Segment, limit: number = 10): Promise<Array<{
+    id: string
+    type: 'task' | 'meeting' | 'update'
+    action: string
+    user: {
+      id: string
+      firstName: string
+      lastName: string
+    }
+    timestamp: Date
+  }>> {
+    const { Task } = await import("../models/Task")
+    const { Meeting } = await import("../models/Meeting")
+    const { User } = await import("../models/User")
+
+    let institutionIds: string[] = []
+    let contactIds: string[] = []
+
+    if (segment.type === "institution") {
+      const institutions = await this.applyInstitutionFilters(segment.criteria)
+      institutionIds = institutions.map(i => i.id)
+    } else {
+      const contacts = await this.applyContactFilters(segment.criteria)
+      contactIds = contacts.map(c => c.id)
+    }
+
+    const activities: Array<{
+      id: string
+      type: 'task' | 'meeting' | 'update'
+      action: string
+      user: { id: string, firstName: string, lastName: string }
+      timestamp: Date
+    }> = []
+
+    // Get recent tasks
+    const taskWhere: any = {}
+    if (institutionIds.length > 0) {
+      taskWhere.institutionId = institutionIds
+    }
+    if (contactIds.length > 0) {
+      taskWhere.contactId = contactIds
+    }
+
+    const recentTasks = await Task.findAll({
+      where: taskWhere,
+      include: [{
+        model: User,
+        as: 'assignee',
+        attributes: ['id', 'firstName', 'lastName']
+      }],
+      order: [['updatedAt', 'DESC']],
+      limit: limit
+    })
+
+    for (const task of recentTasks) {
+      if (task.assignee) {
+        activities.push({
+          id: `task-${task.id}`,
+          type: 'task',
+          action: `completed task: ${task.title}`,
+          user: {
+            id: task.assignee.id,
+            firstName: task.assignee.firstName,
+            lastName: task.assignee.lastName
+          },
+          timestamp: task.updatedAt
+        })
+      }
+    }
+
+    // Get recent meetings
+    const meetingWhere: any = {}
+    if (institutionIds.length > 0) {
+      meetingWhere.institutionId = institutionIds
+    }
+
+    const recentMeetings = await Meeting.findAll({
+      where: meetingWhere,
+      include: [{
+        model: User,
+        as: 'organizer',
+        attributes: ['id', 'firstName', 'lastName']
+      }],
+      order: [['updatedAt', 'DESC']],
+      limit: limit
+    })
+
+    for (const meeting of recentMeetings) {
+      if (meeting.organizer) {
+        activities.push({
+          id: `meeting-${meeting.id}`,
+          type: 'meeting',
+          action: `scheduled meeting: ${meeting.title}`,
+          user: {
+            id: meeting.organizer.id,
+            firstName: meeting.organizer.firstName,
+            lastName: meeting.organizer.lastName
+          },
+          timestamp: meeting.updatedAt
+        })
+      }
+    }
+
+    // Sort by timestamp and limit
+    return activities
+      .sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime())
+      .slice(0, limit)
   }
 }

@@ -31,7 +31,7 @@
                   chips
                   outlined
                   dense
-                  item-text="name"
+                  item-title="name"
                   item-value="id"
                   :rules="segmentSelectionRules"
                 >
@@ -213,7 +213,7 @@
                     <!-- Unique Records -->
                     <v-window-item value="unique">
                       <div class="mt-4">
-                        <v-simple-table dense>
+                        <v-table density="compact">
                           <thead>
                             <tr>
                               <th>{{ $t('segmentation.comparison.details.segment') }}</th>
@@ -231,14 +231,14 @@
                               <td>{{ ((segment.uniqueCount / segment.count) * 100).toFixed(1) }}%</td>
                             </tr>
                           </tbody>
-                        </v-simple-table>
+                        </v-table>
                       </div>
                     </v-window-item>
 
                     <!-- Shared Records -->
                     <v-window-item value="shared">
                       <div class="mt-4">
-                        <v-simple-table dense>
+                        <v-table density="compact">
                           <thead>
                             <tr>
                               <th>{{ $t('segmentation.comparison.details.segmentPair') }}</th>
@@ -256,7 +256,7 @@
                               <td>{{ overlap.percentage.toFixed(1) }}%</td>
                             </tr>
                           </tbody>
-                        </v-simple-table>
+                        </v-table>
                       </div>
                     </v-window-item>
 

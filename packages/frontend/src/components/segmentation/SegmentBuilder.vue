@@ -364,6 +364,11 @@ const saveSegment = async () => {
       criteria: currentCriteria.value
     }
 
+    console.log('SegmentBuilder: Saving segment with criteria:', JSON.stringify(segment.criteria, null, 2))
+    console.log('SegmentBuilder: Contact filters raw:', contactFilters.value)
+    console.log('SegmentBuilder: Institution filters raw:', institutionFilters.value)
+    console.log('SegmentBuilder: Combined filters raw:', combinedFilters.value)
+
     emit('save', segment)
   } catch (error) {
     console.error('Error saving segment:', error)

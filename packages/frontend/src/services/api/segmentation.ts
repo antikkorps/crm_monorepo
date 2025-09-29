@@ -6,6 +6,7 @@ import type {
   BulkOperationResult,
   SegmentPreviewData
 } from "@medical-crm/shared"
+import { getCurrentLocale } from "@/i18n"
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || "/api"
 
@@ -90,18 +91,18 @@ class SegmentationApiClient {
   }
 
   // Segment preview and analytics
-  async previewSegment(criteria: any): Promise<{ data: SegmentPreviewData }> {
+  async previewSegment(_criteria: any): Promise<{ data: SegmentPreviewData }> {
     // Backend preview endpoint not available yet; reuse results as a lightweight preview
     // by posting a temporary segment to results would be ideal; for now return empty structure
     return { data: { total: 0, sample: [], summary: {} } as unknown as SegmentPreviewData }
   }
 
-  async getSegmentAnalytics(id: string): Promise<{ data: SegmentAnalytics }> {
-    return this.get<{ data: SegmentAnalytics }>(`/segments/${id}/analytics`)
+  async getSegmentAnalytics(id: string): Promise<{ data: SegmentAnalyticsPayload }> {
+    return this.get<{ data: SegmentAnalyticsPayload }>(`/segments/${id}/analytics`)
   }
 
   // Segment sharing
-  async shareSegment(id: string, shareWith: string[], permissions: string): Promise<{ success: boolean }> {
+  async shareSegment(_id: string, _shareWith: string[], _permissions: string): Promise<{ success: boolean }> {
     // No backend endpoint yet; optimistically resolve
     return Promise.resolve({ success: true })
   }
@@ -145,13 +146,14 @@ class SegmentationApiClient {
       let keys = fields && fields.length > 0 ? fields : []
       if (keys.length === 0) {
         if (rows.length > 0) {
-          keys = Array.from(new Set(rows.flatMap(r => Object.keys(r))))
+          // Flatten fields from sample rows (avoid exporting raw objects)
+          keys = this.generateDefaultFields(rows)
         } else if (segmentMeta) {
           // Provide sensible defaults based on segment type when no data rows
           if (segmentMeta.type === 'institution') {
-            keys = ['id', 'name', 'type', 'address.city', 'address.state', 'assignedUserId']
+            keys = ['id', 'name', 'type', 'address.city', 'address.state', 'assignedUserId', 'createdAt', 'updatedAt']
           } else {
-            keys = ['id', 'firstName', 'lastName', 'email', 'phone', 'department', 'title', 'isPrimary']
+            keys = ['id', 'firstName', 'lastName', 'email', 'phone', 'department', 'title', 'isPrimary', 'institution.name', 'createdAt', 'updatedAt']
           }
         } else {
           keys = ['id', 'name']
@@ -164,21 +166,99 @@ class SegmentationApiClient {
     return { downloadUrl: url }
   }
 
-  // Very small CSV helper with dot-path support
+  // Generate default fields by flattening primitives from the first few rows
+  private generateDefaultFields(rows: any[], maxDepth: number = 2): string[] {
+    const sample = rows.slice(0, 5)
+    const fields = new Set<string>()
+
+    const isPrimitive = (v: any) => v == null || typeof v === 'string' || typeof v === 'number' || typeof v === 'boolean' || v instanceof Date
+
+    const collect = (obj: any, prefix: string = '', depth: number = 0) => {
+      if (!obj || depth > maxDepth) return
+      Object.keys(obj).forEach(key => {
+        const val = obj[key]
+        const path = prefix ? `${prefix}.${key}` : key
+        if (isPrimitive(val)) {
+          fields.add(path)
+        } else if (Array.isArray(val)) {
+          // Keep array at this level; formatter will join values
+          fields.add(path)
+        } else if (typeof val === 'object') {
+          // Prefer common display field if present
+          if (typeof val.name === 'string' || typeof val.name === 'number') {
+            fields.add(`${path}.name`)
+          } else {
+            collect(val, path, depth + 1)
+          }
+        }
+      })
+    }
+
+    sample.forEach(row => collect(row))
+
+    // Ensure some common fields exist if present
+    const promoteIfExists = (candidate: string, fallback?: string) => {
+      if (Array.from(fields).some(f => f === candidate)) return
+      if (fallback && Array.from(fields).some(f => f === fallback)) {
+        fields.add(candidate)
+      }
+    }
+    promoteIfExists('institution.name', 'institution')
+    promoteIfExists('address.city', 'address')
+
+    return Array.from(fields)
+  }
+
+  // CSV helper with dot-path support and locale-aware date formatting
   private toCsv(rows: any[], fields: string[]): string {
     const keys = fields
-    const escape = (val: any) => {
-      if (val === null || val === undefined) return ""
-      let s = typeof val === "object" ? JSON.stringify(val) : String(val)
-      if (/[",\n]/.test(s)) s = '"' + s.replace(/"/g, '""') + '"'
-      return s
+    const detected = (typeof navigator !== 'undefined' && navigator.language) ? navigator.language : 'fr-FR'
+    const locale = (() => {
+      try {
+        return getCurrentLocale() || detected
+      } catch {
+        return detected
+      }
+    })()
+
+    const formatValue = (val: any): string => {
+      if (val === null || val === undefined) return ''
+      // Date objects or ISO-like strings
+      if (val instanceof Date) {
+        return val.toLocaleDateString(locale)
+      }
+      if (typeof val === 'string') {
+        // Try to parse ISO date/time strings
+        const d = new Date(val)
+        if (!isNaN(d.getTime()) && /\d{4}-\d{2}-\d{2}/.test(val)) {
+          return d.toLocaleDateString(locale)
+        }
+        return val
+      }
+      if (Array.isArray(val)) {
+        return val.map(v => formatValue(v)).join(', ')
+      }
+      if (typeof val === 'object') {
+        // Prefer name if present
+        if (typeof (val as any).name === 'string') return (val as any).name
+        return JSON.stringify(val)
+      }
+      return String(val)
     }
+
+    const escape = (s: string) => {
+      let out = s
+      if (/[",\n]/.test(out)) out = '"' + out.replace(/"/g, '""') + '"'
+      return out
+    }
+
     const header = keys.join(",")
     if (!rows || rows.length === 0) return header + "\n"
+
     const get = (obj: any, path: string) => {
       return path.split('.').reduce((acc, key) => (acc ? acc[key] : undefined), obj)
     }
-    const lines = rows.map(r => keys.map(k => escape(get(r, k))).join(","))
+    const lines = rows.map(r => keys.map(k => escape(formatValue(get(r, k)))).join(","))
     return [header, ...lines].join("\n")
   }
 
@@ -198,3 +278,29 @@ export const segmentationApi = new SegmentationApiClient(API_BASE_URL)
 
 // Export class for testing or custom instances
 export { SegmentationApiClient }
+
+// Frontend shape of analytics payload returned by backend controller
+export interface SegmentAnalyticsPayload {
+  totalCount: number
+  lastUpdated?: string | Date
+  filtersCount?: number
+  usageStats?: { timesUsed: number; lastUsed?: string | Date }
+  institutionStats?: {
+    byType: Record<string, number>
+    byState?: Record<string, number>
+    bySpecialty?: Record<string, number>
+    averageBedCapacity?: number
+    averageSurgicalRooms?: number
+  }
+  contactStats?: {
+    byRole?: Record<string, number>
+    byDepartment?: Record<string, number>
+    primaryContacts?: number
+    withPhone?: number
+    withEmail?: number
+  }
+  tasks?: { total: number; completed: number; completionRate: number }
+  meetings?: { total: number; completed: number; attendanceRate: number }
+  topPerformers?: Array<{ firstName: string; lastName: string; email: string; avatarSeed?: string; tasksCompleted: number }>
+  recentActivity?: Array<{ user: { firstName: string; lastName: string }; action: string; type: string; timestamp: string | Date }>
+}

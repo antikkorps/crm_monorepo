@@ -3,7 +3,7 @@
     <!-- Available Filters -->
     <v-row class="mb-4">
       <v-col cols="12">
-        <v-chip-group v-model="selectedFilterType" column mandatory>
+        <v-chip-group v-model="selectedFilterType" column>
           <v-chip
             v-for="filterType in availableFilterTypes"
             :key="filterType.value"
@@ -137,7 +137,7 @@ const addFilter = (filter: Omit<SegmentBuilderFilter, "id">) => {
 
 const removeFilter = (index: number) => {
   filters.value.splice(index, 1)
-  emit("update:modelValue", filters.value)
+  emit("update:modelValue", [...filters.value])
   emit("filter-removed")
 }
 
@@ -163,12 +163,16 @@ const getFilterLabel = (filter: SegmentBuilderFilter): string => {
   return `${filter.label}: ${operator} ${value}`
 }
 
-// Watchers
+// Watchers - Only sync when external changes occur
 watch(
   () => props.modelValue,
   (newValue) => {
-    filters.value = [...newValue]
-  }
+    // Only update if the array reference is different and lengths differ
+    if (newValue.length !== filters.value.length) {
+      filters.value = [...newValue]
+    }
+  },
+  { deep: false }
 )
 </script>
 

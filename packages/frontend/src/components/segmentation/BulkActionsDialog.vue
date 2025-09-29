@@ -249,8 +249,20 @@
 import { ref, computed, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import type { Segment, BulkOperationOptions } from '@medical-crm/shared'
+import { segmentationApi } from '../../services/api/segmentation'
 
 const { t } = useI18n()
+
+// Helper function to format date
+const formatDate = (dateString: string | Date): string => {
+  if (!dateString) return ''
+  const date = new Date(dateString)
+  return date.toLocaleDateString('fr-FR', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
+  })
+}
 
 // Props
 interface Props {
@@ -403,6 +415,118 @@ const getConfirmationMessage = (): string => {
   }
 }
 
+const handleExportData = async () => {
+  try {
+    // Get segment results from API
+    const response = await segmentationApi.getSegmentResults(props.segment.id)
+    const results = response.data
+
+    if (!results || results.length === 0) {
+      console.warn('No data to export')
+      return
+    }
+
+    // Format data based on selected fields and segment type
+    const formattedData = results.map((item: any) => {
+      const row: any = {}
+
+      exportConfig.value.fields.forEach(field => {
+        switch (field) {
+          case 'firstName':
+            row[t('contact.firstName')] = item.firstName || ''
+            break
+          case 'lastName':
+            row[t('contact.lastName')] = item.lastName || ''
+            break
+          case 'email':
+            row[t('contact.email')] = item.email || ''
+            break
+          case 'phone':
+            row[t('contact.phone')] = item.phone || ''
+            break
+          case 'title':
+            row[t('contact.title')] = item.title || ''
+            break
+          case 'department':
+            row[t('contact.department')] = item.department || ''
+            break
+          case 'name':
+            row[t('institution.name')] = item.name || ''
+            break
+          case 'type':
+            row[t('institution.type')] = item.type || ''
+            break
+          case 'address':
+            row[t('institution.address')] = item.address ?
+              `${item.address.street || ''}, ${item.address.city || ''}, ${item.address.state || ''}`.trim() : ''
+            break
+          case 'specialties':
+            row[t('institution.specialties')] = item.medicalProfile?.specialties?.join(', ') || ''
+            break
+          case 'bedCapacity':
+            row[t('institution.bedCapacity')] = item.medicalProfile?.bedCapacity || ''
+            break
+        }
+      })
+
+      // Add institution name for contacts if includeContacts is checked
+      if (props.segment.type === 'contact' && exportConfig.value.includeContacts && item.institution) {
+        row[t('institution.name')] = item.institution.name || item.institutionId || ''
+      }
+
+      // Format dates
+      if (item.createdAt) {
+        row[t('common.createdAt')] = formatDate(item.createdAt)
+      }
+      if (item.updatedAt) {
+        row[t('common.updatedAt')] = formatDate(item.updatedAt)
+      }
+
+      return row
+    })
+
+    // Convert to CSV
+    const csvContent = convertToCSV(formattedData)
+
+    // Download file
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+    const link = document.createElement('a')
+    const url = URL.createObjectURL(blob)
+    link.setAttribute('href', url)
+    link.setAttribute('download', `${props.segment.name.replace(/[^a-z0-9]/gi, '_')}_export.csv`)
+    link.style.visibility = 'hidden'
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+  } catch (error) {
+    console.error('Error exporting data:', error)
+    throw error
+  }
+}
+
+const convertToCSV = (data: any[]): string => {
+  if (data.length === 0) return ''
+
+  const headers = Object.keys(data[0])
+  const csvRows = []
+
+  // Add headers
+  csvRows.push(headers.join(','))
+
+  // Add data rows
+  for (const row of data) {
+    const values = headers.map(header => {
+      const value = row[header]
+      // Escape quotes and wrap in quotes if contains comma or newline
+      const escaped = String(value).replace(/"/g, '""')
+      return escaped.includes(',') || escaped.includes('\n') ? `"${escaped}"` : escaped
+    })
+    csvRows.push(values.join(','))
+  }
+
+  return csvRows.join('\n')
+}
+
 const executeAction = async () => {
   if (!canExecute.value) return
 
@@ -460,19 +584,29 @@ const executeAction = async () => {
         throw new Error('Invalid action')
     }
 
-    // TODO: Call API to execute bulk operation
-    console.log('Executing bulk action:', selectedAction.value, options)
+    if (selectedAction.value === 'export_data') {
+      // Handle export data specifically
+      await handleExportData()
+      emit('action-completed', {
+        success: true,
+        processedCount: props.segment.stats?.totalCount || 0,
+        operation: 'export_data'
+      })
+    } else {
+      // TODO: Call API to execute other bulk operations
+      console.log('Executing bulk action:', selectedAction.value, options)
 
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 2000))
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 2000))
 
-    const result = {
-      success: true,
-      processedCount: props.segment.stats?.totalCount || 0,
-      operation: selectedAction.value
+      const result = {
+        success: true,
+        processedCount: props.segment.stats?.totalCount || 0,
+        operation: selectedAction.value
+      }
+
+      emit('action-completed', result)
     }
-
-    emit('action-completed', result)
   } catch (error) {
     console.error('Error executing bulk action:', error)
   } finally {

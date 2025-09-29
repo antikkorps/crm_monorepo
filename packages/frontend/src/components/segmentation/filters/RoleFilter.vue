@@ -10,6 +10,7 @@
       chips
       outlined
       dense
+      :loading="loading"
       class="mb-3"
     />
     <v-btn
@@ -25,8 +26,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { filterOptionsApi } from '../../../services/api/filterOptions'
 
 const { t } = useI18n()
 
@@ -44,25 +46,33 @@ const emit = defineEmits<{
 
 // Reactive data
 const selectedRoles = ref<string[]>([])
+const roleOptions = ref<Array<{ value: string; label: string }>>([])
+const loading = ref(false)
 
-// Mock role data - in real implementation, this would come from API
-const roleOptions = [
-  { value: 'admin', label: t('segmentation.filters.role.roles.admin') },
-  { value: 'manager', label: t('segmentation.filters.role.roles.manager') },
-  { value: 'doctor', label: t('segmentation.filters.role.roles.doctor') },
-  { value: 'nurse', label: t('segmentation.filters.role.roles.nurse') },
-  { value: 'receptionist', label: t('segmentation.filters.role.roles.receptionist') },
-  { value: 'specialist', label: t('segmentation.filters.role.roles.specialist') },
-  { value: 'coordinator', label: t('segmentation.filters.role.roles.coordinator') },
-  { value: 'assistant', label: t('segmentation.filters.role.roles.assistant') }
-]
+// Load roles from API
+onMounted(async () => {
+  try {
+    loading.value = true
+    const response = await filterOptionsApi.getContactRoles()
+    roleOptions.value = response.data.map(role => ({
+      value: role,
+      label: role
+    }))
+  } catch (error) {
+    console.error('Error loading roles:', error)
+    // Fallback to empty array
+    roleOptions.value = []
+  } finally {
+    loading.value = false
+  }
+})
 
 // Methods
 const addFilter = () => {
   if (selectedRoles.value.length === 0) return
 
-  const roleLabels = selectedRoles.value.map(role => 
-    roleOptions.find(opt => opt.value === role)?.label || role
+  const roleLabels = selectedRoles.value.map(role =>
+    roleOptions.value.find(opt => opt.value === role)?.label || role
   ).join(', ')
 
   emit('add-filter', {

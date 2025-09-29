@@ -216,8 +216,11 @@
 import { ref, computed, watch } from "vue"
 import { useI18n } from "vue-i18n"
 import type { Segment, SegmentVisibility, SegmentType } from "@medical-crm/shared"
+import { useAuthStore } from "../../stores/auth"
 
 const { t } = useI18n()
+const authStore = useAuthStore()
+const currentUserId = computed(() => authStore.user?.id)
 
 // Props
 interface Props {
@@ -253,7 +256,7 @@ const filteredSegments = computed(() => {
   // Filter by tab
   switch (activeTab.value) {
     case "mine":
-      filtered = filtered.filter((segment) => segment.ownerId === "current-user-id")
+      filtered = filtered.filter((segment) => segment.ownerId === currentUserId.value)
       break
     case "team":
       filtered = filtered.filter((segment) => segment.visibility === "team")
@@ -307,8 +310,7 @@ const getVisibilityLabel = (visibility: SegmentVisibility): string => {
 }
 
 const canEdit = (segment: Segment): boolean => {
-  // TODO: Implement proper permission checking
-  return segment.ownerId === "current-user-id" || segment.visibility === "team"
+  return segment.ownerId === currentUserId.value || segment.visibility === "team"
 }
 
 const canShare = (segment: Segment): boolean => {

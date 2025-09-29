@@ -1,13 +1,13 @@
 import { ref, reactive, computed } from "vue"
 import { segmentationApi } from "@/services/api/segmentation"
 import { debounce, SimpleCache } from "@/utils/performance"
-import type { 
-  Segment, 
-  SegmentCreationAttributes, 
-  SegmentAnalytics,
+import type {
+  Segment,
+  SegmentCreationAttributes,
   BulkOperationOptions,
   SegmentPreviewData
 } from "@medical-crm/shared"
+import type { SegmentAnalyticsPayload } from "@/services/api/segmentation"
 
 // Global cache for segments to avoid unnecessary reloads
 const segmentsCache = ref<{
@@ -188,7 +188,7 @@ export function useSegmentation() {
   const debouncedPreview = debounce(previewSegment, 500)
 
   // Get analytics
-  const getAnalytics = async (id: string): Promise<SegmentAnalytics | null> => {
+  const getAnalytics = async (id: string): Promise<SegmentAnalyticsPayload | null> => {
     loading.value = true
     error.value = null
     try {

@@ -11,6 +11,7 @@ import billingAnalyticsRoutes from "./routes/billing-analytics"
 import callRoutes from "./routes/calls"
 import catalogRoutes from "./routes/catalog"
 import contactRoutes from "./routes/contacts"
+import filterOptionsRoutes from "./routes/filterOptions"
 import institutionRoutes from "./routes/institutions"
 import invoiceRoutes from "./routes/invoices"
 import exportRoutes from "./routes/export"
@@ -153,6 +154,10 @@ export const createApp = (): Koa => {
   // Apply export routes
   app.use(exportRoutes.routes())
   app.use(exportRoutes.allowedMethods())
+
+  // Apply filter options routes
+  app.use(filterOptionsRoutes.routes())
+  app.use(filterOptionsRoutes.allowedMethods())
 
   // Apply quote routes
   app.use(quoteRoutes.routes())

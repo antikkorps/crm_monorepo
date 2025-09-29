@@ -41,9 +41,14 @@ export class SegmentController {
       const segmentsWithStats = await Promise.all(
         filteredSegments.map(async (segment) => {
           try {
+            // Fix Sequelize field access issue with public class fields
+            const segmentData = segment.toJSON() as any
+            segment.criteria = segmentData.criteria
+            segment.type = segmentData.type
+
             const stats = await SegmentService.getSegmentStats(segment)
             return {
-              ...segment.toJSON(),
+              ...segmentData,
               stats,
             }
           } catch (err) {
@@ -113,12 +118,17 @@ export class SegmentController {
 
       // Relaxed: allow fetching segment details for any authenticated user
 
+      // Fix Sequelize field access issue with public class fields
+      const segmentData = segment.toJSON() as any
+      segment.criteria = segmentData.criteria
+      segment.type = segmentData.type
+
       const stats = await SegmentService.getSegmentStats(segment)
 
       ctx.body = {
         success: true,
         data: {
-          ...segment.toJSON(),
+          ...segmentData,
           stats,
         },
       }
@@ -146,8 +156,22 @@ export class SegmentController {
         teamId?: string
       }
 
+      logger.info('createSegment: Received request', {
+        name,
+        type,
+        criteria: JSON.stringify(criteria, null, 2),
+        visibility,
+        teamId,
+        requestBody: JSON.stringify(ctx.request.body, null, 2)
+      })
+
       // Validate required fields
       if (!name || !type || !criteria) {
+        logger.warn('createSegment: Missing required fields', {
+          hasName: !!name,
+          hasType: !!type,
+          hasCriteria: !!criteria
+        })
         ctx.status = 400
         ctx.body = {
           success: false,
@@ -189,6 +213,13 @@ export class SegmentController {
         },
         user.id
       )
+
+      logger.info('createSegment: Segment created successfully', {
+        segmentId: segment.id,
+        segmentName: segment.name,
+        segmentType: segment.type,
+        criteriaInDB: JSON.stringify(segment.criteria, null, 2)
+      })
 
       ctx.status = 201
       ctx.body = {
@@ -319,6 +350,11 @@ export class SegmentController {
       }
 
       // Relaxed: allow accessing results for any authenticated user
+
+      // Fix Sequelize field access issue with public class fields
+      const segmentData = segment.toJSON() as any
+      segment.criteria = segmentData.criteria
+      segment.type = segmentData.type
 
       const results = await SegmentService.getSegmentResults(segment, additionalFilters)
 
@@ -491,7 +527,35 @@ export class SegmentController {
         return
       }
 
-      if (!segment.isVisibleTo(user.id, user.teamId)) {
+      // Get data from JSON representation (Sequelize field access issue with public class fields)
+      const segmentData = segment.toJSON() as any
+      const criteria = segmentData.criteria as SegmentCriteria
+      const segmentType = segmentData.type as SegmentType
+
+      logger.info('getSegmentAnalytics: Segment retrieved', {
+        segmentId: segment.id,
+        segmentName: segment.name,
+        segmentType: segmentType,
+        hasCriteria: !!criteria,
+        criteriaType: typeof criteria,
+        criteriaValue: criteria,
+        criteriaJSON: JSON.stringify(criteria)
+      })
+
+      // Super admins have access to all segments
+      const isSuperAdmin = user.role === 'super_admin'
+      const hasAccess = isSuperAdmin || segment.isVisibleTo(user.id, user.teamId)
+
+      if (!hasAccess) {
+        logger.warn('Analytics access denied', {
+          segmentId: id,
+          userId: user.id,
+          userRole: user.role,
+          ownerId: segment.ownerId,
+          visibility: segment.visibility,
+          userTeamId: user.teamId,
+          segmentTeamId: segment.teamId
+        })
         ctx.status = 403
         ctx.body = {
           success: false,
@@ -500,25 +564,76 @@ export class SegmentController {
         return
       }
 
-      const analytics = await SegmentService.getSegmentAnalytics(segment)
-
-      // Get additional analytics based on segment type
-      let additionalAnalytics = {}
-
-      if (segment.type === "institution") {
-        additionalAnalytics = await SegmentService.getInstitutionAnalytics(segment)
-      } else {
-        additionalAnalytics = await SegmentService.getContactAnalytics(segment)
+      // Validate segment has criteria - if not, return empty analytics
+      if (!criteria) {
+        logger.warn('Segment has no criteria, returning empty analytics', {
+          segmentId: id,
+          criteriaValue: criteria,
+          criteriaKeys: criteria ? Object.keys(criteria) : 'null/undefined'
+        })
+        ctx.body = {
+          success: true,
+          data: {
+            totalCount: 0,
+            lastUpdated: segment.updatedAt,
+            filtersCount: 0,
+            usageStats: { timesUsed: 0 },
+            tasks: { total: 0, completed: 0, completionRate: 0 },
+            meetings: { total: 0, completed: 0, attendanceRate: 0 },
+            topPerformers: [],
+            recentActivity: []
+          },
+        }
+        return
       }
 
-      ctx.body = {
-        success: true,
-        data: {
-          ...analytics,
-          ...additionalAnalytics,
-        },
+      // Assign criteria and type to segment for service methods
+      segment.criteria = criteria
+      segment.type = segmentType
+
+      try {
+        const analytics = await SegmentService.getSegmentAnalytics(segment)
+
+        // Get additional analytics based on segment type
+        let additionalAnalytics = {}
+
+        if (segmentType === "institution") {
+          additionalAnalytics = await SegmentService.getInstitutionAnalytics(segment)
+        } else {
+          additionalAnalytics = await SegmentService.getContactAnalytics(segment)
+        }
+
+        // Get engagement metrics (tasks, meetings)
+        const engagementMetrics = await SegmentService.getEngagementMetrics(segment)
+
+        // Get top performers and recent activity
+        const topPerformers = await SegmentService.getTopPerformers(segment, 5)
+        const recentActivity = await SegmentService.getRecentActivity(segment, 10)
+
+        ctx.body = {
+          success: true,
+          data: {
+            ...analytics,
+            ...additionalAnalytics,
+            ...engagementMetrics,
+            topPerformers,
+            recentActivity,
+          },
+        }
+      } catch (analyticsError) {
+        logger.error('Error computing analytics', {
+          error: (analyticsError as Error).message,
+          stack: (analyticsError as Error).stack,
+          segmentId: id
+        })
+        throw analyticsError
       }
     } catch (error) {
+      logger.error('getSegmentAnalytics error', {
+        error: (error as Error).message,
+        stack: (error as Error).stack,
+        segmentId: ctx.params.id
+      })
       ctx.status = 500
       ctx.body = {
         success: false,
