@@ -22,13 +22,18 @@
   "navigation": {
     "dashboard": "Dashboard",
     "institutions": "Institutions",
+    "contacts": "Contacts",
     "tasks": "Tasks",
     "quotes": "Quotes",
     "invoices": "Invoices",
     "templates": "Templates",
     "analytics": "Analytics",
+    "segmentation": "Segmentation",
     "team": "Team",
     "webhooks": "Webhooks",
+    "digiforma": "Digiforma",
+    "exportCenter": "Export Center",
+    "catalog": "Catalog",
     "profile": "Profile",
     "logout": "Logout"
   },
@@ -47,8 +52,10 @@
     "passwordMinLength": "Password must be at least 6 characters long"
   },
   "sidebar": {
-    "appName": "MyCRM",
+    "appName": "Medical CRM",
     "billing": "Billing",
+    "contactsSegmentation": "Contacts & Segmentation",
+    "configuration": "Configuration",
     "viewProfile": "View profile",
     "clickToViewProfile": "Click to view profile"
   },

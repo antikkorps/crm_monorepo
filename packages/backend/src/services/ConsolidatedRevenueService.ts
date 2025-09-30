@@ -148,9 +148,9 @@ export class ConsolidatedRevenueService {
     }
 
     if (startDate || endDate) {
-      where.issueDate = {}
-      if (startDate) where.issueDate[Op.gte] = startDate
-      if (endDate) where.issueDate[Op.lte] = endDate
+      where.createdAt = {}
+      if (startDate) where.createdAt[Op.gte] = startDate
+      if (endDate) where.createdAt[Op.lte] = endDate
     }
 
     const invoices = await Invoice.findAll({

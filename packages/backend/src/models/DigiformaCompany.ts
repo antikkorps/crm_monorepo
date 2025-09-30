@@ -103,7 +103,6 @@ DigiformaCompany.init(
     digiformaId: {
       type: DataTypes.STRING,
       allowNull: false,
-      unique: true,
       comment: 'Digiforma company ID',
     },
     institutionId: {

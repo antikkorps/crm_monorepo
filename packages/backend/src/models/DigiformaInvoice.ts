@@ -194,7 +194,6 @@ DigiformaInvoice.init(
     digiformaId: {
       type: DataTypes.STRING,
       allowNull: false,
-      unique: true,
       comment: 'Digiforma invoice ID',
     },
     digiformaCompanyId: {

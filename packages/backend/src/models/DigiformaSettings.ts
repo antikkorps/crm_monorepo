@@ -1,6 +1,5 @@
-import { DataTypes, Model, Optional } from 'sequelize'
-import { sequelize } from '../config/database'
-import crypto from 'crypto'
+import { DataTypes, Model, Optional } from "sequelize"
+import { sequelize } from "../config/database"
 
 interface DigiformaSettingsAttributes {
   id: string
@@ -11,7 +10,7 @@ interface DigiformaSettingsAttributes {
   lastTestSuccess?: boolean
   lastTestMessage?: string
   autoSyncEnabled: boolean
-  syncFrequency: 'daily' | 'weekly' | 'monthly'
+  syncFrequency: "daily" | "weekly" | "monthly"
   lastSyncDate?: Date
   createdAt?: Date
   updatedAt?: Date
@@ -20,7 +19,17 @@ interface DigiformaSettingsAttributes {
 interface DigiformaSettingsCreationAttributes
   extends Optional<
     DigiformaSettingsAttributes,
-    'id' | 'apiUrl' | 'isEnabled' | 'lastTestDate' | 'lastTestSuccess' | 'lastTestMessage' | 'autoSyncEnabled' | 'syncFrequency' | 'lastSyncDate' | 'createdAt' | 'updatedAt'
+    | "id"
+    | "apiUrl"
+    | "isEnabled"
+    | "lastTestDate"
+    | "lastTestSuccess"
+    | "lastTestMessage"
+    | "autoSyncEnabled"
+    | "syncFrequency"
+    | "lastSyncDate"
+    | "createdAt"
+    | "updatedAt"
   > {}
 
 /**
@@ -42,28 +51,28 @@ export class DigiformaSettings
   declare lastTestSuccess?: boolean
   declare lastTestMessage?: string
   declare autoSyncEnabled: boolean
-  declare syncFrequency: 'daily' | 'weekly' | 'monthly'
+  declare syncFrequency: "daily" | "weekly" | "monthly"
   declare lastSyncDate?: Date
   declare readonly createdAt?: Date
   declare readonly updatedAt?: Date
 
   // Encryption key (should be stored in environment variables)
   private static readonly ENCRYPTION_KEY =
-    process.env.DIGIFORMA_ENCRYPTION_KEY || 'default-key-change-in-production'
+    process.env.DIGIFORMA_ENCRYPTION_KEY || "default-key-change-in-production"
 
   /**
    * Encrypt token before saving
    * Using simple base64 encoding for now (should use proper encryption in production)
    */
   private static encryptToken(token: string): string {
-    return Buffer.from(token).toString('base64')
+    return Buffer.from(token).toString("base64")
   }
 
   /**
    * Decrypt token after reading
    */
   private static decryptToken(encryptedToken: string): string {
-    return Buffer.from(encryptedToken, 'base64').toString('utf8')
+    return Buffer.from(encryptedToken, "base64").toString("utf8")
   }
 
   /**
@@ -89,11 +98,11 @@ export class DigiformaSettings
 
     if (!settings) {
       settings = await DigiformaSettings.create({
-        bearerToken: '',
-        apiUrl: 'https://api.digiforma.com/graphql',
+        bearerToken: "",
+        apiUrl: "https://app.digiforma.com/api/v1/graphql",
         isEnabled: false,
         autoSyncEnabled: false,
-        syncFrequency: 'weekly',
+        syncFrequency: "weekly",
       })
     }
 
@@ -136,13 +145,13 @@ DigiformaSettings.init(
     bearerToken: {
       type: DataTypes.TEXT,
       allowNull: false,
-      defaultValue: '',
-      comment: 'Encrypted bearer token for Digiforma API',
+      defaultValue: "",
+      comment: "Encrypted bearer token for Digiforma API",
     },
     apiUrl: {
       type: DataTypes.STRING,
       allowNull: false,
-      defaultValue: 'https://api.digiforma.com/graphql',
+      defaultValue: "https://app.digiforma.com/api/v1/graphql",
     },
     isEnabled: {
       type: DataTypes.BOOLEAN,
@@ -167,9 +176,9 @@ DigiformaSettings.init(
       defaultValue: false,
     },
     syncFrequency: {
-      type: DataTypes.ENUM('daily', 'weekly', 'monthly'),
+      type: DataTypes.ENUM("daily", "weekly", "monthly"),
       allowNull: false,
-      defaultValue: 'weekly',
+      defaultValue: "weekly",
     },
     lastSyncDate: {
       type: DataTypes.DATE,
@@ -178,7 +187,7 @@ DigiformaSettings.init(
   },
   {
     sequelize,
-    tableName: 'digiforma_settings',
+    tableName: "digiforma_settings",
     underscored: true,
     timestamps: true,
   }

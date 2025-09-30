@@ -23,6 +23,7 @@ const ExportCenter = () => import("@/views/export/ExportCenterView.vue")
 const Segmentation = () => import("@/views/segmentation/SegmentationView.vue")
 const Contacts = () => import("@/views/contacts/ContactsView.vue")
 const Catalog = () => import("@/views/catalog/CatalogView.vue")
+const DigiformaSettings = () => import("@/views/settings/DigiformaSettingsView.vue")
 
 const routes: RouteRecordRaw[] = [
   {
@@ -204,6 +205,15 @@ const routes: RouteRecordRaw[] = [
     meta: {
       requiresAuth: true,
       title: "Contacts",
+    },
+  },
+  {
+    path: "/settings/digiforma",
+    name: "DigiformaSettings",
+    component: DigiformaSettings,
+    meta: {
+      requiresAuth: true,
+      title: "Digiforma Integration",
     },
   },
   {

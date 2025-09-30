@@ -63,6 +63,8 @@
             <v-tab value="overview">Aperçu</v-tab>
             <v-tab value="medical">Profil Médical</v-tab>
             <v-tab value="contacts">Contacts</v-tab>
+            <v-tab value="revenue">Revenus</v-tab>
+            <v-tab value="digiforma">Digiforma</v-tab>
           </v-tabs>
           <v-window v-model="activeTab">
             <v-window-item value="overview">
@@ -179,6 +181,14 @@
                 </v-list>
               </v-card>
             </v-window-item>
+
+            <v-window-item value="revenue">
+              <RevenueTab :institution-id="institution.id" />
+            </v-window-item>
+
+            <v-window-item value="digiforma">
+              <DigiformaTab :institution-id="institution.id" />
+            </v-window-item>
           </v-window>
         </div>
 
@@ -223,6 +233,8 @@
 <script setup lang="ts">
 import ContactPersonForm from "@/components/institutions/ContactPersonForm.vue"
 import MedicalInstitutionForm from "@/components/institutions/MedicalInstitutionFormVuetify.vue"
+import DigiformaTab from "@/components/institutions/DigiformaTab.vue"
+import RevenueTab from "@/components/institutions/RevenueTab.vue"
 import AppLayout from "@/components/layout/AppLayout.vue"
 import { institutionsApi } from "@/services/api"
 import type {

@@ -72,14 +72,54 @@
           ></v-list-item>
         </v-list-group>
 
-        <!-- Additional Navigation -->
+        <!-- Contacts & Segmentation -->
+        <v-list-group value="Contacts">
+          <template v-slot:activator="{ props }">
+            <v-list-item
+              v-bind="props"
+              prepend-icon="mdi-account-box-multiple"
+              :title="$t('sidebar.contactsSegmentation')"
+            ></v-list-item>
+          </template>
+
+          <v-list-item
+            v-for="item in contactsNavigation"
+            :key="item.title"
+            :prepend-icon="item.icon"
+            :title="$t(item.title)"
+            :to="item.to"
+            :value="item.value"
+            @click="onNavigationClick"
+          ></v-list-item>
+        </v-list-group>
+
+        <!-- Configuration -->
+        <v-list-group value="Configuration">
+          <template v-slot:activator="{ props }">
+            <v-list-item
+              v-bind="props"
+              prepend-icon="mdi-cog"
+              :title="$t('sidebar.configuration')"
+            ></v-list-item>
+          </template>
+
+          <v-list-item
+            v-for="item in configNavigation"
+            :key="item.title"
+            :prepend-icon="item.icon"
+            :title="$t(item.title)"
+            :to="item.to"
+            :value="item.value"
+            @click="onNavigationClick"
+          ></v-list-item>
+        </v-list-group>
+
+        <!-- Export Center -->
         <v-list-item
-          v-for="item in additionalNavigation"
-          :key="item.title"
-          :prepend-icon="item.icon"
-          :title="$t(item.title)"
-          :to="item.to"
-          :value="item.value"
+          prepend-icon="mdi-download"
+          :title="$t('navigation.exportCenter')"
+          to="/export"
+          value="export"
           @click="onNavigationClick"
         ></v-list-item>
       </v-list>
@@ -308,12 +348,6 @@ const mainNavigation = [
     value: "institutions",
   },
   {
-    title: "navigation.contacts",
-    icon: "mdi-account-box-outline",
-    to: "/contacts",
-    value: "contacts",
-  },
-  {
     title: "navigation.tasks",
     icon: "mdi-check-circle",
     to: "/tasks",
@@ -354,13 +388,22 @@ const billingNavigation = [
   },
 ]
 
-const additionalNavigation = [
+const contactsNavigation = [
+  {
+    title: "navigation.contacts",
+    icon: "mdi-account-box-outline",
+    to: "/contacts",
+    value: "contacts",
+  },
   {
     title: "navigation.segmentation",
     icon: "mdi-filter-variant",
     to: "/segmentation",
     value: "segmentation",
   },
+]
+
+const configNavigation = [
   {
     title: "navigation.team",
     icon: "mdi-account-group",
@@ -374,10 +417,10 @@ const additionalNavigation = [
     value: "webhooks",
   },
   {
-    title: "navigation.exportCenter",
-    icon: "mdi-download",
-    to: "/export",
-    value: "export",
+    title: "navigation.digiforma",
+    icon: "mdi-school",
+    to: "/settings/digiforma",
+    value: "digiforma",
   },
 ]
 

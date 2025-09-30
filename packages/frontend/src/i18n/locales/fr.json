@@ -38,11 +38,20 @@
     "segmentation": "Segmentation",
     "team": "Équipe",
     "webhooks": "Webhooks",
+    "digiforma": "Digiforma",
     "export": "Exporter",
     "exportCenter": "Centre d'Export",
     "catalog": "Catalogue",
     "profile": "Profil",
     "logout": "Se déconnecter"
+  },
+  "sidebar": {
+    "appName": "Medical CRM",
+    "billing": "Facturation",
+    "contactsSegmentation": "Contacts & Segmentation",
+    "configuration": "Configuration",
+    "viewProfile": "Voir le profil",
+    "clickToViewProfile": "Cliquer pour voir le profil"
   },
   "auth": {
     "login": "Se connecter",
@@ -57,12 +66,6 @@
     "emailInvalid": "Format d'email invalide",
     "passwordRequired": "Le mot de passe est requis",
     "passwordMinLength": "Le mot de passe doit contenir au moins 6 caractères"
-  },
-  "sidebar": {
-    "appName": "MyCRM",
-    "billing": "Facturation",
-    "viewProfile": "Voir le profil",
-    "clickToViewProfile": "Cliquer pour voir le profil"
   },
   "notifications": {
     "title": "Notifications",

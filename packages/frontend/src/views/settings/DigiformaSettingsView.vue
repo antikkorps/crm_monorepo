@@ -380,7 +380,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import AppLayout from '@/layouts/AppLayout.vue'
+import AppLayout from '@/components/layout/AppLayout.vue'
 import { digiformaApi } from '@/services/api'
 import type { DigiformaSettings, DigiformaSyncStatus, DigiformaSync } from '@/services/api/digiforma'
 

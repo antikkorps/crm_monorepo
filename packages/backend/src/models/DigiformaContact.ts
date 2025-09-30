@@ -96,7 +96,6 @@ DigiformaContact.init(
     digiformaId: {
       type: DataTypes.STRING,
       allowNull: false,
-      unique: true,
       comment: 'Digiforma contact ID',
     },
     digiformaCompanyId: {
