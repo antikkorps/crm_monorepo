@@ -113,6 +113,14 @@ et une fois dans le container
 psql -U <username> -d <database>
 ```
 
+## Generate Key
+
+Pour générer une clé d'encryption pour le plugin Digiforma, vous pouvez utiliser le script suivant :
+
+```bash
+openssl rand -base64 32
+```
+
 ## License
 
 Private - All rights reserved

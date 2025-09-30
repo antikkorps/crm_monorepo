@@ -27,6 +27,8 @@
     "csv-parser": "^3.2.0",
     "dotenv": "^16.4.7",
     "exceljs": "^4.4.0",
+    "graphql": "^16.11.0",
+    "graphql-request": "^7.2.0",
     "handlebars": "^4.7.8",
     "joi": "^17.13.3",
     "jsonwebtoken": "^9.0.2",

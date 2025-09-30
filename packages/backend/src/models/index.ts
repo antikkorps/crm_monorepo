@@ -24,6 +24,12 @@ import { Team } from "./Team"
 import { User } from "./User"
 import { Webhook } from "./Webhook"
 import { WebhookLog } from "./WebhookLog"
+import { DigiformaSync } from "./DigiformaSync"
+import { DigiformaCompany } from "./DigiformaCompany"
+import { DigiformaContact } from "./DigiformaContact"
+import { DigiformaQuote } from "./DigiformaQuote"
+import { DigiformaInvoice } from "./DigiformaInvoice"
+import { DigiformaSettings } from "./DigiformaSettings"
 
 // Define associations
 // MedicalInstitution associations
@@ -605,6 +611,12 @@ export {
   User,
   Webhook,
   WebhookLog,
+  DigiformaSync,
+  DigiformaCompany,
+  DigiformaContact,
+  DigiformaQuote,
+  DigiformaInvoice,
+  DigiformaSettings,
 }
 
 // Export default for convenience
@@ -634,4 +646,10 @@ export default {
   Segment,
   Webhook,
   WebhookLog,
+  DigiformaSync,
+  DigiformaCompany,
+  DigiformaContact,
+  DigiformaQuote,
+  DigiformaInvoice,
+  DigiformaSettings,
 }

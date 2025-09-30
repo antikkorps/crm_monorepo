@@ -586,7 +586,7 @@
     - Use existing billing analytics data as foundation
     - _Requirements: 2.5, 8.2_
 
-- [ ] 21. Implement comprehensive data export and segmentation system
+- [x] 21. Implement comprehensive data export and segmentation system
 
   - [x] 21.1 Create data export backend functionality ✅
 
@@ -683,6 +683,7 @@
     **Problem**: Currently, when clicking "Modifier" on an invoice, the user is redirected to `/invoices/:id/edit` but the page doesn't handle edit mode properly. The route exists but the component doesn't show an edit form.
 
     **Requirements**:
+
     - Add `editMode` prop handling in InvoiceDetailView.vue
     - When `editMode=true`, show InvoiceForm component instead of detail view
     - Ensure smooth transition between view and edit modes
@@ -690,6 +691,7 @@
     - Maintain navigation consistency
 
     **Technical Tasks**:
+
     1. Add `editMode` prop to InvoiceDetailView component props
     2. Conditionally render InvoiceForm when in edit mode
     3. Pass current invoice data to InvoiceForm for editing
@@ -697,6 +699,7 @@
     5. Add proper loading states and error handling
 
     **Components to modify**:
+
     - `InvoiceDetailView.vue`: Add edit mode logic
     - Router already configured with `editMode: true` prop
 
@@ -715,74 +718,137 @@
   - [ ] 23.4 Conduct full accessibility (a11y) audit
     - Check color contrasts, keyboard navigation, and ARIA attributes across the application.
 
-- [ ] 24. Implement Digiforma read-only data synchronization via GraphQL API (Customer Management Only)
+- [ ] 24. **Intégration Digiforma (Read-Only) - EN COURS** 🚀
 
-  - [ ] 24.1 Set up Digiforma GraphQL API read-only integration
+  **Objectif:** Synchroniser les données Digiforma (clients, contacts, devis, CA) avec le CRM pour un CA consolidé Audit + Formation
 
-    - Configure GraphQL client with authentication (Bearer token from Digiforma)
-    - Set up API connection management and error handling for read operations
-    - Implement rate limiting and retry logic for API calls
-    - Create data mapping for Digiforma entities (companies, trainees, quotes, invoices) to CRM contacts/institutions/quotes/invoices
-    - _Requirements: 6.4, 6.5_
+  **Architecture:**
+  - 📖 Read-only depuis Digiforma (GraphQL API)
+  - 🔄 Synchronisation hebdomadaire ou manuelle
+  - 🔗 Fusion intelligente avec institutions/contacts existants (par email)
+  - 📊 Dashboard CA consolidé (Audit + Formation + Autre)
 
-  - [ ] 24.2 Implement customer and billing data synchronization logic (read-only)
+  - [ ] 24.1 Backend - Modèles et Services Digiforma
 
-    - Build GraphQL queries for retrieving companies, trainees, quotes, and invoices data
-    - Add pagination support for large datasets
-    - Implement duplicate detection and merge logic for existing CRM customers/billing data
-    - Create incremental sync with status tracking and error handling
-    - Add data transformation and validation rules for read-only operations
-    - Write integration tests for data synchronization (read-only)
-    - _Requirements: 6.4, 6.5_
+    **Modèles à créer:**
+    - `DigiformaSync` : Tracking des synchronisations (lastSync, status, errors)
+    - `DigiformaCompany` : Companies Digiforma → MedicalInstitution (mapping)
+    - `DigiformaContact` : Contacts Digiforma → ContactPerson
+    - `DigiformaQuote` : Devis Digiforma (montants, dates, status)
+    - `DigiformaInvoice` : Factures Digiforma (CA, paiements)
 
-  - [ ] 24.3 Build Digiforma sync management interface (read-only focus)
+    **Services:**
+    - `DigiformaService` : Client GraphQL + auth Bearer token
+    - `DigiformaSyncService` : Logique de synchronisation et fusion
+    - `DigiformaMergeService` : Détection duplicates + merge intelligent par email
 
-    - Create Digiforma API connection configuration dashboard
-    - Implement sync status monitoring and error reporting for read operations
-    - Add manual sync trigger and history viewing for imported data
-    - Build data mapping configuration interface for CRM integration
-    - Create sync testing and validation tools (read-only)
-    - _Requirements: 6.3, 6.4_
+    **Tâches:**
+    - [ ] Créer les modèles Sequelize avec associations
+    - [ ] Implémenter DigiformaService avec GraphQL client (graphql-request)
+    - [ ] Créer les queries GraphQL pour companies, contacts, quotes, invoices
+    - [ ] Implémenter la logique de merge par email (companies → institutions)
+    - [ ] Ajouter la gestion d'erreurs et retry logic
+    - [ ] Créer les endpoints API (POST /api/digiforma/sync, GET /api/digiforma/status)
+    - [ ] Écrire les tests d'intégration
+    - _Requirements: 6.4, 6.5, 1.2, 2.1_
 
-  - [ ] 24.4 Implement Digiforma quotes/invoices visual tracking system
+  - [ ] 24.2 Backend - Consolidation financière
 
-    - [ ] 24.4.1 Create Digiforma document tracking models
+    **Calculs CA consolidé:**
+    - CA Audit : Depuis invoices CRM existantes
+    - CA Formation : Depuis factures Digiforma synchronisées
+    - CA Autre : Autres sources (à définir)
+    - Total consolidé par institution et période
 
-      - Create DigiformaDocument model to track external quotes/invoices
-      - Store Digiforma document ID, type (quote/invoice), status, amount, date
-      - Link to CRM institutions/contacts for relationship tracking
-      - Add metadata fields for Qualiopi compliance tracking
-      - Implement document synchronization status and last sync date
-      - _Requirements: 6.4, 6.5, 2.1_
+    **Endpoints API:**
+    - `GET /api/institutions/:id/revenue/consolidated` : CA consolidé par institution
+    - `GET /api/dashboard/revenue/consolidated` : Vue globale CA par source
+    - `GET /api/digiforma/institutions/:id/quotes` : Devis Digiforma liés
+    - `GET /api/digiforma/institutions/:id/invoices` : Factures Digiforma liées
 
-    - [ ] 24.4.2 Implement Digiforma document sync and tracking logic
+    **Tâches:**
+    - [ ] Créer le service ConsolidatedRevenueService
+    - [ ] Implémenter les calculs par source (Audit/Formation/Autre)
+    - [ ] Créer les endpoints de statistiques financières
+    - [ ] Ajouter la gestion des périodes (mois, trimestre, année)
+    - [ ] Écrire les tests unitaires pour les calculs
+    - _Requirements: 2.5, 6.4, 8.2_
 
-      - Build GraphQL queries to retrieve Digiforma quotes and invoices
-      - Create sync service to import document metadata (not full content)
-      - Implement document status tracking (draft, sent, paid, cancelled)
-      - Add relationship mapping between Digiforma docs and CRM entities
-      - Create audit trail for document lifecycle changes
-      - Write integration tests for document tracking
-      - _Requirements: 6.4, 6.5_
+  - [ ] 24.3 Frontend - Configuration et Synchronisation Digiforma
 
-    - [ ] 24.4.3 Build visual tracking interface in CRM
+    **Interface de configuration:**
+    - ⚙️ Page settings pour configurer le token Bearer Digiforma
+    - ✅ Test de connexion API avec validation
+    - 🔄 Déclenchement manuel de la synchronisation
+    - 📊 Historique des syncs avec status (success/error/in_progress)
+    - 📧 Configuration des règles de merge (par email, nom, etc.)
 
-      - Add Digiforma documents section to institution detail view
-      - Create visual indicators for document status (badges, colors)
-      - Implement document timeline showing Digiforma activity
-      - Add filtering by document type, status, date range
-      - Create quick stats dashboard for Digiforma vs CRM billing comparison
-      - Build document reconciliation tools for dual-tracking visibility
-      - _Requirements: 6.3, 2.3, 5.1_
+    **Composants:**
+    - `DigiformaSettingsView.vue` : Configuration API + token
+    - `DigiformaSyncStatus.vue` : Status widget + historique
+    - `DigiformaMergeConfig.vue` : Configuration des règles de fusion
 
-    - [ ] 24.4.4 Implement dual billing system dashboard
-      - Create unified billing overview showing both CRM and Digiforma documents
-      - Add revenue comparison between CRM billing and Digiforma tracking
-      - Implement compliance status indicators for Qualiopi requirements
-      - Create alerts for missing or inconsistent document tracking
-      - Build reporting tools for dual-source billing analysis
-      - Add export functionality for compliance and audit purposes
-      - _Requirements: 2.5, 6.3, 6.4_
+    **Tâches:**
+    - [ ] Créer DigiformaSettingsView avec formulaire sécurisé
+    - [ ] Implémenter le bouton "Synchroniser maintenant"
+    - [ ] Créer le widget de status avec progress bar
+    - [ ] Ajouter l'historique des synchronisations avec erreurs
+    - [ ] Intégrer dans le menu Settings
+    - _Requirements: 6.3, 6.4, 10.1_
+
+  - [ ] 24.4 Frontend - Dashboard CA Consolidé
+
+    **Dashboard principal:**
+    - 📈 Widget "Revenu Consolidé" sur le dashboard principal
+    - 🔵 CA Audit (depuis CRM)
+    - 🟢 CA Formation (depuis Digiforma)
+    - 🟡 CA Autre
+    - 📊 Total consolidé avec évolution mensuelle
+    - 📅 Filtres par période (mois, trimestre, année)
+
+    **Composants:**
+    - `ConsolidatedRevenueDashboard.vue` : Dashboard global
+    - `RevenueBySourceChart.vue` : Graphique par source
+    - `RevenueEvolutionChart.vue` : Évolution temporelle
+
+    **Tâches:**
+    - [ ] Créer le widget de CA consolidé pour le dashboard
+    - [ ] Implémenter les graphiques par source (Chart.js/ApexCharts)
+    - [ ] Ajouter les filtres de période dynamiques
+    - [ ] Créer les indicateurs visuels (badges, couleurs)
+    - [ ] Intégrer au DashboardView principal
+    - _Requirements: 2.5, 8.2, 10.1_
+
+  - [ ] 24.5 Frontend - Onglet Digiforma dans InstitutionDetailView
+
+    **Détail par institution:**
+    - 📋 Onglet "Digiforma" dans la vue détail institution
+    - 💰 CA Formation total pour cette institution
+    - 📄 Liste des devis Digiforma liés
+    - 🧾 Liste des factures Digiforma liées
+    - 📊 Comparaison CA Audit vs Formation
+    - 🔗 Liens vers les contacts Digiforma fusionnés
+
+    **Composants:**
+    - `DigiformaTab.vue` : Onglet principal
+    - `DigiformaQuotesList.vue` : Liste devis
+    - `DigiformaInvoicesList.vue` : Liste factures
+    - `DigiformaRevenueComparison.vue` : Comparaison visuelle
+
+    **Tâches:**
+    - [ ] Créer l'onglet Digiforma dans InstitutionDetailView
+    - [ ] Implémenter la liste des devis avec status
+    - [ ] Créer la liste des factures avec montants
+    - [ ] Ajouter le graphique de comparaison Audit/Formation
+    - [ ] Afficher les contacts fusionnés depuis Digiforma
+    - _Requirements: 1.2, 2.5, 5.1, 6.3_
+
+  **Notes techniques:**
+  - GraphQL API Digiforma : https://api.digiforma.com/graphql
+  - Authentication : Bearer token (stocké chiffré en base)
+  - Synchronisation : Job hebdomadaire (cron) + manuel
+  - Merge strategy : Email prioritaire, fallback nom + adresse
+  - Conformité : Read-only strict (Qualiopi)
 
 ## Issues Récurrents à Résoudre
 
@@ -823,17 +889,20 @@
 ## 🔔 Système de Relances Automatiques pour Devis - NOUVELLE FONCTIONNALITÉ
 
 ### Description
+
 Implémentation d'un système de relance automatique pour les devis arrivant à échéance afin d'optimiser le taux de conversion et éviter la perte de prospects.
 
 ### Fonctionnalités principales
 
 #### 1. Notifications de relance intelligentes
+
 - [ ] **Alerte 7 jours avant échéance** : Notification dans l'interface pour l'utilisateur assigné
 - [ ] **Alerte 3 jours avant échéance** : Notification plus urgente + email optionnel
 - [ ] **Alerte jour J** : Notification critique + proposition d'extension automatique
 - [ ] **Alerte après échéance** : Notification pour relance post-échéance avec suggestions d'actions
 
 #### 2. Création automatique de tâches de relance
+
 - [ ] **Tâche de relance auto-générée** à J-7 : "Relancer le client pour le devis #XXX"
 - [ ] **Tâche de suivi post-échéance** : "Proposer une extension ou nouveau devis pour #XXX"
 - [ ] **Assignation intelligente** : Assignée à l'utilisateur responsable du devis
@@ -841,12 +910,14 @@ Implémentation d'un système de relance automatique pour les devis arrivant à 
 - [ ] **Templates de tâches** personnalisables par type d'institution ou montant
 
 #### 3. Actions rapides intégrées
+
 - [ ] **Bouton "Relancer le client"** depuis la vue devis avec templates d'emails
 - [ ] **Extension rapide de date** d'échéance (+15j, +30j, +60j) avec un clic
 - [ ] **Conversion en nouveau devis** si échéance dépassée avec reprise des données
 - [ ] **Historique des relances** pour traçabilité et suivi des actions
 
 #### 4. Dashboard des échéances et alertes
+
 - [ ] **Widget "Devis à échéance"** sur le dashboard principal avec indicateurs visuels
 - [ ] **Vue calendrier** des échéances à venir avec filtrage par utilisateur/équipe
 - [ ] **Statistiques de conversion** par période d'échéance et efficacité des relances
@@ -855,6 +926,7 @@ Implémentation d'un système de relance automatique pour les devis arrivant à 
 ### Implémentation technique
 
 #### Backend
+
 - [ ] **Job scheduler** (cron job) pour vérifier les échéances quotidiennement
 - [ ] **Service QuoteReminderService** pour logique de génération des rappels
 - [ ] **Service de notification** intégré avec le système existant pour créer les alertes
@@ -863,6 +935,7 @@ Implémentation d'un système de relance automatique pour les devis arrivant à 
 - [ ] **Modèle QuoteReminder** pour tracer l'historique des relances
 
 #### Frontend
+
 - [ ] **Composant NotificationCenter** étendu pour afficher les alertes d'échéances
 - [ ] **Composant QuoteExpiryWidget** pour le dashboard avec actions rapides
 - [ ] **Modal de relance rapide** avec templates d'emails et actions prédéfinies
@@ -871,6 +944,7 @@ Implémentation d'un système de relance automatique pour les devis arrivant à 
 - [ ] **Composant d'extension rapide** de date avec justification
 
 #### Base de données
+
 - [ ] **Table quote_reminders** pour stocker l'historique des rappels envoyés
 - [ ] **Index optimisé sur validUntil** pour requêtes d'échéance performantes
 - [ ] **Champ lastReminderSent** sur les devis pour éviter les doublons
@@ -878,26 +952,31 @@ Implémentation d'un système de relance automatique pour les devis arrivant à 
 - [ ] **Configuration des délais** de relance par utilisateur/équipe/institution
 
 ### Valeur métier et ROI
+
 - **Impact direct sur CA** : Réduction de 15-25% de perte de devis par oubli d'échéance
 - **Efficacité commerciale** : Automatisation des relances = +30% de temps disponible pour prospection
 - **Taux de conversion** : Relances systématiques = +20% de conversion devis → commande
 - **Satisfaction client** : Suivi proactif = meilleure image professionnelle
 
 ### Priorité et planning
+
 **Priorité:** 🟡 HAUTE - Impact direct sur le chiffre d'affaires
 
 **Estimation de développement:**
+
 - Backend (scheduler, services, API) : 4-5 jours
 - Frontend (composants, vues, intégrations) : 3-4 jours
 - Tests et intégration : 2 jours
 - **Total estimé : 2 semaines**
 
 **Dépendances:**
+
 - Système de notifications existant ✅
 - Système de tâches existant ✅
 - Système de devis existant ✅
 
 ### Phase d'implémentation suggérée
+
 1. **Phase 1** : Notifications de base et tâches automatiques (1 semaine)
 2. **Phase 2** : Dashboard et actions rapides (1 semaine)
 3. **Phase 3** : Templates personnalisés et analytics (optionnel, +1 semaine)

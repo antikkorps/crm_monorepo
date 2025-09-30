@@ -11,6 +11,7 @@ import billingAnalyticsRoutes from "./routes/billing-analytics"
 import callRoutes from "./routes/calls"
 import catalogRoutes from "./routes/catalog"
 import contactRoutes from "./routes/contacts"
+import digiformaRoutes from "./routes/digiforma"
 import filterOptionsRoutes from "./routes/filterOptions"
 import institutionRoutes from "./routes/institutions"
 import invoiceRoutes from "./routes/invoices"
@@ -20,6 +21,7 @@ import meetingRoutes from "./routes/meetings"
 import pluginRoutes from "./routes/plugins"
 import quoteRoutes from "./routes/quotes"
 import reminderRoutes from "./routes/reminders"
+import revenueRoutes from "./routes/revenue"
 import segmentRoutes from "./routes/segments"
 import socketRoutes from "./routes/socket"
 import taskRoutes from "./routes/tasks"
@@ -206,6 +208,14 @@ export const createApp = (): Koa => {
   // Apply plugin routes
   app.use(pluginRoutes.routes())
   app.use(pluginRoutes.allowedMethods())
+
+  // Apply Digiforma routes
+  app.use(digiformaRoutes.routes())
+  app.use(digiformaRoutes.allowedMethods())
+
+  // Apply revenue routes (consolidated revenue endpoints)
+  app.use(revenueRoutes.routes())
+  app.use(revenueRoutes.allowedMethods())
 
   // 404 handler
   app.use(async (ctx) => {

@@ -619,3 +619,6 @@ export const catalogApi = {
   search: (query: string) => apiClient.get(`/catalog/search?q=${encodeURIComponent(query)}`),
   getCategories: () => apiClient.get("/catalog/categories"),
 }
+
+// Export Digiforma API
+export { digiformaApi } from './digiforma'
