@@ -130,7 +130,7 @@
                     color="info"
                     prepend-icon="mdi-connection"
                     :loading="testing"
-                    :disabled="!formData.bearerToken || !formData.apiUrl || loading"
+                    :disabled="(!formData.bearerToken && !settings?.isConfigured) || !formData.apiUrl || loading"
                     @click="testConnection"
                   >
                     Tester la connexion

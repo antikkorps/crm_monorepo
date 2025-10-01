@@ -634,15 +634,66 @@ DIGIFORMA_API_URL=https://app.digiforma.com/api/v1/graphql
 
 ## 🔐 Sécurité
 
-### Stockage du Bearer Token
-- Token chiffré en **base64** (simple, amélioration possible avec AES-256)
-- Variable `DIGIFORMA_ENCRYPTION_KEY` pour clé personnalisée
-- Token JAMAIS retourné dans les API responses
+### Chiffrement du Bearer Token
+
+Le Bearer token Digiforma est stocké de manière **hautement sécurisée** en base de données :
+
+#### Algorithme : AES-256-GCM
+- **AES-256** : Chiffrement symétrique avec clé de 256 bits
+- **GCM (Galois/Counter Mode)** : Mode d'opération authentifié
+- **Authenticated Encryption** : Détecte toute modification du token chiffré
+
+#### Caractéristiques de sécurité
+- ✅ **Salt unique** : 32 bytes aléatoires pour chaque chiffrement
+- ✅ **IV (Initialization Vector) unique** : 16 bytes aléatoires par chiffrement
+- ✅ **Authentication Tag** : 16 bytes pour vérifier l'intégrité
+- ✅ **Dérivation de clé** : scrypt pour dériver la clé à partir du mot de passe
+- ✅ **Non-déterministe** : Même token chiffré 2 fois = 2 résultats différents
+
+#### Format de stockage
+```
+salt:iv:authTag:encryptedData
+```
+Chaque composant est encodé en base64 et séparé par `:`.
+
+#### Configuration de la clé de chiffrement
+
+**Variable d'environnement** : `DIGIFORMA_ENCRYPTION_KEY`
+
+```bash
+# Générer une clé sécurisée (recommandé)
+openssl rand -base64 32
+
+# Exemple dans .env
+DIGIFORMA_ENCRYPTION_KEY=6K8vX2nT9pL4mW7hQ1rY3cZ5bN8aD0fG==
+```
+
+**⚠️ IMPORTANT** :
+- La clé **DOIT** faire au moins **32 caractères**
+- Utilisez une clé **différente pour chaque environnement**
+- **Ne committez JAMAIS** la clé dans Git
+- Stockez la clé dans un gestionnaire de secrets en production (AWS Secrets Manager, Azure Key Vault, etc.)
+
+#### Migration automatique
+
+Si un token est stocké avec l'ancien format base64, il sera **automatiquement migré** vers AES-256-GCM lors de la première lecture.
+
+#### Protection contre les attaques
+
+✅ **Brute force** : Clé 256 bits = 2^256 combinaisons
+✅ **Tampering** : Authentication tag détecte toute modification
+✅ **Replay attacks** : Salt et IV uniques à chaque chiffrement
+✅ **Rainbow tables** : scrypt rend le calcul coûteux
 
 ### Permissions RBAC
 - **Configuration** : `canManageSystemSettings` (SUPER_ADMIN, TEAM_ADMIN)
 - **Consultation sync** : `canViewInstitutionAnalytics`
 - **Consultation données** : `canViewAllInstitutions`
+
+### Protection des données
+- Token JAMAIS retourné dans les API responses
+- Logs ne contiennent jamais le token en clair
+- Connexion HTTPS obligatoire pour les appels API
 
 ---
 

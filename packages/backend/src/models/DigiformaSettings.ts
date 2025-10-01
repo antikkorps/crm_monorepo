@@ -1,9 +1,11 @@
 import { DataTypes, Model, Optional } from "sequelize"
 import { sequelize } from "../config/database"
+import { EncryptionService } from "../utils/encryption"
+import { logger } from "../utils/logger"
 
 interface DigiformaSettingsAttributes {
   id: string
-  bearerToken: string // Will be encrypted
+  bearerToken: string // Will be encrypted with AES-256-GCM
   apiUrl: string
   isEnabled: boolean
   lastTestDate?: Date
@@ -36,7 +38,9 @@ interface DigiformaSettingsCreationAttributes
  * DigiformaSettings - Stores Digiforma API configuration
  *
  * Security:
- * - Bearer token is encrypted at rest
+ * - Bearer token is encrypted at rest using AES-256-GCM
+ * - Each encryption uses a unique salt and IV
+ * - Authentication tag prevents tampering
  * - Only one settings record should exist (singleton pattern)
  */
 export class DigiformaSettings
@@ -56,37 +60,43 @@ export class DigiformaSettings
   declare readonly createdAt?: Date
   declare readonly updatedAt?: Date
 
-  // Encryption key (should be stored in environment variables)
-  private static readonly ENCRYPTION_KEY =
-    process.env.DIGIFORMA_ENCRYPTION_KEY || "default-key-change-in-production"
-
-  /**
-   * Encrypt token before saving
-   * Using simple base64 encoding for now (should use proper encryption in production)
-   */
-  private static encryptToken(token: string): string {
-    return Buffer.from(token).toString("base64")
-  }
-
-  /**
-   * Decrypt token after reading
-   */
-  private static decryptToken(encryptedToken: string): string {
-    return Buffer.from(encryptedToken, "base64").toString("utf8")
-  }
-
   /**
    * Get decrypted bearer token
+   * Handles both new AES-256-GCM format and legacy base64 format
    */
   getDecryptedToken(): string {
-    return DigiformaSettings.decryptToken(this.bearerToken)
+    if (!this.bearerToken || this.bearerToken.length === 0) {
+      throw new Error('Bearer token is not configured')
+    }
+
+    try {
+      // Check if token is encrypted with new format
+      if (EncryptionService.isEncrypted(this.bearerToken)) {
+        return EncryptionService.decrypt(this.bearerToken)
+      } else {
+        // Legacy base64 format - decrypt and migrate
+        logger.warn('Bearer token is using legacy base64 encoding - migrating to AES-256-GCM')
+        const plainToken = Buffer.from(this.bearerToken, 'base64').toString('utf8')
+
+        // Migrate to new encryption (async update will happen on next save)
+        this.bearerToken = EncryptionService.encrypt(plainToken)
+        this.save().catch(err => {
+          logger.error('Failed to migrate token encryption', { error: err.message })
+        })
+
+        return plainToken
+      }
+    } catch (error) {
+      logger.error('Failed to decrypt bearer token', { error: (error as Error).message })
+      throw new Error('Failed to decrypt bearer token - please reconfigure Digiforma settings')
+    }
   }
 
   /**
-   * Set bearer token (will be encrypted)
+   * Set bearer token (will be encrypted with AES-256-GCM)
    */
   async setBearerToken(token: string): Promise<void> {
-    const encrypted = DigiformaSettings.encryptToken(token)
+    const encrypted = EncryptionService.encrypt(token)
     await this.update({ bearerToken: encrypted })
   }
 

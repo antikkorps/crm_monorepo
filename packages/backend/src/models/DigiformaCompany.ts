@@ -67,12 +67,18 @@ export class DigiformaCompany
   /**
    * Find unlinked companies (not yet merged with institutions)
    */
-  static async findUnlinked(limit = 50): Promise<DigiformaCompany[]> {
-    return await DigiformaCompany.findAll({
+  static async findUnlinked(limit?: number): Promise<DigiformaCompany[]> {
+    const options: any = {
       where: { institutionId: { [Op.is]: null } as any },
-      limit,
       order: [['lastSyncAt', 'DESC']],
-    })
+    }
+
+    // Only add limit if explicitly provided
+    if (limit) {
+      options.limit = limit
+    }
+
+    return await DigiformaCompany.findAll(options)
   }
 
   /**

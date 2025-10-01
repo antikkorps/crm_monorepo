@@ -216,12 +216,7 @@
           :items-length="totalRecords"
           item-key="id"
           class="elevation-0 enhanced-table"
-          @update:page="
-            (p) => {
-              lazyParams.first = (p - 1) * lazyParams.rows
-              loadInstitutions()
-            }
-          "
+          @update:page="onPageChange"
         >
           <template #no-data>
             <div class="table-empty-state text-center py-12">
@@ -458,12 +453,7 @@
             :model-value="Math.floor(lazyParams.first / lazyParams.rows) + 1"
             :length="Math.ceil(totalRecords / lazyParams.rows)"
             :total-visible="3"
-            @update:model-value="
-              (p) => {
-                lazyParams.first = (p - 1) * lazyParams.rows
-                loadInstitutions()
-              }
-            "
+            @update:model-value="onPageChange"
           />
         </div>
       </div>
@@ -631,6 +621,12 @@ const loadUsers = async () => {
 }
 
 const loadInstitutions = async () => {
+  // Prevent multiple simultaneous requests
+  if (loading.value) {
+    console.log("Already loading, skipping duplicate request")
+    return
+  }
+
   loading.value = true
   try {
     const params = {
@@ -655,6 +651,12 @@ const loadInstitutions = async () => {
   } finally {
     loading.value = false
   }
+}
+
+const onPageChange = (page: number) => {
+  if (loading.value) return // Prevent page change during loading
+  lazyParams.value.first = (page - 1) * lazyParams.value.rows
+  loadInstitutions()
 }
 
 let searchTimeout = ref<any>(null)
@@ -822,10 +824,10 @@ onMounted(() => {
 
 // Watcher pour détecter les changements de route et rafraîchir
 watch(
-  () => route.fullPath,
+  () => route.path,
   (newPath, oldPath) => {
-    // Si on revient sur cette page depuis une autre page
-    if (newPath === "/institutions" && oldPath && oldPath !== newPath) {
+    // Si on revient sur cette page depuis une autre page (ignorer les changements de query params)
+    if (newPath === "/institutions" && oldPath && oldPath !== "/institutions") {
       console.log("Retour sur la page institutions, rafraîchissement des données...")
       setTimeout(() => loadInstitutions(), 100) // Petit délai pour laisser la page se charger
     }

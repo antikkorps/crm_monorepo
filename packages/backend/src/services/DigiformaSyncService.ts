@@ -243,6 +243,9 @@ export class DigiformaSyncService {
           }
 
           // If no match by email, try by name + city
+          // TEMPORARILY DISABLED: Name matching is too permissive and creates false positives
+          // TODO: Implement fuzzy matching with confidence score (task 24.6)
+          /*
           if (!matchingInstitution && digiformaCompany.name && digiformaCompany.address?.city) {
             matchingInstitution = await MedicalInstitution.findOne({
               where: {
@@ -250,6 +253,7 @@ export class DigiformaSyncService {
               },
             })
           }
+          */
 
           // If found, link them
           if (matchingInstitution) {
@@ -265,10 +269,10 @@ export class DigiformaSyncService {
               name: digiformaCompany.name,
               type: InstitutionType.CLINIC, // Default type for Digiforma companies
               address: {
-                street: '',
-                city: digiformaCompany.address?.city || '',
-                state: '',
-                zipCode: '',
+                street: digiformaCompany.address?.street || 'Adresse non renseignée',
+                city: digiformaCompany.address?.city || 'Non renseignée',
+                state: digiformaCompany.address?.state || 'Non renseigné',
+                zipCode: digiformaCompany.address?.zipCode || '00000',
                 country: digiformaCompany.address?.country || 'FR',
               },
               tags: ['digiforma', 'formation'],
@@ -280,7 +284,7 @@ export class DigiformaSyncService {
             if (digiformaCompany.email) {
               await ContactPerson.create({
                 institutionId: newInstitution.id,
-                firstName: '',
+                firstName: 'Contact',
                 lastName: digiformaCompany.name,
                 email: digiformaCompany.email,
                 isPrimary: true,
