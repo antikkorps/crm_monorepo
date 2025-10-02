@@ -155,7 +155,7 @@ const searchSchema = Joi.object({
     .optional(),
   isActive: Joi.boolean().optional(),
   page: Joi.number().integer().min(1).default(1),
-  limit: Joi.number().integer().min(1).max(100).default(20),
+  limit: Joi.number().integer().min(-1).max(100).default(20),
   sortBy: Joi.string().valid("name", "type", "createdAt", "updatedAt").default("name"),
   sortOrder: Joi.string().uppercase().valid("ASC", "DESC").default("ASC"),
 })
@@ -264,29 +264,35 @@ export class MedicalInstitutionController {
       // Search institutions
       const institutions = await MedicalInstitution.searchInstitutions(filters)
 
-      // Apply pagination and sorting
-      const offset = (page - 1) * limit
-      const sortedInstitutions = institutions
-        .sort((a, b) => {
-          const aValue = a[sortBy as keyof typeof a] as any
-          const bValue = b[sortBy as keyof typeof b] as any
+      // Apply sorting
+      const sortedInstitutions = institutions.sort((a, b) => {
+        const aValue = a[sortBy as keyof typeof a] as any
+        const bValue = b[sortBy as keyof typeof b] as any
 
-          if (sortOrder === "DESC") {
-            return aValue > bValue ? -1 : aValue < bValue ? 1 : 0
-          }
-          return aValue < bValue ? -1 : aValue > bValue ? 1 : 0
-        })
-        .slice(offset, offset + limit)
+        if (sortOrder === "DESC") {
+          return aValue > bValue ? -1 : aValue < bValue ? 1 : 0
+        }
+        return aValue < bValue ? -1 : aValue > bValue ? 1 : 0
+      })
+
+      // Apply pagination (unless limit is -1, which means "all")
+      let paginatedInstitutions: typeof sortedInstitutions
+      if (limit === -1) {
+        paginatedInstitutions = sortedInstitutions
+      } else {
+        const offset = (page - 1) * limit
+        paginatedInstitutions = sortedInstitutions.slice(offset, offset + limit)
+      }
 
       ctx.body = {
         success: true,
         data: {
-          institutions: sortedInstitutions,
+          institutions: paginatedInstitutions,
           pagination: {
             page,
             limit,
             total: institutions.length,
-            totalPages: Math.ceil(institutions.length / limit),
+            totalPages: limit === -1 ? 1 : Math.ceil(institutions.length / limit),
           },
         },
       }

@@ -50,6 +50,13 @@ router.get(
   DigiformaController.getSyncHistory
 )
 
+// GET /api/digiforma/institutions/:id/company - Get Digiforma company info for an institution
+router.get(
+  "/institutions/:id/company",
+  requirePermission("canViewAllInstitutions"),
+  DigiformaController.getInstitutionCompany
+)
+
 // GET /api/digiforma/institutions/:id/quotes - Get Digiforma quotes for an institution
 router.get(
   "/institutions/:id/quotes",

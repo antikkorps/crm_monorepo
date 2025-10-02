@@ -203,7 +203,7 @@ async function loadRevenue() {
 }
 
 // Get period dates
-function getPeriodDates(): [Date?, Date?] {
+function getPeriodDates(): [string?, string?] {
   const now = new Date()
   let startDate: Date
 
@@ -220,7 +220,7 @@ function getPeriodDates(): [Date?, Date?] {
       break
   }
 
-  return [startDate, now]
+  return [startDate.toISOString(), now.toISOString()]
 }
 
 // Set period
@@ -261,7 +261,7 @@ function updateChart() {
       datasets: [
         {
           label: 'Audit',
-          data: evolution.value.map(e => e.auditRevenue),
+          data: evolution.value.map(e => e.audit),
           borderColor: '#2196F3',
           backgroundColor: 'rgba(33, 150, 243, 0.1)',
           tension: 0.4,
@@ -269,7 +269,7 @@ function updateChart() {
         },
         {
           label: 'Formation',
-          data: evolution.value.map(e => e.formationRevenue),
+          data: evolution.value.map(e => e.formation),
           borderColor: '#4CAF50',
           backgroundColor: 'rgba(76, 175, 80, 0.1)',
           tension: 0.4,
@@ -277,7 +277,7 @@ function updateChart() {
         },
         {
           label: 'Autre',
-          data: evolution.value.map(e => e.otherRevenue),
+          data: evolution.value.map(e => e.other),
           borderColor: '#FF9800',
           backgroundColor: 'rgba(255, 152, 0, 0.1)',
           tension: 0.4,

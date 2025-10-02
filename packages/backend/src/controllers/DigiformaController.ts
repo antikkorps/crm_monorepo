@@ -5,6 +5,7 @@ import { DigiformaSyncService } from '../services/DigiformaSyncService'
 import { ConsolidatedRevenueService } from '../services/ConsolidatedRevenueService'
 import { DigiformaQuote } from '../models/DigiformaQuote'
 import { DigiformaInvoice } from '../models/DigiformaInvoice'
+import { DigiformaCompany } from '../models/DigiformaCompany'
 import { logger } from '../utils/logger'
 import Joi from 'joi'
 
@@ -257,6 +258,38 @@ export class DigiformaController {
     } catch (error) {
       logger.error('Failed to get Digiforma sync history', {
         userId: ctx.state.user?.id,
+        error: (error as Error).message,
+      })
+      throw error
+    }
+  }
+
+  /**
+   * GET /api/digiforma/institutions/:id/company
+   * Get Digiforma company info for an institution
+   */
+  static async getInstitutionCompany(ctx: Context) {
+    const { id } = ctx.params
+
+    if (!id) {
+      throw createError('Institution ID is required', 400, 'MISSING_ID')
+    }
+
+    try {
+      const company = await DigiformaCompany.findOne({
+        where: { institutionId: id },
+      })
+
+      ctx.body = {
+        success: true,
+        data: {
+          company,
+        },
+      }
+    } catch (error) {
+      logger.error('Failed to get Digiforma company for institution', {
+        userId: ctx.state.user?.id,
+        institutionId: id,
         error: (error as Error).message,
       })
       throw error

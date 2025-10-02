@@ -188,7 +188,37 @@ export interface DigiformaInvoice {
   paidDate?: string
 }
 
+export interface DigiformaCompany {
+  id: string
+  digiformaId: string
+  name: string
+  email?: string
+  phone?: string
+  address?: {
+    city?: string
+    cityCode?: string
+    country?: string
+  }
+  metadata?: {
+    accountingNumber?: string
+    ape?: string
+    code?: string
+    employeesCount?: number
+    note?: string
+  }
+}
+
 export const digiformaDataApi = {
+  /**
+   * Get Digiforma company info for an institution
+   */
+  getInstitutionCompany: async (institutionId: string): Promise<DigiformaCompany | null> => {
+    const response = await apiRequest<{ success: boolean; data: { company: DigiformaCompany | null } }>(
+      `/digiforma/institutions/${institutionId}/company`
+    )
+    return response.data.company
+  },
+
   /**
    * Get Digiforma quotes for an institution
    */

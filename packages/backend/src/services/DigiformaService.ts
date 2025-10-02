@@ -49,18 +49,33 @@ export class DigiformaService {
 
   /**
    * Fetch companies from Digiforma
+   * Updated with real Digiforma API structure from query builder
    */
   async fetchCompanies(): Promise<any[]> {
     try {
       const query = `
         query {
           companies {
-            id
-            name
-            country
+            accountingNumber
+            ape
             city
+            cityCode
+            code
+            contacts {
+              email
+              firstname
+              lastname
+              civility
+              id
+              phone
+              position
+              title
+            }
+            country
             email
-            opca
+            employeesCount
+            name
+            note
           }
         }
       `
@@ -144,14 +159,34 @@ export class DigiformaService {
       const query = `
         query {
           quotations {
-            id
-            reference
+            acceptedAt
             date
-            status
-            total_amount
-            customer {
+            id
+            insertedAt
+            items {
+              description
+              forceTotal
+              forcedTotal
               id
               name
+              quantity
+              type
+              unitPrice
+              vat
+            }
+            number
+            numberStr
+            prefix
+            customer {
+              accountingNumber
+              id
+              accountManager {
+                email
+                firstname
+                id
+                lastname
+                type
+              }
             }
           }
         }
@@ -176,15 +211,32 @@ export class DigiformaService {
       const query = `
         query {
           invoices {
-            id
-            reference
             date
-            status
-            total_amount
-            paid_amount
-            customer {
-              id
+            id
+            insertedAt
+            updatedAt
+            invoicePayments {
+              amount
+              date
+              updatedAt
+            }
+            accountingAnalytics
+            items {
+              description
+              quantity
+              type
+              unitPrice
+              vat
               name
+              id
+            }
+            number
+            numberStr
+            isPaymentLimitEndMonth
+            paymentLimitDays
+            customer {
+              accountingNumber
+              id
             }
           }
         }
@@ -210,11 +262,26 @@ export class DigiformaService {
         query GetCompany($id: ID!) {
           company(id: $id) {
             id
-            name
-            country
+            accountingNumber
+            ape
             city
+            cityCode
+            code
+            contacts {
+              email
+              firstname
+              lastname
+              civility
+              id
+              phone
+              position
+              title
+            }
+            country
             email
-            opca
+            employeesCount
+            name
+            note
           }
         }
       `
@@ -262,13 +329,31 @@ export class DigiformaService {
 
   /**
    * Get total revenue from Digiforma
+   * Calculates totals from invoice items and payments
    */
   async getTotalRevenue(): Promise<{ total: number; paid: number; unpaid: number }> {
     try {
       const invoices = await this.fetchInvoices()
 
-      const total = invoices.reduce((sum, inv) => sum + parseFloat(inv.total_amount || 0), 0)
-      const paid = invoices.reduce((sum, inv) => sum + parseFloat(inv.paid_amount || 0), 0)
+      // Calculate total from items (quantity * unitPrice * (1 + vat))
+      const total = invoices.reduce((sum, inv) => {
+        const invoiceTotal = (inv.items || []).reduce((itemSum: number, item: any) => {
+          const quantity = parseFloat(item.quantity || 0)
+          const unitPrice = parseFloat(item.unitPrice || 0)
+          const vat = parseFloat(item.vat || 0)
+          const itemTotal = quantity * unitPrice * (1 + vat / 100)
+          return itemSum + itemTotal
+        }, 0)
+        return sum + invoiceTotal
+      }, 0)
+
+      // Calculate paid from invoicePayments
+      const paid = invoices.reduce((sum, inv) => {
+        const invoicePaid = (inv.invoicePayments || []).reduce((paymentSum: number, payment: any) => {
+          return paymentSum + parseFloat(payment.amount || 0)
+        }, 0)
+        return sum + invoicePaid
+      }, 0)
 
       return {
         total,

@@ -3,8 +3,8 @@ import { DigiformaService } from './DigiformaService'
 import { DigiformaSync, SyncStatus, SyncType } from '../models/DigiformaSync'
 import { DigiformaCompany } from '../models/DigiformaCompany'
 import { DigiformaContact } from '../models/DigiformaContact'
-import { DigiformaQuote } from '../models/DigiformaQuote'
-import { DigiformaInvoice } from '../models/DigiformaInvoice'
+import { DigiformaQuote, DigiformaQuoteStatus } from '../models/DigiformaQuote'
+import { DigiformaInvoice, DigiformaInvoiceStatus } from '../models/DigiformaInvoice'
 import { MedicalInstitution } from '../models/MedicalInstitution'
 import { ContactPerson } from '../models/ContactPerson'
 import { logger } from '../utils/logger'
@@ -121,22 +121,34 @@ export class DigiformaSyncService {
 
       for (const company of companies) {
         try {
+          // Skip companies without ID
+          if (!company.id) {
+            logger.warn('Skipping company without ID', { name: company.name })
+            continue
+          }
+
           const existing = await DigiformaCompany.findByDigiformaId(company.id)
 
           const companyData = {
             digiformaId: company.id,
             name: company.name,
             email: company.email || undefined,
-            phone: undefined, // Not in current API schema
+            phone: undefined, // Not available in API
             address: {
               city: company.city || undefined,
+              cityCode: company.cityCode || undefined,
               country: company.country || undefined,
             },
             siret: undefined,
             website: undefined,
             lastSyncAt: new Date(),
             metadata: {
-              opca: company.opca || undefined,
+              accountingNumber: company.accountingNumber || undefined,
+              ape: company.ape || undefined,
+              code: company.code || undefined,
+              employeesCount: company.employeesCount || undefined,
+              note: company.note || undefined,
+              contacts: company.contacts || [], // Store contacts for later processing
             },
           }
 
@@ -191,12 +203,67 @@ export class DigiformaSyncService {
 
   /**
    * Sync quotes from Digiforma
-   * TODO: Implement when Digiforma provides quotes endpoint
    */
   private async syncQuotes(): Promise<void> {
     try {
-      // For now, we'll skip this as we don't have the Digiforma quotes API structure yet
-      logger.info('Skipping quotes sync - API structure not yet implemented')
+      const quotations = await this.digiformaService.fetchQuotations()
+      logger.info(`Fetched ${quotations.length} quotations from Digiforma`)
+
+      for (const quote of quotations) {
+        try {
+          // Calculate total from items
+          const totalAmount = (quote.items || []).reduce((sum: number, item: any) => {
+            const quantity = parseFloat(item.quantity || 0)
+            const unitPrice = parseFloat(item.unitPrice || 0)
+            const vat = parseFloat(item.vat || 0)
+            return sum + quantity * unitPrice * (1 + vat / 100)
+          }, 0)
+
+          // Determine status
+          let status = DigiformaQuoteStatus.DRAFT
+          if (quote.acceptedAt) {
+            status = DigiformaQuoteStatus.ACCEPTED
+          }
+
+          // Find linked company
+          const company = await DigiformaCompany.findOne({
+            where: { digiformaId: quote.customer?.id }
+          })
+
+          // Create or update quote
+          const [digiformaQuote, created] = await DigiformaQuote.upsert({
+            digiformaId: quote.id,
+            digiformaCompanyId: company?.id,
+            institutionId: company?.institutionId,
+            quoteNumber: quote.numberStr || quote.number?.toString(),
+            status,
+            totalAmount,
+            currency: 'EUR',
+            createdDate: new Date(quote.date || quote.insertedAt),
+            acceptedDate: quote.acceptedAt ? new Date(quote.acceptedAt) : undefined,
+            lastSyncAt: new Date(),
+            metadata: {
+              prefix: quote.prefix,
+              items: quote.items,
+              customer: quote.customer,
+            }
+          })
+
+          if (created) {
+            this.currentSync!.quotesSynced++
+          }
+        } catch (error) {
+          logger.error('Failed to sync quote', {
+            quoteId: quote.id,
+            error: (error as Error).message
+          })
+          await this.currentSync?.addError('QUOTE_SYNC_FAILED', (error as Error).message, {
+            quoteId: quote.id
+          })
+        }
+      }
+
+      logger.info(`Synced ${this.currentSync!.quotesSynced} quotes`)
     } catch (error) {
       logger.error('Failed to sync Digiforma quotes', { error: (error as Error).message })
       await this.currentSync?.addError('QUOTES_SYNC_FAILED', (error as Error).message)
@@ -205,12 +272,89 @@ export class DigiformaSyncService {
 
   /**
    * Sync invoices from Digiforma
-   * TODO: Implement when Digiforma provides invoices endpoint
    */
   private async syncInvoices(): Promise<void> {
     try {
-      // For now, we'll skip this as we don't have the Digiforma invoices API structure yet
-      logger.info('Skipping invoices sync - API structure not yet implemented')
+      const invoices = await this.digiformaService.fetchInvoices()
+      logger.info(`Fetched ${invoices.length} invoices from Digiforma`)
+
+      for (const invoice of invoices) {
+        try {
+          // Calculate total from items
+          const totalAmount = (invoice.items || []).reduce((sum: number, item: any) => {
+            const quantity = parseFloat(item.quantity || 0)
+            const unitPrice = parseFloat(item.unitPrice || 0)
+            const vat = parseFloat(item.vat || 0)
+            return sum + quantity * unitPrice * (1 + vat / 100)
+          }, 0)
+
+          // Calculate paid amount from payments
+          const paidAmount = (invoice.invoicePayments || []).reduce((sum: number, payment: any) => {
+            return sum + parseFloat(payment.amount || 0)
+          }, 0)
+
+          // Determine status
+          let status = DigiformaInvoiceStatus.DRAFT
+          if (paidAmount >= totalAmount && paidAmount > 0) {
+            status = DigiformaInvoiceStatus.PAID
+          } else if (paidAmount > 0) {
+            status = DigiformaInvoiceStatus.PARTIALLY_PAID
+          } else if (invoice.date) {
+            status = DigiformaInvoiceStatus.SENT
+          }
+
+          // Find linked company
+          const company = await DigiformaCompany.findOne({
+            where: { digiformaId: invoice.customer?.id }
+          })
+
+          // Find if this invoice is linked to a quote
+          const linkedQuote = await DigiformaQuote.findOne({
+            where: {
+              digiformaCompanyId: company?.id,
+              // Match by similar date/amount if no explicit link
+            }
+          })
+
+          // Create or update invoice
+          const [digiformaInvoice, created] = await DigiformaInvoice.upsert({
+            digiformaId: invoice.id,
+            digiformaCompanyId: company?.id,
+            digiformaQuoteId: linkedQuote?.id,
+            institutionId: company?.institutionId,
+            invoiceNumber: invoice.numberStr || invoice.number?.toString(),
+            status,
+            totalAmount,
+            paidAmount,
+            currency: 'EUR',
+            issueDate: new Date(invoice.date || invoice.insertedAt),
+            paidDate: invoice.invoicePayments?.[0]?.date ? new Date(invoice.invoicePayments[0].date) : undefined,
+            lastSyncAt: new Date(),
+            metadata: {
+              items: invoice.items,
+              invoicePayments: invoice.invoicePayments,
+              accountingAnalytics: invoice.accountingAnalytics,
+              isPaymentLimitEndMonth: invoice.isPaymentLimitEndMonth,
+              paymentLimitDays: invoice.paymentLimitDays,
+              customer: invoice.customer,
+            }
+          })
+
+          if (created) {
+            this.currentSync!.invoicesSynced++
+          }
+        } catch (error) {
+          logger.error('Failed to sync invoice', {
+            invoiceId: invoice.id,
+            error: (error as Error).message
+          })
+          await this.currentSync?.addError('INVOICE_SYNC_FAILED', (error as Error).message, {
+            invoiceId: invoice.id
+          })
+        }
+      }
+
+      logger.info(`Synced ${this.currentSync!.invoicesSynced} invoices`)
     } catch (error) {
       logger.error('Failed to sync Digiforma invoices', { error: (error as Error).message })
       await this.currentSync?.addError('INVOICES_SYNC_FAILED', (error as Error).message)
@@ -265,6 +409,8 @@ export class DigiformaSyncService {
             })
           } else {
             // Create new institution if no match
+            const metadata = digiformaCompany.metadata || {}
+
             const newInstitution = await MedicalInstitution.create({
               name: digiformaCompany.name,
               type: InstitutionType.CLINIC, // Default type for Digiforma companies
@@ -272,16 +418,37 @@ export class DigiformaSyncService {
                 street: digiformaCompany.address?.street || 'Adresse non renseignée',
                 city: digiformaCompany.address?.city || 'Non renseignée',
                 state: digiformaCompany.address?.state || 'Non renseigné',
-                zipCode: digiformaCompany.address?.zipCode || '00000',
+                zipCode: digiformaCompany.address?.zipCode || (metadata.cityCode as string) || '00000',
                 country: digiformaCompany.address?.country || 'FR',
               },
               tags: ['digiforma', 'formation'],
-            })
+              // Store Digiforma metadata in notes for now
+              notes: metadata.note || `Code: ${metadata.code || 'N/A'}, APE: ${metadata.ape || 'N/A'}, Comptabilité: ${metadata.accountingNumber || 'N/A'}`,
+            } as any)
 
             await digiformaCompany.linkToInstitution(newInstitution.id)
 
-            // Create contact person if email exists
-            if (digiformaCompany.email) {
+            // Create contact persons from Digiforma contacts
+            const digiformaContacts = digiformaCompany.metadata?.contacts || []
+
+            if (digiformaContacts.length > 0) {
+              // Create contacts from the contacts array
+              for (let i = 0; i < digiformaContacts.length; i++) {
+                const contact = digiformaContacts[i]
+                if (contact.email) {
+                  await ContactPerson.create({
+                    institutionId: newInstitution.id,
+                    firstName: contact.firstname || 'Contact',
+                    lastName: contact.lastname || digiformaCompany.name,
+                    email: contact.email,
+                    phone: contact.phone || undefined,
+                    title: contact.position || contact.title || undefined,
+                    isPrimary: i === 0, // First contact is primary
+                  })
+                }
+              }
+            } else if (digiformaCompany.email) {
+              // Fallback: create contact from company email if no contacts array
               await ContactPerson.create({
                 institutionId: newInstitution.id,
                 firstName: 'Contact',
@@ -294,6 +461,7 @@ export class DigiformaSyncService {
             logger.info('Created new institution from Digiforma company', {
               digiformaCompanyId: digiformaCompany.id,
               institutionId: newInstitution.id,
+              contactsCreated: digiformaContacts.length || (digiformaCompany.email ? 1 : 0),
             })
           }
         } catch (error) {

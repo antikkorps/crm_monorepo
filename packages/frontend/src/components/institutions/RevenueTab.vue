@@ -290,7 +290,7 @@ async function loadRevenue() {
 }
 
 // Get period dates
-function getPeriodDates(): [Date?, Date?] {
+function getPeriodDates(): [string?, string?] {
   if (period.value === 'all') {
     return [undefined, undefined]
   }
@@ -311,7 +311,7 @@ function getPeriodDates(): [Date?, Date?] {
       break
   }
 
-  return [startDate, now]
+  return [startDate.toISOString(), now.toISOString()]
 }
 
 // Set period

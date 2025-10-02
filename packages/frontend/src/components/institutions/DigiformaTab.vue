@@ -8,6 +8,42 @@
 
     <!-- Content -->
     <div v-else>
+      <!-- Company Info -->
+      <v-row v-if="company" class="mb-6">
+        <v-col cols="12">
+          <v-card elevation="2">
+            <v-card-title class="d-flex align-center">
+              <v-icon icon="mdi-office-building" color="primary" class="mr-2" />
+              Informations Digiforma
+            </v-card-title>
+            <v-card-text>
+              <v-row>
+                <v-col cols="12" md="6" v-if="company.metadata?.accountingNumber">
+                  <div class="text-caption text-medium-emphasis">Numéro comptable</div>
+                  <div class="text-h6">{{ company.metadata.accountingNumber }}</div>
+                </v-col>
+                <v-col cols="12" md="6" v-if="company.metadata?.code">
+                  <div class="text-caption text-medium-emphasis">Code Digiforma</div>
+                  <div class="text-h6">{{ company.metadata.code }}</div>
+                </v-col>
+                <v-col cols="12" md="6" v-if="company.metadata?.ape">
+                  <div class="text-caption text-medium-emphasis">Code APE</div>
+                  <div class="text-h6">{{ company.metadata.ape }}</div>
+                </v-col>
+                <v-col cols="12" md="6" v-if="company.metadata?.employeesCount">
+                  <div class="text-caption text-medium-emphasis">Nombre d'employés</div>
+                  <div class="text-h6">{{ company.metadata.employeesCount }}</div>
+                </v-col>
+                <v-col cols="12" v-if="company.metadata?.note">
+                  <div class="text-caption text-medium-emphasis">Notes</div>
+                  <div class="text-body-1">{{ company.metadata.note }}</div>
+                </v-col>
+              </v-row>
+            </v-card-text>
+          </v-card>
+        </v-col>
+      </v-row>
+
       <!-- Formation Revenue Summary -->
       <v-row class="mb-6">
         <v-col cols="12">
@@ -209,7 +245,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { digiformaApi } from '@/services/api'
-import type { ConsolidatedRevenue, DigiformaQuote, DigiformaInvoice } from '@/services/api/digiforma'
+import type { ConsolidatedRevenue, DigiformaQuote, DigiformaInvoice, DigiformaCompany } from '@/services/api/digiforma'
 
 // Props
 const props = defineProps<{
@@ -217,6 +253,7 @@ const props = defineProps<{
 }>()
 
 // Refs
+const company = ref<DigiformaCompany | null>(null)
 const revenue = ref<ConsolidatedRevenue | null>(null)
 const quotes = ref<DigiformaQuote[]>([])
 const invoices = ref<DigiformaInvoice[]>([])
@@ -249,12 +286,14 @@ async function loadData() {
   error.value = null
 
   try {
-    const [revenueData, quotesData, invoicesData] = await Promise.all([
+    const [companyData, revenueData, quotesData, invoicesData] = await Promise.all([
+      digiformaApi.data.getInstitutionCompany(props.institutionId),
       digiformaApi.revenue.getInstitutionRevenue(props.institutionId),
       digiformaApi.data.getInstitutionQuotes(props.institutionId),
       digiformaApi.data.getInstitutionInvoices(props.institutionId)
     ])
 
+    company.value = companyData
     revenue.value = revenueData
     quotes.value = quotesData
     invoices.value = invoicesData

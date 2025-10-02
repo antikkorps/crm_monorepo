@@ -14,7 +14,8 @@ export const useInstitutionsStore = defineStore("institutions", () => {
     try {
       loading.value = true
       error.value = null
-      const response = await institutionsApi.getAll()
+      // Fetch all institutions (limit: -1 means no pagination)
+      const response = await institutionsApi.getAll({ limit: -1 })
       const data = (response as any).data || response
 
       // Handle paginated response: {institutions: [...], pagination: {...}}

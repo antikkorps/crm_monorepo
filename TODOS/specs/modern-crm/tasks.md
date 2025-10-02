@@ -824,19 +824,38 @@
 
     _Requirements: 6.4, 8.2, 10.1_
 
-  **ÉTAT FINAL:** ✅ Intégration Digiforma 100% complète
-  - Backend : Modèles, services, API endpoints, documentation
-  - Frontend : Settings, dashboard widget, onglet institution
-  - Fonctionnalités : Sync manuelle/auto, CA consolidé, merge intelligent
-  - Documentation : `packages/backend/DIGIFORMA.md`
+  **ÉTAT FINAL:** ✅ Intégration Digiforma complète et fonctionnelle
+  - ✅ Backend : Modèles, services, API endpoints, documentation
+  - ✅ Frontend : Settings, dashboard widget, onglet institution
+  - ✅ Fonctionnalités : Sync manuelle, CA consolidé, merge par email
+  - ✅ Sécurité : Chiffrement AES-256-GCM du bearer token
+  - ✅ Documentation : `packages/backend/DIGIFORMA.md`
+  - ✅ Tests : Test de connexion fonctionnel, sync sans erreur
 
-  **PROCHAINES AMÉLIORATIONS POSSIBLES (24.6 - Phase 2):**
-  - [ ] **Gestion des noms d'institutions différents** (voir section dédiée ci-dessous)
+  **🔧 CORRECTIONS APPLIQUÉES LORS DE L'IMPLÉMENTATION :**
+  - ✅ Validation address (street, state, city, zipCode) avec valeurs par défaut
+  - ✅ Validation firstName pour contacts avec valeur par défaut "Contact"
+  - ✅ Fix limite de 50 dans `findUnlinked()` → retourne toutes les companies
+  - ✅ Chiffrement AES-256-GCM du bearer token (migration auto depuis base64)
+  - ✅ Fix UX bouton "Tester connexion" actif après enregistrement
+  - ✅ Fix pagination boucle infinie dans MedicalInstitutionsView
+  - ⚠️ Matching par nom désactivé temporairement (trop permissif, créait faux positifs)
+
+  **📊 RÉSULTATS DE SYNCHRONISATION (dernier test) :**
+  - 502 companies Digiforma synchronisées avec succès
+  - Matching par email uniquement (fiable et précis)
+  - 0 erreur de synchronisation
+  - Prêt pour production avec vraies données
+
+  **🔄 AMÉLIORATIONS FUTURES (Phase 2 - optionnel) :**
+  - [ ] **Matching par nom avec fuzzy matching** (tâche 24.6 - si nécessaire)
   - [ ] Synchronisation incrémentale (delta sync)
-  - [ ] Webhooks Digiforma si disponibles
-  - [ ] Réconciliation manuelle avancée des duplicates
+  - [ ] Webhooks Digiforma si API disponible
+  - [ ] Interface réconciliation manuelle des duplicates
   - [ ] Export CA consolidé Excel/PDF
-  - [ ] Notifications sync terminée
+  - [ ] Notifications automatiques fin de sync
+  - [ ] Sync automatique hebdomadaire (cron job)
+  - [ ] Import/sync des quotes et invoices Digiforma (API à documenter)
 
 - [ ] 24.6 **Amélioration Merge - Gestion noms différents** 🔄 **NOUVEAU**
 

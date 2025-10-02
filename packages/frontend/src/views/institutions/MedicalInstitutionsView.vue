@@ -45,7 +45,7 @@
             <v-card-text class="pa-4">
               <div class="d-flex align-center justify-space-between">
                 <div>
-                  <div class="text-h5 font-weight-bold">{{ totalRecords }}</div>
+                  <div class="text-h5 font-weight-bold">{{ stats.total }}</div>
                   <div class="text-caption text-medium-emphasis">
                     Institutions Totales
                   </div>
@@ -59,9 +59,7 @@
             <v-card-text class="pa-4">
               <div class="d-flex align-center justify-space-between">
                 <div>
-                  <div class="text-h5 font-weight-bold">
-                    {{ institutions.filter((i) => i.isActive).length }}
-                  </div>
+                  <div class="text-h5 font-weight-bold">{{ stats.active }}</div>
                   <div class="text-caption text-medium-emphasis">Actives</div>
                 </div>
                 <v-icon color="success" size="32">mdi-check-circle</v-icon>
@@ -73,13 +71,7 @@
             <v-card-text class="pa-4">
               <div class="d-flex align-center justify-space-between">
                 <div>
-                  <div class="text-h5 font-weight-bold">
-                    {{
-                      institutions.filter(
-                        (i) => i.medicalProfile?.complianceStatus === "pending_review"
-                      ).length
-                    }}
-                  </div>
+                  <div class="text-h5 font-weight-bold">{{ stats.pendingReview }}</div>
                   <div class="text-caption text-medium-emphasis">En Attente</div>
                 </div>
                 <v-icon color="warning" size="32">mdi-clock-alert</v-icon>
@@ -91,13 +83,7 @@
             <v-card-text class="pa-4">
               <div class="d-flex align-center justify-space-between">
                 <div>
-                  <div class="text-h5 font-weight-bold">
-                    {{
-                      institutions.filter(
-                        (i) => i.medicalProfile?.complianceStatus === "non_compliant"
-                      ).length
-                    }}
-                  </div>
+                  <div class="text-h5 font-weight-bold">{{ stats.nonCompliant }}</div>
                   <div class="text-caption text-medium-emphasis">Non Conformes</div>
                 </div>
                 <v-icon color="error" size="32">mdi-alert-circle</v-icon>
@@ -540,6 +526,12 @@ const onImportCompleted = () => {
 const institutions = ref<MedicalInstitution[]>([])
 const loading = ref(false)
 const totalRecords = ref(0)
+const stats = ref({
+  total: 0,
+  active: 0,
+  pendingReview: 0,
+  nonCompliant: 0
+})
 const searchQuery = ref("")
 const showAdvancedFilters = ref(false)
 const showCreateDialog = ref(false)
@@ -617,6 +609,30 @@ const loadUsers = async () => {
     userOptions.value = []
   } finally {
     loadingUsers.value = false
+  }
+}
+
+const loadStats = async () => {
+  try {
+    // Fetch all institutions (limit: -1 means no pagination)
+    const response = await institutionsApi.getAll({ limit: -1 })
+    const payload: any = response
+    let allInstitutions: MedicalInstitution[] = []
+
+    if (payload?.success && payload.data) {
+      allInstitutions = payload.data.institutions || []
+    } else {
+      allInstitutions = payload.data || []
+    }
+
+    stats.value = {
+      total: allInstitutions.length,
+      active: allInstitutions.filter(i => i.isActive).length,
+      pendingReview: allInstitutions.filter(i => i.medicalProfile?.complianceStatus === "pending_review").length,
+      nonCompliant: allInstitutions.filter(i => i.medicalProfile?.complianceStatus === "non_compliant").length
+    }
+  } catch (error) {
+    console.error("Error loading stats:", error)
   }
 }
 
@@ -803,6 +819,7 @@ onMounted(() => {
     sessionStorage.removeItem("needsRefresh")
   }
 
+  loadStats()
   loadInstitutions()
   loadUsers()
 
