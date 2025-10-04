@@ -122,10 +122,8 @@
                   {{ formatDate(item.createdDate) }}
                 </template>
 
-                <template v-slot:item.validUntil="{ item }">
-                  <span :class="{ 'text-error': isExpired(item.validUntil) }">
-                    {{ formatDate(item.validUntil) }}
-                  </span>
+                <template v-slot:item.acceptedDate="{ item }">
+                  {{ formatDate(item.acceptedDate) }}
                 </template>
               </v-data-table>
             </v-card-text>
@@ -182,10 +180,8 @@
                   {{ formatDate(item.issueDate) }}
                 </template>
 
-                <template v-slot:item.dueDate="{ item }">
-                  <span :class="{ 'text-error': isOverdue(item) }">
-                    {{ formatDate(item.dueDate) }}
-                  </span>
+                <template v-slot:item.paidDate="{ item }">
+                  {{ formatDate(item.paidDate) }}
                 </template>
               </v-data-table>
             </v-card-text>
@@ -268,7 +264,7 @@ const quoteHeaders = [
   { title: 'Statut', key: 'status', sortable: true },
   { title: 'Montant', key: 'totalAmount', sortable: true },
   { title: 'Date création', key: 'createdDate', sortable: true },
-  { title: 'Valide jusqu\'au', key: 'validUntil', sortable: true }
+  { title: 'Date acceptation', key: 'acceptedDate', sortable: true }
 ]
 
 const invoiceHeaders = [
@@ -277,7 +273,7 @@ const invoiceHeaders = [
   { title: 'Montant total', key: 'totalAmount', sortable: true },
   { title: 'Montant payé', key: 'paidAmount', sortable: true },
   { title: 'Date émission', key: 'issueDate', sortable: true },
-  { title: 'Date échéance', key: 'dueDate', sortable: true }
+  { title: 'Date paiement', key: 'paidDate', sortable: true }
 ]
 
 // Load all data
