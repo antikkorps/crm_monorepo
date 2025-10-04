@@ -316,8 +316,11 @@ function formatCurrency(amount: number): string {
   }).format(amount)
 }
 
-function formatDate(dateString: string): string {
-  return new Date(dateString).toLocaleDateString('fr-FR', {
+function formatDate(dateString?: string | null): string {
+  if (!dateString) return '-'
+  const date = new Date(dateString)
+  if (isNaN(date.getTime())) return '-'
+  return date.toLocaleDateString('fr-FR', {
     year: 'numeric',
     month: 'short',
     day: 'numeric'

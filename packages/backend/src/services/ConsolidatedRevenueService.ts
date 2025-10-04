@@ -1,6 +1,9 @@
 import { Op } from 'sequelize'
 import { Invoice } from '../models/Invoice'
 import { DigiformaInvoice } from '../models/DigiformaInvoice'
+import { DigiformaCompany } from '../models/DigiformaCompany'
+import { DigiformaSettings } from '../models/DigiformaSettings'
+import { DigiformaService } from './DigiformaService'
 import { MedicalInstitution } from '../models/MedicalInstitution'
 import { logger } from '../utils/logger'
 
@@ -181,7 +184,7 @@ export class ConsolidatedRevenueService {
   }
 
   /**
-   * Get formation revenue from Digiforma invoices
+   * Get formation revenue from Digiforma invoices (fetched from API)
    */
   private static async getFormationRevenue(
     institutionId?: string,
@@ -193,34 +196,108 @@ export class ConsolidatedRevenueService {
     unpaidRevenue: number
     invoiceCount: number
   }> {
-    const where: any = {}
+    try {
+      // Get Digiforma settings
+      const settings = await DigiformaSettings.findOne()
+      if (!settings || !settings.isEnabled) {
+        return {
+          totalRevenue: 0,
+          paidRevenue: 0,
+          unpaidRevenue: 0,
+          invoiceCount: 0,
+        }
+      }
 
-    if (institutionId) {
-      where.institutionId = institutionId
-    }
+      // Get companies to fetch invoices for
+      let companies: DigiformaCompany[]
+      if (institutionId) {
+        companies = await DigiformaCompany.findAll({
+          where: { institutionId }
+        })
+        if (companies.length === 0) {
+          return {
+            totalRevenue: 0,
+            paidRevenue: 0,
+            unpaidRevenue: 0,
+            invoiceCount: 0,
+          }
+        }
+      } else {
+        // Get all companies linked to institutions for global revenue
+        companies = await DigiformaCompany.findAll({
+          where: { institutionId: { [Op.not]: null } }
+        })
+      }
 
-    if (startDate || endDate) {
-      where.issueDate = {}
-      if (startDate) where.issueDate[Op.gte] = startDate
-      if (endDate) where.issueDate[Op.lte] = endDate
-    }
+      // Fetch invoices from Digiforma API
+      const token = settings.getDecryptedToken()
+      const digiformaService = new DigiformaService(token)
 
-    const invoices = await DigiformaInvoice.findAll({ where })
+      let allInvoices: any[] = []
+      for (const company of companies) {
+        try {
+          const invoices = await digiformaService.fetchInvoicesByCompanyId(company.digiformaId)
+          allInvoices.push(...invoices)
+        } catch (error) {
+          logger.warn('Failed to fetch invoices for company', {
+            companyId: company.digiformaId,
+            error: (error as Error).message
+          })
+        }
+      }
 
-    const totalRevenue = invoices.reduce(
-      (sum, inv) => sum + parseFloat(inv.totalAmount?.toString() || '0'),
-      0
-    )
-    const paidRevenue = invoices.reduce(
-      (sum, inv) => sum + parseFloat(inv.paidAmount?.toString() || '0'),
-      0
-    )
+      // Filter by date range if provided
+      if (startDate || endDate) {
+        allInvoices = allInvoices.filter(invoice => {
+          if (!invoice.date) return false
+          const invoiceDate = new Date(invoice.date)
+          if (startDate && invoiceDate < startDate) return false
+          if (endDate && invoiceDate > endDate) return false
+          return true
+        })
+      }
 
-    return {
-      totalRevenue,
-      paidRevenue,
-      unpaidRevenue: totalRevenue - paidRevenue,
-      invoiceCount: invoices.length,
+      // Calculate revenue from invoice items
+      let totalRevenue = 0
+      let paidRevenue = 0
+
+      for (const invoice of allInvoices) {
+        const items = invoice.items || []
+        const invoiceTotal = items.reduce((sum: number, item: any) => {
+          const quantity = parseFloat(item.quantity || 0)
+          const unitPrice = parseFloat(item.unitPrice || 0)
+          const vat = parseFloat(item.vat || 0)
+          return sum + quantity * unitPrice * (1 + vat / 100)
+        }, 0)
+
+        totalRevenue += invoiceTotal
+
+        // Calculate paid amount from payments
+        const payments = invoice.payments || []
+        const invoicePaid = payments.reduce((sum: number, payment: any) => {
+          return sum + parseFloat(payment.amount || 0)
+        }, 0)
+
+        paidRevenue += invoicePaid
+      }
+
+      return {
+        totalRevenue,
+        paidRevenue,
+        unpaidRevenue: totalRevenue - paidRevenue,
+        invoiceCount: allInvoices.length,
+      }
+    } catch (error) {
+      logger.error('Failed to get formation revenue from Digiforma API', {
+        institutionId,
+        error: (error as Error).message,
+      })
+      return {
+        totalRevenue: 0,
+        paidRevenue: 0,
+        unpaidRevenue: 0,
+        invoiceCount: 0,
+      }
     }
   }
 

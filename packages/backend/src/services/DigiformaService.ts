@@ -56,6 +56,7 @@ export class DigiformaService {
       const query = `
         query {
           companies {
+            id
             accountingNumber
             ape
             city
@@ -70,12 +71,15 @@ export class DigiformaService {
               phone
               position
               title
+              tags
             }
             country
             email
             employeesCount
             name
             note
+            roadAddress
+            siret
           }
         }
       `
@@ -180,6 +184,20 @@ export class DigiformaService {
             customer {
               accountingNumber
               id
+              contracted
+              crmStatus
+              entity {
+                ... on Company {
+                  id
+                  email
+                  accountingNumber
+                  city
+                  cityCode
+                  code
+                  name
+                  country
+                }
+              }
               accountManager {
                 email
                 firstname
@@ -237,6 +255,20 @@ export class DigiformaService {
             customer {
               accountingNumber
               id
+              contracted
+              crmStatus
+              entity {
+                ... on Company {
+                  id
+                  email
+                  accountingNumber
+                  city
+                  cityCode
+                  code
+                  name
+                  country
+                }
+              }
             }
           }
         }
@@ -276,12 +308,15 @@ export class DigiformaService {
               phone
               position
               title
+              tags
             }
             country
             email
             employeesCount
             name
             note
+            roadAddress
+            siret
           }
         }
       `
@@ -363,6 +398,99 @@ export class DigiformaService {
     } catch (error) {
       logger.error('Failed to calculate Digiforma revenue', {
         error: (error as Error).message
+      })
+      throw error
+    }
+  }
+
+  /**
+   * Fetch quotes for a specific company
+   */
+  async fetchQuotesByCompanyId(companyId: string): Promise<any[]> {
+    try {
+      const allQuotes = await this.fetchQuotations()
+
+      logger.info('Filtering quotes by company ID', {
+        companyId,
+        totalQuotes: allQuotes.length,
+        sampleCustomerEntityIds: allQuotes.slice(0, 3).map(q => ({
+          quoteId: q.id,
+          customerId: q.customer?.id,
+          entityId: q.customer?.entity?.id
+        }))
+      })
+
+      // Match by customer.entity.id (the actual company ID)
+      const filtered = allQuotes.filter(quote => quote.customer?.entity?.id === companyId)
+
+      logger.info('Filtered quotes result', {
+        companyId,
+        matchedQuotes: filtered.length
+      })
+
+      return filtered
+    } catch (error) {
+      logger.error('Failed to fetch quotes for company', {
+        error: (error as Error).message,
+        companyId
+      })
+      throw error
+    }
+  }
+
+  /**
+   * Fetch invoices for a specific company
+   */
+  async fetchInvoicesByCompanyId(companyId: string): Promise<any[]> {
+    try {
+      const allInvoices = await this.fetchInvoices()
+      // Match by customer.entity.id (the actual company ID)
+      return allInvoices.filter(invoice => invoice.customer?.entity?.id === companyId)
+    } catch (error) {
+      logger.error('Failed to fetch invoices for company', {
+        error: (error as Error).message,
+        companyId
+      })
+      throw error
+    }
+  }
+
+  /**
+   * Get revenue for a specific company
+   */
+  async getCompanyRevenue(companyId: string): Promise<{ total: number; paid: number; unpaid: number }> {
+    try {
+      const invoices = await this.fetchInvoicesByCompanyId(companyId)
+
+      // Calculate total from items
+      const total = invoices.reduce((sum, inv) => {
+        const invoiceTotal = (inv.items || []).reduce((itemSum: number, item: any) => {
+          const quantity = parseFloat(item.quantity || 0)
+          const unitPrice = parseFloat(item.unitPrice || 0)
+          const vat = parseFloat(item.vat || 0)
+          const itemTotal = quantity * unitPrice * (1 + vat / 100)
+          return itemSum + itemTotal
+        }, 0)
+        return sum + invoiceTotal
+      }, 0)
+
+      // Calculate paid from invoicePayments
+      const paid = invoices.reduce((sum, inv) => {
+        const invoicePaid = (inv.invoicePayments || []).reduce((paymentSum: number, payment: any) => {
+          return paymentSum + parseFloat(payment.amount || 0)
+        }, 0)
+        return sum + invoicePaid
+      }, 0)
+
+      return {
+        total,
+        paid,
+        unpaid: total - paid,
+      }
+    } catch (error) {
+      logger.error('Failed to calculate company revenue', {
+        error: (error as Error).message,
+        companyId
       })
       throw error
     }

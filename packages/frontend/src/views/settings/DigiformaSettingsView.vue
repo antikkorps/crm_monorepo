@@ -225,15 +225,27 @@
                 <v-icon icon="mdi-sync" color="primary" class="mr-2" />
                 Synchronisation
               </div>
-              <v-btn
-                color="primary"
-                prepend-icon="mdi-sync"
-                :loading="syncing"
-                :disabled="!settings?.isConfigured || !settings?.isEnabled || loading || syncStatus?.isRunning"
-                @click="triggerSync"
-              >
-                Synchroniser maintenant
-              </v-btn>
+              <div class="d-flex gap-2">
+                <v-btn
+                  color="primary"
+                  prepend-icon="mdi-sync"
+                  :loading="syncing"
+                  :disabled="!settings?.isConfigured || !settings?.isEnabled || loading || syncStatus?.isRunning"
+                  @click="triggerSync('normal')"
+                >
+                  Synchroniser maintenant
+                </v-btn>
+                <v-btn
+                  v-if="isSuperAdmin"
+                  color="warning"
+                  prepend-icon="mdi-sync-alert"
+                  :loading="syncing"
+                  :disabled="!settings?.isConfigured || !settings?.isEnabled || loading || syncStatus?.isRunning"
+                  @click="syncModeDialog = true"
+                >
+                  Synchro initiale
+                </v-btn>
+              </div>
             </v-card-title>
 
             <v-card-text>
@@ -362,6 +374,46 @@
       </v-row>
     </div>
 
+    <!-- Sync Mode Dialog (Superadmin only) -->
+    <v-dialog v-model="syncModeDialog" max-width="500">
+      <v-card>
+        <v-card-title class="d-flex align-center">
+          <v-icon icon="mdi-alert" color="warning" class="mr-2" />
+          Synchronisation initiale
+        </v-card-title>
+        <v-card-text>
+          <v-alert type="warning" variant="tonal" class="mb-4">
+            <v-alert-title>Attention</v-alert-title>
+            La synchronisation initiale va mettre à jour <strong>toutes</strong> les institutions, contacts et adresses depuis Digiforma.
+            <br><br>
+            Cela peut écraser les modifications manuelles effectuées dans le CRM.
+            <br><br>
+            La synchronisation normale crée uniquement les <strong>nouvelles</strong> entreprises sans toucher aux données existantes.
+          </v-alert>
+
+          <p class="text-body-2 mt-4">
+            Êtes-vous sûr de vouloir lancer une synchronisation initiale ?
+          </p>
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer />
+          <v-btn
+            variant="text"
+            @click="syncModeDialog = false"
+          >
+            Annuler
+          </v-btn>
+          <v-btn
+            color="warning"
+            variant="flat"
+            @click="confirmInitialSync"
+          >
+            Confirmer
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
     <!-- Snackbar for notifications -->
     <v-snackbar
       v-model="snackbar.show"
@@ -379,10 +431,15 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import AppLayout from '@/components/layout/AppLayout.vue'
 import { digiformaApi } from '@/services/api'
+import { useAuthStore } from '@/stores/auth'
 import type { DigiformaSettings, DigiformaSyncStatus, DigiformaSync } from '@/services/api/digiforma'
+
+// Auth store
+const authStore = useAuthStore()
+const isSuperAdmin = computed(() => authStore.userRole === 'super_admin')
 
 // Refs
 const settings = ref<DigiformaSettings | null>(null)
@@ -395,6 +452,7 @@ const syncing = ref(false)
 const loadingHistory = ref(false)
 const showToken = ref(false)
 const testResult = ref<{ success: boolean; message: string } | null>(null)
+const syncModeDialog = ref(false)
 
 // Form data
 const formData = ref({
@@ -545,12 +603,15 @@ async function testConnection() {
 }
 
 // Trigger sync
-async function triggerSync() {
+async function triggerSync(mode: 'initial' | 'normal' = 'normal') {
   syncing.value = true
 
   try {
-    const result = await digiformaApi.sync.triggerSync()
-    showSnackbar('Synchronisation démarrée', 'success')
+    const result = await digiformaApi.sync.triggerSync({ mode })
+    showSnackbar(
+      mode === 'initial' ? 'Synchronisation initiale démarrée' : 'Synchronisation démarrée',
+      'success'
+    )
 
     // Poll sync status
     const pollInterval = setInterval(async () => {
@@ -568,6 +629,12 @@ async function triggerSync() {
     console.error('Failed to trigger sync:', error)
     syncing.value = false
   }
+}
+
+// Confirm initial sync (superadmin only)
+function confirmInitialSync() {
+  syncModeDialog.value = false
+  triggerSync('initial')
 }
 
 // Helper functions

@@ -2,6 +2,7 @@ import { Context } from '../types/koa'
 import { createError } from '../middleware/errorHandler'
 import { DigiformaSettings } from '../models/DigiformaSettings'
 import { DigiformaSyncService } from '../services/DigiformaSyncService'
+import { DigiformaService } from '../services/DigiformaService'
 import { ConsolidatedRevenueService } from '../services/ConsolidatedRevenueService'
 import { DigiformaQuote } from '../models/DigiformaQuote'
 import { DigiformaInvoice } from '../models/DigiformaInvoice'
@@ -149,6 +150,15 @@ export class DigiformaController {
    * Trigger manual synchronization
    */
   static async triggerSync(ctx: Context) {
+    const schema = Joi.object({
+      mode: Joi.string().valid('initial', 'normal').optional().default('normal'),
+    })
+
+    const { error, value } = schema.validate(ctx.request.body)
+    if (error) {
+      throw createError(error.details[0].message, 400, 'VALIDATION_ERROR', error.details)
+    }
+
     try {
       const settings = await DigiformaSettings.getSettings()
 
@@ -156,27 +166,34 @@ export class DigiformaController {
         throw createError('Digiforma is not configured or disabled', 400, 'NOT_CONFIGURED')
       }
 
+      // Check if user is superadmin for initial sync
+      if (value.mode === 'initial' && ctx.state.user?.role !== 'super_admin') {
+        throw createError('Only superadmins can trigger initial sync', 403, 'FORBIDDEN')
+      }
+
       const token = settings.getDecryptedToken()
       const syncService = new DigiformaSyncService(token)
 
       // Start sync (don't wait for completion)
-      const sync = await syncService.startFullSync(ctx.state.user?.id)
+      const sync = await syncService.startFullSync(ctx.state.user?.id, value.mode)
 
       // Update last sync date
       await settings.updateLastSync()
 
       ctx.body = {
         success: true,
-        message: 'Synchronization started',
+        message: `${value.mode === 'initial' ? 'Initial' : 'Normal'} synchronization started`,
         data: {
           syncId: sync.id,
           status: sync.status,
+          mode: value.mode,
         },
       }
 
       logger.info('Digiforma sync triggered', {
         userId: ctx.state.user?.id,
         syncId: sync.id,
+        mode: value.mode,
       })
     } catch (error) {
       logger.error('Failed to trigger Digiforma sync', {
@@ -298,7 +315,7 @@ export class DigiformaController {
 
   /**
    * GET /api/digiforma/institutions/:id/quotes
-   * Get Digiforma quotes for an institution
+   * Get Digiforma quotes for an institution (fetched on-demand from Digiforma API)
    */
   static async getInstitutionQuotes(ctx: Context) {
     const { id } = ctx.params
@@ -308,12 +325,60 @@ export class DigiformaController {
     }
 
     try {
-      const quotes = await DigiformaQuote.getByInstitution(id)
+      const settings = await DigiformaSettings.getSettings()
+      if (!settings.isConfigured()) {
+        ctx.body = { success: true, data: { quotes: [] } }
+        return
+      }
+
+      // Find Digiforma company linked to this institution
+      const company = await DigiformaCompany.findOne({
+        where: { institutionId: id }
+      })
+
+      if (!company) {
+        ctx.body = { success: true, data: { quotes: [] } }
+        return
+      }
+
+      // Fetch quotes from Digiforma API
+      const token = settings.getDecryptedToken()
+      const digiformaService = new DigiformaService(token)
+
+      logger.info('Fetching quotes for company', {
+        institutionId: id,
+        digiformaCompanyId: company.id,
+        digiformaId: company.digiformaId
+      })
+
+      const quotes = await digiformaService.fetchQuotesByCompanyId(company.digiformaId)
+
+      logger.info('Fetched quotes', {
+        institutionId: id,
+        digiformaId: company.digiformaId,
+        quotesCount: quotes.length
+      })
+
+      // Transform quotes to match expected format
+      const transformedQuotes = quotes.map(quote => ({
+        id: quote.id,
+        quoteNumber: quote.numberStr || quote.number?.toString(),
+        totalAmount: (quote.items || []).reduce((sum: number, item: any) => {
+          const quantity = parseFloat(item.quantity || 0)
+          const unitPrice = parseFloat(item.unitPrice || 0)
+          const vat = parseFloat(item.vat || 0)
+          return sum + quantity * unitPrice * (1 + vat / 100)
+        }, 0),
+        status: quote.acceptedAt ? 'accepted' : 'draft',
+        createdDate: quote.date || quote.insertedAt,
+        acceptedDate: quote.acceptedAt,
+        metadata: quote
+      }))
 
       ctx.body = {
         success: true,
         data: {
-          quotes,
+          quotes: transformedQuotes,
         },
       }
     } catch (error) {
@@ -328,7 +393,7 @@ export class DigiformaController {
 
   /**
    * GET /api/digiforma/institutions/:id/invoices
-   * Get Digiforma invoices for an institution
+   * Get Digiforma invoices for an institution (fetched on-demand from Digiforma API)
    */
   static async getInstitutionInvoices(ctx: Context) {
     const { id } = ctx.params
@@ -338,12 +403,58 @@ export class DigiformaController {
     }
 
     try {
-      const invoices = await DigiformaInvoice.getByInstitution(id)
+      const settings = await DigiformaSettings.getSettings()
+      if (!settings.isConfigured()) {
+        ctx.body = { success: true, data: { invoices: [] } }
+        return
+      }
+
+      // Find Digiforma company linked to this institution
+      const company = await DigiformaCompany.findOne({
+        where: { institutionId: id }
+      })
+
+      if (!company) {
+        ctx.body = { success: true, data: { invoices: [] } }
+        return
+      }
+
+      // Fetch invoices from Digiforma API
+      const token = settings.getDecryptedToken()
+      const digiformaService = new DigiformaService(token)
+      const invoices = await digiformaService.fetchInvoicesByCompanyId(company.digiformaId)
+
+      // Transform invoices to match expected format
+      const transformedInvoices = invoices.map(invoice => {
+        const totalAmount = (invoice.items || []).reduce((sum: number, item: any) => {
+          const quantity = parseFloat(item.quantity || 0)
+          const unitPrice = parseFloat(item.unitPrice || 0)
+          const vat = parseFloat(item.vat || 0)
+          return sum + quantity * unitPrice * (1 + vat / 100)
+        }, 0)
+
+        const paidAmount = (invoice.invoicePayments || []).reduce((sum: number, payment: any) => {
+          return sum + parseFloat(payment.amount || 0)
+        }, 0)
+
+        return {
+          id: invoice.id,
+          invoiceNumber: invoice.numberStr || invoice.number?.toString(),
+          totalAmount,
+          paidAmount,
+          status: paidAmount >= totalAmount && paidAmount > 0 ? 'paid' :
+                  paidAmount > 0 ? 'partially_paid' :
+                  invoice.date ? 'sent' : 'draft',
+          issueDate: invoice.date || invoice.insertedAt,
+          paidDate: invoice.invoicePayments?.[0]?.date,
+          metadata: invoice
+        }
+      })
 
       ctx.body = {
         success: true,
         data: {
-          invoices,
+          invoices: transformedInvoices,
         },
       }
     } catch (error) {

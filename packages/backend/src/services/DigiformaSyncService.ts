@@ -36,8 +36,10 @@ export class DigiformaSyncService {
 
   /**
    * Start a full synchronization
+   * @param triggeredBy - User who triggered the sync
+   * @param mode - 'initial' creates/updates all institutions, 'normal' only creates new ones
    */
-  async startFullSync(triggeredBy?: string): Promise<DigiformaSync> {
+  async startFullSync(triggeredBy?: string, mode: 'initial' | 'normal' = 'normal'): Promise<DigiformaSync> {
     // Check if sync is already running
     const runningSyncexist = await DigiformaSync.findOne({
       where: { status: SyncStatus.IN_PROGRESS },
@@ -56,25 +58,20 @@ export class DigiformaSyncService {
     try {
       await this.currentSync.update({ status: SyncStatus.IN_PROGRESS })
 
+      logger.info('Starting Digiforma sync', { syncId: this.currentSync.id, mode })
+
       // Step 1: Sync companies
       logger.info('Starting Digiforma companies sync', { syncId: this.currentSync.id })
       await this.syncCompanies()
 
-      // Step 2: Sync contacts (if available in API)
-      logger.info('Starting Digiforma contacts sync', { syncId: this.currentSync.id })
-      await this.syncContacts()
+      // Step 2: Merge with CRM data (creates institutions)
+      // Note: Quotes and invoices are fetched on-demand per institution for better performance
+      logger.info('Starting Digiforma-CRM merge', { syncId: this.currentSync.id, mode })
+      await this.mergeWithCRM(mode)
 
-      // Step 3: Sync quotes (if available in API)
-      logger.info('Starting Digiforma quotes sync', { syncId: this.currentSync.id })
-      await this.syncQuotes()
-
-      // Step 4: Sync invoices
-      logger.info('Starting Digiforma invoices sync', { syncId: this.currentSync.id })
-      await this.syncInvoices()
-
-      // Step 5: Merge with CRM data
-      logger.info('Starting Digiforma-CRM merge', { syncId: this.currentSync.id })
-      await this.mergeWithCRM()
+      // Step 3: Sync contacts (after institutions are created/linked)
+      logger.info('Starting Digiforma contacts sync', { syncId: this.currentSync.id, mode })
+      await this.syncContacts(mode)
 
       // Complete sync
       const finalStatus =
@@ -83,6 +80,7 @@ export class DigiformaSyncService {
 
       logger.info('Digiforma sync completed', {
         syncId: this.currentSync.id,
+        mode,
         status: finalStatus,
         stats: {
           companiesSynced: this.currentSync.companiesSynced,
@@ -135,11 +133,12 @@ export class DigiformaSyncService {
             email: company.email || undefined,
             phone: undefined, // Not available in API
             address: {
+              street: company.roadAddress || undefined,
               city: company.city || undefined,
               cityCode: company.cityCode || undefined,
               country: company.country || undefined,
             },
-            siret: undefined,
+            siret: company.siret || undefined,
             website: undefined,
             lastSyncAt: new Date(),
             metadata: {
@@ -188,13 +187,89 @@ export class DigiformaSyncService {
   }
 
   /**
-   * Sync contacts from Digiforma
-   * TODO: Implement when Digiforma provides contacts endpoint
+   * Sync contacts from Digiforma companies metadata
+   * Contacts are already fetched with companies and stored in metadata
+   * @param mode - 'initial' updates all contacts, 'normal' only creates new ones
    */
-  private async syncContacts(): Promise<void> {
+  private async syncContacts(mode: 'initial' | 'normal' = 'normal'): Promise<void> {
     try {
-      // For now, we'll skip this as we don't have the Digiforma contacts API structure yet
-      logger.info('Skipping contacts sync - API structure not yet implemented')
+      // Get all companies with contacts in metadata
+      const companies = await DigiformaCompany.findAll({
+        include: [{ model: MedicalInstitution, as: 'institution' }]
+      })
+
+      for (const company of companies) {
+        try {
+          const contacts = company.metadata?.contacts || []
+
+          if (contacts.length === 0) {
+            continue
+          }
+
+          // Only create contacts for companies linked to institutions
+          if (!company.institutionId) {
+            continue
+          }
+
+          // Create contacts for this institution
+          for (let i = 0; i < contacts.length; i++) {
+            const contact = contacts[i]
+
+            if (!contact.email) {
+              continue // Skip contacts without email
+            }
+
+            try {
+              // Check if contact already exists
+              const existing = await ContactPerson.findOne({
+                where: {
+                  institutionId: company.institutionId,
+                  email: contact.email
+                }
+              })
+
+              if (existing) {
+                // Only update in initial mode
+                if (mode === 'initial') {
+                  await existing.update({
+                    firstName: contact.firstname || 'Contact',
+                    lastName: contact.lastname || company.name,
+                    phone: contact.phone || undefined,
+                    title: contact.position || contact.title || undefined,
+                    isPrimary: i === 0 && !existing.isPrimary,
+                  })
+                }
+                // In normal mode, skip existing contacts
+              } else {
+                // Create new contact (both modes)
+                await ContactPerson.create({
+                  institutionId: company.institutionId,
+                  firstName: contact.firstname || 'Contact',
+                  lastName: contact.lastname || company.name,
+                  email: contact.email,
+                  phone: contact.phone || undefined,
+                  title: contact.position || contact.title || undefined,
+                  isPrimary: i === 0,
+                })
+                this.currentSync!.contactsSynced++
+              }
+            } catch (error) {
+              logger.error('Failed to sync contact', {
+                companyId: company.id,
+                contactEmail: contact.email,
+                error: (error as Error).message
+              })
+            }
+          }
+        } catch (error) {
+          logger.error('Failed to sync contacts for company', {
+            companyId: company.id,
+            error: (error as Error).message
+          })
+        }
+      }
+
+      logger.info(`Synced ${this.currentSync!.contactsSynced} contacts`)
     } catch (error) {
       logger.error('Failed to sync Digiforma contacts', { error: (error as Error).message })
       await this.currentSync?.addError('CONTACTS_SYNC_FAILED', (error as Error).message)
@@ -363,8 +438,9 @@ export class DigiformaSyncService {
 
   /**
    * Merge Digiforma data with CRM (companies → institutions, contacts → contact persons)
+   * @param mode - 'initial' updates existing institutions, 'normal' only creates new ones
    */
-  private async mergeWithCRM(): Promise<void> {
+  private async mergeWithCRM(mode: 'initial' | 'normal' = 'normal'): Promise<void> {
     try {
       // Find unlinked Digiforma companies
       const unlinkedCompanies = await DigiformaCompany.findUnlinked()
@@ -402,13 +478,31 @@ export class DigiformaSyncService {
           // If found, link them
           if (matchingInstitution) {
             await digiformaCompany.linkToInstitution(matchingInstitution.id)
+
+            // Only update address in initial mode
+            if (mode === 'initial') {
+              const metadata = digiformaCompany.metadata || {}
+              if (digiformaCompany.address?.street && digiformaCompany.address.street !== 'Adresse non renseignée') {
+                await matchingInstitution.update({
+                  address: {
+                    street: digiformaCompany.address.street,
+                    city: digiformaCompany.address.city || matchingInstitution.address?.city,
+                    state: matchingInstitution.address?.state || 'Non renseigné',
+                    zipCode: (metadata.cityCode as string) || matchingInstitution.address?.zipCode || '00000',
+                    country: digiformaCompany.address.country || matchingInstitution.address?.country || 'FR',
+                  }
+                } as any)
+              }
+            }
+
             logger.info('Linked Digiforma company to institution', {
               digiformaCompanyId: digiformaCompany.id,
               institutionId: matchingInstitution.id,
               matchType: digiformaCompany.email ? 'email' : 'name',
+              addressUpdated: mode === 'initial' && !!digiformaCompany.address?.street
             })
           } else {
-            // Create new institution if no match
+            // Create new institution if no match (both modes)
             const metadata = digiformaCompany.metadata || {}
 
             const newInstitution = await MedicalInstitution.create({
@@ -418,9 +512,10 @@ export class DigiformaSyncService {
                 street: digiformaCompany.address?.street || 'Adresse non renseignée',
                 city: digiformaCompany.address?.city || 'Non renseignée',
                 state: digiformaCompany.address?.state || 'Non renseigné',
-                zipCode: digiformaCompany.address?.zipCode || (metadata.cityCode as string) || '00000',
+                zipCode: (metadata.cityCode as string) || '00000',
                 country: digiformaCompany.address?.country || 'FR',
               },
+              siret: digiformaCompany.siret || undefined,
               tags: ['digiforma', 'formation'],
               // Store Digiforma metadata in notes for now
               notes: metadata.note || `Code: ${metadata.code || 'N/A'}, APE: ${metadata.ape || 'N/A'}, Comptabilité: ${metadata.accountingNumber || 'N/A'}`,
@@ -428,40 +523,11 @@ export class DigiformaSyncService {
 
             await digiformaCompany.linkToInstitution(newInstitution.id)
 
-            // Create contact persons from Digiforma contacts
-            const digiformaContacts = digiformaCompany.metadata?.contacts || []
-
-            if (digiformaContacts.length > 0) {
-              // Create contacts from the contacts array
-              for (let i = 0; i < digiformaContacts.length; i++) {
-                const contact = digiformaContacts[i]
-                if (contact.email) {
-                  await ContactPerson.create({
-                    institutionId: newInstitution.id,
-                    firstName: contact.firstname || 'Contact',
-                    lastName: contact.lastname || digiformaCompany.name,
-                    email: contact.email,
-                    phone: contact.phone || undefined,
-                    title: contact.position || contact.title || undefined,
-                    isPrimary: i === 0, // First contact is primary
-                  })
-                }
-              }
-            } else if (digiformaCompany.email) {
-              // Fallback: create contact from company email if no contacts array
-              await ContactPerson.create({
-                institutionId: newInstitution.id,
-                firstName: 'Contact',
-                lastName: digiformaCompany.name,
-                email: digiformaCompany.email,
-                isPrimary: true,
-              })
-            }
+            // Contacts will be created in syncContacts() step after merge
 
             logger.info('Created new institution from Digiforma company', {
               digiformaCompanyId: digiformaCompany.id,
               institutionId: newInstitution.id,
-              contactsCreated: digiformaContacts.length || (digiformaCompany.email ? 1 : 0),
             })
           }
         } catch (error) {

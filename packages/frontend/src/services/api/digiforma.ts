@@ -134,9 +134,10 @@ export const digiformaSyncApi = {
   /**
    * Trigger manual synchronization
    */
-  triggerSync: async (): Promise<{ syncId: string; status: string }> => {
-    const response = await apiRequest<{ success: boolean; data: { syncId: string; status: string } }>('/digiforma/sync', {
+  triggerSync: async (payload?: { mode?: 'initial' | 'normal' }): Promise<{ syncId: string; status: string; mode?: string }> => {
+    const response = await apiRequest<{ success: boolean; data: { syncId: string; status: string; mode?: string } }>('/digiforma/sync', {
       method: 'POST',
+      body: JSON.stringify(payload || {}),
     })
     return response.data
   },

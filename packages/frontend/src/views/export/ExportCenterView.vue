@@ -1,291 +1,280 @@
 <template>
-  <div class="export-center">
-    <div class="page-header">
-      <div class="header-content">
-        <h1 class="page-title">
-          <i class="pi pi-download"></i>
-          Export Center
-        </h1>
-        <p class="page-subtitle">
-          Export your CRM data in various formats for analysis and reporting
-        </p>
-      </div>
-    </div>
-
-    <div class="export-content">
-      <!-- Export Types Grid -->
-      <div class="export-types-section">
-        <h2>Available Exports</h2>
-        <div class="export-types-grid">
-          <div
-            v-for="exportType in availableExports"
-            :key="exportType.type"
-            class="export-type-card"
-            :class="{ disabled: !exportType.permissions }"
-          >
-            <div class="card-header">
-              <div class="card-icon">
-                <i :class="getExportIcon(exportType.type)"></i>
-              </div>
-              <div class="card-title">
-                <h3>{{ exportType.name }}</h3>
-                <span class="export-count" v-if="exportType.permissions">
-                  {{ getRecordCount(exportType.type) }} records
-                </span>
-              </div>
-            </div>
-            <p class="card-description">{{ exportType.description }}</p>
-            <div class="card-actions">
-              <v-btn
-                v-if="exportType.permissions"
-                color="primary"
-                prepend-icon="mdi-download"
-                class="export-btn"
-                @click="openExportDialog(exportType)"
-              >
-                Export {{ exportType.name }}
-              </v-btn>
-              <v-btn v-else color="secondary" prepend-icon="mdi-lock" disabled>
-                No Permission
-              </v-btn>
-            </div>
-          </div>
+  <AppLayout>
+    <div class="export-center">
+      <div class="page-header">
+        <div class="header-content">
+          <h1 class="page-title">
+            <i class="pi pi-download"></i>
+            Export Center
+          </h1>
+          <p class="page-subtitle">
+            Export your CRM data in various formats for analysis and reporting
+          </p>
         </div>
       </div>
 
-      <!-- Export History -->
-      <div class="export-history-section">
-        <h2>Export History</h2>
-        <v-data-table
-          :items="exportHistory"
-          :loading="loadingHistory"
-          class="export-history-table"
-          :items-per-page="10"
-          :items-per-page-options="[5, 10, 25]"
-          density="compact"
-        >
-          <template #top>
-            <div class="table-header">
-              <v-text-field
-                v-model="historyFilters.global.value"
-                placeholder="Search exports..."
-                prepend-inner-icon="mdi-magnify"
-                variant="outlined"
-                density="compact"
-                class="search-field"
-              />
+      <div class="export-content">
+        <!-- Export Types Grid -->
+        <div class="export-types-section">
+          <h2>Available Exports</h2>
+          <div class="export-types-grid">
+            <div
+              v-for="exportType in availableExports"
+              :key="exportType.type"
+              class="export-type-card"
+              :class="{ disabled: !exportType.permissions }"
+            >
+              <div class="card-header">
+                <div class="card-icon">
+                  <i :class="getExportIcon(exportType.type)"></i>
+                </div>
+                <div class="card-title">
+                  <h3>{{ exportType.name }}</h3>
+                  <span class="export-count" v-if="exportType.permissions">
+                    {{ getRecordCount(exportType.type) }} records
+                  </span>
+                </div>
+              </div>
+              <p class="card-description">{{ exportType.description }}</p>
+              <div class="card-actions">
+                <v-btn
+                  v-if="exportType.permissions"
+                  color="primary"
+                  prepend-icon="mdi-download"
+                  class="export-btn"
+                  @click="openExportDialog(exportType)"
+                >
+                  Export {{ exportType.name }}
+                </v-btn>
+                <v-btn v-else color="secondary" prepend-icon="mdi-lock" disabled>
+                  No Permission
+                </v-btn>
+              </div>
             </div>
-          </template>
+          </div>
+        </div>
 
-           <template #item.exportType="{ item }">
-             <span class="export-type-badge" :class="item.exportType || 'unknown'">
-               {{ getExportTypeName(item.exportType || 'unknown') }}
-             </span>
-           </template>
+        <!-- Export History -->
+        <div class="export-history-section">
+          <h2>Export History</h2>
+          <v-data-table
+            :items="exportHistory"
+            :loading="loadingHistory"
+            class="export-history-table"
+            :items-per-page="10"
+            :items-per-page-options="[5, 10, 25]"
+            density="compact"
+          >
+            <template #top>
+              <div class="table-header">
+                <v-text-field
+                  v-model="historyFilters.global.value"
+                  placeholder="Search exports..."
+                  prepend-inner-icon="mdi-magnify"
+                  variant="outlined"
+                  density="compact"
+                  class="search-field"
+                />
+              </div>
+            </template>
 
-          <template #item.createdAt="{ item }">
-            {{ formatDate(item.createdAt) }}
-          </template>
+            <template #item.exportType="{ item }">
+              <span class="export-type-badge" :class="item.exportType || 'unknown'">
+                {{ getExportTypeName(item.exportType || "unknown") }}
+              </span>
+            </template>
 
-           <template #item.format="{ item }">
-             <span class="format-badge">{{ (item.format || 'unknown').toUpperCase() }}</span>
-           </template>
+            <template #item.createdAt="{ item }">
+              {{ formatDate(item.createdAt) }}
+            </template>
 
-          <template #item.status="{ item }">
-            <span class="status-badge" :class="item.status">
-              {{ item.status }}
-            </span>
-          </template>
+            <template #item.format="{ item }">
+              <span class="format-badge">{{
+                (item.format || "unknown").toUpperCase()
+              }}</span>
+            </template>
 
-          <template #item.recordCount="{ item }">
-            {{ item.recordCount?.toLocaleString() || "N/A" }}
-          </template>
+            <template #item.status="{ item }">
+              <span class="status-badge" :class="item.status">
+                {{ item.status }}
+              </span>
+            </template>
 
-          <template #item.actions="{ item }">
-            <div class="action-buttons">
-              <v-btn
-                v-if="item.status === 'completed' && item.downloadUrl"
-                icon="mdi-download"
-                variant="text"
-                size="small"
-                @click="downloadExport(item)"
-              />
-              <v-btn
-                v-if="item.status === 'failed'"
-                icon="mdi-alert-circle"
-                variant="text"
-                color="error"
-                size="small"
-                @click="showErrorDetails(item)"
-              />
-              <v-btn
-                icon="mdi-delete"
-                variant="text"
-                color="error"
-                size="small"
-                @click="deleteExport(item)"
-              />
-            </div>
-          </template>
-        </v-data-table>
+            <template #item.recordCount="{ item }">
+              {{ item.recordCount?.toLocaleString() || "N/A" }}
+            </template>
+
+            <template #item.actions="{ item }">
+              <div class="action-buttons">
+                <v-btn
+                  v-if="item.status === 'completed' && item.downloadUrl"
+                  icon="mdi-download"
+                  variant="text"
+                  size="small"
+                  @click="downloadExport(item)"
+                />
+                <v-btn
+                  v-if="item.status === 'failed'"
+                  icon="mdi-alert-circle"
+                  variant="text"
+                  color="error"
+                  size="small"
+                  @click="showErrorDetails(item)"
+                />
+                <v-btn
+                  icon="mdi-delete"
+                  variant="text"
+                  color="error"
+                  size="small"
+                  @click="deleteExport(item)"
+                />
+              </div>
+            </template>
+          </v-data-table>
+        </div>
       </div>
-    </div>
 
-     <!-- Export Configuration Dialog -->
-     <v-dialog
-       v-model="showExportDialog"
-       persistent
-       width="600"
-       class="export-dialog"
-     >
-       <v-card>
-         <v-card-title>{{ `Export ${selectedExportType?.name || ''}` }}</v-card-title>
-         <v-card-text>
-           <div class="export-form" v-if="selectedExportType">
-         <div class="form-section">
-           <h3>Export Options</h3>
+      <!-- Export Configuration Dialog -->
+      <v-dialog v-model="showExportDialog" persistent width="600" class="export-dialog">
+        <v-card>
+          <v-card-title>{{ `Export ${selectedExportType?.name || ""}` }}</v-card-title>
+          <v-card-text>
+            <div class="export-form" v-if="selectedExportType">
+              <div class="form-section">
+                <h3>Export Options</h3>
 
-           <!-- Format Selection -->
-           <div class="field">
-             <v-select
-               v-model="exportOptions.format"
-               :items="formatOptions"
-               item-title="name"
-               item-value="value"
-               label="Export Format *"
-               placeholder="Select format"
-               density="compact"
-               variant="outlined"
-             />
-           </div>
+                <!-- Format Selection -->
+                <div class="field">
+                  <v-select
+                    v-model="exportOptions.format"
+                    :items="formatOptions"
+                    item-title="name"
+                    item-value="value"
+                    label="Export Format *"
+                    placeholder="Select format"
+                    density="compact"
+                    variant="outlined"
+                  />
+                </div>
 
-           <!-- Date Range -->
-           <div class="field">
-             <div class="date-range">
-               <v-text-field
-                 v-model="dateRangeStart"
-                 type="date"
-                 label="Start Date"
-                 density="compact"
-                 variant="outlined"
-                 class="date-input"
-               />
-               <span class="date-separator">to</span>
-               <v-text-field
-                 v-model="dateRangeEnd"
-                 type="date"
-                 label="End Date"
-                 density="compact"
-                 variant="outlined"
-                 class="date-input"
-               />
-             </div>
-           </div>
+                <!-- Date Range -->
+                <div class="field">
+                  <div class="date-range">
+                    <v-text-field
+                      v-model="dateRangeStart"
+                      type="date"
+                      label="Start Date"
+                      density="compact"
+                      variant="outlined"
+                      class="date-input"
+                    />
+                    <span class="date-separator">to</span>
+                    <v-text-field
+                      v-model="dateRangeEnd"
+                      type="date"
+                      label="End Date"
+                      density="compact"
+                      variant="outlined"
+                      class="date-input"
+                    />
+                  </div>
+                </div>
 
-           <!-- Search Query -->
-           <div class="field">
-             <v-text-field
-               v-model="exportOptions.searchQuery"
-               label="Search Query (Optional)"
-               placeholder="Filter results..."
-               density="compact"
-               variant="outlined"
-             />
-           </div>
+                <!-- Search Query -->
+                <div class="field">
+                  <v-text-field
+                    v-model="exportOptions.searchQuery"
+                    label="Search Query (Optional)"
+                    placeholder="Filter results..."
+                    density="compact"
+                    variant="outlined"
+                  />
+                </div>
 
-           <!-- Additional Options based on export type -->
-           <div class="field" v-if="selectedExportType.type === 'institutions'">
-             <v-select
-               v-model="exportOptions.institutionType"
-               :items="institutionTypeOptions"
-               item-title="name"
-               item-value="value"
-               label="Institution Type"
-               placeholder="All types"
-               clearable
-               density="compact"
-               variant="outlined"
-             />
-           </div>
+                <!-- Additional Options based on export type -->
+                <div class="field" v-if="selectedExportType.type === 'institutions'">
+                  <v-select
+                    v-model="exportOptions.institutionType"
+                    :items="institutionTypeOptions"
+                    item-title="name"
+                    item-value="value"
+                    label="Institution Type"
+                    placeholder="All types"
+                    clearable
+                    density="compact"
+                    variant="outlined"
+                  />
+                </div>
 
-           <div class="field" v-if="selectedExportType.type === 'tasks'">
-             <v-select
-               v-model="exportOptions.taskStatus"
-               :items="taskStatusOptions"
-               item-title="name"
-               item-value="value"
-               label="Task Status"
-               placeholder="All statuses"
-               clearable
-               density="compact"
-               variant="outlined"
-             />
-           </div>
+                <div class="field" v-if="selectedExportType.type === 'tasks'">
+                  <v-select
+                    v-model="exportOptions.taskStatus"
+                    :items="taskStatusOptions"
+                    item-title="name"
+                    item-value="value"
+                    label="Task Status"
+                    placeholder="All statuses"
+                    clearable
+                    density="compact"
+                    variant="outlined"
+                  />
+                </div>
 
-           <!-- Include Headers -->
-           <div class="field-checkbox">
-             <v-checkbox
-               v-model="exportOptions.includeHeaders"
-               label="Include column headers"
-               density="compact"
-             />
-           </div>
+                <!-- Include Headers -->
+                <div class="field-checkbox">
+                  <v-checkbox
+                    v-model="exportOptions.includeHeaders"
+                    label="Include column headers"
+                    density="compact"
+                  />
+                </div>
 
-           <!-- Use Queue for Large Exports -->
-           <div class="field-checkbox">
-             <v-checkbox
-               v-model="exportOptions.useQueue"
-               label="Use background processing for large exports"
-               density="compact"
-             />
-           </div>
-         </div>
+                <!-- Use Queue for Large Exports -->
+                <div class="field-checkbox">
+                  <v-checkbox
+                    v-model="exportOptions.useQueue"
+                    label="Use background processing for large exports"
+                    density="compact"
+                  />
+                </div>
+              </div>
 
-         <!-- Data Preview -->
-         <div class="preview-section" v-if="previewData.length > 0">
-           <h3>Data Preview</h3>
-           <ExportPreview
-             :data="previewData"
-             :total-records="estimatedRecordCount"
-             :format="exportOptions.format"
-             :available-fields="availableFields"
-             :selected-fields="selectedFields"
-             @update:selected-fields="selectedFields = $event"
-           />
-         </div>
+              <!-- Data Preview -->
+              <div class="preview-section" v-if="previewData.length > 0">
+                <h3>Data Preview</h3>
+                <ExportPreview
+                  :data="previewData"
+                  :total-records="estimatedRecordCount"
+                  :format="exportOptions.format"
+                  :available-fields="availableFields"
+                  :selected-fields="selectedFields"
+                  @update:selected-fields="selectedFields = $event"
+                />
+              </div>
 
-         <v-card-actions class="form-actions">
-           <v-spacer></v-spacer>
-           <v-btn
-             variant="text"
-             prepend-icon="mdi-close"
-             @click="closeExportDialog"
-           >
-             Cancel
-           </v-btn>
-           <v-btn
-             color="primary"
-             prepend-icon="mdi-download"
-             :loading="exporting"
-             @click="performExport"
-           >
-             Export
-           </v-btn>
-         </v-card-actions>
-       </div>
-       </v-card-text>
-     </v-card>
-     </v-dialog>
+              <v-card-actions class="form-actions">
+                <v-spacer></v-spacer>
+                <v-btn variant="text" prepend-icon="mdi-close" @click="closeExportDialog">
+                  Cancel
+                </v-btn>
+                <v-btn
+                  color="primary"
+                  prepend-icon="mdi-download"
+                  :loading="exporting"
+                  @click="performExport"
+                >
+                  Export
+                </v-btn>
+              </v-card-actions>
+            </div>
+          </v-card-text>
+        </v-card>
+      </v-dialog>
 
-     <!-- Error Details Dialog -->
-     <v-dialog
-       v-model="showErrorDialog"
-       persistent
-       width="500"
-       class="error-dialog"
-     >
-       <v-card>
-         <v-card-title>Export Error Details</v-card-title>
+      <!-- Error Details Dialog -->
+      <v-dialog v-model="showErrorDialog" persistent width="500" class="error-dialog">
+        <v-card>
+          <v-card-title>Export Error Details</v-card-title>
           <v-card-text>
             <div class="error-content" v-if="selectedErrorExport">
               <div class="error-message">
@@ -300,10 +289,11 @@
                 <ul>
                   <li>
                     <strong>Type:</strong>
-                    {{ getExportTypeName(selectedErrorExport.exportType || 'unknown') }}
+                    {{ getExportTypeName(selectedErrorExport.exportType || "unknown") }}
                   </li>
                   <li>
-                    <strong>Format:</strong> {{ (selectedErrorExport.format || 'unknown').toUpperCase() }}
+                    <strong>Format:</strong>
+                    {{ (selectedErrorExport.format || "unknown").toUpperCase() }}
                   </li>
                   <li>
                     <strong>Date:</strong> {{ formatDate(selectedErrorExport.createdAt) }}
@@ -316,31 +306,33 @@
               <v-btn variant="text" @click="showErrorDialog = false">Close</v-btn>
             </v-card-actions>
           </v-card-text>
-       </v-card>
-     </v-dialog>
+        </v-card>
+      </v-dialog>
 
-    <!-- Vuetify Snackbar for notifications -->
-    <v-snackbar
-      v-model="snackbar.visible"
-      :color="snackbar.color"
-      timeout="5000"
-      location="top"
-    >
-      <div class="d-flex align-center">
-        <v-icon class="mr-2">{{ snackbar.icon }}</v-icon>
-        <span>{{ snackbar.message }}</span>
-      </div>
+      <!-- Vuetify Snackbar for notifications -->
+      <v-snackbar
+        v-model="snackbar.visible"
+        :color="snackbar.color"
+        timeout="5000"
+        location="top"
+      >
+        <div class="d-flex align-center">
+          <v-icon class="mr-2">{{ snackbar.icon }}</v-icon>
+          <span>{{ snackbar.message }}</span>
+        </div>
 
-      <template v-slot:actions>
-        <v-btn variant="text" @click="snackbar.visible = false"> Close </v-btn>
-      </template>
-    </v-snackbar>
-  </div>
+        <template v-slot:actions>
+          <v-btn variant="text" @click="snackbar.visible = false"> Close </v-btn>
+        </template>
+      </v-snackbar>
+    </div>
+  </AppLayout>
 </template>
 
 <script setup lang="ts">
 import type { FieldDefinition, PreviewData } from "@/components/export/ExportPreview.vue"
 import ExportPreview from "@/components/export/ExportPreview.vue"
+import AppLayout from "@/components/layout/AppLayout.vue"
 import {
   ExportApiService,
   ExportJob,
@@ -413,7 +405,7 @@ const dateRangeStart = computed({
       exportOptions.value.dateRange = { start: "", end: "" }
     }
     exportOptions.value.dateRange.start = value || ""
-  }
+  },
 })
 
 const dateRangeEnd = computed({
@@ -423,7 +415,7 @@ const dateRangeEnd = computed({
       exportOptions.value.dateRange = { start: "", end: "" }
     }
     exportOptions.value.dateRange.end = value || ""
-  }
+  },
 })
 
 // Methods
@@ -464,10 +456,10 @@ const getExportTypeName = (type: string) => {
 
 const getRecordCount = (type: string) => {
   if (!availableExports.value) return "0"
-  
-  const exportType = availableExports.value.find(exp => exp.type === type)
+
+  const exportType = availableExports.value.find((exp) => exp.type === type)
   if (!exportType) return "0"
-  
+
   return exportType.recordCount.toLocaleString()
 }
 
@@ -511,7 +503,9 @@ const performExport = async () => {
 
     // Convert date objects to ISO strings
     if (options.dateRange?.start) {
-      options.dateRange.start = new Date(options.dateRange.start).toISOString().split("T")[0]
+      options.dateRange.start = new Date(options.dateRange.start)
+        .toISOString()
+        .split("T")[0]
     }
     if (options.dateRange?.end) {
       options.dateRange.end = new Date(options.dateRange.end).toISOString().split("T")[0]
@@ -618,7 +612,12 @@ const generateMockPreviewData = (exportType: string) => {
         totalCount: 1250,
         fields: [
           { key: "id", label: "ID", type: "string" as const, required: true },
-          { key: "name", label: "Institution Name", type: "string" as const, required: true },
+          {
+            key: "name",
+            label: "Institution Name",
+            type: "string" as const,
+            required: true,
+          },
           { key: "type", label: "Type", type: "string" as const },
           { key: "address", label: "Address", type: "string" as const },
           { key: "phone", label: "Phone", type: "string" as const },
@@ -669,8 +668,18 @@ const generateMockPreviewData = (exportType: string) => {
         totalCount: 850,
         fields: [
           { key: "id", label: "ID", type: "string" as const, required: true },
-          { key: "firstName", label: "First Name", type: "string" as const, required: true },
-          { key: "lastName", label: "Last Name", type: "string" as const, required: true },
+          {
+            key: "firstName",
+            label: "First Name",
+            type: "string" as const,
+            required: true,
+          },
+          {
+            key: "lastName",
+            label: "Last Name",
+            type: "string" as const,
+            required: true,
+          },
           { key: "email", label: "Email", type: "string" as const },
           { key: "phone", label: "Phone", type: "string" as const },
           { key: "role", label: "Role", type: "string" as const },
