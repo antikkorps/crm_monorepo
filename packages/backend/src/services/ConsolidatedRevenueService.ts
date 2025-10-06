@@ -246,16 +246,31 @@ export class ConsolidatedRevenueService {
         }
       }
 
-      // Filter by date range if provided
-      if (startDate || endDate) {
-        allInvoices = allInvoices.filter(invoice => {
+      const totalFetched = allInvoices.length
+
+      // Filter invoices by crmStatus WON and date range
+      allInvoices = allInvoices.filter(invoice => {
+        // Only count invoices where customer has WON status
+        if (invoice.customer?.crmStatus !== 'WON') {
+          return false
+        }
+
+        // Filter by date range if provided
+        if (startDate || endDate) {
           if (!invoice.date) return false
           const invoiceDate = new Date(invoice.date)
           if (startDate && invoiceDate < startDate) return false
           if (endDate && invoiceDate > endDate) return false
-          return true
-        })
-      }
+        }
+
+        return true
+      })
+
+      logger.info('Filtered invoices for formation revenue', {
+        totalFetched,
+        wonStatus: allInvoices.length,
+        sampleStatuses: allInvoices.slice(0, 3).map(inv => inv.customer?.crmStatus)
+      })
 
       // Calculate revenue from invoice items
       let totalRevenue = 0

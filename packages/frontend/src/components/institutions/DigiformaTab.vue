@@ -48,7 +48,7 @@
       <v-row class="mb-6">
         <v-col cols="12">
           <v-card elevation="2" color="green" variant="tonal">
-            <v-card-text class="text-center py-6">
+            <v-card-text class="text-center py-8">
               <div class="d-flex align-center justify-center mb-3">
                 <v-icon icon="mdi-school" size="40" color="green" class="mr-3" />
                 <div class="text-h3 font-weight-bold">
@@ -58,24 +58,9 @@
               <div class="text-h6 text-medium-emphasis mb-4">
                 Chiffre d'affaires Formation (Digiforma)
               </div>
-              <v-row>
-                <v-col cols="6">
-                  <div class="text-h6 font-weight-bold" style="color: #4CAF50">
-                    {{ formatCurrency(revenue?.formation.paidRevenue || 0) }}
-                  </div>
-                  <div class="text-body-2 text-medium-emphasis">Payé</div>
-                </v-col>
-                <v-col cols="6">
-                  <div class="text-h6 font-weight-bold" style="color: #F44336">
-                    {{ formatCurrency(revenue?.formation.unpaidRevenue || 0) }}
-                  </div>
-                  <div class="text-body-2 text-medium-emphasis">Impayé</div>
-                </v-col>
-              </v-row>
-              <v-divider class="my-3" />
               <div class="text-body-1">
                 <v-icon icon="mdi-file-document" class="mr-1" />
-                {{ revenue?.formation.invoiceCount || 0 }} facture(s) Formation
+                {{ revenue?.formation.invoiceCount || 0 }} facture(s) Formation (statut WON)
               </div>
             </v-card-text>
           </v-card>
@@ -172,16 +157,8 @@
                   {{ formatCurrency(item.totalAmount) }}
                 </template>
 
-                <template v-slot:item.paidAmount="{ item }">
-                  {{ formatCurrency(item.paidAmount) }}
-                </template>
-
                 <template v-slot:item.issueDate="{ item }">
                   {{ formatDate(item.issueDate) }}
-                </template>
-
-                <template v-slot:item.paidDate="{ item }">
-                  {{ formatDate(item.paidDate) }}
                 </template>
               </v-data-table>
             </v-card-text>
@@ -271,9 +248,7 @@ const invoiceHeaders = [
   { title: 'N° Facture', key: 'invoiceNumber', sortable: true },
   { title: 'Statut', key: 'status', sortable: true },
   { title: 'Montant total', key: 'totalAmount', sortable: true },
-  { title: 'Montant payé', key: 'paidAmount', sortable: true },
-  { title: 'Date émission', key: 'issueDate', sortable: true },
-  { title: 'Date paiement', key: 'paidDate', sortable: true }
+  { title: 'Date émission', key: 'issueDate', sortable: true }
 ]
 
 // Load all data

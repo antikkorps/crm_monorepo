@@ -849,6 +849,7 @@
 
   **🔄 AMÉLIORATIONS FUTURES (Phase 2 - optionnel) :**
   - [ ] **Matching par nom avec fuzzy matching** (tâche 24.6 - si nécessaire)
+  - [ ] **Mutation bidirectionnelle des contacts vers Digiforma** (tâche 24.7)
   - [ ] Synchronisation incrémentale (delta sync)
   - [ ] Webhooks Digiforma si API disponible
   - [ ] Interface réconciliation manuelle des duplicates
@@ -944,6 +945,98 @@
   **Priorité:** 🟡 Moyenne (amélioration UX et qualité des données)
   **Dépendances:** Tâche 24 doit être complète ✅
     - _Requirements: 1.2, 2.5, 5.1, 6.3_
+
+- [ ] 24.7 **Mutation bidirectionnelle des contacts vers Digiforma** 🆕 **NOUVEAU**
+
+  **Objectif:** Synchroniser les contacts créés/modifiés dans le CRM vers Digiforma pour maintenir la cohérence des données.
+
+  **Contexte:**
+  - Actuellement : Sync unidirectionnelle Digiforma → CRM (read-only)
+  - Besoin : Quand on crée/modifie un contact dans le CRM sur une institution liée à Digiforma, envoyer les changements à Digiforma
+
+  **Architecture proposée:**
+
+  - [ ] **24.7.1 Backend - GraphQL Mutations Digiforma**
+
+    **Mutations à implémenter:**
+    - `createContact(companyId, contactData)` : Créer un contact dans Digiforma
+    - `updateContact(contactId, contactData)` : Mettre à jour un contact existant
+    - `deleteContact(contactId)` : Supprimer un contact (optionnel, selon besoin métier)
+
+    **Service de mutation:**
+    - Créer `DigiformaMutationService` avec méthodes GraphQL mutation
+    - Gérer les erreurs et validations Digiforma
+    - Logger toutes les mutations pour audit trail
+    - Implémenter retry logic en cas d'échec réseau
+
+    **Hook sur ContactPerson model:**
+    - Hook `afterCreate` : Si institution liée à Digiforma → mutation create
+    - Hook `afterUpdate` : Si institution liée à Digiforma → mutation update
+    - Hook `afterDestroy` : Si institution liée à Digiforma → mutation delete (optionnel)
+    - Vérifier que le contact ne vient pas déjà de Digiforma (éviter boucle)
+
+    **Fichiers:**
+    - `packages/backend/src/services/DigiformaMutationService.ts`
+    - Modifier `packages/backend/src/models/ContactPerson.ts` (hooks)
+    - Modifier `packages/backend/DIGIFORMA.md` (documenter mutations)
+
+    _Requirements: 1.2, 6.4, 6.5_
+
+  - [ ] **24.7.2 Gestion des conflits et synchronisation bidirectionnelle**
+
+    **Stratégie de résolution de conflits:**
+    - **Timestamp-based:** Dernière modification gagne (field `updatedAt`)
+    - **Source priority:** CRM ou Digiforma prioritaire selon configuration
+    - **Manual resolution:** Interface pour résoudre conflits manuellement si détectés
+
+    **Détection de boucles:**
+    - Flag `syncSource: 'crm' | 'digiforma'` sur ContactPerson
+    - Ne pas re-synchroniser vers la source d'origine
+    - Timestamp de dernière sync pour éviter doublons
+
+    **Queue de synchronisation:**
+    - Implémenter queue (Bull/BullMQ) pour mutations asynchrones
+    - Retry automatique en cas d'échec
+    - Dashboard de monitoring des mutations en attente/échec
+
+    _Requirements: 6.4, 11.1_
+
+  - [ ] **24.7.3 Frontend - Indicateurs de synchronisation**
+
+    **Indicateurs visuels:**
+    - Badge "Synchronisé avec Digiforma" sur les contacts liés
+    - Statut de dernière sync (date, succès/échec)
+    - Bouton "Forcer la synchronisation" pour sync manuelle
+    - Historique des mutations Digiforma par contact
+
+    **Gestion des erreurs:**
+    - Notification si échec de mutation vers Digiforma
+    - Affichage des conflits détectés avec actions possibles
+    - Logs de synchronisation accessibles depuis l'UI
+
+    **Fichiers:**
+    - Modifier `packages/frontend/src/components/institutions/ContactsTab.vue`
+    - Créer `packages/frontend/src/components/digiforma/SyncStatusBadge.vue`
+
+    _Requirements: 6.3, 10.1_
+
+  **Considérations techniques:**
+  - **Performance:** Mutations asynchrones pour ne pas bloquer l'UI
+  - **Fiabilité:** Queue avec retry pour garantir la cohérence
+  - **Audit:** Logger toutes les mutations pour traçabilité
+  - **Sécurité:** Valider les droits utilisateur avant mutation Digiforma
+  - **Conformité:** Respecter les contraintes Qualiopi (si applicables aux mutations)
+
+  **Phases d'implémentation:**
+  1. **Phase 1** : Mutations create/update uniquement (2-3 jours)
+  2. **Phase 2** : Gestion conflits et queue asynchrone (2-3 jours)
+  3. **Phase 3** : Interface monitoring et résolution manuelle (1-2 jours)
+
+  **Priorité:** 🟢 Moyenne-Haute (amélioration workflow utilisateur)
+  **Dépendances:** Tâche 24 complète ✅
+  **Estimation:** 5-8 jours de développement
+
+  _Requirements: 1.2, 6.4, 6.5, 10.1, 11.1_
 
   **Notes techniques:**
   - GraphQL API Digiforma : https://api.digiforma.com/graphql

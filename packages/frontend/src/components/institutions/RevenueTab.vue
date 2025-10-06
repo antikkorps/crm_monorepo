@@ -8,31 +8,48 @@
 
     <!-- Content -->
     <div v-else>
+      <!-- Period Selector -->
+      <v-row class="mb-6">
+        <v-col cols="12">
+          <div class="d-flex align-center justify-space-between flex-wrap ga-4">
+            <div class="d-flex align-center">
+              <v-icon icon="mdi-calendar-range" size="small" class="mr-2 text-medium-emphasis" />
+              <span class="text-subtitle-1 text-medium-emphasis">Période d'analyse</span>
+            </div>
+            <v-chip-group
+              v-model="period"
+              mandatory
+              selected-class="text-primary"
+              color="primary"
+            >
+              <v-chip value="month" variant="outlined">
+                Ce mois
+              </v-chip>
+              <v-chip value="quarter" variant="outlined">
+                Ce trimestre
+              </v-chip>
+              <v-chip value="year" variant="outlined">
+                Cette année
+              </v-chip>
+              <v-chip value="all" variant="outlined">
+                Total
+              </v-chip>
+            </v-chip-group>
+          </div>
+        </v-col>
+      </v-row>
+
       <!-- Total Revenue Card -->
       <v-row class="mb-6">
         <v-col cols="12">
           <v-card elevation="2" color="primary" variant="tonal">
-            <v-card-text class="text-center py-6">
+            <v-card-text class="text-center py-8">
               <div class="text-h3 font-weight-bold mb-2">
                 {{ formatCurrency(revenue?.total.totalRevenue || 0) }}
               </div>
-              <div class="text-h6 text-medium-emphasis mb-4">
+              <div class="text-h6 text-medium-emphasis">
                 Chiffre d'affaires total
               </div>
-              <v-row>
-                <v-col cols="6">
-                  <div class="text-h6 font-weight-bold" style="color: #4CAF50">
-                    {{ formatCurrency(revenue?.total.paidRevenue || 0) }}
-                  </div>
-                  <div class="text-body-2 text-medium-emphasis">Payé</div>
-                </v-col>
-                <v-col cols="6">
-                  <div class="text-h6 font-weight-bold" style="color: #F44336">
-                    {{ formatCurrency(revenue?.total.unpaidRevenue || 0) }}
-                  </div>
-                  <div class="text-body-2 text-medium-emphasis">Impayé</div>
-                </v-col>
-              </v-row>
             </v-card-text>
           </v-card>
         </v-col>
@@ -91,7 +108,8 @@
 
               <v-divider class="my-3" />
 
-              <v-row class="mb-3">
+              <!-- TODO: Réactiver payé/impayé quand la connexion Sage sera mise en place -->
+              <!-- <v-row class="mb-3">
                 <v-col cols="6">
                   <div class="text-subtitle-2 font-weight-bold" style="color: #4CAF50">
                     {{ formatCurrency(revenue?.formation.paidRevenue || 0) }}
@@ -104,11 +122,11 @@
                   </div>
                   <div class="text-caption text-medium-emphasis">Impayé</div>
                 </v-col>
-              </v-row>
+              </v-row> -->
 
               <div class="text-body-2 text-medium-emphasis">
                 <v-icon icon="mdi-file-document" size="small" class="mr-1" />
-                {{ revenue?.formation.invoiceCount || 0 }} facture(s)
+                {{ revenue?.formation.invoiceCount || 0 }} facture(s) (statut WON)
               </div>
             </v-card-text>
           </v-card>
@@ -178,43 +196,6 @@
               <div class="chart-container">
                 <canvas ref="revenueChart" />
               </div>
-            </v-card-text>
-          </v-card>
-        </v-col>
-      </v-row>
-
-      <!-- Period Selector -->
-      <v-row class="mb-6">
-        <v-col cols="12">
-          <v-card elevation="2">
-            <v-card-title>Période</v-card-title>
-            <v-card-text>
-              <v-btn-group variant="outlined" class="mb-4">
-                <v-btn
-                  :color="period === 'month' ? 'primary' : undefined"
-                  @click="setPeriod('month')"
-                >
-                  Ce mois
-                </v-btn>
-                <v-btn
-                  :color="period === 'quarter' ? 'primary' : undefined"
-                  @click="setPeriod('quarter')"
-                >
-                  Ce trimestre
-                </v-btn>
-                <v-btn
-                  :color="period === 'year' ? 'primary' : undefined"
-                  @click="setPeriod('year')"
-                >
-                  Cette année
-                </v-btn>
-                <v-btn
-                  :color="period === 'all' ? 'primary' : undefined"
-                  @click="setPeriod('all')"
-                >
-                  Total
-                </v-btn>
-              </v-btn-group>
             </v-card-text>
           </v-card>
         </v-col>
@@ -312,12 +293,6 @@ function getPeriodDates(): [string?, string?] {
   }
 
   return [startDate.toISOString(), now.toISOString()]
-}
-
-// Set period
-function setPeriod(newPeriod: 'month' | 'quarter' | 'year' | 'all') {
-  period.value = newPeriod
-  loadRevenue()
 }
 
 // Update chart
@@ -452,6 +427,10 @@ watch([chartType, revenueChart], () => {
   if (revenueChart.value && revenue.value) {
     updateChart()
   }
+})
+
+watch(period, () => {
+  loadRevenue()
 })
 </script>
 
