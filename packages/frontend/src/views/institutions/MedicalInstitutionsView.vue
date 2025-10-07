@@ -485,7 +485,7 @@
 
 <script setup lang="ts">
 import ImportInstitutionsDialog from "@/components/institutions/ImportInstitutionsDialog.vue"
-import MedicalInstitutionForm from "@/components/institutions/MedicalInstitutionFormVuetify.vue"
+import MedicalInstitutionForm from "@/components/institutions/MedicalInstitutionForm.vue"
 import AppLayout from "@/components/layout/AppLayout.vue"
 import { institutionsApi } from "@/services/api"
 import type {

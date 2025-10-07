@@ -24,6 +24,7 @@ const Segmentation = () => import("@/views/segmentation/SegmentationView.vue")
 const Contacts = () => import("@/views/contacts/ContactsView.vue")
 const Catalog = () => import("@/views/catalog/CatalogView.vue")
 const DigiformaSettings = () => import("@/views/settings/DigiformaSettingsView.vue")
+const SecurityLogs = () => import("@/views/settings/SecurityLogsView.vue")
 
 const routes: RouteRecordRaw[] = [
   {
@@ -214,6 +215,15 @@ const routes: RouteRecordRaw[] = [
     meta: {
       requiresAuth: true,
       title: "Digiforma Integration",
+    },
+  },
+  {
+    path: "/settings/security-logs",
+    name: "SecurityLogs",
+    component: SecurityLogs,
+    meta: {
+      requiresAuth: true,
+      title: "Security Logs",
     },
   },
   {

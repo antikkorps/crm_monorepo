@@ -427,22 +427,24 @@
   - Bénéfices : Maintenance facilitée, réduction des bugs, cohérence accrue
   - Priorité : Haute (qualité de code) - RÉSOLU
 
-- [ ] 17. Security implementation and compliance features
+- [x] 17. Security implementation and compliance features ✅
 
-  - [ ] 17.1 Implement security middleware and data protection
+  - [x] 17.1 Implement security middleware and data protection ✅
 
-    - Add input validation and sanitization middleware
-    - Implement rate limiting and abuse protection
-    - Create audit logging for healthcare compliance
-    - Add data encryption for sensitive medical information
+    - ✅ Add input validation and sanitization middleware (koa-xss-sanitizer + InputValidator)
+    - ✅ Implement rate limiting and abuse protection (5 different rate limiters)
+    - ✅ Create audit logging for healthcare compliance (Integrated with SecurityLog)
+    - ✅ XSS protection, UUID validation, Content-Type validation
+    - ✅ Documentation in SECURITY.md
     - _Requirements: 11.1, 11.2, 11.3, 11.4_
 
-- [ ] 17.2 Build compliance monitoring and reporting
+  - [x] 17.2 Build compliance monitoring and reporting ✅
 
-  - Create healthcare compliance tracking interface
-  - Implement data access audit trails and reporting
-  - Add security incident logging and notification
-  - Build data retention and privacy management tools
+  - ✅ Create healthcare compliance tracking interface (Security logs viewer)
+  - ✅ Implement data access audit trails and reporting (SecurityLog model + API)
+  - ✅ Add security incident logging and notification (Auth logging, 403 tracking)
+  - ✅ Build data retention and privacy management tools (Auto-cleanup job 90/365 days)
+  - ✅ Frontend interface at /settings/security-logs with filters and stats
   - _Requirements: 11.3, 11.4, 11.5_
 
 - [ ] 18. Performance optimization and production readiness
@@ -723,6 +725,7 @@
   **Objectif:** Synchroniser les données Digiforma (clients, contacts, devis, CA) avec le CRM pour un CA consolidé Audit + Formation
 
   **Architecture:**
+
   - ✅ Read-only depuis Digiforma (GraphQL API)
   - ✅ Synchronisation hebdomadaire ou manuelle
   - ✅ Fusion intelligente avec institutions/contacts existants (par email)
@@ -731,6 +734,7 @@
   - [x] 24.1 Backend - Modèles et Services Digiforma ✅ **100%**
 
     **Modèles créés:**
+
     - ✅ `DigiformaSync` : Tracking des synchronisations (lastSync, status, errors)
     - ✅ `DigiformaSettings` : Configuration API (bearer token, apiUrl, autoSync)
     - ✅ `DigiformaCompany` : Companies Digiforma → MedicalInstitution (mapping)
@@ -739,12 +743,14 @@
     - ✅ `DigiformaInvoice` : Factures Digiforma (CA, paiements)
 
     **Services implémentés:**
+
     - ✅ `DigiformaService` : Client GraphQL + auth Bearer token
     - ✅ `DigiformaSyncService` : Logique de synchronisation complète
     - ✅ Fusion intelligente par email (companies → institutions)
     - ✅ Controller et routes API complets
 
     **Fichiers:**
+
     - `packages/backend/src/models/Digiforma*.ts` (tous les modèles)
     - `packages/backend/src/services/DigiformaService.ts`
     - `packages/backend/src/services/DigiformaSyncService.ts`
@@ -757,12 +763,14 @@
   - [x] 24.2 Backend - Consolidation financière ✅ **100%**
 
     **Calculs CA consolidé implémentés:**
+
     - ✅ CA Audit : Depuis invoices CRM existantes
     - ✅ CA Formation : Depuis factures Digiforma synchronisées
     - ✅ CA Autre : Placeholder pour autres sources
     - ✅ Total consolidé par institution et période
 
     **Endpoints API créés:**
+
     - ✅ `GET /api/institutions/:id/revenue/consolidated` : CA consolidé par institution
     - ✅ `GET /api/dashboard/revenue/consolidated` : Vue globale CA par source
     - ✅ `GET /api/dashboard/revenue/evolution` : Évolution mensuelle du CA
@@ -770,6 +778,7 @@
     - ✅ `GET /api/digiforma/institutions/:id/invoices` : Factures Digiforma liées
 
     **Fichiers:**
+
     - `packages/backend/src/services/ConsolidatedRevenueService.ts`
     - `packages/backend/src/routes/revenue.ts`
 
@@ -778,6 +787,7 @@
   - [x] 24.3 Frontend - Configuration et Synchronisation Digiforma ✅ **100%**
 
     **Interface de configuration implémentée:**
+
     - ✅ Page settings complète pour configurer le token Bearer Digiforma
     - ✅ Test de connexion API avec validation et feedback
     - ✅ Déclenchement manuel de la synchronisation
@@ -786,6 +796,7 @@
     - ✅ Affichage des erreurs de synchronisation
 
     **Fichiers:**
+
     - `packages/frontend/src/views/settings/DigiformaSettingsView.vue`
     - `packages/frontend/src/services/api/digiforma.ts`
 
@@ -794,6 +805,7 @@
   - [x] 24.4 Frontend - Dashboard CA Consolidé ✅ **100%**
 
     **Dashboard principal implémenté:**
+
     - ✅ Widget "Revenu Consolidé" sur le dashboard principal
     - ✅ CA Audit (depuis CRM) avec graphique
     - ✅ CA Formation (depuis Digiforma) avec graphique
@@ -804,6 +816,7 @@
     - ✅ Indicateurs payé/impayé par source
 
     **Fichiers:**
+
     - `packages/frontend/src/components/dashboard/ConsolidatedRevenueWidget.vue`
 
     _Requirements: 2.5, 8.2, 10.1_
@@ -811,6 +824,7 @@
   - [x] 24.5 Frontend - Onglet Digiforma dans InstitutionDetailView ✅ **100%**
 
     **Détail par institution implémenté:**
+
     - ✅ Onglet "Digiforma" dans InstitutionDetailView
     - ✅ CA Formation total pour l'institution avec breakdown payé/impayé
     - ✅ Liste des devis Digiforma avec status et montants
@@ -820,11 +834,13 @@
     - ✅ Bouton de navigation vers configuration Digiforma
 
     **Fichiers:**
+
     - `packages/frontend/src/components/institutions/DigiformaTab.vue`
 
     _Requirements: 6.4, 8.2, 10.1_
 
   **ÉTAT FINAL:** ✅ Intégration Digiforma complète et fonctionnelle
+
   - ✅ Backend : Modèles, services, API endpoints, documentation
   - ✅ Frontend : Settings, dashboard widget, onglet institution
   - ✅ Fonctionnalités : Sync manuelle, CA consolidé, merge par email
@@ -833,6 +849,7 @@
   - ✅ Tests : Test de connexion fonctionnel, sync sans erreur
 
   **🔧 CORRECTIONS APPLIQUÉES LORS DE L'IMPLÉMENTATION :**
+
   - ✅ Validation address (street, state, city, zipCode) avec valeurs par défaut
   - ✅ Validation firstName pour contacts avec valeur par défaut "Contact"
   - ✅ Fix limite de 50 dans `findUnlinked()` → retourne toutes les companies
@@ -842,12 +859,14 @@
   - ⚠️ Matching par nom désactivé temporairement (trop permissif, créait faux positifs)
 
   **📊 RÉSULTATS DE SYNCHRONISATION (dernier test) :**
+
   - 502 companies Digiforma synchronisées avec succès
   - Matching par email uniquement (fiable et précis)
   - 0 erreur de synchronisation
   - Prêt pour production avec vraies données
 
   **🔄 AMÉLIORATIONS FUTURES (Phase 2 - optionnel) :**
+
   - [ ] **Matching par nom avec fuzzy matching** (tâche 24.6 - si nécessaire)
   - [ ] **Mutation bidirectionnelle des contacts vers Digiforma** (tâche 24.7)
   - [ ] Synchronisation incrémentale (delta sync)
@@ -867,6 +886,7 @@
   - [ ] **24.6.1 Backend - Algorithmes de matching avancés**
 
     **Fuzzy matching sur noms d'institutions:**
+
     - [ ] Intégrer une librairie de fuzzy string matching (ex: `fuzzball`, `string-similarity`)
     - [ ] Calculer un score de similarité entre noms (Levenshtein, Jaro-Winkler)
     - [ ] Définir un seuil de matching (ex: 85% de similarité)
@@ -874,48 +894,55 @@
     - [ ] Créer un service `DigiformaMatchingService` dédié
 
     **Normalisation des noms:**
+
     - [ ] Supprimer les accents, ponctuation, majuscules
     - [ ] Retirer les mots communs ("Clinique", "Centre", "Hôpital", etc.)
     - [ ] Normaliser les abréviations (CHU, CH, Ste → Sainte)
 
     **Matching multi-critères:**
+
     - [ ] Email contact (priorité 1, score 100%)
     - [ ] Nom + Ville (priorité 2, score fuzzy)
     - [ ] Nom + Code postal (priorité 3, score fuzzy)
     - [ ] SIRET si disponible (priorité 4, score 100%)
 
     **Fichiers à créer/modifier:**
+
     - `packages/backend/src/services/DigiformaMatchingService.ts`
     - Modifier `packages/backend/src/services/DigiformaSyncService.ts`
 
   - [ ] **24.6.2 Backend - Table de mapping manuel**
 
     **Nouveau modèle `DigiformaInstitutionMapping`:**
+
     ```typescript
     {
-      digiformaCompanyId: string    // ID Digiforma
-      institutionId: string         // ID CRM
-      matchType: 'auto' | 'manual' | 'fuzzy'
-      matchScore: number            // Score de confiance (0-100)
-      confirmedBy: string           // User ID qui a validé
+      digiformaCompanyId: string // ID Digiforma
+      institutionId: string // ID CRM
+      matchType: "auto" | "manual" | "fuzzy"
+      matchScore: number // Score de confiance (0-100)
+      confirmedBy: string // User ID qui a validé
       confirmedAt: Date
-      notes: string                 // Notes de l'admin
+      notes: string // Notes de l'admin
     }
     ```
 
     **API endpoints:**
+
     - `GET /api/digiforma/unmatched-companies` : Liste des companies sans match
     - `POST /api/digiforma/mappings` : Créer un mapping manuel
     - `DELETE /api/digiforma/mappings/:id` : Supprimer un mapping
     - `GET /api/digiforma/suggested-matches/:companyId` : Suggestions de match
 
     **Fichiers:**
+
     - `packages/backend/src/models/DigiformaInstitutionMapping.ts`
     - Modifier `packages/backend/src/controllers/DigiformaController.ts`
 
   - [ ] **24.6.3 Frontend - Interface de réconciliation manuelle**
 
     **Page dédiée `/settings/digiforma/mappings`:**
+
     - ✅ Liste des companies Digiforma non fusionnées
     - ✅ Pour chaque company : suggestions de matches CRM avec score
     - ✅ Possibilité de valider un match suggéré
@@ -924,6 +951,7 @@
     - ✅ Historique des mappings manuels avec audit trail
 
     **Composants:**
+
     - `DigiformaMappingView.vue` : Page principale
     - `UnmatchedCompaniesList.vue` : Liste des non-fusionnés
     - `InstitutionMatchSuggestions.vue` : Suggestions avec scores
@@ -932,6 +960,7 @@
   - [ ] **24.6.4 Processus de synchronisation amélioré**
 
     **Workflow de sync avec matching intelligent:**
+
     1. Récupérer les companies Digiforma
     2. Pour chaque company :
        - Vérifier mapping manuel existant → utiliser si trouvé
@@ -944,13 +973,15 @@
 
   **Priorité:** 🟡 Moyenne (amélioration UX et qualité des données)
   **Dépendances:** Tâche 24 doit être complète ✅
-    - _Requirements: 1.2, 2.5, 5.1, 6.3_
+
+  - _Requirements: 1.2, 2.5, 5.1, 6.3_
 
 - [ ] 24.7 **Mutation bidirectionnelle des contacts vers Digiforma** 🆕 **NOUVEAU**
 
   **Objectif:** Synchroniser les contacts créés/modifiés dans le CRM vers Digiforma pour maintenir la cohérence des données.
 
   **Contexte:**
+
   - Actuellement : Sync unidirectionnelle Digiforma → CRM (read-only)
   - Besoin : Quand on crée/modifie un contact dans le CRM sur une institution liée à Digiforma, envoyer les changements à Digiforma
 
@@ -959,23 +990,27 @@
   - [ ] **24.7.1 Backend - GraphQL Mutations Digiforma**
 
     **Mutations à implémenter:**
+
     - `createContact(companyId, contactData)` : Créer un contact dans Digiforma
     - `updateContact(contactId, contactData)` : Mettre à jour un contact existant
     - `deleteContact(contactId)` : Supprimer un contact (optionnel, selon besoin métier)
 
     **Service de mutation:**
+
     - Créer `DigiformaMutationService` avec méthodes GraphQL mutation
     - Gérer les erreurs et validations Digiforma
     - Logger toutes les mutations pour audit trail
     - Implémenter retry logic en cas d'échec réseau
 
     **Hook sur ContactPerson model:**
+
     - Hook `afterCreate` : Si institution liée à Digiforma → mutation create
     - Hook `afterUpdate` : Si institution liée à Digiforma → mutation update
     - Hook `afterDestroy` : Si institution liée à Digiforma → mutation delete (optionnel)
     - Vérifier que le contact ne vient pas déjà de Digiforma (éviter boucle)
 
     **Fichiers:**
+
     - `packages/backend/src/services/DigiformaMutationService.ts`
     - Modifier `packages/backend/src/models/ContactPerson.ts` (hooks)
     - Modifier `packages/backend/DIGIFORMA.md` (documenter mutations)
@@ -985,16 +1020,19 @@
   - [ ] **24.7.2 Gestion des conflits et synchronisation bidirectionnelle**
 
     **Stratégie de résolution de conflits:**
+
     - **Timestamp-based:** Dernière modification gagne (field `updatedAt`)
     - **Source priority:** CRM ou Digiforma prioritaire selon configuration
     - **Manual resolution:** Interface pour résoudre conflits manuellement si détectés
 
     **Détection de boucles:**
+
     - Flag `syncSource: 'crm' | 'digiforma'` sur ContactPerson
     - Ne pas re-synchroniser vers la source d'origine
     - Timestamp de dernière sync pour éviter doublons
 
     **Queue de synchronisation:**
+
     - Implémenter queue (Bull/BullMQ) pour mutations asynchrones
     - Retry automatique en cas d'échec
     - Dashboard de monitoring des mutations en attente/échec
@@ -1004,23 +1042,27 @@
   - [ ] **24.7.3 Frontend - Indicateurs de synchronisation**
 
     **Indicateurs visuels:**
+
     - Badge "Synchronisé avec Digiforma" sur les contacts liés
     - Statut de dernière sync (date, succès/échec)
     - Bouton "Forcer la synchronisation" pour sync manuelle
     - Historique des mutations Digiforma par contact
 
     **Gestion des erreurs:**
+
     - Notification si échec de mutation vers Digiforma
     - Affichage des conflits détectés avec actions possibles
     - Logs de synchronisation accessibles depuis l'UI
 
     **Fichiers:**
+
     - Modifier `packages/frontend/src/components/institutions/ContactsTab.vue`
     - Créer `packages/frontend/src/components/digiforma/SyncStatusBadge.vue`
 
     _Requirements: 6.3, 10.1_
 
   **Considérations techniques:**
+
   - **Performance:** Mutations asynchrones pour ne pas bloquer l'UI
   - **Fiabilité:** Queue avec retry pour garantir la cohérence
   - **Audit:** Logger toutes les mutations pour traçabilité
@@ -1028,6 +1070,7 @@
   - **Conformité:** Respecter les contraintes Qualiopi (si applicables aux mutations)
 
   **Phases d'implémentation:**
+
   1. **Phase 1** : Mutations create/update uniquement (2-3 jours)
   2. **Phase 2** : Gestion conflits et queue asynchrone (2-3 jours)
   3. **Phase 3** : Interface monitoring et résolution manuelle (1-2 jours)
@@ -1039,6 +1082,7 @@
   _Requirements: 1.2, 6.4, 6.5, 10.1, 11.1_
 
   **Notes techniques:**
+
   - GraphQL API Digiforma : https://api.digiforma.com/graphql
   - Authentication : Bearer token (stocké chiffré en base)
   - Synchronisation : Job hebdomadaire (cron) + manuel

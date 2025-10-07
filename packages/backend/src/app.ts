@@ -29,7 +29,11 @@ import teamRoutes from "./routes/teams"
 import templateRoutes from "./routes/templates"
 import userRoutes from "./routes/users"
 import webhookRoutes from "./routes/webhooks"
+import securityLogRoutes from "./routes/security-logs"
 import { logger } from "./utils/logger"
+import { securityLoggingMiddleware } from "./middleware/securityLogging"
+import { generalRateLimiter } from "./middleware/rateLimiting"
+import { inputValidationMiddleware } from "./middleware/inputSanitization"
 
 export const createApp = (): Koa => {
   const app = new Koa()
@@ -92,6 +96,14 @@ export const createApp = (): Koa => {
     })
   )
 
+  // Input validation and sanitization middleware
+  app.use(inputValidationMiddleware)
+
+  // General rate limiting (apply to all routes)
+  app.use(generalRateLimiter)
+
+  // Security logging middleware
+  app.use(securityLoggingMiddleware)
 
   // Health check endpoint
   router.get("/health", async (ctx) => {
@@ -216,6 +228,10 @@ export const createApp = (): Koa => {
   // Apply revenue routes (consolidated revenue endpoints)
   app.use(revenueRoutes.routes())
   app.use(revenueRoutes.allowedMethods())
+
+  // Apply security log routes
+  app.use(securityLogRoutes.routes())
+  app.use(securityLogRoutes.allowedMethods())
 
   // 404 handler
   app.use(async (ctx) => {

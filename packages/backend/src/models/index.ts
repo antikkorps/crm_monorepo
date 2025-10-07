@@ -30,6 +30,7 @@ import { DigiformaContact } from "./DigiformaContact"
 import { DigiformaQuote } from "./DigiformaQuote"
 import { DigiformaInvoice } from "./DigiformaInvoice"
 import { DigiformaSettings } from "./DigiformaSettings"
+import { SecurityLog } from "./SecurityLog"
 
 // Define associations
 // MedicalInstitution associations
@@ -584,6 +585,20 @@ User.hasMany(CatalogItem, {
   onDelete: "CASCADE",
 })
 
+// SecurityLog associations
+SecurityLog.belongsTo(User, {
+  foreignKey: "userId",
+  as: "user",
+  onDelete: "SET NULL",
+})
+
+// User security log associations
+User.hasMany(SecurityLog, {
+  foreignKey: "userId",
+  as: "securityLogs",
+  onDelete: "SET NULL",
+})
+
 // Export all models
 export {
   Call,
@@ -617,6 +632,7 @@ export {
   DigiformaQuote,
   DigiformaInvoice,
   DigiformaSettings,
+  SecurityLog,
 }
 
 // Export default for convenience
@@ -652,4 +668,5 @@ export default {
   DigiformaQuote,
   DigiformaInvoice,
   DigiformaSettings,
+  SecurityLog,
 }

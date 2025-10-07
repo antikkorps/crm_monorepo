@@ -2,6 +2,7 @@ import Joi from "joi"
 import { createError } from "../middleware/errorHandler"
 import { User } from "../models/User"
 import { AuthService } from "../services/AuthService"
+import { SecurityLogService } from "../services/SecurityLogService"
 import { Context, Next } from "../types/koa"
 import { logger } from "../utils/logger"
 
@@ -42,6 +43,11 @@ export class AuthController {
       // Authenticate user
       const { user, tokens } = await AuthService.login({ email, password })
 
+      // Log successful authentication
+      await SecurityLogService.logAuthSuccess(ctx, user.id).catch((err) => {
+        logger.error("Failed to log auth success", { error: err })
+      })
+
       // Set secure HTTP-only cookie for refresh token
       ctx.cookies.set("refreshToken", tokens.refreshToken, {
         httpOnly: true,
@@ -68,6 +74,15 @@ export class AuthController {
         userAgent: ctx.get("User-Agent"),
       })
     } catch (error) {
+      // Log failed authentication
+      await SecurityLogService.logAuthFailure(
+        ctx,
+        email,
+        (error as Error).message
+      ).catch((err) => {
+        logger.error("Failed to log auth failure", { error: err })
+      })
+
       logger.warn("Login failed", {
         email,
         error: (error as Error).message,
@@ -136,6 +151,11 @@ export class AuthController {
    * Logout user and clear refresh token
    */
   static async logout(ctx: Context) {
+    // Log logout
+    await SecurityLogService.logLogout(ctx).catch((err) => {
+      logger.error("Failed to log logout", { error: err })
+    })
+
     // Clear refresh token cookie
     ctx.cookies.set("refreshToken", "", {
       httpOnly: true,

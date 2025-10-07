@@ -232,7 +232,7 @@
 
 <script setup lang="ts">
 import ContactPersonForm from "@/components/institutions/ContactPersonForm.vue"
-import MedicalInstitutionForm from "@/components/institutions/MedicalInstitutionFormVuetify.vue"
+import MedicalInstitutionForm from "@/components/institutions/MedicalInstitutionForm.vue"
 import DigiformaTab from "@/components/institutions/DigiformaTab.vue"
 import RevenueTab from "@/components/institutions/RevenueTab.vue"
 import AppLayout from "@/components/layout/AppLayout.vue"

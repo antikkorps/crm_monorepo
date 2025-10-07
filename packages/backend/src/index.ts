@@ -5,6 +5,7 @@ import { PluginService } from "./services/PluginService"
 import { SocketService } from "./services/SocketService"
 import { TaskNotificationService } from "./services/TaskNotificationService"
 import { WebhookJobProcessor } from "./services/WebhookJobProcessor"
+import { SecurityLogCleanupJob } from "./jobs/securityLogCleanup"
 import { initializeDatabase } from "./utils/database-init"
 import { logger } from "./utils/logger"
 
@@ -54,6 +55,11 @@ async function startServer() {
     taskNotificationService.start()
     console.log("Task notification processor started")
 
+    // Start security log cleanup job
+    console.log("Starting security log cleanup job...")
+    SecurityLogCleanupJob.start()
+    console.log("Security log cleanup job started")
+
     // Start server
     console.log("Starting server on port", config.port)
     const server = httpServer.listen(config.port, () => {
@@ -72,6 +78,9 @@ async function startServer() {
 
       // Stop webhook job processor
       webhookJobProcessor.stop()
+
+      // Stop security log cleanup job
+      SecurityLogCleanupJob.stop()
 
       // Shutdown plugin system
       await pluginService.shutdown()

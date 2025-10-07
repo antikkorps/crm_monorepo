@@ -279,7 +279,8 @@
         }
       },
       "name": {
-        "label": "Nom"
+        "label": "Nom",
+        "placeholder": "Rechercher par nom..."
       },
       "type": {
         "label": "Type"
@@ -774,7 +775,15 @@
     "phone": "Téléphone",
     "email": "Email",
     "specialties": "Spécialités",
-    "bedCapacity": "Capacité de Lits"
+    "bedCapacity": "Capacité de Lits",
+    "types": {
+      "hospital": "Hôpital",
+      "clinic": "Clinique",
+      "medical_center": "Centre Médical",
+      "medicalCenter": "Centre Médical",
+      "specialty_clinic": "Clinique Spécialisée",
+      "specialtyClinic": "Clinique Spécialisée"
+    }
   },
   "validation": {
     "required": "Ce champ est requis",

@@ -1,312 +1,94 @@
 <template>
   <div class="medical-institution-form">
     <form @submit.prevent="handleSubmit">
-      <TabView>
-        <!-- Basic Information Tab -->
-        <TabPanel header="Basic Information" value="0">
+      <v-tabs v-model="activeTab" class="mb-4">
+        <v-tab value="basic">Basic Information</v-tab>
+        <v-tab value="address">Address</v-tab>
+        <v-tab value="medical">Medical Profile</v-tab>
+        <v-tab value="assignment">Assignment</v-tab>
+      </v-tabs>
+
+      <v-window v-model="activeTab">
+        <v-window-item value="basic">
           <div class="formgrid grid">
-            <!-- Institution Name -->
             <div class="field col-12">
-              <label for="name" class="block text-900 font-medium mb-2">
-                Institution Name *
-              </label>
-              <InputText
-                id="name"
-                v-model="form.name"
-                class="w-full"
-                :class="{ 'p-invalid': errors.name }"
-                placeholder="Enter institution name"
-              />
-              <small v-if="errors.name" class="p-error">{{ errors.name }}</small>
+              <v-text-field v-model="form.name" label="Institution Name *" :error-messages="errors.name ? [errors.name] : []" />
             </div>
-
-            <!-- Institution Type -->
             <div class="field col-12 md:col-6">
-              <label for="type" class="block text-900 font-medium mb-2">
-                Institution Type *
-              </label>
-              <Dropdown
-                id="type"
-                v-model="form.type"
-                :options="institutionTypeOptions"
-                option-label="label"
-                option-value="value"
-                placeholder="Select institution type"
-                class="w-full"
-                :class="{ 'p-invalid': errors.type }"
-              />
-              <small v-if="errors.type" class="p-error">{{ errors.type }}</small>
+              <v-select v-model="form.type" :items="institutionTypeOptions" item-title="label" item-value="value" label="Institution Type *" :error-messages="errors.type ? [errors.type] : []" />
             </div>
-
-            <!-- Status -->
             <div class="field col-12 md:col-6">
-              <label class="block text-900 font-medium mb-2">Status</label>
-              <div class="flex align-items-center">
-                <InputSwitch v-model="form.isActive" />
-                <span class="ml-2">{{ form.isActive ? "Active" : "Inactive" }}</span>
-              </div>
+              <v-switch v-model="form.isActive" :label="form.isActive ? 'Active' : 'Inactive'" inset />
             </div>
-
-            <!-- Tags -->
             <div class="field col-12">
-              <label for="tags" class="block text-900 font-medium mb-2">Tags</label>
-              <Chips
-                id="tags"
-                v-model="form.tags"
-                class="w-full"
-                placeholder="Add tags..."
-              />
-              <small class="text-600">
-                Press Enter to add tags. Tags help categorize and search institutions.
-              </small>
+              <v-combobox v-model="form.tags" label="Tags" multiple chips clearable hint="Press Enter to add tags. Tags help categorize and search institutions." persistent-hint />
             </div>
           </div>
-        </TabPanel>
+        </v-window-item>
 
-        <!-- Address Information Tab -->
-        <TabPanel header="Address" value="1">
+        <v-window-item value="address">
           <div class="formgrid grid">
-            <!-- Street Address -->
             <div class="field col-12">
-              <label for="street" class="block text-900 font-medium mb-2">
-                Street Address *
-              </label>
-              <InputText
-                id="street"
-                v-model="form.address.street"
-                class="w-full"
-                :class="{ 'p-invalid': errors['address.street'] }"
-                placeholder="Enter street address"
-              />
-              <small v-if="errors['address.street']" class="p-error">
-                {{ errors["address.street"] }}
-              </small>
+              <v-text-field v-model="form.address.street" label="Street Address *" :error-messages="errors['address.street'] ? [errors['address.street']] : []" />
             </div>
-
-            <!-- City and State -->
             <div class="field col-12 md:col-6">
-              <label for="city" class="block text-900 font-medium mb-2">City *</label>
-              <InputText
-                id="city"
-                v-model="form.address.city"
-                class="w-full"
-                :class="{ 'p-invalid': errors['address.city'] }"
-                placeholder="Enter city"
-              />
-              <small v-if="errors['address.city']" class="p-error">
-                {{ errors["address.city"] }}
-              </small>
+              <v-text-field v-model="form.address.city" label="City *" :error-messages="errors['address.city'] ? [errors['address.city']] : []" />
             </div>
-
             <div class="field col-12 md:col-6">
-              <label for="state" class="block text-900 font-medium mb-2">State *</label>
-              <InputText
-                id="state"
-                v-model="form.address.state"
-                class="w-full"
-                :class="{ 'p-invalid': errors['address.state'] }"
-                placeholder="Enter state"
-              />
-              <small v-if="errors['address.state']" class="p-error">
-                {{ errors["address.state"] }}
-              </small>
+              <v-text-field v-model="form.address.state" label="State *" :error-messages="errors['address.state'] ? [errors['address.state']] : []" />
             </div>
-
-            <!-- ZIP Code and Country -->
             <div class="field col-12 md:col-6">
-              <label for="zipCode" class="block text-900 font-medium mb-2">
-                ZIP Code *
-              </label>
-              <InputText
-                id="zipCode"
-                v-model="form.address.zipCode"
-                class="w-full"
-                :class="{ 'p-invalid': errors['address.zipCode'] }"
-                placeholder="Enter ZIP code"
-              />
-              <small v-if="errors['address.zipCode']" class="p-error">
-                {{ errors["address.zipCode"] }}
-              </small>
+              <v-text-field v-model="form.address.zipCode" label="ZIP Code *" :error-messages="errors['address.zipCode'] ? [errors['address.zipCode']] : []" />
             </div>
-
             <div class="field col-12 md:col-6">
-              <label for="country" class="block text-900 font-medium mb-2">
-                Country *
-              </label>
-              <InputText
-                id="country"
-                v-model="form.address.country"
-                class="w-full"
-                :class="{ 'p-invalid': errors['address.country'] }"
-                placeholder="Enter country"
-              />
-              <small v-if="errors['address.country']" class="p-error">
-                {{ errors["address.country"] }}
-              </small>
+              <v-text-field v-model="form.address.country" label="Country *" :error-messages="errors['address.country'] ? [errors['address.country']] : []" />
             </div>
           </div>
-        </TabPanel>
+        </v-window-item>
 
-        <!-- Medical Profile Tab -->
-        <TabPanel header="Medical Profile" value="2">
+        <v-window-item value="medical">
           <div class="formgrid grid">
-            <!-- Capacity Information -->
             <div class="field col-12 md:col-6">
-              <label for="bedCapacity" class="block text-900 font-medium mb-2">
-                Bed Capacity
-              </label>
-              <InputNumber
-                id="bedCapacity"
-                v-model="form.medicalProfile.bedCapacity"
-                class="w-full"
-                :min="0"
-                placeholder="Number of beds"
-              />
+              <v-text-field v-model.number="form.medicalProfile.bedCapacity" type="number" label="Bed Capacity" />
             </div>
-
             <div class="field col-12 md:col-6">
-              <label for="surgicalRooms" class="block text-900 font-medium mb-2">
-                Surgical Rooms
-              </label>
-              <InputNumber
-                id="surgicalRooms"
-                v-model="form.medicalProfile.surgicalRooms"
-                class="w-full"
-                :min="0"
-                placeholder="Number of surgical rooms"
-              />
+              <v-text-field v-model.number="form.medicalProfile.surgicalRooms" type="number" label="Surgical Rooms" />
             </div>
-
-            <!-- Specialties -->
             <div class="field col-12 md:col-6">
-              <label for="specialties" class="block text-900 font-medium mb-2">
-                Medical Specialties
-              </label>
-              <MultiSelect
-                id="specialties"
-                v-model="form.medicalProfile.specialties"
-                :options="specialtyOptions"
-                option-label="label"
-                option-value="value"
-                placeholder="Select specialties"
-                class="w-full"
-                :filter="true"
-              />
+              <v-select v-model="form.medicalProfile.specialties" :items="specialtyOptions" item-title="label" item-value="value" label="Specialties" multiple chips clearable />
             </div>
-
-            <!-- Compliance Status -->
             <div class="field col-12 md:col-6">
-              <label for="complianceStatus" class="block text-900 font-medium mb-2">
-                Compliance Status
-              </label>
-              <Dropdown
-                id="complianceStatus"
-                v-model="form.medicalProfile.complianceStatus"
-                :options="complianceStatusOptions"
-                option-label="label"
-                option-value="value"
-                placeholder="Select compliance status"
-                class="w-full"
-              />
+              <v-combobox v-model="form.medicalProfile.departments" label="Departments" multiple chips clearable />
             </div>
-
-            <!-- Departments -->
-            <div class="field col-12">
-              <label for="departments" class="block text-900 font-medium mb-2">
-                Departments
-              </label>
-              <Chips
-                id="departments"
-                v-model="form.medicalProfile.departments"
-                class="w-full"
-                placeholder="Add departments..."
-              />
+            <div class="field col-12 md:col-6">
+              <v-combobox v-model="form.medicalProfile.equipmentTypes" label="Equipment Types" multiple chips clearable />
             </div>
-
-            <!-- Equipment Types -->
-            <div class="field col-12">
-              <label for="equipmentTypes" class="block text-900 font-medium mb-2">
-                Equipment Types
-              </label>
-              <Chips
-                id="equipmentTypes"
-                v-model="form.medicalProfile.equipmentTypes"
-                class="w-full"
-                placeholder="Add equipment types..."
-              />
+            <div class="field col-12 md:col-6">
+              <v-combobox v-model="form.medicalProfile.certifications" label="Certifications" multiple chips clearable />
             </div>
-
-            <!-- Certifications -->
-            <div class="field col-12">
-              <label for="certifications" class="block text-900 font-medium mb-2">
-                Certifications
-              </label>
-              <Chips
-                id="certifications"
-                v-model="form.medicalProfile.certifications"
-                class="w-full"
-                placeholder="Add certifications..."
-              />
+            <div class="field col-12 md:col-6">
+              <v-select v-model="form.medicalProfile.complianceStatus" :items="complianceStatusOptions" item-title="label" item-value="value" label="Compliance Status" />
             </div>
-
-            <!-- Compliance Notes -->
             <div class="field col-12">
-              <label for="complianceNotes" class="block text-900 font-medium mb-2">
-                Compliance Notes
-              </label>
-              <Textarea
-                id="complianceNotes"
-                v-model="form.medicalProfile.complianceNotes"
-                class="w-full"
-                rows="3"
-                placeholder="Enter compliance notes..."
-              />
+              <v-textarea v-model="form.medicalProfile.complianceNotes" label="Compliance Notes" rows="3" auto-grow />
             </div>
           </div>
-        </TabPanel>
+        </v-window-item>
 
-        <!-- Assignment Tab -->
-        <TabPanel header="Assignment" value="3">
+        <v-window-item value="assignment">
           <div class="formgrid grid">
-            <!-- Assigned User -->
             <div class="field col-12">
-              <label for="assignedUserId" class="block text-900 font-medium mb-2">
-                Assigned User
-              </label>
-              <Dropdown
-                id="assignedUserId"
-                v-model="form.assignedUserId"
-                :options="userOptions"
-                option-label="label"
-                option-value="value"
-                placeholder="Select assigned user"
-                class="w-full"
-                show-clear
-              />
-              <small class="text-600">
-                Assign this institution to a team member for management
-              </small>
+              <v-select v-model="form.assignedUserId" :items="userOptions" item-title="label" item-value="value" label="Assigned User" clearable hint="Assign this institution to a team member for management" persistent-hint />
             </div>
           </div>
-        </TabPanel>
-      </TabView>
+        </v-window-item>
+      </v-window>
 
-      <!-- Form Actions -->
       <div class="flex justify-content-end gap-2 mt-4">
-        <Button
-          label="Cancel"
-          icon="pi pi-times"
-          severity="secondary"
-          outlined
-          @click="$emit('cancel')"
-          type="button"
-        />
-        <Button
-          :label="isEditing ? 'Update Institution' : 'Create Institution'"
-          :icon="isEditing ? 'pi pi-check' : 'pi pi-plus'"
-          :loading="saving"
-          type="submit"
-        />
+        <v-btn variant="outlined" color="secondary" prepend-icon="mdi-close" @click="$emit('cancel')" type="button">Cancel</v-btn>
+        <v-btn :loading="saving" color="primary" :prepend-icon="isEditing ? 'mdi-check' : 'mdi-plus'" type="submit">
+          {{ isEditing ? 'Update Institution' : 'Create Institution' }}
+        </v-btn>
       </div>
     </form>
   </div>
@@ -319,16 +101,6 @@ import type {
   MedicalInstitution,
   MedicalInstitutionCreationAttributes,
 } from "@medical-crm/shared"
-import Button from "primevue/button"
-import Chips from "primevue/chips"
-import Dropdown from "primevue/dropdown"
-import InputNumber from "primevue/inputnumber"
-import InputSwitch from "primevue/inputswitch"
-import InputText from "primevue/inputtext"
-import MultiSelect from "primevue/multiselect"
-import TabPanel from "primevue/tabpanel"
-import TabView from "primevue/tabview"
-import Textarea from "primevue/textarea"
 import { computed, reactive, ref, watch } from "vue"
 
 interface Props {
@@ -342,10 +114,10 @@ interface Emits {
 
 const props = defineProps<Props>()
 const emit = defineEmits<Emits>()
-// Snackbar/notifications are handled by parent components (Vuetify)
 
 const saving = ref(false)
 const isEditing = computed(() => !!props.institution)
+const activeTab = ref<'basic' | 'address' | 'medical' | 'assignment'>("basic")
 
 // Form data
 const form = reactive({
@@ -420,7 +192,6 @@ const specialtyOptions = [
 const userOptions = ref([
   { label: "John Doe", value: "user1" },
   { label: "Jane Smith", value: "user2" },
-  // This will be populated from API in a real implementation
 ])
 
 // Initialize form with institution data if editing
@@ -433,15 +204,24 @@ watch(
       form.isActive = institution.isActive
       form.tags = [...institution.tags]
       form.address = { ...institution.address }
-      form.medicalProfile = {
+      form.medicalProfile = institution.medicalProfile ? {
         bedCapacity: institution.medicalProfile.bedCapacity,
         surgicalRooms: institution.medicalProfile.surgicalRooms,
-        specialties: [...institution.medicalProfile.specialties],
-        departments: [...institution.medicalProfile.departments],
-        equipmentTypes: [...institution.medicalProfile.equipmentTypes],
-        certifications: [...institution.medicalProfile.certifications],
+        specialties: [...(institution.medicalProfile.specialties || [])],
+        departments: [...(institution.medicalProfile.departments || [])],
+        equipmentTypes: [...(institution.medicalProfile.equipmentTypes || [])],
+        certifications: [...(institution.medicalProfile.certifications || [])],
         complianceStatus: institution.medicalProfile.complianceStatus,
         complianceNotes: institution.medicalProfile.complianceNotes || "",
+      } : {
+        bedCapacity: undefined,
+        surgicalRooms: undefined,
+        specialties: [],
+        departments: [],
+        equipmentTypes: [],
+        certifications: [],
+        complianceStatus: "pending_review" as ComplianceStatus,
+        complianceNotes: "",
       }
       form.assignedUserId = institution.assignedUserId
     } else {
@@ -487,7 +267,6 @@ const validateForm = (): boolean => {
   clearErrors()
   let isValid = true
 
-  // Required fields
   if (!form.name.trim()) {
     errors.name = "Institution name is required"
     isValid = false
@@ -501,7 +280,6 @@ const validateForm = (): boolean => {
     isValid = false
   }
 
-  // Address validation
   if (!form.address.street.trim()) {
     errors["address.street"] = "Street address is required"
     isValid = false
@@ -563,8 +341,6 @@ const handleSubmit = async () => {
       },
     }
 
-    // In a real implementation, this would call the API
-    // For now, we'll simulate the API call
     await new Promise((resolve) => setTimeout(resolve, 1500))
 
     const savedInstitution: MedicalInstitution = {
@@ -573,7 +349,7 @@ const handleSubmit = async () => {
       tags: institutionData.tags || [],
       isActive: institutionData.isActive ?? true,
       medicalProfile: {
-        id: props.institution?.medicalProfile.id || `profile-${Date.now()}`,
+        id: props.institution?.medicalProfile?.id || `profile-${Date.now()}`,
         ...institutionData.medicalProfile,
       },
       contactPersons: props.institution?.contactPersons || [],
@@ -582,8 +358,6 @@ const handleSubmit = async () => {
     }
 
     emit("institution-saved", savedInstitution)
-
-    // Notify parent via emitted event; parent can display snackbar
 
     if (!isEditing.value) {
       resetForm()
@@ -597,20 +371,7 @@ const handleSubmit = async () => {
 </script>
 
 <style scoped>
-.medical-institution-form {
-  padding: 1rem 0;
-}
-
-.field {
-  margin-bottom: 1rem;
-}
-
-.p-error {
-  display: block;
-  margin-top: 0.25rem;
-}
-
-:deep(.p-tabview-panels) {
-  padding: 1.5rem 1rem;
-}
+.medical-institution-form { padding: 1rem 0; }
+.field { margin-bottom: 1rem; }
+.p-error { display: block; margin-top: 0.25rem; }
 </style>

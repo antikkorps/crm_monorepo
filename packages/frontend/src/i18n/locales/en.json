@@ -17,7 +17,16 @@
     "previous": "Previous",
     "refresh": "Refresh",
     "export": "Export",
-    "import": "Import"
+    "import": "Import",
+    "active": "Active",
+    "inactive": "Inactive",
+    "viewDetails": "View details",
+    "copy": "Copy",
+    "warning": "Warning",
+    "type": "Type",
+    "template": "Template",
+    "create": "Create",
+    "retry": "Retry"
   },
   "navigation": {
     "dashboard": "Dashboard",
@@ -110,14 +119,23 @@
       "institutionFilters": "Institution Filters",
       "contactFilters": "Contact Filters",
       "combinedFilters": "Combined Filters",
-      "preview": { "title": "Results Preview" },
+      "preview": {
+        "title": "Results Preview",
+        "name": "Name",
+        "type": "Type",
+        "city": "City",
+        "status": "Status"
+      },
       "saveSegment": "Save Segment"
     },
     "filters": {
       "label": "Filters",
       "addFilter": "Add Filter",
       "name": { "label": "Name" },
-      "type": { "label": "Type" },
+      "type": {
+        "label": "Type",
+        "placeholder": "Select type..."
+      },
       "location": {
         "label": "Location",
         "country": "Country",
@@ -281,6 +299,23 @@
      "confirm": {
        "deleteTitle": "Delete Task",
        "deleteMessage": "Are you sure you want to delete the task \"{title}\"?"
+     }
+   },
+   "institution": {
+     "name": "Name",
+     "type": "Type",
+     "address": "Address",
+     "phone": "Phone",
+     "email": "Email",
+     "specialties": "Specialties",
+     "bedCapacity": "Bed Capacity",
+     "types": {
+       "hospital": "Hospital",
+       "clinic": "Clinic",
+       "medical_center": "Medical Center",
+       "medicalCenter": "Medical Center",
+       "specialty_clinic": "Specialty Clinic",
+       "specialtyClinic": "Specialty Clinic"
      }
    }
 }
