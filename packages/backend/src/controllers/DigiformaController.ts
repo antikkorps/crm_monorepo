@@ -53,7 +53,7 @@ export class DigiformaController {
   static async updateSettings(ctx: Context) {
     const schema = Joi.object({
       bearerToken: Joi.string().optional(),
-      apiUrl: Joi.string().uri().optional(),
+      apiUrl: Joi.string().trim().optional(),
       isEnabled: Joi.boolean().optional(),
       autoSyncEnabled: Joi.boolean().optional(),
       syncFrequency: Joi.string().valid('daily', 'weekly', 'monthly').optional(),
@@ -213,7 +213,20 @@ export class DigiformaController {
       const settings = await DigiformaSettings.getSettings()
 
       if (!settings.isConfigured()) {
-        throw createError('Digiforma is not configured', 400, 'NOT_CONFIGURED')
+        // Return empty status instead of error
+        ctx.body = {
+          success: true,
+          data: {
+            lastSync: null,
+            isRunning: false,
+            stats: {
+              totalCompanies: 0,
+              linkedCompanies: 0,
+              unlinkedCompanies: 0,
+            },
+          },
+        }
+        return
       }
 
       const token = settings.getDecryptedToken()
@@ -253,7 +266,19 @@ export class DigiformaController {
       const settings = await DigiformaSettings.getSettings()
 
       if (!settings.isConfigured()) {
-        throw createError('Digiforma is not configured', 400, 'NOT_CONFIGURED')
+        // Return empty history instead of error
+        ctx.body = {
+          success: true,
+          data: {
+            syncs: [],
+            pagination: {
+              limit: value.limit,
+              offset: value.offset,
+              total: 0,
+            },
+          },
+        }
+        return
       }
 
       const token = settings.getDecryptedToken()
