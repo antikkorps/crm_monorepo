@@ -38,6 +38,7 @@ const envSchema = Joi.object({
     then: Joi.string().default("test_password"),
     otherwise: Joi.string().required(),
   }),
+  DB_SYNC_ON_START: Joi.boolean().truthy("true").truthy("1").falsy("false").falsy("0").default(false),
 
   // JWT configuration
   JWT_SECRET: Joi.string().when("NODE_ENV", {
@@ -81,6 +82,7 @@ export const config = {
     name: envVars.DB_NAME,
     user: envVars.DB_USER,
     password: envVars.DB_PASSWORD,
+    syncOnStart: envVars.DB_SYNC_ON_START,
   },
 
   jwt: {

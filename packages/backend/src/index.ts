@@ -14,56 +14,45 @@ async function startServer() {
     console.log("Starting server initialization...")
 
     // Initialize database connection
-    logger.info("Initializing database connection...")
+    const shouldSync = config.env === "development" || config.database.syncOnStart
+
+    logger.info("Initializing database connection...", {
+      environment: config.env,
+      syncOnStart: config.database.syncOnStart,
+      willSync: shouldSync,
+    })
+
     await initializeDatabase({
-      sync: config.env === "development",
+      sync: shouldSync,
       seed: config.env === "development",
     })
-    console.log("Database initialized successfully")
-
     // Create application instance
-    console.log("Creating app instance...")
     const app = createApp()
-    console.log("App created successfully")
 
     // Create HTTP server
-    console.log("Creating HTTP server...")
     const httpServer = createServer(app.callback())
-    console.log("HTTP server created")
 
     // Initialize plugin system
-    console.log("Initializing plugin system...")
     const pluginService = PluginService.getInstance()
     await pluginService.initialize()
-    console.log("Plugin system initialized")
 
     // Initialize Socket.io
-    console.log("Initializing Socket.io...")
     const socketService = SocketService.getInstance()
     socketService.initialize(httpServer)
-    console.log("Socket.io initialized")
 
     // Start webhook job processor
-    console.log("Starting webhook job processor...")
     const webhookJobProcessor = WebhookJobProcessor.getInstance()
     webhookJobProcessor.start()
-    console.log("Webhook job processor started")
 
     // Start task notification processor
-    console.log("Starting task notification processor...")
     const taskNotificationService = TaskNotificationService.getInstance()
     taskNotificationService.start()
-    console.log("Task notification processor started")
 
     // Start security log cleanup job
-    console.log("Starting security log cleanup job...")
     SecurityLogCleanupJob.start()
-    console.log("Security log cleanup job started")
 
     // Start server
-    console.log("Starting server on port", config.port)
     const server = httpServer.listen(config.port, () => {
-      console.log("✅ Server listening on port", config.port)
       logger.info(`🚀 Medical CRM Backend server started`, {
         port: config.port,
         environment: config.env,
