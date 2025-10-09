@@ -12,6 +12,9 @@ export async function initializeDatabase(
   const { sync = false, seed = false, force = false } = options
 
   try {
+    // Ensure models are registered with Sequelize before any synchronization
+    await import("../models")
+
     // Connect to database
     await DatabaseManager.connect()
 
