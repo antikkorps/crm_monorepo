@@ -39,10 +39,12 @@ export class QuoteService {
       }
 
       // Create the quote
-      const quote = await Quote.createQuote({
+      const sanitizedData = this.sanitizeQuotePayload({
         ...data,
         assignedUserId: userId,
       })
+
+      const quote = await Quote.createQuote(sanitizedData)
 
       // Create quote lines if provided
       if (data.lines && data.lines.length > 0) {
@@ -237,7 +239,8 @@ export class QuoteService {
       const { lines, ...quoteFields } = data as any
 
       // Update quote basic fields
-      await quote.update(quoteFields, { transaction })
+      const sanitizedFields = this.sanitizeQuotePayload(quoteFields as QuoteUpdateRequest)
+      await quote.update(sanitizedFields, { transaction })
 
       // If lines provided, replace existing with provided set
       if (Array.isArray(lines)) {
@@ -815,6 +818,24 @@ export class QuoteService {
         this.validateQuoteLineData(line)
       }
     }
+  }
+
+  /**
+   * Normalize optional quote fields (e.g., transform empty strings to null)
+   */
+  private static sanitizeQuotePayload<
+    T extends { templateId?: string | null }
+  >(data: T): T {
+    const sanitized = { ...data }
+
+    if (sanitized.templateId !== undefined) {
+      const templateId = sanitized.templateId
+      if (templateId === null || (typeof templateId === "string" && templateId.trim() === "")) {
+        sanitized.templateId = null
+      }
+    }
+
+    return sanitized
   }
 
   /**

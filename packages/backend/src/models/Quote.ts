@@ -450,6 +450,17 @@ Quote.init(
       type: DataTypes.UUID,
       allowNull: true,
       field: "template_id",
+      set(value: string | null | undefined) {
+        if (
+          value === null ||
+          value === undefined ||
+          (typeof value === "string" && value.trim().length === 0)
+        ) {
+          this.setDataValue("templateId", null)
+        } else {
+          this.setDataValue("templateId", value)
+        }
+      },
     },
     orderNumber: {
       type: DataTypes.STRING,
