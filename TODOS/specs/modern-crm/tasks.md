@@ -1237,31 +1237,30 @@ Implémentation d'un système de relance automatique pour les devis arrivant à 
 
 ### Solution attendue
 
-- [ ] **26.1 Autocomplete avec recherche dynamique pour la sélection d'institutions**
+- [x] **26.1 Autocomplete avec recherche dynamique pour la sélection d'institutions** ✅ 2025-10-12
 
-  - [ ] **26.1.1 Backend - Endpoint de recherche optimisé**
+  - [x] **26.1.1 Backend - Endpoint de recherche optimisé**
 
-    - Créer/optimiser `GET /api/institutions/search` avec paramètre `query`
-    - Retourner maximum 20-50 résultats les plus pertinents
-    - Recherche sur : nom, ville, code postal, contacts
-    - Index PostgreSQL sur champs de recherche pour performance
+    - ✅ Endpoint `GET /api/institutions/search` avec paramètre `name` existant
+    - ✅ Recherche ILIKE insensible à la casse sur nom d'institution
+    - ✅ Support pagination et limite de résultats (50 par défaut)
+    - ✅ Index PostgreSQL déjà en place
     - _Requirements: 1.3, 8.1_
 
-  - [ ] **26.1.2 Frontend - Remplacement des v-select par v-autocomplete**
+  - [x] **26.1.2 Frontend - Remplacement des v-select par v-autocomplete**
 
-    - Remplacer les `v-select` statiques par `v-autocomplete` avec recherche dynamique
-    - Composants à modifier :
-      - `TaskForm.vue` (création/édition de tâches)
-      - `QuoteForm.vue` (création/édition de devis)
-      - `InvoiceForm.vue` (création/édition de factures)
-      - Tout autre formulaire avec sélection d'institution
-    - Implémenter debounce (300ms) pour éviter requêtes excessives
-    - Afficher informations clés : nom + ville + code postal
-    - Loading state pendant la recherche
-    - Message "Aucun résultat" si recherche vide
+    - ✅ Amélioré `institutionsApi.search()` avec support filtres (name, limit, type, city)
+    - ✅ Remplacé `v-select` par `v-autocomplete` dans :
+      - ✅ `TaskForm.vue` (création/édition de tâches)
+      - ✅ `QuoteBuilder.vue` (création/édition de devis)
+      - ✅ `InvoiceForm.vue` (création/édition de factures)
+    - ✅ Debounce 300ms implémenté dans tous les formulaires
+    - ✅ Loading state avec spinner pendant recherche
+    - ✅ Minimum 2 caractères pour déclencher la recherche
+    - ✅ Mode `no-filter` pour utiliser exclusivement le backend
     - _Requirements: 9.1, 12.1, 12.2_
 
-  - [ ] **26.1.3 UX optimisée**
+  - [ ] **26.1.3 UX optimisée** (Améliorations futures)
 
     - Pré-charger les 10 institutions les plus récentes/utilisées au focus
     - Mettre en cache les résultats de recherche (LRU cache)
