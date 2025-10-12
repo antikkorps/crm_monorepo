@@ -1219,3 +1219,65 @@ Implémentation d'un système de relance automatique pour les devis arrivant à 
 1. **Phase 1** : Notifications de base et tâches automatiques (1 semaine)
 2. **Phase 2** : Dashboard et actions rapides (1 semaine)
 3. **Phase 3** : Templates personnalisés et analytics (optionnel, +1 semaine)
+
+---
+
+## 🚨 URGENT - Filtrage dynamique des institutions dans les formulaires
+
+### Description
+
+**Problème critique:** Lors de la création de tâches ou de devis, la sélection d'institutions ne propose aucun filtrage dynamique par saisie. Avec 500+ clients, il est impossible de trouver rapidement une institution, ce qui bloque complètement le workflow.
+
+### Impact
+
+- **UX bloquante** : Impossible de créer efficacement des tâches/devis
+- **Perte de temps** : Scroll manuel dans une liste de 500+ entrées
+- **Frustration utilisateur** : Expérience dégradée sur une action critique
+- **Scalabilité** : Problème qui empire avec la croissance de la base clients
+
+### Solution attendue
+
+- [ ] **26.1 Autocomplete avec recherche dynamique pour la sélection d'institutions**
+
+  - [ ] **26.1.1 Backend - Endpoint de recherche optimisé**
+
+    - Créer/optimiser `GET /api/institutions/search` avec paramètre `query`
+    - Retourner maximum 20-50 résultats les plus pertinents
+    - Recherche sur : nom, ville, code postal, contacts
+    - Index PostgreSQL sur champs de recherche pour performance
+    - _Requirements: 1.3, 8.1_
+
+  - [ ] **26.1.2 Frontend - Remplacement des v-select par v-autocomplete**
+
+    - Remplacer les `v-select` statiques par `v-autocomplete` avec recherche dynamique
+    - Composants à modifier :
+      - `TaskForm.vue` (création/édition de tâches)
+      - `QuoteForm.vue` (création/édition de devis)
+      - `InvoiceForm.vue` (création/édition de factures)
+      - Tout autre formulaire avec sélection d'institution
+    - Implémenter debounce (300ms) pour éviter requêtes excessives
+    - Afficher informations clés : nom + ville + code postal
+    - Loading state pendant la recherche
+    - Message "Aucun résultat" si recherche vide
+    - _Requirements: 9.1, 12.1, 12.2_
+
+  - [ ] **26.1.3 UX optimisée**
+
+    - Pré-charger les 10 institutions les plus récentes/utilisées au focus
+    - Mettre en cache les résultats de recherche (LRU cache)
+    - Afficher avatar/logo de l'institution si disponible
+    - Tri intelligent : récents > fréquents > alphabétique
+    - Shortcut clavier pour création rapide d'institution depuis l'autocomplete
+    - _Requirements: 7.1, 10.1_
+
+### Priorité et estimation
+
+**Priorité:** 🔴 **URGENTE** - Bloqueur UX majeur
+**Estimation:** 1-2 jours de développement
+**Impact:** Critique pour utilisation quotidienne avec 500+ clients
+
+### Dépendances
+
+- Système d'institutions existant ✅
+- Formulaires de tâches/devis/factures existants ✅
+- Vuetify autocomplete component ✅

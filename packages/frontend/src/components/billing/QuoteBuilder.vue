@@ -49,15 +49,19 @@
         <v-card-text>
           <v-row>
             <v-col cols="12" md="6">
-              <v-select
+              <v-autocomplete
                 v-model="formData.institutionId"
-                :items="institutionsStore.institutions"
+                :items="institutionOptions"
                 item-title="name"
                 item-value="id"
                 label="Institution médicale *"
                 variant="outlined"
                 :error-messages="errors.institutionId"
+                :loading="loadingInstitutions"
                 @update:model-value="onInstitutionChange"
+                @update:search="onInstitutionSearch"
+                no-filter
+                clearable
               />
             </v-col>
 
@@ -285,6 +289,7 @@
 </template>
 
 <script setup lang="ts">
+import { institutionsApi } from "@/services/api"
 import { useInstitutionsStore } from "@/stores/institutions"
 import {
   calculateTotals,
@@ -355,6 +360,8 @@ const formData = ref<QuoteFormData>({
 // Data sources
 const templates = ref<DocumentTemplate[]>([])
 const errors = ref<Record<string, string>>({})
+const institutionOptions = ref<any[]>([])
+const loadingInstitutions = ref(false)
 
 // Computed properties
 const isEditing = computed(() => !!props.quote)
@@ -459,6 +466,57 @@ const loadTemplates = async () => {
   } catch (error) {
     console.error("Failed to load templates:", error)
   }
+}
+
+const loadInstitutions = async () => {
+  try {
+    await institutionsStore.fetchInstitutions()
+    institutionOptions.value = institutionsStore.institutions || []
+  } catch (error) {
+    console.error("Error loading institutions:", error)
+    institutionOptions.value = []
+  }
+}
+
+// Debounce timer for institution search
+let searchDebounceTimer: NodeJS.Timeout | null = null
+
+const onInstitutionSearch = async (search: string | null) => {
+  // Clear previous timer
+  if (searchDebounceTimer) {
+    clearTimeout(searchDebounceTimer)
+  }
+
+  // If search is empty or too short, load all institutions
+  if (!search || search.length < 2) {
+    loadingInstitutions.value = true
+    await loadInstitutions()
+    loadingInstitutions.value = false
+    return
+  }
+
+  // Debounce search
+  searchDebounceTimer = setTimeout(async () => {
+    try {
+      loadingInstitutions.value = true
+      const response = await institutionsApi.search(search, { limit: 50 })
+      const data = (response as any).data || response
+
+      let institutionsArray: any[] = []
+      if (Array.isArray(data)) {
+        institutionsArray = data
+      } else if (data && Array.isArray(data.institutions)) {
+        institutionsArray = data.institutions
+      }
+
+      institutionOptions.value = institutionsArray
+    } catch (error) {
+      console.error("Error searching institutions:", error)
+      institutionOptions.value = []
+    } finally {
+      loadingInstitutions.value = false
+    }
+  }, 300) // 300ms debounce
 }
 
 const onInstitutionChange = () => {
@@ -684,7 +742,7 @@ watch(() => props.quote, loadQuoteData, { immediate: true })
 
 // Initialize component
 onMounted(async () => {
-  await Promise.all([institutionsStore.fetchInstitutions(), loadTemplates()])
+  await Promise.all([loadInstitutions(), loadTemplates()])
 })
 </script>
 

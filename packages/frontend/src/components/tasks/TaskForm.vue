@@ -92,7 +92,7 @@
        <!-- Institution and Contact Row -->
        <div class="form-row">
          <div class="form-group">
-           <v-select
+           <v-autocomplete
              id="institutionId"
              v-model="formData.institutionId"
              :items="institutionOptions"
@@ -105,6 +105,8 @@
              density="comfortable"
              hide-details="auto"
              @update:model-value="onInstitutionChange"
+             @update:search="onInstitutionSearch"
+             no-filter
            />
          </div>
 
@@ -164,6 +166,7 @@
 </template>
 
 <script setup lang="ts">
+import { institutionsApi } from "@/services/api"
 import { useInstitutionsStore } from "@/stores/institutions"
 import { useTeamStore } from "@/stores/team"
 import type {
@@ -219,10 +222,11 @@ const assigneeOptions = ref<Array<{ label: string; value: string }>>([])
 const institutionOptions = ref<Array<{ label: string; value: string }>>([])
 const contactOptions = ref<Array<{ label: string; value: string }>>([])
 const loadingContacts = ref(false)
+const loadingInstitutionsSearch = ref(false)
 
 // Computed loading states from stores
 const loadingUsers = computed(() => teamStore.loading)
-const loadingInstitutions = computed(() => institutionsStore.loading)
+const loadingInstitutions = computed(() => institutionsStore.loading || loadingInstitutionsSearch.value)
 
 const isEditing = computed(() => !!props.task)
 
@@ -401,6 +405,50 @@ const loadInstitutions = async () => {
     console.error("Error loading institutions:", error)
     institutionOptions.value = []
   }
+}
+
+// Debounce timer for institution search
+let searchDebounceTimer: NodeJS.Timeout | null = null
+
+const onInstitutionSearch = async (search: string | null) => {
+  // Clear previous timer
+  if (searchDebounceTimer) {
+    clearTimeout(searchDebounceTimer)
+  }
+
+  // If search is empty or too short, load all institutions
+  if (!search || search.length < 2) {
+    loadingInstitutionsSearch.value = true
+    await loadInstitutions()
+    loadingInstitutionsSearch.value = false
+    return
+  }
+
+  // Debounce search
+  searchDebounceTimer = setTimeout(async () => {
+    try {
+      loadingInstitutionsSearch.value = true
+      const response = await institutionsApi.search(search, { limit: 50 })
+      const data = (response as any).data || response
+
+      let institutionsArray: any[] = []
+      if (Array.isArray(data)) {
+        institutionsArray = data
+      } else if (data && Array.isArray(data.institutions)) {
+        institutionsArray = data.institutions
+      }
+
+      institutionOptions.value = institutionsArray.map((institution: any) => ({
+        label: institution.name,
+        value: institution.id,
+      }))
+    } catch (error) {
+      console.error("Error searching institutions:", error)
+      institutionOptions.value = []
+    } finally {
+      loadingInstitutionsSearch.value = false
+    }
+  }, 300) // 300ms debounce
 }
 
 // Helper function to format date for datetime-local input

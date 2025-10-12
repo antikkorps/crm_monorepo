@@ -10,7 +10,7 @@
         <v-form @submit.prevent="handleSubmit">
           <v-row dense>
             <v-col cols="12" md="6">
-              <v-select
+              <v-autocomplete
                 v-model="form.institutionId"
                 :items="institutions"
                 item-title="name"
@@ -18,6 +18,10 @@
                 label="Institution *"
                 :error-messages="errors.institutionId"
                 :disabled="isEditing"
+                :loading="loadingInstitutions"
+                @update:search="onInstitutionSearch"
+                no-filter
+                clearable
               />
             </v-col>
             <v-col cols="12" md="6">
@@ -129,6 +133,7 @@ type InvoiceLineForm = LineWithCatalog<InvoiceLineCreateRequest & {
 const institutions = ref<any[]>([])
 const errors = ref<Record<string, string>>({})
 const lineErrors = ref<Record<number, Record<string, string>>>({})
+const loadingInstitutions = ref(false)
 
 const invoiceTotals = computed(() => {
   return calculateTotals(form.value.lines)
@@ -142,6 +147,47 @@ const loadInstitutions = async () => {
     const data = (response as any).data
     institutions.value = data?.institutions || data || []
   } catch (error) { console.error("Error loading institutions:", error) }
+}
+
+// Debounce timer for institution search
+let searchDebounceTimer: NodeJS.Timeout | null = null
+
+const onInstitutionSearch = async (search: string | null) => {
+  // Clear previous timer
+  if (searchDebounceTimer) {
+    clearTimeout(searchDebounceTimer)
+  }
+
+  // If search is empty or too short, load all institutions
+  if (!search || search.length < 2) {
+    loadingInstitutions.value = true
+    await loadInstitutions()
+    loadingInstitutions.value = false
+    return
+  }
+
+  // Debounce search
+  searchDebounceTimer = setTimeout(async () => {
+    try {
+      loadingInstitutions.value = true
+      const response = await institutionsApi.search(search, { limit: 50 })
+      const data = (response as any).data || response
+
+      let institutionsArray: any[] = []
+      if (Array.isArray(data)) {
+        institutionsArray = data
+      } else if (data && Array.isArray(data.institutions)) {
+        institutionsArray = data.institutions
+      }
+
+      institutions.value = institutionsArray
+    } catch (error) {
+      console.error("Error searching institutions:", error)
+      institutions.value = []
+    } finally {
+      loadingInstitutions.value = false
+    }
+  }, 300) // 300ms debounce
 }
 
 const addLine = () => {

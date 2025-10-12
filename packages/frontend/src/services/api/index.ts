@@ -175,8 +175,14 @@ export const institutionsApi = {
   create: (data: any) => apiClient.post("/institutions", data),
   update: (id: string, data: any) => apiClient.put(`/institutions/${id}`, data),
   delete: (id: string) => apiClient.delete(`/institutions/${id}`),
-  search: (query: string) =>
-    apiClient.get(`/institutions/search?q=${encodeURIComponent(query)}`),
+  search: (query: string, filters?: { limit?: number; type?: string; city?: string }) => {
+    const params = new URLSearchParams()
+    params.append("name", query)
+    if (filters?.limit !== undefined) params.append("limit", filters.limit.toString())
+    if (filters?.type) params.append("type", filters.type)
+    if (filters?.city) params.append("city", filters.city)
+    return apiClient.get(`/institutions/search?${params.toString()}`)
+  },
   // Collaboration endpoints
   getCollaboration: (id: string) => apiClient.get(`/institutions/${id}/collaboration`),
   getTimeline: (
