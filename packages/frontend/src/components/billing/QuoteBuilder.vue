@@ -11,34 +11,6 @@
         <v-btn variant="text" prepend-icon="mdi-arrow-left" @click="emit('cancelled')">
           Retour à la liste
         </v-btn>
-        <v-btn
-          variant="outlined"
-          color="secondary"
-          prepend-icon="mdi-content-save"
-          @click="saveDraft"
-          :loading="saving"
-          :disabled="!isFormValid"
-        >
-          Sauvegarder brouillon
-        </v-btn>
-        <v-btn
-          variant="outlined"
-          color="info"
-          prepend-icon="mdi-eye"
-          @click="previewQuote"
-          :disabled="!isFormValid"
-        >
-          Aperçu
-        </v-btn>
-        <v-btn
-          color="primary"
-          prepend-icon="mdi-check"
-          @click="saveQuote"
-          :loading="saving"
-          :disabled="!isFormValid"
-        >
-          {{ isEditing ? "Mettre à jour" : "Créer le devis" }}
-        </v-btn>
       </div>
     </div>
 
@@ -237,6 +209,45 @@
               </div>
             </v-col>
           </v-row>
+        </v-card-text>
+      </v-card>
+
+      <!-- Form Actions -->
+      <v-card class="form-section form-actions-section">
+        <v-card-text>
+          <div class="form-actions">
+            <v-btn
+              variant="outlined"
+              color="secondary"
+              prepend-icon="mdi-content-save"
+              @click="saveDraft"
+              :loading="saving"
+              :disabled="!isFormValid"
+              size="large"
+            >
+              Sauvegarder brouillon
+            </v-btn>
+            <v-btn
+              variant="outlined"
+              color="info"
+              prepend-icon="mdi-eye"
+              @click="previewQuote"
+              :disabled="!isFormValid"
+              size="large"
+            >
+              Aperçu
+            </v-btn>
+            <v-btn
+              color="primary"
+              prepend-icon="mdi-check"
+              @click="saveQuote"
+              :loading="saving"
+              :disabled="!isFormValid"
+              size="large"
+            >
+              {{ isEditing ? "Mettre à jour" : "Créer le devis" }}
+            </v-btn>
+          </div>
         </v-card-text>
       </v-card>
     </div>
@@ -832,6 +843,17 @@ onMounted(async () => {
   gap: 0.75rem;
 }
 
+.form-actions-section {
+  margin-top: 2rem;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
 /* Responsive design */
 @media (max-width: 768px) {
   .quote-builder {
@@ -847,6 +869,15 @@ onMounted(async () => {
     width: 100%;
     justify-content: flex-start;
     gap: 0.5rem;
+  }
+
+  .form-actions {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .form-actions .v-btn {
+    width: 100%;
   }
 }
 </style>
