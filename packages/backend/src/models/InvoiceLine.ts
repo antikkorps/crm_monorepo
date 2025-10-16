@@ -87,10 +87,10 @@ export class InvoiceLine
   // Instance methods
   public calculateTotals(): void {
     // Ensure numeric values
-    const quantity = Number(this.quantity) || 0
-    const unitPrice = Number(this.unitPrice) || 0
-    const discountValue = Number(this.discountValue) || 0
-    const taxRate = Number(this.taxRate) || 0
+    const quantity = Number(this.quantity || 0)
+    const unitPrice = Number(this.unitPrice || 0)
+    const discountValue = Number(this.discountValue || 0)
+    const taxRate = Number(this.taxRate || 0)
 
     // Calculate subtotal
     this.subtotal = quantity * unitPrice

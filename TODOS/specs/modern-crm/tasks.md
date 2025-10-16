@@ -680,32 +680,18 @@
     - Improve forms for creating/editing lines.
     - Add missing UI elements for actions (e.g., email tracking, history).
 
-  - [ ] 23.1.1 Implement Invoice Edit Mode in InvoiceDetailView
+  - [x] 23.1.1 Implement Invoice Edit Mode in InvoiceDetailView ✅ **RÉSOLU**
 
-    **Problem**: Currently, when clicking "Modifier" on an invoice, the user is redirected to `/invoices/:id/edit` but the page doesn't handle edit mode properly. The route exists but the component doesn't show an edit form.
+    **Problème initial**: Le mode d'édition des factures ne fonctionnait pas et provoquait des erreurs serveur (500) ou des sauvegardes silencieuses.
 
-    **Requirements**:
+    **Solution implémentée**:
 
-    - Add `editMode` prop handling in InvoiceDetailView.vue
-    - When `editMode=true`, show InvoiceForm component instead of detail view
-    - Ensure smooth transition between view and edit modes
-    - Handle save/cancel actions properly
-    - Maintain navigation consistency
+    - Correction de la logique de permission pour autoriser la modification des factures en brouillon uniquement.
+    - Ajout d'infobulles sur l'interface pour clarifier la règle métier à l'utilisateur.
+    - Correction de multiples bugs dans le backend liés à la gestion des transactions Sequelize, au calcul des totaux (`NaN`), et à la sauvegarde des données (`shadowing`).
+    - La modification des factures (champs et lignes) est maintenant fonctionnelle et robuste.
 
-    **Technical Tasks**:
-
-    1. Add `editMode` prop to InvoiceDetailView component props
-    2. Conditionally render InvoiceForm when in edit mode
-    3. Pass current invoice data to InvoiceForm for editing
-    4. Handle form submission and navigation back to detail view
-    5. Add proper loading states and error handling
-
-    **Components to modify**:
-
-    - `InvoiceDetailView.vue`: Add edit mode logic
-    - Router already configured with `editMode: true` prop
-
-    **Priority**: High (UX issue affecting invoice management workflow)
+    **Priorité**: Haute (UX issue affecting invoice management workflow) - ✅ **RÉSOLU**
 
   - [ ] 23.2 Refine and complete Notifications UI
 

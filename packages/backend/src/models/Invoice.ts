@@ -292,29 +292,31 @@ export class Invoice
     await this.reload()
   }
 
-  public async recalculateTotals(): Promise<void> {
-    const lines = await this.getLines()
+  public async recalculateTotals(options?: { transaction?: any }): Promise<void> {
+    const lines = await this.getLines(options)
 
-    this.subtotal = lines.reduce((sum, line) => sum + line.subtotal, 0)
-    this.totalDiscountAmount = lines.reduce((sum, line) => sum + line.discountAmount, 0)
-    this.totalTaxAmount = lines.reduce((sum, line) => sum + line.taxAmount, 0)
-    this.total = lines.reduce((sum, line) => sum + line.total, 0)
+    this.subtotal = lines.reduce((sum, line) => sum + (Number(line.subtotal) || 0), 0)
+    this.totalDiscountAmount = lines.reduce((sum, line) => sum + (Number(line.discountAmount) || 0), 0)
+    this.totalTaxAmount = lines.reduce((sum, line) => sum + (Number(line.taxAmount) || 0), 0)
+    this.total = lines.reduce((sum, line) => sum + (Number(line.total) || 0), 0)
 
     // Update remaining amount
     this.remainingAmount = this.total - this.totalPaid
 
-    await this.save()
+    await this.save(options)
   }
 
-  public async getLines(): Promise<any[]> {
-    if (this.lines) {
+  public async getLines(options?: { transaction?: any }): Promise<any[]> {
+    // Do not use cached `this.lines` if in a transaction, as it might be stale
+    if (this.lines && !options?.transaction) {
       return this.lines
     }
     const InvoiceLine = sequelize.models.InvoiceLine
-    const invoiceId = (this as any).getDataValue ? (this as any).getDataValue('id') : (this as any).id
+    const invoiceId = (this as any).getDataValue ? (this as any).getDataValue('id') : this.id
     return InvoiceLine.findAll({
-      where: { invoice_id: invoiceId },
-      order: [["order_index", "ASC"]],
+      where: { invoiceId: invoiceId },
+      order: [["orderIndex", "ASC"]],
+      transaction: options?.transaction,
     })
   }
 
