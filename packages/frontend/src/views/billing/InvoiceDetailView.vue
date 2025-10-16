@@ -27,7 +27,14 @@
           <!-- Ligne 2 desktop: toutes les actions, en wrap -->
           <div class="d-none d-sm-flex align-center flex-wrap gap-2 mt-3">
             <!-- Primaire -->
-            <v-btn :disabled="!canModifyInvoice(invoice)" prepend-icon="mdi-pencil" variant="outlined" @click="editInvoice">Modifier</v-btn>
+            <v-tooltip location="top">
+              <template v-slot:activator="{ props }">
+                <div v-bind="props">
+                  <v-btn :disabled="!canModifyInvoice(invoice)" prepend-icon="mdi-pencil" variant="outlined" @click="editInvoice">Modifier</v-btn>
+                </div>
+              </template>
+              <span>Seules les factures en brouillon peuvent être modifiées.</span>
+            </v-tooltip>
             <v-btn
               v-if="['draft','sent','overdue','partially_paid','paid'].includes(invoice.status)"
               prepend-icon="mdi-send"
@@ -75,14 +82,21 @@
               block
               size="large"
             >Encaisser</v-btn>
-            <v-btn
-              :disabled="!canModifyInvoice(invoice)"
-              prepend-icon="mdi-pencil"
-              variant="outlined"
-              @click="editInvoice"
-              block
-              size="large"
-            >Modifier</v-btn>
+            <v-tooltip location="top">
+              <template #activator="{ props }">
+                <div v-bind="props" class="d-block"> <!-- d-block to make the div take full width -->
+                  <v-btn
+                    :disabled="!canModifyInvoice(invoice)"
+                    prepend-icon="mdi-pencil"
+                    variant="outlined"
+                    @click="editInvoice"
+                    block
+                    size="large"
+                  >Modifier</v-btn>
+                </div>
+              </template>
+              <span>Seules les factures en brouillon peuvent être modifiées.</span>
+            </v-tooltip>
 
             <v-menu location="bottom start">
               <template #activator="{ props }">
@@ -249,19 +263,32 @@
       </div>
 
       <PaymentForm v-model:visible="showPaymentDialog" :invoice="invoice" @payment-recorded="onPaymentRecorded" @notify="({ message, color }) => showSnackbar(message, color)" />
+
+      <InvoiceForm
+        v-if="invoice"
+        v-model:visible="showEditDialog"
+        :invoice="invoice"
+        @invoice-updated="handleInvoiceUpdated"
+        @notify="({ message, color }) => showSnackbar(message, color)"
+      />
+
       <v-snackbar v-model="snackbar.visible" :color="snackbar.color" timeout="3000">{{ snackbar.message }}</v-snackbar>
     </div>
   </AppLayout>
 </template>
 
 <script setup lang="ts">
-import { PaymentForm, PaymentHistory } from "@/components/billing"
+import { PaymentForm, PaymentHistory, InvoiceForm } from "@/components/billing"
 import AppLayout from "@/components/layout/AppLayout.vue"
 import { invoicesApi, documentsApi, institutionsApi } from "@/services/api"
 import { useAuthStore } from "@/stores/auth"
 import type { Invoice, InvoiceStatus } from "@medical-crm/shared"
 import { computed, onMounted, ref, watch } from "vue"
 import { useRoute, useRouter } from "vue-router"
+
+const props = defineProps<{
+  editMode?: boolean
+}>()
 
 const route = useRoute()
 const router = useRouter()
@@ -270,6 +297,7 @@ const authStore = useAuthStore()
 const invoice = ref<Invoice | null>(null)
 const loading = ref(false)
 const showPaymentDialog = ref(false)
+const showEditDialog = ref(false)
 const snackbar = ref({ visible: false, message: '', color: 'info' })
 const sendDialog = ref({ visible: false, recipients: [] as string[], message: '', loading: false, sendCopyToSelf: true })
 const statusDialog = ref({ visible: false, newStatus: '', reason: '', loading: false })
@@ -441,12 +469,8 @@ const formatDate = (date: string | Date) => new Date(date).toLocaleDateString('f
 
 const canModifyInvoice = (invoice: Invoice | null) => {
   if (!invoice) return false
-  // Une facture peut être modifiée si :
-  // - elle est en brouillon (modification complète)
-  // - elle est envoyée mais pas encore payée (modification limitée)
-  // - elle est en retard mais pas encore payée (modification limitée)
-  return ['draft', 'sent', 'overdue'].includes(invoice.status) &&
-         (invoice.totalPaid === 0 || invoice.totalPaid < invoice.total)
+  // La modification n'est autorisée que pour les factures en statut "Brouillon".
+  return invoice.status === 'draft'
 }
 
 const canReceivePayment = (invoice: Invoice | null) => {
@@ -566,7 +590,32 @@ watch(() => statusDialog.value.visible, (visible: boolean) => {
   }
 })
 
-onMounted(loadInvoice)
+const handleInvoiceUpdated = (updatedInvoice: Invoice) => {
+  showEditDialog.value = false
+  // The router watcher will handle navigation back
+  refreshInvoice()
+  showSnackbar("Facture mise à jour avec succès.", "success")
+}
+
+watch(() => props.editMode, (isEdit) => {
+  if (isEdit && invoice.value) {
+    showEditDialog.value = true
+  }
+}, { immediate: true })
+
+watch(showEditDialog, (isVisible) => {
+  if (!isVisible && props.editMode) {
+    router.push(`/invoices/${route.params.id}`)
+  }
+})
+
+onMounted(() => {
+  loadInvoice().then(() => {
+    if (props.editMode && invoice.value) {
+      showEditDialog.value = true
+    }
+  })
+})
 </script>
 
 <style scoped>

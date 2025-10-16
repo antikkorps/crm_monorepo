@@ -276,34 +276,58 @@ export class InvoiceService {
     updateData: Partial<InvoiceCreateRequest>,
     userId: string
   ): Promise<Invoice> {
-    const invoice = await this.getInvoiceById(id)
-
-    // Check permissions
-    if (!(await this.canUserModifyInvoice(invoice, userId))) {
-      throw {
-        code: "INSUFFICIENT_PERMISSIONS",
-        message: "You don't have permission to modify this invoice",
-        status: 403,
+    const transaction = await sequelize.transaction();
+    try {
+      const invoice = await Invoice.findByPk(id, { transaction });
+      if (!invoice) {
+        throw { code: "INVOICE_NOT_FOUND", message: "Invoice not found", status: 404 };
       }
-    }
 
-    // Check if invoice can be modified
-    if (!invoice.canBeModified()) {
-      throw {
-        code: "INVOICE_NOT_MODIFIABLE",
-        message: "Invoice cannot be modified in its current state",
-        status: 400,
+      // Check permissions
+      if (!(await this.canUserModifyInvoice(invoice, userId))) {
+        throw {
+          code: "INSUFFICIENT_PERMISSIONS",
+          message: "You don't have permission to modify this invoice",
+          status: 403,
+        };
       }
+
+      // Check if invoice can be modified
+      if (!invoice.canBeModified()) {
+        throw {
+          code: "INVOICE_NOT_MODIFIABLE",
+          message: "Invoice cannot be modified in its current state",
+          status: 400,
+        };
+      }
+
+      // 1. Modify the INSTANCE using .set() to avoid shadowing issues
+      invoice.set('title', updateData.title ?? invoice.title);
+      invoice.set('description', updateData.description ?? invoice.description);
+      invoice.set('dueDate', updateData.dueDate ?? invoice.dueDate);
+
+      // 2. Handle lines by deleting all and recreating them
+      if (updateData.lines) {
+        await InvoiceLine.destroy({ where: { invoiceId: id }, transaction });
+
+        for (const [index, lineData] of updateData.lines.entries()) {
+          const linePayload = { ...lineData, invoiceId: id, orderIndex: index + 1 };
+          delete (linePayload as any).id; // Ensure it's a create operation
+          await InvoiceLine.create(linePayload, { transaction });
+        }
+      }
+
+      // 3. Now, recalculate totals. This will fetch the new lines and also
+      //    save the entire invoice instance with all changes via `this.save()`.
+      await invoice.recalculateTotals({ transaction });
+
+      await transaction.commit();
+
+      return this.getInvoiceById(id);
+    } catch (error) {
+      await transaction.rollback();
+      throw error;
     }
-
-    // Update invoice fields
-    if (updateData.title !== undefined) invoice.title = updateData.title
-    if (updateData.description !== undefined) invoice.description = updateData.description
-    if (updateData.dueDate !== undefined) invoice.dueDate = updateData.dueDate
-
-    await invoice.save()
-
-    return this.getInvoiceById(id)
   }
 
   // Delete invoice
