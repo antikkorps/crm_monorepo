@@ -632,8 +632,8 @@ export class DocumentTemplateService {
     // Remove any event handlers (onclick, onload, etc.)
     html = html.replace(/\s+on\w+\s*=\s*["'][^"']*["']/gi, '')
 
-    // Remove any javascript: protocols
-    html = html.replace(/javascript:/gi, '')
+    // Remove any potentially dangerous URL protocols
+    html = html.replace(/(javascript:|data:|vbscript:)/gi, '')
 
     return html
   }
