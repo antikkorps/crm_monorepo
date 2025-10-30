@@ -86,7 +86,7 @@
     - Write integration tests for team management operations
     - _Requirements: 10.2, 10.4, 10.5_
 
-- [x] 5. Implement task management system for team collaboration
+- [-] 5. Implement task management system for team collaboration
 
   - [x] 5.1 Create task model and database schema
 
@@ -104,6 +104,18 @@
     - Add filtering and search capabilities for team tasks
     - Write integration tests for task management workflows
     - _Requirements: 9.1, 9.2, 9.3_
+
+  - [ ] 5.3 Implement email notifications for deadlines and reminders
+
+    - Integrate EmailService (nodemailer) with ReminderService
+    - Send email for overdue tasks to assignees
+    - Send email for quotes expiring soon (7 days before) to assigned users
+    - Send email for unpaid invoices (30 days after due date) to responsible users
+    - Create email templates for each reminder type with task/quote/invoice details
+    - Add email delivery alongside in-app notifications in ReminderService
+    - Include direct links to entities in email body
+    - Write tests for email integration with reminder system
+    - _Requirements: 9.1, 9.2, 2.1, 2.5, 3.1, 3.2_
 
 - [x] 6. Set up real-time communication with Socket.io
 
