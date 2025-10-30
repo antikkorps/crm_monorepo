@@ -2,90 +2,34 @@ import { Options, Sequelize } from "sequelize"
 import { logger } from "../utils/logger"
 import config from "./environment"
 
-// Create Sequelize instance - use mock database for tests
+// Create Sequelize instance
 let sequelize: Sequelize
 
 if (config.env === "test") {
-  try {
-    // Use pg-mem for testing
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const pgMem = require("pg-mem")
-    const db = pgMem.newDb({ 
-      autoCreateForeignKeyIndices: true,
-    })
-    
-    // Add some PostgreSQL functions that might be used
-    db.public.registerFunction({
-      name: "version",
-      returns: pgMem.DataType.text,
-      implementation: () => "PostgreSQL 13.0 (pg-mem)",
-    })
-
-    // Enable uuid generation
-    db.public.registerFunction({
-      name: "gen_random_uuid",
-      returns: pgMem.DataType.uuid,
-      implementation: () => {
-        return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function (c) {
-          const r = (Math.random() * 16) | 0
-          const v = c === "x" ? r : (r & 0x3) | 0x8
-          return v.toString(16)
-        })
-      },
-    })
-
-    // Create custom ENUM types that pg-mem needs
-    try {
-      db.public.none(`
-        CREATE TYPE enum_users_role AS ENUM (
-          'super_admin', 'admin', 'team_admin', 'manager', 'user'
-        );
-      `)
-    } catch (e) {
-      // Enum might already exist
-    }
-
-    // Create the pg adapter
-    const pgAdapter = db.adapters.createPg()
-
-    // Create Sequelize instance with the mock
-    sequelize = new Sequelize("test", "test", "test", {
-      dialect: "postgres",
-      dialectModule: pgAdapter,
-      logging: false,
-      define: {
-        timestamps: true,
-        underscored: true,
-        freezeTableName: true,
-      },
-    })
-  } catch (error) {
-    // Fallback to regular postgres connection if pg-mem is not available
-    console.warn("pg-mem not available, falling back to postgres:", error)
-    sequelize = new Sequelize({
-      dialect: "postgres",
-      host: process.env.DB_HOST || "localhost",
-      port: Number(process.env.DB_PORT || 5432),
-      database: process.env.DB_NAME || "medical_crm_test",
-      username: process.env.DB_USER || "postgres",
-      password: process.env.DB_PASSWORD || "password",
-      logging: false,
-      dialectOptions: {
-        ssl: false,
-      },
-      pool: {
-        max: 5,
-        min: 0,
-        acquire: 3000,
-        idle: 1000,
-      },
-      define: {
-        timestamps: true,
-        underscored: true,
-        freezeTableName: true,
-      },
-    })
-  }
+  // Use real PostgreSQL database for tests (more reliable than pg-mem)
+  sequelize = new Sequelize({
+    dialect: "postgres",
+    host: process.env.DB_HOST || "localhost",
+    port: Number(process.env.DB_PORT || 5432),
+    database: process.env.DB_NAME || "medical_crm_test",
+    username: process.env.DB_USER || "postgres",
+    password: process.env.DB_PASSWORD || "password",
+    logging: false,
+    dialectOptions: {
+      ssl: false,
+    },
+    pool: {
+      max: 5,
+      min: 0,
+      acquire: 3000,
+      idle: 1000,
+    },
+    define: {
+      timestamps: true,
+      underscored: true,
+      freezeTableName: true,
+    },
+  })
 } else {
   // Production/development configuration
   const dbConfig: Options = {

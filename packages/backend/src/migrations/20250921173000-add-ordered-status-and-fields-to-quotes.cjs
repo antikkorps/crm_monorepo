@@ -3,7 +3,7 @@ module.exports = {
   async up(queryInterface, Sequelize) {
     // Add new enum value 'ordered' to quotes status
     await queryInterface.sequelize.query(
-      'ALTER TYPE "enum_quotes_status" ADD VALUE IF NOT EXISTS \"ordered\";'
+      'ALTER TYPE "enum_quotes_status" ADD VALUE IF NOT EXISTS \'ordered\';'
     )
 
     // Add order_number and ordered_at columns if not exists

@@ -423,14 +423,14 @@ export class CsvImportService {
       }) || null
     }
     
-    // In production, use JSONB-safe where with Sequelize.json
+    // In production, use JSONB-safe where with Sequelize.literal
     return await MedicalInstitution.findOne({
       where: {
         name: data.name,
         [Op.and]: [
-          Sequelize.where(Sequelize.json("address.street"), data.street),
-          Sequelize.where(Sequelize.json("address.city"), data.city),
-        ],
+          Sequelize.literal(`"address"->>'street' = '${data.street.replace(/'/g, "''")}'`),
+          Sequelize.literal(`"address"->>'city' = '${data.city.replace(/'/g, "''")}'`),
+        ] as any,
       },
     })
   }

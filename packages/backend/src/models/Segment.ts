@@ -190,16 +190,18 @@ export class Segment
         ]
       } else {
         if (instFilters.city) {
-          institutionWhere[Op.and] = [
-            ...(institutionWhere[Op.and] || []),
-            Sequelize.where(Sequelize.json("institution.address.city"), { [Op.iLike]: `%${instFilters.city}%` }),
-          ]
+          const andConditions = (institutionWhere[Op.and] as any[]) || []
+          andConditions.push(
+            Sequelize.literal(`"institution"."address"->>'city' ILIKE '%${instFilters.city.replace(/'/g, "''")}%'`)
+          )
+          institutionWhere[Op.and] = andConditions as any
         }
         if (instFilters.state) {
-          institutionWhere[Op.and] = [
-            ...(institutionWhere[Op.and] || []),
-            Sequelize.where(Sequelize.json("institution.address.state"), { [Op.iLike]: `%${instFilters.state}%` }),
-          ]
+          const andConditions = (institutionWhere[Op.and] as any[]) || []
+          andConditions.push(
+            Sequelize.literal(`"institution"."address"->>'state' ILIKE '%${instFilters.state.replace(/'/g, "''")}%'`)
+          )
+          institutionWhere[Op.and] = andConditions as any
         }
       }
 

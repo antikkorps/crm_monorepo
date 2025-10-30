@@ -6,6 +6,7 @@ import { SocketService } from "./services/SocketService"
 import { TaskNotificationService } from "./services/TaskNotificationService"
 import { WebhookJobProcessor } from "./services/WebhookJobProcessor"
 import { SecurityLogCleanupJob } from "./jobs/securityLogCleanup"
+import { reminderProcessorJob } from "./jobs/reminderProcessor"
 import { initializeDatabase } from "./utils/database-init"
 import { logger } from "./utils/logger"
 
@@ -51,6 +52,9 @@ async function startServer() {
     // Start security log cleanup job
     SecurityLogCleanupJob.start()
 
+    // Start reminder processor job
+    reminderProcessorJob.start()
+
     // Start server
     const server = httpServer.listen(config.port, () => {
       logger.info(`🚀 Medical CRM Backend server started`, {
@@ -70,6 +74,9 @@ async function startServer() {
 
       // Stop security log cleanup job
       SecurityLogCleanupJob.stop()
+
+      // Stop reminder processor job
+      reminderProcessorJob.stop()
 
       // Shutdown plugin system
       await pluginService.shutdown()

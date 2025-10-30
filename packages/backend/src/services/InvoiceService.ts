@@ -397,7 +397,7 @@ export class InvoiceService {
       try {
         logger.debug("InvoiceService.sendInvoice: updating sentAt timestamp", { id })
         await Invoice.update(
-          // @ts-expect-error sentAt may not exist in some DB schemas
+          // sentAt may not exist in some DB schemas
           { sentAt: new Date() },
           { where: { id } }
         )

@@ -275,6 +275,149 @@ export class DatabaseSeeder {
     }
   }
 
+  static async seedReminderRules() {
+    try {
+      const [rules] = await sequelize.query("SELECT COUNT(*) as count FROM reminder_rules")
+      const ruleCount = parseInt((rules[0] as any).count)
+
+      if (ruleCount > 0) {
+        logger.info("Reminder rules already exist, skipping reminder rule seeding")
+        return
+      }
+
+      // Get admin user for createdBy field
+      const [adminUsers] = await sequelize.query(
+        "SELECT id FROM users WHERE role = 'admin' LIMIT 1"
+      )
+      const adminId = (adminUsers as any)[0]?.id
+
+      if (!adminId) {
+        logger.warn("No admin user found, skipping reminder rule seeding")
+        return
+      }
+
+      // Default reminder rules
+      const defaultRules = [
+        // Task reminders
+        {
+          entity_type: "task",
+          trigger_type: "due_soon",
+          days_before: 3,
+          days_after: 0,
+          priority: "medium",
+          title_template: "Task Due Soon",
+          message_template: "Task '{title}' is due in {days} days.",
+          action_url_template: "/tasks/{id}",
+          action_text_template: "View Task",
+          auto_create_task: false,
+          task_priority: "medium",
+          created_by: adminId,
+        },
+        {
+          entity_type: "task",
+          trigger_type: "overdue",
+          days_before: 0,
+          days_after: 1,
+          priority: "high",
+          title_template: "Task Overdue",
+          message_template: "Task '{title}' is {days} days overdue.",
+          action_url_template: "/tasks/{id}",
+          action_text_template: "View Task",
+          auto_create_task: false,
+          task_priority: "high",
+          created_by: adminId,
+        },
+        // Quote reminders
+        {
+          entity_type: "quote",
+          trigger_type: "expired",
+          days_before: 0,
+          days_after: 7,
+          priority: "medium",
+          title_template: "Quote Expired",
+          message_template: "Quote '{quoteNumber}' for {institutionName} expired {days} days ago.",
+          action_url_template: "/quotes/{id}",
+          action_text_template: "View Quote",
+          auto_create_task: true,
+          task_title_template: "Follow up on expired quote {quoteNumber}",
+          task_priority: "medium",
+          created_by: adminId,
+        },
+        {
+          entity_type: "quote",
+          trigger_type: "due_soon",
+          days_before: 7,
+          days_after: 0,
+          priority: "low",
+          title_template: "Quote Expiring Soon",
+          message_template: "Quote '{quoteNumber}' for {institutionName} expires in {days} days.",
+          action_url_template: "/quotes/{id}",
+          action_text_template: "View Quote",
+          auto_create_task: false,
+          task_priority: "low",
+          created_by: adminId,
+        },
+        // Invoice reminders
+        {
+          entity_type: "invoice",
+          trigger_type: "unpaid",
+          days_before: 0,
+          days_after: 30,
+          priority: "high",
+          title_template: "Invoice Overdue",
+          message_template: "Invoice '{invoiceNumber}' for {amount}€ is {days} days overdue.",
+          action_url_template: "/invoices/{id}",
+          action_text_template: "View Invoice",
+          auto_create_task: true,
+          task_title_template: "Follow up on unpaid invoice {invoiceNumber}",
+          task_priority: "high",
+          created_by: adminId,
+        },
+        {
+          entity_type: "invoice",
+          trigger_type: "due_soon",
+          days_before: 7,
+          days_after: 0,
+          priority: "medium",
+          title_template: "Invoice Due Soon",
+          message_template: "Invoice '{invoiceNumber}' for {amount}€ is due in {days} days.",
+          action_url_template: "/invoices/{id}",
+          action_text_template: "View Invoice",
+          auto_create_task: false,
+          task_priority: "medium",
+          created_by: adminId,
+        },
+      ]
+
+      // Insert default reminder rules
+      for (const rule of defaultRules) {
+        await sequelize.query(
+          `
+          INSERT INTO reminder_rules (
+            entity_type, trigger_type, days_before, days_after, priority,
+            title_template, message_template, action_url_template, action_text_template,
+            auto_create_task, task_title_template, task_priority, created_by,
+            created_at, updated_at
+          ) VALUES (
+            :entity_type, :trigger_type, :days_before, :days_after, :priority,
+            :title_template, :message_template, :action_url_template, :action_text_template,
+            :auto_create_task, :task_title_template, :task_priority, :created_by,
+            NOW(), NOW()
+          )
+        `,
+          {
+            replacements: rule,
+          }
+        )
+      }
+
+      logger.info("Default reminder rules seeded successfully")
+    } catch (error) {
+      logger.error("Error seeding reminder rules", { error })
+      throw error
+    }
+  }
+
   static async seedAll() {
     try {
       logger.info("Starting database seeding...")
@@ -283,6 +426,7 @@ export class DatabaseSeeder {
       await this.seedUsers()
       await this.seedMedicalInstitutions()
       await this.seedContactPersons()
+      await this.seedReminderRules()
 
       logger.info("Database seeding completed successfully")
     } catch (error) {

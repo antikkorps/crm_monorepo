@@ -6,7 +6,7 @@ import { SecurityLog } from "../models/SecurityLog"
  * Runs daily at 2:00 AM
  */
 export class SecurityLogCleanupJob {
-  private static task: cron.ScheduledTask | null = null
+  private static task: import("node-cron").ScheduledTask | null = null
   private static isRunning = false
 
   /**

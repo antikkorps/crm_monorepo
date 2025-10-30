@@ -8,6 +8,7 @@ import {
   QuoteUpdateRequest,
 } from "@medical-crm/shared"
 import { Op, Transaction } from "sequelize"
+import { QuoteAttributes } from "../models/Quote"
 import { sequelize } from "../config/database"
 import { createError } from "../middleware/errorHandler"
 import { MedicalInstitution } from "../models/MedicalInstitution"
@@ -39,12 +40,13 @@ export class QuoteService {
       }
 
       // Create the quote
-      const sanitizedData = this.sanitizeQuotePayload({
+      const createData = {
         ...data,
         assignedUserId: userId,
-      })
+        templateId: data.templateId || undefined,
+      }
 
-      const quote = await Quote.createQuote(sanitizedData)
+      const quote = await Quote.createQuote(createData)
 
       // Create quote lines if provided
       if (data.lines && data.lines.length > 0) {
@@ -239,8 +241,31 @@ export class QuoteService {
       const { lines, ...quoteFields } = data as any
 
       // Update quote basic fields
-      const sanitizedFields = this.sanitizeQuotePayload(quoteFields as QuoteUpdateRequest)
-      await quote.update(sanitizedFields, { transaction })
+      const updateData: Partial<QuoteAttributes> = {}
+      
+      if (quoteFields.templateId !== undefined) {
+        updateData.templateId = quoteFields.templateId || undefined
+      }
+      if (quoteFields.title !== undefined) {
+        updateData.title = quoteFields.title
+      }
+      if (quoteFields.description !== undefined) {
+        updateData.description = quoteFields.description
+      }
+      if (quoteFields.validUntil !== undefined) {
+        updateData.validUntil = quoteFields.validUntil
+      }
+      if (quoteFields.status !== undefined) {
+        updateData.status = quoteFields.status
+      }
+      if (quoteFields.clientComments !== undefined) {
+        updateData.clientComments = quoteFields.clientComments
+      }
+      if (quoteFields.internalNotes !== undefined) {
+        updateData.internalNotes = quoteFields.internalNotes
+      }
+      
+      await quote.update(updateData, { transaction })
 
       // If lines provided, replace existing with provided set
       if (Array.isArray(lines)) {
