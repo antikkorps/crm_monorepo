@@ -1,5 +1,4 @@
 import { useAuthStore } from "@/stores/auth"
-import { useNotificationStore } from "@/stores/notifications"
 import { io, type Socket } from "socket.io-client"
 import { onMounted, onUnmounted, ref, watch } from "vue"
 
@@ -12,11 +11,9 @@ export interface SocketNotification {
 
 export function useSocket() {
   const authStore = useAuthStore()
-  const notificationStore = useNotificationStore()
   const socket = ref<Socket | null>(null)
   const isConnected = ref(false)
   const isConnecting = ref(false)
-  const notifications = ref<SocketNotification[]>([])
   const reconnectAttempts = ref(0)
   const maxReconnectAttempts = 5
 
@@ -109,128 +106,35 @@ export function useSocket() {
     // Generic notification handler
     socket.value.on("notification", (data: SocketNotification) => {
       console.log("Received generic notification:", data)
-      notificationStore.addNotification({
-        type: data.type,
-        message: data.message,
-        data: data.data,
-        timestamp: new Date(data.timestamp || Date.now()),
-      })
-      addNotification({
-        ...data,
-        timestamp: new Date(data.timestamp || Date.now()),
-      })
     })
 
     // Specific event handlers for different notification types
     socket.value.on("task-assigned", (data: any) => {
       console.log("Task assigned notification:", data)
-      notificationStore.addNotification({
-        type: "task-assigned",
-        message: `You have been assigned a new task: ${
-          data.task?.title || "Unknown Task"
-        }`,
-        data,
-        timestamp: new Date(),
-      })
-      addNotification({
-        type: "task-assigned",
-        message: `You have been assigned a new task: ${
-          data.task?.title || "Unknown Task"
-        }`,
-        data,
-        timestamp: new Date(),
-      })
     })
 
     socket.value.on("institution-updated", (data: any) => {
       console.log("Institution updated notification:", data)
-      notificationStore.addNotification({
-        type: "institution-updated",
-        message: `Medical institution "${
-          data.institution?.name || "Unknown Institution"
-        }" has been updated`,
-        data,
-        timestamp: new Date(),
-      })
-      addNotification({
-        type: "institution-updated",
-        message: `Medical institution "${
-          data.institution?.name || "Unknown Institution"
-        }" has been updated`,
-        data,
-        timestamp: new Date(),
-      })
+
     })
 
     socket.value.on("team-activity", (data: any) => {
       console.log("Team activity notification:", data)
-      const userName = data.user
-        ? `${data.user.firstName} ${data.user.lastName}`
-        : "Someone"
-      notificationStore.addNotification({
-        type: "team-activity",
-        message: `${userName} ${data.action || "performed an action"} ${
-          data.target || ""
-        }`,
-        data,
-        timestamp: new Date(),
-      })
-      addNotification({
-        type: "team-activity",
-        message: `${userName} ${data.action || "performed an action"} ${
-          data.target || ""
-        }`,
-        data,
-        timestamp: new Date(),
-      })
     })
 
     socket.value.on("webhook-triggered", (data: any) => {
       console.log("Webhook triggered notification:", data)
-      notificationStore.addNotification({
-        type: "webhook-triggered",
-        message: `Webhook "${data.webhook?.name || "Unknown Webhook"}" was triggered`,
-        data,
-        timestamp: new Date(),
-      })
-      addNotification({
-        type: "webhook-triggered",
-        message: `Webhook "${data.webhook?.name || "Unknown Webhook"}" was triggered`,
-        data,
-        timestamp: new Date(),
-      })
+
     })
 
     socket.value.on("task-overdue", (data: any) => {
       console.log("Task overdue notification:", data)
-      notificationStore.addNotification({
-        type: "task-overdue",
-        message: `La tâche "${data.task?.title || "Unknown Task"}" est en retard`,
-        data,
-        timestamp: new Date(),
-      })
-      addNotification({
-        type: "task-overdue",
-        message: `La tâche "${data.task?.title || "Unknown Task"}" est en retard`,
-        data,
-        timestamp: new Date(),
-      })
+
     })
 
     socket.value.on("task-due-soon", (data: any) => {
       console.log("Task due soon notification:", data)
-      notificationStore.addNotification({
-        type: "task-due-soon",
-        message: `La tâche "${data.task?.title || "Unknown Task"}" arrive à échéance ${data.daysUntilDue === 0 ? "aujourd'hui" : "demain"}`,
-        data,
-        timestamp: new Date(),
-      })
-      addNotification({
-        type: "task-due-soon",
-        message: `La tâche "${data.task?.title || "Unknown Task"}" arrive à échéance ${data.daysUntilDue === 0 ? "aujourd'hui" : "demain"}`,
-        data,
-        timestamp: new Date(),
-      })
+
     })
 
     socket.value.on("connect_error", (error: Error) => {
@@ -241,24 +145,11 @@ export function useSocket() {
       isConnecting.value = false
 
       // Add user-friendly error notification
-      addNotification({
-        type: "error",
-        message:
-          "Unable to establish real-time connection. Some features may be limited.",
-        data: { error: error.message },
-        timestamp: new Date(),
-      })
     })
 
     socket.value.on("error", (error: any) => {
       console.error("Socket error:", error)
       // Add error notification
-      addNotification({
-        type: "error",
-        message: "Connection error occurred. Some features may be unavailable.",
-        data: { error },
-        timestamp: new Date(),
-      })
     })
   }
 
@@ -283,24 +174,9 @@ export function useSocket() {
     }
   }
 
-  const addNotification = (notification: SocketNotification) => {
-    notifications.value.unshift(notification)
 
-    // Keep only last 100 notifications to prevent memory issues
-    if (notifications.value.length > 100) {
-      notifications.value = notifications.value.slice(0, 100)
-    }
-  }
 
-  const clearNotifications = () => {
-    notifications.value = []
-  }
 
-  const removeNotification = (index: number) => {
-    if (index >= 0 && index < notifications.value.length) {
-      notifications.value.splice(index, 1)
-    }
-  }
 
   // Watch for authentication changes
   watch(
@@ -338,12 +214,8 @@ export function useSocket() {
     socket,
     isConnected,
     isConnecting,
-    notifications,
-    reconnectAttempts,
     connect,
     disconnect,
     emit,
-    clearNotifications,
-    removeNotification,
   }
 }

@@ -18,6 +18,7 @@ import { Payment } from "./Payment"
 import { Quote } from "./Quote"
 import { QuoteLine } from "./QuoteLine"
 import { Reminder } from "./Reminder"
+import { ReminderRule } from "./ReminderRule"
 import { Segment } from "./Segment"
 import { Task } from "./Task"
 import { Team } from "./Team"
@@ -599,6 +600,26 @@ User.hasMany(SecurityLog, {
   onDelete: "SET NULL",
 })
 
+// User reminder rule associations
+User.hasMany(ReminderRule, {
+  foreignKey: "createdBy",
+  as: "createdReminderRules",
+  onDelete: "RESTRICT",
+})
+
+User.hasMany(ReminderRule, {
+  foreignKey: "updatedBy",
+  as: "updatedReminderRules",
+  onDelete: "SET NULL",
+})
+
+// Team reminder rule associations
+Team.hasMany(ReminderRule, {
+  foreignKey: "teamId",
+  as: "reminderRules",
+  onDelete: "SET NULL",
+})
+
 // Export all models
 export {
   Call,
@@ -620,6 +641,7 @@ export {
   Quote,
   QuoteLine,
   Reminder,
+  ReminderRule,
   Segment,
   Task,
   Team,
@@ -659,6 +681,7 @@ export default {
   Call,
   CatalogItem,
   Reminder,
+  ReminderRule,
   Segment,
   Webhook,
   WebhookLog,

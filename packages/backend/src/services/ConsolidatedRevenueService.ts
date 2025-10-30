@@ -225,7 +225,7 @@ export class ConsolidatedRevenueService {
       } else {
         // Get all companies linked to institutions for global revenue
         companies = await DigiformaCompany.findAll({
-          where: { institutionId: { [Op.not]: null } }
+          where: { institutionId: { [Op.not]: null as any } }
         })
       }
 

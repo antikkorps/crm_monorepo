@@ -1,8 +1,8 @@
-import { RouterContext } from "@koa/router"
+import { ParameterizedContext } from "koa"
 import { Next as KoaNext } from "koa"
 
-// Use the proper router context type from @koa/router
-export type Context = RouterContext
+// Use a more flexible context type that works with both Koa and Router
+export type Context = ParameterizedContext
 export type Next = KoaNext
 
 // Middleware type for router compatibility

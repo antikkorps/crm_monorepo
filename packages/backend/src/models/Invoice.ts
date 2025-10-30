@@ -32,6 +32,7 @@ export interface InvoiceAttributes {
   // Metadata
   sentAt?: Date
   paidAt?: Date
+  archived: boolean
   createdAt: Date
   updatedAt: Date
 }
@@ -48,6 +49,7 @@ export interface InvoiceCreationAttributes
     | "totalDiscountAmount"
     | "totalTaxAmount"
     | "total"
+    | "archived"
     | "createdAt"
     | "updatedAt"
   > {}
@@ -82,7 +84,7 @@ export class Invoice
   // Metadata
   public sentAt?: Date
   public paidAt?: Date
-  public archived?: boolean
+  public archived!: boolean
   public readonly createdAt!: Date
   public readonly updatedAt!: Date
 
@@ -152,7 +154,7 @@ export class Invoice
     // Best-effort update of sentAt; ignore if column doesn't exist
     try {
       await (this.constructor as typeof Invoice).update(
-        // @ts-expect-error sentAt may not exist on some DB schemas
+        // sentAt may not exist on some DB schemas
         { sentAt: new Date() },
         { where: { id: this.id } }
       )

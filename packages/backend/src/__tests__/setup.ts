@@ -17,18 +17,23 @@ process.env.DB_HOST = process.env.DB_HOST || "localhost"
 process.env.DB_PORT = process.env.DB_PORT || "5432"
 
 // Initialize database connection and models once for all tests
+let isInitialized = false
 beforeAll(async () => {
+  if (isInitialized) return
+
   try {
     const { sequelize } = await import("../config/database")
 
     // Import all models to ensure they're registered
     await import("../models")
 
-    // Sync database schema once at the start
+    // Sync database schema with force: true to reset test DB
     await sequelize.sync({ force: true })
 
+    isInitialized = true
     console.log("Test database initialized successfully")
   } catch (error) {
-    console.warn("Database initialization warning:", (error as Error).message)
+    console.error("Database initialization failed:", (error as Error).message)
+    throw error
   }
 })

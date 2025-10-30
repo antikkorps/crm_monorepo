@@ -212,6 +212,7 @@ export interface QuoteLineCreateRequest {
 }
 
 export interface QuoteUpdateRequest {
+  templateId?: string | null
   title?: string
   description?: string
   validUntil?: Date

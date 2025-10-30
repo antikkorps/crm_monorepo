@@ -96,16 +96,16 @@ export class SegmentService {
         ]
       } else {
         if (instFilters.city) {
-          institutionWhere[Op.and] = [
-            ...(institutionWhere[Op.and] || []),
-            Sequelize.where(Sequelize.json("institution.address.city"), { [Op.iLike]: `%${instFilters.city}%` }),
-          ]
+          const cityCondition = Sequelize.literal(`"institution"."address"->>'city' ILIKE '%${instFilters.city.replace(/'/g, "''")}%'`)
+          const andConditions = ((institutionWhere as any)[Op.and] as any[]) || []
+          andConditions.push(cityCondition)
+          ;(institutionWhere as any)[Op.and] = andConditions
         }
         if (instFilters.state) {
-          institutionWhere[Op.and] = [
-            ...(institutionWhere[Op.and] || []),
-            Sequelize.where(Sequelize.json("institution.address.state"), { [Op.iLike]: `%${instFilters.state}%` }),
-          ]
+          const stateCondition = Sequelize.literal(`"institution"."address"->>'state' ILIKE '%${instFilters.state.replace(/'/g, "''")}%'`)
+          const andConditions = ((institutionWhere as any)[Op.and] as any[]) || []
+          andConditions.push(stateCondition)
+          ;(institutionWhere as any)[Op.and] = andConditions
         }
       }
 
@@ -280,16 +280,20 @@ export class SegmentService {
           whereClause.type = value
           break
         case "city":
-          whereClause[Op.and] = [
-            ...(whereClause[Op.and] || []),
-            Sequelize.where(Sequelize.json("address.city"), { [Op.iLike]: `%${value}%` }),
-          ]
+          const cityValue = String(value)
+          const cityConditions = ((whereClause as any)[Op.and] as any[]) || []
+          cityConditions.push(
+            Sequelize.literal(`"address"->>'city' ILIKE '%${cityValue.replace(/'/g, "''")}%'`)
+          )
+          ;(whereClause as any)[Op.and] = cityConditions
           break
         case "state":
-          whereClause[Op.and] = [
-            ...(whereClause[Op.and] || []),
-            Sequelize.where(Sequelize.json("address.state"), { [Op.iLike]: `%${value}%` }),
-          ]
+          const stateValue = String(value)
+          const stateConditions = ((whereClause as any)[Op.and] as any[]) || []
+          stateConditions.push(
+            Sequelize.literal(`"address"->>'state' ILIKE '%${stateValue.replace(/'/g, "''")}%'`)
+          )
+          ;(whereClause as any)[Op.and] = stateConditions
           break
         case "assignedUserId":
           whereClause.assignedUserId = value

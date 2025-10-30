@@ -64,10 +64,11 @@ export class ExportService {
 
       // Apply search query
       if (options.searchQuery) {
+        const searchQuery = options.searchQuery.replace(/'/g, "''")
         whereClause[Op.or] = [
           { name: { [Op.iLike]: `%${options.searchQuery}%` } },
-          Sequelize.where(Sequelize.json("address.city"), { [Op.iLike]: `%${options.searchQuery}%` }),
-        ]
+          Sequelize.literal(`"address"->>'city' ILIKE '%${searchQuery}%'`),
+        ] as any
       }
 
       // Apply team-based filtering

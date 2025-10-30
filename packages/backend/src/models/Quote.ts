@@ -456,7 +456,7 @@ Quote.init(
           value === undefined ||
           (typeof value === "string" && value.trim().length === 0)
         ) {
-          this.setDataValue("templateId", null)
+          this.setDataValue("templateId", undefined)
         } else {
           this.setDataValue("templateId", value)
         }
