@@ -6,6 +6,7 @@ import { Invoice } from "../models/Invoice"
 import { User } from "../models/User"
 import { MedicalInstitution } from "../models/MedicalInstitution"
 import { NotificationService, NotificationType, NotificationPriority } from "./NotificationService"
+import EmailService from "./EmailService"
 
 import { logger } from "../utils/logger"
 
@@ -37,11 +38,13 @@ interface WhereClause {
 
 export class ReminderService {
   private notificationService: NotificationService
+  private emailService: EmailService
   private static instance: ReminderService
   private lastNotificationCache = new Map<string, Date>() // Cache to prevent spam
 
   private constructor() {
     this.notificationService = NotificationService.getInstance()
+    this.emailService = new EmailService()
   }
 
   public static getInstance(): ReminderService {
@@ -363,6 +366,11 @@ export class ReminderService {
       // Mark notification as sent to prevent spam
       this.markNotificationSent(rule.id, entity.id)
 
+      // Send email reminder if enabled and assignee has email
+      if (process.env.ENABLE_EMAIL_REMINDERS === 'true') {
+        await this.sendEmailReminder(rule, entity)
+      }
+
       logger.info(`Reminder notification sent for ${rule.entityType} ${entity.id}`, {
         entityType: rule.entityType,
         entityId: entity.id,
@@ -598,6 +606,258 @@ export class ReminderService {
         await ReminderRule.create(ruleData)
         logger.info(`Created default reminder rule for ${ruleData.entityType} ${ruleData.triggerType}`)
       }
+    }
+  }
+
+  /**
+   * Send email reminder based on entity type
+   */
+  private async sendEmailReminder(rule: ReminderRule, entity: ReminderData): Promise<void> {
+    try {
+      const currentDate = new Date()
+      let daysUntil: number | undefined
+
+      // Calculate days until due/expiry for the email subject
+      if (entity.dueDate) {
+        const dueDate = new Date(entity.dueDate)
+        daysUntil = Math.ceil((dueDate.getTime() - currentDate.getTime()) / (1000 * 60 * 60 * 24))
+      } else if (entity.validUntil) {
+        const validUntil = new Date(entity.validUntil)
+        daysUntil = Math.ceil((validUntil.getTime() - currentDate.getTime()) / (1000 * 60 * 60 * 24))
+      } else if (entity.dueAt) {
+        const dueAt = new Date(entity.dueAt)
+        daysUntil = Math.ceil((dueAt.getTime() - currentDate.getTime()) / (1000 * 60 * 60 * 24))
+      }
+
+      switch (rule.entityType) {
+        case "task":
+          await this.sendTaskReminderEmail(entity, rule, daysUntil)
+          break
+        case "quote":
+          await this.sendQuoteReminderEmail(entity, rule, daysUntil)
+          break
+        case "invoice":
+          await this.sendInvoiceReminderEmail(entity, rule, daysUntil)
+          break
+        default:
+          logger.warn(`Email reminder not implemented for entity type: ${rule.entityType}`)
+      }
+    } catch (error) {
+      logger.error("Error sending email reminder", {
+        error: error instanceof Error ? error.message : String(error),
+        entityId: entity.id,
+        entityType: rule.entityType,
+        ruleId: rule.id,
+      })
+    }
+  }
+
+  /**
+   * Send email reminder for task
+   */
+  private async sendTaskReminderEmail(
+    entity: ReminderData,
+    rule: ReminderRule,
+    daysUntilDue?: number
+  ): Promise<void> {
+    try {
+      if (!entity.assignee?.email || !entity.assignee.firstName) {
+        logger.warn("Cannot send task email: missing assignee email or name", {
+          entityId: entity.id,
+          assigneeEmail: entity.assignee?.email,
+        })
+        return
+      }
+
+      const assigneeName = `${entity.assignee.firstName} ${entity.assignee.lastName || ""}`.trim()
+      const taskUrl = `${process.env.FRONTEND_URL || "http://localhost:3000"}/tasks/${entity.id}`
+      const dueDateStr = entity.dueDate ? new Date(entity.dueDate).toLocaleDateString("fr-FR") : "Non définie"
+
+      const isOverdue = rule.triggerType === "overdue"
+      const subject = isOverdue 
+        ? `🚨 TÂCHE EN RETARD: ${entity.title}`
+        : `⏰ RAPPEL: Tâche à échéance dans ${daysUntilDue} jour(s)`
+
+      const message = `
+        <p>Bonjour ${assigneeName},</p>
+        
+        <p>Ceci est un rappel concernant la tâche suivante :</p>
+        
+        <div style="background-color: #f5f5f5; padding: 15px; border-radius: 5px; margin: 15px 0;">
+          <h3 style="margin: 0 0 10px 0; color: #333;">${entity.title}</h3>
+          <p style="margin: 5px 0;"><strong>Échéance :</strong> ${dueDateStr}</p>
+          ${entity.institution ? `<p style="margin: 5px 0;"><strong>Institution :</strong> ${entity.institution.name}</p>` : ""}
+          <p style="margin: 5px 0;"><strong>Statut :</strong> ${entity.status || "À faire"}</p>
+        </div>
+        
+        ${isOverdue 
+          ? `<p style="color: #d32f2f; font-weight: bold;">⚠️ Cette tâche est en retard !</p>`
+          : `<p style="color: #1976d2;">📅 Plus que ${daysUntilDue} jour(s) avant l'échéance.</p>`
+        }
+        
+        <p><a href="${taskUrl}" style="background-color: #1976d2; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Voir la tâche</a></p>
+        
+        <p>Si vous avez des questions ou besoin d'aide, n'hésitez pas à nous contacter.</p>
+        
+        <p>Cordialement,<br>Équipe Medical CRM</p>
+      `
+
+      await this.emailService.sendCustomEmail(
+        entity.assignee.email,
+        subject,
+        message
+      )
+
+      logger.info("Task reminder email sent", {
+        entityId: entity.id,
+        assigneeEmail: entity.assignee.email,
+        triggerType: rule.triggerType,
+      })
+    } catch (error) {
+      logger.error("Failed to send task reminder email", {
+        error: error instanceof Error ? error.message : String(error),
+        entityId: entity.id,
+      })
+    }
+  }
+
+  /**
+   * Send email reminder for quote
+   */
+  private async sendQuoteReminderEmail(
+    entity: ReminderData,
+    rule: ReminderRule,
+    daysUntilExpiry?: number
+  ): Promise<void> {
+    try {
+      if (!entity.assignee?.email || !entity.assignee.firstName) {
+        logger.warn("Cannot send quote email: missing assignee email or name", {
+          entityId: entity.id,
+          assigneeEmail: entity.assignee?.email,
+        })
+        return
+      }
+
+      const assigneeName = `${entity.assignee.firstName} ${entity.assignee.lastName || ""}`.trim()
+      const quoteUrl = `${process.env.FRONTEND_URL || "http://localhost:3000"}/quotes/${entity.id}`
+      const validUntilStr = entity.validUntil ? new Date(entity.validUntil).toLocaleDateString("fr-FR") : "Non définie"
+
+      const isExpired = rule.triggerType === "expired"
+      const subject = isExpired 
+        ? `⚠️ DEVIS EXPIRÉ: ${entity.title || entity.quoteNumber}`
+        : `⏰ RAPPEL: Devis à échéance dans ${daysUntilExpiry} jour(s)`
+
+      const message = `
+        <p>Bonjour ${assigneeName},</p>
+        
+        <p>Ceci est un rappel concernant le devis suivant :</p>
+        
+        <div style="background-color: #f5f5f5; padding: 15px; border-radius: 5px; margin: 15px 0;">
+          <h3 style="margin: 0 0 10px 0; color: #333;">${entity.title || entity.quoteNumber}</h3>
+          <p style="margin: 5px 0;"><strong>Numéro :</strong> ${entity.quoteNumber || "N/A"}</p>
+          <p style="margin: 5px 0;"><strong>Montant :</strong> ${entity.totalAmount ? new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(entity.totalAmount) : "N/A"}</p>
+          <p style="margin: 5px 0;"><strong>Échéance :</strong> ${validUntilStr}</p>
+          ${entity.institution ? `<p style="margin: 5px 0;"><strong>Institution :</strong> ${entity.institution.name}</p>` : ""}
+        </div>
+        
+        ${isExpired 
+          ? `<p style="color: #d32f2f; font-weight: bold;">❗ Ce devis a expiré !</p>
+             <p>Nous recommandons de contacter le client pour proposer un nouveau devis ou une extension.</p>`
+          : `<p style="color: #1976d2;">📅 Plus que ${daysUntilExpiry} jour(s) avant l'expiration.</p>
+             <p>N'oubliez pas de relancer le client pour éviter la perte de cette opportunité.</p>`
+        }
+        
+        <p><a href="${quoteUrl}" style="background-color: #1976d2; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Voir le devis</a></p>
+        
+        <p>Cordialement,<br>Équipe Medical CRM</p>
+      `
+
+      await this.emailService.sendCustomEmail(
+        entity.assignee.email,
+        subject,
+        message
+      )
+
+      logger.info("Quote reminder email sent", {
+        entityId: entity.id,
+        assigneeEmail: entity.assignee.email,
+        triggerType: rule.triggerType,
+      })
+    } catch (error) {
+      logger.error("Failed to send quote reminder email", {
+        error: error instanceof Error ? error.message : String(error),
+        entityId: entity.id,
+      })
+    }
+  }
+
+  /**
+   * Send email reminder for invoice
+   */
+  private async sendInvoiceReminderEmail(
+    entity: ReminderData,
+    rule: ReminderRule,
+    daysUntilDue?: number
+  ): Promise<void> {
+    try {
+      if (!entity.assignee?.email || !entity.assignee.firstName) {
+        logger.warn("Cannot send invoice email: missing assignee email or name", {
+          entityId: entity.id,
+          assigneeEmail: entity.assignee?.email,
+        })
+        return
+      }
+
+      const assigneeName = `${entity.assignee.firstName} ${entity.assignee.lastName || ""}`.trim()
+      const invoiceUrl = `${process.env.FRONTEND_URL || "http://localhost:3000"}/invoices/${entity.id}`
+      const dueAtStr = entity.dueAt ? new Date(entity.dueAt).toLocaleDateString("fr-FR") : "Non définie"
+
+      const isOverdue = rule.triggerType === "unpaid"
+      const subject = isOverdue 
+        ? `🚨 FACTURE EN RETARD: ${entity.title || entity.invoiceNumber}`
+        : `💰 RAPPEL: Facture à échéance dans ${daysUntilDue} jour(s)`
+
+      const message = `
+        <p>Bonjour ${assigneeName},</p>
+        
+        <p>Ceci est un rappel concernant la facture suivante :</p>
+        
+        <div style="background-color: #f5f5f5; padding: 15px; border-radius: 5px; margin: 15px 0;">
+          <h3 style="margin: 0 0 10px 0; color: #333;">${entity.title || entity.invoiceNumber}</h3>
+          <p style="margin: 5px 0;"><strong>Numéro :</strong> ${entity.invoiceNumber || "N/A"}</p>
+          <p style="margin: 5px 0;"><strong>Montant :</strong> ${entity.amount ? new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(entity.amount) : new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(entity.totalAmount || 0)}</p>
+          <p style="margin: 5px 0;"><strong>Échéance :</strong> ${dueAtStr}</p>
+          ${entity.institution ? `<p style="margin: 5px 0;"><strong>Institution :</strong> ${entity.institution.name}</p>` : ""}
+        </div>
+        
+        ${isOverdue 
+          ? `<p style="color: #d32f2f; font-weight: bold;">⚠️ Cette facture est en retard de paiement !</p>
+             <p>Veuillez contacter le client pour récupérer le paiement ou proposer un échéancier.</p>`
+          : `<p style="color: #1976d2;">📅 Plus que ${daysUntilDue} jour(s) avant l'échéance.</p>
+             <p>N'oubliez pas de relancer le client pour le paiement.</p>`
+        }
+        
+        <p><a href="${invoiceUrl}" style="background-color: #1976d2; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Voir la facture</a></p>
+        
+        <p>Cordialement,<br>Équipe Medical CRM</p>
+      `
+
+      await this.emailService.sendCustomEmail(
+        entity.assignee.email,
+        subject,
+        message
+      )
+
+      logger.info("Invoice reminder email sent", {
+        entityId: entity.id,
+        assigneeEmail: entity.assignee.email,
+        triggerType: rule.triggerType,
+      })
+    } catch (error) {
+      logger.error("Failed to send invoice reminder email", {
+        error: error instanceof Error ? error.message : String(error),
+        entityId: entity.id,
+      })
     }
   }
 }
