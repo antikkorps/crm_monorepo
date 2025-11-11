@@ -315,7 +315,7 @@ export class DashboardController {
       attributes: [
         [sequelize.fn("COUNT", sequelize.col("id")), "count"],
         [sequelize.fn("SUM", sequelize.col("total")), "totalRevenue"],
-        [sequelize.fn("SUM", sequelize.col("totalPaid")), "paidRevenue"],
+        [sequelize.fn("SUM", sequelize.col("paid_amount")), "paidRevenue"],
         [sequelize.fn("AVG", sequelize.col("total")), "avgValue"],
       ],
       raw: true,
