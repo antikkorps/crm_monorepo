@@ -281,10 +281,13 @@ const selectedTemplate = computed(() => {
 })
 
 const templateOptions = computed(() => {
-  return templates.value.map((t) => ({
-    label: t.name,
-    value: t.id,
-  }))
+  return [
+    { label: "Default Template", value: "" },
+    ...templates.value.map((t) => ({
+      label: t.name,
+      value: t.id,
+    }))
+  ]
 })
 
 const canSendReminder = computed(() => {

@@ -122,12 +122,15 @@ export class SystemSettings
       },
     ]
 
-    for (const setting of defaults) {
-      await SystemSettings.findOrCreate({
-        where: { key: setting.key },
-        defaults: setting,
-      })
-    }
+    // Execute all findOrCreate operations in parallel for better performance
+    await Promise.all(
+      defaults.map(setting =>
+        SystemSettings.findOrCreate({
+          where: { key: setting.key },
+          defaults: setting,
+        })
+      )
+    )
   }
 }
 

@@ -182,7 +182,6 @@ onMounted(async () => {
 // Mark a feature as changed
 const markAsChanged = (key: string) => {
   changedKeys.value.add(key)
-  hasChanges.value = featureStates.value[key] !== originalStates.value[key] || changedKeys.value.size > 0
 
   // Check if any feature actually differs from original
   let actualChanges = false

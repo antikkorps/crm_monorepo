@@ -130,7 +130,13 @@ const dialogVisible = computed({
 const isEditing = computed(() => !!props.invoice)
 const submitting = ref(false)
 
-const form = ref<InvoiceCreateRequest & { templateId?: string }>({ institutionId: "", title: "", dueDate: new Date().toISOString().split('T')[0] as any, lines: [], templateId: "" })
+const form = ref<InvoiceCreateRequest & { templateId?: string }>({
+  institutionId: "",
+  title: "",
+  dueDate: new Date().toISOString().split('T')[0],
+  lines: [],
+  templateId: ""
+})
 type InvoiceLineForm = LineWithCatalog<InvoiceLineCreateRequest & {
   id?: string
   invoiceId?: string

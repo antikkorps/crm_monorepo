@@ -9,6 +9,9 @@ import type {
 } from "@medical-crm/shared"
 import type { SegmentAnalyticsPayload } from "@/services/api/segmentation"
 
+// Cache configuration
+const CACHE_TTL = 5 * 60 * 1000 // 5 minutes
+
 // Global cache for segments to avoid unnecessary reloads
 const segmentsCache = ref<{
   data: Segment[]
@@ -17,7 +20,7 @@ const segmentsCache = ref<{
 }>({
   data: [],
   lastUpdated: 0,
-  ttl: 5 * 60 * 1000 // 5 minutes
+  ttl: CACHE_TTL
 })
 
 // Cache for segment previews and searches
@@ -55,7 +58,7 @@ export function useSegmentation() {
       segmentsCache.value = {
         data: response.data,
         lastUpdated: Date.now(),
-        ttl: 5 * 60 * 1000
+        ttl: CACHE_TTL
       }
     } catch (err) {
       error.value = err instanceof Error ? err.message : "Failed to load segments"
@@ -94,7 +97,7 @@ export function useSegmentation() {
       segmentsCache.value = {
         data: segments.value,
         lastUpdated: Date.now(),
-        ttl: 5 * 60 * 1000
+        ttl: CACHE_TTL
       }
 
       return response.data
@@ -125,7 +128,7 @@ export function useSegmentation() {
       segmentsCache.value = {
         data: segments.value,
         lastUpdated: Date.now(),
-        ttl: 5 * 60 * 1000
+        ttl: CACHE_TTL
       }
 
       return response.data
@@ -153,7 +156,7 @@ export function useSegmentation() {
       segmentsCache.value = {
         data: segments.value,
         lastUpdated: Date.now(),
-        ttl: 5 * 60 * 1000
+        ttl: CACHE_TTL
       }
     } catch (err) {
       error.value = err instanceof Error ? err.message : "Failed to delete segment"
@@ -176,7 +179,7 @@ export function useSegmentation() {
       segmentsCache.value = {
         data: segments.value,
         lastUpdated: Date.now(),
-        ttl: 5 * 60 * 1000
+        ttl: CACHE_TTL
       }
 
       return response.data

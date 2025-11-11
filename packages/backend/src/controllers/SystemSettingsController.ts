@@ -187,26 +187,34 @@ export class SystemSettingsController {
         return
       }
 
-      const updatedSettings = []
+      // Perform updates concurrently to avoid N+1 query performance issues
+      const results = await Promise.all(
+        settings.map(async ({ key, value }) => {
+          const setting = await SystemSettings.findOne({ where: { key } })
+          if (setting) {
+            await setting.update({
+              value,
+              updatedBy: user.id,
+            })
+            logger.info(`Setting '${key}' updated by ${user.email}`)
+            return { success: true, key, setting }
+          }
+          logger.warn(`Setting '${key}' not found, skipping`)
+          return { success: false, key, error: 'Setting not found' }
+        })
+      )
 
-      for (const { key, value } of settings) {
-        const setting = await SystemSettings.findOne({ where: { key } })
-
-        if (setting) {
-          await setting.update({
-            value,
-            updatedBy: user.id,
-          })
-          updatedSettings.push(setting)
-
-          logger.info(`Setting '${key}' updated by ${user.email}`)
-        }
-      }
+      const updatedSettings = results.filter(r => r.success).map(r => r.setting)
+      const failedKeys = results.filter(r => !r.success).map(r => ({ key: r.key, error: r.error }))
 
       ctx.status = 200
       ctx.body = {
         success: true,
         data: updatedSettings,
+        ...(failedKeys.length > 0 && {
+          warnings: `${failedKeys.length} setting(s) not found`,
+          failedKeys
+        }),
       }
     } catch (error) {
       logger.error("Error bulk updating settings:", error)

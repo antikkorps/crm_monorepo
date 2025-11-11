@@ -49,10 +49,23 @@ export const useSettingsStore = defineStore("settings", {
       try {
         this.loading = true
         const response = await settingsApi.getPublic()
-        const data = response.data || {}
+
+        // Validate response structure
+        if (!response || typeof response !== 'object') {
+          console.error("Invalid response structure from settings API")
+          return
+        }
+
+        const data = response.data
+
+        // Check if data exists and is an object
+        if (!data || typeof data !== 'object') {
+          console.error("Settings API returned invalid or null data")
+          return
+        }
 
         // Update feature flags from response
-        if (data.features) {
+        if (data.features && typeof data.features === 'object') {
           this.featureFlags = {
             quotes_enabled: data.features.quotes_enabled ?? true,
             invoices_enabled: data.features.invoices_enabled ?? true,
@@ -60,6 +73,8 @@ export const useSettingsStore = defineStore("settings", {
             contacts_enabled: data.features.contacts_enabled ?? true,
             segmentation_enabled: data.features.segmentation_enabled ?? true,
           }
+        } else {
+          console.warn("No features object in settings response, using defaults")
         }
 
         this.initialized = true
@@ -78,7 +93,19 @@ export const useSettingsStore = defineStore("settings", {
       try {
         this.loading = true
         const response = await settingsApi.getAll()
-        this.allSettings = response.data || []
+
+        // Validate response structure
+        if (!response || typeof response !== 'object' || !response.data) {
+          console.error("Invalid response structure from settings API")
+          throw new Error("Invalid response from settings API")
+        }
+
+        if (!Array.isArray(response.data)) {
+          console.error("Settings API returned non-array data")
+          throw new Error("Expected array of settings")
+        }
+
+        this.allSettings = response.data
       } catch (error) {
         console.error("Failed to load all settings:", error)
         throw error
