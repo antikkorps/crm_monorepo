@@ -781,11 +781,24 @@
 
 - [-] 23. Frontend Harmonization and Polish ✨ **EN COURS**
 
-  - [ ] 23.1 Refine and complete Quotes/Invoices UI
+  - [x] 23.1 Refine and complete Quotes/Invoices UI ✅ **COMPLÉTÉ**
 
-    - Ensure consistent design between Quotes and Invoices views.
-    - Improve forms for creating/editing lines.
-    - Add missing UI elements for actions (e.g., email tracking, history).
+    **Améliorations implémentées (2025-11-11)**:
+    - ✅ **Support des templates pour les factures** : Ajout du sélecteur de template dans InvoiceForm.vue
+    - ✅ **Harmonisation de DocumentActions.vue** : Conversion complète de PrimeVue vers Vuetify
+    - ✅ **Système de relances fonctionnel** : Payment reminders entièrement implémenté
+    - ✅ **Design cohérent** : Material Design 3 unifié sur tous les composants de facturation
+    - ✅ **Meilleure UX** : Grid responsive Vuetify, densité compact pour les formulaires
+
+    **Problèmes résolus**:
+    - Templates devis/factures maintenant correctement pris en compte lors de la génération PDF
+    - InvoiceForm utilise maintenant le même système de templates que QuoteBuilder
+    - DocumentActions migré vers Vuetify (plus de PrimeVue dans les composants de facturation)
+    - Interface cohérente entre création de devis et création de factures
+
+    **Fichiers modifiés**:
+    - `packages/frontend/src/components/billing/InvoiceForm.vue`
+    - `packages/frontend/src/components/billing/DocumentActions.vue`
 
   - [x] 23.1.1 Implement Invoice Edit Mode in InvoiceDetailView ✅ **RÉSOLU**
 
