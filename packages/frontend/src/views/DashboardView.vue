@@ -90,9 +90,34 @@
       <v-row v-if="metrics" class="mb-6">
         <v-col cols="12">
           <v-card elevation="2">
-            <v-card-title class="d-flex align-center">
-              <v-icon icon="mdi-chart-timeline-variant" color="primary" class="mr-2" />
-              Indicateurs de performance
+            <v-card-title class="d-flex align-center justify-space-between">
+              <div class="d-flex align-center">
+                <v-icon icon="mdi-chart-timeline-variant" color="primary" class="mr-2" />
+                Indicateurs de performance
+              </div>
+              <v-btn-group variant="outlined" density="compact">
+                <v-btn
+                  :color="period === 'week' ? 'primary' : undefined"
+                  size="small"
+                  @click="setPeriod('week')"
+                >
+                  7 jours
+                </v-btn>
+                <v-btn
+                  :color="period === 'month' ? 'primary' : undefined"
+                  size="small"
+                  @click="setPeriod('month')"
+                >
+                  30 jours
+                </v-btn>
+                <v-btn
+                  :color="period === 'quarter' ? 'primary' : undefined"
+                  size="small"
+                  @click="setPeriod('quarter')"
+                >
+                  90 jours
+                </v-btn>
+              </v-btn-group>
             </v-card-title>
 
             <v-card-text>
@@ -183,7 +208,7 @@
       <!-- KPI Charts Widget -->
       <v-row v-if="metrics" class="mb-6">
         <v-col cols="12">
-          <KPIChartsWidget />
+          <KPIChartsWidget :period="period" />
         </v-col>
       </v-row>
 
@@ -399,6 +424,7 @@ const router = useRouter()
 const metrics = ref<DashboardMetrics | null>(null)
 const metricsLoading = ref(false)
 const metricsError = ref<string | null>(null)
+const period = ref<'week' | 'month' | 'quarter'>('month')
 
 // Check if user should be automatically redirected to billing analytics
 const shouldRedirectToBilling = computed(() => {
@@ -657,13 +683,19 @@ const loadMetrics = async () => {
   metricsError.value = null
 
   try {
-    metrics.value = await dashboardApi.getMetrics({ period: 'month' })
+    metrics.value = await dashboardApi.getMetrics({ period: period.value })
   } catch (error) {
     console.error('Error loading dashboard metrics:', error)
     metricsError.value = error instanceof Error ? error.message : 'Failed to load metrics'
   } finally {
     metricsLoading.value = false
   }
+}
+
+// Set period and reload metrics
+const setPeriod = (newPeriod: 'week' | 'month' | 'quarter') => {
+  period.value = newPeriod
+  loadMetrics()
 }
 
 // Auto-redirect logic (if needed)
