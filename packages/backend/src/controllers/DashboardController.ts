@@ -387,11 +387,19 @@ export class DashboardController {
       },
     });
 
-    const percentageChange =
-      previousPeriodCount === 0
-        ? 100
-        : ((currentPeriodCount - previousPeriodCount) / previousPeriodCount) *
-          100;
+    // Calculate percentage change, handling division by zero
+    let percentageChange: number;
+    if (previousPeriodCount === 0) {
+      // If there were no items in the previous period
+      if (currentPeriodCount > 0) {
+        percentageChange = 100;
+      } else {
+        percentageChange = 0;
+      }
+    } else {
+      percentageChange =
+        ((currentPeriodCount - previousPeriodCount) / previousPeriodCount) * 100;
+    }
 
     return {
       count: currentPeriodCount,
