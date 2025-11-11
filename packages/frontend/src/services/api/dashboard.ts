@@ -39,6 +39,20 @@ export interface Alert {
 }
 
 /**
+ * Quick Action type
+ */
+export interface QuickAction {
+  id: string
+  title: string
+  description: string
+  icon: string
+  color: string
+  route: string
+  priority: number
+  category: string
+}
+
+/**
  * Dashboard metrics types
  */
 export interface DashboardMetrics {
@@ -151,6 +165,19 @@ export const dashboardApi = {
     const response = await apiClient.get<{ success: boolean; data: Alert[] }>(
       "/dashboard/alerts"
     )
+
+    return response.data
+  },
+
+  /**
+   * Get personalized quick actions
+   * @returns List of quick actions
+   */
+  async getQuickActions(): Promise<QuickAction[]> {
+    const response = await apiClient.get<{
+      success: boolean
+      data: QuickAction[]
+    }>("/dashboard/quick-actions")
 
     return response.data
   },

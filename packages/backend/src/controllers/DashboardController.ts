@@ -72,6 +72,33 @@ export class DashboardController {
   }
 
   /**
+   * Get personalized quick actions
+   * GET /api/dashboard/quick-actions
+   */
+  static async getQuickActions(ctx: Context): Promise<void> {
+    const user = ctx.state.user as User;
+
+    try {
+      const actions = await DashboardController.getPersonalizedQuickActions(
+        user
+      );
+
+      ctx.body = {
+        success: true,
+        data: actions,
+      };
+    } catch (error) {
+      console.error("Error fetching quick actions:", error);
+      ctx.status = 500;
+      ctx.body = {
+        success: false,
+        message: "Failed to fetch quick actions",
+        error: error instanceof Error ? error.message : "Unknown error",
+      };
+    }
+  }
+
+  /**
    * Get dashboard metrics
    * GET /api/dashboard/metrics
    */
@@ -887,5 +914,180 @@ export class DashboardController {
     alerts.sort((a, b) => b.priority - a.priority);
 
     return alerts;
+  }
+
+  /**
+   * Get personalized quick actions based on user context and behavior
+   */
+  private static async getPersonalizedQuickActions(
+    user: User
+  ): Promise<any[]> {
+    const actions: any[] = [];
+    const whereClause: any = {};
+
+    // Apply team filtering for non-SUPER_ADMIN users
+    if (user.role !== UserRole.SUPER_ADMIN && user.teamId) {
+      whereClause.teamId = user.teamId;
+    }
+
+    if (user.role === UserRole.USER) {
+      whereClause.assigneeId = user.id;
+    }
+
+    const now = new Date();
+
+    // Action 1: Complete overdue tasks
+    const overdueTasks = await Task.count({
+      where: {
+        ...whereClause,
+        status: { [Op.notIn]: ["completed", "cancelled"] },
+        dueDate: { [Op.lt]: now },
+      },
+    });
+
+    if (overdueTasks > 0) {
+      actions.push({
+        id: "action-complete-overdue-tasks",
+        title: "Compléter les tâches en retard",
+        description: `${overdueTasks} tâche(s) en retard nécessitent votre attention`,
+        icon: "mdi-clock-alert",
+        color: "error",
+        route: "/tasks?filter=overdue",
+        priority: 10,
+        category: "urgent",
+      });
+    }
+
+    // Action 2: Follow up on unpaid invoices
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(now.getDate() - 30);
+
+    const unpaidInvoices = await Invoice.count({
+      where: {
+        ...whereClause,
+        status: { [Op.notIn]: ["paid", "cancelled"] },
+        dueDate: { [Op.lt]: thirtyDaysAgo },
+      },
+    });
+
+    if (unpaidInvoices > 0) {
+      actions.push({
+        id: "action-follow-unpaid-invoices",
+        title: "Relancer les factures impayées",
+        description: `${unpaidInvoices} facture(s) impayée(s) depuis plus de 30 jours`,
+        icon: "mdi-currency-usd-off",
+        color: "warning",
+        route: "/invoices?filter=overdue",
+        priority: 9,
+        category: "finance",
+      });
+    }
+
+    // Action 3: Review pending quotes
+    const pendingQuotes = await Quote.count({
+      where: {
+        ...whereClause,
+        status: "sent",
+      },
+    });
+
+    if (pendingQuotes > 0) {
+      actions.push({
+        id: "action-review-pending-quotes",
+        title: "Suivre les devis envoyés",
+        description: `${pendingQuotes} devis en attente de réponse`,
+        icon: "mdi-file-clock",
+        color: "info",
+        route: "/quotes?filter=sent",
+        priority: 7,
+        category: "sales",
+      });
+    }
+
+    // Action 4: Create quote for recent institutions without tasks
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(now.getDate() - 7);
+
+    const recentInstitutions = await MedicalInstitution.count({
+      where: {
+        ...whereClause,
+        createdAt: { [Op.gte]: sevenDaysAgo },
+      },
+    });
+
+    if (recentInstitutions > 0) {
+      actions.push({
+        id: "action-create-quote-new-clients",
+        title: "Créer des devis pour nouveaux clients",
+        description: `${recentInstitutions} nouveau(x) client(s) cette semaine`,
+        icon: "mdi-file-plus",
+        color: "success",
+        route: "/quotes/new",
+        priority: 6,
+        category: "sales",
+      });
+    }
+
+    // Action 5: Plan upcoming tasks (for next 3 days)
+    const threeDaysFromNow = new Date();
+    threeDaysFromNow.setDate(now.getDate() + 3);
+
+    const upcomingTasks = await Task.count({
+      where: {
+        ...whereClause,
+        status: { [Op.notIn]: ["completed", "cancelled"] },
+        dueDate: {
+          [Op.between]: [now, threeDaysFromNow],
+        },
+      },
+    });
+
+    if (upcomingTasks > 0) {
+      actions.push({
+        id: "action-plan-upcoming-tasks",
+        title: "Planifier les tâches à venir",
+        description: `${upcomingTasks} tâche(s) prévues dans les 3 prochains jours`,
+        icon: "mdi-calendar-check",
+        color: "primary",
+        route: "/tasks?filter=upcoming",
+        priority: 5,
+        category: "planning",
+      });
+    }
+
+    // Action 6: Add new institution (always available)
+    actions.push({
+      id: "action-add-institution",
+      title: "Ajouter une institution",
+      description: "Créer une nouvelle institution dans le CRM",
+      icon: "mdi-domain-plus",
+      color: "blue",
+      route: "/institutions/new",
+      priority: 3,
+      category: "general",
+    });
+
+    // Action 7: View analytics (if SUPER_ADMIN or TEAM_ADMIN)
+    if (
+      user.role === UserRole.SUPER_ADMIN ||
+      user.role === UserRole.TEAM_ADMIN
+    ) {
+      actions.push({
+        id: "action-view-analytics",
+        title: "Consulter les analytics",
+        description: "Analyser les performances et KPIs",
+        icon: "mdi-chart-line",
+        color: "purple",
+        route: "/billing/analytics",
+        priority: 4,
+        category: "analytics",
+      });
+    }
+
+    // Sort actions by priority (descending)
+    actions.sort((a, b) => b.priority - a.priority);
+
+    // Return top 6 actions
+    return actions.slice(0, 6);
   }
 }

@@ -38,4 +38,10 @@ router.get("/activities", DashboardController.getActivities);
  */
 router.get("/alerts", DashboardController.getAlerts);
 
+/**
+ * GET /api/dashboard/quick-actions
+ * Get personalized quick actions based on user context
+ */
+router.get("/quick-actions", DashboardController.getQuickActions);
+
 export default router;
