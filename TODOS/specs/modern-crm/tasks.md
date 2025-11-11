@@ -779,7 +779,7 @@
   **FONCTIONNALITÉS:** CRUD complet, pagination, recherche, filtres, validation, permissions.
   **PRIORITÉ:** ✅ TERMINÉ - Système de gestion des contacts entièrement fonctionnel.
 
-- [ ] 23. Frontend Harmonization and Polish
+- [-] 23. Frontend Harmonization and Polish ✨ **EN COURS**
 
   - [ ] 23.1 Refine and complete Quotes/Invoices UI
 
@@ -800,18 +800,57 @@
 
     **Priorité**: Haute (UX issue affecting invoice management workflow) - ✅ **RÉSOLU**
 
-  - [ ] 23.2 Refine and complete Notifications UI
+  - [x] 23.2 Refine and complete Notifications UI ✅ **COMPLÉTÉ**
 
-    - Improve the notification center component.
-    - Ensure all user-facing notifications are clear, translatable, and actionable.
-    - Review real-time updates for notifications.
+    **Améliorations implémentées (2025-11-11)**:
+    - ✅ Conversion complète de PrimeVue → Vuetify pour cohérence
+    - ✅ NotificationsView: PrimeVue TabView → Vuetify v-tabs
+    - ✅ NotificationHistory: Tous composants PrimeVue → Vuetify (Dialog, Button, Dropdown, Paginator)
+    - ✅ NotificationSettings: InputSwitch, Slider → v-switch, v-slider Vuetify
+    - ✅ Meilleure accessibilité avec composants Vuetify (ARIA, keyboard nav)
+    - ✅ Design cohérent Material Design 3
+    - ✅ Mobile responsive avec système de grille Vuetify
 
-  - [ ] 23.3 Implement enhanced loading states
+    **Fichiers modifiés**:
+    - `packages/frontend/src/views/notifications/NotificationsView.vue`
+    - `packages/frontend/src/components/common/NotificationHistory.vue`
+    - `packages/frontend/src/components/common/NotificationSettings.vue`
 
-    - Replace spinners with `v-skeleton-loader` where appropriate for a better perceived performance.
+  - [x] 23.3 Implement enhanced loading states ✅ **COMPLÉTÉ**
 
-  - [ ] 23.4 Conduct full accessibility (a11y) audit
-    - Check color contrasts, keyboard navigation, and ARIA attributes across the application.
+    **Améliorations implémentées (2025-11-11)**:
+    - ✅ TasksView: v-progress-circular → v-skeleton-loader (list-item-avatar-three-line)
+    - ✅ QuotesView: Spinner → v-skeleton-loader (table-row)
+    - ✅ InstitutionDetailView: Spinner → v-skeleton-loader (article, table)
+    - ✅ Meilleure performance perçue avec feedback structurel
+    - ✅ Réduction du temps de chargement perçu
+    - ✅ Conforme aux guidelines Material Design 3
+
+    **Bénéfices**:
+    - Feedback visuel montrant la structure du contenu pendant le chargement
+    - Expérience utilisateur plus professionnelle
+    - Meilleur support aria-busy pour screen readers
+
+  - [x] 23.4 Conduct full accessibility (a11y) audit ✅ **COMPLÉTÉ**
+
+    **Audit réalisé (2025-11-11)** - Voir `TODOS/ACCESSIBILITY_NOTES.md`
+
+    **État actuel**: 8.5/10 (Très Bon)
+
+    **Points forts identifiés**:
+    - ✅ HTML sémantique avec hiérarchie de titres appropriée
+    - ✅ Labels de formulaires présents sur tous les champs
+    - ✅ Navigation clavier fonctionnelle (Vuetify)
+    - ✅ Contraste des couleurs conforme WCAG AA
+    - ✅ Gestion du focus dans les dialogs
+    - ✅ Attributs ARIA fournis par Vuetify
+
+    **Recommandations futures** (priorité moyenne):
+    - Ajouter aria-label explicites sur boutons icon-only
+    - Ajouter aria-live="polite" aux zones de contenu dynamique
+    - Ajouter captions aux tableaux complexes
+
+    **Conclusion**: Aucune action urgente requise. L'application est accessible.
 
 - [x] 24. **Intégration Digiforma (Read-Only)** ✅ **COMPLÉTÉ**
 
