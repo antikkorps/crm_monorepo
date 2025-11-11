@@ -11,6 +11,7 @@ import billingAnalyticsRoutes from "./routes/billing-analytics"
 import callRoutes from "./routes/calls"
 import catalogRoutes from "./routes/catalog"
 import contactRoutes from "./routes/contacts"
+import dashboardRoutes from "./routes/dashboard"
 import digiformaRoutes from "./routes/digiforma"
 import filterOptionsRoutes from "./routes/filterOptions"
 import institutionRoutes from "./routes/institutions"
@@ -157,6 +158,10 @@ export const createApp = (): Koa => {
   // Apply contact routes
   app.use(contactRoutes.routes())
   app.use(contactRoutes.allowedMethods())
+
+  // Apply dashboard routes
+  app.use(dashboardRoutes.routes())
+  app.use(dashboardRoutes.allowedMethods())
 
   // Apply institution routes
   app.use(institutionRoutes.routes())

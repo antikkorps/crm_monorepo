@@ -628,3 +628,6 @@ export const catalogApi = {
 
 // Export Digiforma API
 export { digiformaApi } from './digiforma'
+
+// Export Dashboard API
+export { dashboardApi } from './dashboard'
