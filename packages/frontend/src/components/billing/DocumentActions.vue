@@ -1,202 +1,229 @@
 <template>
-  <div class="document-actions">
-    <div class="actions-header">
-      <h4>Document Actions</h4>
-      <div class="template-selector" v-if="templates.length > 0">
-        <label for="template-select">Template:</label>
-        <Dropdown
-          id="template-select"
-          v-model="selectedTemplateId"
-          :options="templateOptions"
-          option-label="label"
-          option-value="value"
-          placeholder="Default Template"
-          show-clear
-          size="small"
-        />
-      </div>
-    </div>
-
-    <div class="action-buttons">
-      <Button
-        label="Preview PDF"
-        icon="pi pi-eye"
-        severity="info"
-        outlined
-        @click="previewPDF"
-        :loading="previewing"
-        :disabled="!canGenerateDocument"
+  <v-card elevation="2" class="document-actions-card">
+    <v-card-title class="d-flex align-center justify-space-between">
+      <span>Document Actions</span>
+      <v-select
+        v-if="templates.length > 0"
+        v-model="selectedTemplateId"
+        :items="templateOptions"
+        item-title="label"
+        item-value="value"
+        label="Template"
+        density="compact"
+        variant="outlined"
+        clearable
+        hide-details
+        style="max-width: 250px"
       />
+    </v-card-title>
 
-      <Button
-        label="Download PDF"
-        icon="pi pi-download"
-        severity="secondary"
-        @click="downloadPDF"
-        :loading="downloading"
-        :disabled="!canGenerateDocument"
-      />
+    <v-card-text class="pa-4">
+      <v-row dense>
+        <v-col cols="12" sm="6" md="3">
+          <v-btn
+            block
+            variant="outlined"
+            color="info"
+            prepend-icon="mdi-eye"
+            @click="previewPDF"
+            :loading="previewing"
+            :disabled="!canGenerateDocument"
+          >
+            Preview PDF
+          </v-btn>
+        </v-col>
 
-      <Button
-        label="Email Document"
-        icon="pi pi-send"
-        severity="success"
-        @click="emailDocument"
-        :loading="emailing"
-        :disabled="!canEmailDocument"
-      />
+        <v-col cols="12" sm="6" md="3">
+          <v-btn
+            block
+            variant="outlined"
+            prepend-icon="mdi-download"
+            @click="downloadPDF"
+            :loading="downloading"
+            :disabled="!canGenerateDocument"
+          >
+            Download PDF
+          </v-btn>
+        </v-col>
 
-      <Button
-        v-if="documentType === 'invoice' && canSendReminder"
-        label="Payment Reminder"
-        icon="pi pi-bell"
-        severity="warning"
-        outlined
-        @click="sendPaymentReminder"
-        :loading="sendingReminder"
-      />
-    </div>
+        <v-col cols="12" sm="6" md="3">
+          <v-btn
+            block
+            variant="outlined"
+            color="success"
+            prepend-icon="mdi-email"
+            @click="emailDocument"
+            :loading="emailing"
+            :disabled="!canEmailDocument"
+          >
+            Email Document
+          </v-btn>
+        </v-col>
+
+        <v-col v-if="documentType === 'invoice' && canSendReminder" cols="12" sm="6" md="3">
+          <v-btn
+            block
+            variant="outlined"
+            color="warning"
+            prepend-icon="mdi-bell-alert"
+            @click="sendPaymentReminder"
+            :loading="sendingReminder"
+          >
+            Payment Reminder
+          </v-btn>
+        </v-col>
+      </v-row>
+    </v-card-text>
 
     <!-- Email Dialog -->
-    <Dialog
-      v-model:visible="showEmailDialog"
-      header="Email Document"
-      :modal="true"
-      class="email-dialog"
-    >
-      <div class="email-content">
-        <div class="document-info">
-          <h5>Document Details</h5>
-          <div class="info-row">
-            <span
-              ><strong>Type:</strong>
-              {{ documentType.charAt(0).toUpperCase() + documentType.slice(1) }}</span
-            >
-          </div>
-          <div class="info-row">
-            <span><strong>Number:</strong> {{ documentNumber }}</span>
-          </div>
-          <div v-if="selectedTemplate" class="info-row">
-            <span><strong>Template:</strong> {{ selectedTemplate.name }}</span>
-          </div>
-        </div>
+    <v-dialog v-model="showEmailDialog" max-width="600">
+      <v-card>
+        <v-card-title class="d-flex align-center justify-space-between">
+          <span>Email Document</span>
+          <v-btn icon="mdi-close" variant="text" @click="closeEmailDialog" />
+        </v-card-title>
 
-        <div class="recipient-section">
-          <label for="email-recipients">Recipients *</label>
-          <Chips
-            id="email-recipients"
+        <v-divider />
+
+        <v-card-text class="pa-4">
+          <v-sheet color="grey-lighten-5" rounded class="pa-3 mb-4">
+            <div class="text-subtitle-2 mb-2">Document Details</div>
+            <div class="text-body-2">
+              <strong>Type:</strong> {{ documentType.charAt(0).toUpperCase() + documentType.slice(1) }}
+            </div>
+            <div class="text-body-2">
+              <strong>Number:</strong> {{ documentNumber }}
+            </div>
+            <div v-if="selectedTemplate" class="text-body-2">
+              <strong>Template:</strong> {{ selectedTemplate.name }}
+            </div>
+          </v-sheet>
+
+          <v-combobox
             v-model="emailRecipients"
+            label="Recipients *"
             placeholder="Enter email addresses"
-            :class="{ 'p-invalid': emailErrors.recipients }"
+            multiple
+            chips
+            closable-chips
+            :error-messages="emailErrors.recipients"
+            variant="outlined"
+            density="compact"
+            class="mb-3"
           />
-          <small v-if="emailErrors.recipients" class="p-error">{{
-            emailErrors.recipients
-          }}</small>
-          <small v-if="suggestedEmail" class="suggested-email">
-            Suggested:
-            <Button
-              :label="suggestedEmail"
-              link
-              size="small"
+
+          <v-alert v-if="suggestedEmail" type="info" density="compact" class="mb-3">
+            <span class="text-caption">Suggested: </span>
+            <v-btn
+              :text="suggestedEmail"
+              variant="text"
+              size="x-small"
               @click="addSuggestedEmail"
             />
-          </small>
-        </div>
+          </v-alert>
 
-        <div class="message-section">
-          <label for="email-message">Custom Message (Optional)</label>
-          <Textarea
-            id="email-message"
+          <v-textarea
             v-model="emailMessage"
+            label="Custom Message (Optional)"
             :placeholder="defaultEmailMessage"
             rows="4"
+            variant="outlined"
+            density="compact"
+            class="mb-3"
           />
-        </div>
 
-        <div class="email-options">
-          <div class="option-row">
-            <Checkbox id="attach-pdf" v-model="attachPDF" binary />
-            <label for="attach-pdf">Attach PDF document</label>
-          </div>
-          <div class="option-row">
-            <Checkbox id="send-copy" v-model="sendCopyToSelf" binary />
-            <label for="send-copy">Send copy to myself</label>
-          </div>
-        </div>
-      </div>
+          <v-checkbox
+            v-model="attachPDF"
+            label="Attach PDF document"
+            density="compact"
+            hide-details
+          />
+        </v-card-text>
 
-      <template #footer>
-        <Button label="Cancel" severity="secondary" outlined @click="closeEmailDialog" />
-        <Button
-          label="Send Email"
-          icon="pi pi-send"
-          @click="confirmEmailDocument"
-          :loading="emailing"
-          :disabled="!isEmailFormValid"
-        />
-      </template>
-    </Dialog>
+        <v-divider />
+
+        <v-card-actions class="pa-4">
+          <v-spacer />
+          <v-btn variant="text" @click="closeEmailDialog">Cancel</v-btn>
+          <v-btn
+            variant="elevated"
+            color="success"
+            prepend-icon="mdi-send"
+            @click="confirmEmailDocument"
+            :loading="emailing"
+          >
+            Send Email
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
 
     <!-- Payment Reminder Dialog -->
-    <Dialog
-      v-model:visible="showReminderDialog"
-      header="Send Payment Reminder"
-      :modal="true"
-      class="reminder-dialog"
-    >
-      <div class="reminder-content">
-        <div class="reminder-info">
-          <div class="info-row">
-            <i class="pi pi-exclamation-triangle warning-icon"></i>
-            <div>
-              <strong>Overdue Invoice</strong>
-              <p>This invoice is {{ daysOverdue }} days overdue.</p>
-            </div>
-          </div>
-          <div class="amount-info">
-            <span
-              ><strong>Outstanding Amount:</strong>
-              {{ formatCurrency(outstandingAmount) }}</span
-            >
-          </div>
-        </div>
+    <v-dialog v-model="showReminderDialog" max-width="600">
+      <v-card>
+        <v-card-title class="d-flex align-center justify-space-between">
+          <span>Send Payment Reminder</span>
+          <v-btn icon="mdi-close" variant="text" @click="showReminderDialog = false" />
+        </v-card-title>
 
-        <div class="message-section">
-          <label for="reminder-message">Custom Message (Optional)</label>
-          <Textarea
-            id="reminder-message"
+        <v-divider />
+
+        <v-card-text class="pa-4">
+          <v-alert type="warning" variant="tonal" class="mb-4">
+            <div class="d-flex align-center">
+              <v-icon start>mdi-alert</v-icon>
+              <div>
+                <div class="font-weight-bold">Overdue Invoice</div>
+                <div class="text-body-2">This invoice is {{ daysOverdue }} days overdue.</div>
+              </div>
+            </div>
+            <div class="mt-2">
+              <strong>Outstanding Amount:</strong> {{ formatCurrency(outstandingAmount) }}
+            </div>
+          </v-alert>
+
+          <v-textarea
             v-model="reminderMessage"
+            label="Custom Message (Optional)"
             placeholder="Add a personal message for the payment reminder..."
             rows="4"
+            variant="outlined"
+            density="compact"
           />
-        </div>
-      </div>
+        </v-card-text>
 
-      <template #footer>
-        <Button
-          label="Cancel"
-          severity="secondary"
-          outlined
-          @click="showReminderDialog = false"
-        />
-        <Button
-          label="Send Reminder"
-          icon="pi pi-send"
-          severity="warning"
-          @click="confirmSendReminder"
-          :loading="sendingReminder"
-        />
-      </template>
-    </Dialog>
+        <v-divider />
 
-    <!-- Toast for notifications -->
-    <Toast />
-  </div>
+        <v-card-actions class="pa-4">
+          <v-spacer />
+          <v-btn variant="text" @click="showReminderDialog = false">Cancel</v-btn>
+          <v-btn
+            variant="elevated"
+            color="warning"
+            prepend-icon="mdi-send"
+            @click="confirmSendReminder"
+            :loading="sendingReminder"
+          >
+            Send Reminder
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
+    <!-- Snackbar for notifications -->
+    <v-snackbar
+      v-model="snackbar.visible"
+      :color="snackbar.color"
+      :timeout="3000"
+      location="top"
+    >
+      {{ snackbar.message }}
+    </v-snackbar>
+  </v-card>
 </template>
 
 <script setup lang="ts">
 import type { DocumentTemplate, Invoice, Quote } from "@medical-crm/shared"
-import { useToast } from "primevue/usetoast"
 import { computed, onMounted, ref, watch } from "vue"
 import { documentsApi, templatesApi } from "../../services/api"
 
@@ -237,64 +264,45 @@ const attachPDF = ref(true)
 const sendCopyToSelf = ref(false)
 const emailErrors = ref<Record<string, string>>({})
 
-// Payment reminder dialog state
+// Reminder dialog state
 const showReminderDialog = ref(false)
 const reminderMessage = ref("")
 
-// Toast for notifications
-const toast = useToast()
+// Snackbar state
+const snackbar = ref({
+  visible: false,
+  message: "",
+  color: "info"
+})
 
-// Computed properties
-const templateOptions = computed(() => [
-  { label: "Default Template", value: "" },
-  ...templates.value.map((t) => ({ label: t.name, value: t.id })),
-])
-
+// Computed
 const selectedTemplate = computed(() => {
   return templates.value.find((t) => t.id === selectedTemplateId.value)
 })
 
+const templateOptions = computed(() => {
+  return templates.value.map((t) => ({
+    label: t.name,
+    value: t.id,
+  }))
+})
+
 const canSendReminder = computed(() => {
-  return (
-    props.documentType === "invoice" &&
-    props.document &&
-    "status" in props.document &&
-    (props.document.status === "sent" || props.document.status === "overdue") &&
-    "remainingAmount" in props.document &&
-    props.document.remainingAmount > 0
-  )
+  if (props.documentType !== "invoice" || !props.document) return false
+  const invoice = props.document as Invoice
+  return invoice.status === "sent" && invoice.remainingAmount > 0
 })
 
 const daysOverdue = computed(() => {
-  if (
-    props.documentType !== "invoice" ||
-    !props.document ||
-    !("dueDate" in props.document)
-  ) {
-    return 0
-  }
-  const dueDate = new Date(props.document.dueDate)
-  const today = new Date()
-  const diffTime = today.getTime() - dueDate.getTime()
-  return Math.max(0, Math.ceil(diffTime / (1000 * 60 * 60 * 24)))
+  if (!props.document || props.documentType !== "invoice") return 0
+  const invoice = props.document as Invoice
+  return invoice.daysOverdue || 0
 })
 
 const outstandingAmount = computed(() => {
-  if (
-    props.documentType !== "invoice" ||
-    !props.document ||
-    !("remainingAmount" in props.document)
-  ) {
-    return 0
-  }
-  return props.document.remainingAmount
-})
-
-const isEmailFormValid = computed(() => {
-  return (
-    emailRecipients.value.length > 0 &&
-    emailRecipients.value.every((email) => isValidEmail(email))
-  )
+  if (!props.document || props.documentType !== "invoice") return 0
+  const invoice = props.document as Invoice
+  return invoice.remainingAmount || 0
 })
 
 const defaultEmailMessage = computed(() => {
@@ -306,6 +314,10 @@ const defaultEmailMessage = computed(() => {
 })
 
 // Methods
+const showSnackbar = (message: string, color: string = "info") => {
+  snackbar.value = { visible: true, message, color }
+}
+
 const loadTemplates = async () => {
   try {
     const response = await templatesApi.getAll({
@@ -336,12 +348,7 @@ const previewPDF = async () => {
     emit("documentGenerated", "preview")
   } catch (error) {
     console.error("Failed to preview document:", error)
-    toast.add({
-      severity: "error",
-      summary: "Error",
-      detail: "Failed to preview document",
-      life: 3000,
-    })
+    showSnackbar("Failed to preview document", "error")
   } finally {
     previewing.value = false
   }
@@ -365,22 +372,11 @@ const downloadPDF = async () => {
     const filename = `${props.documentType}-${props.documentNumber}.pdf`
     documentsApi.downloadBlob(blob, filename)
 
-    toast.add({
-      severity: "success",
-      summary: "Success",
-      detail: "Document downloaded successfully",
-      life: 3000,
-    })
-
+    showSnackbar("Document downloaded successfully", "success")
     emit("documentGenerated", "download")
   } catch (error) {
     console.error("Failed to download document:", error)
-    toast.add({
-      severity: "error",
-      summary: "Error",
-      detail: "Failed to download document",
-      life: 3000,
-    })
+    showSnackbar("Failed to download document", "error")
   } finally {
     downloading.value = false
   }
@@ -419,30 +415,15 @@ const confirmEmailDocument = async () => {
     }
 
     if (result.data?.emailSent) {
-      toast.add({
-        severity: "success",
-        summary: "Success",
-        detail: "Document emailed successfully",
-        life: 3000,
-      })
+      showSnackbar("Document emailed successfully", "success")
       closeEmailDialog()
       emit("documentEmailed", "email")
     } else {
-      toast.add({
-        severity: "error",
-        summary: "Email Failed",
-        detail: result.data?.emailError || "Failed to send email",
-        life: 5000,
-      })
+      showSnackbar(result.data?.emailError || "Failed to send email", "error")
     }
   } catch (error) {
     console.error("Failed to email document:", error)
-    toast.add({
-      severity: "error",
-      summary: "Error",
-      detail: "Failed to email document",
-      life: 3000,
-    })
+    showSnackbar("Failed to email document", "error")
   } finally {
     emailing.value = false
   }
@@ -459,23 +440,12 @@ const confirmSendReminder = async () => {
 
     await documentsApi.sendPaymentReminder(props.documentId, reminderMessage.value)
 
-    toast.add({
-      severity: "success",
-      summary: "Success",
-      detail: "Payment reminder sent successfully",
-      life: 3000,
-    })
-
+    showSnackbar("Payment reminder sent successfully", "success")
     showReminderDialog.value = false
     reminderMessage.value = ""
   } catch (error) {
     console.error("Failed to send payment reminder:", error)
-    toast.add({
-      severity: "error",
-      summary: "Error",
-      detail: "Failed to send payment reminder",
-      life: 3000,
-    })
+    showSnackbar("Failed to send payment reminder", "error")
   } finally {
     sendingReminder.value = false
   }
@@ -515,9 +485,9 @@ const closeEmailDialog = () => {
 }
 
 const formatCurrency = (amount: number) => {
-  return new Intl.NumberFormat("en-US", {
+  return new Intl.NumberFormat("fr-FR", {
     style: "currency",
-    currency: "USD",
+    currency: "EUR",
   }).format(amount || 0)
 }
 
@@ -531,163 +501,7 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.document-actions {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-.actions-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 1rem;
-}
-
-.actions-header h4 {
-  margin: 0;
-  color: var(--text-color);
-  font-size: 1rem;
-  font-weight: 600;
-}
-
-.template-selector {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-size: 0.875rem;
-}
-
-.template-selector label {
-  color: var(--text-color-secondary);
-  white-space: nowrap;
-}
-
-.action-buttons {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-  gap: 0.75rem;
-}
-
-.email-dialog,
-.reminder-dialog {
-  max-width: 500px;
-}
-
-.email-content,
-.reminder-content {
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-  padding: 1rem 0;
-}
-
-.document-info h5 {
-  margin: 0 0 0.75rem 0;
-  color: var(--text-color);
-  font-size: 0.875rem;
-}
-
-.info-row {
-  margin-bottom: 0.5rem;
-  font-size: 0.875rem;
-  color: var(--text-color-secondary);
-}
-
-.recipient-section,
-.message-section {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.recipient-section label,
-.message-section label {
-  font-weight: 500;
-  color: var(--text-color);
-  font-size: 0.875rem;
-}
-
-.suggested-email {
-  font-size: 0.75rem;
-  color: var(--text-color-secondary);
-  margin-top: 0.25rem;
-}
-
-.email-options {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-  padding: 1rem;
-  background: var(--surface-50);
-  border-radius: 6px;
-}
-
-.option-row {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.option-row label {
-  font-size: 0.875rem;
-  color: var(--text-color);
-  cursor: pointer;
-}
-
-.reminder-info {
-  padding: 1rem;
-  background: var(--orange-50);
-  border: 1px solid var(--orange-200);
-  border-radius: 6px;
-}
-
-.reminder-info .info-row {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.75rem;
-  margin-bottom: 1rem;
-}
-
-.warning-icon {
-  color: var(--orange-500);
-  font-size: 1.25rem;
-  margin-top: 0.125rem;
-}
-
-.reminder-info strong {
-  color: var(--orange-700);
-}
-
-.reminder-info p {
-  margin: 0.25rem 0 0 0;
-  color: var(--orange-600);
-  font-size: 0.875rem;
-}
-
-.amount-info {
-  font-size: 0.875rem;
-  color: var(--orange-700);
-}
-
-.p-error {
-  color: var(--red-500);
-  font-size: 0.75rem;
-}
-
-/* Responsive design */
-@media (max-width: 768px) {
-  .actions-header {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .action-buttons {
-    grid-template-columns: 1fr;
-  }
-
-  .template-selector {
-    justify-content: space-between;
-  }
+.document-actions-card {
+  width: 100%;
 }
 </style>
