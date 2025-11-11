@@ -1,4 +1,4 @@
-import { Context } from "koa";
+import { Context } from "../types/koa";
 import { User, UserRole } from "../models/User";
 import { MedicalInstitution } from "../models/MedicalInstitution";
 import { Task } from "../models/Task";
@@ -315,7 +315,7 @@ export class DashboardController {
       attributes: [
         [sequelize.fn("COUNT", sequelize.col("id")), "count"],
         [sequelize.fn("SUM", sequelize.col("total")), "totalRevenue"],
-        [sequelize.fn("SUM", sequelize.col("paidAmount")), "paidRevenue"],
+        [sequelize.fn("SUM", sequelize.col("totalPaid")), "paidRevenue"],
         [sequelize.fn("AVG", sequelize.col("total")), "avgValue"],
       ],
       raw: true,
@@ -597,7 +597,7 @@ export class DashboardController {
         include: [
           {
             model: User,
-            as: "creator",
+            as: "assignedUser",
             attributes: ["id", "firstName", "lastName"],
           },
         ],
@@ -613,10 +613,10 @@ export class DashboardController {
           entityId: inst.id,
           entityType: "institution",
           timestamp: inst.createdAt,
-          user: inst.creator
+          user: inst.assignedUser
             ? {
-                id: inst.creator.id,
-                name: `${inst.creator.firstName} ${inst.creator.lastName}`,
+                id: inst.assignedUser.id,
+                name: `${inst.assignedUser.firstName} ${inst.assignedUser.lastName}`,
               }
             : null,
           icon: "mdi-domain",
@@ -697,7 +697,7 @@ export class DashboardController {
           },
           {
             model: User,
-            as: "createdBy",
+            as: "assignedUser",
             attributes: ["id", "firstName", "lastName"],
           },
         ],
@@ -713,10 +713,10 @@ export class DashboardController {
           entityId: quote.id,
           entityType: "quote",
           timestamp: quote.createdAt,
-          user: quote.createdBy
+          user: quote.assignedUser
             ? {
-                id: quote.createdBy.id,
-                name: `${quote.createdBy.firstName} ${quote.createdBy.lastName}`,
+                id: quote.assignedUser.id,
+                name: `${quote.assignedUser.firstName} ${quote.assignedUser.lastName}`,
               }
             : null,
           icon: "mdi-file-document",
@@ -746,7 +746,7 @@ export class DashboardController {
           },
           {
             model: User,
-            as: "createdBy",
+            as: "assignedUser",
             attributes: ["id", "firstName", "lastName"],
           },
         ],
@@ -762,10 +762,10 @@ export class DashboardController {
           entityId: invoice.id,
           entityType: "invoice",
           timestamp: invoice.createdAt,
-          user: invoice.createdBy
+          user: invoice.assignedUser
             ? {
-                id: invoice.createdBy.id,
-                name: `${invoice.createdBy.firstName} ${invoice.createdBy.lastName}`,
+                id: invoice.assignedUser.id,
+                name: `${invoice.assignedUser.firstName} ${invoice.assignedUser.lastName}`,
               }
             : null,
           icon: "mdi-receipt",

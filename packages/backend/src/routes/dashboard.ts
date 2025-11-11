@@ -1,4 +1,4 @@
-import Router from "koa-router";
+import Router from "@koa/router";
 import { DashboardController } from "../controllers/DashboardController";
 import { authenticate } from "../middleware/auth";
 
