@@ -150,7 +150,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, watch } from 'vue'
+import { ref, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import { dashboardApi, type DashboardMetrics } from '@/services/api/dashboard'
 import Chart from 'chart.js/auto'
 
@@ -178,9 +178,8 @@ async function loadMetrics() {
   try {
     metrics.value = await dashboardApi.getMetrics({ period: period.value })
     // Wait for next tick to ensure canvases are rendered
-    setTimeout(() => {
-      updateCharts()
-    }, 100)
+    await nextTick()
+    updateCharts()
   } catch (error) {
     console.error('Error loading KPI metrics:', error)
   } finally {
