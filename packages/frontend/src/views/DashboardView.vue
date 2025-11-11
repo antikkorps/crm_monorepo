@@ -180,6 +180,23 @@
         </v-col>
       </v-row>
 
+      <!-- KPI Charts Widget -->
+      <v-row v-if="metrics" class="mb-6">
+        <v-col cols="12">
+          <KPIChartsWidget />
+        </v-col>
+      </v-row>
+
+      <!-- Smart Alerts & Timeline -->
+      <v-row class="mb-6">
+        <v-col cols="12" md="5">
+          <SmartAlertsWidget />
+        </v-col>
+        <v-col cols="12" md="7">
+          <TimelineWidget />
+        </v-col>
+      </v-row>
+
       <!-- Quick Actions -->
       <v-row class="mb-6">
         <v-col cols="12">
@@ -409,6 +426,9 @@
 
 <script setup lang="ts">
 import AppLayout from "@/components/layout/AppLayout.vue"
+import TimelineWidget from "@/components/dashboard/TimelineWidget.vue"
+import SmartAlertsWidget from "@/components/dashboard/SmartAlertsWidget.vue"
+import KPIChartsWidget from "@/components/dashboard/KPIChartsWidget.vue"
 import { useAuthStore } from "@/stores/auth"
 import { useInstitutionsStore } from "@/stores/institutions"
 import { useTasksStore } from "@/stores/tasks"

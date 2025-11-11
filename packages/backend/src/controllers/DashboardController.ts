@@ -15,6 +15,63 @@ import { sequelize } from "../config/database";
  */
 export class DashboardController {
   /**
+   * Get recent activities timeline
+   * GET /api/dashboard/activities
+   */
+  static async getActivities(ctx: Context): Promise<void> {
+    const user = ctx.state.user as User;
+
+    try {
+      const { limit = 20, offset = 0, type } = ctx.query;
+
+      const activities = await DashboardController.getRecentActivities(
+        user,
+        parseInt(limit as string),
+        parseInt(offset as string),
+        type as string | undefined
+      );
+
+      ctx.body = {
+        success: true,
+        data: activities,
+      };
+    } catch (error) {
+      console.error("Error fetching dashboard activities:", error);
+      ctx.status = 500;
+      ctx.body = {
+        success: false,
+        message: "Failed to fetch dashboard activities",
+        error: error instanceof Error ? error.message : "Unknown error",
+      };
+    }
+  }
+
+  /**
+   * Get smart alerts for the user
+   * GET /api/dashboard/alerts
+   */
+  static async getAlerts(ctx: Context): Promise<void> {
+    const user = ctx.state.user as User;
+
+    try {
+      const alerts = await DashboardController.getSmartAlerts(user);
+
+      ctx.body = {
+        success: true,
+        data: alerts,
+      };
+    } catch (error) {
+      console.error("Error fetching dashboard alerts:", error);
+      ctx.status = 500;
+      ctx.body = {
+        success: false,
+        message: "Failed to fetch dashboard alerts",
+        error: error instanceof Error ? error.message : "Unknown error",
+      };
+    }
+  }
+
+  /**
    * Get dashboard metrics
    * GET /api/dashboard/metrics
    */
@@ -474,5 +531,361 @@ export class DashboardController {
       startDate,
       endDate: now,
     };
+  }
+
+  /**
+   * Get recent activities timeline
+   */
+  private static async getRecentActivities(
+    user: User,
+    limit: number,
+    offset: number,
+    type?: string
+  ): Promise<any[]> {
+    const whereClause: any = {};
+
+    // Apply team filtering for non-SUPER_ADMIN users
+    if (user.role !== UserRole.SUPER_ADMIN && user.teamId) {
+      whereClause.teamId = user.teamId;
+    }
+
+    const activities: any[] = [];
+
+    // Fetch recent institutions (if type filter allows)
+    if (!type || type === "institution") {
+      const institutions = await MedicalInstitution.findAll({
+        where: whereClause,
+        order: [["createdAt", "DESC"]],
+        limit: Math.ceil(limit / 4),
+        attributes: ["id", "name", "createdAt"],
+        include: [
+          {
+            model: User,
+            as: "creator",
+            attributes: ["id", "firstName", "lastName"],
+          },
+        ],
+      });
+
+      activities.push(
+        ...institutions.map((inst: any) => ({
+          id: `institution-${inst.id}`,
+          type: "institution",
+          action: "created",
+          title: `Nouvelle institution : ${inst.name}`,
+          description: `Institution ${inst.name} ajoutée`,
+          entityId: inst.id,
+          entityType: "institution",
+          timestamp: inst.createdAt,
+          user: inst.creator
+            ? {
+                id: inst.creator.id,
+                name: `${inst.creator.firstName} ${inst.creator.lastName}`,
+              }
+            : null,
+          icon: "mdi-domain",
+          color: "blue",
+        }))
+      );
+    }
+
+    // Fetch recent tasks (if type filter allows)
+    if (!type || type === "task") {
+      const taskWhereClause = { ...whereClause };
+      if (user.role === UserRole.USER) {
+        taskWhereClause.assigneeId = user.id;
+      }
+
+      const tasks = await Task.findAll({
+        where: taskWhereClause,
+        order: [["createdAt", "DESC"]],
+        limit: Math.ceil(limit / 4),
+        attributes: ["id", "title", "status", "createdAt", "updatedAt"],
+        include: [
+          {
+            model: User,
+            as: "assignee",
+            attributes: ["id", "firstName", "lastName"],
+          },
+          {
+            model: MedicalInstitution,
+            as: "institution",
+            attributes: ["id", "name"],
+          },
+        ],
+      });
+
+      activities.push(
+        ...tasks.map((task: any) => ({
+          id: `task-${task.id}`,
+          type: "task",
+          action: task.status === "completed" ? "completed" : "created",
+          title:
+            task.status === "completed"
+              ? `Tâche complétée : ${task.title}`
+              : `Nouvelle tâche : ${task.title}`,
+          description: task.institution
+            ? `${task.institution.name}`
+            : "Aucune institution",
+          entityId: task.id,
+          entityType: "task",
+          timestamp:
+            task.status === "completed" ? task.updatedAt : task.createdAt,
+          user: task.assignee
+            ? {
+                id: task.assignee.id,
+                name: `${task.assignee.firstName} ${task.assignee.lastName}`,
+              }
+            : null,
+          icon:
+            task.status === "completed"
+              ? "mdi-check-circle"
+              : "mdi-clipboard-text",
+          color: task.status === "completed" ? "success" : "info",
+        }))
+      );
+    }
+
+    // Fetch recent quotes (if type filter allows)
+    if (!type || type === "quote") {
+      const quotes = await Quote.findAll({
+        where: whereClause,
+        order: [["createdAt", "DESC"]],
+        limit: Math.ceil(limit / 4),
+        attributes: ["id", "quoteNumber", "total", "status", "createdAt"],
+        include: [
+          {
+            model: MedicalInstitution,
+            as: "institution",
+            attributes: ["id", "name"],
+          },
+          {
+            model: User,
+            as: "createdBy",
+            attributes: ["id", "firstName", "lastName"],
+          },
+        ],
+      });
+
+      activities.push(
+        ...quotes.map((quote: any) => ({
+          id: `quote-${quote.id}`,
+          type: "quote",
+          action: "created",
+          title: `Nouveau devis : ${quote.quoteNumber}`,
+          description: `${quote.total}€ - ${quote.institution?.name || "N/A"}`,
+          entityId: quote.id,
+          entityType: "quote",
+          timestamp: quote.createdAt,
+          user: quote.createdBy
+            ? {
+                id: quote.createdBy.id,
+                name: `${quote.createdBy.firstName} ${quote.createdBy.lastName}`,
+              }
+            : null,
+          icon: "mdi-file-document",
+          color: "orange",
+        }))
+      );
+    }
+
+    // Fetch recent invoices (if type filter allows)
+    if (!type || type === "invoice") {
+      const invoices = await Invoice.findAll({
+        where: whereClause,
+        order: [["createdAt", "DESC"]],
+        limit: Math.ceil(limit / 4),
+        attributes: [
+          "id",
+          "invoiceNumber",
+          "total",
+          "status",
+          "createdAt",
+        ],
+        include: [
+          {
+            model: MedicalInstitution,
+            as: "institution",
+            attributes: ["id", "name"],
+          },
+          {
+            model: User,
+            as: "createdBy",
+            attributes: ["id", "firstName", "lastName"],
+          },
+        ],
+      });
+
+      activities.push(
+        ...invoices.map((invoice: any) => ({
+          id: `invoice-${invoice.id}`,
+          type: "invoice",
+          action: "created",
+          title: `Nouvelle facture : ${invoice.invoiceNumber}`,
+          description: `${invoice.total}€ - ${invoice.institution?.name || "N/A"}`,
+          entityId: invoice.id,
+          entityType: "invoice",
+          timestamp: invoice.createdAt,
+          user: invoice.createdBy
+            ? {
+                id: invoice.createdBy.id,
+                name: `${invoice.createdBy.firstName} ${invoice.createdBy.lastName}`,
+              }
+            : null,
+          icon: "mdi-receipt",
+          color: "green",
+        }))
+      );
+    }
+
+    // Sort all activities by timestamp descending
+    activities.sort(
+      (a, b) =>
+        new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+    );
+
+    // Apply pagination
+    return activities.slice(offset, offset + limit);
+  }
+
+  /**
+   * Get smart alerts for the user
+   */
+  private static async getSmartAlerts(user: User): Promise<any[]> {
+    const alerts: any[] = [];
+    const whereClause: any = {};
+
+    // Apply team filtering for non-SUPER_ADMIN users
+    if (user.role !== UserRole.SUPER_ADMIN && user.teamId) {
+      whereClause.teamId = user.teamId;
+    }
+
+    if (user.role === UserRole.USER) {
+      whereClause.assigneeId = user.id;
+    }
+
+    const now = new Date();
+
+    // Alert: Overdue tasks
+    const overdueTasks = await Task.count({
+      where: {
+        ...whereClause,
+        status: { [Op.notIn]: ["completed", "cancelled"] },
+        dueDate: { [Op.lt]: now },
+      },
+    });
+
+    if (overdueTasks > 0) {
+      alerts.push({
+        id: "alert-overdue-tasks",
+        type: "critical",
+        title: "Tâches en retard",
+        message: `Vous avez ${overdueTasks} tâche(s) en retard`,
+        count: overdueTasks,
+        icon: "mdi-alert-circle",
+        color: "error",
+        action: {
+          label: "Voir les tâches",
+          route: "/tasks?filter=overdue",
+        },
+        priority: 10,
+      });
+    }
+
+    // Alert: Unpaid invoices (overdue 30+ days)
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(now.getDate() - 30);
+
+    const unpaidInvoices = await Invoice.count({
+      where: {
+        ...whereClause,
+        status: { [Op.notIn]: ["paid", "cancelled"] },
+        dueDate: { [Op.lt]: thirtyDaysAgo },
+      },
+    });
+
+    if (unpaidInvoices > 0) {
+      alerts.push({
+        id: "alert-unpaid-invoices",
+        type: "critical",
+        title: "Factures impayées",
+        message: `${unpaidInvoices} facture(s) impayée(s) depuis plus de 30 jours`,
+        count: unpaidInvoices,
+        icon: "mdi-currency-usd-off",
+        color: "error",
+        action: {
+          label: "Voir les factures",
+          route: "/invoices?filter=overdue",
+        },
+        priority: 9,
+      });
+    }
+
+    // Alert: Quotes expiring soon (within 7 days)
+    const sevenDaysFromNow = new Date();
+    sevenDaysFromNow.setDate(now.getDate() + 7);
+
+    const expiringQuotes = await Quote.count({
+      where: {
+        ...whereClause,
+        status: "sent",
+        validUntil: {
+          [Op.between]: [now, sevenDaysFromNow],
+        },
+      },
+    });
+
+    if (expiringQuotes > 0) {
+      alerts.push({
+        id: "alert-expiring-quotes",
+        type: "warning",
+        title: "Devis à échéance proche",
+        message: `${expiringQuotes} devis expire(nt) dans les 7 prochains jours`,
+        count: expiringQuotes,
+        icon: "mdi-clock-alert",
+        color: "warning",
+        action: {
+          label: "Voir les devis",
+          route: "/quotes?filter=expiring",
+        },
+        priority: 7,
+      });
+    }
+
+    // Alert: Tasks due soon (within 3 days)
+    const threeDaysFromNow = new Date();
+    threeDaysFromNow.setDate(now.getDate() + 3);
+
+    const tasksDueSoon = await Task.count({
+      where: {
+        ...whereClause,
+        status: { [Op.notIn]: ["completed", "cancelled"] },
+        dueDate: {
+          [Op.between]: [now, threeDaysFromNow],
+        },
+      },
+    });
+
+    if (tasksDueSoon > 0) {
+      alerts.push({
+        id: "alert-tasks-due-soon",
+        type: "info",
+        title: "Tâches à venir",
+        message: `${tasksDueSoon} tâche(s) à échéance dans les 3 prochains jours`,
+        count: tasksDueSoon,
+        icon: "mdi-calendar-clock",
+        color: "info",
+        action: {
+          label: "Voir les tâches",
+          route: "/tasks?filter=due-soon",
+        },
+        priority: 5,
+      });
+    }
+
+    // Sort alerts by priority (descending)
+    alerts.sort((a, b) => b.priority - a.priority);
+
+    return alerts;
   }
 }

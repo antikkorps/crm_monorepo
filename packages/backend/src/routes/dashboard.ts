@@ -22,4 +22,20 @@ router.use(authenticate);
  */
 router.get("/metrics", DashboardController.getMetrics);
 
+/**
+ * GET /api/dashboard/activities
+ * Get recent activities timeline
+ * Query params:
+ *  - limit: number of activities (default: 20)
+ *  - offset: pagination offset (default: 0)
+ *  - type: filter by activity type (optional)
+ */
+router.get("/activities", DashboardController.getActivities);
+
+/**
+ * GET /api/dashboard/alerts
+ * Get smart alerts for the current user
+ */
+router.get("/alerts", DashboardController.getAlerts);
+
 export default router;
