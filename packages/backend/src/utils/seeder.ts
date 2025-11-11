@@ -21,7 +21,7 @@ export class DatabaseSeeder {
       await sequelize.query(
         `
         INSERT INTO users (
-          id, email, password_hash, first_name, last_name, role, 
+          id, email, password_hash, first_name, last_name, role,
           avatar_seed, is_active, created_at, updated_at
         ) VALUES (
           :id, :email, :password_hash, :first_name, :last_name, :role,
@@ -42,6 +42,34 @@ export class DatabaseSeeder {
         }
       )
 
+      // Create team admin user
+      const teamAdminId = uuidv4()
+      const teamAdminPasswordHash = await bcrypt.hash("teamadmin123", 10)
+
+      await sequelize.query(
+        `
+        INSERT INTO users (
+          id, email, password_hash, first_name, last_name, role,
+          avatar_seed, is_active, created_at, updated_at
+        ) VALUES (
+          :id, :email, :password_hash, :first_name, :last_name, :role,
+          :avatar_seed, :is_active, NOW(), NOW()
+        )
+      `,
+        {
+          replacements: {
+            id: teamAdminId,
+            email: "teamadmin@medical-crm.com",
+            password_hash: teamAdminPasswordHash,
+            first_name: "Team",
+            last_name: "Admin",
+            role: "team_admin",
+            avatar_seed: "team-admin",
+            is_active: true,
+          },
+        }
+      )
+
       // Create demo sales rep
       const salesRepId = uuidv4()
       const salesRepPasswordHash = await bcrypt.hash("demo123", 10)
@@ -49,7 +77,7 @@ export class DatabaseSeeder {
       await sequelize.query(
         `
         INSERT INTO users (
-          id, email, password_hash, first_name, last_name, role, 
+          id, email, password_hash, first_name, last_name, role,
           avatar_seed, is_active, created_at, updated_at
         ) VALUES (
           :id, :email, :password_hash, :first_name, :last_name, :role,
@@ -63,7 +91,7 @@ export class DatabaseSeeder {
             password_hash: salesRepPasswordHash,
             first_name: "Demo",
             last_name: "Sales Rep",
-            role: "sales_rep",
+            role: "user",
             avatar_seed: "demo-sales",
             is_active: true,
           },
@@ -310,6 +338,7 @@ export class DatabaseSeeder {
           action_url_template: "/tasks/{id}",
           action_text_template: "View Task",
           auto_create_task: false,
+          task_title_template: null,
           task_priority: "medium",
           created_by: adminId,
         },
@@ -324,6 +353,7 @@ export class DatabaseSeeder {
           action_url_template: "/tasks/{id}",
           action_text_template: "View Task",
           auto_create_task: false,
+          task_title_template: null,
           task_priority: "high",
           created_by: adminId,
         },
@@ -354,6 +384,7 @@ export class DatabaseSeeder {
           action_url_template: "/quotes/{id}",
           action_text_template: "View Quote",
           auto_create_task: false,
+          task_title_template: null,
           task_priority: "low",
           created_by: adminId,
         },
@@ -384,6 +415,7 @@ export class DatabaseSeeder {
           action_url_template: "/invoices/{id}",
           action_text_template: "View Invoice",
           auto_create_task: false,
+          task_title_template: null,
           task_priority: "medium",
           created_by: adminId,
         },
@@ -391,29 +423,37 @@ export class DatabaseSeeder {
 
       // Insert default reminder rules
       for (const rule of defaultRules) {
+        const ruleWithId = {
+          id: uuidv4(),
+          ...rule,
+        }
+
         await sequelize.query(
           `
           INSERT INTO reminder_rules (
-            entity_type, trigger_type, days_before, days_after, priority,
+            id, entity_type, trigger_type, days_before, days_after, priority,
             title_template, message_template, action_url_template, action_text_template,
             auto_create_task, task_title_template, task_priority, created_by,
             created_at, updated_at
           ) VALUES (
-            :entity_type, :trigger_type, :days_before, :days_after, :priority,
+            :id, :entity_type, :trigger_type, :days_before, :days_after, :priority,
             :title_template, :message_template, :action_url_template, :action_text_template,
             :auto_create_task, :task_title_template, :task_priority, :created_by,
             NOW(), NOW()
           )
         `,
           {
-            replacements: rule,
+            replacements: ruleWithId,
           }
         )
       }
 
       logger.info("Default reminder rules seeded successfully")
     } catch (error) {
-      logger.error("Error seeding reminder rules", { error })
+      logger.error("Error seeding reminder rules", {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      })
       throw error
     }
   }
