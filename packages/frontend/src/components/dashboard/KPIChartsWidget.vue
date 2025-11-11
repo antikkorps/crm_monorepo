@@ -392,14 +392,27 @@ function updateTasksChart() {
   })
 }
 
-// Generate trend data based on current value and growth
+// Simple seeded PRNG (mulberry32)
+function mulberry32(seed: number) {
+  return function() {
+    let t = seed += 0x6D2B79F5
+    t = Math.imul(t ^ t >>> 15, t | 1)
+    t ^= t + Math.imul(t ^ t >>> 7, t | 61)
+    return ((t ^ t >>> 14) >>> 0) / 4294967296
+  }
+}
+
+// Generate trend data based on current value and growth, deterministic
 function generateTrendData(currentValue: number, growthPercent: number): number[] {
   const points = 7
   const data: number[] = []
   const trend = growthPercent / 100
+  // Derive seed from input parameters for determinism
+  const seed = Math.floor(currentValue * 1000 + growthPercent * 100)
+  const rand = mulberry32(seed)
 
   for (let i = 0; i < points; i++) {
-    const variation = Math.random() * 0.2 - 0.1 // ±10% variation
+    const variation = rand() * 0.2 - 0.1 // ±10% variation, deterministic
     const value = currentValue * (1 - ((points - i - 1) / points) * trend + variation)
     data.push(Math.max(0, Math.round(value)))
   }
