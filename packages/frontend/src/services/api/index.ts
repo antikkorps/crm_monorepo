@@ -631,3 +631,13 @@ export { digiformaApi } from './digiforma'
 
 // Export Dashboard API
 export { dashboardApi } from './dashboard'
+
+// System Settings API
+export const settingsApi = {
+  getPublic: () => apiClient.get("/settings/public"),
+  getAll: () => apiClient.get("/settings"),
+  getByCategory: (category: string) => apiClient.get(`/settings/category/${category}`),
+  updateSetting: (key: string, value: any) => apiClient.put(`/settings/${key}`, { value }),
+  bulkUpdate: (settings: Array<{ key: string; value: any }>) =>
+    apiClient.post("/settings/bulk-update", { settings }),
+}

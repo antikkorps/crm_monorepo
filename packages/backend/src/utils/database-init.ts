@@ -1,4 +1,5 @@
 import DatabaseManager from "../config/database"
+import { SystemSettings } from "../models/SystemSettings"
 import { logger } from "./logger"
 import { DatabaseSeeder } from "./seeder"
 
@@ -25,6 +26,11 @@ export async function initializeDatabase(
       await DatabaseManager.sync({ force, alter: !force })
       logger.info("Database schema synchronized")
     }
+
+    // Initialize system settings with defaults
+    logger.info("Initializing system settings...")
+    await SystemSettings.initializeDefaults()
+    logger.info("System settings initialized")
 
     // Seed database if requested
     if (seed) {

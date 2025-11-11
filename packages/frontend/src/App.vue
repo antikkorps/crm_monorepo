@@ -19,15 +19,19 @@
 
 <script setup lang="ts">
 import { useAuthStore } from "@/stores/auth"
+import { useSettingsStore } from "@/stores/settings"
 import { useSnackbar } from "@/composables/useSnackbar"
 import { onMounted } from "vue"
 
 const authStore = useAuthStore()
+const settingsStore = useSettingsStore()
 const { snackbarState, hideSnackbar } = useSnackbar()
 
-// Initialize authentication on app startup
-onMounted(() => {
+// Initialize authentication and settings on app startup
+onMounted(async () => {
   authStore.initializeAuth()
+  // Load public settings (feature flags) - no auth required
+  await settingsStore.loadPublicSettings()
 })
 </script>
 

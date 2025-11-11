@@ -32,6 +32,7 @@ import { DigiformaQuote } from "./DigiformaQuote"
 import { DigiformaInvoice } from "./DigiformaInvoice"
 import { DigiformaSettings } from "./DigiformaSettings"
 import { SecurityLog } from "./SecurityLog"
+import { SystemSettings } from "./SystemSettings"
 
 // Define associations
 // MedicalInstitution associations
@@ -655,6 +656,7 @@ export {
   DigiformaInvoice,
   DigiformaSettings,
   SecurityLog,
+  SystemSettings,
 }
 
 // Export default for convenience
@@ -692,4 +694,5 @@ export default {
   DigiformaInvoice,
   DigiformaSettings,
   SecurityLog,
+  SystemSettings,
 }
