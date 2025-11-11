@@ -19,9 +19,8 @@ export enum SegmentVisibility {
 export interface SegmentCriteria {
   institutionFilters?: MedicalInstitutionSearchFilters
   contactFilters?: {
-    role?: string[]
-    department?: string[]
     title?: string[]
+    department?: string[]
     isPrimary?: boolean
     hasPhone?: boolean
     hasEmail?: boolean
@@ -141,8 +140,8 @@ export class Segment
     if (this.criteria.contactFilters) {
       const contactFilters = this.criteria.contactFilters
 
-      if (contactFilters.role && contactFilters.role.length > 0) {
-        whereClause.title = { [Op.in]: contactFilters.role }
+      if (contactFilters.title && contactFilters.title.length > 0) {
+        whereClause.title = { [Op.in]: contactFilters.title }
       }
 
       if (contactFilters.department && contactFilters.department.length > 0) {

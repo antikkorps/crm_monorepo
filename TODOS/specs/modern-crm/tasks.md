@@ -865,6 +865,96 @@
 
     **Conclusion**: Aucune action urgente requise. L'application est accessible.
 
+  - [x] 23.5 Système de Feature Flags (SUPER_ADMIN) ✅ **COMPLÉTÉ**
+
+    **Implémentation complète (2025-11-11)** - Commits: 1d729f1, 94d5134
+
+    **Fonctionnalités**:
+    - ✅ Backend: SystemSettings model (JSONB) + controller + routes
+    - ✅ Frontend: Settings store Pinia + API service + admin UI
+    - ✅ Navigation dynamique selon feature flags
+    - ✅ Protection SUPER_ADMIN pour modification des settings
+    - ✅ Modules configurables: Quotes, Invoices, Tasks, Contacts, Segmentation
+    - ✅ Tous activés par défaut
+    - ✅ Interface admin intuitive `/settings/features`
+
+    **Impact**:
+    - Menu Billing masqué si quotes ET invoices désactivés
+    - Liens individuels masqués selon leur état
+    - Chargement des settings au démarrage de l'app (no auth required)
+    - Validation de réponse sécurisée (pas de `|| {}` dangereux)
+
+    **Fichiers créés**:
+    - `packages/backend/src/models/SystemSettings.ts`
+    - `packages/backend/src/controllers/SystemSettingsController.ts`
+    - `packages/backend/src/routes/settings.ts`
+    - `packages/frontend/src/stores/settings.ts`
+    - `packages/frontend/src/views/settings/FeaturesSettingsView.vue`
+
+  - [x] 23.6 Segmentation - Corrections Critiques de Sécurité ✅ **COMPLÉTÉ**
+
+    **Audit complet réalisé (2025-11-11)** - Voir `TODOS/SEGMENTATION_AUDIT.md` - Commits: ed2cf6d, 80236ab
+
+    **Problèmes critiques corrigés**:
+    - 🔴 **Injection SQL éliminée** (6 occurrences): Sequelize.literal → Sequelize.where avec cast sécurisé
+    - 🔴 **Désynchronisation Sequelize** : `public field!` → `declare` pour accès correct aux champs
+    - 🟠 **Cache frontend non invalidé** : Ajout invalidation dans create/update/delete/duplicate
+    - 🟠 **Gestion d'erreur masquante** : getSegments retourne maintenant 500 au lieu de 200 OK en erreur
+    - ✅ **Workarounds supprimés** : Plus besoin de toJSON() grâce au fix Sequelize
+
+    **Impact**:
+    - ✅ Segmentation maintenant PRODUCTION-READY
+    - ✅ Aucune vulnérabilité de sécurité
+    - ✅ Modifications visibles immédiatement (cache OK)
+    - ✅ Erreurs correctement exposées pour debugging
+
+    **Fichiers modifiés**:
+    - `packages/backend/src/models/Segment.ts`
+    - `packages/backend/src/services/SegmentService.ts`
+    - `packages/backend/src/controllers/SegmentController.ts`
+    - `packages/frontend/src/composables/useSegmentation.ts`
+
+  - [x] 23.7 Améliorations Code Quality (Copilot Review) ✅ **COMPLÉTÉ**
+
+    **8 améliorations implémentées (2025-11-11)** - Commit: 94d5134
+
+    **Frontend**:
+    - ✅ Cache TTL magic number → constante `CACHE_TTL` (useSegmentation.ts)
+    - ✅ Validation réponse sécurisée au lieu de `|| {}` (settings.ts)
+    - ✅ Logique redondante supprimée (FeaturesSettingsView.vue)
+    - ✅ Ligne longue formatée (InvoiceForm.vue)
+    - ✅ Option "Default Template" ajoutée (DocumentActions.vue)
+
+    **Backend**:
+    - ✅ Initialisation parallèle avec Promise.all (SystemSettings.ts)
+    - ✅ Bulk updates optimisé avec Promise.all (SystemSettingsController.ts)
+    - ✅ Suivi des settings échoués dans réponse
+
+    **Impact**: Code plus performant, maintenable et robuste. Aucun breaking change.
+
+  - [x] 23.8 Pagination et Cohérence Contact Filters ✅ **COMPLÉTÉ**
+
+    **Implémentation finale (2025-11-11)**
+
+    **Pagination getSegments**:
+    - ✅ Ajout paramètres `limit` et `offset` dans query string
+    - ✅ Calcul stats uniquement sur résultats paginés (performance++)
+    - ✅ Métadonnées dans réponse: `total`, `limit`, `offset`, `hasMore`
+    - ✅ Backward compatible (pas de limit = tous les résultats)
+
+    **Renommage role → title**:
+    - ✅ Suppression champ `role` dans ContactFilters (confusion)
+    - ✅ Utilisation cohérente de `title` partout (mappe vers champ DB `title`)
+    - ✅ Mise à jour types shared, backend models, services
+
+    **Impact**: Meilleure performance pagination + clarté des filtres contacts
+
+    **Fichiers modifiés**:
+    - `packages/shared/src/types/segmentation.ts`
+    - `packages/backend/src/models/Segment.ts`
+    - `packages/backend/src/services/SegmentService.ts`
+    - `packages/backend/src/controllers/SegmentController.ts`
+
 - [x] 24. **Intégration Digiforma (Read-Only)** ✅ **COMPLÉTÉ**
 
   **Objectif:** Synchroniser les données Digiforma (clients, contacts, devis, CA) avec le CRM pour un CA consolidé Audit + Formation

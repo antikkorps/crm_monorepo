@@ -12,7 +12,7 @@ export class SegmentController {
   static async getSegments(ctx: Context) {
     try {
       const user = ctx.state.user as User
-      const { type, visibility } = ctx.query
+      const { type, visibility, limit, offset } = ctx.query
 
       let whereClause: any = {}
 
@@ -37,9 +37,21 @@ export class SegmentController {
         filteredSegments = filteredSegments.filter(s => s.visibility === whereClause.visibility)
       }
 
-      // Add statistics for each segment
+      // Count total before pagination
+      const total = filteredSegments.length
+
+      // Apply pagination if specified
+      let paginatedSegments = filteredSegments
+      const limitNum = limit ? parseInt(limit as string) : undefined
+      const offsetNum = offset ? parseInt(offset as string) : 0
+
+      if (limitNum) {
+        paginatedSegments = filteredSegments.slice(offsetNum, offsetNum + limitNum)
+      }
+
+      // Add statistics for each segment (only for paginated results)
       const segmentsWithStats = await Promise.all(
-        filteredSegments.map(async (segment) => {
+        paginatedSegments.map(async (segment) => {
           try {
             const stats = await SegmentService.getSegmentStats(segment)
             return {
@@ -66,6 +78,12 @@ export class SegmentController {
       ctx.body = {
         success: true,
         data: segmentsWithStats,
+        meta: {
+          total,
+          limit: limitNum || total,
+          offset: offsetNum,
+          hasMore: limitNum ? (offsetNum + limitNum) < total : false,
+        },
       }
     } catch (error) {
       logger.error('getSegments error', {

@@ -46,10 +46,10 @@ export class SegmentService {
     })
 
     // Apply contact-specific filters
-    if (contactFilters.role && contactFilters.role.length > 0) {
-      whereClause.title = { [Op.in]: contactFilters.role }
-      logger.info('applyContactFilters: Applied role filter', {
-        roleFilter: contactFilters.role,
+    if (contactFilters.title && contactFilters.title.length > 0) {
+      whereClause.title = { [Op.in]: contactFilters.title }
+      logger.info('applyContactFilters: Applied title filter', {
+        titleFilter: contactFilters.title,
         whereTitleClause: whereClause.title
       })
     }

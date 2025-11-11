@@ -15,9 +15,8 @@ export enum SegmentVisibility {
 }
 
 export interface ContactFilters {
-  role?: string[]
-  department?: string[]
   title?: string[]
+  department?: string[]
   isPrimary?: boolean
   hasPhone?: boolean
   hasEmail?: boolean
