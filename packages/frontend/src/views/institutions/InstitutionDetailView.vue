@@ -1,9 +1,9 @@
 <template>
   <AppLayout>
     <div class="institution-detail-view">
-      <div v-if="loading" class="text-center py-12">
-        <v-progress-circular indeterminate color="primary" size="64" />
-        <p class="text-body-1 mt-4">Chargement des détails de l'institution...</p>
+      <div v-if="loading" class="pa-6">
+        <v-skeleton-loader type="article, actions" class="mb-6" />
+        <v-skeleton-loader type="table" />
       </div>
 
       <div v-else-if="error" class="text-center py-12">

@@ -75,8 +75,12 @@
 
        <!-- Loading State -->
        <div v-if="tasksStore.loading" class="loading-container">
-          <v-progress-circular indeterminate color="primary" />
-          <p>{{ t('task.loading') }}</p>
+          <v-skeleton-loader
+            v-for="i in 5"
+            :key="i"
+            type="list-item-avatar-three-line"
+            class="mb-4"
+          />
        </div>
 
        <!-- Error State -->

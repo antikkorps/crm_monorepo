@@ -34,9 +34,13 @@
           </v-card-text>
         </v-card>
 
-        <div v-if="loading" class="text-center py-12">
-          <v-progress-circular indeterminate color="primary" size="64" />
-          <p class="mt-4">Chargement des devis...</p>
+        <div v-if="loading" class="pa-4">
+          <v-skeleton-loader
+            v-for="i in 5"
+            :key="i"
+            type="table-row"
+            class="mb-2"
+          />
         </div>
 
         <div v-else-if="quotes.length === 0" class="text-center py-12">
