@@ -7,6 +7,7 @@ import { Invoice } from "../models/Invoice";
 import { Team } from "../models/Team";
 import { Op } from "sequelize";
 import { sequelize } from "../config/database";
+import { formatCurrency } from "@medical-crm/shared";
 
 /**
  * DashboardController
@@ -700,7 +701,7 @@ export class DashboardController {
           type: "quote",
           action: "created",
           title: `Nouveau devis : ${quote.quoteNumber}`,
-          description: `${quote.total}€ - ${quote.institution?.name || "N/A"}`,
+          description: `${formatCurrency(quote.total)} - ${quote.institution?.name || "N/A"}`,
           entityId: quote.id,
           entityType: "quote",
           timestamp: quote.createdAt,
@@ -749,7 +750,7 @@ export class DashboardController {
           type: "invoice",
           action: "created",
           title: `Nouvelle facture : ${invoice.invoiceNumber}`,
-          description: `${invoice.total}€ - ${invoice.institution?.name || "N/A"}`,
+          description: `${formatCurrency(invoice.total)} - ${invoice.institution?.name || "N/A"}`,
           entityId: invoice.id,
           entityType: "invoice",
           timestamp: invoice.createdAt,
