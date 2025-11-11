@@ -1,225 +1,287 @@
 <template>
-  <div class="notification-settings">
-    <div class="settings-header">
-      <h3 class="m-0">Notification Settings</h3>
-      <p class="text-600 mt-2 mb-4">Customize how and when you receive notifications</p>
+  <div class="notification-settings pa-4">
+    <div class="settings-header mb-6">
+      <h3 class="text-h5 font-weight-bold mb-2">Notification Settings</h3>
+      <p class="text-body-2 text-medium-emphasis">
+        Customize how and when you receive notifications
+      </p>
     </div>
 
     <div class="settings-content">
       <!-- General Settings -->
-      <div class="settings-section">
-        <h4 class="section-title">General</h4>
+      <v-card class="mb-6" variant="outlined">
+        <v-card-title class="bg-grey-lighten-4">
+          <v-icon start>mdi-cog</v-icon>
+          General
+        </v-card-title>
 
-        <div class="setting-item">
-          <div class="setting-info">
-            <label class="setting-label">Sound Notifications</label>
-            <small class="setting-description"
-              >Play a sound when new notifications arrive</small
-            >
-          </div>
-          <div class="setting-control">
-            <InputSwitch v-model="localPreferences.enableSound" />
-          </div>
-        </div>
+        <v-card-text class="pa-4">
+          <v-list class="pa-0">
+            <!-- Sound Notifications -->
+            <v-list-item class="px-0">
+              <v-list-item-title>Sound Notifications</v-list-item-title>
+              <v-list-item-subtitle>Play a sound when new notifications arrive</v-list-item-subtitle>
+              <template #append>
+                <v-switch
+                  v-model="localPreferences.enableSound"
+                  color="primary"
+                  hide-details
+                  inset
+                />
+              </template>
+            </v-list-item>
 
-        <div class="setting-item" v-if="localPreferences.enableSound">
-          <div class="setting-info">
-            <label class="setting-label">Sound Volume</label>
-            <small class="setting-description">Adjust notification sound volume</small>
-          </div>
-          <div class="setting-control">
-            <Slider
-              v-model="localPreferences.soundVolume"
-              :min="0"
-              :max="1"
-              :step="0.1"
-              class="w-full"
-            />
-            <small class="text-600"
-              >{{ Math.round(localPreferences.soundVolume * 100) }}%</small
-            >
-          </div>
-        </div>
+            <!-- Sound Volume -->
+            <v-list-item v-if="localPreferences.enableSound" class="px-0">
+              <v-list-item-title>Sound Volume</v-list-item-title>
+              <v-list-item-subtitle class="mb-2">Adjust notification sound volume</v-list-item-subtitle>
+              <div class="d-flex align-center w-100 mt-2">
+                <v-slider
+                  v-model="localPreferences.soundVolume"
+                  :min="0"
+                  :max="1"
+                  :step="0.1"
+                  thumb-label
+                  color="primary"
+                  hide-details
+                >
+                  <template #append>
+                    <span class="text-caption ml-2">
+                      {{ Math.round(localPreferences.soundVolume * 100) }}%
+                    </span>
+                  </template>
+                </v-slider>
+              </div>
+            </v-list-item>
 
-        <div class="setting-item">
-          <div class="setting-info">
-            <label class="setting-label">Desktop Notifications</label>
-            <small class="setting-description"
-              >Show desktop notifications outside the browser</small
-            >
-          </div>
-          <div class="setting-control">
-            <InputSwitch
-              v-model="localPreferences.enableDesktop"
-              @change="handleDesktopToggle"
-            />
-          </div>
-        </div>
+            <v-divider class="my-2" />
 
-        <div class="setting-item" v-if="localPreferences.enableDesktop">
-          <div class="setting-info">
-            <label class="setting-label">Desktop Duration</label>
-            <small class="setting-description"
-              >How long desktop notifications stay visible</small
-            >
-          </div>
-          <div class="setting-control">
-            <Dropdown
-              v-model="localPreferences.desktopDuration"
-              :options="durationOptions"
-              option-label="label"
-              option-value="value"
-              class="w-full"
-            />
-          </div>
-        </div>
-      </div>
+            <!-- Desktop Notifications -->
+            <v-list-item class="px-0">
+              <v-list-item-title>Desktop Notifications</v-list-item-title>
+              <v-list-item-subtitle>Show desktop notifications outside the browser</v-list-item-subtitle>
+              <template #append>
+                <v-switch
+                  v-model="localPreferences.enableDesktop"
+                  color="primary"
+                  hide-details
+                  inset
+                  @update:model-value="handleDesktopToggle"
+                />
+              </template>
+            </v-list-item>
+
+            <!-- Desktop Duration -->
+            <v-list-item v-if="localPreferences.enableDesktop" class="px-0">
+              <v-list-item-title>Desktop Duration</v-list-item-title>
+              <v-list-item-subtitle>How long desktop notifications stay visible</v-list-item-subtitle>
+              <v-select
+                v-model="localPreferences.desktopDuration"
+                :items="durationOptions"
+                variant="outlined"
+                density="compact"
+                hide-details
+                class="mt-2"
+              />
+            </v-list-item>
+          </v-list>
+        </v-card-text>
+      </v-card>
 
       <!-- Notification Types -->
-      <div class="settings-section">
-        <h4 class="section-title">Notification Types</h4>
+      <v-card class="mb-6" variant="outlined">
+        <v-card-title class="bg-grey-lighten-4">
+          <v-icon start>mdi-bell</v-icon>
+          Notification Types
+        </v-card-title>
 
-        <div class="setting-item">
-          <div class="setting-info">
-            <label class="setting-label">Task Assignments</label>
-            <small class="setting-description">When you are assigned to a new task</small>
-          </div>
-          <div class="setting-control">
-            <InputSwitch v-model="localPreferences.enableTaskAssignments" />
-          </div>
-        </div>
+        <v-card-text class="pa-4">
+          <v-list class="pa-0">
+            <v-list-item class="px-0">
+              <v-list-item-title>Task Assignments</v-list-item-title>
+              <v-list-item-subtitle>When you are assigned to a new task</v-list-item-subtitle>
+              <template #append>
+                <v-switch
+                  v-model="localPreferences.enableTaskAssignments"
+                  color="primary"
+                  hide-details
+                  inset
+                />
+              </template>
+            </v-list-item>
 
-        <div class="setting-item">
-          <div class="setting-info">
-            <label class="setting-label">Institution Updates</label>
-            <small class="setting-description"
-              >When medical institutions are updated</small
-            >
-          </div>
-          <div class="setting-control">
-            <InputSwitch v-model="localPreferences.enableInstitutionUpdates" />
-          </div>
-        </div>
+            <v-divider class="my-2" />
 
-        <div class="setting-item">
-          <div class="setting-info">
-            <label class="setting-label">Team Activity</label>
-            <small class="setting-description">When team members perform actions</small>
-          </div>
-          <div class="setting-control">
-            <InputSwitch v-model="localPreferences.enableTeamActivity" />
-          </div>
-        </div>
+            <v-list-item class="px-0">
+              <v-list-item-title>Institution Updates</v-list-item-title>
+              <v-list-item-subtitle>When medical institutions are updated</v-list-item-subtitle>
+              <template #append>
+                <v-switch
+                  v-model="localPreferences.enableInstitutionUpdates"
+                  color="primary"
+                  hide-details
+                  inset
+                />
+              </template>
+            </v-list-item>
 
-        <div class="setting-item">
-          <div class="setting-info">
-            <label class="setting-label">Webhook Events</label>
-            <small class="setting-description">When webhooks are triggered</small>
-          </div>
-          <div class="setting-control">
-            <InputSwitch v-model="localPreferences.enableWebhookEvents" />
-          </div>
-        </div>
-      </div>
+            <v-divider class="my-2" />
+
+            <v-list-item class="px-0">
+              <v-list-item-title>Team Activity</v-list-item-title>
+              <v-list-item-subtitle>When team members perform actions</v-list-item-subtitle>
+              <template #append>
+                <v-switch
+                  v-model="localPreferences.enableTeamActivity"
+                  color="primary"
+                  hide-details
+                  inset
+                />
+              </template>
+            </v-list-item>
+
+            <v-divider class="my-2" />
+
+            <v-list-item class="px-0">
+              <v-list-item-title>Webhook Events</v-list-item-title>
+              <v-list-item-subtitle>When webhooks are triggered</v-list-item-subtitle>
+              <template #append>
+                <v-switch
+                  v-model="localPreferences.enableWebhookEvents"
+                  color="primary"
+                  hide-details
+                  inset
+                />
+              </template>
+            </v-list-item>
+          </v-list>
+        </v-card-text>
+      </v-card>
 
       <!-- Test Notifications -->
-      <div class="settings-section">
-        <h4 class="section-title">Test Notifications</h4>
+      <v-card class="mb-6" variant="outlined">
+        <v-card-title class="bg-grey-lighten-4">
+          <v-icon start>mdi-test-tube</v-icon>
+          Test Notifications
+        </v-card-title>
 
-        <div class="test-buttons">
-          <Button
-            label="Test Sound"
-            icon="pi pi-volume-up"
-            outlined
-            size="small"
-            @click="testSound"
-            :disabled="!localPreferences.enableSound"
-          />
-          <Button
-            label="Test Desktop"
-            icon="pi pi-desktop"
-            outlined
-            size="small"
-            @click="testDesktop"
-            :disabled="
-              !localPreferences.enableDesktop ||
-              !notificationStore.isDesktopPermissionGranted
-            "
-          />
-          <Button
-            label="Test Notification"
-            icon="pi pi-bell"
-            outlined
-            size="small"
-            @click="testNotification"
-          />
-        </div>
-      </div>
+        <v-card-text class="pa-4">
+          <div class="d-flex flex-wrap ga-2">
+            <v-btn
+              variant="outlined"
+              size="small"
+              prepend-icon="mdi-volume-up"
+              @click="testSound"
+              :disabled="!localPreferences.enableSound"
+            >
+              Test Sound
+            </v-btn>
+            <v-btn
+              variant="outlined"
+              size="small"
+              prepend-icon="mdi-monitor"
+              @click="testDesktop"
+              :disabled="
+                !localPreferences.enableDesktop ||
+                !notificationStore.isDesktopPermissionGranted
+              "
+            >
+              Test Desktop
+            </v-btn>
+            <v-btn
+              variant="outlined"
+              size="small"
+              prepend-icon="mdi-bell"
+              @click="testNotification"
+            >
+              Test Notification
+            </v-btn>
+          </div>
+        </v-card-text>
+      </v-card>
 
       <!-- Statistics -->
-      <div class="settings-section">
-        <h4 class="section-title">Statistics</h4>
+      <v-card variant="outlined">
+        <v-card-title class="bg-grey-lighten-4">
+          <v-icon start>mdi-chart-bar</v-icon>
+          Statistics
+        </v-card-title>
 
-        <div class="stats-grid">
-          <div class="stat-item">
-            <div class="stat-value">{{ stats.total }}</div>
-            <div class="stat-label">Total Notifications</div>
-          </div>
-          <div class="stat-item">
-            <div class="stat-value">{{ stats.unread }}</div>
-            <div class="stat-label">Unread</div>
-          </div>
-          <div class="stat-item">
-            <div class="stat-value">{{ stats.today }}</div>
-            <div class="stat-label">Today</div>
-          </div>
-          <div class="stat-item">
-            <div class="stat-value">{{ stats.thisWeek }}</div>
-            <div class="stat-label">This Week</div>
-          </div>
-        </div>
+        <v-card-text class="pa-4">
+          <v-row>
+            <v-col v-for="(value, key) in statsGrid" :key="key" cols="6" md="3">
+              <v-sheet class="text-center pa-4 bg-grey-lighten-5 rounded">
+                <div class="text-h4 font-weight-bold text-primary mb-1">{{ value }}</div>
+                <div class="text-caption text-medium-emphasis">{{ key }}</div>
+              </v-sheet>
+            </v-col>
+          </v-row>
 
-        <div class="type-stats">
-          <h5>By Type</h5>
-          <div class="type-stat-item">
-            <i class="pi pi-check-square text-blue-500"></i>
-            <span>Task Assignments: {{ stats.byType.taskAssigned }}</span>
+          <v-divider class="my-4" />
+
+          <div>
+            <h4 class="text-subtitle-1 font-weight-bold mb-3">By Type</h4>
+            <v-list class="pa-0" density="compact">
+              <v-list-item>
+                <template #prepend>
+                  <v-icon color="blue" size="small">mdi-check-circle</v-icon>
+                </template>
+                <v-list-item-title class="text-body-2">
+                  Task Assignments: {{ stats.byType.taskAssigned }}
+                </v-list-item-title>
+              </v-list-item>
+
+              <v-list-item>
+                <template #prepend>
+                  <v-icon color="green" size="small">mdi-domain</v-icon>
+                </template>
+                <v-list-item-title class="text-body-2">
+                  Institution Updates: {{ stats.byType.institutionUpdated }}
+                </v-list-item-title>
+              </v-list-item>
+
+              <v-list-item>
+                <template #prepend>
+                  <v-icon color="purple" size="small">mdi-account-group</v-icon>
+                </template>
+                <v-list-item-title class="text-body-2">
+                  Team Activity: {{ stats.byType.teamActivity }}
+                </v-list-item-title>
+              </v-list-item>
+
+              <v-list-item>
+                <template #prepend>
+                  <v-icon color="orange" size="small">mdi-webhook</v-icon>
+                </template>
+                <v-list-item-title class="text-body-2">
+                  Webhook Events: {{ stats.byType.webhookTriggered }}
+                </v-list-item-title>
+              </v-list-item>
+            </v-list>
           </div>
-          <div class="type-stat-item">
-            <i class="pi pi-building text-green-500"></i>
-            <span>Institution Updates: {{ stats.byType.institutionUpdated }}</span>
-          </div>
-          <div class="type-stat-item">
-            <i class="pi pi-users text-purple-500"></i>
-            <span>Team Activity: {{ stats.byType.teamActivity }}</span>
-          </div>
-          <div class="type-stat-item">
-            <i class="pi pi-link text-orange-500"></i>
-            <span>Webhook Events: {{ stats.byType.webhookTriggered }}</span>
-          </div>
-        </div>
-      </div>
+        </v-card-text>
+      </v-card>
     </div>
 
-    <div class="settings-footer">
-      <div class="footer-actions">
-        <Button
-          label="Reset to Defaults"
-          icon="pi pi-refresh"
-          text
-          size="small"
-          @click="resetToDefaults"
-        />
-        <div class="ml-auto">
-          <Button label="Cancel" text size="small" @click="cancel" class="mr-2" />
-          <Button
-            label="Save Changes"
-            icon="pi pi-check"
-            size="small"
-            @click="saveChanges"
-            :disabled="!hasChanges"
-          />
-        </div>
+    <!-- Footer Actions -->
+    <v-divider class="my-6" />
+
+    <div class="d-flex justify-space-between align-center">
+      <v-btn variant="text" prepend-icon="mdi-refresh" @click="resetToDefaults">
+        Reset to Defaults
+      </v-btn>
+
+      <div class="d-flex ga-2">
+        <v-btn variant="text" @click="cancel">Cancel</v-btn>
+        <v-btn
+          variant="elevated"
+          color="primary"
+          prepend-icon="mdi-check"
+          @click="saveChanges"
+          :disabled="!hasChanges"
+        >
+          Save Changes
+        </v-btn>
       </div>
     </div>
   </div>
@@ -230,10 +292,6 @@ import {
   useNotificationStore,
   type NotificationPreferences,
 } from "@/stores/notifications"
-import Button from "primevue/button"
-import Dropdown from "primevue/dropdown"
-import InputSwitch from "primevue/inputswitch"
-import Slider from "primevue/slider"
 import { computed, onMounted, ref, watch } from "vue"
 
 const emit = defineEmits<{
@@ -250,11 +308,11 @@ const originalPreferences = ref<NotificationPreferences>({
 })
 
 const durationOptions = [
-  { label: "3 seconds", value: 3000 },
-  { label: "5 seconds", value: 5000 },
-  { label: "10 seconds", value: 10000 },
-  { label: "15 seconds", value: 15000 },
-  { label: "30 seconds", value: 30000 },
+  { title: "3 seconds", value: 3000 },
+  { title: "5 seconds", value: 5000 },
+  { title: "10 seconds", value: 10000 },
+  { title: "15 seconds", value: 15000 },
+  { title: "30 seconds", value: 30000 },
 ]
 
 const hasChanges = computed(() => {
@@ -264,6 +322,13 @@ const hasChanges = computed(() => {
 })
 
 const stats = computed(() => notificationStore.getNotificationStats())
+
+const statsGrid = computed(() => ({
+  "Total": stats.value.total,
+  "Unread": stats.value.unread,
+  "Today": stats.value.today,
+  "This Week": stats.value.thisWeek,
+}))
 
 const handleDesktopToggle = async () => {
   if (localPreferences.value.enableDesktop) {
@@ -342,162 +407,6 @@ onMounted(() => {
 
 <style scoped>
 .notification-settings {
-  max-width: 600px;
-  margin: 0 auto;
-}
-
-.settings-header {
-  padding-bottom: 1rem;
-  border-bottom: 1px solid #e9ecef;
-  margin-bottom: 1.5rem;
-}
-
-.settings-content {
-  display: flex;
-  flex-direction: column;
-  gap: 2rem;
-}
-
-.settings-section {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-.section-title {
-  font-size: 1.1rem;
-  font-weight: 600;
-  color: #495057;
-  margin: 0 0 0.5rem 0;
-  padding-bottom: 0.5rem;
-  border-bottom: 1px solid #f1f3f4;
-}
-
-.setting-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  padding: 1rem;
-  background: #f8f9fa;
-  border-radius: 8px;
-  gap: 1rem;
-}
-
-.setting-info {
-  flex: 1;
-}
-
-.setting-label {
-  display: block;
-  font-weight: 500;
-  color: #495057;
-  margin-bottom: 0.25rem;
-}
-
-.setting-description {
-  color: #6c757d;
-  font-size: 0.875rem;
-  line-height: 1.4;
-}
-
-.setting-control {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 0.5rem;
-  min-width: 120px;
-}
-
-.test-buttons {
-  display: flex;
-  gap: 0.5rem;
-  flex-wrap: wrap;
-}
-
-.stats-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-  gap: 1rem;
-  margin-bottom: 1.5rem;
-}
-
-.stat-item {
-  text-align: center;
-  padding: 1rem;
-  background: #f8f9fa;
-  border-radius: 8px;
-}
-
-.stat-value {
-  font-size: 1.5rem;
-  font-weight: 600;
-  color: #1976d2;
-  margin-bottom: 0.25rem;
-}
-
-.stat-label {
-  font-size: 0.875rem;
-  color: #6c757d;
-}
-
-.type-stats {
-  margin-top: 1rem;
-}
-
-.type-stats h5 {
-  margin: 0 0 0.75rem 0;
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: #495057;
-}
-
-.type-stat-item {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 0;
-  font-size: 0.875rem;
-  color: #6c757d;
-}
-
-.settings-footer {
-  margin-top: 2rem;
-  padding-top: 1rem;
-  border-top: 1px solid #e9ecef;
-}
-
-.footer-actions {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-/* Responsive Design */
-@media (max-width: 768px) {
-  .setting-item {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .setting-control {
-    align-items: stretch;
-    min-width: auto;
-  }
-
-  .stats-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
-  .footer-actions {
-    flex-direction: column;
-    gap: 1rem;
-    align-items: stretch;
-  }
-
-  .footer-actions > div {
-    margin-left: 0 !important;
-    display: flex;
-    gap: 0.5rem;
-  }
+  max-width: 100%;
 }
 </style>
