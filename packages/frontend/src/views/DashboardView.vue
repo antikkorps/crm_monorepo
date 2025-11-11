@@ -86,6 +86,100 @@
         </v-col>
       </v-row>
 
+      <!-- Performance Metrics Widget -->
+      <v-row v-if="metrics" class="mb-6">
+        <v-col cols="12">
+          <v-card elevation="2">
+            <v-card-title class="d-flex align-center">
+              <v-icon icon="mdi-chart-timeline-variant" color="primary" class="mr-2" />
+              Indicateurs de performance
+            </v-card-title>
+
+            <v-card-text>
+              <v-row>
+                <!-- Revenue Growth -->
+                <v-col cols="12" md="4">
+                  <v-card variant="outlined" class="performance-card">
+                    <v-card-text>
+                      <div class="d-flex align-center justify-space-between mb-2">
+                        <span class="text-subtitle-2 text-medium-emphasis">Croissance CA</span>
+                        <v-icon :icon="metrics.growth.revenueGrowth >= 0 ? 'mdi-trending-up' : 'mdi-trending-down'"
+                                :color="metrics.growth.revenueGrowth >= 0 ? 'success' : 'error'"
+                                size="24" />
+                      </div>
+                      <div :class="`text-h4 font-weight-bold ${metrics.growth.revenueGrowth >= 0 ? 'text-success' : 'text-error'}`">
+                        {{ metrics.growth.revenueGrowth > 0 ? '+' : '' }}{{ metrics.growth.revenueGrowth.toFixed(1) }}%
+                      </div>
+                      <div class="text-caption text-medium-emphasis mt-2">
+                        vs période précédente
+                      </div>
+                    </v-card-text>
+                  </v-card>
+                </v-col>
+
+                <!-- New Clients -->
+                <v-col cols="12" md="4">
+                  <v-card variant="outlined" class="performance-card">
+                    <v-card-text>
+                      <div class="d-flex align-center justify-space-between mb-2">
+                        <span class="text-subtitle-2 text-medium-emphasis">Nouveaux clients</span>
+                        <v-icon icon="mdi-account-multiple-plus" color="blue" size="24" />
+                      </div>
+                      <div class="text-h4 font-weight-bold text-blue">
+                        {{ metrics.newClients.count }}
+                      </div>
+                      <div class="text-caption text-medium-emphasis mt-2">
+                        <span :class="metrics.newClients.percentageChange >= 0 ? 'text-success' : 'text-error'">
+                          {{ metrics.newClients.percentageChange > 0 ? '+' : '' }}{{ metrics.newClients.percentageChange.toFixed(1) }}%
+                        </span> ce mois
+                      </div>
+                    </v-card-text>
+                  </v-card>
+                </v-col>
+
+                <!-- Conversion Rate -->
+                <v-col cols="12" md="4">
+                  <v-card variant="outlined" class="performance-card">
+                    <v-card-text>
+                      <div class="d-flex align-center justify-space-between mb-2">
+                        <span class="text-subtitle-2 text-medium-emphasis">Taux de conversion</span>
+                        <v-icon icon="mdi-percent" color="orange" size="24" />
+                      </div>
+                      <div class="text-h4 font-weight-bold text-orange">
+                        {{ metrics.conversionRate.rate.toFixed(1) }}%
+                      </div>
+                      <div class="text-caption text-medium-emphasis mt-2">
+                        {{ metrics.conversionRate.quotesAccepted }} / {{ metrics.conversionRate.quotesTotal }} devis acceptés
+                      </div>
+                    </v-card-text>
+                  </v-card>
+                </v-col>
+              </v-row>
+
+              <!-- Tasks Completed Growth -->
+              <v-row class="mt-2">
+                <v-col cols="12">
+                  <v-alert
+                    :color="metrics.growth.tasksCompletedGrowth >= 0 ? 'success' : 'info'"
+                    variant="tonal"
+                    density="compact"
+                    class="mb-0"
+                  >
+                    <div class="d-flex align-center">
+                      <v-icon :icon="metrics.growth.tasksCompletedGrowth >= 0 ? 'mdi-check-circle' : 'mdi-information'" class="mr-2" />
+                      <span class="text-body-2">
+                        <strong>{{ metrics.growth.tasksCompletedGrowth > 0 ? '+' : '' }}{{ metrics.growth.tasksCompletedGrowth.toFixed(1) }}%</strong>
+                        de tâches complétées par rapport à la période précédente
+                      </span>
+                    </div>
+                  </v-alert>
+                </v-col>
+              </v-row>
+            </v-card-text>
+          </v-card>
+        </v-col>
+      </v-row>
+
       <!-- Quick Actions -->
       <v-row class="mb-6">
         <v-col cols="12">
@@ -320,11 +414,17 @@ import { useInstitutionsStore } from "@/stores/institutions"
 import { useTasksStore } from "@/stores/tasks"
 import { computed, onMounted, ref } from "vue"
 import { useRouter } from "vue-router"
+import { dashboardApi, type DashboardMetrics } from "@/services/api/dashboard"
 
 const authStore = useAuthStore()
 const institutionsStore = useInstitutionsStore()
 const tasksStore = useTasksStore()
 const router = useRouter()
+
+// Dashboard metrics state
+const metrics = ref<DashboardMetrics | null>(null)
+const metricsLoading = ref(false)
+const metricsError = ref<string | null>(null)
 
 // Check if user should be automatically redirected to billing analytics
 const shouldRedirectToBilling = computed(() => {
@@ -473,49 +573,99 @@ const truncateText = (text: string, maxLength: number) => {
   return text.substring(0, maxLength) + "..."
 }
 
-// Stats cards data - updated with Material Design Icons and dynamic data
-const statsCards = computed(() => [
-  {
-    title: 'Institutions',
-    value: institutionsStore.institutions.length.toString(),
-    description: `${institutionsStore.institutions.filter(inst => inst.isActive).length} actives`,
-    icon: 'mdi-domain',
-    color: 'blue',
-    actionLabel: 'Voir tout',
-    actionIcon: 'mdi-arrow-right',
-    route: '/institutions'
-  },
-  {
-    title: 'Tâches',
-    value: tasksStore.taskStats.total.toString(),
-    description: `${tasksStore.taskStats.inProgress} en cours, ${tasksStore.taskStats.overdue} en retard`,
-    icon: 'mdi-check-circle',
-    color: tasksStore.taskStats.overdue > 0 ? 'error' : 'green',
-    actionLabel: 'Gérer',
-    actionIcon: 'mdi-arrow-right',
-    route: '/tasks'
-  },
-  {
-    title: 'Équipe',
-    value: '5', // TODO: Connect to team store when available
-    description: 'Membres actifs',
-    icon: 'mdi-account-group',
-    color: 'purple',
-    actionLabel: 'Voir équipe',
-    actionIcon: 'mdi-arrow-right',
-    route: '/team'
-  },
-  {
-    title: 'Analytics',
-    value: '24', // TODO: Connect to analytics store when available
-    description: 'Rapports générés',
-    icon: 'mdi-chart-bar',
-    color: 'orange',
-    actionLabel: 'Analyser',
-    actionIcon: 'mdi-arrow-right',
-    route: '/billing/analytics'
+// Stats cards data - updated with real metrics from backend
+const statsCards = computed(() => {
+  if (!metrics.value) {
+    // Fallback to store data while loading
+    return [
+      {
+        title: 'Institutions',
+        value: institutionsStore.institutions.length.toString(),
+        description: `${institutionsStore.institutions.filter(inst => inst.isActive).length} actives`,
+        icon: 'mdi-domain',
+        color: 'blue',
+        actionLabel: 'Voir tout',
+        actionIcon: 'mdi-arrow-right',
+        route: '/institutions'
+      },
+      {
+        title: 'Tâches',
+        value: tasksStore.taskStats.total.toString(),
+        description: `${tasksStore.taskStats.inProgress} en cours, ${tasksStore.taskStats.overdue} en retard`,
+        icon: 'mdi-check-circle',
+        color: tasksStore.taskStats.overdue > 0 ? 'error' : 'green',
+        actionLabel: 'Gérer',
+        actionIcon: 'mdi-arrow-right',
+        route: '/tasks'
+      },
+      {
+        title: 'Équipe',
+        value: '...',
+        description: 'Chargement...',
+        icon: 'mdi-account-group',
+        color: 'purple',
+        actionLabel: 'Voir équipe',
+        actionIcon: 'mdi-arrow-right',
+        route: '/team'
+      },
+      {
+        title: 'CA du mois',
+        value: '...',
+        description: 'Chargement...',
+        icon: 'mdi-chart-line',
+        color: 'orange',
+        actionLabel: 'Analyser',
+        actionIcon: 'mdi-arrow-right',
+        route: '/billing/analytics'
+      }
+    ]
   }
-])
+
+  const { institutions, tasks, team, billing } = metrics.value
+
+  return [
+    {
+      title: 'Institutions',
+      value: institutions.total.toString(),
+      description: `${institutions.active} actives, ${institutions.inactive} inactives`,
+      icon: 'mdi-domain',
+      color: 'blue',
+      actionLabel: 'Voir tout',
+      actionIcon: 'mdi-arrow-right',
+      route: '/institutions'
+    },
+    {
+      title: 'Tâches',
+      value: tasks.total.toString(),
+      description: `${tasks.inProgress} en cours, ${tasks.overdue} en retard`,
+      icon: 'mdi-check-circle',
+      color: tasks.overdue > 0 ? 'error' : 'green',
+      actionLabel: 'Gérer',
+      actionIcon: 'mdi-arrow-right',
+      route: '/tasks'
+    },
+    {
+      title: 'Équipe',
+      value: team.activeMembers.toString(),
+      description: `${team.totalMembers} membres, ${team.teams} équipe(s)`,
+      icon: 'mdi-account-group',
+      color: 'purple',
+      actionLabel: 'Voir équipe',
+      actionIcon: 'mdi-arrow-right',
+      route: '/team'
+    },
+    {
+      title: 'CA du mois',
+      value: formatCurrency(billing.totalRevenue),
+      description: `${billing.invoicesCount} factures, ${billing.quotesCount} devis`,
+      icon: 'mdi-chart-line',
+      color: 'orange',
+      actionLabel: 'Analyser',
+      actionIcon: 'mdi-arrow-right',
+      route: '/billing/analytics'
+    }
+  ]
+})
 
 // Quick actions data - updated with Material Design Icons
 const quickActions = ref([
@@ -563,10 +713,36 @@ const quickActions = ref([
   }
 ])
 
+// Format currency helper
+const formatCurrency = (amount: number): string => {
+  return new Intl.NumberFormat('fr-FR', {
+    style: 'currency',
+    currency: 'EUR',
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(amount)
+}
+
+// Load dashboard metrics from API
+const loadMetrics = async () => {
+  metricsLoading.value = true
+  metricsError.value = null
+
+  try {
+    metrics.value = await dashboardApi.getMetrics({ period: 'month' })
+  } catch (error) {
+    console.error('Error loading dashboard metrics:', error)
+    metricsError.value = error instanceof Error ? error.message : 'Failed to load metrics'
+  } finally {
+    metricsLoading.value = false
+  }
+}
+
 // Auto-redirect logic (if needed)
 onMounted(async () => {
   // Fetch data for dashboard
   await Promise.all([
+    loadMetrics(),
     tasksStore.fetchTasks(),
     institutionsStore.fetchInstitutions()
   ])
@@ -587,6 +763,16 @@ onMounted(async () => {
 
 .stat-card:hover {
   transform: translateY(-4px);
+}
+
+.performance-card {
+  transition: all 0.2s ease-in-out;
+  height: 100%;
+}
+
+.performance-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 .quick-action-card {
