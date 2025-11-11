@@ -70,21 +70,21 @@ export class Segment
   extends Model<SegmentAttributes, SegmentCreationAttributes>
   implements SegmentAttributes
 {
-  public id!: string
-  public name!: string
-  public description?: string
-  public type!: SegmentType
-  public criteria!: SegmentCriteria
-  public visibility!: SegmentVisibility
-  public ownerId!: string
-  public teamId?: string
-  public isActive!: boolean
-  public readonly createdAt!: Date
-  public readonly updatedAt!: Date
+  declare id: string
+  declare name: string
+  declare description: string | undefined
+  declare type: SegmentType
+  declare criteria: SegmentCriteria
+  declare visibility: SegmentVisibility
+  declare ownerId: string
+  declare teamId: string | undefined
+  declare isActive: boolean
+  declare readonly createdAt: Date
+  declare readonly updatedAt: Date
 
   // Associations
-  public owner?: User
-  public team?: Team
+  declare owner?: User
+  declare team?: Team
 
   // Instance methods
   public isVisibleTo(userId: string, userTeamId?: string): boolean {
