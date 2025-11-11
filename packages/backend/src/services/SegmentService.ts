@@ -96,15 +96,25 @@ export class SegmentService {
         ]
       } else {
         if (instFilters.city) {
-          const cityCondition = Sequelize.literal(`"institution"."address"->>'city' ILIKE '%${instFilters.city.replace(/'/g, "''")}%'`)
           const andConditions = ((institutionWhere as any)[Op.and] as any[]) || []
-          andConditions.push(cityCondition)
+          // Secure JSONB query using Sequelize.where with cast
+          andConditions.push(
+            Sequelize.where(
+              Sequelize.cast(Sequelize.json('institution.address.city'), 'text'),
+              { [Op.iLike]: `%${instFilters.city}%` }
+            )
+          )
           ;(institutionWhere as any)[Op.and] = andConditions
         }
         if (instFilters.state) {
-          const stateCondition = Sequelize.literal(`"institution"."address"->>'state' ILIKE '%${instFilters.state.replace(/'/g, "''")}%'`)
           const andConditions = ((institutionWhere as any)[Op.and] as any[]) || []
-          andConditions.push(stateCondition)
+          // Secure JSONB query using Sequelize.where with cast
+          andConditions.push(
+            Sequelize.where(
+              Sequelize.cast(Sequelize.json('institution.address.state'), 'text'),
+              { [Op.iLike]: `%${instFilters.state}%` }
+            )
+          )
           ;(institutionWhere as any)[Op.and] = andConditions
         }
       }
@@ -282,16 +292,24 @@ export class SegmentService {
         case "city":
           const cityValue = String(value)
           const cityConditions = ((whereClause as any)[Op.and] as any[]) || []
+          // Secure JSONB query using Sequelize.where with cast
           cityConditions.push(
-            Sequelize.literal(`"address"->>'city' ILIKE '%${cityValue.replace(/'/g, "''")}%'`)
+            Sequelize.where(
+              Sequelize.cast(Sequelize.json('address.city'), 'text'),
+              { [Op.iLike]: `%${cityValue}%` }
+            )
           )
           ;(whereClause as any)[Op.and] = cityConditions
           break
         case "state":
           const stateValue = String(value)
           const stateConditions = ((whereClause as any)[Op.and] as any[]) || []
+          // Secure JSONB query using Sequelize.where with cast
           stateConditions.push(
-            Sequelize.literal(`"address"->>'state' ILIKE '%${stateValue.replace(/'/g, "''")}%'`)
+            Sequelize.where(
+              Sequelize.cast(Sequelize.json('address.state'), 'text'),
+              { [Op.iLike]: `%${stateValue}%` }
+            )
           )
           ;(whereClause as any)[Op.and] = stateConditions
           break

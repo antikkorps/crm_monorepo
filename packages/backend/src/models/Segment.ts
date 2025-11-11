@@ -191,15 +191,23 @@ export class Segment
       } else {
         if (instFilters.city) {
           const andConditions = (institutionWhere[Op.and] as any[]) || []
+          // Secure JSONB query using Sequelize.where with cast
           andConditions.push(
-            Sequelize.literal(`"institution"."address"->>'city' ILIKE '%${instFilters.city.replace(/'/g, "''")}%'`)
+            Sequelize.where(
+              Sequelize.cast(Sequelize.json('institution.address.city'), 'text'),
+              { [Op.iLike]: `%${instFilters.city}%` }
+            )
           )
           institutionWhere[Op.and] = andConditions as any
         }
         if (instFilters.state) {
           const andConditions = (institutionWhere[Op.and] as any[]) || []
+          // Secure JSONB query using Sequelize.where with cast
           andConditions.push(
-            Sequelize.literal(`"institution"."address"->>'state' ILIKE '%${instFilters.state.replace(/'/g, "''")}%'`)
+            Sequelize.where(
+              Sequelize.cast(Sequelize.json('institution.address.state'), 'text'),
+              { [Op.iLike]: `%${instFilters.state}%` }
+            )
           )
           institutionWhere[Op.and] = andConditions as any
         }

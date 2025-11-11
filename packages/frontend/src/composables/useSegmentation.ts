@@ -89,6 +89,14 @@ export function useSegmentation() {
     try {
       const response = await segmentationApi.createSegment(data)
       segments.value.push(response.data)
+
+      // Invalidate and update cache
+      segmentsCache.value = {
+        data: segments.value,
+        lastUpdated: Date.now(),
+        ttl: 5 * 60 * 1000
+      }
+
       return response.data
     } catch (err) {
       error.value = err instanceof Error ? err.message : "Failed to create segment"
@@ -112,6 +120,14 @@ export function useSegmentation() {
       if (currentSegment.value?.id === id) {
         currentSegment.value = response.data
       }
+
+      // Invalidate and update cache
+      segmentsCache.value = {
+        data: segments.value,
+        lastUpdated: Date.now(),
+        ttl: 5 * 60 * 1000
+      }
+
       return response.data
     } catch (err) {
       error.value = err instanceof Error ? err.message : "Failed to update segment"
@@ -132,6 +148,13 @@ export function useSegmentation() {
       if (currentSegment.value?.id === id) {
         currentSegment.value = null
       }
+
+      // Invalidate and update cache
+      segmentsCache.value = {
+        data: segments.value,
+        lastUpdated: Date.now(),
+        ttl: 5 * 60 * 1000
+      }
     } catch (err) {
       error.value = err instanceof Error ? err.message : "Failed to delete segment"
       console.error("Error deleting segment:", err)
@@ -148,6 +171,14 @@ export function useSegmentation() {
     try {
       const response = await segmentationApi.duplicateSegment(id)
       segments.value.push(response.data)
+
+      // Invalidate and update cache
+      segmentsCache.value = {
+        data: segments.value,
+        lastUpdated: Date.now(),
+        ttl: 5 * 60 * 1000
+      }
+
       return response.data
     } catch (err) {
       error.value = err instanceof Error ? err.message : "Failed to duplicate segment"

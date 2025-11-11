@@ -41,14 +41,9 @@ export class SegmentController {
       const segmentsWithStats = await Promise.all(
         filteredSegments.map(async (segment) => {
           try {
-            // Fix Sequelize field access issue with public class fields
-            const segmentData = segment.toJSON() as any
-            segment.criteria = segmentData.criteria
-            segment.type = segmentData.type
-
             const stats = await SegmentService.getSegmentStats(segment)
             return {
-              ...segmentData,
+              ...segment.toJSON(),
               stats,
             }
           } catch (err) {
@@ -73,13 +68,15 @@ export class SegmentController {
         data: segmentsWithStats,
       }
     } catch (error) {
-      // Avoid breaking export flows: log and return empty data when something goes wrong
-      logger.error('getSegmentResults error', { error: (error as Error).message, stack: (error as Error).stack, id: ctx.params.id })
-      ctx.status = 200
+      logger.error('getSegments error', {
+        error: (error as Error).message,
+        stack: (error as Error).stack,
+        userId: (ctx.state.user as User)?.id
+      })
+      ctx.status = 500
       ctx.body = {
-        success: true,
-        data: [],
-        meta: { total: 0, limit: 0, offset: 0 },
+        success: false,
+        error: (error as Error).message || 'Failed to load segments',
       }
     }
   }
@@ -118,17 +115,12 @@ export class SegmentController {
 
       // Relaxed: allow fetching segment details for any authenticated user
 
-      // Fix Sequelize field access issue with public class fields
-      const segmentData = segment.toJSON() as any
-      segment.criteria = segmentData.criteria
-      segment.type = segmentData.type
-
       const stats = await SegmentService.getSegmentStats(segment)
 
       ctx.body = {
         success: true,
         data: {
-          ...segmentData,
+          ...segment.toJSON(),
           stats,
         },
       }
@@ -351,11 +343,6 @@ export class SegmentController {
 
       // Relaxed: allow accessing results for any authenticated user
 
-      // Fix Sequelize field access issue with public class fields
-      const segmentData = segment.toJSON() as any
-      segment.criteria = segmentData.criteria
-      segment.type = segmentData.type
-
       const results = await SegmentService.getSegmentResults(segment, additionalFilters)
 
       // Apply pagination if specified
@@ -527,19 +514,14 @@ export class SegmentController {
         return
       }
 
-      // Get data from JSON representation (Sequelize field access issue with public class fields)
-      const segmentData = segment.toJSON() as any
-      const criteria = segmentData.criteria as SegmentCriteria
-      const segmentType = segmentData.type as SegmentType
-
       logger.info('getSegmentAnalytics: Segment retrieved', {
         segmentId: segment.id,
         segmentName: segment.name,
-        segmentType: segmentType,
-        hasCriteria: !!criteria,
-        criteriaType: typeof criteria,
-        criteriaValue: criteria,
-        criteriaJSON: JSON.stringify(criteria)
+        segmentType: segment.type,
+        hasCriteria: !!segment.criteria,
+        criteriaType: typeof segment.criteria,
+        criteriaValue: segment.criteria,
+        criteriaJSON: JSON.stringify(segment.criteria)
       })
 
       // Super admins have access to all segments
@@ -565,11 +547,11 @@ export class SegmentController {
       }
 
       // Validate segment has criteria - if not, return empty analytics
-      if (!criteria) {
+      if (!segment.criteria) {
         logger.warn('Segment has no criteria, returning empty analytics', {
           segmentId: id,
-          criteriaValue: criteria,
-          criteriaKeys: criteria ? Object.keys(criteria) : 'null/undefined'
+          criteriaValue: segment.criteria,
+          criteriaKeys: segment.criteria ? Object.keys(segment.criteria) : 'null/undefined'
         })
         ctx.body = {
           success: true,
@@ -587,17 +569,13 @@ export class SegmentController {
         return
       }
 
-      // Assign criteria and type to segment for service methods
-      segment.criteria = criteria
-      segment.type = segmentType
-
       try {
         const analytics = await SegmentService.getSegmentAnalytics(segment)
 
         // Get additional analytics based on segment type
         let additionalAnalytics = {}
 
-        if (segmentType === "institution") {
+        if (segment.type === "institution") {
           additionalAnalytics = await SegmentService.getInstitutionAnalytics(segment)
         } else {
           additionalAnalytics = await SegmentService.getContactAnalytics(segment)
