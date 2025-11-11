@@ -1,33 +1,8 @@
 <template>
   <v-card elevation="2" class="h-100">
-    <v-card-title class="d-flex align-center justify-space-between">
-      <div class="d-flex align-center">
-        <v-icon icon="mdi-chart-box" color="primary" class="mr-2" />
-        Indicateurs clés (KPIs)
-      </div>
-      <v-btn-group variant="outlined" density="compact">
-        <v-btn
-          :color="period === 'week' ? 'primary' : undefined"
-          size="x-small"
-          @click="setPeriod('week')"
-        >
-          7j
-        </v-btn>
-        <v-btn
-          :color="period === 'month' ? 'primary' : undefined"
-          size="x-small"
-          @click="setPeriod('month')"
-        >
-          30j
-        </v-btn>
-        <v-btn
-          :color="period === 'quarter' ? 'primary' : undefined"
-          size="x-small"
-          @click="setPeriod('quarter')"
-        >
-          90j
-        </v-btn>
-      </v-btn-group>
+    <v-card-title class="d-flex align-center">
+      <v-icon icon="mdi-chart-box" color="primary" class="mr-2" />
+      Indicateurs clés (KPIs)
     </v-card-title>
 
     <!-- Loading State -->
@@ -154,10 +129,14 @@ import { ref, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import { dashboardApi, type DashboardMetrics } from '@/services/api/dashboard'
 import Chart from 'chart.js/auto'
 
+// Props
+const props = defineProps<{
+  period: 'week' | 'month' | 'quarter'
+}>()
+
 // State
 const metrics = ref<DashboardMetrics | null>(null)
 const loading = ref(false)
-const period = ref<'week' | 'month' | 'quarter'>('month')
 
 // Chart refs
 const revenueChart = ref<HTMLCanvasElement>()
@@ -176,7 +155,7 @@ async function loadMetrics() {
   loading.value = true
 
   try {
-    metrics.value = await dashboardApi.getMetrics({ period: period.value })
+    metrics.value = await dashboardApi.getMetrics({ period: props.period })
     // Wait for next tick to ensure canvases are rendered
     await nextTick()
     updateCharts()
@@ -185,12 +164,6 @@ async function loadMetrics() {
   } finally {
     loading.value = false
   }
-}
-
-// Set period
-function setPeriod(newPeriod: 'week' | 'month' | 'quarter') {
-  period.value = newPeriod
-  loadMetrics()
 }
 
 // Format currency
@@ -429,6 +402,11 @@ onUnmounted(() => {
   if (clientsChartInstance.value) clientsChartInstance.value.destroy()
   if (conversionChartInstance.value) conversionChartInstance.value.destroy()
   if (tasksChartInstance.value) tasksChartInstance.value.destroy()
+})
+
+// Watch for period changes from parent
+watch(() => props.period, () => {
+  loadMetrics()
 })
 
 watch([revenueChart, clientsChart, conversionChart, tasksChart], () => {
