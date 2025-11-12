@@ -703,8 +703,8 @@ export class ReminderRuleController {
           })),
           timeline: timeline.map((day: any) => ({
             date: day.date,
-            sent: parseInt(day.sent),
-            failed: parseInt(day.failed),
+            sent: Number.isNaN(parseInt(day.sent)) ? 0 : parseInt(day.sent),
+            failed: Number.isNaN(parseInt(day.failed)) ? 0 : parseInt(day.failed),
           })),
           lastJobRun: stats.last_sent ? new Date(stats.last_sent) : null,
           periodDays: days,
