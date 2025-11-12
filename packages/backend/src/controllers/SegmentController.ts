@@ -639,6 +639,129 @@ export class SegmentController {
   }
 
   /**
+   * Preview segment results without creating a segment
+   */
+  static async previewSegment(ctx: Context) {
+    try {
+      const user = ctx.state.user as User
+      const { type, criteria } = ctx.request.body as {
+        type: SegmentType
+        criteria: SegmentCriteria
+      }
+
+      // Validate required fields
+      if (!type || !criteria) {
+        ctx.status = 400
+        ctx.body = {
+          success: false,
+          error: "Type and criteria are required",
+        }
+        return
+      }
+
+      // Validate segment type
+      if (!Object.values(SegmentType).includes(type)) {
+        ctx.status = 400
+        ctx.body = {
+          success: false,
+          error: "Invalid segment type",
+        }
+        return
+      }
+
+      // Create a temporary segment object (not saved to DB) for preview
+      const tempSegment = Segment.build({
+        id: "preview_temp",
+        name: "Preview",
+        type,
+        criteria,
+        ownerId: user.id,
+        visibility: SegmentVisibility.PRIVATE,
+      }) as Segment
+
+      logger.info('previewSegment: Processing preview request', {
+        type,
+        criteria: JSON.stringify(criteria, null, 2),
+        userId: user.id
+      })
+
+      // Get results with limit for preview
+      const allResults = await SegmentService.getSegmentResults(tempSegment)
+      const totalCount = allResults.length
+
+      // Get sample records (max 10 for preview)
+      const sampleSize = Math.min(10, totalCount)
+      const sampleRecords = allResults.slice(0, sampleSize)
+
+      // Count active records
+      const activeCount = allResults.filter((record: any) => record.isActive !== false).length
+
+      // Format sample records based on type
+      const formattedSamples = sampleRecords.map((record: any) => {
+        if (type === SegmentType.INSTITUTION) {
+          return {
+            id: record.id,
+            name: record.name,
+            type: record.type,
+            address: record.address,
+            isActive: record.isActive !== false,
+          }
+        } else {
+          return {
+            id: record.id,
+            name: `${record.firstName} ${record.lastName}`,
+            firstName: record.firstName,
+            lastName: record.lastName,
+            title: record.title,
+            department: record.department,
+            email: record.email,
+            phone: record.phone,
+            isPrimary: record.isPrimary,
+            institution: record.institution ? {
+              id: record.institution.id,
+              name: record.institution.name,
+              type: record.institution.type,
+            } : null,
+            isActive: record.isActive !== false,
+          }
+        }
+      })
+
+      ctx.body = {
+        success: true,
+        data: {
+          total: totalCount,
+          activeCount,
+          sample: formattedSamples,
+          summary: {
+            totalRecords: totalCount,
+            activeRecords: activeCount,
+            inactiveRecords: totalCount - activeCount,
+            matchPercentage: 0, // Would require database total count
+          },
+        },
+      }
+
+      logger.info('previewSegment: Preview completed', {
+        totalCount,
+        activeCount,
+        sampleSize: formattedSamples.length
+      })
+    } catch (error) {
+      logger.error('previewSegment error', {
+        error: (error as Error).message,
+        stack: (error as Error).stack,
+        userId: (ctx.state.user as User)?.id
+      })
+      ctx.status = 500
+      ctx.body = {
+        success: false,
+        error: (error as Error).message,
+      }
+    }
+  }
+
+  /**
    * Get segment comparison with other segments
    */
   static async compareSegments(ctx: Context) {

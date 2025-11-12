@@ -141,6 +141,7 @@
 import { ref, computed, watch, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import type { SegmentType, SegmentCriteria, SegmentPreviewData } from '@medical-crm/shared'
+import { segmentationApi } from '@/services/api/segmentation'
 
 const { t } = useI18n()
 
@@ -223,20 +224,8 @@ const refreshPreview = async () => {
 
 const loadPreview = async () => {
   try {
-    // Simulate API call to get preview data
-    // In real implementation, this would call the backend API
-    await new Promise(resolve => setTimeout(resolve, 1000))
-
-    // Mock data for demonstration
-    if (hasFilters()) {
-      previewData.value = {
-        count: Math.floor(Math.random() * 1000) + 100,
-        sampleRecords: generateSampleRecords(),
-        lastUpdated: new Date()
-      }
-      activeCount.value = Math.floor(previewData.value.count * 0.8)
-      totalCount.value = 5000 // Mock total records in database
-    } else {
+    if (!hasFilters()) {
+      // Reset to empty state when no filters
       previewData.value = {
         count: 0,
         sampleRecords: [],
@@ -244,11 +233,35 @@ const loadPreview = async () => {
       }
       activeCount.value = 0
       totalCount.value = 0
+      emit('preview-updated', previewData.value)
+      return
+    }
+
+    // Call real backend API
+    const response = await segmentationApi.previewSegment(props.segmentType, props.criteria)
+
+    if (response.data) {
+      previewData.value = {
+        count: response.data.total || 0,
+        sampleRecords: response.data.sample || [],
+        lastUpdated: new Date()
+      }
+      activeCount.value = response.data.activeCount || 0
+      totalCount.value = response.data.summary?.totalRecords || response.data.total || 0
     }
 
     emit('preview-updated', previewData.value)
   } catch (error) {
     console.error('Error loading preview:', error)
+    // Reset to empty on error
+    previewData.value = {
+      count: 0,
+      sampleRecords: [],
+      lastUpdated: new Date()
+    }
+    activeCount.value = 0
+    totalCount.value = 0
+    emit('preview-updated', previewData.value)
   }
 }
 
@@ -259,35 +272,6 @@ const hasFilters = (): boolean => {
     (criteria.contactFilters && Object.keys(criteria.contactFilters).length > 0) ||
     (criteria.combinedFilters && Object.keys(criteria.combinedFilters).length > 0)
   )
-}
-
-const generateSampleRecords = () => {
-  const records = []
-  const count = Math.min(5, previewData.value.count)
-
-  for (let i = 0; i < count; i++) {
-    if (props.segmentType === 'institution') {
-      records.push({
-        id: `inst_${i + 1}`,
-        name: `Hospital ${i + 1}`,
-        type: ['hospital', 'clinic', 'medical_center'][Math.floor(Math.random() * 3)],
-        address: {
-          city: ['Paris', 'Lyon', 'Marseille', 'Toulouse'][Math.floor(Math.random() * 4)]
-        },
-        isActive: Math.random() > 0.2
-      })
-    } else {
-      records.push({
-        id: `contact_${i + 1}`,
-        name: `Dr. Smith ${i + 1}`,
-        title: ['Director', 'Manager', 'Coordinator'][Math.floor(Math.random() * 3)],
-        department: ['Surgery', 'Emergency', 'Administration'][Math.floor(Math.random() * 3)],
-        isActive: Math.random() > 0.2
-      })
-    }
-  }
-
-  return records
 }
 
 // Watchers

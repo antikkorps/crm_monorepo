@@ -91,10 +91,8 @@ class SegmentationApiClient {
   }
 
   // Segment preview and analytics
-  async previewSegment(_criteria: any): Promise<{ data: SegmentPreviewData }> {
-    // Backend preview endpoint not available yet; reuse results as a lightweight preview
-    // by posting a temporary segment to results would be ideal; for now return empty structure
-    return { data: { total: 0, sample: [], summary: {} } as unknown as SegmentPreviewData }
+  async previewSegment(type: string, criteria: any): Promise<{ data: SegmentPreviewData }> {
+    return this.post<{ data: SegmentPreviewData }>("/segments/preview", { type, criteria })
   }
 
   async getSegmentAnalytics(id: string): Promise<{ data: SegmentAnalyticsPayload }> {

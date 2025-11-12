@@ -10,6 +10,7 @@
             :value="filterType.value"
             filter
             outlined
+            @click="toggleFilterType(filterType.value)"
           >
             <v-icon left small>{{ filterType.icon }}</v-icon>
             {{ filterType.label }}
@@ -127,6 +128,14 @@ const currentFilterComponent = computed(() => {
 })
 
 // Methods
+const toggleFilterType = (filterType: string) => {
+  // If clicking on already selected type, deselect it
+  if (selectedFilterType.value === filterType) {
+    selectedFilterType.value = ""
+  }
+  // Otherwise v-chip-group will handle selection automatically
+}
+
 const addFilter = (filter: Omit<SegmentBuilderFilter, "id">) => {
   const newFilter: SegmentBuilderFilter = {
     ...filter,
