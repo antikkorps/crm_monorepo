@@ -38,22 +38,23 @@
           cols="12"
           sm="6"
           md="4"
+          class="d-flex"
         >
           <v-card
-            class="quick-action-card"
+            class="quick-action-card flex-grow-1"
             :class="`action-${action.category}`"
             variant="outlined"
             hover
             @click="handleActionClick(action)"
           >
-            <v-card-text class="text-center pa-6">
+            <v-card-text class="text-center pa-6 d-flex flex-column">
               <!-- Category Badge -->
               <v-chip
                 v-if="action.category === 'urgent'"
                 color="error"
                 size="x-small"
                 variant="flat"
-                class="mb-3"
+                class="mb-3 align-self-center"
               >
                 <v-icon start size="x-small">mdi-alert</v-icon>
                 Urgent
@@ -62,7 +63,7 @@
               <!-- Icon -->
               <v-avatar
                 size="64"
-                class="mb-4"
+                class="mb-4 align-self-center"
                 :color="action.color"
                 variant="tonal"
               >
@@ -79,7 +80,7 @@
               </v-card-title>
 
               <!-- Description -->
-              <p class="text-body-2 text-medium-emphasis mb-4">
+              <p class="text-body-2 text-medium-emphasis mb-4 flex-grow-1">
                 {{ action.description }}
               </p>
 
@@ -90,6 +91,7 @@
                 size="small"
                 block
                 append-icon="mdi-arrow-right"
+                class="mt-auto"
               >
                 Accéder
               </v-btn>
@@ -106,12 +108,9 @@
         class="mt-4"
         closable
       >
-        <div class="d-flex align-center">
-          <v-icon icon="mdi-information" class="mr-2" size="small" />
-          <span class="text-caption">
-            Les actions sont personnalisées selon votre activité et mises à jour automatiquement
-          </span>
-        </div>
+        <span class="text-caption">
+          Les actions sont personnalisées selon votre activité et mises à jour automatiquement
+        </span>
       </v-alert>
     </v-card-text>
   </v-card>
@@ -156,7 +155,7 @@ onMounted(() => {
 .quick-action-card {
   cursor: pointer;
   transition: all 0.3s ease-in-out;
-  min-height: 260px;
+  height: 100%;
   display: flex;
   flex-direction: column;
   border-radius: 12px;

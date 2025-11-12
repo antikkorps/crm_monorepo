@@ -239,8 +239,11 @@ const loadDashboardData = async () => {
     const response = await billingAnalyticsApi.getDashboard(params)
     dashboardData.value = response.data
   } catch (err: any) {
+    // Reset dashboardData to null on error to prevent Chart.js from trying to render with stale/null data
+    dashboardData.value = null
     error.value = err.message || "Failed to load billing analytics"
     showSnackbar("Failed to load billing analytics data", "error")
+    console.error("Error loading dashboard:", err)
   } finally {
     loading.value = false
   }
