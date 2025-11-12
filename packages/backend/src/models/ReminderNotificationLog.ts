@@ -1,4 +1,4 @@
-import { DataTypes, Model, Optional } from "sequelize"
+import { DataTypes, Model, Op, Optional } from "sequelize"
 import { sequelize } from "../config/database"
 import { ReminderRule } from "./ReminderRule"
 import { User } from "./User"
@@ -143,7 +143,7 @@ export class ReminderNotificationLog
         recipientId,
         status: ReminderNotificationStatus.SENT,
         sentAt: {
-          [sequelize.Sequelize.Op.gte]: cutoffTime,
+          [Op.gte]: cutoffTime,
         },
       },
       order: [["sentAt", "DESC"]],
@@ -308,7 +308,7 @@ export class ReminderNotificationLog
     const result = await this.destroy({
       where: {
         sentAt: {
-          [sequelize.Sequelize.Op.lt]: cutoffDate,
+          [Op.lt]: cutoffDate,
         },
       },
     })
