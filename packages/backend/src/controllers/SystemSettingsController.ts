@@ -1,4 +1,6 @@
 import { Context } from "koa"
+import { Op } from "sequelize"
+import { sequelize } from "../config/database"
 import { SystemSettings } from "../models/SystemSettings"
 import { User, UserRole } from "../models/User"
 import logger from "../utils/logger"
@@ -187,34 +189,67 @@ export class SystemSettingsController {
         return
       }
 
-      // Perform updates concurrently to avoid N+1 query performance issues
-      const results = await Promise.all(
-        settings.map(async ({ key, value }) => {
-          const setting = await SystemSettings.findOne({ where: { key } })
-          if (setting) {
-            await setting.update({
-              value,
-              updatedBy: user.id,
-            })
-            logger.info(`Setting '${key}' updated by ${user.email}`)
-            return { success: true, key, setting }
-          }
-          logger.warn(`Setting '${key}' not found, skipping`)
-          return { success: false, key, error: 'Setting not found' }
+      // Use transaction for atomicity and fetch all settings at once to avoid N+1 queries
+      const transaction = await sequelize.transaction()
+
+      try {
+        // Extract all keys from the settings array
+        const keys = settings.map(s => s.key)
+
+        // Fetch all settings at once using findAll with IN clause
+        const existingSettings = await SystemSettings.findAll({
+          where: {
+            key: {
+              [Op.in]: keys,
+            },
+          },
+          transaction,
         })
-      )
 
-      const updatedSettings = results.filter(r => r.success).map(r => r.setting)
-      const failedKeys = results.filter(r => !r.success).map(r => ({ key: r.key, error: r.error }))
+        // Create a map for quick lookup
+        const settingsMap = new Map(existingSettings.map((s: SystemSettings) => [s.key, s]))
 
-      ctx.status = 200
-      ctx.body = {
-        success: true,
-        data: updatedSettings,
-        ...(failedKeys.length > 0 && {
-          warnings: `${failedKeys.length} setting(s) not found`,
-          failedKeys
-        }),
+        // Track results
+        const results: Array<{ success: boolean; key: string; setting?: SystemSettings; error?: string }> = []
+
+        // Perform all updates within the transaction
+        for (const { key, value } of settings) {
+          const setting = settingsMap.get(key)
+          if (setting) {
+            await setting.update(
+              {
+                value,
+                updatedBy: user.id,
+              },
+              { transaction }
+            )
+            logger.info(`Setting '${key}' updated by ${user.email}`)
+            results.push({ success: true, key, setting })
+          } else {
+            logger.warn(`Setting '${key}' not found, skipping`)
+            results.push({ success: false, key, error: 'Setting not found' })
+          }
+        }
+
+        // Commit the transaction
+        await transaction.commit()
+
+        const updatedSettings = results.filter(r => r.success).map(r => r.setting)
+        const failedKeys = results.filter(r => !r.success).map(r => ({ key: r.key, error: r.error }))
+
+        ctx.status = 200
+        ctx.body = {
+          success: true,
+          data: updatedSettings,
+          ...(failedKeys.length > 0 && {
+            warnings: `${failedKeys.length} setting(s) not found`,
+            failedKeys
+          }),
+        }
+      } catch (transactionError) {
+        // Rollback the transaction on error
+        await transaction.rollback()
+        throw transactionError
       }
     } catch (error) {
       logger.error("Error bulk updating settings:", error)
