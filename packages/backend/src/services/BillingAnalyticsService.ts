@@ -594,29 +594,115 @@ export class BillingAnalyticsService {
     endDate?: Date,
     userId?: string
   ): Promise<BillingDashboardData> {
-    const [
-      revenueAnalytics,
-      paymentAnalytics,
-      outstandingAnalytics,
-      segmentAnalytics,
-      cashFlowProjections,
-      kpis,
-    ] = await Promise.all([
-      this.getRevenueAnalytics(startDate, endDate, userId),
-      this.getPaymentAnalytics(startDate, endDate, userId),
-      this.getOutstandingInvoiceAnalytics(userId),
-      this.getMedicalInstitutionSegmentAnalytics(userId),
-      this.getCashFlowProjections(90, userId),
-      this.calculateBillingKPIs(userId),
-    ])
+    try {
+      // Use Promise.allSettled to handle individual failures gracefully
+      const results = await Promise.allSettled([
+        this.getRevenueAnalytics(startDate, endDate, userId),
+        this.getPaymentAnalytics(startDate, endDate, userId),
+        this.getOutstandingInvoiceAnalytics(userId),
+        this.getMedicalInstitutionSegmentAnalytics(userId),
+        this.getCashFlowProjections(90, userId),
+        this.calculateBillingKPIs(userId),
+      ])
 
-    return {
-      revenueAnalytics,
-      paymentAnalytics,
-      outstandingAnalytics,
-      segmentAnalytics,
-      cashFlowProjections,
-      kpis,
+      // Extract successful results or provide default values
+      const [
+        revenueAnalytics,
+        paymentAnalytics,
+        outstandingAnalytics,
+        segmentAnalytics,
+        cashFlowProjections,
+        kpis,
+      ] = results.map((result, index) => {
+        if (result.status === 'fulfilled') {
+          return result.value
+        } else {
+          // Log the specific error
+          const methodNames = [
+            'getRevenueAnalytics',
+            'getPaymentAnalytics',
+            'getOutstandingInvoiceAnalytics',
+            'getMedicalInstitutionSegmentAnalytics',
+            'getCashFlowProjections',
+            'calculateBillingKPIs'
+          ]
+          console.error(`Error in ${methodNames[index]}:`, result.reason)
+
+          // Return appropriate default value based on method
+          switch (index) {
+            case 0: // revenueAnalytics
+              return {
+                totalRevenue: 0,
+                paidRevenue: 0,
+                pendingRevenue: 0,
+                overdueRevenue: 0,
+                monthlyRevenue: [],
+                revenueByStatus: [],
+                averageInvoiceValue: 0,
+                averagePaymentTime: 0
+              }
+            case 1: // paymentAnalytics
+              return {
+                totalPayments: 0,
+                paymentsByMethod: [],
+                paymentsByStatus: [],
+                averagePaymentAmount: 0,
+                paymentTrends: [],
+                partialPaymentStats: {
+                  invoicesWithPartialPayments: 0,
+                  averagePartialPaymentRatio: 0,
+                  totalPartiallyPaidAmount: 0,
+                  averageTimeToFullPayment: 0
+                }
+              }
+            case 2: // outstandingAnalytics
+              return {
+                totalOutstanding: 0,
+                overdueAmount: 0,
+                overdueCount: 0,
+                partiallyPaidAmount: 0,
+                partiallyPaidCount: 0,
+                agingBuckets: [],
+                topOverdueInvoices: []
+              }
+            case 3: // segmentAnalytics
+              return {
+                byType: {},
+                byState: {},
+                totalInstitutions: 0
+              }
+            case 4: // cashFlowProjections
+              return {
+                projections: [],
+                totalExpected: 0,
+                totalConfirmed: 0
+              }
+            case 5: // kpis
+              return {
+                totalActiveInvoices: 0,
+                averageCollectionTime: 0,
+                collectionRate: 0,
+                overdueRate: 0,
+                monthlyGrowthRate: 0,
+                customerPaymentScore: 0
+              }
+            default:
+              return {}
+          }
+        }
+      })
+
+      return {
+        revenueAnalytics,
+        paymentAnalytics,
+        outstandingAnalytics,
+        segmentAnalytics,
+        cashFlowProjections,
+        kpis,
+      }
+    } catch (error) {
+      console.error('Fatal error in getBillingDashboardData:', error)
+      throw error
     }
   }
 
