@@ -6,6 +6,7 @@ import { ReminderService } from "../services/ReminderService"
 import { logger } from "../utils/logger"
 import { validateReminderRule } from "../validation/reminderValidation"
 import { sequelize } from "../config/database"
+import { createError } from "../middleware/errorHandler"
 
 // Type guard function to check if user is authenticated
 function isAuthenticated(ctx: Context): ctx is Context & { state: { user: User } } {
@@ -580,7 +581,16 @@ export class ReminderRuleController {
     try {
       const user = requireAuth(ctx)
       const { daysBack = "30" } = ctx.query as any
-      const days = parseInt(daysBack)
+      const days = parseInt(daysBack, 10)
+
+      // Validate daysBack parameter
+      if (isNaN(days) || days < 1 || days > 365) {
+        throw createError(
+          "Days back must be a valid number between 1 and 365",
+          400,
+          "INVALID_DAYS_BACK"
+        )
+      }
 
       // Date range for analytics
       const cutoffDate = new Date()
