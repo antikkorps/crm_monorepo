@@ -179,37 +179,7 @@
 import { ref, onMounted, computed } from 'vue'
 import { formatDistanceToNow } from 'date-fns'
 import { fr } from 'date-fns/locale'
-
-interface ReminderStats {
-  summary: {
-    totalRules: number
-    activeRules: number
-    inactiveRules: number
-  }
-  notifications: {
-    totalSent: number
-    totalFailed: number
-    successRate: number
-    daysActive: number
-    averagePerDay: number
-  }
-  topRules: Array<{
-    id: string
-    entityType: string
-    triggerType: string
-    priority: string
-    isActive: boolean
-    notificationsSent: number
-    lastTriggered: string | null
-  }>
-  timeline: Array<{
-    date: string
-    sent: number
-    failed: number
-  }>
-  lastJobRun: string | null
-  periodDays: number
-}
+import { reminderRulesApi, type ReminderStats } from '@/services/api'
 
 const loading = ref(true)
 const error = ref<string | null>(null)
@@ -234,22 +204,7 @@ async function loadStats() {
   error.value = null
 
   try {
-    const response = await fetch('/api/reminder-rules/stats/detailed?daysBack=30', {
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('token')}`,
-      },
-    })
-
-    if (!response.ok) {
-      throw new Error('Failed to load reminder stats')
-    }
-
-    const data = await response.json()
-    if (data.success && data.data) {
-      stats.value = data.data
-    } else {
-      throw new Error(data.message || 'Invalid response format')
-    }
+    stats.value = await reminderRulesApi.getDetailedStats(30)
   } catch (err) {
     console.error('Error loading reminder stats:', err)
     error.value = 'Une erreur est survenue lors du chargement des statistiques'
