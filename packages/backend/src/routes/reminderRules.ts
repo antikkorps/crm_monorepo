@@ -24,12 +24,11 @@ router.get("/notifications/history", reminderRuleController.getMyNotificationHis
 // POST /api/reminder-rules/process - Manually trigger reminder processing (SUPER_ADMIN only)
 router.post("/process", requireAdmin, reminderRuleController.processReminders.bind(reminderRuleController))
 
-// GET /api/reminder-rules/:id - Get reminder rule by ID
-router.get("/:id", reminderRuleController.getReminderRule.bind(reminderRuleController))
-
 // GET /api/reminder-rules/:id/logs - Get notification logs for a specific rule
 router.get("/:id/logs", reminderRuleController.getReminderRuleLogs.bind(reminderRuleController))
 
+// GET /api/reminder-rules/:id - Get reminder rule by ID
+router.get("/:id", reminderRuleController.getReminderRule.bind(reminderRuleController))
 // POST /api/reminder-rules - Create new reminder rule
 router.post("/", reminderRuleController.createReminderRule.bind(reminderRuleController))
 
