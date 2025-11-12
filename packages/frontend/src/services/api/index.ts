@@ -632,6 +632,9 @@ export { digiformaApi } from './digiforma'
 // Export Dashboard API
 export { dashboardApi } from './dashboard'
 
+// Export Reminder Rules API
+export { reminderRulesApi } from './reminderRules'
+
 // System Settings API
 export const settingsApi = {
   getPublic: () => apiClient.get("/settings/public"),
