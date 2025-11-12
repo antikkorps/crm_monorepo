@@ -1393,10 +1393,10 @@ export class InvoiceService {
       .map(([key, data]) => {
         const [year, month] = key.split("-")
         return {
-          month: new Date(parseInt(year), parseInt(month) - 1).toLocaleString("default", {
+          month: new Date(Number.parseInt(year), Number.parseInt(month) - 1).toLocaleString("default", {
             month: "long",
           }),
-          year: parseInt(year),
+          year: Number.parseInt(year),
           count: data.count,
           amount: data.amount,
         }

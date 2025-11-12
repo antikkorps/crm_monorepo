@@ -53,8 +53,8 @@ export class ReminderController {
 
       // Apply pagination
       const paginatedReminders = reminders.slice(
-        parseInt(offset as string),
-        parseInt(offset as string) + parseInt(limit as string)
+        Number.parseInt(offset as string),
+        Number.parseInt(offset as string) + Number.parseInt(limit as string)
       )
 
       ctx.body = {
@@ -62,8 +62,8 @@ export class ReminderController {
         data: paginatedReminders,
         pagination: {
           total: reminders.length,
-          limit: parseInt(limit as string),
-          offset: parseInt(offset as string),
+          limit: Number.parseInt(limit as string),
+          offset: Number.parseInt(offset as string),
         },
       }
     } catch (error: any) {
@@ -624,7 +624,7 @@ export class ReminderController {
     try {
       const { userId, hoursAhead = 24 } = ctx.query
 
-      const parsedHours = parseInt(hoursAhead as string)
+      const parsedHours = Number.parseInt(hoursAhead as string)
       if (isNaN(parsedHours) || parsedHours <= 0) {
         throw createError("Invalid hours ahead value", 400, "INVALID_HOURS_AHEAD")
       }

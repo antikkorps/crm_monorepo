@@ -45,8 +45,8 @@ export class ExportController {
         end: new Date(ctx.query.endDate as string),
       } : undefined,
       searchQuery: ctx.query.search as string,
-      limit: ctx.query.limit ? parseInt(ctx.query.limit as string) : undefined,
-      offset: ctx.query.offset ? parseInt(ctx.query.offset as string) : undefined,
+      limit: ctx.query.limit ? Number.parseInt(ctx.query.limit as string) : undefined,
+      offset: ctx.query.offset ? Number.parseInt(ctx.query.offset as string) : undefined,
       teamMemberIds: user.role === UserRole.SUPER_ADMIN || user.role === UserRole.TEAM_ADMIN 
         ? undefined
         : [user.id],
@@ -192,8 +192,8 @@ export class ExportController {
           end: new Date(body.endDate),
         } : undefined,
         searchQuery: body.search as string,
-        limit: body.limit ? parseInt(body.limit) : undefined,
-        offset: body.offset ? parseInt(body.offset) : undefined,
+        limit: body.limit ? Number.parseInt(body.limit) : undefined,
+        offset: body.offset ? Number.parseInt(body.offset) : undefined,
         useQueue: body.useQueue || false,
         teamMemberIds: user.role === UserRole.SUPER_ADMIN || user.role === UserRole.TEAM_ADMIN 
           ? undefined

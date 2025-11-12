@@ -670,11 +670,11 @@ export class BillingAnalyticsService {
 
     return results.map((row) => ({
       month: row.month_name.trim(),
-      year: parseInt(row.year),
+      year: Number.parseInt(row.year),
       totalInvoiced: parseFloat(row.total_invoiced) || 0,
       totalPaid: parseFloat(row.total_paid) || 0,
-      invoiceCount: parseInt(row.invoice_count) || 0,
-      paymentCount: parseInt(row.payment_count) || 0,
+      invoiceCount: Number.parseInt(row.invoice_count) || 0,
+      paymentCount: Number.parseInt(row.payment_count) || 0,
     }))
   }
 
@@ -835,7 +835,7 @@ export class BillingAnalyticsService {
     return results.map((row) => ({
       date: row.date,
       amount: parseFloat(row.amount) || 0,
-      count: parseInt(row.count) || 0,
+      count: Number.parseInt(row.count) || 0,
     }))
   }
 
@@ -861,7 +861,7 @@ export class BillingAnalyticsService {
     const row = result[0] as any
 
     return {
-      invoicesWithPartialPayments: parseInt(row?.invoices_with_partial_payments) || 0,
+      invoicesWithPartialPayments: Number.parseInt(row?.invoices_with_partial_payments) || 0,
       averagePartialPaymentRatio: parseFloat(row?.avg_partial_payment_ratio) || 0,
       totalPartiallyPaidAmount: parseFloat(row?.total_partially_paid_amount) || 0,
       averageTimeToFullPayment: parseFloat(row?.avg_time_to_full_payment) || 0,

@@ -580,7 +580,7 @@ export class ReminderRuleController {
     try {
       const user = requireAuth(ctx)
       const { daysBack = "30" } = ctx.query as any
-      const days = parseInt(daysBack)
+      const days = Number.parseInt(daysBack)
 
       // Date range for analytics
       const cutoffDate = new Date()
@@ -619,8 +619,8 @@ export class ReminderRuleController {
       )) as any
 
       const stats = notificationStats[0]
-      const totalSent = parseInt(stats.total_sent) || 0
-      const totalFailed = parseInt(stats.total_failed) || 0
+      const totalSent = Number.parseInt(stats.total_sent) || 0
+      const totalFailed = Number.parseInt(stats.total_failed) || 0
       const totalNotifications = totalSent + totalFailed
       const successRate = totalNotifications > 0 ? (totalSent / totalNotifications) * 100 : 0
 
@@ -689,8 +689,8 @@ export class ReminderRuleController {
             totalSent,
             totalFailed,
             successRate: Math.round(successRate * 100) / 100,
-            daysActive: parseInt(stats.days_active) || 0,
-            averagePerDay: stats.days_active > 0 ? Math.round(totalSent / parseInt(stats.days_active)) : 0,
+            daysActive: Number.parseInt(stats.days_active) || 0,
+            averagePerDay: stats.days_active > 0 ? Math.round(totalSent / Number.parseInt(stats.days_active)) : 0,
           },
           topRules: topRules.map((rule: any) => ({
             id: rule.id,
@@ -698,13 +698,13 @@ export class ReminderRuleController {
             triggerType: rule.trigger_type,
             priority: rule.priority,
             isActive: rule.is_active,
-            notificationsSent: parseInt(rule.notifications_sent),
+            notificationsSent: Number.parseInt(rule.notifications_sent),
             lastTriggered: rule.last_triggered,
           })),
           timeline: timeline.map((day: any) => ({
             date: day.date,
-            sent: parseInt(day.sent),
-            failed: parseInt(day.failed),
+            sent: Number.parseInt(day.sent),
+            failed: Number.parseInt(day.failed),
           })),
           lastJobRun: stats.last_sent ? new Date(stats.last_sent) : null,
           periodDays: days,
@@ -771,7 +771,7 @@ export class ReminderRuleController {
 
       // Filter by date range
       const cutoffDate = new Date()
-      cutoffDate.setDate(cutoffDate.getDate() - parseInt(daysBack))
+      cutoffDate.setDate(cutoffDate.getDate() - Number.parseInt(daysBack))
       whereClause.sentAt = {
         [sequelize.Sequelize.Op.gte]: cutoffDate,
       }
@@ -787,12 +787,12 @@ export class ReminderRuleController {
           },
         ],
         order: [["sentAt", "DESC"]],
-        limit: parseInt(limit),
-        offset: parseInt(offset),
+        limit: Number.parseInt(limit),
+        offset: Number.parseInt(offset),
       })
 
       // Get rule stats
-      const ruleStats = await ReminderNotificationLog.getRuleStats(id, parseInt(daysBack))
+      const ruleStats = await ReminderNotificationLog.getRuleStats(id, Number.parseInt(daysBack))
 
       ctx.body = {
         success: true,
@@ -801,9 +801,9 @@ export class ReminderRuleController {
           stats: ruleStats,
           pagination: {
             total: count,
-            limit: parseInt(limit),
-            offset: parseInt(offset),
-            hasMore: parseInt(offset) + parseInt(limit) < count,
+            limit: Number.parseInt(limit),
+            offset: Number.parseInt(offset),
+            hasMore: Number.parseInt(offset) + Number.parseInt(limit) < count,
           },
         },
       }
@@ -832,7 +832,7 @@ export class ReminderRuleController {
       const { limit = "50", offset = "0", daysBack = "30" } = ctx.query as any
 
       const cutoffDate = new Date()
-      cutoffDate.setDate(cutoffDate.getDate() - parseInt(daysBack))
+      cutoffDate.setDate(cutoffDate.getDate() - Number.parseInt(daysBack))
 
       const { count, rows: logs } = await ReminderNotificationLog.findAndCountAll({
         where: {
@@ -849,8 +849,8 @@ export class ReminderRuleController {
           },
         ],
         order: [["sentAt", "DESC"]],
-        limit: parseInt(limit),
-        offset: parseInt(offset),
+        limit: Number.parseInt(limit),
+        offset: Number.parseInt(offset),
       })
 
       ctx.body = {
@@ -859,9 +859,9 @@ export class ReminderRuleController {
           logs,
           pagination: {
             total: count,
-            limit: parseInt(limit),
-            offset: parseInt(offset),
-            hasMore: parseInt(offset) + parseInt(limit) < count,
+            limit: Number.parseInt(limit),
+            offset: Number.parseInt(offset),
+            hasMore: Number.parseInt(offset) + Number.parseInt(limit) < count,
           },
         },
       }

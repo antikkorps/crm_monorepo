@@ -405,7 +405,7 @@ export class Invoice
             return 0
           }
           const seqStr = invoice.invoiceNumber.slice(-4)
-          const seqNum = parseInt(seqStr, 10)
+          const seqNum = Number.parseInt(seqStr, 10)
           return isNaN(seqNum) ? 0 : seqNum
         })
         .filter(seq => seq > 0)

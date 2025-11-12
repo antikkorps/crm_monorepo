@@ -42,8 +42,8 @@ export class SegmentController {
 
       // Apply pagination if specified
       let paginatedSegments = filteredSegments
-      const limitNum = limit ? parseInt(limit as string) : undefined
-      const offsetNum = offset ? parseInt(offset as string) : 0
+      const limitNum = limit ? Number.parseInt(limit as string) : undefined
+      const offsetNum = offset ? Number.parseInt(offset as string) : 0
 
       if (limitNum) {
         paginatedSegments = filteredSegments.slice(offsetNum, offsetNum + limitNum)
@@ -366,8 +366,8 @@ export class SegmentController {
       // Apply pagination if specified
       let paginatedResults = results
       if (limit) {
-        const start = parseInt(offset as string) || 0
-        const end = start + parseInt(limit as string)
+        const start = Number.parseInt(offset as string) || 0
+        const end = start + Number.parseInt(limit as string)
         paginatedResults = results.slice(start, end)
       }
 
@@ -376,8 +376,8 @@ export class SegmentController {
         data: paginatedResults,
         meta: {
           total: results.length,
-          limit: limit ? parseInt(limit as string) : results.length,
-          offset: offset ? parseInt(offset as string) : 0,
+          limit: limit ? Number.parseInt(limit as string) : results.length,
+          offset: offset ? Number.parseInt(offset as string) : 0,
         },
       }
     } catch (error) {
