@@ -1,9 +1,82 @@
 <template>
   <div class="revenue-tab">
     <!-- Loading State -->
-    <div v-if="loading" class="text-center py-12">
-      <v-progress-circular indeterminate color="primary" size="64" />
-      <p class="text-body-1 mt-4">Chargement des revenus...</p>
+    <div v-if="loading" class="pa-4">
+      <!-- Period Selector Skeleton -->
+      <v-row class="mb-6">
+        <v-col cols="12">
+          <div class="d-flex align-center justify-space-between flex-wrap ga-4">
+            <div class="d-flex align-center">
+              <v-skeleton-loader type="avatar" width="20" height="20" class="mr-2" />
+              <v-skeleton-loader type="text" width="150" />
+            </div>
+            <div class="d-flex ga-2">
+              <v-skeleton-loader type="chip" width="80" v-for="i in 4" :key="i" />
+            </div>
+          </div>
+        </v-col>
+      </v-row>
+
+      <!-- Total Revenue Card Skeleton -->
+      <v-row class="mb-6">
+        <v-col cols="12">
+          <v-card elevation="2" color="primary" variant="tonal">
+            <v-card-text class="text-center py-8">
+              <v-skeleton-loader type="text" width="300" class="mx-auto mb-2" />
+              <v-skeleton-loader type="text" width="200" class="mx-auto" />
+            </v-card-text>
+          </v-card>
+        </v-col>
+      </v-row>
+
+      <!-- Revenue Breakdown Skeletons -->
+      <v-row class="mb-6">
+        <v-col cols="12" md="4" v-for="i in 3" :key="i">
+          <v-card elevation="2" class="h-100">
+            <v-card-title class="d-flex align-center">
+              <v-skeleton-loader type="avatar" width="24" height="24" class="mr-2" />
+              <v-skeleton-loader type="text" width="120" />
+            </v-card-title>
+            <v-card-text>
+              <v-skeleton-loader type="text" width="180" class="mb-3" />
+              <v-divider class="my-3" />
+              <v-row class="mb-3">
+                <v-col cols="6">
+                  <v-skeleton-loader type="text" width="100" class="mb-1" />
+                  <v-skeleton-loader type="text" width="60" />
+                </v-col>
+                <v-col cols="6">
+                  <v-skeleton-loader type="text" width="100" class="mb-1" />
+                  <v-skeleton-loader type="text" width="60" />
+                </v-col>
+              </v-row>
+              <v-skeleton-loader type="text" width="150" />
+            </v-card-text>
+          </v-card>
+        </v-col>
+      </v-row>
+
+      <!-- Chart Skeleton -->
+      <v-row class="mb-6">
+        <v-col cols="12">
+          <v-card elevation="2">
+            <v-card-title class="d-flex align-center justify-space-between">
+              <div class="d-flex align-center">
+                <v-skeleton-loader type="avatar" width="24" height="24" class="mr-2" />
+                <v-skeleton-loader type="text" width="200" />
+              </div>
+              <div class="d-flex ga-1">
+                <v-skeleton-loader type="button" width="40" v-for="i in 2" :key="i" />
+              </div>
+            </v-card-title>
+            <v-card-text>
+              <div class="chart-container">
+                <v-skeleton-loader type="image" height="400" />
+              </div>
+            </v-card-text>
+          </v-card>
+        </v-col>
+      </v-row>
     </div>
 
     <!-- Content -->

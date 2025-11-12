@@ -1,4 +1,4 @@
-import { Context } from "koa"
+import { Context } from "../types/koa"
 import { ReminderRule } from "../models/ReminderRule"
 import { ReminderNotificationLog } from "../models/ReminderNotificationLog"
 import { User, UserRole } from "../models/User"
@@ -6,6 +6,7 @@ import { ReminderService } from "../services/ReminderService"
 import { logger } from "../utils/logger"
 import { validateReminderRule } from "../validation/reminderValidation"
 import { sequelize } from "../config/database"
+import { Op } from "sequelize"
 import { createError } from "../middleware/errorHandler"
 
 // Type guard function to check if user is authenticated
@@ -809,7 +810,7 @@ export class ReminderRuleController {
       const cutoffDate = new Date()
       cutoffDate.setDate(cutoffDate.getDate() - Number.parseInt(daysBack))
       whereClause.sentAt = {
-        [sequelize.Sequelize.Op.gte]: cutoffDate,
+        [Op.gte]: cutoffDate,
       }
 
       // Get logs with pagination
@@ -874,7 +875,7 @@ export class ReminderRuleController {
         where: {
           recipientId: user.id,
           sentAt: {
-            [sequelize.Sequelize.Op.gte]: cutoffDate,
+            [Op.gte]: cutoffDate,
           },
         },
         include: [

@@ -141,7 +141,7 @@ const addFilter = (filter: Omit<SegmentBuilderFilter, "id">) => {
 
 const removeFilter = (index: number) => {
   filters.value.splice(index, 1)
-  emit("update:modelValue", filters.value)
+  emit("update:modelValue", [...filters.value])
   emit("filter-removed")
 }
 

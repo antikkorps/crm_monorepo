@@ -32,7 +32,8 @@
       outlined
       dense
       class="mb-3"
-      :disabled="!region"
+      :disabled="!country"
+      clearable
     />
     <v-btn
       color="primary"
@@ -101,28 +102,33 @@ const regionOptions = computed(() => {
 })
 
 const cityOptions = computed(() => {
-  if (!region.value) return []
+  if (!country.value) return []
   
   const cities: Record<string, Array<{ value: string; label: string }>> = {
-    ca: [
+    us: [
       { value: 'la', label: 'Los Angeles' },
-      { value: 'sf', label: 'San Francisco' }
-    ],
-    ny: [
+      { value: 'sf', label: 'San Francisco' },
       { value: 'nyc', label: 'New York City' },
-      { value: 'buffalo', label: 'Buffalo' }
+      { value: 'buffalo', label: 'Buffalo' },
+      { value: 'houston', label: 'Houston' },
+      { value: 'chicago', label: 'Chicago' }
     ],
-    on: [
+    ca: [
       { value: 'toronto', label: 'Toronto' },
-      { value: 'ottawa', label: 'Ottawa' }
+      { value: 'ottawa', label: 'Ottawa' },
+      { value: 'vancouver', label: 'Vancouver' },
+      { value: 'montreal', label: 'Montreal' }
     ],
-    idf: [
+    fr: [
       { value: 'paris', label: 'Paris' },
-      { value: 'versailles', label: 'Versailles' }
+      { value: 'versailles', label: 'Versailles' },
+      { value: 'lyon', label: 'Lyon' },
+      { value: 'marseille', label: 'Marseille' },
+      { value: 'nice', label: 'Nice' }
     ]
   }
   
-  return cities[region.value] || []
+  return cities[country.value] || []
 })
 
 // Methods
@@ -132,35 +138,53 @@ const onCountryChange = () => {
 }
 
 const onRegionChange = () => {
-  city.value = ''
+  // Don't clear city when region changes to allow independent selection
 }
 
 const addFilter = () => {
-  if (!country.value) return
+  if (!country.value && !city.value) return
 
   const locationParts = []
+  let filterValue: any = {}
+
   if (country.value) {
     const countryLabel = countryOptions.find(c => c.value === country.value)?.label
     locationParts.push(countryLabel)
+    filterValue.country = country.value
   }
+  
   if (region.value) {
     const regionLabel = regionOptions.value.find(r => r.value === region.value)?.label
     locationParts.push(regionLabel)
+    filterValue.region = region.value
   }
+  
   if (city.value) {
     const cityLabel = cityOptions.value.find(c => c.value === city.value)?.label
     locationParts.push(cityLabel)
+    filterValue.city = city.value
+  }
+
+  // If only city is selected, we need to determine the country from the city
+  if (!country.value && city.value) {
+    // Find which country this city belongs to
+    for (const [countryCode, cities] of Object.entries(cityOptions.value)) {
+      if (cities.some(c => c.value === city.value)) {
+        filterValue.country = countryCode
+        const countryLabel = countryOptions.find(c => c.value === countryCode)?.label
+        if (countryLabel) {
+          locationParts.unshift(countryLabel)
+        }
+        break
+      }
+    }
   }
 
   emit('add-filter', {
     type: 'institution',
     field: 'location',
     operator: 'equals',
-    value: {
-      country: country.value,
-      region: region.value,
-      city: city.value
-    },
+    value: filterValue,
     label: `${t('segmentation.filters.location.label')}: ${locationParts.join(', ')}`,
     group: 'institution'
   })

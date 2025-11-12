@@ -1,9 +1,49 @@
 <template>
   <div class="digiforma-tab">
     <!-- Loading State -->
-    <div v-if="loading" class="text-center py-12">
-      <v-progress-circular indeterminate color="primary" size="64" />
-      <p class="text-body-1 mt-4">Chargement des données Digiforma...</p>
+    <div v-if="loading" class="pa-4">
+      <!-- Company Info Skeleton -->
+      <v-card class="mb-6" elevation="2">
+        <v-card-title class="d-flex align-center">
+          <v-skeleton-loader type="avatar" width="24" height="24" class="mr-2" />
+          <v-skeleton-loader type="text" width="200" />
+        </v-card-title>
+        <v-card-text>
+          <v-row>
+            <v-col cols="12" md="6" v-for="i in 4" :key="i">
+              <v-skeleton-loader type="text" width="120" class="mb-1" />
+              <v-skeleton-loader type="heading" width="180" />
+            </v-col>
+          </v-row>
+        </v-card-text>
+      </v-card>
+
+      <!-- Revenue Summary Skeleton -->
+      <v-card class="mb-6" elevation="2" color="green" variant="tonal">
+        <v-card-text class="text-center py-8">
+          <v-skeleton-loader type="text" width="300" class="mx-auto mb-3" />
+          <v-skeleton-loader type="text" width="250" class="mx-auto mb-4" />
+          <v-skeleton-loader type="text" width="200" class="mx-auto" />
+        </v-card-text>
+      </v-card>
+
+      <!-- Tables Skeletons -->
+      <v-row class="mb-6">
+        <v-col cols="12" md="6" v-for="i in 2" :key="i">
+          <v-card elevation="2">
+            <v-card-title class="d-flex align-center justify-space-between">
+              <div class="d-flex align-center">
+                <v-skeleton-loader type="avatar" width="24" height="24" class="mr-2" />
+                <v-skeleton-loader type="text" width="150" />
+              </div>
+              <v-skeleton-loader type="chip" width="80" />
+            </v-card-title>
+            <v-card-text>
+              <v-skeleton-loader type="table" />
+            </v-card-text>
+          </v-card>
+        </v-col>
+      </v-row>
     </div>
 
     <!-- Content -->

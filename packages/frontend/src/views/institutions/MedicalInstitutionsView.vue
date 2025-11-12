@@ -203,6 +203,8 @@
           item-key="id"
           class="elevation-0 enhanced-table"
           @update:page="onPageChange"
+          @update:items-per-page="onItemsPerPageChange"
+          @update:sort-by="onSortChange"
         >
           <template #no-data>
             <div class="table-empty-state text-center py-12">
@@ -672,6 +674,25 @@ const loadInstitutions = async () => {
 const onPageChange = (page: number) => {
   if (loading.value) return // Prevent page change during loading
   lazyParams.value.first = (page - 1) * lazyParams.value.rows
+  loadInstitutions()
+}
+
+const onItemsPerPageChange = (itemsPerPage: number) => {
+  if (loading.value) return
+  lazyParams.value.rows = itemsPerPage
+  lazyParams.value.first = 0 // Reset to first page
+  loadInstitutions()
+}
+
+const onSortChange = (sortOptions: any[]) => {
+  if (loading.value) return
+  if (sortOptions && sortOptions.length > 0) {
+    lazyParams.value.sortField = sortOptions[0].key
+    lazyParams.value.sortOrder = sortOptions[0].order === 'desc' ? -1 : 1
+  } else {
+    lazyParams.value.sortField = "name"
+    lazyParams.value.sortOrder = 1
+  }
   loadInstitutions()
 }
 
