@@ -1,5 +1,6 @@
 import { Context } from "koa"
 import { ReminderRule } from "../models/ReminderRule"
+import { ReminderNotificationLog } from "../models/ReminderNotificationLog"
 import { User, UserRole } from "../models/User"
 import { ReminderService } from "../services/ReminderService"
 import { logger } from "../utils/logger"
@@ -567,6 +568,313 @@ export class ReminderRuleController {
       ctx.body = {
         success: false,
         message: "Failed to fetch reminder statistics",
+      }
+    }
+  }
+
+  /**
+   * Get detailed reminder system statistics with notification logs
+   * Includes: rule counts, notification volume, success rates, top rules, last job run
+   */
+  public async getDetailedStats(ctx: Context): Promise<void> {
+    try {
+      const user = requireAuth(ctx)
+      const { daysBack = "30" } = ctx.query as any
+      const days = parseInt(daysBack)
+
+      // Date range for analytics
+      const cutoffDate = new Date()
+      cutoffDate.setDate(cutoffDate.getDate() - days)
+
+      // Build where clause based on user permissions
+      const ruleWhereClause: any = {}
+      if (user.role !== UserRole.SUPER_ADMIN && user.teamId) {
+        ruleWhereClause.teamId = user.teamId
+      }
+
+      // 1. Summary stats
+      const totalRules = await ReminderRule.count({ where: ruleWhereClause })
+      const activeRules = await ReminderRule.count({
+        where: { ...ruleWhereClause, isActive: true },
+      })
+
+      // 2. Notification volume stats
+      const [notificationStats] = (await sequelize.query(
+        `
+        SELECT
+          COUNT(*) FILTER (WHERE status = 'sent') as total_sent,
+          COUNT(*) FILTER (WHERE status = 'failed') as total_failed,
+          COUNT(DISTINCT DATE(sent_at)) as days_active,
+          MAX(sent_at) as last_sent
+        FROM reminder_notification_logs
+        WHERE sent_at >= :cutoffDate
+          ${user.role !== UserRole.SUPER_ADMIN && user.teamId ? "AND rule_id IN (SELECT id FROM reminder_rules WHERE team_id = :teamId)" : ""}
+      `,
+        {
+          replacements: {
+            cutoffDate,
+            ...(user.teamId && { teamId: user.teamId }),
+          },
+        }
+      )) as any
+
+      const stats = notificationStats[0]
+      const totalSent = parseInt(stats.total_sent) || 0
+      const totalFailed = parseInt(stats.total_failed) || 0
+      const totalNotifications = totalSent + totalFailed
+      const successRate = totalNotifications > 0 ? (totalSent / totalNotifications) * 100 : 0
+
+      // 3. Top performing rules (by volume)
+      const [topRules] = (await sequelize.query(
+        `
+        SELECT
+          rr.id,
+          rr.entity_type,
+          rr.trigger_type,
+          rr.priority,
+          rr.is_active,
+          COUNT(rnl.id) as notifications_sent,
+          MAX(rnl.sent_at) as last_triggered
+        FROM reminder_rules rr
+        LEFT JOIN reminder_notification_logs rnl ON rnl.rule_id = rr.id
+          AND rnl.sent_at >= :cutoffDate
+          AND rnl.status = 'sent'
+        WHERE 1=1
+          ${user.role !== UserRole.SUPER_ADMIN && user.teamId ? "AND rr.team_id = :teamId" : ""}
+        GROUP BY rr.id, rr.entity_type, rr.trigger_type, rr.priority, rr.is_active
+        ORDER BY notifications_sent DESC
+        LIMIT 10
+      `,
+        {
+          replacements: {
+            cutoffDate,
+            ...(user.teamId && { teamId: user.teamId }),
+          },
+        }
+      )) as any
+
+      // 4. Notification timeline (daily breakdown for last 7 days)
+      const timelineStart = new Date()
+      timelineStart.setDate(timelineStart.getDate() - 7)
+
+      const [timeline] = (await sequelize.query(
+        `
+        SELECT
+          DATE(sent_at) as date,
+          COUNT(*) FILTER (WHERE status = 'sent') as sent,
+          COUNT(*) FILTER (WHERE status = 'failed') as failed
+        FROM reminder_notification_logs
+        WHERE sent_at >= :timelineStart
+          ${user.role !== UserRole.SUPER_ADMIN && user.teamId ? "AND rule_id IN (SELECT id FROM reminder_rules WHERE team_id = :teamId)" : ""}
+        GROUP BY DATE(sent_at)
+        ORDER BY DATE(sent_at) DESC
+      `,
+        {
+          replacements: {
+            timelineStart,
+            ...(user.teamId && { teamId: user.teamId }),
+          },
+        }
+      )) as any
+
+      ctx.body = {
+        success: true,
+        data: {
+          summary: {
+            totalRules,
+            activeRules,
+            inactiveRules: totalRules - activeRules,
+          },
+          notifications: {
+            totalSent,
+            totalFailed,
+            successRate: Math.round(successRate * 100) / 100,
+            daysActive: parseInt(stats.days_active) || 0,
+            averagePerDay: stats.days_active > 0 ? Math.round(totalSent / parseInt(stats.days_active)) : 0,
+          },
+          topRules: topRules.map((rule: any) => ({
+            id: rule.id,
+            entityType: rule.entity_type,
+            triggerType: rule.trigger_type,
+            priority: rule.priority,
+            isActive: rule.is_active,
+            notificationsSent: parseInt(rule.notifications_sent),
+            lastTriggered: rule.last_triggered,
+          })),
+          timeline: timeline.map((day: any) => ({
+            date: day.date,
+            sent: parseInt(day.sent),
+            failed: parseInt(day.failed),
+          })),
+          lastJobRun: stats.last_sent ? new Date(stats.last_sent) : null,
+          periodDays: days,
+        },
+      }
+    } catch (error) {
+      const userId = isAuthenticated(ctx) ? ctx.state.user.id : "unknown"
+      logger.error("Error fetching detailed reminder stats", {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+        userId,
+      })
+      ctx.status = 500
+      ctx.body = {
+        success: false,
+        message: "Failed to fetch detailed reminder statistics",
+      }
+    }
+  }
+
+  /**
+   * Get notification logs for a specific reminder rule
+   * Includes pagination and filtering
+   */
+  public async getReminderRuleLogs(ctx: Context): Promise<void> {
+    try {
+      const user = requireAuth(ctx)
+      const { id } = ctx.params
+      const { limit = "50", offset = "0", status, daysBack = "30" } = ctx.query as any
+
+      // Check if rule exists and user has access
+      const rule = await ReminderRule.findByPk(id)
+      if (!rule) {
+        ctx.status = 404
+        ctx.body = {
+          success: false,
+          message: "Reminder rule not found",
+        }
+        return
+      }
+
+      // Check permissions
+      if (
+        user.role !== UserRole.SUPER_ADMIN &&
+        rule.teamId !== user.teamId
+      ) {
+        ctx.status = 403
+        ctx.body = {
+          success: false,
+          message: "Access denied",
+        }
+        return
+      }
+
+      // Build where clause
+      const whereClause: any = {
+        ruleId: id,
+      }
+
+      // Filter by status if provided
+      if (status && ["sent", "failed", "pending"].includes(status)) {
+        whereClause.status = status
+      }
+
+      // Filter by date range
+      const cutoffDate = new Date()
+      cutoffDate.setDate(cutoffDate.getDate() - parseInt(daysBack))
+      whereClause.sentAt = {
+        [sequelize.Sequelize.Op.gte]: cutoffDate,
+      }
+
+      // Get logs with pagination
+      const { count, rows: logs } = await ReminderNotificationLog.findAndCountAll({
+        where: whereClause,
+        include: [
+          {
+            model: User,
+            as: "recipient",
+            attributes: ["id", "firstName", "lastName", "email"],
+          },
+        ],
+        order: [["sentAt", "DESC"]],
+        limit: parseInt(limit),
+        offset: parseInt(offset),
+      })
+
+      // Get rule stats
+      const ruleStats = await ReminderNotificationLog.getRuleStats(id, parseInt(daysBack))
+
+      ctx.body = {
+        success: true,
+        data: {
+          logs,
+          stats: ruleStats,
+          pagination: {
+            total: count,
+            limit: parseInt(limit),
+            offset: parseInt(offset),
+            hasMore: parseInt(offset) + parseInt(limit) < count,
+          },
+        },
+      }
+    } catch (error) {
+      const userId = isAuthenticated(ctx) ? ctx.state.user.id : "unknown"
+      logger.error("Error fetching reminder rule logs", {
+        error: error instanceof Error ? error.message : String(error),
+        ruleId: ctx.params.id,
+        userId,
+      })
+      ctx.status = 500
+      ctx.body = {
+        success: false,
+        message: "Failed to fetch reminder rule logs",
+      }
+    }
+  }
+
+  /**
+   * Get notification history for the current user
+   * Shows all reminders they have received
+   */
+  public async getMyNotificationHistory(ctx: Context): Promise<void> {
+    try {
+      const user = requireAuth(ctx)
+      const { limit = "50", offset = "0", daysBack = "30" } = ctx.query as any
+
+      const cutoffDate = new Date()
+      cutoffDate.setDate(cutoffDate.getDate() - parseInt(daysBack))
+
+      const { count, rows: logs } = await ReminderNotificationLog.findAndCountAll({
+        where: {
+          recipientId: user.id,
+          sentAt: {
+            [sequelize.Sequelize.Op.gte]: cutoffDate,
+          },
+        },
+        include: [
+          {
+            model: ReminderRule,
+            as: "rule",
+            attributes: ["id", "entityType", "triggerType", "priority"],
+          },
+        ],
+        order: [["sentAt", "DESC"]],
+        limit: parseInt(limit),
+        offset: parseInt(offset),
+      })
+
+      ctx.body = {
+        success: true,
+        data: {
+          logs,
+          pagination: {
+            total: count,
+            limit: parseInt(limit),
+            offset: parseInt(offset),
+            hasMore: parseInt(offset) + parseInt(limit) < count,
+          },
+        },
+      }
+    } catch (error) {
+      const userId = isAuthenticated(ctx) ? ctx.state.user.id : "unknown"
+      logger.error("Error fetching user notification history", {
+        error: error instanceof Error ? error.message : String(error),
+        userId,
+      })
+      ctx.status = 500
+      ctx.body = {
+        success: false,
+        message: "Failed to fetch notification history",
       }
     }
   }
