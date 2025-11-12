@@ -1,23 +1,31 @@
 <template>
-  <div class="features-settings">
+  <AppLayout>
+    <!-- Page Header -->
+    <v-row class="mb-6">
+      <v-col cols="12">
+        <div class="d-flex justify-space-between align-center">
+          <div>
+            <h1 class="text-h3 font-weight-bold mb-2">
+              <v-icon icon="mdi-toggle-switch" class="mr-2" />
+              Gestion des Fonctionnalités
+            </h1>
+            <p class="text-body-1 text-medium-emphasis">
+              Activez ou désactivez les modules de l'application. La désactivation d'un module le masquera de la navigation
+              et empêchera l'accès à ses fonctionnalités.
+            </p>
+          </div>
+        </div>
+      </v-col>
+    </v-row>
+
     <v-row>
       <v-col cols="12">
         <v-card>
-          <v-card-title class="d-flex align-center bg-primary">
-            <v-icon start class="text-white">mdi-toggle-switch</v-icon>
-            <span class="text-white">Feature Flags Management</span>
-          </v-card-title>
-
           <v-card-text class="pa-6">
-            <v-alert type="info" variant="tonal" class="mb-6">
-              <v-icon start>mdi-information</v-icon>
-              Enable or disable application modules. Disabling a module will hide it from navigation
-              and prevent access to its features.
-            </v-alert>
 
             <div v-if="loading" class="text-center py-12">
               <v-progress-circular indeterminate color="primary" size="64" />
-              <div class="text-h6 mt-4">Loading settings...</div>
+              <div class="text-h6 mt-4">Chargement des paramètres...</div>
             </div>
 
             <div v-else>
@@ -57,7 +65,7 @@
                 class="mt-6"
               >
                 <v-icon start>mdi-alert</v-icon>
-                You have unsaved changes. Click "Save Changes" to apply them.
+                Vous avez des modifications non enregistrées. Cliquez sur "Enregistrer les modifications" pour les appliquer.
               </v-alert>
             </div>
           </v-card-text>
@@ -71,7 +79,7 @@
               @click="resetChanges"
               :disabled="!hasChanges || saving"
             >
-              Cancel
+              Annuler
             </v-btn>
             <v-btn
               variant="elevated"
@@ -80,7 +88,7 @@
               :disabled="!hasChanges"
               @click="saveChanges"
             >
-              Save Changes
+              Enregistrer les modifications
             </v-btn>
           </v-card-actions>
         </v-card>
@@ -88,24 +96,65 @@
     </v-row>
 
     <!-- Success Snackbar -->
+    <!-- Success Snackbar -->
     <v-snackbar v-model="showSuccess" color="success" timeout="3000">
       <v-icon start>mdi-check-circle</v-icon>
-      Settings saved successfully!
+      Paramètres enregistrés avec succès !
     </v-snackbar>
 
     <!-- Error Snackbar -->
     <v-snackbar v-model="showError" color="error" timeout="5000">
       <v-icon start>mdi-alert-circle</v-icon>
-      Failed to save settings. {{ errorMessage }}
+      Échec de l'enregistrement des paramètres. {{ errorMessage }}
     </v-snackbar>
-  </div>
+  </AppLayout>
 </template>
 
 <script setup lang="ts">
 import { useSettingsStore } from "@/stores/settings"
 import { onMounted, ref } from "vue"
+import AppLayout from "@/components/layout/AppLayout.vue"
 
 const settingsStore = useSettingsStore()
+
+// Feature definitions with French translations
+const features = [
+  {
+    key: "quotes_enabled",
+    title: "Gestion des Devis",
+    description: "Activer la création, modification et génération PDF des devis",
+    icon: "mdi-file-document-edit",
+    color: "blue",
+  },
+  {
+    key: "invoices_enabled",
+    title: "Gestion des Factures",
+    description: "Activer la création des factures, suivi des paiements et rappels",
+    icon: "mdi-file-document",
+    color: "green",
+  },
+  {
+    key: "tasks_enabled",
+    title: "Gestion des Tâches",
+    description: "Activer l'assignation, suivi et notifications des tâches",
+    icon: "mdi-check-circle",
+    color: "purple",
+  },
+  {
+    key: "contacts_enabled",
+    title: "Gestion des Contacts",
+    description: "Activer la gestion des personnes de contact pour les institutions",
+    icon: "mdi-account-box-outline",
+    color: "orange",
+  },
+  {
+    key: "segmentation_enabled",
+    title: "Segmentation Client",
+    description: "Activer la segmentation avancée et filtrage des clients",
+    icon: "mdi-filter-variant",
+    color: "teal",
+  },
+]
 
 // Component state
 const loading = ref(false)
@@ -115,45 +164,6 @@ const showError = ref(false)
 const errorMessage = ref("")
 const hasChanges = ref(false)
 const changedKeys = ref<Set<string>>(new Set())
-
-// Feature definitions
-const features = [
-  {
-    key: "quotes_enabled",
-    title: "Quotes Management",
-    description: "Enable quote creation, editing, and PDF generation",
-    icon: "mdi-file-document-edit",
-    color: "blue",
-  },
-  {
-    key: "invoices_enabled",
-    title: "Invoices Management",
-    description: "Enable invoice creation, payment tracking, and reminders",
-    icon: "mdi-file-document",
-    color: "green",
-  },
-  {
-    key: "tasks_enabled",
-    title: "Tasks Management",
-    description: "Enable task assignment, tracking, and notifications",
-    icon: "mdi-check-circle",
-    color: "purple",
-  },
-  {
-    key: "contacts_enabled",
-    title: "Contacts Management",
-    description: "Enable contact person management for institutions",
-    icon: "mdi-account-box-outline",
-    color: "orange",
-  },
-  {
-    key: "segmentation_enabled",
-    title: "Customer Segmentation",
-    description: "Enable advanced customer segmentation and filtering",
-    icon: "mdi-filter-variant",
-    color: "teal",
-  },
-]
 
 // Feature states (local copy for editing)
 const featureStates = ref<Record<string, boolean>>({})
@@ -173,7 +183,7 @@ onMounted(async () => {
   } catch (error) {
     console.error("Failed to load settings:", error)
     showError.value = true
-    errorMessage.value = "Failed to load current settings"
+    errorMessage.value = "Échec du chargement des paramètres actuels"
   } finally {
     loading.value = false
   }
@@ -233,7 +243,7 @@ const saveChanges = async () => {
   } catch (error: any) {
     console.error("Failed to save settings:", error)
     showError.value = true
-    errorMessage.value = error.message || "Unknown error occurred"
+    errorMessage.value = error.message || "Erreur inconnue"
   } finally {
     saving.value = false
   }

@@ -40,8 +40,8 @@
         >
           <template #item.name="{ item }">
             <div class="d-flex align-center">
-              <v-avatar size="32" class="mr-3">
-                <v-img :src="`https://i.pravatar.cc/40?u=${item.email}`" />
+              <v-avatar size="32" class="mr-3" color="primary" variant="tonal">
+                <span class="text-body-2">{{ `${(item.firstName || '').charAt(0)}${(item.lastName || '').charAt(0)}`.toUpperCase() || '?' }}</span>
               </v-avatar>
               <div>
                 <div class="font-weight-bold">{{ item.firstName }} {{ item.lastName }}</div>

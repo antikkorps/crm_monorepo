@@ -243,10 +243,12 @@ const onSegmentTypeChange = () => {
 }
 
 const onFilterAdded = () => {
+  console.log('SegmentBuilder: Filter added, updating criteria')
   emit('update:modelValue', currentCriteria.value)
 }
 
 const onFilterRemoved = () => {
+  console.log('SegmentBuilder: Filter removed, updating criteria')
   emit('update:modelValue', currentCriteria.value)
 }
 
@@ -380,6 +382,7 @@ const saveSegment = async () => {
 // Watchers
 watch(() => props.modelValue, (newValue) => {
   if (newValue) {
+    console.log('SegmentBuilder: modelValue changed:', newValue)
     // Load existing criteria into builder
     // This would need to be implemented based on the specific filter structure
   }

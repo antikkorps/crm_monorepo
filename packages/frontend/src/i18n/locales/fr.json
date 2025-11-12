@@ -24,7 +24,9 @@
     "type": "Type",
     "template": "Modèle",
     "create": "Créer",
-    "retry": "Réessayer"
+    "retry": "Réessayer",
+    "active": "Actif",
+    "inactive": "Inactif"
   },
   "navigation": {
     "dashboard": "Tableau de bord",
@@ -43,6 +45,7 @@
     "exportCenter": "Centre d'Export",
     "catalog": "Catalogue",
     "profile": "Profil",
+    "systemSettings": "Paramètres système",
     "logout": "Se déconnecter"
   },
   "sidebar": {
@@ -240,7 +243,20 @@
         "message": "Commencez à créer un nouveau segment avec des filtres personnalisés"
       },
       "preview": {
-        "title": "Aperçu des Résultats"
+        "title": "Aperçu des Résultats",
+        "city": "Ville",
+        "status": "Statut",
+        "totalRecords": "Total des Enregistrements",
+        "activeRecords": "Enregistrements Actifs",
+        "matchPercentage": "Pourcentage de Correspondance",
+        "sampleRecords": "Exemples d'Enregistrements",
+        "loading": "Chargement de l'aperçu...",
+        "noData": "Aucune donnée disponible",
+        "addFilters": "Ajoutez des filtres pour voir les résultats",
+        "name": "Nom",
+        "type": "Type",
+        "title": "Titre",
+        "department": "Département"
       }
     },
     "filters": {
@@ -283,7 +299,8 @@
         "placeholder": "Rechercher par nom..."
       },
       "type": {
-        "label": "Type"
+        "label": "Type",
+        "placeholder": "Sélectionner un type..."
       },
       "location": {
         "label": "Localisation",
