@@ -13,6 +13,9 @@ router.get("/:id", requireAuth, SegmentController.getSegment)
 // POST /api/segments - Create a new segment
 router.post("/", requireAuth, SegmentController.createSegment)
 
+// POST /api/segments/preview - Preview segment results without saving
+router.post("/preview", requireAuth, SegmentController.previewSegment)
+
 // PUT /api/segments/:id - Update a segment
 router.put("/:id", requireAuth, SegmentController.updateSegment)
 
