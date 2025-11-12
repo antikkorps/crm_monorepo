@@ -12,7 +12,7 @@ router.use(authenticate)
 // GET /api/reminder-rules - Get all reminder rules (with optional filters)
 router.get("/", reminderRuleController.getReminderRules.bind(reminderRuleController))
 
-// GET /api/reminder-rules/stats - Get reminder statistics (basic)
+// GET /api/reminder-rules/stats - Get summary reminder statistics (counts, status, etc.)
 router.get("/stats", reminderRuleController.getReminderStats.bind(reminderRuleController))
 
 // GET /api/reminder-rules/stats/detailed - Get detailed reminder statistics with logs analytics
