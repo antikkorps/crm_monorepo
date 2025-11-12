@@ -5,7 +5,7 @@
         <v-card-text>
           <div class="d-flex align-center">
             <div class="flex-grow-1">
-              <div class="text-medium-emphasis text-body-2 mb-1">Active Invoices</div>
+              <div class="text-medium-emphasis text-body-2 mb-1">Factures Actives</div>
               <div class="text-h4 font-weight-bold">
                 {{ formatNumber(kpis?.totalActiveInvoices || 0) }}
               </div>
@@ -23,11 +23,11 @@
         <v-card-text>
           <div class="d-flex align-center">
             <div class="flex-grow-1">
-              <div class="text-medium-emphasis text-body-2 mb-1">Avg Collection Time</div>
+              <div class="text-medium-emphasis text-body-2 mb-1">Temps de Recouvrement Moyen</div>
               <div class="text-h4 font-weight-bold">
                 {{ formatDays(kpis?.averageCollectionTime || 0) }}
               </div>
-              <div class="text-body-2 text-medium-emphasis">days</div>
+              <div class="text-body-2 text-medium-emphasis">jours</div>
             </div>
             <v-avatar color="green-lighten-4" size="48">
               <v-icon icon="mdi-clock-outline" color="green" />
@@ -42,7 +42,7 @@
         <v-card-text>
           <div class="d-flex align-center">
             <div class="flex-grow-1">
-              <div class="text-medium-emphasis text-body-2 mb-1">Collection Rate</div>
+              <div class="text-medium-emphasis text-body-2 mb-1">Taux de Recouvrement</div>
               <div class="text-h4 font-weight-bold">
                 {{ formatPercentage(kpis?.collectionRate || 0) }}
               </div>
@@ -66,7 +66,7 @@
         <v-card-text>
           <div class="d-flex align-center">
             <div class="flex-grow-1">
-              <div class="text-medium-emphasis text-body-2 mb-1">Overdue Rate</div>
+              <div class="text-medium-emphasis text-body-2 mb-1">Taux d'Impayés</div>
               <div class="text-h4 font-weight-bold">
                 {{ formatPercentage(kpis?.overdueRate || 0) }}
               </div>
@@ -90,7 +90,7 @@
         <v-card-text>
           <div class="d-flex align-center">
             <div class="flex-grow-1">
-              <div class="text-medium-emphasis text-body-2 mb-1">Monthly Growth</div>
+              <div class="text-medium-emphasis text-body-2 mb-1">Croissance Mensuelle</div>
               <div class="text-h4 font-weight-bold">
                 {{ formatPercentage(kpis?.monthlyGrowthRate || 0) }}
               </div>
@@ -114,7 +114,7 @@
         <v-card-text>
           <div class="d-flex align-center">
             <div class="flex-grow-1">
-              <div class="text-medium-emphasis text-body-2 mb-1">Payment Score</div>
+              <div class="text-medium-emphasis text-body-2 mb-1">Score de Paiement</div>
               <div class="text-h4 font-weight-bold">
                 {{ Math.round(kpis?.customerPaymentScore || 0) }}/100
               </div>
@@ -138,7 +138,7 @@
     <v-col cols="12" md="12" lg="4">
       <v-card class="kpi-card fill-height" elevation="2" hover>
         <v-card-text class="text-center">
-          <div class="text-medium-emphasis text-body-2 mb-2">Overall Health Score</div>
+          <div class="text-medium-emphasis text-body-2 mb-2">Score de Santé Global</div>
           <div class="d-flex justify-center mb-3">
             <v-progress-circular
               :model-value="overallHealthScore"
@@ -291,21 +291,21 @@ const formatPercentage = (value: number): string => {
 
 const getCollectionRateStatus = (rate: number): string => {
   if (rate >= 80) return "Excellent"
-  if (rate >= 60) return "Good"
-  return "Needs Improvement"
+  if (rate >= 60) return "Bon"
+  return "À Améliorer"
 }
 
 const getOverdueRateStatus = (rate: number): string => {
   if (rate <= 10) return "Excellent"
   if (rate <= 20) return "Acceptable"
-  return "High Risk"
+  return "Risque Élevé"
 }
 
 const getGrowthRateStatus = (rate: number): string => {
-  if (rate > 5) return "Strong Growth"
-  if (rate > 0) return "Growing"
+  if (rate > 5) return "Forte Croissance"
+  if (rate > 0) return "En Croissance"
   if (rate === 0) return "Stable"
-  return "Declining"
+  return "En Déclin"
 }
 
 const getPaymentScoreColor = (score: number): string => {
@@ -327,10 +327,10 @@ const getHealthScoreTextColor = (score: number): string => {
 }
 
 const getHealthScoreLabel = (score: number): string => {
-  if (score >= 80) return "Excellent Health"
-  if (score >= 60) return "Good Health"
-  if (score >= 40) return "Fair Health"
-  return "Poor Health"
+  if (score >= 80) return "Santé Excellente"
+  if (score >= 60) return "Bonne Santé"
+  if (score >= 40) return "Santé Correcte"
+  return "Santé Faible"
 }
 </script>
 

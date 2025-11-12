@@ -1,34 +1,50 @@
 <template>
   <AppLayout>
-    <v-container class="billing-analytics">
-      <div class="d-flex justify-space-between align-center mb-4">
-        <h1 class="text-h3 font-weight-bold">Billing Analytics & Reports</h1>
+    <v-container fluid class="billing-analytics">
+      <!-- Header -->
+      <div class="d-flex justify-space-between align-center mb-6">
+        <div class="d-flex align-center">
+          <v-avatar color="primary" size="48" class="mr-3">
+            <v-icon icon="mdi-chart-line" color="white" size="32" />
+          </v-avatar>
+          <div>
+            <h1 class="text-h4 font-weight-bold">Analytique Facturation</h1>
+            <p class="text-body-2 text-medium-emphasis ma-0">
+              Vue d'ensemble des revenus et performances
+            </p>
+          </div>
+        </div>
 
         <div class="d-flex ga-2">
           <v-btn
             prepend-icon="mdi-refresh"
-            variant="outlined"
+            variant="tonal"
+            color="primary"
             @click="refreshData"
             :loading="loading"
           >
-            Refresh
+            Actualiser
           </v-btn>
           <v-btn
             prepend-icon="mdi-download"
-            variant="outlined"
+            variant="tonal"
+            color="secondary"
             @click="showExportDialog = true"
           >
-            Export
+            Exporter
           </v-btn>
         </div>
       </div>
 
-      <!-- Date Range Filter -->
-      <v-card class="mb-4">
+      <!-- Filters Card -->
+      <v-card elevation="2" class="mb-6">
+        <v-card-title class="d-flex align-center">
+          <v-icon icon="mdi-filter-variant" class="mr-2" />
+          Filtres
+        </v-card-title>
         <v-card-text>
-          <div class="d-flex flex-wrap ga-4 align-center">
-            <div>
-              <label class="text-body-2 font-weight-medium mb-1 d-block">Date Range</label>
+          <v-row>
+            <v-col cols="12" md="4">
               <v-menu
                 v-model="dateRangeMenu"
                 :close-on-content-click="false"
@@ -40,49 +56,83 @@
                   <v-text-field
                     v-bind="props"
                     :model-value="dateRangeText"
-                    label="Select date range"
-                    prepend-icon="mdi-calendar"
+                    label="Période"
+                    prepend-inner-icon="mdi-calendar"
                     readonly
                     variant="outlined"
-                  ></v-text-field>
+                    density="comfortable"
+                  />
                 </template>
                 <v-date-picker
                   v-model="dateRange"
                   range
                   @update:model-value="onDateRangeChange"
-                ></v-date-picker>
+                />
               </v-menu>
-            </div>
+            </v-col>
 
-            <div v-if="canViewAllBilling">
-              <label class="text-body-2 font-weight-medium mb-1 d-block">User Filter</label>
+            <v-col v-if="canViewAllBilling" cols="12" md="4">
               <v-select
                 v-model="selectedUserId"
                 :items="userOptions"
                 item-title="label"
                 item-value="value"
-                placeholder="All Users"
+                label="Utilisateur"
+                prepend-inner-icon="mdi-account"
+                placeholder="Tous les utilisateurs"
+                clearable
                 @update:model-value="onUserFilterChange"
                 variant="outlined"
-                style="width: 200px"
-              ></v-select>
-            </div>
+                density="comfortable"
+              />
+            </v-col>
 
-            <v-btn
-              prepend-icon="mdi-filter-remove"
-              variant="text"
-              @click="clearFilters"
-              style="margin-top: 1.5rem"
-            >
-              Clear Filters
-            </v-btn>
-          </div>
+            <v-col cols="12" :md="canViewAllBilling ? 4 : 8" class="d-flex align-end">
+              <v-btn
+                prepend-icon="mdi-filter-remove"
+                variant="text"
+                color="error"
+                @click="clearFilters"
+                block
+              >
+                Réinitialiser les filtres
+              </v-btn>
+            </v-col>
+          </v-row>
         </v-card-text>
       </v-card>
 
       <!-- Loading State -->
-      <div v-if="loading" class="d-flex justify-center pa-4">
-        <v-progress-circular indeterminate size="64"></v-progress-circular>
+      <div v-if="loading">
+        <v-row>
+          <!-- KPI Cards Skeleton -->
+          <v-col cols="12" md="6" lg="3" v-for="i in 4" :key="`kpi-${i}`">
+            <v-skeleton-loader type="card" />
+          </v-col>
+
+          <!-- Revenue Chart Skeleton -->
+          <v-col cols="12" lg="8">
+            <v-skeleton-loader type="image, article" />
+          </v-col>
+
+          <!-- Outstanding Summary Skeleton -->
+          <v-col cols="12" lg="4">
+            <v-skeleton-loader type="article, list-item-three-line" />
+          </v-col>
+
+          <!-- Payment & Cash Flow Skeleton -->
+          <v-col cols="12" lg="6">
+            <v-skeleton-loader type="image, article" />
+          </v-col>
+          <v-col cols="12" lg="6">
+            <v-skeleton-loader type="image, article" />
+          </v-col>
+
+          <!-- Segments Skeleton -->
+          <v-col cols="12">
+            <v-skeleton-loader type="table" />
+          </v-col>
+        </v-row>
       </div>
 
       <!-- Dashboard Content -->
@@ -124,15 +174,21 @@
       </v-row>
 
       <!-- Error State -->
-      <div
-        v-else-if="error"
-        class="d-flex flex-column align-center justify-center pa-6"
-      >
-        <v-icon icon="mdi-alert-triangle" size="96" color="orange" class="mb-3"></v-icon>
-        <h3 class="text-h5 font-weight-medium mb-2">Failed to Load Analytics</h3>
-        <p class="text-medium-emphasis mb-4 text-center">{{ error }}</p>
-        <v-btn @click="loadDashboardData">Try Again</v-btn>
-      </div>
+      <v-card v-else-if="error" elevation="2" class="text-center pa-12">
+        <v-avatar size="96" color="error-lighten-4" class="mb-4">
+          <v-icon icon="mdi-alert-circle-outline" size="64" color="error" />
+        </v-avatar>
+        <h3 class="text-h5 font-weight-bold mb-2">Erreur de chargement</h3>
+        <p class="text-body-1 text-medium-emphasis mb-6">{{ error }}</p>
+        <v-btn
+          color="primary"
+          size="large"
+          prepend-icon="mdi-refresh"
+          @click="loadDashboardData"
+        >
+          Réessayer
+        </v-btn>
+      </v-card>
 
       <!-- Export Dialog -->
       <ExportDialog
@@ -156,7 +212,7 @@
             variant="text"
             @click="snackbar = false"
           >
-            Close
+            Fermer
           </v-btn>
         </template>
       </v-snackbar>
@@ -196,7 +252,7 @@ const snackbarColor = ref('success')
 
 // User options for filtering
 const userOptions = ref([
-  { label: "All Users", value: null },
+  { label: "Tous les utilisateurs", value: null },
   // Will be populated from API
 ])
 
@@ -239,8 +295,11 @@ const loadDashboardData = async () => {
     const response = await billingAnalyticsApi.getDashboard(params)
     dashboardData.value = response.data
   } catch (err: any) {
-    error.value = err.message || "Failed to load billing analytics"
-    showSnackbar("Failed to load billing analytics data", "error")
+    // Reset dashboardData to null on error to prevent Chart.js from trying to render with stale/null data
+    dashboardData.value = null
+    error.value = err.message || "Échec du chargement des données d'analyse"
+    showSnackbar("Échec du chargement des données d'analyse", "error")
+    console.error("Erreur de chargement du tableau de bord:", err)
   } finally {
     loading.value = false
   }
@@ -295,9 +354,9 @@ const handleExport = async (exportType: string) => {
     document.body.removeChild(link)
     window.URL.revokeObjectURL(url)
 
-    showSnackbar("Analytics data exported successfully", "success")
+    showSnackbar("Données d'analyse exportées avec succès", "success")
   } catch (err: any) {
-    showSnackbar(err.message || "Failed to export analytics data", "error")
+    showSnackbar(err.message || "Échec de l'export des données d'analyse", "error")
   }
 }
 
@@ -307,11 +366,11 @@ const loadUserOptions = async () => {
       // Load users for filtering - this would come from a users API
       // For now, we'll use a placeholder
       userOptions.value = [
-        { label: "All Users", value: null },
+        { label: "Tous les utilisateurs", value: null },
         // Add actual users here when API is available
       ]
     } catch (err) {
-      console.error("Failed to load user options:", err)
+      console.error("Échec du chargement des options utilisateur:", err)
     }
   }
 }

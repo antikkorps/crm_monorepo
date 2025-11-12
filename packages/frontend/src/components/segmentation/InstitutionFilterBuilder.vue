@@ -3,7 +3,7 @@
     <!-- Available Filters -->
     <v-row class="mb-4">
       <v-col cols="12">
-        <v-chip-group v-model="selectedFilterType" column mandatory>
+        <v-chip-group v-model="selectedFilterType" column>
           <v-chip
             v-for="filterType in availableFilterTypes"
             :key="filterType.value"
