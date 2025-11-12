@@ -464,8 +464,8 @@ export class CsvImportService {
       if (existingProfile) {
         // Update existing medical profile
         await existingProfile.update({
-          bedCapacity: data.bedCapacity ? parseInt(data.bedCapacity) : existingProfile.getDataValue('bedCapacity'),
-          surgicalRooms: data.surgicalRooms ? parseInt(data.surgicalRooms) : existingProfile.getDataValue('surgicalRooms'),
+          bedCapacity: data.bedCapacity ? Number.parseInt(data.bedCapacity) : existingProfile.getDataValue('bedCapacity'),
+          surgicalRooms: data.surgicalRooms ? Number.parseInt(data.surgicalRooms) : existingProfile.getDataValue('surgicalRooms'),
           specialties: data.specialties ? data.specialties.split(',').map(s => s.trim()) : existingProfile.getDataValue('specialties'),
           departments: data.departments ? data.departments.split(',').map(d => d.trim()) : existingProfile.getDataValue('departments'),
           equipmentTypes: data.equipmentTypes ? data.equipmentTypes.split(',').map(e => e.trim()) : existingProfile.getDataValue('equipmentTypes'),
@@ -479,8 +479,8 @@ export class CsvImportService {
         // Create new medical profile
         await MedicalProfile.create({
           institutionId,
-          bedCapacity: data.bedCapacity ? parseInt(data.bedCapacity) : undefined,
-          surgicalRooms: data.surgicalRooms ? parseInt(data.surgicalRooms) : undefined,
+          bedCapacity: data.bedCapacity ? Number.parseInt(data.bedCapacity) : undefined,
+          surgicalRooms: data.surgicalRooms ? Number.parseInt(data.surgicalRooms) : undefined,
           specialties: data.specialties ? data.specialties.split(',').map(s => s.trim()) : [],
           departments: data.departments ? data.departments.split(',').map(d => d.trim()) : [],
           equipmentTypes: data.equipmentTypes ? data.equipmentTypes.split(',').map(e => e.trim()) : [],
@@ -520,8 +520,8 @@ export class CsvImportService {
       
       const medicalProfile = await MedicalProfile.create({
         institutionId,
-        bedCapacity: data.bedCapacity ? parseInt(data.bedCapacity) : undefined,
-        surgicalRooms: data.surgicalRooms ? parseInt(data.surgicalRooms) : undefined,
+        bedCapacity: data.bedCapacity ? Number.parseInt(data.bedCapacity) : undefined,
+        surgicalRooms: data.surgicalRooms ? Number.parseInt(data.surgicalRooms) : undefined,
         specialties: data.specialties ? data.specialties.split(',').map(s => s.trim()) : [],
         departments: data.departments ? data.departments.split(',').map(d => d.trim()) : [],
         equipmentTypes: data.equipmentTypes ? data.equipmentTypes.split(',').map(e => e.trim()) : [],

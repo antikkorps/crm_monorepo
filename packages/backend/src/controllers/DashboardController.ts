@@ -27,8 +27,8 @@ export class DashboardController {
 
       const activities = await DashboardController.getRecentActivities(
         user,
-        parseInt(limit as string),
-        parseInt(offset as string),
+        Number.parseInt(limit as string),
+        Number.parseInt(offset as string),
         type as string | undefined
       );
 
@@ -341,8 +341,8 @@ export class DashboardController {
       totalRevenue,
       paidRevenue,
       unpaidRevenue: totalRevenue - paidRevenue,
-      quotesCount: parseInt(quoteData?.count || "0"),
-      invoicesCount: parseInt(invoiceData?.count || "0"),
+      quotesCount: Number.parseInt(quoteData?.count || "0"),
+      invoicesCount: Number.parseInt(invoiceData?.count || "0"),
       avgQuoteValue: parseFloat(quoteData?.avgValue || "0"),
       avgInvoiceValue: parseFloat(invoiceData?.avgValue || "0"),
     };

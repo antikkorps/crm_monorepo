@@ -282,8 +282,8 @@ export class ReminderNotificationLog
     )) as any
 
     const stats = results[0]
-    const totalSent = parseInt(stats.total_sent) || 0
-    const totalFailed = parseInt(stats.total_failed) || 0
+    const totalSent = Number.parseInt(stats.total_sent) || 0
+    const totalFailed = Number.parseInt(stats.total_failed) || 0
     const total = totalSent + totalFailed
     const successRate = total > 0 ? (totalSent / total) * 100 : 0
 

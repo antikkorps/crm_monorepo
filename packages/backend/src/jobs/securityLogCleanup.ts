@@ -50,8 +50,8 @@ export class SecurityLogCleanupJob {
    * Run the cleanup process
    */
   static async runCleanup() {
-    const retentionDays = parseInt(process.env.SECURITY_LOG_RETENTION_DAYS || "90")
-    const criticalRetentionDays = parseInt(
+    const retentionDays = Number.parseInt(process.env.SECURITY_LOG_RETENTION_DAYS || "90")
+    const criticalRetentionDays = Number.parseInt(
       process.env.SECURITY_LOG_CRITICAL_RETENTION_DAYS || "365"
     )
 
