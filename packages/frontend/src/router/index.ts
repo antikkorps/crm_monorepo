@@ -1,4 +1,5 @@
 import { useAuthStore } from "@/stores/auth"
+import { UserRole } from "@medical-crm/shared"
 import type { RouteRecordRaw } from "vue-router"
 import { createRouter, createWebHistory } from "vue-router"
 
@@ -25,6 +26,7 @@ const Contacts = () => import("@/views/contacts/ContactsView.vue")
 const Catalog = () => import("@/views/catalog/CatalogView.vue")
 const DigiformaSettings = () => import("@/views/settings/DigiformaSettingsView.vue")
 const SecurityLogs = () => import("@/views/settings/SecurityLogsView.vue")
+const FeaturesSettings = () => import("@/views/settings/FeaturesSettingsView.vue")
 
 const routes: RouteRecordRaw[] = [
   {
@@ -227,6 +229,16 @@ const routes: RouteRecordRaw[] = [
     },
   },
   {
+    path: "/settings/features",
+    name: "FeaturesSettings",
+    component: FeaturesSettings,
+    meta: {
+      requiresAuth: true,
+      requiresSuperAdmin: true,
+      title: "Feature Flags",
+    },
+  },
+  {
     path: "/:pathMatch(.*)*",
     name: "NotFound",
     redirect: "/",
@@ -265,6 +277,12 @@ router.beforeEach(async (to, _from, next) => {
 
   // Redirect to dashboard if already authenticated and trying to access login or landing
   if ((to.name === "Login" || to.name === "Landing") && authStore.isAuthenticated) {
+    next({ name: "Dashboard" })
+    return
+  }
+
+  // Check for SUPER_ADMIN requirement
+  if (to.meta.requiresSuperAdmin && authStore.userRole !== UserRole.SUPER_ADMIN) {
     next({ name: "Dashboard" })
     return
   }

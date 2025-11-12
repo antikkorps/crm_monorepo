@@ -1,238 +1,273 @@
 <template>
   <div class="notification-history">
-    <div class="history-header">
+    <div class="history-header mb-4">
       <div class="header-content">
-        <h3 class="m-0">Notification History</h3>
-        <p class="text-600 mt-2 mb-0">View and manage all your notifications</p>
-      </div>
-      <div class="header-actions">
-        <Button
-          icon="pi pi-cog"
-          text
-          rounded
-          @click="showSettings = true"
-          title="Notification Settings"
-        />
+        <h3 class="text-h5 font-weight-bold mb-2">Notification History</h3>
+        <p class="text-body-2 text-medium-emphasis">View and manage all your notifications</p>
       </div>
     </div>
 
     <!-- Filters and Actions -->
-    <div class="history-controls">
-      <div class="filter-controls">
-        <Dropdown
-          v-model="selectedType"
-          :options="typeOptions"
-          option-label="label"
-          option-value="value"
-          placeholder="All Types"
-          class="filter-dropdown"
-          show-clear
-        />
-        <Dropdown
-          v-model="selectedStatus"
-          :options="statusOptions"
-          option-label="label"
-          option-value="value"
-          placeholder="All Status"
-          class="filter-dropdown"
-          show-clear
-        />
-      </div>
+    <v-row class="mb-4" align="center">
+      <v-col cols="12" md="6">
+        <v-row dense>
+          <v-col cols="6">
+            <v-select
+              v-model="selectedType"
+              :items="typeOptions"
+              label="Filter by Type"
+              variant="outlined"
+              density="compact"
+              clearable
+              hide-details
+            />
+          </v-col>
+          <v-col cols="6">
+            <v-select
+              v-model="selectedStatus"
+              :items="statusOptions"
+              label="Filter by Status"
+              variant="outlined"
+              density="compact"
+              clearable
+              hide-details
+            />
+          </v-col>
+        </v-row>
+      </v-col>
 
-      <div class="action-controls">
-        <Button
-          label="Mark All Read"
-          icon="pi pi-check"
-          text
+      <v-col cols="12" md="6" class="d-flex justify-end flex-wrap ga-2">
+        <v-btn
+          variant="text"
           size="small"
+          prepend-icon="mdi-check-all"
           @click="markAllAsRead"
           :disabled="unreadCount === 0"
-        />
-        <Button
-          label="Clear Read"
-          icon="pi pi-trash"
-          text
+        >
+          Mark All Read
+        </v-btn>
+        <v-btn
+          variant="text"
           size="small"
+          prepend-icon="mdi-delete-sweep"
           @click="clearReadNotifications"
           :disabled="readCount === 0"
-        />
-        <Button
-          label="Clear All"
-          icon="pi pi-times"
-          text
+        >
+          Clear Read
+        </v-btn>
+        <v-btn
+          variant="text"
           size="small"
-          severity="danger"
+          color="error"
+          prepend-icon="mdi-delete"
           @click="confirmClearAll = true"
-        />
-      </div>
-    </div>
+        >
+          Clear All
+        </v-btn>
+      </v-col>
+    </v-row>
 
     <!-- Notification List -->
     <div class="history-content">
-      <div v-if="filteredNotifications.length === 0" class="empty-state">
-        <i class="pi pi-bell-slash text-4xl text-400 mb-3"></i>
-        <h4 class="text-600 mb-2">No notifications found</h4>
-        <p class="text-500 m-0">
-          {{
-            hasFilters ? "Try adjusting your filters" : "You have no notifications yet"
-          }}
+      <!-- Empty State -->
+      <div v-if="filteredNotifications.length === 0" class="text-center py-12">
+        <v-icon size="64" color="grey-lighten-2" class="mb-4">mdi-bell-off</v-icon>
+        <h4 class="text-h6 text-medium-emphasis mb-2">No notifications found</h4>
+        <p class="text-body-2 text-medium-emphasis">
+          {{ hasFilters ? "Try adjusting your filters" : "You have no notifications yet" }}
         </p>
       </div>
 
-      <div v-else class="notification-list">
-        <div
-          v-for="notification in paginatedNotifications"
-          :key="notification.id"
-          class="history-item"
-          :class="{
-            'history-item-unread': !notification.read,
-            'history-item-dismissed': notification.dismissed,
-          }"
-        >
-          <div class="item-icon">
-            <i :class="getNotificationIcon(notification.type)"></i>
-          </div>
+      <!-- Notifications List -->
+      <v-list v-else class="pa-0">
+        <template v-for="notification in paginatedNotifications" :key="notification.id">
+          <v-list-item
+            :class="{
+              'notification-unread': !notification.read,
+              'notification-dismissed': notification.dismissed,
+            }"
+            class="notification-item"
+          >
+            <template #prepend>
+              <v-icon :color="getNotificationColor(notification.type)">
+                {{ getNotificationIcon(notification.type) }}
+              </v-icon>
+            </template>
 
-          <div class="item-content">
-            <div class="item-header">
-              <span class="item-type">{{ getTypeLabel(notification.type) }}</span>
-              <span class="item-time">{{ formatTime(notification.timestamp) }}</span>
-            </div>
-            <p class="item-message">{{ notification.message }}</p>
-            <div v-if="notification.data" class="item-data">
-              <small class="text-500"> Additional data available </small>
-            </div>
-          </div>
+            <v-list-item-title class="mb-1">
+              <v-chip
+                :color="getNotificationColor(notification.type)"
+                size="x-small"
+                variant="flat"
+                class="mr-2"
+              >
+                {{ getTypeLabel(notification.type) }}
+              </v-chip>
+              <span class="text-caption text-medium-emphasis">
+                {{ formatTime(notification.timestamp) }}
+              </span>
+            </v-list-item-title>
 
-          <div class="item-actions">
-            <Button
-              v-if="!notification.read"
-              icon="pi pi-check"
-              text
-              rounded
-              size="small"
-              @click="markAsRead(notification.id)"
-              title="Mark as read"
-            />
-            <Button
-              icon="pi pi-eye"
-              text
-              rounded
-              size="small"
-              @click="viewNotification(notification)"
-              title="View details"
-            />
-            <Button
-              icon="pi pi-times"
-              text
-              rounded
-              size="small"
-              severity="danger"
-              @click="removeNotification(notification.id)"
-              title="Remove"
-            />
-          </div>
-        </div>
-      </div>
+            <v-list-item-subtitle class="text-wrap">
+              {{ notification.message }}
+            </v-list-item-subtitle>
+
+            <template #append>
+              <div class="d-flex ga-1">
+                <v-btn
+                  v-if="!notification.read"
+                  icon="mdi-check"
+                  size="x-small"
+                  variant="text"
+                  @click="markAsRead(notification.id)"
+                  title="Mark as read"
+                />
+                <v-btn
+                  icon="mdi-eye"
+                  size="x-small"
+                  variant="text"
+                  @click="viewNotification(notification)"
+                  title="View details"
+                />
+                <v-btn
+                  icon="mdi-close"
+                  size="x-small"
+                  variant="text"
+                  color="error"
+                  @click="removeNotification(notification.id)"
+                  title="Remove"
+                />
+              </div>
+            </template>
+          </v-list-item>
+          <v-divider />
+        </template>
+      </v-list>
 
       <!-- Pagination -->
-      <div v-if="totalPages > 1" class="pagination-container">
-        <Paginator
-          v-model:first="first"
-          :rows="pageSize"
-          :total-records="filteredNotifications.length"
-          :rows-per-page-options="[10, 25, 50]"
-          template="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink RowsPerPageDropdown"
+      <div v-if="totalPages > 1" class="d-flex justify-center mt-6">
+        <v-pagination
+          v-model="currentPage"
+          :length="totalPages"
+          :total-visible="7"
+          size="small"
         />
       </div>
     </div>
 
     <!-- Notification Details Dialog -->
-    <Dialog
-      v-model:visible="showDetails"
-      modal
-      header="Notification Details"
-      :style="{ width: '500px' }"
-    >
-      <div v-if="selectedNotification" class="notification-details">
-        <div class="detail-row">
-          <strong>Type:</strong>
-          <span>{{ getTypeLabel(selectedNotification.type) }}</span>
-        </div>
-        <div class="detail-row">
-          <strong>Time:</strong>
-          <span>{{ formatFullTime(selectedNotification.timestamp) }}</span>
-        </div>
-        <div class="detail-row">
-          <strong>Status:</strong>
-          <Tag
-            :value="selectedNotification.read ? 'Read' : 'Unread'"
-            :severity="selectedNotification.read ? 'success' : 'info'"
-          />
-        </div>
-        <div class="detail-row">
-          <strong>Message:</strong>
-          <p class="m-0">{{ selectedNotification.message }}</p>
-        </div>
-        <div v-if="selectedNotification.data" class="detail-row">
-          <strong>Additional Data:</strong>
-          <pre class="data-preview">{{
-            JSON.stringify(selectedNotification.data, null, 2)
-          }}</pre>
-        </div>
-      </div>
+    <v-dialog v-model="showDetails" max-width="600">
+      <v-card>
+        <v-card-title class="d-flex align-center justify-space-between">
+          <span>Notification Details</span>
+          <v-btn icon="mdi-close" variant="text" @click="showDetails = false" />
+        </v-card-title>
 
-      <template #footer>
-        <Button label="Close" text @click="showDetails = false" />
-      </template>
-    </Dialog>
+        <v-divider />
+
+        <v-card-text v-if="selectedNotification" class="pa-4">
+          <v-row dense>
+            <v-col cols="12">
+              <div class="text-subtitle-2 mb-1">Type</div>
+              <v-chip
+                :color="getNotificationColor(selectedNotification.type)"
+                size="small"
+                variant="flat"
+              >
+                {{ getTypeLabel(selectedNotification.type) }}
+              </v-chip>
+            </v-col>
+
+            <v-col cols="12">
+              <div class="text-subtitle-2 mb-1">Time</div>
+              <div class="text-body-2">{{ formatFullTime(selectedNotification.timestamp) }}</div>
+            </v-col>
+
+            <v-col cols="12">
+              <div class="text-subtitle-2 mb-1">Status</div>
+              <v-chip
+                :color="selectedNotification.read ? 'success' : 'info'"
+                size="small"
+                variant="flat"
+              >
+                {{ selectedNotification.read ? "Read" : "Unread" }}
+              </v-chip>
+            </v-col>
+
+            <v-col cols="12">
+              <div class="text-subtitle-2 mb-1">Message</div>
+              <div class="text-body-2">{{ selectedNotification.message }}</div>
+            </v-col>
+
+            <v-col v-if="selectedNotification.data" cols="12">
+              <div class="text-subtitle-2 mb-1">Additional Data</div>
+              <v-sheet color="grey-lighten-4" rounded class="pa-3">
+                <pre class="text-caption">{{ JSON.stringify(selectedNotification.data, null, 2) }}</pre>
+              </v-sheet>
+            </v-col>
+          </v-row>
+        </v-card-text>
+
+        <v-divider />
+
+        <v-card-actions>
+          <v-spacer />
+          <v-btn variant="text" @click="showDetails = false">Close</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
 
     <!-- Clear All Confirmation -->
-    <Dialog
-      v-model:visible="confirmClearAll"
-      modal
-      header="Clear All Notifications"
-      :style="{ width: '400px' }"
-    >
-      <p>
-        Are you sure you want to clear all notifications? This action cannot be undone.
-      </p>
+    <v-dialog v-model="confirmClearAll" max-width="400">
+      <v-card>
+        <v-card-title>Clear All Notifications</v-card-title>
 
-      <template #footer>
-        <Button label="Cancel" text @click="confirmClearAll = false" />
-        <Button label="Clear All" severity="danger" @click="clearAllNotifications" />
-      </template>
-    </Dialog>
+        <v-divider />
+
+        <v-card-text class="pa-4">
+          Are you sure you want to clear all notifications? This action cannot be undone.
+        </v-card-text>
+
+        <v-divider />
+
+        <v-card-actions>
+          <v-spacer />
+          <v-btn variant="text" @click="confirmClearAll = false">Cancel</v-btn>
+          <v-btn variant="text" color="error" @click="clearAllNotifications">Clear All</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
 
     <!-- Settings Dialog -->
-    <Dialog
-      v-model:visible="showSettings"
-      modal
-      header="Notification Settings"
-      :style="{ width: '700px', maxHeight: '80vh' }"
-    >
-      <NotificationSettings @close="showSettings = false" />
-    </Dialog>
+    <v-dialog v-model="showSettings" max-width="800" scrollable>
+      <v-card>
+        <v-card-title class="d-flex align-center justify-space-between">
+          <span>Notification Settings</span>
+          <v-btn icon="mdi-close" variant="text" @click="showSettings = false" />
+        </v-card-title>
+
+        <v-divider />
+
+        <v-card-text class="pa-0">
+          <NotificationSettings @close="showSettings = false" />
+        </v-card-text>
+      </v-card>
+    </v-dialog>
   </div>
 </template>
 
 <script setup lang="ts">
 import NotificationSettings from "@/components/common/NotificationSettings.vue"
 import { useNotificationStore, type NotificationHistory } from "@/stores/notifications"
-import Button from "primevue/button"
-import Dialog from "primevue/dialog"
-import Dropdown from "primevue/dropdown"
-import Paginator from "primevue/paginator"
-import Tag from "primevue/tag"
-import { computed, ref } from "vue"
+import { computed, ref, watch } from "vue"
 
 const notificationStore = useNotificationStore()
 
 // Filters and pagination
 const selectedType = ref<string | null>(null)
 const selectedStatus = ref<string | null>(null)
-const first = ref(0)
-const pageSize = ref(25)
+const currentPage = ref(1)
+const pageSize = 25
 
 // Dialog states
 const showDetails = ref(false)
@@ -241,19 +276,20 @@ const confirmClearAll = ref(false)
 const selectedNotification = ref<NotificationHistory | null>(null)
 
 const typeOptions = [
-  { label: "Task Assignments", value: "task-assigned" },
-  { label: "Institution Updates", value: "institution-updated" },
-  { label: "Team Activity", value: "team-activity" },
-  { label: "Webhook Events", value: "webhook-triggered" },
-  { label: "Success", value: "success" },
-  { label: "Warning", value: "warning" },
-  { label: "Error", value: "error" },
+  { title: "Task Assignments", value: "task-assigned" },
+  { title: "Overdue Tasks", value: "task-overdue" },
+  { title: "Institution Updates", value: "institution-updated" },
+  { title: "Team Activity", value: "team-activity" },
+  { title: "Webhook Events", value: "webhook-triggered" },
+  { title: "Success", value: "success" },
+  { title: "Warning", value: "warning" },
+  { title: "Error", value: "error" },
 ]
 
 const statusOptions = [
-  { label: "Unread", value: "unread" },
-  { label: "Read", value: "read" },
-  { label: "Dismissed", value: "dismissed" },
+  { title: "Unread", value: "unread" },
+  { title: "Read", value: "read" },
+  { title: "Dismissed", value: "dismissed" },
 ]
 
 const filteredNotifications = computed(() => {
@@ -281,13 +317,13 @@ const filteredNotifications = computed(() => {
 })
 
 const paginatedNotifications = computed(() => {
-  const start = first.value
-  const end = start + pageSize.value
+  const start = (currentPage.value - 1) * pageSize
+  const end = start + pageSize
   return filteredNotifications.value.slice(start, end)
 })
 
 const totalPages = computed(() =>
-  Math.ceil(filteredNotifications.value.length / pageSize.value)
+  Math.ceil(filteredNotifications.value.length / pageSize)
 )
 
 const hasFilters = computed(() => selectedType.value || selectedStatus.value)
@@ -297,6 +333,11 @@ const unreadCount = computed(
 )
 
 const readCount = computed(() => filteredNotifications.value.filter((n) => n.read).length)
+
+// Reset to first page when filters change
+watch([selectedType, selectedStatus], () => {
+  currentPage.value = 1
+})
 
 const markAsRead = (notificationId: string) => {
   notificationStore.markAsRead(notificationId)
@@ -335,27 +376,52 @@ const viewNotification = (notification: NotificationHistory) => {
 
 const getTypeLabel = (type: string): string => {
   const option = typeOptions.find((opt) => opt.value === type)
-  return option?.label || type.charAt(0).toUpperCase() + type.slice(1)
+  return option?.title || type.charAt(0).toUpperCase() + type.slice(1)
 }
 
 const getNotificationIcon = (type: string): string => {
   switch (type) {
     case "task-assigned":
-      return "pi pi-check-square text-blue-500"
+      return "mdi-check-circle"
+    case "task-overdue":
+      return "mdi-clock-alert"
     case "institution-updated":
-      return "pi pi-building text-green-500"
+      return "mdi-domain"
     case "team-activity":
-      return "pi pi-users text-purple-500"
+      return "mdi-account-group"
     case "webhook-triggered":
-      return "pi pi-link text-orange-500"
+      return "mdi-webhook"
     case "success":
-      return "pi pi-check-circle text-green-500"
+      return "mdi-check-circle"
     case "warning":
-      return "pi pi-exclamation-triangle text-yellow-500"
+      return "mdi-alert"
     case "error":
-      return "pi pi-times-circle text-red-500"
+      return "mdi-close-circle"
     default:
-      return "pi pi-info-circle text-blue-500"
+      return "mdi-information"
+  }
+}
+
+const getNotificationColor = (type: string): string => {
+  switch (type) {
+    case "task-assigned":
+      return "blue"
+    case "task-overdue":
+      return "red"
+    case "institution-updated":
+      return "green"
+    case "team-activity":
+      return "purple"
+    case "webhook-triggered":
+      return "orange"
+    case "success":
+      return "green"
+    case "warning":
+      return "amber"
+    case "error":
+      return "red"
+    default:
+      return "blue"
   }
 }
 
@@ -386,212 +452,28 @@ const formatFullTime = (timestamp: Date): string => {
 
 <style scoped>
 .notification-history {
-  max-width: 800px;
-  margin: 0 auto;
+  max-width: 100%;
 }
 
-.history-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  padding-bottom: 1rem;
-  border-bottom: 1px solid #e9ecef;
-  margin-bottom: 1.5rem;
+.notification-item {
+  border-left: 3px solid transparent;
+  transition: all 0.2s ease;
 }
 
-.header-content {
-  flex: 1;
+.notification-unread {
+  background-color: rgba(25, 118, 210, 0.08);
+  border-left-color: #1976d2;
 }
 
-.header-actions {
-  display: flex;
-  gap: 0.5rem;
-}
-
-.history-controls {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1.5rem;
-  gap: 1rem;
-}
-
-.filter-controls {
-  display: flex;
-  gap: 0.75rem;
-}
-
-.filter-dropdown {
-  min-width: 150px;
-}
-
-.action-controls {
-  display: flex;
-  gap: 0.5rem;
-}
-
-.history-content {
-  min-height: 400px;
-}
-
-.empty-state {
-  text-align: center;
-  padding: 3rem 1rem;
-}
-
-.notification-list {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-
-.history-item {
-  display: flex;
-  align-items: flex-start;
-  padding: 1rem;
-  background: #ffffff;
-  border: 1px solid #e9ecef;
-  border-radius: 8px;
-  transition: all 0.2s;
-}
-
-.history-item:hover {
-  border-color: #dee2e6;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.history-item-unread {
-  background: #e3f2fd;
-  border-left: 4px solid #1976d2;
-}
-
-.history-item-dismissed {
+.notification-dismissed {
   opacity: 0.6;
 }
 
-.item-icon {
-  margin-right: 1rem;
-  margin-top: 0.25rem;
-  font-size: 1.1rem;
-}
-
-.item-content {
-  flex: 1;
-}
-
-.item-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 0.5rem;
-}
-
-.item-type {
-  font-weight: 600;
-  color: #495057;
-  font-size: 0.9rem;
-}
-
-.item-time {
-  color: #6c757d;
-  font-size: 0.8rem;
-}
-
-.item-message {
-  margin: 0 0 0.5rem 0;
-  color: #495057;
-  line-height: 1.4;
-}
-
-.item-data {
-  margin-top: 0.5rem;
-}
-
-.item-actions {
-  display: flex;
-  gap: 0.25rem;
-  margin-left: 1rem;
-  opacity: 0;
-  transition: opacity 0.2s;
-}
-
-.history-item:hover .item-actions {
-  opacity: 1;
-}
-
-.pagination-container {
-  margin-top: 2rem;
-  display: flex;
-  justify-content: center;
-}
-
-.notification-details {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-.detail-row {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.detail-row strong {
-  color: #495057;
-  font-size: 0.9rem;
-}
-
-.data-preview {
-  background: #f8f9fa;
-  padding: 0.75rem;
-  border-radius: 4px;
-  font-size: 0.8rem;
-  max-height: 200px;
-  overflow-y: auto;
+pre {
+  margin: 0;
   white-space: pre-wrap;
   word-break: break-word;
-}
-
-/* Responsive Design */
-@media (max-width: 768px) {
-  .history-header {
-    flex-direction: column;
-    gap: 1rem;
-    align-items: stretch;
-  }
-
-  .history-controls {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 1rem;
-  }
-
-  .filter-controls,
-  .action-controls {
-    flex-wrap: wrap;
-  }
-
-  .filter-dropdown {
-    min-width: 120px;
-    flex: 1;
-  }
-
-  .history-item {
-    flex-direction: column;
-    gap: 1rem;
-  }
-
-  .item-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.25rem;
-  }
-
-  .item-actions {
-    margin-left: 0;
-    opacity: 1;
-    align-self: flex-end;
-  }
+  max-height: 200px;
+  overflow-y: auto;
 }
 </style>

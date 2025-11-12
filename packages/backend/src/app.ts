@@ -32,6 +32,7 @@ import templateRoutes from "./routes/templates"
 import userRoutes from "./routes/users"
 import webhookRoutes from "./routes/webhooks"
 import securityLogRoutes from "./routes/security-logs"
+import settingsRoutes from "./routes/settings"
 import { logger } from "./utils/logger"
 import { securityLoggingMiddleware } from "./middleware/securityLogging"
 import { generalRateLimiter } from "./middleware/rateLimiting"
@@ -242,6 +243,10 @@ export const createApp = (): Koa => {
   // Apply security log routes
   app.use(securityLogRoutes.routes())
   app.use(securityLogRoutes.allowedMethods())
+
+  // Apply settings routes
+  app.use(settingsRoutes.routes())
+  app.use(settingsRoutes.allowedMethods())
 
   // 404 handler
   app.use(async (ctx) => {

@@ -9,6 +9,9 @@ import type {
 } from "@medical-crm/shared"
 import type { SegmentAnalyticsPayload } from "@/services/api/segmentation"
 
+// Cache configuration
+const CACHE_TTL = 5 * 60 * 1000 // 5 minutes
+
 // Global cache for segments to avoid unnecessary reloads
 const segmentsCache = ref<{
   data: Segment[]
@@ -17,7 +20,7 @@ const segmentsCache = ref<{
 }>({
   data: [],
   lastUpdated: 0,
-  ttl: 5 * 60 * 1000 // 5 minutes
+  ttl: CACHE_TTL
 })
 
 // Cache for segment previews and searches
@@ -55,7 +58,7 @@ export function useSegmentation() {
       segmentsCache.value = {
         data: response.data,
         lastUpdated: Date.now(),
-        ttl: 5 * 60 * 1000
+        ttl: CACHE_TTL
       }
     } catch (err) {
       error.value = err instanceof Error ? err.message : "Failed to load segments"
@@ -89,6 +92,14 @@ export function useSegmentation() {
     try {
       const response = await segmentationApi.createSegment(data)
       segments.value.push(response.data)
+
+      // Invalidate and update cache
+      segmentsCache.value = {
+        data: segments.value,
+        lastUpdated: Date.now(),
+        ttl: CACHE_TTL
+      }
+
       return response.data
     } catch (err) {
       error.value = err instanceof Error ? err.message : "Failed to create segment"
@@ -112,6 +123,14 @@ export function useSegmentation() {
       if (currentSegment.value?.id === id) {
         currentSegment.value = response.data
       }
+
+      // Invalidate and update cache
+      segmentsCache.value = {
+        data: segments.value,
+        lastUpdated: Date.now(),
+        ttl: CACHE_TTL
+      }
+
       return response.data
     } catch (err) {
       error.value = err instanceof Error ? err.message : "Failed to update segment"
@@ -132,6 +151,13 @@ export function useSegmentation() {
       if (currentSegment.value?.id === id) {
         currentSegment.value = null
       }
+
+      // Invalidate and update cache
+      segmentsCache.value = {
+        data: segments.value,
+        lastUpdated: Date.now(),
+        ttl: CACHE_TTL
+      }
     } catch (err) {
       error.value = err instanceof Error ? err.message : "Failed to delete segment"
       console.error("Error deleting segment:", err)
@@ -148,6 +174,14 @@ export function useSegmentation() {
     try {
       const response = await segmentationApi.duplicateSegment(id)
       segments.value.push(response.data)
+
+      // Invalidate and update cache
+      segmentsCache.value = {
+        data: segments.value,
+        lastUpdated: Date.now(),
+        ttl: CACHE_TTL
+      }
+
       return response.data
     } catch (err) {
       error.value = err instanceof Error ? err.message : "Failed to duplicate segment"

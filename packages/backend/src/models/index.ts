@@ -19,6 +19,7 @@ import { Quote } from "./Quote"
 import { QuoteLine } from "./QuoteLine"
 import { Reminder } from "./Reminder"
 import { ReminderRule } from "./ReminderRule"
+import { ReminderNotificationLog } from "./ReminderNotificationLog"
 import { Segment } from "./Segment"
 import { Task } from "./Task"
 import { Team } from "./Team"
@@ -32,6 +33,7 @@ import { DigiformaQuote } from "./DigiformaQuote"
 import { DigiformaInvoice } from "./DigiformaInvoice"
 import { DigiformaSettings } from "./DigiformaSettings"
 import { SecurityLog } from "./SecurityLog"
+import { SystemSettings } from "./SystemSettings"
 
 // Define associations
 // MedicalInstitution associations
@@ -620,6 +622,33 @@ Team.hasMany(ReminderRule, {
   onDelete: "SET NULL",
 })
 
+// ReminderNotificationLog associations
+ReminderNotificationLog.belongsTo(ReminderRule, {
+  foreignKey: "ruleId",
+  as: "rule",
+  onDelete: "CASCADE",
+})
+
+ReminderNotificationLog.belongsTo(User, {
+  foreignKey: "recipientId",
+  as: "recipient",
+  onDelete: "CASCADE",
+})
+
+// ReminderRule notification log associations
+ReminderRule.hasMany(ReminderNotificationLog, {
+  foreignKey: "ruleId",
+  as: "notificationLogs",
+  onDelete: "CASCADE",
+})
+
+// User notification log associations
+User.hasMany(ReminderNotificationLog, {
+  foreignKey: "recipientId",
+  as: "receivedNotifications",
+  onDelete: "CASCADE",
+})
+
 // Export all models
 export {
   Call,
@@ -642,6 +671,7 @@ export {
   QuoteLine,
   Reminder,
   ReminderRule,
+  ReminderNotificationLog,
   Segment,
   Task,
   Team,
@@ -655,6 +685,7 @@ export {
   DigiformaInvoice,
   DigiformaSettings,
   SecurityLog,
+  SystemSettings,
 }
 
 // Export default for convenience
@@ -682,6 +713,7 @@ export default {
   CatalogItem,
   Reminder,
   ReminderRule,
+  ReminderNotificationLog,
   Segment,
   Webhook,
   WebhookLog,
@@ -692,4 +724,5 @@ export default {
   DigiformaInvoice,
   DigiformaSettings,
   SecurityLog,
+  SystemSettings,
 }

@@ -51,8 +51,8 @@
           @click="onNavigationClick"
         ></v-list-item>
 
-        <!-- Billing Section -->
-        <v-list-group value="Billing">
+        <!-- Billing Section (conditionally shown based on feature flags) -->
+        <v-list-group v-if="filteredBillingNavigation.length > 0" value="Billing">
           <template v-slot:activator="{ props }">
             <v-list-item
               v-bind="props"
@@ -62,7 +62,7 @@
           </template>
 
           <v-list-item
-            v-for="item in billingNavigation"
+            v-for="item in filteredBillingNavigation"
             :key="item.title"
             :prepend-icon="item.icon"
             :title="$t(item.title)"
@@ -94,7 +94,7 @@
         </v-list-group>
 
         <!-- Configuration -->
-        <v-list-group value="Configuration">
+        <v-list-group v-if="configNavigation.length > 0" value="Configuration">
           <template v-slot:activator="{ props }">
             <v-list-item
               v-bind="props"
@@ -315,11 +315,14 @@ import LanguageSelector from "@/components/common/LanguageSelector.vue"
 import NotificationCenterVuetify from "@/components/common/NotificationCenterVuetify.vue"
 import UserAvatar from "@/components/common/UserAvatar.vue"
 import { useAuthStore } from "@/stores/auth"
+import { useSettingsStore } from "@/stores/settings"
+import { UserRole } from "@medical-crm/shared"
 import { computed, ref } from "vue"
 import { useRouter } from "vue-router"
 import { useDisplay } from "vuetify"
 
 const authStore = useAuthStore()
+const settingsStore = useSettingsStore()
 const router = useRouter()
 const { mobile } = useDisplay()
 
@@ -403,26 +406,54 @@ const contactsNavigation = [
   },
 ]
 
-const configNavigation = [
-  {
-    title: "navigation.team",
-    icon: "mdi-account-group",
-    to: "/team",
-    value: "team",
-  },
-  {
-    title: "navigation.webhooks",
-    icon: "mdi-webhook",
-    to: "/webhooks",
-    value: "webhooks",
-  },
-  {
-    title: "navigation.digiforma",
-    icon: "mdi-school",
-    to: "/settings/digiforma",
-    value: "digiforma",
-  },
-]
+const configNavigation = computed(() => {
+  const items = [
+    {
+      title: "navigation.team",
+      icon: "mdi-account-group",
+      to: "/team",
+      value: "team",
+    },
+    {
+      title: "navigation.webhooks",
+      icon: "mdi-webhook",
+      to: "/webhooks",
+      value: "webhooks",
+    },
+    {
+      title: "navigation.digiforma",
+      icon: "mdi-school",
+      to: "/settings/digiforma",
+      value: "digiforma",
+    },
+  ]
+
+  // Add System Settings for SUPER_ADMIN only
+  if (authStore.userRole === UserRole.SUPER_ADMIN) {
+    items.push({
+      title: "navigation.systemSettings",
+      icon: "mdi-cog-outline",
+      to: "/settings/features",
+      value: "features",
+    })
+  }
+
+  return items
+})
+
+// Filter billing navigation based on feature flags
+const filteredBillingNavigation = computed(() => {
+  return billingNavigation.filter((item) => {
+    if (item.value === "quotes") {
+      return settingsStore.isQuotesEnabled
+    }
+    if (item.value === "invoices") {
+      return settingsStore.isInvoicesEnabled
+    }
+    // Templates, catalog, and analytics are always visible if any billing feature is enabled
+    return settingsStore.isBillingEnabled
+  })
+})
 
 // Handle logout
 const handleLogout = async () => {

@@ -19,9 +19,8 @@ export enum SegmentVisibility {
 export interface SegmentCriteria {
   institutionFilters?: MedicalInstitutionSearchFilters
   contactFilters?: {
-    role?: string[]
-    department?: string[]
     title?: string[]
+    department?: string[]
     isPrimary?: boolean
     hasPhone?: boolean
     hasEmail?: boolean
@@ -70,21 +69,21 @@ export class Segment
   extends Model<SegmentAttributes, SegmentCreationAttributes>
   implements SegmentAttributes
 {
-  public id!: string
-  public name!: string
-  public description?: string
-  public type!: SegmentType
-  public criteria!: SegmentCriteria
-  public visibility!: SegmentVisibility
-  public ownerId!: string
-  public teamId?: string
-  public isActive!: boolean
-  public readonly createdAt!: Date
-  public readonly updatedAt!: Date
+  declare id: string
+  declare name: string
+  declare description: string | undefined
+  declare type: SegmentType
+  declare criteria: SegmentCriteria
+  declare visibility: SegmentVisibility
+  declare ownerId: string
+  declare teamId: string | undefined
+  declare isActive: boolean
+  declare readonly createdAt: Date
+  declare readonly updatedAt: Date
 
   // Associations
-  public owner?: User
-  public team?: Team
+  declare owner?: User
+  declare team?: Team
 
   // Instance methods
   public isVisibleTo(userId: string, userTeamId?: string): boolean {
@@ -141,8 +140,8 @@ export class Segment
     if (this.criteria.contactFilters) {
       const contactFilters = this.criteria.contactFilters
 
-      if (contactFilters.role && contactFilters.role.length > 0) {
-        whereClause.title = { [Op.in]: contactFilters.role }
+      if (contactFilters.title && contactFilters.title.length > 0) {
+        whereClause.title = { [Op.in]: contactFilters.title }
       }
 
       if (contactFilters.department && contactFilters.department.length > 0) {
@@ -191,15 +190,23 @@ export class Segment
       } else {
         if (instFilters.city) {
           const andConditions = (institutionWhere[Op.and] as any[]) || []
+          // Secure JSONB query using Sequelize.where with cast
           andConditions.push(
-            Sequelize.literal(`"institution"."address"->>'city' ILIKE '%${instFilters.city.replace(/'/g, "''")}%'`)
+            Sequelize.where(
+              Sequelize.cast(Sequelize.json('institution.address.city'), 'text'),
+              { [Op.iLike]: `%${instFilters.city}%` }
+            )
           )
           institutionWhere[Op.and] = andConditions as any
         }
         if (instFilters.state) {
           const andConditions = (institutionWhere[Op.and] as any[]) || []
+          // Secure JSONB query using Sequelize.where with cast
           andConditions.push(
-            Sequelize.literal(`"institution"."address"->>'state' ILIKE '%${instFilters.state.replace(/'/g, "''")}%'`)
+            Sequelize.where(
+              Sequelize.cast(Sequelize.json('institution.address.state'), 'text'),
+              { [Op.iLike]: `%${instFilters.state}%` }
+            )
           )
           institutionWhere[Op.and] = andConditions as any
         }

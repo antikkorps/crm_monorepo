@@ -1,78 +1,43 @@
 <template>
-  <div class="notifications-view">
-    <div class="view-header">
-      <div class="header-content">
-        <h1 class="page-title">Notifications</h1>
-        <p class="page-description">
-          Manage your notification preferences and view notification history
-        </p>
-      </div>
+  <v-container fluid class="pa-6">
+    <div class="mb-6">
+      <h1 class="text-h4 font-weight-bold mb-2">Notifications</h1>
+      <p class="text-body-1 text-medium-emphasis">
+        Manage your notification preferences and view notification history
+      </p>
     </div>
 
-    <div class="view-content">
-      <TabView>
-        <TabPanel header="History">
-          <NotificationHistory />
-        </TabPanel>
+    <v-card elevation="2">
+      <v-tabs v-model="activeTab" bg-color="primary">
+        <v-tab value="history">
+          <v-icon start>mdi-history</v-icon>
+          History
+        </v-tab>
+        <v-tab value="settings">
+          <v-icon start>mdi-cog</v-icon>
+          Settings
+        </v-tab>
+      </v-tabs>
 
-        <TabPanel header="Settings">
-          <NotificationSettings />
-        </TabPanel>
-      </TabView>
-    </div>
-  </div>
+      <v-card-text class="pa-6">
+        <v-window v-model="activeTab">
+          <v-window-item value="history">
+            <NotificationHistory />
+          </v-window-item>
+
+          <v-window-item value="settings">
+            <NotificationSettings />
+          </v-window-item>
+        </v-window>
+      </v-card-text>
+    </v-card>
+  </v-container>
 </template>
 
 <script setup lang="ts">
 import NotificationHistory from "@/components/common/NotificationHistory.vue"
 import NotificationSettings from "@/components/common/NotificationSettings.vue"
-import TabPanel from "primevue/tabpanel"
-import TabView from "primevue/tabview"
+import { ref } from "vue"
+
+const activeTab = ref("history")
 </script>
-
-<style scoped>
-.notifications-view {
-  padding: 2rem;
-  max-width: 1200px;
-  margin: 0 auto;
-}
-
-.view-header {
-  margin-bottom: 2rem;
-}
-
-.page-title {
-  font-size: 2rem;
-  font-weight: 600;
-  color: #495057;
-  margin: 0 0 0.5rem 0;
-}
-
-.page-description {
-  color: #6c757d;
-  font-size: 1.1rem;
-  margin: 0;
-}
-
-.view-content {
-  background: #ffffff;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  overflow: hidden;
-}
-
-/* Responsive Design */
-@media (max-width: 768px) {
-  .notifications-view {
-    padding: 1rem;
-  }
-
-  .page-title {
-    font-size: 1.5rem;
-  }
-
-  .page-description {
-    font-size: 1rem;
-  }
-}
-</style>

@@ -25,10 +25,24 @@
               />
             </v-col>
             <v-col cols="12" md="6">
+              <v-select
+                v-model="form.templateId"
+                :items="templates"
+                item-title="name"
+                item-value="id"
+                label="Modèle de document"
+                variant="outlined"
+                density="compact"
+                clearable
+              />
+            </v-col>
+            <v-col cols="12" md="6">
               <v-text-field
                 v-model="form.title"
                 label="Titre *"
                 :error-messages="errors.title"
+                variant="outlined"
+                density="compact"
               />
             </v-col>
             <v-col cols="12" md="6">
@@ -37,6 +51,8 @@
                 label="Date d'échéance *"
                 type="date"
                 :error-messages="errors.dueDate"
+                variant="outlined"
+                density="compact"
               />
             </v-col>
             <v-col cols="12">
@@ -92,8 +108,8 @@
 </template>
 
 <script setup lang="ts">
-import { institutionsApi, invoicesApi } from "@/services/api"
-import type { Invoice, InvoiceCreateRequest, InvoiceLineCreateRequest } from "@medical-crm/shared"
+import { institutionsApi, invoicesApi, templatesApi } from "@/services/api"
+import type { Invoice, InvoiceCreateRequest, InvoiceLineCreateRequest, DocumentTemplate } from "@medical-crm/shared"
 import { computed, onMounted, ref, watch } from "vue"
 import { createInvoiceLineDefaults, calculateTotals, type LineWithCatalog } from "@/utils/billing"
 import QuoteLine from "./QuoteLine.vue"
@@ -114,7 +130,14 @@ const dialogVisible = computed({
 const isEditing = computed(() => !!props.invoice)
 const submitting = ref(false)
 
-const form = ref<InvoiceCreateRequest>({ institutionId: "", title: "", dueDate: new Date().toISOString().split('T')[0] as any, lines: [] })
+const form = ref<InvoiceCreateRequest>({
+  institutionId: "",
+  title: "",
+  dueDate: new Date().toISOString().split('T')[0],
+  lines: []
+})
+// If templateId is needed, handle it as a separate ref:
+const templateId = ref<string>("")
 type InvoiceLineForm = LineWithCatalog<InvoiceLineCreateRequest & {
   id?: string
   invoiceId?: string
@@ -131,6 +154,7 @@ type InvoiceLineForm = LineWithCatalog<InvoiceLineCreateRequest & {
 }>
 
 const institutions = ref<any[]>([])
+const templates = ref<DocumentTemplate[]>([])
 const errors = ref<Record<string, string>>({})
 const lineErrors = ref<Record<number, Record<string, string>>>({})
 const loadingInstitutions = ref(false)
@@ -147,6 +171,15 @@ const loadInstitutions = async () => {
     const data = (response as any).data
     institutions.value = data?.institutions || data || []
   } catch (error) { console.error("Error loading institutions:", error) }
+}
+
+const loadTemplates = async () => {
+  try {
+    const response = await templatesApi.getAll({ type: "invoice" })
+    templates.value = (response as any)?.data || []
+  } catch (error) {
+    console.error("Failed to load templates:", error)
+  }
 }
 
 // Debounce timer for institution search
@@ -288,6 +321,7 @@ const resetForm = () => {
   form.value = {
     institutionId: "",
     title: "",
+    templateId: "",
     dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] as any,
     lines: [],
   }
@@ -301,6 +335,7 @@ watch(() => props.invoice, (invoice) => {
   if (invoice) {
     form.value = {
       ...invoice,
+      templateId: (invoice as any).templateId || "",
       dueDate: new Date(invoice.dueDate).toISOString().split('T')[0] as any,
       lines: invoice.lines?.map(line => ({ ...line, tempId: `id_${line.id}` })) || [],
     }
@@ -309,7 +344,9 @@ watch(() => props.invoice, (invoice) => {
   }
 }, { immediate: true })
 
-onMounted(loadInstitutions)
+onMounted(async () => {
+  await Promise.all([loadInstitutions(), loadTemplates()])
+})
 </script>
 
 <style scoped>

@@ -1,5 +1,10 @@
 import { Op } from "sequelize"
 import { ReminderRule } from "../models/ReminderRule"
+import {
+  ReminderNotificationLog,
+  ReminderEntityType,
+  ReminderNotificationType,
+} from "../models/ReminderNotificationLog"
 import { Task, TaskPriority, TaskStatus } from "../models/Task"
 import { Quote } from "../models/Quote"
 import { Invoice } from "../models/Invoice"
@@ -40,7 +45,6 @@ export class ReminderService {
   private notificationService: NotificationService
   private emailService: EmailService
   private static instance: ReminderService
-  private lastNotificationCache = new Map<string, Date>() // Cache to prevent spam
 
   private constructor() {
     this.notificationService = NotificationService.getInstance()
@@ -275,58 +279,108 @@ export class ReminderService {
 
   /**
    * Check if notification was already sent recently (anti-spam)
+   * Uses persistent database check instead of in-memory cache
+   *
+   * @param ruleId - Reminder rule ID
+   * @param entityType - Entity type (task, quote, invoice)
+   * @param entityId - Entity ID
+   * @param recipientId - User ID who will receive the notification
+   * @returns true if notification should be sent, false if sent too recently
    */
-  private shouldSendNotification(ruleId: string, entityId: string): boolean {
-    const cacheKey = `${ruleId}-${entityId}`
-    const lastSent = this.lastNotificationCache.get(cacheKey)
-    
-    if (!lastSent) {
-      return true // First time notification
+  private async shouldSendNotification(
+    ruleId: string,
+    entityType: ReminderEntityType,
+    entityId: string,
+    recipientId: string
+  ): Promise<boolean> {
+    try {
+      const recentLog = await ReminderNotificationLog.findRecentNotification(
+        ruleId,
+        entityType,
+        entityId,
+        recipientId,
+        23 // 23 hours - prevent daily spam
+      )
+
+      if (!recentLog) {
+        return true // No recent notification found, safe to send
+      }
+
+      logger.debug("Duplicate notification prevented by persistent log", {
+        ruleId,
+        entityType,
+        entityId,
+        recipientId,
+        lastSent: recentLog.sentAt,
+      })
+
+      return false // Notification sent too recently
+    } catch (error) {
+      logger.error("Error checking notification history", {
+        error: error instanceof Error ? error.message : String(error),
+        ruleId,
+        entityId,
+        recipientId,
+      })
+      // On error, allow notification to prevent blocking legitimate alerts
+      return true
     }
-    
-    const now = new Date()
-    const hoursSinceLastNotification = (now.getTime() - lastSent.getTime()) / (1000 * 60 * 60)
-    
-    // Only allow notification every 23 hours to avoid daily spam
-    return hoursSinceLastNotification >= 23
   }
 
   /**
-   * Mark notification as sent
+   * Log notification as sent in persistent database
+   * Replaces in-memory cache with durable audit trail
+   *
+   * @param ruleId - Reminder rule ID
+   * @param entityType - Entity type (task, quote, invoice)
+   * @param entityId - Entity ID
+   * @param recipientId - User ID who received the notification
+   * @param notificationType - Type of notification sent (in_app, email, both)
    */
-  private markNotificationSent(ruleId: string, entityId: string): void {
-    const cacheKey = `${ruleId}-${entityId}`
-    this.lastNotificationCache.set(cacheKey, new Date())
-    
-    // Clean old cache entries (older than 7 days)
-    const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
-    const keysToDelete: string[] = []
-    this.lastNotificationCache.forEach((date, key) => {
-      if (date < sevenDaysAgo) {
-        keysToDelete.push(key)
-      }
-    })
-    keysToDelete.forEach(key => this.lastNotificationCache.delete(key))
+  private async markNotificationSent(
+    ruleId: string,
+    entityType: ReminderEntityType,
+    entityId: string,
+    recipientId: string,
+    notificationType: ReminderNotificationType = ReminderNotificationType.IN_APP
+  ): Promise<void> {
+    try {
+      await ReminderNotificationLog.logNotification({
+        ruleId,
+        entityType,
+        entityId,
+        recipientId,
+        notificationType,
+      })
+
+      logger.debug("Notification logged in persistent database", {
+        ruleId,
+        entityType,
+        entityId,
+        recipientId,
+        notificationType,
+      })
+    } catch (error) {
+      // Log error but don't throw - notification was already sent
+      logger.error("Error logging notification to database", {
+        error: error instanceof Error ? error.message : String(error),
+        ruleId,
+        entityId,
+        recipientId,
+      })
+    }
   }
 
   /**
    * Send reminder notification
+   * Now uses persistent database logging for per-recipient anti-spam protection
    */
   private async sendReminderNotification(
     rule: ReminderRule,
     entity: ReminderData
   ): Promise<void> {
     try {
-      // Check anti-spam mechanism
-      if (!this.shouldSendNotification(rule.id, entity.id)) {
-        logger.debug(`Skipping duplicate notification for ${rule.entityType} ${entity.id}`, {
-          entityType: rule.entityType,
-          entityId: entity.id,
-          ruleId: rule.id,
-        })
-        return
-      }
-
+      const entityType = rule.entityType as ReminderEntityType
       const notificationType = this.getNotificationType(rule.entityType, rule.triggerType)
       const notificationData = {
         type: notificationType,
@@ -339,35 +393,69 @@ export class ReminderService {
         entityId: entity.id,
       }
 
-      // Send notification - avoid duplicates
+      // Collect all notification targets
       const notificationTargets: string[] = []
-      
+
       // Add assignee if exists
       if (entity.assigneeId) {
         notificationTargets.push(entity.assigneeId)
       }
-      
+
       // If rule is team-specific, notify team members (except assignee to avoid duplicates)
       if (rule.teamId) {
         const teamMembers = await this.getTeamMembers(rule.teamId)
-        const teamMembersToNotify = teamMembers.filter(memberId => 
+        const teamMembersToNotify = teamMembers.filter(memberId =>
           !notificationTargets.includes(memberId)
         )
-        for (const memberId of teamMembersToNotify) {
-          await this.notificationService.notifyUser(memberId, notificationData)
-        }
-      } else {
-        // Notify individual assignee
-        for (const targetId of notificationTargets) {
-          await this.notificationService.notifyUser(targetId, notificationData)
-        }
+        notificationTargets.push(...teamMembersToNotify)
       }
 
-      // Mark notification as sent to prevent spam
-      this.markNotificationSent(rule.id, entity.id)
+      // Send to each recipient with individual anti-spam checking
+      let sentCount = 0
+      let skippedCount = 0
 
-      // Send email reminder if enabled and assignee has email
-      if (process.env.ENABLE_EMAIL_REMINDERS === 'true') {
+      for (const recipientId of notificationTargets) {
+        // Check if this specific recipient already received this notification recently
+        const shouldSend = await this.shouldSendNotification(
+          rule.id,
+          entityType,
+          entity.id,
+          recipientId
+        )
+
+        if (!shouldSend) {
+          logger.debug(`Skipping duplicate notification for recipient`, {
+            entityType: rule.entityType,
+            entityId: entity.id,
+            ruleId: rule.id,
+            recipientId,
+          })
+          skippedCount++
+          continue
+        }
+
+        // Send in-app notification
+        await this.notificationService.notifyUser(recipientId, notificationData)
+
+        // Determine notification type to log
+        const logNotificationType = process.env.ENABLE_EMAIL_REMINDERS === 'true'
+          ? ReminderNotificationType.BOTH
+          : ReminderNotificationType.IN_APP
+
+        // Mark notification as sent for this specific recipient
+        await this.markNotificationSent(
+          rule.id,
+          entityType,
+          entity.id,
+          recipientId,
+          logNotificationType
+        )
+
+        sentCount++
+      }
+
+      // Send email reminder if enabled and we sent to at least one recipient
+      if (sentCount > 0 && process.env.ENABLE_EMAIL_REMINDERS === 'true') {
         await this.sendEmailReminder(rule, entity)
       }
 
