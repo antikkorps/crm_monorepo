@@ -252,7 +252,7 @@ async function loadStats() {
     }
   } catch (err) {
     console.error('Error loading reminder stats:', err)
-    error.value = err instanceof Error ? err.message : 'Une erreur est survenue'
+    error.value = 'Une erreur est survenue lors du chargement des statistiques'
   } finally {
     loading.value = false
   }
