@@ -252,7 +252,7 @@ export class Quote
 
     let sequence = 1
     if (result.length > 0 && result[0].quote_number) {
-      const lastSequence = parseInt(result[0].quote_number.slice(-4))
+      const lastSequence = Number.parseInt(result[0].quote_number.slice(-4))
       console.log("Last sequence:", lastSequence)
       sequence = lastSequence + 1
     }
@@ -295,7 +295,7 @@ export class Quote
 
     let sequence = 1
     if (rows.length > 0 && rows[0].order_number) {
-      const lastSequence = parseInt(rows[0].order_number.slice(-4))
+      const lastSequence = Number.parseInt(rows[0].order_number.slice(-4))
       sequence = lastSequence + 1
     }
     return `${basePattern}${String(sequence).padStart(4, "0")}`

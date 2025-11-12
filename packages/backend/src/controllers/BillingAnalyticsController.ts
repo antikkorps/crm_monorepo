@@ -172,7 +172,7 @@ export class BillingAnalyticsController {
     try {
       const { projectionDays = "90", userId } = ctx.query
       const filterUserId = userId as string | undefined
-      const days = parseInt(projectionDays as string, 10)
+      const days = Number.parseInt(projectionDays as string, 10)
 
       if (isNaN(days) || days < 1 || days > 365) {
         throw createError(

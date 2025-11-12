@@ -7,7 +7,7 @@ export class DatabaseSeeder {
   static async seedUsers() {
     try {
       const [users] = await sequelize.query("SELECT COUNT(*) as count FROM users")
-      const userCount = parseInt((users[0] as any).count)
+      const userCount = Number.parseInt((users[0] as any).count)
 
       if (userCount > 0) {
         logger.info("Users already exist, skipping user seeding")
@@ -80,7 +80,7 @@ export class DatabaseSeeder {
   static async seedTeams() {
     try {
       const [teams] = await sequelize.query("SELECT COUNT(*) as count FROM teams")
-      const teamCount = parseInt((teams[0] as any).count)
+      const teamCount = Number.parseInt((teams[0] as any).count)
 
       if (teamCount > 0) {
         logger.info("Teams already exist, skipping team seeding")
@@ -118,7 +118,7 @@ export class DatabaseSeeder {
       const [institutions] = await sequelize.query(
         "SELECT COUNT(*) as count FROM medical_institutions"
       )
-      const institutionCount = parseInt((institutions[0] as any).count)
+      const institutionCount = Number.parseInt((institutions[0] as any).count)
 
       if (institutionCount > 0) {
         logger.info("Medical institutions already exist, skipping seeding")
@@ -192,7 +192,7 @@ export class DatabaseSeeder {
       const [contacts] = await sequelize.query(
         "SELECT COUNT(*) as count FROM contact_persons"
       )
-      const contactCount = parseInt((contacts[0] as any).count)
+      const contactCount = Number.parseInt((contacts[0] as any).count)
 
       if (contactCount > 0) {
         logger.info(`Found ${contactCount} contact persons, skipping seeding`)
@@ -278,7 +278,7 @@ export class DatabaseSeeder {
   static async seedReminderRules() {
     try {
       const [rules] = await sequelize.query("SELECT COUNT(*) as count FROM reminder_rules")
-      const ruleCount = parseInt((rules[0] as any).count)
+      const ruleCount = Number.parseInt((rules[0] as any).count)
 
       if (ruleCount > 0) {
         logger.info("Reminder rules already exist, skipping reminder rule seeding")

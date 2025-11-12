@@ -46,8 +46,8 @@ export class CallController {
 
       // Apply pagination
       const paginatedCalls = calls.slice(
-        parseInt(offset as string),
-        parseInt(offset as string) + parseInt(limit as string)
+        Number.parseInt(offset as string),
+        Number.parseInt(offset as string) + Number.parseInt(limit as string)
       )
 
       ctx.body = {
@@ -55,8 +55,8 @@ export class CallController {
         data: paginatedCalls,
         pagination: {
           total: calls.length,
-          limit: parseInt(limit as string),
-          offset: parseInt(offset as string),
+          limit: Number.parseInt(limit as string),
+          offset: Number.parseInt(offset as string),
         },
       }
     } catch (error: any) {
