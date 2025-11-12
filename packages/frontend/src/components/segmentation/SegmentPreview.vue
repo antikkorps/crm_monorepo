@@ -261,6 +261,7 @@ const loadPreview = async () => {
     }
     activeCount.value = 0
     totalCount.value = 0
+    emit('preview-updated', previewData.value)
   }
 }
 
