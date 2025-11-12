@@ -6,6 +6,7 @@ import { ReminderService } from "../services/ReminderService"
 import { logger } from "../utils/logger"
 import { validateReminderRule } from "../validation/reminderValidation"
 import { sequelize } from "../config/database"
+import { createError } from "../middleware/errorHandler"
 
 // Type guard function to check if user is authenticated
 function isAuthenticated(ctx: Context): ctx is Context & { state: { user: User } } {
@@ -581,6 +582,14 @@ export class ReminderRuleController {
       const user = requireAuth(ctx)
       const { daysBack = "30" } = ctx.query as any
       const days = Number.parseInt(daysBack)
+      // Validate daysBack parameter
+      if (isNaN(days) || days < 1 || days > 365) {
+        throw createError(
+          "Days back must be a valid number between 1 and 365",
+          400,
+          "INVALID_DAYS_BACK"
+        )
+      }
 
       // Date range for analytics
       const cutoffDate = new Date()
@@ -599,8 +608,7 @@ export class ReminderRuleController {
       })
 
       // 2. Notification volume stats
-      const [notificationStats] = (await sequelize.query(
-        `
+      let notificationStatsQuery = `
         SELECT
           COUNT(*) FILTER (WHERE status = 'sent') as total_sent,
           COUNT(*) FILTER (WHERE status = 'failed') as total_failed,
@@ -608,8 +616,16 @@ export class ReminderRuleController {
           MAX(sent_at) as last_sent
         FROM reminder_notification_logs
         WHERE sent_at >= :cutoffDate
-          ${user.role !== UserRole.SUPER_ADMIN && user.teamId ? "AND rule_id IN (SELECT id FROM reminder_rules WHERE team_id = :teamId)" : ""}
-      `,
+      `
+      
+      if (user.role !== UserRole.SUPER_ADMIN && user.teamId) {
+        notificationStatsQuery += `
+          AND rule_id IN (SELECT id FROM reminder_rules WHERE team_id = :teamId)
+        `
+      }
+
+      const [notificationStats] = (await sequelize.query(
+        notificationStatsQuery,
         {
           replacements: {
             cutoffDate,
@@ -625,8 +641,7 @@ export class ReminderRuleController {
       const successRate = totalNotifications > 0 ? (totalSent / totalNotifications) * 100 : 0
 
       // 3. Top performing rules (by volume)
-      const [topRules] = (await sequelize.query(
-        `
+      let topRulesQuery = `
         SELECT
           rr.id,
           rr.entity_type,
@@ -640,11 +655,22 @@ export class ReminderRuleController {
           AND rnl.sent_at >= :cutoffDate
           AND rnl.status = 'sent'
         WHERE 1=1
-          ${user.role !== UserRole.SUPER_ADMIN && user.teamId ? "AND rr.team_id = :teamId" : ""}
+      `
+      
+      if (user.role !== UserRole.SUPER_ADMIN && user.teamId) {
+        topRulesQuery += `
+          AND rr.team_id = :teamId
+        `
+      }
+      
+      topRulesQuery += `
         GROUP BY rr.id, rr.entity_type, rr.trigger_type, rr.priority, rr.is_active
         ORDER BY notifications_sent DESC
         LIMIT 10
-      `,
+      `
+
+      const [topRules] = (await sequelize.query(
+        topRulesQuery,
         {
           replacements: {
             cutoffDate,
@@ -657,18 +683,28 @@ export class ReminderRuleController {
       const timelineStart = new Date()
       timelineStart.setDate(timelineStart.getDate() - 7)
 
-      const [timeline] = (await sequelize.query(
-        `
+      let timelineQuery = `
         SELECT
           DATE(sent_at) as date,
           COUNT(*) FILTER (WHERE status = 'sent') as sent,
           COUNT(*) FILTER (WHERE status = 'failed') as failed
         FROM reminder_notification_logs
         WHERE sent_at >= :timelineStart
-          ${user.role !== UserRole.SUPER_ADMIN && user.teamId ? "AND rule_id IN (SELECT id FROM reminder_rules WHERE team_id = :teamId)" : ""}
+      `
+      
+      if (user.role !== UserRole.SUPER_ADMIN && user.teamId) {
+        timelineQuery += `
+          AND rule_id IN (SELECT id FROM reminder_rules WHERE team_id = :teamId)
+        `
+      }
+      
+      timelineQuery += `
         GROUP BY DATE(sent_at)
         ORDER BY DATE(sent_at) DESC
-      `,
+      `
+
+      const [timeline] = (await sequelize.query(
+        timelineQuery,
         {
           replacements: {
             timelineStart,
@@ -703,8 +739,8 @@ export class ReminderRuleController {
           })),
           timeline: timeline.map((day: any) => ({
             date: day.date,
-            sent: Number.parseInt(day.sent),
-            failed: Number.parseInt(day.failed),
+            sent: Number.isNaN(parseInt(day.sent)) ? 0 : parseInt(day.sent),
+            failed: Number.isNaN(parseInt(day.failed)) ? 0 : parseInt(day.failed),
           })),
           lastJobRun: stats.last_sent ? new Date(stats.last_sent) : null,
           periodDays: days,
