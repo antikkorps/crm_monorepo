@@ -472,7 +472,7 @@
 
 - [ ] 16. Implement comprehensive testing and quality assurance
 
-  - [ ] 16.1 Write comprehensive backend test suite
+  - [~] 16.1 Write comprehensive backend test suite (In Progress)
 
     - Create unit tests for all service classes and models
     - Implement integration tests for API endpoints
@@ -494,6 +494,62 @@
   - Impact : Réduction de ~400 lignes à ~150 lignes pour les exports principaux
   - Bénéfices : Maintenance facilitée, réduction des bugs, cohérence accrue
   - Priorité : Haute (qualité de code) - RÉSOLU
+
+- [~] 16.1.3 **Add comprehensive controller and service tests** 🆕
+
+  **Status:** 🟡 En cours
+  **Priority:** Haute
+  **Estimate:** 8-12 heures
+
+  **Tests Created:**
+  - ✅ HealthController.test.ts - Comprehensive health check endpoint tests
+    - Basic, detailed, ready, and live endpoint tests
+    - Database connectivity tests
+    - Memory usage monitoring tests
+    - Error handling and edge cases
+
+  - ✅ TaskController.test.ts - Complete CRUD operations and permissions
+    - GET /api/tasks - List with filtering, pagination, role-based access
+    - GET /api/tasks/:id - Single task retrieval and permissions
+    - POST /api/tasks - Task creation with validation
+    - PUT /api/tasks/:id - Updates with notifications
+    - DELETE /api/tasks/:id - Deletion with permission checks
+    - GET /api/tasks/assigned/:userId - User tasks filtering
+
+  - ✅ DashboardController.test.ts - Dashboard metrics and analytics
+    - GET /api/dashboard/metrics - Comprehensive metrics
+    - GET /api/dashboard/activities - Recent activities timeline
+    - GET /api/dashboard/alerts - Smart alerts detection
+    - GET /api/dashboard/quick-actions - Personalized actions
+    - Period filtering and role-based data access
+
+  - ✅ SecurityLogService.test.ts - Security logging and compliance
+    - IP address extraction from various headers
+    - User agent parsing
+    - Authentication success/failure logging
+    - Permission denied tracking
+    - Data access audit trails (read, create, update, delete, export)
+    - Complete user session lifecycle tracking
+
+  - ✅ ConsolidatedRevenueService.test.ts - Financial analytics
+    - Institution-specific revenue calculations
+    - Global revenue aggregation
+    - Paid/unpaid revenue tracking
+    - Invoice filtering by date range
+    - Top institutions ranking
+    - Edge cases (zero amounts, decimals, large numbers)
+
+  **Coverage Improvements:**
+  - Controllers: +3 controllers tested (HealthController, TaskController, DashboardController)
+  - Services: +2 services tested (SecurityLogService, ConsolidatedRevenueService)
+  - Total new test files: 5
+  - Estimated test cases: ~150+ tests
+
+  **Next Steps:**
+  - Add tests for remaining controllers (MeetingController, InvoiceController, etc.)
+  - Add tests for remaining services (SageService, DigiformaService, etc.)
+  - Run full test suite with coverage report
+  - Verify 70% coverage threshold is met
 
 - [x] 17. Security implementation and compliance features ✅
 
