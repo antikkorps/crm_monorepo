@@ -2209,11 +2209,43 @@ Améliorer le système d'import CSV existant pour gérer l'identifiant comptable
 
 ### Sous-tâches
 
-- [ ] **29.1** - Ajouter champ `accountingNumber` au modèle MedicalInstitution (2h)
-  - Migration Sequelize pour colonne `accounting_number`
-  - Index unique sur `accounting_number`
-  - Frontend: formulaire + affichage + filtre
-  - Tests: création, unicité, recherche
+- [x] **29.1** - Ajouter champ `accountingNumber` au modèle MedicalInstitution ✅ (2h)
+
+  **Status:** ✅ Complété
+  **Date:** 2025-11-13
+
+  **Backend:**
+  - ✅ Migration Sequelize `20251113000000-add-accounting-number-to-medical-institutions.cjs`
+  - ✅ Colonne `accounting_number` VARCHAR(50) nullable
+  - ✅ Index unique avec condition WHERE NOT NULL (permet plusieurs NULL)
+  - ✅ Modèle MedicalInstitution déjà à jour avec validation
+  - ✅ Validation Joi dans createInstitutionSchema et updateInstitutionSchema
+  - ✅ Search/filter par accountingNumber et digiformaId dans getInstitutions
+  - ✅ Tests exhaustifs: validation, unicité, CRUD, queries (44 tests)
+
+  **Frontend:**
+  - ✅ Ajout champ accountingNumber dans MedicalInstitutionForm (onglet Basic)
+  - ✅ Ajout champ digiformaId (readonly) pour affichage sync status
+  - ✅ Affichage dans InstitutionDetailView avec icônes et badges
+  - ✅ Support filter/search par accountingNumber dans API
+
+  **Shared:**
+  - ✅ Interfaces TypeScript déjà à jour dans @medical-crm/shared
+
+  **Tests créés:**
+  - `MedicalInstitution-accountingNumber.test.ts` (44 tests):
+    - Validation champ (longueur, vide, null)
+    - Contrainte d'unicité
+    - Opérations CRUD
+    - Queries et recherche
+    - Intégration avec digiformaId
+
+  **Fichiers modifiés:**
+  - `packages/backend/src/migrations/20251113000000-add-accounting-number-to-medical-institutions.cjs` (NEW)
+  - `packages/backend/src/controllers/MedicalInstitutionController.ts`
+  - `packages/frontend/src/components/institutions/MedicalInstitutionForm.vue`
+  - `packages/frontend/src/views/institutions/InstitutionDetailView.vue`
+  - `packages/backend/src/__tests__/models/MedicalInstitution-accountingNumber.test.ts` (NEW)
 
 - [ ] **29.2** - Améliorer logique de matching CSV multi-critères (4-5h)
   - Matching par `accountingNumber` (priorité 1, confidence 100%)

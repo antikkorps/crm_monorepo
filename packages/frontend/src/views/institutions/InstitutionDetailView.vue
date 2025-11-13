@@ -90,6 +90,25 @@
                           </div>
                         </template>
                       </v-list-item>
+                      <v-list-item
+                        title="Numéro Comptable"
+                        :subtitle="institution.accountingNumber || 'Non renseigné'"
+                        prepend-icon="mdi-calculator"
+                      >
+                        <template v-if="institution.accountingNumber" v-slot:append>
+                          <v-chip size="small" color="info" variant="tonal">{{ institution.accountingNumber }}</v-chip>
+                        </template>
+                      </v-list-item>
+                      <v-list-item
+                        v-if="institution.digiformaId"
+                        title="ID Digiforma"
+                        :subtitle="institution.digiformaId"
+                        prepend-icon="mdi-cloud-sync"
+                      >
+                        <template v-slot:append>
+                          <v-chip size="small" color="primary" variant="tonal">Synchronisé</v-chip>
+                        </template>
+                      </v-list-item>
                     </v-list>
                   </v-card>
                 </v-col>
