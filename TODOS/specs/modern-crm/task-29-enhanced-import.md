@@ -1,9 +1,28 @@
 # Task 29: Import CSV Amélioré avec Matching Comptable et Intégrations Digiforma/Sage
 
-**Status:** 🆕 NOUVEAU
+**Status:** 🟡 EN COURS - Backend complété, Frontend en attente
 **Priority:** Haute
 **Estimate:** 12-16 heures
 **Dependencies:** Task 24 (Digiforma), Task 15 (Sage prep)
+
+## ✅ Progrès
+
+### Complété (commits bc092d9, dbe7e72):
+- ✅ 29.1 Backend - Champs `accountingNumber` et `digiformaId` ajoutés au modèle
+- ✅ 29.3 - Queries Digiforma implémentées (`searchCompanyByAccountingNumber`, `searchCompanyByName`)
+- ✅ 29.3 - Intégration Digiforma dans CSV import (matching multi-critères)
+- ✅ 29.4 - Service Sage créé avec structure complète et TODOs
+
+### En attente:
+- ⏸️ 29.1 Frontend - UI pour afficher/modifier `accountingNumber`
+- ⏸️ 29.2 - Amélioration fuzzy matching (optionnel)
+- ⏸️ 29.3 - Mutations Digiforma (test prévu semaine prochaine)
+- ⏸️ 29.5 - Améliorations UI import dialog
+- ⏸️ 29.6 - Bug fix URL encoding Digiforma
+
+### Credentials nécessaires:
+- 🔑 Sage API credentials (pour tester SageService)
+- 🔑 Digiforma bearer token (pour tester mutations)
 
 ## ⚠️ Informations Importantes
 
@@ -29,13 +48,14 @@ Le système d'import CSV existant doit être amélioré pour :
 
 ### 29.1 - Ajouter champ identifiant comptable (2h) ⭐
 
-**Backend:**
-- [ ] Ajouter champ `accountingNumber` (string, nullable, unique) au modèle `MedicalInstitution`
-- [ ] Créer migration Sequelize pour ajouter colonne `accounting_number`
-- [ ] Ajouter index unique sur `accounting_number` (si non null)
-- [ ] Mettre à jour interfaces TypeScript dans `@medical-crm/shared`
+**Backend:** ✅ COMPLÉTÉ (commit dbe7e72)
+- [x] Ajouter champ `accountingNumber` (string, nullable, unique) au modèle `MedicalInstitution`
+- [x] Ajouter champ `digiformaId` (string, nullable, unique) pour lien avec Digiforma
+- [ ] Créer migration Sequelize pour ajouter colonne `accounting_number` (pas nécessaire - DB sync en dev)
+- [x] Ajouter index unique sur `accounting_number` et `digiforma_id` (null-safe)
+- [x] Mettre à jour interfaces TypeScript dans `@medical-crm/shared`
 
-**Frontend:**
+**Frontend:** ⏸️ EN ATTENTE
 - [ ] Ajouter champ "Numéro Client Comptable" dans formulaire institution
 - [ ] Afficher `accountingNumber` dans les détails de l'institution
 - [ ] Ajouter filtre de recherche par `accountingNumber`
@@ -269,20 +289,25 @@ public async syncCompanyToCRM(digiformaCompanyId: string): Promise<MedicalInstit
 }
 ```
 
-**Files to modify:**
+**Files modified:** ✅ COMPLÉTÉ (commits bc092d9, dbe7e72)
 ```
-packages/backend/src/services/CsvImportService.ts
-packages/backend/src/services/DigiformaService.ts
+packages/backend/src/services/CsvImportService.ts - Multi-criteria matching + Digiforma integration
+packages/backend/src/services/DigiformaService.ts - searchCompanyByName(), searchCompanyByAccountingNumber()
 ```
 
-**Testing:**
-- [ ] Test: institution existe dans Digiforma → sync to CRM
-- [ ] Test: institution n'existe pas → skip creation (TODO not ready)
+**Testing:** ⏸️ EN ATTENTE (mutations + bearer token requis)
+- [x] Query: searchCompanyByAccountingNumber() - implémentée
+- [x] Query: searchCompanyByName() - implémentée
+- [x] Intégration dans CsvImportService - matching multi-critères complété
+- [ ] Test: institution existe dans Digiforma → sync to CRM (TODO: mutation createCompany)
+- [ ] Test: institution n'existe pas → création dans Digiforma (TODO: mutation createCompany)
 - [ ] Test: logging des actions Digiforma
+
+**Note:** Queries implémentées et intégrées. Mutations reportées à la semaine prochaine pour tests avec échantillon.
 
 ---
 
-### 29.4 - Préparation Sage : Structure de base (3-4h) ⭐
+### 29.4 - Préparation Sage : Structure de base (3-4h) ⭐ ✅ COMPLÉTÉ
 
 **Objectif:** Préparer l'architecture pour sync Sage → CRM (unidirectionnel pour v1)
 
@@ -560,24 +585,30 @@ SageSettings.init(
 export { SageSettings, SageSettingsAttributes, SageSettingsCreationAttributes }
 ```
 
-**Files to create:**
+**Files created:** ✅ (commit dbe7e72)
 ```
-packages/backend/src/services/SageService.ts
-packages/backend/src/models/SageSettings.ts
-packages/backend/src/controllers/SageController.ts
-packages/backend/src/routes/sage.ts
-packages/backend/migrations/YYYY-MM-DD-create-sage-settings.ts
+✅ packages/backend/src/services/SageService.ts - Service complet avec TODOs
+⏸️ packages/backend/src/models/SageSettings.ts - TODO (optionnel)
+⏸️ packages/backend/src/controllers/SageController.ts - TODO (quand credentials disponibles)
+⏸️ packages/backend/src/routes/sage.ts - TODO (quand credentials disponibles)
+⏸️ packages/backend/migrations/YYYY-MM-DD-create-sage-settings.ts - TODO (optionnel)
 ```
 
-**Feature Flag Setup (IMPORTANT):**
+**Service SageService.ts implémenté avec:**
+- [x] Interfaces complètes (SageConfig, SageCustomer, SageInvoice, SagePayment, SageInvoiceItem)
+- [x] Méthodes de sync avec TODOs: testConnection(), syncCustomers(), syncInvoices(), syncPayments()
+- [x] Méthode de matching: matchOrCreateInstitution() avec accountingNumber
+- [x] Méthodes privées API avec TODOs: fetchCustomers(), fetchInvoices(), fetchPayments()
+- [x] Méthodes de mapping avec TODOs: mapSageCustomer(), mapSageInvoice(), mapSageInvoiceItem()
+- [x] Méthodes v2 (CRM → Sage): createInvoiceFromQuote(), updateCustomerFromInstitution()
+- [x] Logging complet et feature flag support (SAGE_INTEGRATION_ENABLED)
+
+**Feature Flag Setup:** ⏸️ TODO (quand UI Sage settings sera créée)
 
 Ajouter le feature flag Sage dans `FeaturesSettingsView.vue` :
-
 ```typescript
 // packages/frontend/src/views/settings/FeaturesSettingsView.vue
-
 const features = [
-  // ... existing features
   {
     key: "sage_enabled",
     title: "Sage Accounting Integration",
@@ -588,35 +619,11 @@ const features = [
 ]
 ```
 
-Backend settings store :
-```typescript
-// packages/backend/src/models/Settings.ts (or equivalent)
-
-interface FeatureFlags {
-  // ... existing flags
-  sage_enabled: boolean
-}
-
-// Default to false
-const defaultFeatureFlags = {
-  // ...
-  sage_enabled: false
-}
-```
-
-Frontend store :
-```typescript
-// packages/frontend/src/stores/settings.ts
-
-interface FeatureFlags {
-  // ... existing flags
-  sage_enabled: boolean
-}
-```
-
-**Testing:**
-- [ ] Test SageService instantiation
-- [ ] Test testConnection (mock API)
+**Testing:** ⏸️ EN ATTENTE (Sage API credentials requis)
+- [x] Service SageService créé et structuré
+- [x] Interfaces et types définis
+- [ ] Test SageService instantiation (quand credentials disponibles)
+- [ ] Test testConnection (mock API ou credentials réels)
 - [ ] Test matchOrCreateInstitution with accountingNumber
 - [ ] Test feature flag Sage (désactivé par défaut)
 - [ ] Test activation/désactivation du flag dans UI
