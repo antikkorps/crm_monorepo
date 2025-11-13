@@ -34,6 +34,8 @@ export interface MedicalInstitution extends BaseEntity {
   name: string
   type: InstitutionType
   address: Address
+  accountingNumber?: string
+  digiformaId?: string
   contactPersons: ContactPerson[]
   medicalProfile: MedicalProfile
   assignedUserId?: string
@@ -45,6 +47,8 @@ export interface MedicalInstitutionCreationAttributes {
   name: string
   type: InstitutionType
   address: Address
+  accountingNumber?: string
+  digiformaId?: string
   assignedUserId?: string
   tags?: string[]
   isActive?: boolean

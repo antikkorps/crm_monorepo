@@ -502,4 +502,149 @@ export class DigiformaService {
   async fetchAllCompanies(): Promise<any[]> {
     return await this.fetchCompanies()
   }
+
+  /**
+   * Search for a company by name (with optional city filter)
+   * Uses confirmed Digiforma GraphQL structure with CompanyFilter
+   *
+   * @param name - Company name to search for
+   * @param city - Optional city filter
+   * @returns First matching company or null
+   */
+  async searchCompanyByName(name: string, city?: string): Promise<any | null> {
+    // Validate inputs
+    if (!name || typeof name !== 'string' || name.trim().length === 0) {
+      logger.warn('searchCompanyByName called with invalid name', { name })
+      return null
+    }
+
+    try {
+      const filter: any = { name: name.trim() }
+      if (city && typeof city === 'string' && city.trim().length > 0) {
+        filter.city = city.trim()
+      }
+
+      const query = `
+        query SearchCompanies($filter: CompanyFilter!) {
+          companies(filter: $filter) {
+            id
+            name
+            accountingNumber
+            siret
+            code
+            email
+            city
+            roadAddress
+            cityCode
+            country
+            contacts {
+              id
+              firstname
+              lastname
+              email
+              phone
+              position
+              title
+            }
+          }
+        }
+      `
+
+      const variables = { filter }
+      const response = await this.client.request(query, variables)
+      const companies = (response as any).companies
+
+      if (!companies || companies.length === 0) {
+        logger.info('No company found by name', { name, city })
+        return null
+      }
+
+      logger.info('Company found by name', {
+        name,
+        city,
+        foundId: companies[0].id,
+        foundName: companies[0].name
+      })
+
+      // Return first match
+      return companies[0]
+    } catch (error) {
+      logger.error('Failed to search company by name', {
+        error: (error as Error).message,
+        name,
+        city
+      })
+      throw error
+    }
+  }
+
+  /**
+   * Search for a company by accounting number
+   * Uses confirmed Digiforma GraphQL structure with CompanyFilter
+   * This is the PRIMARY matching method for CSV import
+   *
+   * @param accountingNumber - Accounting number (numéro client comptable)
+   * @returns Matching company or null
+   */
+  async searchCompanyByAccountingNumber(accountingNumber: string): Promise<any | null> {
+    // Validate input
+    if (!accountingNumber || typeof accountingNumber !== 'string' || accountingNumber.trim().length === 0) {
+      logger.warn('searchCompanyByAccountingNumber called with invalid accountingNumber', { accountingNumber })
+      return null
+    }
+
+    try {
+      const query = `
+        query SearchByAccountingNumber($filter: CompanyFilter!) {
+          companies(filter: $filter) {
+            id
+            name
+            accountingNumber
+            siret
+            code
+            email
+            city
+            roadAddress
+            cityCode
+            country
+            contacts {
+              id
+              firstname
+              lastname
+              email
+              phone
+              position
+              title
+            }
+          }
+        }
+      `
+
+      const variables = {
+        filter: { accountingNumber: accountingNumber.trim() }
+      }
+
+      const response = await this.client.request(query, variables)
+      const companies = (response as any).companies
+
+      if (!companies || companies.length === 0) {
+        logger.info('No company found by accounting number', { accountingNumber })
+        return null
+      }
+
+      logger.info('Company found by accounting number', {
+        accountingNumber,
+        foundId: companies[0].id,
+        foundName: companies[0].name
+      })
+
+      return companies[0]
+    } catch (error) {
+      logger.error('Failed to search company by accounting number', {
+        error: (error as Error).message,
+        accountingNumber
+      })
+      throw error
+    }
+  }
 }

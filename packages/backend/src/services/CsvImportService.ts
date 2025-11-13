@@ -2,6 +2,7 @@ import { ComplianceStatus, InstitutionType } from "@medical-crm/shared"
 import { Op, Sequelize } from "sequelize"
 import { ContactPerson, MedicalInstitution, MedicalProfile, User } from "../models"
 import { logger } from "../utils/logger"
+import { DigiformaService } from "./DigiformaService"
 
 export interface CsvImportResult {
   success: boolean
@@ -39,6 +40,9 @@ export class CsvImportService {
   private static readonly FIELD_MAPPINGS: Record<string, string[]> = {
     name: ["name", "institution_name", "institutionName", "institution name", "nom", "nom_etablissement", "raison_sociale"],
     type: ["type", "institution_type", "institutionType", "hospital type", "type_institution", "type_etablissement"],
+    // Expected format: alphanumeric code (e.g., "CLI001", "C12345") matching the accounting system's customer/client number
+    // This is the PRIMARY matching key across Sage, CSV, Digiforma, and CRM
+    accountingNumber: ["accountingNumber", "accounting_number", "numero_client", "client_number", "numero_comptable", "code_comptable", "accounting_id"],
     street: ["street", "address", "street_address", "street address", "adresse", "rue"],
     city: ["city", "ville"],
     state: ["state", "province", "etat", "departement", "département"],
@@ -300,10 +304,15 @@ export class CsvImportService {
     let duplicatesFound = 0
     let duplicatesMerged = 0
 
+    // Initialize Digiforma service once for all rows (performance optimization)
+    const digiformaToken = process.env.DIGIFORMA_BEARER_TOKEN
+    const digiformaEnabled = digiformaToken && process.env.DIGIFORMA_INTEGRATION_ENABLED === 'true'
+    const digiformaService = digiformaEnabled ? new DigiformaService(digiformaToken!) : null
+
     for (const row of rows) {
       try {
         // Check for duplicates
-        const existingInstitution = await this.findDuplicateInstitution(row.data)
+        const existingInstitution = await this.findDuplicateInstitution(row.data, digiformaService)
         
         if (existingInstitution) {
           duplicatesFound++
@@ -409,20 +418,125 @@ export class CsvImportService {
     })
   }
 
-  private static async findDuplicateInstitution(data: Record<string, string>): Promise<MedicalInstitution | null> {
-    // Check for duplicate by name and address
+  private static async findDuplicateInstitution(
+    data: Record<string, string>,
+    digiformaService: DigiformaService | null = null
+  ): Promise<MedicalInstitution | null> {
+    // Multi-criteria matching strategy:
+    // 1. Priority 1: Digiforma accountingNumber match (if available)
+    // 2. Priority 2: Digiforma name + city match (if available)
+    // 3. Priority 3: Local database name + address match
+
+    if (digiformaService) {
+      try {
+
+        // Priority 1: Search by accountingNumber (PRIMARY matching method)
+        if (data.accountingNumber) {
+          logger.info('CSV Import: Searching Digiforma by accountingNumber', {
+            accountingNumber: data.accountingNumber,
+            institutionName: data.name
+          })
+
+          const digiformaCompany = await digiformaService.searchCompanyByAccountingNumber(
+            data.accountingNumber
+          )
+
+          if (digiformaCompany) {
+            logger.info('CSV Import: Found match in Digiforma by accountingNumber', {
+              accountingNumber: data.accountingNumber,
+              digiformaId: digiformaCompany.id,
+              digiformaName: digiformaCompany.name
+            })
+
+            // Check if this Digiforma company already exists in local CRM
+            // Search by digiformaId (Digiforma company ID stored in CRM)
+            const localInstitution = await MedicalInstitution.findOne({
+              where: { digiformaId: digiformaCompany.id }
+            })
+
+            if (localInstitution) {
+              logger.info('CSV Import: Found existing CRM institution linked to Digiforma', {
+                crmId: localInstitution.id,
+                digiformaId: digiformaCompany.id
+              })
+              return localInstitution
+            }
+
+            // Institution exists in Digiforma but not in CRM - not a duplicate, will be created
+            logger.info('CSV Import: Digiforma company exists but not yet in CRM', {
+              digiformaId: digiformaCompany.id,
+              digiformaName: digiformaCompany.name
+            })
+            return null
+          }
+
+          logger.info('CSV Import: No match found in Digiforma by accountingNumber', {
+            accountingNumber: data.accountingNumber
+          })
+        }
+
+        // Priority 2: Search by name + city as fallback
+        if (data.name && data.city) {
+          logger.info('CSV Import: Searching Digiforma by name and city', {
+            name: data.name,
+            city: data.city
+          })
+
+          const digiformaCompany = await digiformaService.searchCompanyByName(
+            data.name,
+            data.city
+          )
+
+          if (digiformaCompany) {
+            logger.info('CSV Import: Found match in Digiforma by name+city', {
+              digiformaId: digiformaCompany.id,
+              digiformaName: digiformaCompany.name,
+              digiformaAccountingNumber: digiformaCompany.accountingNumber
+            })
+
+            // Check if exists in local CRM
+            const localInstitution = await MedicalInstitution.findOne({
+              where: { digiformaId: digiformaCompany.id }
+            })
+
+            if (localInstitution) {
+              logger.info('CSV Import: Found existing CRM institution linked to Digiforma', {
+                crmId: localInstitution.id,
+                digiformaId: digiformaCompany.id
+              })
+              return localInstitution
+            }
+
+            return null
+          }
+
+          logger.info('CSV Import: No match found in Digiforma by name+city', {
+            name: data.name,
+            city: data.city
+          })
+        }
+      } catch (error) {
+        // Log Digiforma errors but don't fail import - fall back to local search
+        logger.warn('CSV Import: Digiforma search failed, falling back to local search', {
+          error: (error as Error).message,
+          institutionName: data.name
+        })
+      }
+    }
+
+    // Priority 3: Local database search by name + address
     // In test environment, use simpler approach to avoid JSONB operator issues
     if (process.env.NODE_ENV === 'test') {
       const allInstitutions = await MedicalInstitution.findAll({
         where: { name: data.name }
       })
-      
+
       return allInstitutions.find(inst => {
         const address = inst.address || inst.getDataValue('address')
         return address?.street === data.street && address?.city === data.city
       }) || null
     }
-    
+
     // In production, use JSONB-safe where with Sequelize.literal
     return await MedicalInstitution.findOne({
       where: {
@@ -573,8 +687,8 @@ export class CsvImportService {
 
   static generateCsvTemplate(): string {
     const headers = [
-      'name', 'type', 'street', 'city', 'state', 'zipCode', 'country',
-      'bedCapacity', 'surgicalRooms', 'specialties', 'departments', 
+      'name', 'type', 'accountingNumber', 'street', 'city', 'state', 'zipCode', 'country',
+      'bedCapacity', 'surgicalRooms', 'specialties', 'departments',
       'equipmentTypes', 'certifications', 'complianceStatus',
       'lastAuditDate', 'complianceExpirationDate', 'complianceNotes', 'tags',
       'contactFirstName', 'contactLastName', 'contactEmail', 'contactPhone',
@@ -585,7 +699,7 @@ export class CsvImportService {
     const esc = (v: string) => (/,|"|\n/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v)
 
     const exampleValues = [
-      'General Hospital', 'hospital', '123 Medical Center Dr', 'Healthcare City', 'CA', '90210', 'US',
+      'General Hospital', 'hospital', 'CLI001', '123 Medical Center Dr', 'Healthcare City', 'CA', '90210', 'US',
       '150', '8', 'cardiology,neurology', 'emergency,icu',
       'mri,ct_scan', 'jcaho,iso_9001', 'compliant',
       '2024-01-15', '2025-01-15', 'All requirements met', 'cardiology,emergency',

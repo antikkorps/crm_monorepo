@@ -19,6 +19,8 @@ export interface MedicalInstitutionAttributes {
   name: string
   type: InstitutionType
   address: AddressAttributes
+  accountingNumber?: string
+  digiformaId?: string
   assignedUserId?: string
   tags: string[]
   isActive: boolean
@@ -42,6 +44,8 @@ export class MedicalInstitution
   declare name: string
   declare type: InstitutionType
   declare address: AddressAttributes
+  declare accountingNumber?: string
+  declare digiformaId?: string
   declare assignedUserId?: string
   declare tags: string[]
   declare isActive: boolean
@@ -490,6 +494,34 @@ MedicalInstitution.init(
         },
       },
     },
+    accountingNumber: {
+      type: DataTypes.STRING(50),
+      allowNull: true,
+      field: "accounting_number",
+      validate: {
+        isValidAccountingNumber(value: string | null) {
+          if (value !== null && value !== undefined) {
+            if (typeof value !== 'string' || value.length === 0 || value.length > 50) {
+              throw new Error('accountingNumber must be between 1 and 50 characters')
+            }
+          }
+        },
+      },
+    },
+    digiformaId: {
+      type: DataTypes.STRING(100),
+      allowNull: true,
+      field: "digiforma_id",
+      validate: {
+        isValidDigiformaId(value: string | null) {
+          if (value !== null && value !== undefined) {
+            if (typeof value !== 'string' || value.length === 0 || value.length > 100) {
+              throw new Error('digiformaId must be between 1 and 100 characters')
+            }
+          }
+        },
+      },
+    },
     assignedUserId: {
       type: DataTypes.UUID,
       allowNull: true,
@@ -551,6 +583,24 @@ MedicalInstitution.init(
       },
       {
         fields: ["type"],
+      },
+      {
+        fields: ["accounting_number"],
+        unique: true,
+        where: {
+          accounting_number: {
+            [Op.ne]: null,
+          },
+        },
+      },
+      {
+        fields: ["digiforma_id"],
+        unique: true,
+        where: {
+          digiforma_id: {
+            [Op.ne]: null,
+          },
+        },
       },
       {
         fields: ["assigned_user_id"],

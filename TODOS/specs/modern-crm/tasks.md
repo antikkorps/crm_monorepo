@@ -2126,3 +2126,144 @@ PORT=3002 npm run dev
 
 ---
 
+
+## Task 29: Import CSV Amélioré avec Matching Comptable et Intégrations Digiforma/Sage 🆕
+
+**Status:** 🟡 À FAIRE
+**Priority:** Haute
+**Estimate:** 12-16 heures
+**Dependencies:** Task 24 (Digiforma), Task 15 (Sage prep)
+
+**⚠️ Infos Clés:**
+- Champ Digiforma: `accountingNumber` (PAS `accountingId`)
+- GraphiQL: https://app.digiforma.com/api/v1/graphiql
+- Guide GraphQL: `/TODOS/specs/modern-crm/digiforma-graphql-exploration.md`
+- Feature Flag Sage: Désactivé par défaut
+
+### Objectif
+
+Améliorer le système d'import CSV existant pour gérer l'identifiant comptable (numéro client) comme clé de matching unique, synchroniser automatiquement avec Digiforma, et préparer l'intégration Sage (unidirectionnelle Sage → CRM pour v1).
+
+### Contexte
+
+- **Source de vérité:** Digiforma pour institutions & contacts
+- **Sage:** Fournit les données comptables (factures, paiements, numéros clients)
+- **CRM:** Consolidation et enrichissement des données
+- **Clé de matching:** Identifiant comptable commun entre Sage, CSV et Digiforma
+
+### Sous-tâches
+
+- [ ] **29.1** - Ajouter champ `accountingNumber` au modèle MedicalInstitution (2h)
+  - Migration Sequelize pour colonne `accounting_number`
+  - Index unique sur `accounting_number`
+  - Frontend: formulaire + affichage + filtre
+  - Tests: création, unicité, recherche
+
+- [ ] **29.2** - Améliorer logique de matching CSV multi-critères (4-5h)
+  - Matching par `accountingNumber` (priorité 1, confidence 100%)
+  - Matching nom exact + adresse (priorité 2, confidence 95%)
+  - Matching fuzzy par nom + ville (priorité 3, confidence 60-85%)
+  - Utiliser `string-similarity` ou `fuse.js` pour fuzzy matching
+  - Retourner `MatchResult` avec type, confidence, et suggestions
+
+- [ ] **29.3** - Intégration Digiforma : Créer institutions manquantes (4-5h)
+  - Workflow: Parse CSV → Check CRM → Check Digiforma → Create in Digiforma (si manquant) → Sync to CRM
+  - `DigiformaService.searchCompanyByName(name, city)` avec TODO pour GraphQL query
+  - `DigiformaService.createCompany(data)` avec TODO pour GraphQL mutation
+  - `DigiformaService.syncCompanyToCRM(digiformaCompanyId)` 
+  - Logging complet des actions Digiforma
+
+- [ ] **29.4** - Préparation Sage : Structure de base avec TODOs (3-4h)
+  - Créer `SageService` avec méthodes skeleton:
+    - `testConnection()` - TODO: besoin credentials
+    - `syncCustomers()` - TODO: API Sage customers
+    - `syncInvoices()` - TODO: API Sage invoices  
+    - `syncPayments()` - TODO: API Sage payments
+    - `matchOrCreateInstitution()` - Match par `accountingNumber`
+  - Créer `SageSettings` model (apiUrl, apiKey encrypted, companyId, enabled, autoSync, lastSync)
+  - Types TypeScript: `SageCustomer`, `SageInvoice`, `SagePayment`
+  - Migration pour table `sage_settings`
+  - Controller et routes `/api/sage/*`
+
+- [ ] **29.5** - Frontend: Améliorer UI import avec statut sync (2-3h)
+  - Preview table avec colonnes:
+    - Status matching (exact/fuzzy/none)
+    - Status Digiforma (existe/sera créé)
+    - Status Sage (accountingNumber si présent)
+  - Options de sync: Switch "Créer dans Digiforma si manquant"
+  - Rapport d'import détaillé: Importées / Mises à jour / Créées Digiforma / Erreurs
+  - Alert: "Les institutions avec numéro client seront liées à Sage lors de la prochaine sync"
+
+- [ ] **29.6** - Bug fix: URL encoding visuel dans champ API URL Digiforma (15min) 🐛
+  - Problème: L'URL affiche des caractères % dans le champ texte des paramètres
+  - Solution: `type="url"` ou `decodeURIComponent()` sur display
+  - Vérifier si encodée en DB ou seulement en affichage
+
+### Nouveaux Fichiers
+
+**Backend:**
+```
+packages/backend/src/services/SageService.ts
+packages/backend/src/models/SageSettings.ts
+packages/backend/src/controllers/SageController.ts
+packages/backend/src/routes/sage.ts
+packages/backend/migrations/*-add-accounting-id.ts
+packages/backend/migrations/*-create-sage-settings.ts
+```
+
+**Frontend:**
+```
+packages/frontend/src/views/settings/SageSettingsView.vue
+packages/frontend/src/components/settings/SageConfigPanel.vue
+```
+
+### Fichiers à Modifier
+
+```
+packages/backend/src/models/MedicalInstitution.ts
+packages/backend/src/services/CsvImportService.ts
+packages/backend/src/services/DigiformaService.ts
+packages/shared/src/types/institution.ts
+packages/frontend/src/components/institutions/InstitutionForm.vue
+packages/frontend/src/components/institutions/ImportInstitutionsDialog.vue
+packages/frontend/src/views/settings/DigiformaSettingsView.vue
+```
+
+### Tests
+
+**Unit Tests:**
+- `accountingNumber` unique constraint
+- Matching logic (exact, fuzzy, accountingNumber)
+- SageService methods (mocked API)
+
+**Integration Tests:**
+- CSV import avec accountingNumber
+- Digiforma search et sync
+- Duplicate detection avec critères mixtes
+
+**Manual Tests:**
+- Import CSV avec numéros comptables
+- Vérifier création dans Digiforma (quand mutation ready)
+- Tester interface Sage (quand credentials disponibles)
+
+### Success Criteria
+
+✅ Champ `accountingNumber` dans institutions  
+✅ Matching par `accountingNumber` prioritaire  
+✅ Fuzzy matching pour noms variés  
+✅ TODOs Digiforma en place pour mutations GraphQL  
+✅ Skeleton Sage service prêt avec TODOs  
+✅ UI montre statuts Digiforma/Sage  
+✅ Bug URL encoding résolu
+
+### Notes Importantes
+
+- **Digiforma mutations:** Identifier noms/schemas exacts des mutations GraphQL
+- **Sage API:** Besoin credentials pour tests réels
+- **Fuzzy matching:** Utiliser npm package `string-similarity` (score 0-1)
+- **V2:** CRM → Sage sync (créer factures Sage depuis devis CRM)
+
+**Documentation complète:** Voir `/TODOS/specs/modern-crm/task-29-enhanced-import.md`
+
+---
+
