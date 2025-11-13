@@ -1,5 +1,6 @@
 import { Sequelize } from "sequelize"
 import { beforeEach, afterEach } from "vitest"
+import { InstitutionType, QuoteStatus, InvoiceStatus, MeetingStatus } from "@medical-crm/shared"
 
 /**
  * Database mock utilities for testing
@@ -45,7 +46,8 @@ export const cleanDatabase = async (sequelize: Sequelize) => {
  * Create mock data helpers
  */
 export const createMockUser = async (overrides = {}) => {
-  const { User, UserRole } = await import("../../models")
+  const { User } = await import("../../models")
+  const { UserRole } = await import("../../models/User")
   return User.create({
     email: `test-${Date.now()}@example.com`,
     passwordHash: "hashedPassword123",
@@ -73,7 +75,7 @@ export const createMockMedicalInstitution = async (overrides = {}) => {
   const { MedicalInstitution } = await import("../../models")
   return MedicalInstitution.create({
     name: `Test Institution ${Date.now()}`,
-    type: "hospital",
+    type: InstitutionType.HOSPITAL,
     address: {
       street: "123 Test St",
       city: "Test City",
@@ -88,7 +90,8 @@ export const createMockMedicalInstitution = async (overrides = {}) => {
 }
 
 export const createMockTask = async (assigneeId: string, institutionId: string, overrides = {}) => {
-  const { Task, TaskStatus, TaskPriority } = await import("../../models")
+  const { Task } = await import("../../models")
+  const { TaskStatus, TaskPriority } = await import("../../models/Task")
   return Task.create({
     title: `Test Task ${Date.now()}`,
     description: "Test task description",
@@ -102,41 +105,40 @@ export const createMockTask = async (assigneeId: string, institutionId: string, 
   })
 }
 
-export const createMockQuote = async (institutionId: string, creatorId: string, overrides = {}) => {
+export const createMockQuote = async (institutionId: string, assignedUserId: string, overrides = {}) => {
   const { Quote } = await import("../../models")
   return Quote.create({
-    quoteNumber: `Q-${Date.now()}`,
+    title: `Test Quote ${Date.now()}`,
     institutionId,
-    creatorId,
-    status: "draft",
-    totalAmount: 1000,
+    assignedUserId,
+    status: QuoteStatus.DRAFT,
     validUntil: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
     ...overrides,
   })
 }
 
-export const createMockInvoice = async (institutionId: string, creatorId: string, overrides = {}) => {
+export const createMockInvoice = async (institutionId: string, assignedUserId: string, overrides = {}) => {
   const { Invoice } = await import("../../models")
   return Invoice.create({
-    invoiceNumber: `INV-${Date.now()}`,
+    title: `Test Invoice ${Date.now()}`,
     institutionId,
-    creatorId,
-    status: "pending",
-    totalAmount: 1500,
+    assignedUserId,
+    status: InvoiceStatus.DRAFT,
     dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
     ...overrides,
   })
 }
 
-export const createMockMeeting = async (institutionId: string, creatorId: string, overrides = {}) => {
+export const createMockMeeting = async (institutionId: string, organizerId: string, overrides = {}) => {
   const { Meeting } = await import("../../models")
   return Meeting.create({
     title: `Test Meeting ${Date.now()}`,
     institutionId,
-    creatorId,
-    startTime: new Date(Date.now() + 24 * 60 * 60 * 1000), // Tomorrow
-    endTime: new Date(Date.now() + 24 * 60 * 60 * 1000 + 60 * 60 * 1000), // +1 hour
+    organizerId,
+    startDate: new Date(Date.now() + 24 * 60 * 60 * 1000), // Tomorrow
+    endDate: new Date(Date.now() + 24 * 60 * 60 * 1000 + 60 * 60 * 1000), // +1 hour
     location: "Test Location",
+    status: MeetingStatus.SCHEDULED,
     ...overrides,
   })
 }
