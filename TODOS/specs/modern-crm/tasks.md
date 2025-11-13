@@ -2147,7 +2147,7 @@ Améliorer le système d'import CSV existant pour gérer l'identifiant comptable
 ### Contexte
 
 - **Source de vérité:** Digiforma pour institutions & contacts
-- **Sage:** Fourniture données comptables (factures, paiements, numéros clients)
+- **Sage:** Fournit les données comptables (factures, paiements, numéros clients)
 - **CRM:** Consolidation et enrichissement des données
 - **Clé de matching:** Identifiant comptable commun entre Sage, CSV et Digiforma
 

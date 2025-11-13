@@ -40,6 +40,8 @@ export class CsvImportService {
   private static readonly FIELD_MAPPINGS: Record<string, string[]> = {
     name: ["name", "institution_name", "institutionName", "institution name", "nom", "nom_etablissement", "raison_sociale"],
     type: ["type", "institution_type", "institutionType", "hospital type", "type_institution", "type_etablissement"],
+    // Expected format: alphanumeric code (e.g., "CLI001", "C12345") matching the accounting system's customer/client number
+    // This is the PRIMARY matching key across Sage, CSV, Digiforma, and CRM
     accountingNumber: ["accountingNumber", "accounting_number", "numero_client", "client_number", "numero_comptable", "code_comptable", "accounting_id"],
     street: ["street", "address", "street_address", "street address", "adresse", "rue"],
     city: ["city", "ville"],
@@ -302,10 +304,15 @@ export class CsvImportService {
     let duplicatesFound = 0
     let duplicatesMerged = 0
 
+    // Initialize Digiforma service once for all rows (performance optimization)
+    const digiformaToken = process.env.DIGIFORMA_BEARER_TOKEN
+    const digiformaEnabled = digiformaToken && process.env.DIGIFORMA_INTEGRATION_ENABLED === 'true'
+    const digiformaService = digiformaEnabled ? new DigiformaService(digiformaToken!) : null
+
     for (const row of rows) {
       try {
         // Check for duplicates
-        const existingInstitution = await this.findDuplicateInstitution(row.data)
+        const existingInstitution = await this.findDuplicateInstitution(row.data, digiformaService)
         
         if (existingInstitution) {
           duplicatesFound++
@@ -411,19 +418,17 @@ export class CsvImportService {
     })
   }
 
-  private static async findDuplicateInstitution(data: Record<string, string>): Promise<MedicalInstitution | null> {
+  private static async findDuplicateInstitution(
+    data: Record<string, string>,
+    digiformaService: DigiformaService | null = null
+  ): Promise<MedicalInstitution | null> {
     // Multi-criteria matching strategy:
     // 1. Priority 1: Digiforma accountingNumber match (if available)
     // 2. Priority 2: Digiforma name + city match (if available)
     // 3. Priority 3: Local database name + address match
 
-    // Check if Digiforma integration is enabled
-    const digiformaToken = process.env.DIGIFORMA_BEARER_TOKEN
-    const digiformaEnabled = digiformaToken && process.env.DIGIFORMA_INTEGRATION_ENABLED === 'true'
-
-    if (digiformaEnabled) {
+    if (digiformaService) {
       try {
-        const digiformaService = new DigiformaService(digiformaToken!)
 
         // Priority 1: Search by accountingNumber (PRIMARY matching method)
         if (data.accountingNumber) {

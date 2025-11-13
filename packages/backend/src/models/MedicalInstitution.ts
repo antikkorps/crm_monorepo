@@ -497,19 +497,29 @@ MedicalInstitution.init(
     accountingNumber: {
       type: DataTypes.STRING(50),
       allowNull: true,
-      unique: true,
       field: "accounting_number",
       validate: {
-        len: [1, 50],
+        isValidAccountingNumber(value: string | null) {
+          if (value !== null && value !== undefined) {
+            if (typeof value !== 'string' || value.length === 0 || value.length > 50) {
+              throw new Error('accountingNumber must be between 1 and 50 characters')
+            }
+          }
+        },
       },
     },
     digiformaId: {
       type: DataTypes.STRING(100),
       allowNull: true,
-      unique: true,
       field: "digiforma_id",
       validate: {
-        len: [1, 100],
+        isValidDigiformaId(value: string | null) {
+          if (value !== null && value !== undefined) {
+            if (typeof value !== 'string' || value.length === 0 || value.length > 100) {
+              throw new Error('digiformaId must be between 1 and 100 characters')
+            }
+          }
+        },
       },
     },
     assignedUserId: {

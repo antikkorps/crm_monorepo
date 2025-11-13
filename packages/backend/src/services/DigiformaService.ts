@@ -512,10 +512,16 @@ export class DigiformaService {
    * @returns First matching company or null
    */
   async searchCompanyByName(name: string, city?: string): Promise<any | null> {
+    // Validate inputs
+    if (!name || typeof name !== 'string' || name.trim().length === 0) {
+      logger.warn('searchCompanyByName called with invalid name', { name })
+      return null
+    }
+
     try {
-      const filter: any = { name }
-      if (city) {
-        filter.city = city
+      const filter: any = { name: name.trim() }
+      if (city && typeof city === 'string' && city.trim().length > 0) {
+        filter.city = city.trim()
       }
 
       const query = `
@@ -581,6 +587,12 @@ export class DigiformaService {
    * @returns Matching company or null
    */
   async searchCompanyByAccountingNumber(accountingNumber: string): Promise<any | null> {
+    // Validate input
+    if (!accountingNumber || typeof accountingNumber !== 'string' || accountingNumber.trim().length === 0) {
+      logger.warn('searchCompanyByAccountingNumber called with invalid accountingNumber', { accountingNumber })
+      return null
+    }
+
     try {
       const query = `
         query SearchByAccountingNumber($filter: CompanyFilter!) {
@@ -609,7 +621,7 @@ export class DigiformaService {
       `
 
       const variables = {
-        filter: { accountingNumber }
+        filter: { accountingNumber: accountingNumber.trim() }
       }
 
       const response = await this.client.request(query, variables)
