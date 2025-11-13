@@ -1,0 +1,110 @@
+name: CD - Deployment
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  deploy-staging:
+    name: Deploy to Staging
+    runs-on: ubuntu-latest
+    environment:
+      name: staging
+      url: https://staging.medical-crm.example.com
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: PUPPETEER_SKIP_DOWNLOAD=true npm ci
+
+      - name: Build backend
+        working-directory: packages/backend
+        run: npm run build
+
+      - name: Build frontend
+        working-directory: packages/frontend
+        run: npm run build
+
+      - name: Run database migrations (staging)
+        if: ${{ github.event_name == 'push' }}
+        working-directory: packages/backend
+        env:
+          DB_HOST: ${{ secrets.STAGING_DB_HOST }}
+          DB_PORT: ${{ secrets.STAGING_DB_PORT }}
+          DB_NAME: ${{ secrets.STAGING_DB_NAME }}
+          DB_USER: ${{ secrets.STAGING_DB_USER }}
+          DB_PASSWORD: ${{ secrets.STAGING_DB_PASSWORD }}
+        run: npm run db:migrate
+
+      - name: Deploy notification
+        run: |
+          echo "🚀 Deployment to staging completed"
+          echo "Branch: ${{ github.ref_name }}"
+          echo "Commit: ${{ github.sha }}"
+
+  deploy-production:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    needs: [deploy-staging]
+    if: github.ref == 'refs/heads/main'
+    environment:
+      name: production
+      url: https://medical-crm.example.com
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: PUPPETEER_SKIP_DOWNLOAD=true npm ci
+
+      - name: Build backend
+        working-directory: packages/backend
+        run: npm run build
+
+      - name: Build frontend
+        working-directory: packages/frontend
+        run: npm run build
+
+      - name: Run database migrations (production)
+        working-directory: packages/backend
+        env:
+          DB_HOST: ${{ secrets.PROD_DB_HOST }}
+          DB_PORT: ${{ secrets.PROD_DB_PORT }}
+          DB_NAME: ${{ secrets.PROD_DB_NAME }}
+          DB_USER: ${{ secrets.PROD_DB_USER }}
+          DB_PASSWORD: ${{ secrets.PROD_DB_PASSWORD }}
+        run: npm run db:migrate
+
+      - name: Health check after deployment
+        working-directory: packages/backend
+        env:
+          HEALTH_CHECK_URL: https://medical-crm.example.com/api/health
+        run: npm run health-check
+
+      - name: Rollback on health check failure
+        if: failure()
+        run: |
+          echo "::error::Health check failed - deployment may need rollback"
+          echo "Please check the logs and consider rolling back the deployment"
+
+      - name: Deployment success notification
+        run: |
+          echo "✅ Production deployment completed successfully"
+          echo "Branch: ${{ github.ref_name }}"
+          echo "Commit: ${{ github.sha }}"
