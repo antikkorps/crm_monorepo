@@ -19,6 +19,8 @@ export interface MedicalInstitutionAttributes {
   name: string
   type: InstitutionType
   address: AddressAttributes
+  accountingNumber?: string
+  digiformaId?: string
   assignedUserId?: string
   tags: string[]
   isActive: boolean
@@ -42,6 +44,8 @@ export class MedicalInstitution
   declare name: string
   declare type: InstitutionType
   declare address: AddressAttributes
+  declare accountingNumber?: string
+  declare digiformaId?: string
   declare assignedUserId?: string
   declare tags: string[]
   declare isActive: boolean
@@ -490,6 +494,24 @@ MedicalInstitution.init(
         },
       },
     },
+    accountingNumber: {
+      type: DataTypes.STRING(50),
+      allowNull: true,
+      unique: true,
+      field: "accounting_number",
+      validate: {
+        len: [1, 50],
+      },
+    },
+    digiformaId: {
+      type: DataTypes.STRING(100),
+      allowNull: true,
+      unique: true,
+      field: "digiforma_id",
+      validate: {
+        len: [1, 100],
+      },
+    },
     assignedUserId: {
       type: DataTypes.UUID,
       allowNull: true,
@@ -551,6 +573,24 @@ MedicalInstitution.init(
       },
       {
         fields: ["type"],
+      },
+      {
+        fields: ["accounting_number"],
+        unique: true,
+        where: {
+          accounting_number: {
+            [Op.ne]: null,
+          },
+        },
+      },
+      {
+        fields: ["digiforma_id"],
+        unique: true,
+        where: {
+          digiforma_id: {
+            [Op.ne]: null,
+          },
+        },
       },
       {
         fields: ["assigned_user_id"],

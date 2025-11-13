@@ -444,8 +444,7 @@ export class CsvImportService {
             })
 
             // Check if this Digiforma company already exists in local CRM
-            // TODO: Once accountingNumber field is added to MedicalInstitution model,
-            // search by accountingNumber instead of digiformaId
+            // Search by digiformaId (Digiforma company ID stored in CRM)
             const localInstitution = await MedicalInstitution.findOne({
               where: { digiformaId: digiformaCompany.id }
             })
