@@ -15,9 +15,9 @@ describe("AuthController", () => {
     it("should login successfully with valid credentials", async () => {
       const plainPassword = "password123"
       const hashedPassword = await bcrypt.hash(plainPassword, 10)
-      const user = await createMockUser({
+      await createMockUser({
         email: "login@example.com",
-        password: hashedPassword,
+        passwordHash: hashedPassword,
       })
 
       const response = await supertest(app.callback())
@@ -62,7 +62,7 @@ describe("AuthController", () => {
       const hashedPassword = await bcrypt.hash("correctpassword", 10)
       await createMockUser({
         email: "test@example.com",
-        password: hashedPassword,
+        passwordHash: hashedPassword,
       })
 
       const response = await supertest(app.callback())
@@ -95,7 +95,7 @@ describe("AuthController", () => {
       const hashedPassword = await bcrypt.hash(plainPassword, 10)
       await createMockUser({
         email: "refresh@example.com",
-        password: hashedPassword,
+        passwordHash: hashedPassword,
       })
 
       // Login to get tokens
@@ -181,7 +181,7 @@ describe("AuthController", () => {
       const hashedPassword = await bcrypt.hash(plainPassword, 10)
       const user = await createMockUser({
         email: "changepass@example.com",
-        password: hashedPassword,
+        passwordHash: hashedPassword,
       })
 
       // Login to get token

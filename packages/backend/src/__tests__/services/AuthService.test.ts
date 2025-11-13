@@ -1,6 +1,5 @@
-import { describe, it, expect, beforeEach, vi } from "vitest"
+import { describe, it, expect, beforeEach } from "vitest"
 import { AuthService } from "../../services/AuthService"
-import { User } from "../../models/User"
 import { createMockUser, cleanDatabase } from "../helpers/db-mock"
 import { sequelize } from "../../config/database"
 import bcrypt from "bcryptjs"
@@ -48,7 +47,7 @@ describe("AuthService", () => {
       const hashedPassword = await bcrypt.hash(plainPassword, 10)
       const user = await createMockUser({
         email: "login@example.com",
-        password: hashedPassword,
+        passwordHash: hashedPassword,
       })
 
       const result = await AuthService.login({
@@ -76,7 +75,7 @@ describe("AuthService", () => {
       const hashedPassword = await bcrypt.hash("correctpassword", 10)
       await createMockUser({
         email: "test@example.com",
-        password: hashedPassword,
+        passwordHash: hashedPassword,
       })
 
       await expect(
@@ -91,7 +90,7 @@ describe("AuthService", () => {
       const hashedPassword = await bcrypt.hash("password123", 10)
       await createMockUser({
         email: "inactive@example.com",
-        password: hashedPassword,
+        passwordHash: hashedPassword,
         isActive: false,
       })
 
@@ -182,7 +181,7 @@ describe("AuthService", () => {
 
       const user = await createMockUser({
         email: "changepass@example.com",
-        password: hashedOldPassword,
+        passwordHash: hashedOldPassword,
       })
 
       await AuthService.changePassword(user.id, oldPassword, newPassword)
@@ -198,7 +197,7 @@ describe("AuthService", () => {
 
     it("should throw error with incorrect old password", async () => {
       const hashedPassword = await bcrypt.hash("correctpassword", 10)
-      const user = await createMockUser({ password: hashedPassword })
+      const user = await createMockUser({ passwordHash: hashedPassword })
 
       await expect(AuthService.changePassword(user.id, "wrongoldpassword", "newpassword")).rejects.toThrow()
     })

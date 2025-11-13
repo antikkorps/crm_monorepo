@@ -95,8 +95,13 @@ jobs:
         working-directory: packages/backend
         env:
           HEALTH_CHECK_URL: https://medical-crm.example.com/api/health
+        run: npm run health-check
+
+      - name: Rollback on health check failure
+        if: failure()
         run: |
-          npm run health-check || echo "Health check failed"
+          echo "::error::Health check failed - deployment may need rollback"
+          echo "Please check the logs and consider rolling back the deployment"
 
       - name: Deployment success notification
         run: |

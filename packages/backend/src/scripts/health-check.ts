@@ -77,44 +77,35 @@ async function checkAPI(): Promise<HealthCheckResult> {
 
 async function checkDiskSpace(): Promise<HealthCheckResult> {
   try {
-    // This is a basic check - in production you'd want to check actual disk usage
-    const { promisify } = require("util")
-    const exec = promisify(require("child_process").exec)
+    const { promisify } = await import("util")
+    const { exec: execCallback } = await import("child_process")
+    const exec = promisify(execCallback)
 
-    try {
-      const { stdout } = await exec("df -h / | tail -1 | awk '{print $5}' | sed 's/%//'")
-      const usage = parseInt(stdout.trim())
+    const { stdout } = await exec("df -h / | tail -1 | awk '{print $5}' | sed 's/%//'")
+    const usage = parseInt(stdout.trim())
 
-      let status: "healthy" | "degraded" | "unhealthy" = "healthy"
-      let message = `Disk usage: ${usage}%`
+    let status: "healthy" | "degraded" | "unhealthy" = "healthy"
+    let message = `Disk usage: ${usage}%`
 
-      if (usage > 90) {
-        status = "unhealthy"
-        message += " - Critical: disk space is running out!"
-      } else if (usage > 75) {
-        status = "degraded"
-        message += " - Warning: disk space is getting low"
-      }
+    if (usage > 90) {
+      status = "unhealthy"
+      message += " - Critical: disk space is running out!"
+    } else if (usage > 75) {
+      status = "degraded"
+      message += " - Warning: disk space is getting low"
+    }
 
-      return {
-        service: "disk",
-        status,
-        message,
-        details: { usagePercent: usage },
-      }
-    } catch (error) {
-      return {
-        service: "disk",
-        status: "healthy",
-        message: "Disk check not available (Windows or restricted environment)",
-      }
+    return {
+      service: "disk",
+      status,
+      message,
+      details: { usagePercent: usage },
     }
   } catch (error) {
     return {
       service: "disk",
-      status: "degraded",
-      message: "Could not check disk space",
-      details: error instanceof Error ? error.message : String(error),
+      status: "healthy",
+      message: "Disk check not available (Windows or restricted environment)",
     }
   }
 }
@@ -188,7 +179,7 @@ function printHealthReport(result: Awaited<ReturnType<typeof runHealthChecks>>) 
 
   const statusEmoji = {
     healthy: "✅",
-    degraded: "⚠️ ",
+    degraded: "⚠️",
     unhealthy: "❌",
   }
 

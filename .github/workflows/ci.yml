@@ -70,27 +70,7 @@ jobs:
 
       - name: Check coverage thresholds
         working-directory: packages/backend
-        run: |
-          if [ -f coverage/coverage-summary.json ]; then
-            node -e "
-              const coverage = require('./coverage/coverage-summary.json');
-              const total = coverage.total;
-              const thresholds = { lines: 70, functions: 70, branches: 70, statements: 70 };
-              let failed = false;
-              for (const [key, threshold] of Object.entries(thresholds)) {
-                const pct = total[key].pct;
-                if (pct < threshold) {
-                  console.error(\`❌ ${key} coverage (${pct}%) is below threshold (${threshold}%)\`);
-                  failed = true;
-                } else {
-                  console.log(\`✅ ${key} coverage: ${pct}%\`);
-                }
-              }
-              if (failed) process.exit(1);
-            "
-          else
-            echo "No coverage report found"
-          fi
+        run: node scripts/check-coverage.js
 
   frontend-tests:
     name: Frontend Tests & Build
@@ -110,12 +90,14 @@ jobs:
         run: PUPPETEER_SKIP_DOWNLOAD=true npm ci
 
       - name: Type check frontend
+        if: hashFiles('packages/frontend/tsconfig.json') != ''
         working-directory: packages/frontend
-        run: npm run type-check || echo "Type check not configured"
+        run: npm run type-check
 
       - name: Lint frontend
+        if: hashFiles('packages/frontend/.eslintrc.*') != ''
         working-directory: packages/frontend
-        run: npm run lint || echo "Lint not configured"
+        run: npm run lint
 
       - name: Build frontend
         working-directory: packages/frontend
@@ -135,8 +117,39 @@ jobs:
           node-version: "20"
 
       - name: Run npm audit
-        run: npm audit --audit-level=moderate || true
+        run: |
+          npm audit --audit-level=moderate --json > audit-report.json || true
+          if [ -f audit-report.json ]; then
+            node -e "
+              const report = require('./audit-report.json');
+              const moderate = report.metadata?.vulnerabilities?.moderate || 0;
+              const high = report.metadata?.vulnerabilities?.high || 0;
+              const critical = report.metadata?.vulnerabilities?.critical || 0;
+              console.log('Security Audit Results:');
+              console.log('  Moderate:', moderate);
+              console.log('  High:', high);
+              console.log('  Critical:', critical);
+              if (high > 0 || critical > 0) {
+                console.error('::warning::Found ' + high + ' high and ' + critical + ' critical vulnerabilities');
+              } else {
+                console.log('✅ No high or critical vulnerabilities found');
+              }
+            "
+          fi
 
-      - name: Check for vulnerabilities in backend
+      - name: Check backend vulnerabilities
         working-directory: packages/backend
-        run: npm audit --audit-level=high || true
+        run: |
+          npm audit --audit-level=high --json > audit-report.json || true
+          if [ -f audit-report.json ]; then
+            node -e "
+              const report = require('./audit-report.json');
+              const high = report.metadata?.vulnerabilities?.high || 0;
+              const critical = report.metadata?.vulnerabilities?.critical || 0;
+              if (high > 0 || critical > 0) {
+                console.error('::warning::Found ' + high + ' high and ' + critical + ' critical vulnerabilities in backend');
+              } else {
+                console.log('✅ No high or critical vulnerabilities found in backend');
+              }
+            "
+          fi

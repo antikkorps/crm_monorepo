@@ -13,10 +13,12 @@
     "lint": "eslint src --ext .ts --fix",
     "lint:check": "eslint src --ext .ts",
     "type-check": "tsc --noEmit",
+    "db:drop": "sequelize-cli db:drop",
+    "db:create": "sequelize-cli db:create",
     "db:migrate": "sequelize-cli db:migrate",
     "db:seed": "sequelize-cli db:seed:all",
     "db:sync": "tsx src/scripts/sync-db.ts",
-    "db:reset": "sequelize-cli db:drop && sequelize-cli db:create && npm run db:migrate && npm run db:seed",
+    "db:reset": "npm run db:drop && npm run db:create && npm run db:migrate && npm run db:seed",
     "db:audit-indexes": "tsx src/scripts/audit-db-indexes.ts",
     "health-check": "tsx src/scripts/health-check.ts"
   },

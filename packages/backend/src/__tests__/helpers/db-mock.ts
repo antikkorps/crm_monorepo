@@ -45,13 +45,16 @@ export const cleanDatabase = async (sequelize: Sequelize) => {
  * Create mock data helpers
  */
 export const createMockUser = async (overrides = {}) => {
-  const { User } = await import("../../models")
+  const { User, UserRole } = await import("../../models")
   return User.create({
     email: `test-${Date.now()}@example.com`,
-    password: "hashedPassword123",
+    passwordHash: "hashedPassword123",
     firstName: "Test",
     lastName: "User",
-    role: "USER",
+    role: UserRole.USER,
+    avatarSeed: `seed-${Date.now()}`,
+    avatarStyle: "adventurer",
+    isActive: true,
     ...overrides,
   })
 }
@@ -61,6 +64,7 @@ export const createMockTeam = async (overrides = {}) => {
   return Team.create({
     name: `Test Team ${Date.now()}`,
     description: "Test team description",
+    isActive: true,
     ...overrides,
   })
 }
@@ -70,25 +74,29 @@ export const createMockMedicalInstitution = async (overrides = {}) => {
   return MedicalInstitution.create({
     name: `Test Institution ${Date.now()}`,
     type: "hospital",
-    address: "123 Test St",
-    city: "Test City",
-    postalCode: "12345",
-    country: "France",
-    phone: "0123456789",
-    email: `institution-${Date.now()}@test.com`,
+    address: {
+      street: "123 Test St",
+      city: "Test City",
+      state: "Test State",
+      zipCode: "12345",
+      country: "France",
+    },
+    tags: [],
+    isActive: true,
     ...overrides,
   })
 }
 
-export const createMockTask = async (userId: string, institutionId: string, overrides = {}) => {
-  const { Task } = await import("../../models")
+export const createMockTask = async (assigneeId: string, institutionId: string, overrides = {}) => {
+  const { Task, TaskStatus, TaskPriority } = await import("../../models")
   return Task.create({
     title: `Test Task ${Date.now()}`,
     description: "Test task description",
-    status: "pending",
-    priority: "medium",
-    assignedToId: userId,
-    medicalInstitutionId: institutionId,
+    status: TaskStatus.TODO,
+    priority: TaskPriority.MEDIUM,
+    assigneeId,
+    creatorId: assigneeId,
+    institutionId,
     dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days from now
     ...overrides,
   })
@@ -98,8 +106,8 @@ export const createMockQuote = async (institutionId: string, creatorId: string, 
   const { Quote } = await import("../../models")
   return Quote.create({
     quoteNumber: `Q-${Date.now()}`,
-    medicalInstitutionId: institutionId,
-    createdById: creatorId,
+    institutionId,
+    creatorId,
     status: "draft",
     totalAmount: 1000,
     validUntil: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
@@ -111,8 +119,8 @@ export const createMockInvoice = async (institutionId: string, creatorId: string
   const { Invoice } = await import("../../models")
   return Invoice.create({
     invoiceNumber: `INV-${Date.now()}`,
-    medicalInstitutionId: institutionId,
-    createdById: creatorId,
+    institutionId,
+    creatorId,
     status: "pending",
     totalAmount: 1500,
     dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
@@ -124,8 +132,8 @@ export const createMockMeeting = async (institutionId: string, creatorId: string
   const { Meeting } = await import("../../models")
   return Meeting.create({
     title: `Test Meeting ${Date.now()}`,
-    medicalInstitutionId: institutionId,
-    createdById: creatorId,
+    institutionId,
+    creatorId,
     startTime: new Date(Date.now() + 24 * 60 * 60 * 1000), // Tomorrow
     endTime: new Date(Date.now() + 24 * 60 * 60 * 1000 + 60 * 60 * 1000), // +1 hour
     location: "Test Location",
@@ -133,12 +141,15 @@ export const createMockMeeting = async (institutionId: string, creatorId: string
   })
 }
 
-export const createMockNote = async (institutionId: string, authorId: string, overrides = {}) => {
+export const createMockNote = async (institutionId: string, creatorId: string, overrides = {}) => {
   const { Note } = await import("../../models")
   return Note.create({
+    title: `Test Note ${Date.now()}`,
     content: `Test note content ${Date.now()}`,
-    medicalInstitutionId: institutionId,
-    authorId,
+    institutionId,
+    creatorId,
+    tags: [],
+    isPrivate: false,
     ...overrides,
   })
 }

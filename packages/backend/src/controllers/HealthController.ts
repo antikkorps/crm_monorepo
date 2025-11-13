@@ -1,4 +1,4 @@
-import { Context, Next } from "../types/koa"
+import { Context } from "../types/koa"
 import { sequelize } from "../config/database"
 import { logger } from "../utils/logger"
 
@@ -37,7 +37,7 @@ export class HealthController {
    * GET /api/health
    * Basic health check endpoint - returns 200 if service is up
    */
-  static async basic(ctx: Context, next: Next) {
+  static async basic(ctx: Context) {
     ctx.status = 200
     ctx.body = {
       status: "ok",
@@ -49,9 +49,7 @@ export class HealthController {
    * GET /api/health/detailed
    * Detailed health check with database and service status
    */
-  static async detailed(ctx: Context, next: Next) {
-    const startTime = Date.now()
-
+  static async detailed(ctx: Context) {
     try {
       // Check database
       const dbStart = Date.now()
@@ -140,7 +138,7 @@ export class HealthController {
    * GET /api/health/ready
    * Readiness probe - checks if service is ready to accept traffic
    */
-  static async ready(ctx: Context, next: Next) {
+  static async ready(ctx: Context) {
     try {
       // Check database connectivity
       await sequelize.authenticate()
@@ -165,7 +163,7 @@ export class HealthController {
    * GET /api/health/live
    * Liveness probe - checks if service is alive (for Kubernetes)
    */
-  static async live(ctx: Context, next: Next) {
+  static async live(ctx: Context) {
     // Simple liveness check - if we can respond, we're alive
     ctx.status = 200
     ctx.body = {

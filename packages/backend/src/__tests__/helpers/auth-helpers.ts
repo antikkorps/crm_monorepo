@@ -1,6 +1,7 @@
 import jwt from "jsonwebtoken"
 import supertest from "supertest"
 import { createMockUser } from "./db-mock"
+import { UserRole } from "../../models/User"
 
 /**
  * Authentication helpers for testing
@@ -16,7 +17,9 @@ export interface TestUser {
 /**
  * Create a test user with a valid JWT token
  */
-export const createAuthenticatedUser = async (role: "SUPER_ADMIN" | "TEAM_ADMIN" | "USER" = "USER"): Promise<TestUser> => {
+export const createAuthenticatedUser = async (
+  role: UserRole = UserRole.USER
+): Promise<TestUser> => {
   const user = await createMockUser({ role })
 
   const token = jwt.sign(
@@ -38,9 +41,9 @@ export const createAuthenticatedUser = async (role: "SUPER_ADMIN" | "TEAM_ADMIN"
  */
 export const createTestUsers = async () => {
   const [superAdmin, teamAdmin, regularUser] = await Promise.all([
-    createAuthenticatedUser("SUPER_ADMIN"),
-    createAuthenticatedUser("TEAM_ADMIN"),
-    createAuthenticatedUser("USER"),
+    createAuthenticatedUser(UserRole.SUPER_ADMIN),
+    createAuthenticatedUser(UserRole.TEAM_ADMIN),
+    createAuthenticatedUser(UserRole.USER),
   ])
 
   return { superAdmin, teamAdmin, regularUser }
