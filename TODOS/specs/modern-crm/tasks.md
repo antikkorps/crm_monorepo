@@ -2130,9 +2130,15 @@ PORT=3002 npm run dev
 ## Task 29: Import CSV Amélioré avec Matching Comptable et Intégrations Digiforma/Sage 🆕
 
 **Status:** 🟡 À FAIRE
-**Priority:** Haute  
+**Priority:** Haute
 **Estimate:** 12-16 heures
 **Dependencies:** Task 24 (Digiforma), Task 15 (Sage prep)
+
+**⚠️ Infos Clés:**
+- Champ Digiforma: `accountingNumber` (PAS `accountingId`)
+- GraphiQL: https://app.digiforma.com/api/v1/graphiql
+- Guide GraphQL: `/TODOS/specs/modern-crm/digiforma-graphql-exploration.md`
+- Feature Flag Sage: Désactivé par défaut
 
 ### Objectif
 
@@ -2147,14 +2153,14 @@ Améliorer le système d'import CSV existant pour gérer l'identifiant comptable
 
 ### Sous-tâches
 
-- [ ] **29.1** - Ajouter champ `accountingId` au modèle MedicalInstitution (2h)
-  - Migration Sequelize pour colonne `accounting_id`
-  - Index unique sur `accounting_id`
+- [ ] **29.1** - Ajouter champ `accountingNumber` au modèle MedicalInstitution (2h)
+  - Migration Sequelize pour colonne `accounting_number`
+  - Index unique sur `accounting_number`
   - Frontend: formulaire + affichage + filtre
   - Tests: création, unicité, recherche
 
 - [ ] **29.2** - Améliorer logique de matching CSV multi-critères (4-5h)
-  - Matching par `accountingId` (priorité 1, confidence 100%)
+  - Matching par `accountingNumber` (priorité 1, confidence 100%)
   - Matching nom exact + adresse (priorité 2, confidence 95%)
   - Matching fuzzy par nom + ville (priorité 3, confidence 60-85%)
   - Utiliser `string-similarity` ou `fuse.js` pour fuzzy matching
@@ -2173,7 +2179,7 @@ Améliorer le système d'import CSV existant pour gérer l'identifiant comptable
     - `syncCustomers()` - TODO: API Sage customers
     - `syncInvoices()` - TODO: API Sage invoices  
     - `syncPayments()` - TODO: API Sage payments
-    - `matchOrCreateInstitution()` - Match par `accountingId`
+    - `matchOrCreateInstitution()` - Match par `accountingNumber`
   - Créer `SageSettings` model (apiUrl, apiKey encrypted, companyId, enabled, autoSync, lastSync)
   - Types TypeScript: `SageCustomer`, `SageInvoice`, `SagePayment`
   - Migration pour table `sage_settings`
@@ -2183,7 +2189,7 @@ Améliorer le système d'import CSV existant pour gérer l'identifiant comptable
   - Preview table avec colonnes:
     - Status matching (exact/fuzzy/none)
     - Status Digiforma (existe/sera créé)
-    - Status Sage (accountingId si présent)
+    - Status Sage (accountingNumber si présent)
   - Options de sync: Switch "Créer dans Digiforma si manquant"
   - Rapport d'import détaillé: Importées / Mises à jour / Créées Digiforma / Erreurs
   - Alert: "Les institutions avec numéro client seront liées à Sage lors de la prochaine sync"
@@ -2226,12 +2232,12 @@ packages/frontend/src/views/settings/DigiformaSettingsView.vue
 ### Tests
 
 **Unit Tests:**
-- `accountingId` unique constraint
-- Matching logic (exact, fuzzy, accountingId)
+- `accountingNumber` unique constraint
+- Matching logic (exact, fuzzy, accountingNumber)
 - SageService methods (mocked API)
 
 **Integration Tests:**
-- CSV import avec accountingId
+- CSV import avec accountingNumber
 - Digiforma search et sync
 - Duplicate detection avec critères mixtes
 
@@ -2242,8 +2248,8 @@ packages/frontend/src/views/settings/DigiformaSettingsView.vue
 
 ### Success Criteria
 
-✅ Champ `accountingId` dans institutions  
-✅ Matching par `accountingId` prioritaire  
+✅ Champ `accountingNumber` dans institutions  
+✅ Matching par `accountingNumber` prioritaire  
 ✅ Fuzzy matching pour noms variés  
 ✅ TODOs Digiforma en place pour mutations GraphQL  
 ✅ Skeleton Sage service prêt avec TODOs  

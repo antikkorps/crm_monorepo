@@ -5,12 +5,19 @@
 **Estimate:** 12-16 heures
 **Dependencies:** Task 24 (Digiforma), Task 15 (Sage prep)
 
+## ⚠️ Informations Importantes
+
+- **Champ comptable Digiforma :** `accountingNumber` (PAS `accountingId`)
+- **GraphiQL Digiforma :** https://app.digiforma.com/api/v1/graphiql
+- **Guide exploration GraphQL :** Voir `/TODOS/specs/modern-crm/digiforma-graphql-exploration.md`
+- **Feature Flag Sage :** Désactivé par défaut (ajout recommandé dans `FeaturesSettingsView.vue`)
+
 ## Contexte
 
 Le système d'import CSV existant doit être amélioré pour :
 1. **Gérer l'identifiant comptable** (numéro client) comme clé de matching unique
 2. **Synchroniser avec Digiforma** : créer les institutions manquantes dans Digiforma
-3. **Préparer l'intégration Sage** : structure et TODOs pour sync Sage → CRM
+3. **Préparer l'intégration Sage** : structure et TODOs pour sync Sage → CRM (désactivé par défaut)
 4. **Améliorer le matching** : nom exact + fuzzy + identifiant comptable
 
 ### Source de vérité unique
@@ -23,28 +30,30 @@ Le système d'import CSV existant doit être amélioré pour :
 ### 29.1 - Ajouter champ identifiant comptable (2h) ⭐
 
 **Backend:**
-- [ ] Ajouter champ `accountingId` (string, nullable, unique) au modèle `MedicalInstitution`
-- [ ] Créer migration Sequelize pour ajouter colonne `accounting_id`
-- [ ] Ajouter index unique sur `accounting_id` (si non null)
+- [ ] Ajouter champ `accountingNumber` (string, nullable, unique) au modèle `MedicalInstitution`
+- [ ] Créer migration Sequelize pour ajouter colonne `accounting_number`
+- [ ] Ajouter index unique sur `accounting_number` (si non null)
 - [ ] Mettre à jour interfaces TypeScript dans `@medical-crm/shared`
 
 **Frontend:**
 - [ ] Ajouter champ "Numéro Client Comptable" dans formulaire institution
-- [ ] Afficher `accountingId` dans les détails de l'institution
-- [ ] Ajouter filtre de recherche par `accountingId`
+- [ ] Afficher `accountingNumber` dans les détails de l'institution
+- [ ] Ajouter filtre de recherche par `accountingNumber`
 
 **Files to modify:**
 ```
 packages/backend/src/models/MedicalInstitution.ts
-packages/backend/migrations/YYYY-MM-DD-add-accounting-id.ts
+packages/backend/migrations/YYYY-MM-DD-add-accounting-number.ts
 packages/shared/src/types/institution.ts
 packages/frontend/src/components/institutions/InstitutionForm.vue
 ```
 
+**Note importante :** Utiliser `accountingNumber` pour correspondre au champ Digiforma
+
 **Testing:**
-- [ ] Test unitaire : création institution avec `accountingId`
-- [ ] Test unicité : erreur si `accountingId` dupliqué
-- [ ] Test recherche par `accountingId`
+- [ ] Test unitaire : création institution avec `accountingNumber`
+- [ ] Test unicité : erreur si `accountingNumber` dupliqué
+- [ ] Test recherche par `accountingNumber`
 
 ---
 
@@ -52,8 +61,8 @@ packages/frontend/src/components/institutions/InstitutionForm.vue
 
 **Stratégie de matching multi-critères:**
 
-1. **Match par `accountingId`** (priorité haute)
-   - Si CSV contient `accountingId` ET institution existe avec ce `accountingId` → UPDATE
+1. **Match par `accountingNumber`** (priorité haute)
+   - Si CSV contient `accountingNumber` ET institution existe avec ce `accountingNumber` → UPDATE
 
 2. **Match par nom exact + adresse** (priorité moyenne)
    - Si nom exact ET (street OU city) correspondent → UPDATE
@@ -77,10 +86,10 @@ interface MatchResult {
 private static async findDuplicateInstitution(
   data: Record<string, string>
 ): Promise<MatchResult> {
-  // 1. Match by accountingId (100% confidence)
-  if (data.accountingId) {
+  // 1. Match by accountingNumber (100% confidence)
+  if (data.accountingNumber) {
     const byAccounting = await MedicalInstitution.findOne({
-      where: { accountingId: data.accountingId }
+      where: { accountingNumber: data.accountingNumber }
     })
     if (byAccounting) {
       return { type: 'exact', confidence: 100, institution: byAccounting }
@@ -131,7 +140,7 @@ packages/backend/package.json (add string-similarity dep)
 ```
 
 **Testing:**
-- [ ] Test matching par `accountingId`
+- [ ] Test matching par `accountingNumber`
 - [ ] Test matching exact name + address
 - [ ] Test fuzzy matching avec noms similaires
 - [ ] Test aucun match trouvé
@@ -183,7 +192,7 @@ private static async createInstitutionWithDigiforma(
   // const newDigiformaCompany = await DigiformaService.createCompany({
   //   name: data.name,
   //   address: { ... },
-  //   accountingId: data.accountingId,
+  //   accountingNumber: data.accountingNumber,
   //   // ... other fields
   // })
 
@@ -229,7 +238,7 @@ public async createCompany(data: {
     zipCode: string
     country: string
   }
-  accountingId?: string
+  accountingNumber?: string
   // ... other fields
 }): Promise<any> {
   // TODO: Implement GraphQL mutation to create company
@@ -294,7 +303,7 @@ export interface SageConfig {
 
 export interface SageCustomer {
   id: string
-  accountingId: string  // Numéro client comptable
+  accountingNumber: string  // Numéro client comptable
   name: string
   address: {
     street: string
@@ -310,7 +319,7 @@ export interface SageInvoice {
   id: string
   invoiceNumber: string
   customerId: string
-  accountingId: string  // Numéro client
+  accountingNumber: string  // Numéro client
   date: Date
   dueDate: Date
   amount: number
@@ -362,7 +371,7 @@ export class SageService {
 
   /**
    * Sync customers from Sage to CRM
-   * Match by accountingId, create/update institutions
+   * Match by accountingNumber, create/update institutions
    */
   public async syncCustomers(): Promise<{
     synced: number
@@ -379,7 +388,7 @@ export class SageService {
 
   /**
    * Sync invoices from Sage to CRM
-   * Match by accountingId to link to institutions
+   * Match by accountingNumber to link to institutions
    */
   public async syncInvoices(
     startDate?: Date,
@@ -417,19 +426,19 @@ export class SageService {
   }
 
   /**
-   * Match Sage customer to CRM institution by accountingId
+   * Match Sage customer to CRM institution by accountingNumber
    */
   private async matchOrCreateInstitution(
     sageCustomer: SageCustomer
   ): Promise<MedicalInstitution> {
-    // Try to find by accountingId first
+    // Try to find by accountingNumber first
     let institution = await MedicalInstitution.findOne({
-      where: { accountingId: sageCustomer.accountingId }
+      where: { accountingNumber: sageCustomer.accountingNumber }
     })
 
     if (institution) {
       logger.info('Matched Sage customer to existing institution', {
-        accountingId: sageCustomer.accountingId,
+        accountingNumber: sageCustomer.accountingNumber,
         institutionId: institution.id
       })
       return institution
@@ -438,14 +447,14 @@ export class SageService {
     // TODO: If not found, should we create a new institution or skip?
     // Decision: Create basic institution with Sage data, mark as needs review
     logger.warn('Sage customer not found in CRM, creating new institution', {
-      accountingId: sageCustomer.accountingId,
+      accountingNumber: sageCustomer.accountingNumber,
       name: sageCustomer.name
     })
 
     institution = await MedicalInstitution.create({
       name: sageCustomer.name,
       type: 'other',  // Default type, needs manual review
-      accountingId: sageCustomer.accountingId,
+      accountingNumber: sageCustomer.accountingNumber,
       address: sageCustomer.address,
       tags: ['sage-import', 'needs-review']
     })
@@ -560,10 +569,57 @@ packages/backend/src/routes/sage.ts
 packages/backend/migrations/YYYY-MM-DD-create-sage-settings.ts
 ```
 
+**Feature Flag Setup (IMPORTANT):**
+
+Ajouter le feature flag Sage dans `FeaturesSettingsView.vue` :
+
+```typescript
+// packages/frontend/src/views/settings/FeaturesSettingsView.vue
+
+const features = [
+  // ... existing features
+  {
+    key: "sage_enabled",
+    title: "Sage Accounting Integration",
+    description: "Enable Sage 100 Cloud accounting integration (customers, invoices, payments sync)",
+    icon: "mdi-calculator-variant",
+    color: "indigo",
+  },
+]
+```
+
+Backend settings store :
+```typescript
+// packages/backend/src/models/Settings.ts (or equivalent)
+
+interface FeatureFlags {
+  // ... existing flags
+  sage_enabled: boolean
+}
+
+// Default to false
+const defaultFeatureFlags = {
+  // ...
+  sage_enabled: false
+}
+```
+
+Frontend store :
+```typescript
+// packages/frontend/src/stores/settings.ts
+
+interface FeatureFlags {
+  // ... existing flags
+  sage_enabled: boolean
+}
+```
+
 **Testing:**
 - [ ] Test SageService instantiation
 - [ ] Test testConnection (mock API)
-- [ ] Test matchOrCreateInstitution with accountingId
+- [ ] Test matchOrCreateInstitution with accountingNumber
+- [ ] Test feature flag Sage (désactivé par défaut)
+- [ ] Test activation/désactivation du flag dans UI
 
 ---
 
@@ -598,12 +654,12 @@ packages/backend/migrations/YYYY-MM-DD-create-sage-settings.ts
 
      <template #item.sageStatus="{ item }">
        <v-chip
-         v-if="item.accountingId"
+         v-if="item.accountingNumber"
          size="small"
          color="info"
          prepend-icon="mdi-calculator"
        >
-         {{ item.accountingId }}
+         {{ item.accountingNumber }}
        </v-chip>
        <span v-else class="text-caption text-disabled">
          Aucun ID comptable
@@ -757,12 +813,12 @@ packages/frontend/src/components/institutions/ImportInstitutionsDialog.vue
 ## Testing Strategy
 
 ### Unit Tests:
-- [ ] Test accountingId unique constraint
-- [ ] Test matching logic (exact, fuzzy, accountingId)
+- [ ] Test accountingNumber unique constraint
+- [ ] Test matching logic (exact, fuzzy, accountingNumber)
 - [ ] Test SageService methods (mocked API)
 
 ### Integration Tests:
-- [ ] Test CSV import with accountingId
+- [ ] Test CSV import with accountingNumber
 - [ ] Test Digiforma search and sync
 - [ ] Test duplicate detection with mixed criteria
 
@@ -798,8 +854,8 @@ packages/frontend/src/components/institutions/ImportInstitutionsDialog.vue
 
 ## Success Criteria
 
-✅ Institutions have `accountingId` field
-✅ CSV import matches by `accountingId` first
+✅ Institutions have `accountingNumber` field
+✅ CSV import matches by `accountingNumber` first
 ✅ Fuzzy matching works for name variations
 ✅ Digiforma integration TODOs are in place
 ✅ Sage service skeleton is ready with TODOs
