@@ -2,95 +2,367 @@
 
 **GraphiQL URL:** https://app.digiforma.com/api/v1/graphiql
 
-## 🎯 Mutations à Identifier
+## ✅ Structure GraphQL Confirmée
 
-Pour compléter l'implémentation de la Task 29, nous avons besoin d'identifier les mutations GraphQL exactes dans Digiforma pour :
+### Types Identifiés
 
-### 1. Créer une entreprise (Company)
+**Company** - Type principal pour les entreprises
+**CompanyFilter** - Filtre pour rechercher des entreprises
+**CompanyInput** - Input pour créer/modifier des entreprises
 
-**Ce qu'on cherche :**
+### CompanyFilter (CONFIRMÉ)
+
 ```graphql
-mutation CreateCompany($input: CompanyInput!) {
-  createCompany(input: $input) {
-    id
-    name
-    accountingNumber  # ✅ CONFIRMÉ (pas accountingId)
-    address {
-      street
-      city
-      zipCode
-      country
-    }
-    # ... autres champs
-  }
-}
-```
-
-**Input probable :**
-```graphql
-input CompanyInput {
-  name: String!
+input CompanyFilter {
   accountingNumber: String
-  address: AddressInput
-  # ... autres champs à identifier
+  code: String
+  email: String
+  group: String
+  name: String
+  siret: String
 }
 ```
 
-### 2. Rechercher une entreprise par nom et ville
+## 🎯 Queries Identifiées
 
-**Ce qu'on cherche :**
+### 1. Rechercher des entreprises
+
+**Query confirmée :**
 ```graphql
-query SearchCompanies($name: String!, $city: String) {
-  companies(where: { name: { contains: $name }, address: { city: { equals: $city } } }) {
+query SearchCompany {
+  companies(filter: { name: "POLE SANTE" }) {
     id
     name
-    accountingNumber
-    address {
-      city
-      street
-    }
+    city
   }
 }
 ```
 
-**Alternative possible :**
+**Note :** Requiert un bearer token valide. Sans token, retourne :
+```json
+{
+  "data": { "companies": null },
+  "errors": [{
+    "message": "Unauthorized, you need an authorization token in your HTTP Header..."
+  }]
+}
+```
+
+**Filtres disponibles :**
+- `accountingNumber` - Numéro comptable (notre clé de matching !)
+- `code` - Code entreprise
+- `email` - Email entreprise
+- `group` - Groupe d'entreprises
+- `name` - Nom de l'entreprise
+- `siret` - Numéro SIRET
+
+**Exemple avec accountingNumber :**
 ```graphql
-query SearchCompanies($filter: CompanyFilterInput) {
-  searchCompanies(filter: $filter) {
+query SearchByAccountingNumber {
+  companies(filter: { accountingNumber: "CLI001" }) {
     id
     name
     accountingNumber
+    city
+    siret
   }
 }
 ```
 
-### 3. Récupérer les détails complets d'une entreprise
+**Exemple avec plusieurs filtres :**
+```graphql
+query SearchCompanies {
+  companies(filter: {
+    name: "POLE SANTE",
+    city: "Paris"
+  }) {
+    id
+    name
+    accountingNumber
+    city
+    siret
+    email
+  }
+}
+```
 
-**Ce qu'on cherche :**
+## 🔍 À Explorer Avec Token
+
+### Query Company (récupérer une entreprise par ID)
+
 ```graphql
 query GetCompany($id: ID!) {
   company(id: $id) {
     id
     name
     accountingNumber
-    address {
-      street
-      city
-      zipCode
-      country
-      state
-    }
-    contacts {
-      id
-      firstName
-      lastName
-      email
-      phone
-    }
-    # ... tous les champs disponibles
+    code
+    siret
+    email
+    # TODO: Identifier tous les champs disponibles
+    # city, street, zipCode, etc.
   }
 }
 ```
+
+### Mutations à Identifier
+
+#### createCompany (ou addCompany)
+
+**À tester :**
+```graphql
+mutation CreateCompany($input: CompanyInput!) {
+  createCompany(input: $input) {
+    id
+    name
+    accountingNumber
+  }
+}
+```
+
+**OU peut-être :**
+```graphql
+mutation AddCompany($input: CompanyInput!) {
+  addCompany(input: $input) {
+    id
+    name
+  }
+}
+```
+
+**Variables possibles :**
+```json
+{
+  "input": {
+    "name": "Test Company",
+    "accountingNumber": "TEST001",
+    "siret": "12345678900001",
+    "email": "contact@test.com"
+  }
+}
+```
+
+#### updateCompany
+
+```graphql
+mutation UpdateCompany($id: ID!, $input: CompanyInput!) {
+  updateCompany(id: $id, input: $input) {
+    id
+    name
+    accountingNumber
+  }
+}
+```
+
+## 📋 Checklist d'Exploration (avec Token)
+
+### Queries
+- [x] Identifier `companies(filter: CompanyFilter)` ✅
+- [x] Confirmer champs de `CompanyFilter` ✅
+- [ ] Tester `company(id: ID!)` pour récupérer une entreprise
+- [ ] Identifier tous les champs retournés par Company (address, contacts, etc.)
+- [ ] Tester recherche par `accountingNumber`
+- [ ] Tester recherche par `siret`
+- [ ] Vérifier si pagination existe (first, after, etc.)
+
+### Mutations
+- [ ] Identifier nom exact de création : `createCompany` ou `addCompany` ?
+- [ ] Identifier champs requis de `CompanyInput`
+- [ ] Identifier champs optionnels de `CompanyInput`
+- [ ] Tester création d'une entreprise test
+- [ ] Identifier mutation de mise à jour
+- [ ] Identifier mutation de suppression (si existe)
+
+### Structure CompanyInput (à documenter)
+- [ ] Champs de base (name, email, siret, accountingNumber, code)
+- [ ] Champs d'adresse (street, city, zipCode, country, state)
+- [ ] Autres champs métier (group, etc.)
+
+## 🔨 Implémentation pour DigiformaService
+
+### searchCompanyByName (Prêt à implémenter)
+
+```typescript
+// packages/backend/src/services/DigiformaService.ts
+
+public async searchCompanyByName(
+  name: string,
+  city?: string
+): Promise<any | null> {
+  const filter: any = { name }
+  if (city) {
+    filter.city = city
+  }
+
+  const query = `
+    query SearchCompanies($filter: CompanyFilter!) {
+      companies(filter: $filter) {
+        id
+        name
+        accountingNumber
+        siret
+        email
+        city
+      }
+    }
+  `
+
+  const variables = { filter }
+
+  const response = await this.makeGraphQLRequest(query, variables)
+  const companies = response.data?.companies
+
+  if (!companies || companies.length === 0) {
+    return null
+  }
+
+  // Return first match
+  return companies[0]
+}
+```
+
+### searchCompanyByAccountingNumber (Nouveau - Important!)
+
+```typescript
+public async searchCompanyByAccountingNumber(
+  accountingNumber: string
+): Promise<any | null> {
+  const query = `
+    query SearchByAccountingNumber($filter: CompanyFilter!) {
+      companies(filter: $filter) {
+        id
+        name
+        accountingNumber
+        siret
+        email
+        city
+      }
+    }
+  `
+
+  const variables = {
+    filter: { accountingNumber }
+  }
+
+  const response = await this.makeGraphQLRequest(query, variables)
+  const companies = response.data?.companies
+
+  if (!companies || companies.length === 0) {
+    return null
+  }
+
+  return companies[0]
+}
+```
+
+### createCompany (TODO - needs CompanyInput structure)
+
+```typescript
+public async createCompany(data: {
+  name: string
+  accountingNumber?: string
+  siret?: string
+  email?: string
+  code?: string
+  // ... other fields to identify
+}): Promise<any> {
+  // TODO: Identifier le nom exact de la mutation
+  const mutation = `
+    mutation CreateCompany($input: CompanyInput!) {
+      createCompany(input: $input) {
+        id
+        name
+        accountingNumber
+        siret
+        email
+      }
+    }
+  `
+
+  const variables = { input: data }
+
+  const response = await this.makeGraphQLRequest(mutation, variables)
+  return response.data?.createCompany
+}
+```
+
+## 📄 Tests à Effectuer (avec Token)
+
+### 1. Test de recherche simple
+```graphql
+query TestSearch {
+  companies(filter: { name: "POLE" }) {
+    id
+    name
+    city
+  }
+}
+```
+
+### 2. Test recherche par accountingNumber
+```graphql
+query TestAccountingSearch {
+  companies(filter: { accountingNumber: "CLI001" }) {
+    id
+    name
+    accountingNumber
+  }
+}
+```
+
+### 3. Test récupération complète
+```graphql
+query TestFullCompany($id: ID!) {
+  company(id: $id) {
+    id
+    name
+    accountingNumber
+    siret
+    code
+    email
+    # Ajouter tous les champs disponibles
+  }
+}
+```
+
+### 4. Test création (prudence!)
+```graphql
+mutation TestCreate {
+  createCompany(input: {
+    name: "TEST COMPANY - DELETE ME"
+    accountingNumber: "TEST999"
+  }) {
+    id
+    name
+  }
+}
+```
+**⚠️ ATTENTION :** Créer avec un nom clairement identifiable pour suppression facile
+
+## 🚀 Prochaines Étapes
+
+1. **Avec token valide :**
+   - [ ] Tester `companies` query avec différents filtres
+   - [ ] Tester `company(id)` query
+   - [ ] Identifier tous les champs disponibles sur Company
+   - [ ] Identifier structure complète de CompanyInput
+   - [ ] Identifier nom exact de mutation création
+   - [ ] Tester création d'une entreprise test
+
+2. **Mettre à jour le code :**
+   - [ ] Implémenter `searchCompanyByAccountingNumber()` dans DigiformaService
+   - [ ] Implémenter `searchCompanyByName()` avec nouvelle structure
+   - [ ] Implémenter `createCompany()` une fois mutation identifiée
+   - [ ] Mettre à jour types TypeScript
+
+3. **Documentation :**
+   - [ ] Documenter tous les champs de Company
+   - [ ] Documenter tous les champs de CompanyInput
+   - [ ] Ajouter exemples de variables GraphQL
+
+---
+
+**Dernière mise à jour :** Structure CompanyFilter confirmée avec 6 champs (accountingNumber, code, email, group, name, siret)
 
 ## 📝 Comment Explorer dans GraphiQL
 
