@@ -665,18 +665,10 @@ export class BillingAnalyticsService {
                 agingBuckets: [],
                 topOverdueInvoices: []
               }
-            case 3: // segmentAnalytics
-              return {
-                byType: {},
-                byState: {},
-                totalInstitutions: 0
-              }
-            case 4: // cashFlowProjections
-              return {
-                projections: [],
-                totalExpected: 0,
-                totalConfirmed: 0
-              }
+            case 3: // segmentAnalytics (must return array)
+              return []
+            case 4: // cashFlowProjections (must return array)
+              return []
             case 5: // kpis
               return {
                 totalActiveInvoices: 0,
@@ -690,7 +682,14 @@ export class BillingAnalyticsService {
               return {}
           }
         }
-      })
+      }) as [
+        RevenueAnalytics,
+        PaymentAnalytics,
+        OutstandingInvoiceAnalytics,
+        MedicalInstitutionSegmentAnalytics[],
+        CashFlowProjection[],
+        BillingKPIs
+      ]
 
       return {
         revenueAnalytics,
