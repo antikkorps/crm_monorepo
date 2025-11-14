@@ -2282,10 +2282,20 @@ Améliorer le système d'import CSV existant pour gérer l'identifiant comptable
   - Rapport d'import détaillé: Importées / Mises à jour / Créées Digiforma / Erreurs
   - Alert: "Les institutions avec numéro client seront liées à Sage lors de la prochaine sync"
 
-- [ ] **29.6** - Bug fix: URL encoding visuel dans champ API URL Digiforma (15min) 🐛
-  - Problème: L'URL affiche des caractères % dans le champ texte des paramètres
-  - Solution: `type="url"` ou `decodeURIComponent()` sur display
-  - Vérifier si encodée en DB ou seulement en affichage
+- [x] **29.6** - Bug fix: URL encoding visuel dans champ API URL Digiforma (15min) 🐛 ✅
+
+  **Status:** ✅ Complété
+  **Date:** 2025-11-14
+
+  **Problème:** L'URL affichait des caractères % (encodés) dans le champ texte quand on revenait sur les paramètres après avoir saisi le token.
+
+  **Solution implémentée:**
+  - Ajout de `decodeURIComponent()` lors du chargement des settings dans le formulaire
+  - L'URL est maintenant affichée décodée (lisible) dans le champ texte
+  - Code modifié: `packages/frontend/src/views/settings/DigiformaSettingsView.vue`
+  - Ligne 511: `apiUrl: settings.value.apiUrl ? decodeURIComponent(settings.value.apiUrl) : ''`
+
+  **Impact:** Meilleure UX, URL lisible dans le formulaire de configuration Digiforma
 
 ### Nouveaux Fichiers
 
