@@ -3,6 +3,7 @@ import { Op, Sequelize } from "sequelize"
 import { ContactPerson, MedicalInstitution, MedicalProfile, User } from "../models"
 import { logger } from "../utils/logger"
 import { DigiformaService } from "./DigiformaService"
+import { CsvMatchingService, type MatchInput } from "./CsvMatchingService"
 
 export interface CsvImportResult {
   success: boolean
@@ -524,29 +525,75 @@ export class CsvImportService {
       }
     }
 
-    // Priority 3: Local database search by name + address
-    // In test environment, use simpler approach to avoid JSONB operator issues
-    if (process.env.NODE_ENV === 'test') {
-      const allInstitutions = await MedicalInstitution.findAll({
-        where: { name: data.name }
-      })
+    // Priority 3: Local database search using smart multi-criteria matching
+    // Use CsvMatchingService for sophisticated matching with fuzzy logic
+    logger.info('CSV Import: Performing local database search with multi-criteria matching', {
+      name: data.name,
+      accountingNumber: data.accountingNumber,
+      city: data.city
+    })
 
-      return allInstitutions.find(inst => {
-        const address = inst.address || inst.getDataValue('address')
-        return address?.street === data.street && address?.city === data.city
-      }) || null
+    const matchInput: MatchInput = {
+      name: data.name,
+      accountingNumber: data.accountingNumber,
+      address: {
+        street: data.street,
+        city: data.city,
+        state: data.state,
+        zipCode: data.zipCode,
+        country: data.country
+      }
     }
 
-    // In production, use JSONB-safe where with Sequelize.literal
-    return await MedicalInstitution.findOne({
-      where: {
-        name: data.name,
-        [Op.and]: [
-          Sequelize.literal(`"address"->>'street' = '${data.street.replace(/'/g, "''")}'`),
-          Sequelize.literal(`"address"->>'city' = '${data.city.replace(/'/g, "''")}'`),
-        ] as any,
-      },
+    const matchResult = await CsvMatchingService.findBestMatch(matchInput)
+
+    if (matchResult.matched) {
+      logger.info('CSV Import: Found local match', {
+        matchType: matchResult.matchType,
+        confidence: matchResult.confidence,
+        institutionId: matchResult.institution!.id,
+        institutionName: matchResult.institution!.name,
+        details: matchResult.details
+      })
+
+      // Log suggestions for manual review if confidence is not 100%
+      if (matchResult.confidence < 100 && matchResult.suggestions && matchResult.suggestions.length > 0) {
+        logger.info('CSV Import: Alternative matches available for manual review', {
+          primaryMatch: {
+            id: matchResult.institution!.id,
+            name: matchResult.institution!.name,
+            confidence: matchResult.confidence
+          },
+          suggestions: matchResult.suggestions.map(s => ({
+            id: s.id,
+            name: s.name
+          }))
+        })
+      }
+
+      return matchResult.institution!
+    }
+
+    logger.info('CSV Import: No match found in local database', {
+      name: data.name,
+      city: data.city,
+      suggestionCount: matchResult.suggestions?.length || 0
     })
+
+    // Log potential suggestions for the user to review
+    if (matchResult.suggestions && matchResult.suggestions.length > 0) {
+      logger.info('CSV Import: Potential matches found but below confidence threshold', {
+        inputName: data.name,
+        inputCity: data.city,
+        suggestions: matchResult.suggestions.map(s => ({
+          id: s.id,
+          name: s.name,
+          city: (s.address as any)?.city
+        }))
+      })
+    }
+
+    return null
   }
 
   private static async mergeInstitution(existing: MedicalInstitution, data: Record<string, string>): Promise<void> {
