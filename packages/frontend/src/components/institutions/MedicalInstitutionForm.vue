@@ -23,6 +23,28 @@
             <div class="field col-12">
               <v-combobox v-model="form.tags" label="Tags" multiple chips clearable hint="Press Enter to add tags. Tags help categorize and search institutions." persistent-hint />
             </div>
+            <div class="field col-12 md:col-6">
+              <v-text-field
+                v-model="form.accountingNumber"
+                label="Numéro Comptable"
+                hint="Numéro client de votre système comptable (Sage, imports CSV)"
+                persistent-hint
+                clearable
+                maxlength="50"
+                counter
+                :rules="[v => !v || v.length <= 50 || 'Maximum 50 caractères']"
+              />
+            </div>
+            <div class="field col-12 md:col-6">
+              <v-text-field
+                v-model="form.digiformaId"
+                label="ID Digiforma"
+                hint="Rempli automatiquement lors de la synchronisation Digiforma"
+                persistent-hint
+                readonly
+                disabled
+              />
+            </div>
           </div>
         </v-window-item>
 
@@ -125,6 +147,8 @@ const form = reactive({
   type: "" as InstitutionType,
   isActive: true,
   tags: [] as string[],
+  accountingNumber: undefined as string | undefined,
+  digiformaId: undefined as string | undefined,
   address: {
     street: "",
     city: "",
@@ -203,6 +227,8 @@ watch(
       form.type = institution.type
       form.isActive = institution.isActive
       form.tags = [...institution.tags]
+      form.accountingNumber = institution.accountingNumber
+      form.digiformaId = institution.digiformaId
       form.address = { ...institution.address }
       form.medicalProfile = institution.medicalProfile ? {
         bedCapacity: institution.medicalProfile.bedCapacity,
@@ -328,6 +354,8 @@ const handleSubmit = async () => {
       },
       tags: form.tags.filter((tag) => tag.trim()),
       isActive: form.isActive,
+      accountingNumber: form.accountingNumber?.trim() || undefined,
+      digiformaId: form.digiformaId?.trim() || undefined,
       assignedUserId: form.assignedUserId,
       medicalProfile: {
         bedCapacity: form.medicalProfile.bedCapacity,

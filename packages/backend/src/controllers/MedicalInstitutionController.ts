@@ -102,6 +102,8 @@ const createInstitutionSchema = Joi.object({
       "any.only": "Invalid institution type",
     }),
   address: addressSchema.required(),
+  accountingNumber: Joi.string().trim().max(50).optional(),
+  digiformaId: Joi.string().trim().max(100).optional(),
   assignedUserId: Joi.string().uuid().optional(),
   tags: Joi.array().items(Joi.string().trim()).default([]),
   medicalProfile: medicalProfileSchema.required(),
@@ -114,6 +116,8 @@ const updateInstitutionSchema = Joi.object({
     .valid(...Object.values(InstitutionType))
     .optional(),
   address: addressSchema.optional(),
+  accountingNumber: Joi.string().trim().max(50).allow(null).optional(),
+  digiformaId: Joi.string().trim().max(100).allow(null).optional(),
   assignedUserId: Joi.string().uuid().allow(null).optional(),
   tags: Joi.array().items(Joi.string().trim()).optional(),
   isActive: Joi.boolean().optional(),
@@ -139,6 +143,8 @@ const searchSchema = Joi.object({
     .optional(),
   city: Joi.string().trim().optional(),
   state: Joi.string().trim().optional(),
+  accountingNumber: Joi.string().trim().max(50).optional(),
+  digiformaId: Joi.string().trim().max(100).optional(),
   assignedUserId: Joi.string().uuid().optional(),
   specialties: Joi.alternatives()
     .try(Joi.string().trim(), Joi.array().items(Joi.string().trim()))
@@ -176,6 +182,8 @@ export class MedicalInstitutionController {
       type,
       city,
       state,
+      accountingNumber,
+      digiformaId,
       assignedUserId,
       specialties,
       minBedCapacity,
@@ -206,6 +214,12 @@ export class MedicalInstitutionController {
       }
       if (state) {
         filters.state = state
+      }
+      if (accountingNumber) {
+        filters.accountingNumber = accountingNumber
+      }
+      if (digiformaId) {
+        filters.digiformaId = digiformaId
       }
       if (assignedUserId) {
         filters.assignedUserId = assignedUserId

@@ -74,12 +74,12 @@
        </div>
 
        <!-- Loading State -->
-       <div v-if="tasksStore.loading" class="loading-container">
-          <v-skeleton-loader
-            v-for="i in 5"
-            :key="i"
-            type="list-item-avatar-three-line"
-            class="mb-4"
+       <div v-if="tasksStore.loading && tasksStore.filteredTasks.length === 0" class="loading-container">
+          <ListSkeleton
+            :count="5"
+            avatar
+            actions
+            type="list-item-three-line"
           />
        </div>
 
@@ -241,6 +241,7 @@ import TaskCard from "@/components/tasks/TaskCard.vue"
 import TaskFilters from "@/components/tasks/TaskFilters.vue"
 import TaskForm from "@/components/tasks/TaskForm.vue"
 import TaskStats from "@/components/tasks/TaskStats.vue"
+import { ListSkeleton } from "@/components/skeletons"
 import { useTasksStore } from "@/stores/tasks"
 import type {
   Task,

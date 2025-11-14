@@ -34,16 +34,16 @@
           </v-card-text>
         </v-card>
 
-        <div v-if="loading" class="pa-4">
-          <v-skeleton-loader
-            v-for="i in 5"
-            :key="i"
-            type="table-row"
-            class="mb-2"
+        <v-card v-if="loading && quotes.length === 0">
+          <TableSkeleton
+            :rows="10"
+            :columns="6"
+            toolbar
+            pagination
           />
-        </div>
+        </v-card>
 
-        <div v-else-if="quotes.length === 0" class="text-center py-12">
+        <div v-else-if="!loading && quotes.length === 0" class="text-center py-12">
           <v-icon size="64" color="grey-lighten-2">mdi-file-document-outline</v-icon>
           <h3 class="text-h6 mt-4">Aucun devis trouvé</h3>
           <p class="text-medium-emphasis">Créez votre premier devis pour commencer.</p>
@@ -54,7 +54,7 @@
           <v-data-table
             :headers="tableHeaders"
             :items="quotes"
-            :loading="loading"
+            :loading="loading && quotes.length > 0"
             :items-per-page="10"
             class="elevation-0"
           >
@@ -115,6 +115,7 @@ import { onMounted, ref } from "vue"
 import QuoteBuilder from "@/components/billing/QuoteBuilder.vue"
 import { quotesApi } from "@/services/api"
 import AppLayout from "@/components/layout/AppLayout.vue"
+import { TableSkeleton } from "@/components/skeletons"
 import { useAuthStore } from "@/stores/auth"
 
 const quotes = ref<Quote[]>([])

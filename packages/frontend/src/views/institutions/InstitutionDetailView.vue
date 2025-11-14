@@ -1,10 +1,7 @@
 <template>
   <AppLayout>
     <div class="institution-detail-view">
-      <div v-if="loading" class="pa-6">
-        <v-skeleton-loader type="article, actions" class="mb-6" />
-        <v-skeleton-loader type="table" />
-      </div>
+      <DetailSkeleton v-if="loading" tabs :tabs-count="5" />
 
       <div v-else-if="error" class="text-center py-12">
         <v-icon size="64" color="error">mdi-alert-circle-outline</v-icon>
@@ -88,6 +85,25 @@
                             <v-chip v-for="tag in (institution.tags || [])" :key="tag" size="small" variant="tonal">{{ tag }}</v-chip>
                             <span v-if="!(institution.tags?.length)" class="text-medium-emphasis">Aucun tag</span>
                           </div>
+                        </template>
+                      </v-list-item>
+                      <v-list-item
+                        title="Numéro Comptable"
+                        :subtitle="institution.accountingNumber || 'Non renseigné'"
+                        prepend-icon="mdi-calculator"
+                      >
+                        <template v-if="institution.accountingNumber" v-slot:append>
+                          <v-chip size="small" color="info" variant="tonal">{{ institution.accountingNumber }}</v-chip>
+                        </template>
+                      </v-list-item>
+                      <v-list-item
+                        v-if="institution.digiformaId"
+                        title="ID Digiforma"
+                        :subtitle="institution.digiformaId"
+                        prepend-icon="mdi-cloud-sync"
+                      >
+                        <template v-slot:append>
+                          <v-chip size="small" color="primary" variant="tonal">Synchronisé</v-chip>
                         </template>
                       </v-list-item>
                     </v-list>
@@ -236,6 +252,7 @@ import MedicalInstitutionForm from "@/components/institutions/MedicalInstitution
 import DigiformaTab from "@/components/institutions/DigiformaTab.vue"
 import RevenueTab from "@/components/institutions/RevenueTab.vue"
 import AppLayout from "@/components/layout/AppLayout.vue"
+import { DetailSkeleton } from "@/components/skeletons"
 import { institutionsApi } from "@/services/api"
 import type {
   ComplianceStatus,
