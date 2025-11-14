@@ -25,11 +25,7 @@ module.exports = {
     await queryInterface.addIndex('medical_institutions', ['accounting_number'], {
       name: 'medical_institutions_accounting_number_unique',
       unique: true,
-      where: {
-        accounting_number: {
-          [Sequelize.Op.ne]: null
-        }
-      }
+      where: Sequelize.literal('accounting_number IS NOT NULL')
     });
 
     console.log('✅ Added accounting_number column with unique index to medical_institutions');

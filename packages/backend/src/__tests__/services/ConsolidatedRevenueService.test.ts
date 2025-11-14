@@ -321,7 +321,7 @@ describe("ConsolidatedRevenueService", () => {
     it("should exclude institutions with zero revenue", async () => {
       const user = await createMockUser()
       const institutionWithRevenue = await createMockMedicalInstitution()
-      const institutionWithoutRevenue = await createMockMedicalInstitution()
+      await createMockMedicalInstitution() // Institution without revenue (not used, just to verify it's excluded)
 
       await createMockInvoice(institutionWithRevenue.id, user.id, {
         status: InvoiceStatus.PAID,

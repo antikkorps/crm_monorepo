@@ -26,19 +26,20 @@
             <div class="field col-12 md:col-6">
               <v-text-field
                 v-model="form.accountingNumber"
-                label="Accounting Number"
-                hint="Client number from your accounting system (Sage, CSV imports)"
+                label="Numéro Comptable"
+                hint="Numéro client de votre système comptable (Sage, imports CSV)"
                 persistent-hint
                 clearable
                 maxlength="50"
                 counter
+                :rules="[v => !v || v.length <= 50 || 'Maximum 50 caractères']"
               />
             </div>
             <div class="field col-12 md:col-6">
               <v-text-field
                 v-model="form.digiformaId"
-                label="Digiforma ID"
-                hint="Automatically filled during Digiforma synchronization"
+                label="ID Digiforma"
+                hint="Rempli automatiquement lors de la synchronisation Digiforma"
                 persistent-hint
                 readonly
                 disabled

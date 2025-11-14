@@ -69,23 +69,23 @@ describe("MedicalInstitution - accountingNumber", () => {
       ).rejects.toThrow()
     })
 
-    it("should reject empty string as accountingNumber", async () => {
-      await expect(
-        MedicalInstitution.create({
-          name: "Test Hospital",
-          type: InstitutionType.HOSPITAL,
-          accountingNumber: "",
-          address: {
-            street: "123 Main St",
-            city: "Paris",
-            state: "Île-de-France",
-            zipCode: "75001",
-            country: "France",
-          },
-          tags: [],
-          isActive: true,
-        })
-      ).rejects.toThrow()
+    it("should allow empty string as accountingNumber", async () => {
+      const institution = await MedicalInstitution.create({
+        name: "Test Hospital",
+        type: InstitutionType.HOSPITAL,
+        accountingNumber: "",
+        address: {
+          street: "123 Main St",
+          city: "Paris",
+          state: "Île-de-France",
+          zipCode: "75001",
+          country: "France",
+        },
+        tags: [],
+        isActive: true,
+      })
+
+      expect(institution.accountingNumber).toBe("")
     })
 
     it("should allow accountingNumber with 50 characters exactly", async () => {
@@ -238,7 +238,7 @@ describe("MedicalInstitution - accountingNumber", () => {
       const accountingNumber1 = "ACCT-001"
       const accountingNumber2 = "ACCT-002"
 
-      const institution1 = await MedicalInstitution.create({
+      await MedicalInstitution.create({
         name: "First Hospital",
         type: InstitutionType.HOSPITAL,
         accountingNumber: accountingNumber1,

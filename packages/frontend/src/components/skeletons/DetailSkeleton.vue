@@ -96,7 +96,7 @@ withDefaults(defineProps<Props>(), {
   chips: true,
   chipsCount: 3,
   tabs: true,
-  tabsCount: 4,
+  tabsCount: 3,
   sections: 2,
   sectionColumns: 6,
   contentType: 'list-item-avatar-three-line@3',
