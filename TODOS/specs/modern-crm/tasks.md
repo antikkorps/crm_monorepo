@@ -2291,17 +2291,73 @@ Améliorer le système d'import CSV existant pour gérer l'identifiant comptable
   - `DigiformaService.syncCompanyToCRM(digiformaCompanyId)` 
   - Logging complet des actions Digiforma
 
-- [ ] **29.4** - Préparation Sage : Structure de base avec TODOs (3-4h)
-  - Créer `SageService` avec méthodes skeleton:
-    - `testConnection()` - TODO: besoin credentials
-    - `syncCustomers()` - TODO: API Sage customers
-    - `syncInvoices()` - TODO: API Sage invoices  
-    - `syncPayments()` - TODO: API Sage payments
-    - `matchOrCreateInstitution()` - Match par `accountingNumber`
-  - Créer `SageSettings` model (apiUrl, apiKey encrypted, companyId, enabled, autoSync, lastSync)
-  - Types TypeScript: `SageCustomer`, `SageInvoice`, `SagePayment`
-  - Migration pour table `sage_settings`
-  - Controller et routes `/api/sage/*`
+- [x] **29.4** - Préparation Sage : Structure de base avec TODOs (3-4h) ✅
+
+  **Status:** ✅ Complété
+  **Date:** 2025-11-14
+
+  **Backend - Model & Migration:**
+  - ✅ Modèle `SageSettings` avec encryption AES-256-GCM pour API key
+  - ✅ Migration `20251114000000-create-sage-settings-table.cjs`
+  - ✅ Champs: apiKey (encrypted), apiUrl, companyId, isEnabled
+  - ✅ Auto-sync: autoSyncEnabled, syncFrequency (hourly/daily/weekly)
+  - ✅ Tracking: lastSyncDate, lastCustomersSync, lastInvoicesSync, lastPaymentsSync
+  - ✅ Test tracking: lastTestDate, lastTestSuccess, lastTestMessage
+  - ✅ Singleton pattern avec `getSettings()`
+  - ✅ Méthodes: `getDecryptedApiKey()`, `setApiKey()`, `updateTestResults()`, `updateLastSync()`
+
+  **Backend - Service:**
+  - ✅ `SageService` avec méthodes skeleton et TODOs complets
+  - ✅ `fromSettings()` - création d'instance depuis SageSettings
+  - ✅ `testConnection()` - TODO: implémenter test API Sage
+  - ✅ `syncCustomers()` - TODO: fetch customers from Sage API
+  - ✅ `syncInvoices()` - TODO: fetch invoices from Sage API
+  - ✅ `syncPayments()` - TODO: fetch payments from Sage API
+  - ✅ `matchOrCreateInstitution()` - matching par accountingNumber
+  - ✅ Méthodes privées avec TODOs: fetchCustomers, fetchInvoices, fetchPayments
+  - ✅ Data mapping avec TODOs: mapSageCustomer, mapSageInvoice, mapSageInvoiceItem
+
+  **Backend - Types TypeScript:**
+  - ✅ `SageCustomer` - maps to MedicalInstitution via accountingNumber
+  - ✅ `SageInvoice`, `SageInvoiceLine`
+  - ✅ `SagePayment`
+  - ✅ `SageApiResponse<T>` - generic API response wrapper
+  - ✅ `SageSyncResult` - résultat de sync avec statistiques
+  - ✅ `SageMatchResult` - résultat de matching avec confidence
+  - ✅ `SageConnectionTestResult` - résultat du test de connexion
+
+  **Backend - Controller & Routes:**
+  - ✅ `SageController` avec tous les endpoints
+  - ✅ GET/POST `/api/sage/settings` - CRUD settings
+  - ✅ POST `/api/sage/test-connection` - test connexion API
+  - ✅ POST `/api/sage/sync/customers` - sync manuel customers
+  - ✅ POST `/api/sage/sync/invoices` - sync manuel invoices
+  - ✅ POST `/api/sage/sync/payments` - sync manuel payments
+  - ✅ POST `/api/sage/sync/all` - sync complet (3 entities)
+  - ✅ Routes montées dans `app.ts`
+  - ✅ Permissions: `canManageSystemSettings` pour tous les endpoints
+
+  **Documentation & TODOs:**
+  - ✅ TODOs complets pour implémentation future de l'API Sage
+  - ✅ Stratégie d'intégration v1 documentée (unidirectionnel Sage → CRM)
+  - ✅ Plan v2 documenté (bidirectionnel avec conflict resolution)
+  - ✅ Notes sur choix de produit Sage (50, Business Cloud, Intacct)
+  - ✅ Notes sur authentification (OAuth2, API key, etc.)
+
+  **Fichiers créés/modifiés:**
+  - `packages/backend/src/models/SageSettings.ts` (259 lignes)
+  - `packages/backend/src/migrations/20251114000000-create-sage-settings-table.cjs` (143 lignes)
+  - `packages/backend/src/types/sage.ts` (211 lignes)
+  - `packages/backend/src/services/SageService.ts` (+40 lignes, fromSettings)
+  - `packages/backend/src/controllers/SageController.ts` (302 lignes)
+  - `packages/backend/src/routes/sage.ts` (60 lignes)
+  - `packages/backend/src/models/index.ts` (+1 export)
+  - `packages/backend/src/app.ts` (+3 lignes routes)
+
+  **Commit:** `14a74e7` - feat(backend): implement Sage accounting integration skeleton (Task 29.4)
+
+  **Prêt pour implémentation:**
+  Structure complète prête pour intégration Sage API une fois credentials disponibles
 
 - [x] **29.5** - Frontend: Améliorer UI import avec statut sync (2-3h) ✅
 
