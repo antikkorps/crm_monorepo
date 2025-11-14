@@ -79,9 +79,9 @@ export class SageSettings
   declare readonly updatedAt?: Date
 
   /**
-   * Get decrypted API key
+   * Get decrypted API key (async to ensure migration is saved)
    */
-  getDecryptedApiKey(): string {
+  async getDecryptedApiKey(): Promise<string> {
     if (!this.apiKey || this.apiKey.length === 0) {
       throw new Error('Sage API key is not configured')
     }
@@ -95,11 +95,15 @@ export class SageSettings
         logger.warn('Sage API key is using legacy format - migrating to AES-256-GCM')
         const plainKey = this.apiKey
 
-        // Migrate to new encryption
+        // Migrate to new encryption (await to ensure consistency)
         this.apiKey = EncryptionService.encrypt(plainKey)
-        this.save().catch(err => {
-          logger.error('Failed to migrate API key encryption', { error: err.message })
-        })
+        try {
+          await this.save()
+          logger.info('Successfully migrated Sage API key to AES-256-GCM encryption')
+        } catch (err) {
+          logger.error('Failed to migrate API key encryption', { error: (err as Error).message })
+          throw new Error('Failed to save encrypted API key - migration failed')
+        }
 
         return plainKey
       }

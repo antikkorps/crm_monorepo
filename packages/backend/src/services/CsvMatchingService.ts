@@ -12,7 +12,7 @@
 import { compareTwoStrings } from 'string-similarity'
 import { MedicalInstitution } from '../models'
 import { logger } from '../utils/logger'
-import { Op } from 'sequelize'
+import { Op, Sequelize } from 'sequelize'
 
 /**
  * Match types by priority
@@ -234,28 +234,22 @@ export class CsvMatchingService {
     const normalizedInputName = this.normalizeName(name)
     const normalizedCity = city.trim().toLowerCase()
 
-    // Find all institutions in the same city
+    // Find all institutions in the same city using SQL JSON query for better performance
     const institutions = await MedicalInstitution.findAll({
-      // We need to use raw query or filter in-memory for JSON field
-      // For now, fetch all and filter
-      limit: 1000 // Safety limit
+      where: Sequelize.where(
+        Sequelize.fn('LOWER', Sequelize.fn('TRIM', Sequelize.literal("address->>'city'"))),
+        normalizedCity
+      ),
+      limit: 500 // Reasonable limit after city filtering
     })
 
-    // Filter by city and calculate similarity scores
+    // Calculate similarity scores for all institutions in the city
     const candidates: Array<{
       institution: MedicalInstitution
       similarity: number
     }> = []
 
     for (const institution of institutions) {
-      const addr = institution.address as any
-      if (!addr || !addr.city) continue
-
-      const instCity = addr.city.trim().toLowerCase()
-
-      // City must match exactly
-      if (instCity !== normalizedCity) continue
-
       // Calculate name similarity
       const instName = this.normalizeName(institution.name)
       const similarity = compareTwoStrings(normalizedInputName, instName)
@@ -341,8 +335,8 @@ export class CsvMatchingService {
       }
     }
 
-    // Remove special characters (keep letters, numbers, spaces)
-    normalized = normalized.replace(/[^a-z0-9\s]/g, '')
+    // Remove punctuation/symbols (keep all Unicode letters including accents, numbers, spaces)
+    normalized = normalized.replace(/[^\p{L}\p{N}\s]/gu, '')
 
     // Normalize multiple spaces
     normalized = normalized.replace(/\s+/g, ' ').trim()

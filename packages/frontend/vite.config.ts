@@ -97,8 +97,8 @@ export default defineConfig({
         }
       }
     },
-    // Increase chunk size warning limit
-    chunkSizeWarningLimit: 800
+    // Increase chunk size warning limit (avoid unnecessary warnings for legitimate large chunks)
+    chunkSizeWarningLimit: 1000
   },
   optimizeDeps: {
     // Pre-bundle dependencies for faster dev startup

@@ -786,7 +786,7 @@ export class MedicalInstitutionController {
         csvData = file.buffer.toString("utf8")
       } else if ((file as any).filepath) {
         const fs = await import("fs")
-        csvData = fs.readFileSync((file as any).filepath, "utf8")
+        csvData = await fs.promises.readFile((file as any).filepath, "utf8")
       } else {
         throw createError("Unable to read uploaded file", 400, "FILE_READ_ERROR")
       }
@@ -881,7 +881,7 @@ export class MedicalInstitutionController {
         csvData = file.buffer.toString("utf8")
       } else if ((file as any).filepath) {
         const fs = await import("fs")
-        csvData = fs.readFileSync((file as any).filepath, "utf8")
+        csvData = await fs.promises.readFile((file as any).filepath, "utf8")
       } else {
         throw createError("Unable to read uploaded file", 400, "FILE_READ_ERROR")
       }
@@ -947,7 +947,7 @@ export class MedicalInstitutionController {
         csvData = file.buffer.toString("utf8")
       } else if ((file as any).filepath) {
         const fs = await import("fs")
-        csvData = fs.readFileSync((file as any).filepath, "utf8")
+        csvData = await fs.promises.readFile((file as any).filepath, "utf8")
       } else {
         throw createError("Unable to read uploaded file", 400, "FILE_READ_ERROR")
       }

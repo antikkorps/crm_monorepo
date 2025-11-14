@@ -109,7 +109,7 @@ export class SageService {
       throw new Error('Sage integration is disabled')
     }
 
-    const apiKey = settings.getDecryptedApiKey()
+    const apiKey = await settings.getDecryptedApiKey()
     return new SageService({
       apiKey,
       apiUrl: settings.apiUrl,
