@@ -9,10 +9,49 @@
  * 3. name (fuzzy) + city (exact) → 60-85% confidence (based on similarity)
  */
 
-import { compareTwoStrings } from 'string-similarity'
 import { MedicalInstitution } from '../models'
 import { logger } from '../utils/logger'
 import { Op, Sequelize } from 'sequelize'
+
+/**
+ * Calculate Dice Coefficient similarity between two strings
+ * Uses bigram (2-character pairs) comparison
+ * Returns a value between 0 (no similarity) and 1 (identical)
+ *
+ * @param str1 - First string to compare
+ * @param str2 - Second string to compare
+ * @returns Similarity score from 0 to 1
+ */
+function diceCoefficient(str1: string, str2: string): number {
+  // Identical strings
+  if (str1 === str2) return 1
+
+  // Strings too short for bigram comparison
+  if (str1.length < 2 || str2.length < 2) return 0
+
+  // Create bigrams (pairs of characters) for first string
+  const bigrams1 = new Set<string>()
+  for (let i = 0; i < str1.length - 1; i++) {
+    bigrams1.add(str1.substring(i, i + 2))
+  }
+
+  // Create bigrams for second string
+  const bigrams2 = new Set<string>()
+  for (let i = 0; i < str2.length - 1; i++) {
+    bigrams2.add(str2.substring(i, i + 2))
+  }
+
+  // Calculate intersection (common bigrams)
+  let intersection = 0
+  for (const bigram of bigrams1) {
+    if (bigrams2.has(bigram)) {
+      intersection++
+    }
+  }
+
+  // Dice coefficient formula: 2 * |intersection| / (|set1| + |set2|)
+  return (2 * intersection) / (bigrams1.size + bigrams2.size)
+}
 
 /**
  * Match types by priority
@@ -252,7 +291,7 @@ export class CsvMatchingService {
     for (const institution of institutions) {
       // Calculate name similarity
       const instName = this.normalizeName(institution.name)
-      const similarity = compareTwoStrings(normalizedInputName, instName)
+      const similarity = diceCoefficient(normalizedInputName, instName)
 
       candidates.push({
         institution,
