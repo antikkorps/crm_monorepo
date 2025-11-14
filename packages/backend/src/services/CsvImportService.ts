@@ -22,6 +22,30 @@ export interface CsvValidationResult {
   duplicatesFound: number
 }
 
+export interface CsvPreviewRow {
+  rowNumber: number
+  name: string
+  accountingNumber?: string
+  city?: string
+  matchStatus: 'exact' | 'fuzzy' | 'none'
+  matchConfidence?: number
+  matchType?: string
+  existingInstitutionId?: string
+  existingInstitutionName?: string
+  digiformaStatus: 'exists' | 'will_create' | 'unknown'
+  sageStatus: 'linked' | 'not_linked'
+  hasErrors: boolean
+  errors: Array<{ field?: string; message: string }>
+}
+
+export interface CsvPreviewResult {
+  totalRows: number
+  validRows: number
+  invalidRows: number
+  preview: CsvPreviewRow[]
+  errors: Array<{ row: number; field?: string; message: string }>
+}
+
 export interface CsvImportOptions {
   validateOnly?: boolean
   skipDuplicates?: boolean
@@ -716,8 +740,8 @@ export class CsvImportService {
   static async validateCsvData(csvData: string): Promise<CsvValidationResult> {
     const parsedRows = this.parseCsv(csvData)
     const validatedRows = await this.validateRows(parsedRows)
-    
-    const errors = validatedRows.flatMap(row => 
+
+    const errors = validatedRows.flatMap(row =>
       row.errors.map(error => ({
         row: row.row,
         field: error.field,
@@ -729,6 +753,103 @@ export class CsvImportService {
       errors,
       totalRows: parsedRows.length,
       duplicatesFound: 0 // Would need to implement duplicate detection for validation
+    }
+  }
+
+  /**
+   * Preview CSV import with detailed matching status for each row
+   */
+  static async previewCsvData(csvData: string): Promise<CsvPreviewResult> {
+    const parsedRows = this.parseCsv(csvData)
+    const validatedRows = await this.validateRows(parsedRows)
+
+    // Initialize Digiforma service if available
+    const digiformaToken = process.env.DIGIFORMA_BEARER_TOKEN
+    const digiformaEnabled = digiformaToken && process.env.DIGIFORMA_INTEGRATION_ENABLED === 'true'
+    const digiformaService = digiformaEnabled ? new DigiformaService(digiformaToken!) : null
+
+    const preview: CsvPreviewRow[] = []
+
+    for (const row of validatedRows) {
+      const hasErrors = row.errors.length > 0
+
+      // Default preview row
+      const previewRow: CsvPreviewRow = {
+        rowNumber: row.row,
+        name: row.data.name || '(empty)',
+        accountingNumber: row.data.accountingNumber,
+        city: row.data.city,
+        matchStatus: 'none',
+        digiformaStatus: 'unknown',
+        sageStatus: row.data.accountingNumber ? 'linked' : 'not_linked',
+        hasErrors,
+        errors: row.errors
+      }
+
+      // Skip matching analysis if row has validation errors
+      if (hasErrors) {
+        preview.push(previewRow)
+        continue
+      }
+
+      // Perform matching analysis
+      try {
+        const matchInput: MatchInput = {
+          name: row.data.name,
+          accountingNumber: row.data.accountingNumber,
+          address: {
+            street: row.data.street,
+            city: row.data.city,
+            state: row.data.state,
+            zipCode: row.data.zipCode,
+            country: row.data.country
+          }
+        }
+
+        const matchResult = await CsvMatchingService.findBestMatch(matchInput)
+
+        if (matchResult.matched && matchResult.institution) {
+          previewRow.matchStatus = matchResult.matchType === 'accountingNumber' || matchResult.matchType === 'exactNameAddress' ? 'exact' : 'fuzzy'
+          previewRow.matchConfidence = matchResult.confidence
+          previewRow.matchType = matchResult.matchType
+          previewRow.existingInstitutionId = matchResult.institution.id
+          previewRow.existingInstitutionName = matchResult.institution.name
+
+          // Check Digiforma status for existing institution
+          if (matchResult.institution.digiformaId) {
+            previewRow.digiformaStatus = 'exists'
+          } else {
+            previewRow.digiformaStatus = digiformaService ? 'will_create' : 'unknown'
+          }
+        } else {
+          // No match found - will be created
+          previewRow.matchStatus = 'none'
+          previewRow.digiformaStatus = digiformaService ? 'will_create' : 'unknown'
+        }
+      } catch (error) {
+        logger.warn('Error during preview matching', {
+          row: row.row,
+          error: (error as Error).message
+        })
+      }
+
+      preview.push(previewRow)
+    }
+
+    const allErrors = validatedRows.flatMap(row =>
+      row.errors.map(error => ({
+        row: row.row,
+        field: error.field,
+        message: error.message
+      }))
+    )
+
+    return {
+      totalRows: parsedRows.length,
+      validRows: validatedRows.filter(r => r.errors.length === 0).length,
+      invalidRows: validatedRows.filter(r => r.errors.length > 0).length,
+      preview,
+      errors: allErrors
     }
   }
 

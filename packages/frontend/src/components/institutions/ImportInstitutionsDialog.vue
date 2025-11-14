@@ -55,36 +55,135 @@
           <div class="text-caption text-medium-emphasis">{{ t('institutions.duplicateHint') }}</div>
         </div>
 
-        <div v-if="validation" class="mb-4">
-          <v-alert :type="validation.isValid ? 'success' : 'warning'" variant="tonal" class="mb-2">
+        <!-- Digiforma Option -->
+        <div class="mb-4">
+          <v-switch
+            v-model="createInDigiforma"
+            color="primary"
+            label="Créer dans Digiforma si manquant"
+            hint="Les institutions non trouvées dans Digiforma y seront créées automatiquement"
+            persistent-hint
+            density="comfortable"
+          />
+        </div>
+
+        <!-- Preview Table -->
+        <div v-if="preview" class="mb-4">
+          <v-alert :type="preview.invalidRows === 0 ? 'success' : 'warning'" variant="tonal" class="mb-2">
             <div class="d-flex justify-space-between align-center">
               <span>
-                {{ t('institutions.validationSummary', { total: validation.totalRows, errors: validation.errors.length, duplicates: validation.duplicatesFound }) }}
+                Lignes: {{ preview.totalRows }} total, {{ preview.validRows }} valides, {{ preview.invalidRows }} invalides
               </span>
-              <v-btn v-if="!validation.isValid" size="small" variant="text" @click="showErrors = !showErrors">
-                <v-icon start>mdi-alert-circle</v-icon>{{ showErrors ? t('institutions.hideErrors') : t('institutions.showErrors') }}
+              <v-btn v-if="preview.preview.length > 0" size="small" variant="text" @click="showPreview = !showPreview">
+                <v-icon start>mdi-table</v-icon>{{ showPreview ? 'Masquer' : 'Voir' }} le détail
               </v-btn>
             </div>
           </v-alert>
 
-          <div v-if="showErrors && validation.errors.length" class="error-list">
-            <div v-for="(e, idx) in validation.errors" :key="idx" class="error-item">
+          <div v-if="showPreview && preview.preview.length" class="preview-table mb-2" style="max-height: 400px; overflow: auto;">
+            <v-table density="compact">
+              <thead>
+                <tr>
+                  <th class="text-left">#</th>
+                  <th class="text-left">Nom</th>
+                  <th class="text-left">Ville</th>
+                  <th class="text-center">Matching</th>
+                  <th class="text-center">Digiforma</th>
+                  <th class="text-center">Sage</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="row in preview.preview" :key="row.rowNumber" :class="{ 'bg-error-lighten-5': row.hasErrors }">
+                  <td>{{ row.rowNumber }}</td>
+                  <td>
+                    <div>{{ row.name }}</div>
+                    <div v-if="row.existingInstitutionName" class="text-caption text-medium-emphasis">
+                      → Existe: {{ row.existingInstitutionName }}
+                    </div>
+                  </td>
+                  <td>{{ row.city }}</td>
+                  <td class="text-center">
+                    <v-chip v-if="row.matchStatus === 'exact'" size="small" color="success" variant="flat">
+                      Exact
+                      <v-tooltip activator="parent" location="top">
+                        {{ row.matchType === 'accountingNumber' ? 'Par numéro comptable' : 'Par nom et adresse' }}
+                      </v-tooltip>
+                    </v-chip>
+                    <v-chip v-else-if="row.matchStatus === 'fuzzy'" size="small" color="warning" variant="flat">
+                      Fuzzy {{ row.matchConfidence }}%
+                      <v-tooltip activator="parent" location="top">
+                        Correspondance approximative par nom et ville
+                      </v-tooltip>
+                    </v-chip>
+                    <v-chip v-else size="small" color="info" variant="flat">
+                      Nouveau
+                    </v-chip>
+                  </td>
+                  <td class="text-center">
+                    <v-chip v-if="row.digiformaStatus === 'exists'" size="small" color="success" variant="tonal">
+                      <v-icon start size="16">mdi-check</v-icon>Existe
+                    </v-chip>
+                    <v-chip v-else-if="row.digiformaStatus === 'will_create'" size="small" color="info" variant="tonal">
+                      <v-icon start size="16">mdi-plus</v-icon>À créer
+                    </v-chip>
+                    <v-chip v-else size="small" color="grey" variant="tonal">
+                      <v-icon start size="16">mdi-help</v-icon>Inconnu
+                    </v-chip>
+                  </td>
+                  <td class="text-center">
+                    <v-chip v-if="row.sageStatus === 'linked'" size="small" color="success" variant="tonal">
+                      <v-icon start size="16">mdi-link</v-icon>{{ row.accountingNumber }}
+                    </v-chip>
+                    <v-chip v-else size="small" color="grey" variant="tonal">
+                      <v-icon start size="16">mdi-link-off</v-icon>-
+                    </v-chip>
+                  </td>
+                </tr>
+              </tbody>
+            </v-table>
+          </div>
+
+          <div v-if="showErrors && preview.errors.length" class="error-list">
+            <div v-for="(e, idx) in preview.errors" :key="idx" class="error-item">
               <v-icon color="warning" size="18" class="mr-1">mdi-alert</v-icon>
               <span>#{{ e.row }} - {{ e.field ? e.field + ': ' : '' }}{{ e.message }}</span>
             </div>
           </div>
         </div>
 
+        <!-- Sage Alert -->
+        <v-alert v-if="hasAccountingNumbers" type="info" variant="tonal" density="compact" class="mb-4">
+          <v-icon start>mdi-information</v-icon>
+          Les institutions avec numéro comptable seront liées à Sage lors de la prochaine synchronisation
+        </v-alert>
+
         <v-alert v-if="errorMessage" type="error" variant="tonal" class="mb-2">{{ errorMessage }}</v-alert>
 
         <div v-if="result" class="mb-2">
           <v-alert :type="result.success ? 'success' : 'warning'" variant="tonal">
-            {{ t('institutions.importResultSummary', {
-              total: result.totalRows,
-              ok: result.successfulImports,
-              ko: result.failedImports,
-              duplicates: result.duplicatesFound
-            }) }}
+            <div class="text-subtitle-2 mb-2">Résultat de l'import</div>
+            <div class="d-flex flex-column gap-1">
+              <div>
+                <v-icon size="small" class="mr-1">mdi-check-circle</v-icon>
+                <strong>{{ result.successfulImports || 0 }}</strong> importées / <strong>{{ result.totalRows || 0 }}</strong> total
+              </div>
+              <div v-if="result.failedImports > 0" class="text-error">
+                <v-icon size="small" class="mr-1">mdi-alert-circle</v-icon>
+                <strong>{{ result.failedImports }}</strong> erreurs
+              </div>
+              <div v-if="result.duplicatesFound > 0">
+                <v-icon size="small" class="mr-1">mdi-content-copy</v-icon>
+                <strong>{{ result.duplicatesFound }}</strong> doublons trouvés
+              </div>
+              <div v-if="result.duplicatesMerged > 0">
+                <v-icon size="small" class="mr-1">mdi-merge</v-icon>
+                <strong>{{ result.duplicatesMerged }}</strong> doublons fusionnés
+              </div>
+              <div v-if="result.digiformaCreated > 0" class="text-info">
+                <v-icon size="small" class="mr-1">mdi-cloud-upload</v-icon>
+                <strong>{{ result.digiformaCreated }}</strong> créées dans Digiforma
+              </div>
+            </div>
           </v-alert>
         </div>
       </v-card-text>
@@ -116,10 +215,34 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { institutionsApi } from '@/services/api'
 import { useDisplay } from 'vuetify'
+
+interface PreviewRow {
+  rowNumber: number
+  name: string
+  accountingNumber?: string
+  city?: string
+  matchStatus: 'exact' | 'fuzzy' | 'none'
+  matchConfidence?: number
+  matchType?: string
+  existingInstitutionId?: string
+  existingInstitutionName?: string
+  digiformaStatus: 'exists' | 'will_create' | 'unknown'
+  sageStatus: 'linked' | 'not_linked'
+  hasErrors: boolean
+  errors: Array<{ field?: string; message: string }>
+}
+
+interface PreviewData {
+  totalRows: number
+  validRows: number
+  invalidRows: number
+  preview: PreviewRow[]
+  errors: Array<{ row: number; field?: string; message: string }>
+}
 
 const props = defineProps<{ modelValue: boolean }>()
 const emit = defineEmits(['update:modelValue', 'completed'])
@@ -130,9 +253,12 @@ const validating = ref(false)
 const importing = ref(false)
 const downloading = ref(false)
 const showErrors = ref(false)
+const showPreview = ref(false)
 const errorMessage = ref('')
+const createInDigiforma = ref(true)
 
 const validation = ref<null | { isValid: boolean; totalRows: number; errors: Array<{ row: number; field?: string; message: string }>; duplicatesFound: number }>(null)
+const preview = ref<PreviewData | null>(null)
 const result = ref<any>(null)
 
 const options = ref({ skipDuplicates: true, mergeDuplicates: false })
@@ -140,6 +266,10 @@ const duplicateMode = ref<'ignore' | 'merge' | 'allow'>('ignore')
 
 const { smAndDown } = useDisplay()
 const isMobile = smAndDown
+
+const hasAccountingNumbers = computed(() =>
+  preview.value?.preview.some(row => !!row.accountingNumber) || false
+)
 
 const downloadTemplate = async () => {
   try {
@@ -162,19 +292,24 @@ const validate = async () => {
   if (!file.value) return
   errorMessage.value = ''
   result.value = null
+  preview.value = null
   try {
     validating.value = true
-    const res: any = await institutionsApi.validateCsv(file.value)
+    const res: any = await institutionsApi.previewCsv(file.value)
     const data = res?.data || res
-    validation.value = {
-      isValid: Boolean(data?.isValid),
+
+    preview.value = {
       totalRows: Number(data?.totalRows || 0),
+      validRows: Number(data?.validRows || 0),
+      invalidRows: Number(data?.invalidRows || 0),
+      preview: Array.isArray(data?.preview) ? data.preview : [],
       errors: Array.isArray(data?.errors) ? data.errors : [],
-      duplicatesFound: Number(data?.duplicatesFound || 0),
     }
-    showErrors.value = !validation.value.isValid
+
+    showPreview.value = true
+    showErrors.value = preview.value.invalidRows > 0
   } catch (e: any) {
-    errorMessage.value = e?.message || 'Validation failed'
+    errorMessage.value = e?.message || 'Preview failed'
   } finally {
     validating.value = false
   }

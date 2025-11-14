@@ -64,6 +64,14 @@ router.post(
   MedicalInstitutionController.validateCsv
 )
 
+// POST /api/institutions/import/preview - Preview CSV with matching details
+router.post(
+  "/import/preview",
+  requirePermission("canImportInstitutions"),
+  uploadCsv.single("file"),
+  MedicalInstitutionController.previewCsv
+)
+
 // POST /api/institutions/import - Import from CSV
 router.post(
   "/import",

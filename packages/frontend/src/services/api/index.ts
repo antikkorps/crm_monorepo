@@ -252,6 +252,19 @@ export const institutionsApi = {
       body: formData,
     }).then((response) => response.json())
   },
+
+  previewCsv: (file: File) => {
+    const formData = new FormData()
+    formData.append("file", file)
+    return fetch(`${API_BASE_URL}/institutions/import/preview`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("token")}`,
+      },
+      body: formData,
+    }).then((response) => response.json())
+  },
+
   downloadImportTemplate: async (): Promise<Blob> => {
     const response = await fetch(`${API_BASE_URL}/institutions/import/template`, {
       method: "GET",
