@@ -9,10 +9,53 @@
  * 3. name (fuzzy) + city (exact) → 60-85% confidence (based on similarity)
  */
 
-import { compareTwoStrings } from 'string-similarity'
 import { MedicalInstitution } from '../models'
 import { logger } from '../utils/logger'
 import { Op, Sequelize } from 'sequelize'
+
+/**
+ * Calculate Dice Coefficient similarity between two strings
+ * Uses bigram (2-character pairs) comparison with multiset (preserves duplicates)
+ * Returns a value between 0 (no similarity) and 1 (identical)
+ *
+ * @param str1 - First string to compare
+ * @param str2 - Second string to compare
+ * @returns Similarity score from 0 to 1
+ */
+function diceCoefficient(str1: string, str2: string): number {
+  // Identical strings
+  if (str1 === str2) return 1
+
+  // Strings too short for bigram comparison
+  if (str1.length < 2 || str2.length < 2) return 0
+
+  // Create bigrams (pairs of characters) for first string
+  const bigrams1: string[] = []
+  for (let i = 0; i < str1.length - 1; i++) {
+    bigrams1.push(str1.substring(i, i + 2))
+  }
+
+  // Create bigrams for second string
+  const bigrams2: string[] = []
+  for (let i = 0; i < str2.length - 1; i++) {
+    bigrams2.push(str2.substring(i, i + 2))
+  }
+
+  // Calculate intersection (common bigrams, counting duplicates)
+  // We need to match bigrams and remove them to handle duplicates correctly
+  let intersection = 0
+  const bigrams2Copy = [...bigrams2]
+  for (const bigram of bigrams1) {
+    const index = bigrams2Copy.indexOf(bigram)
+    if (index !== -1) {
+      intersection++
+      bigrams2Copy.splice(index, 1) // Remove matched bigram to handle duplicates
+    }
+  }
+
+  // Dice coefficient formula: 2 * |intersection| / (|array1| + |array2|)
+  return (2 * intersection) / (bigrams1.length + bigrams2.length)
+}
 
 /**
  * Match types by priority
@@ -252,7 +295,7 @@ export class CsvMatchingService {
     for (const institution of institutions) {
       // Calculate name similarity
       const instName = this.normalizeName(institution.name)
-      const similarity = compareTwoStrings(normalizedInputName, instName)
+      const similarity = diceCoefficient(normalizedInputName, instName)
 
       candidates.push({
         institution,
