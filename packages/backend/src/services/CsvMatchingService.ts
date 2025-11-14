@@ -15,7 +15,7 @@ import { Op, Sequelize } from 'sequelize'
 
 /**
  * Calculate Dice Coefficient similarity between two strings
- * Uses bigram (2-character pairs) comparison
+ * Uses bigram (2-character pairs) comparison with multiset (preserves duplicates)
  * Returns a value between 0 (no similarity) and 1 (identical)
  *
  * @param str1 - First string to compare
@@ -30,27 +30,31 @@ function diceCoefficient(str1: string, str2: string): number {
   if (str1.length < 2 || str2.length < 2) return 0
 
   // Create bigrams (pairs of characters) for first string
-  const bigrams1 = new Set<string>()
+  const bigrams1: string[] = []
   for (let i = 0; i < str1.length - 1; i++) {
-    bigrams1.add(str1.substring(i, i + 2))
+    bigrams1.push(str1.substring(i, i + 2))
   }
 
   // Create bigrams for second string
-  const bigrams2 = new Set<string>()
+  const bigrams2: string[] = []
   for (let i = 0; i < str2.length - 1; i++) {
-    bigrams2.add(str2.substring(i, i + 2))
+    bigrams2.push(str2.substring(i, i + 2))
   }
 
-  // Calculate intersection (common bigrams)
+  // Calculate intersection (common bigrams, counting duplicates)
+  // We need to match bigrams and remove them to handle duplicates correctly
   let intersection = 0
+  const bigrams2Copy = [...bigrams2]
   for (const bigram of bigrams1) {
-    if (bigrams2.has(bigram)) {
+    const index = bigrams2Copy.indexOf(bigram)
+    if (index !== -1) {
       intersection++
+      bigrams2Copy.splice(index, 1) // Remove matched bigram to handle duplicates
     }
   }
 
-  // Dice coefficient formula: 2 * |intersection| / (|set1| + |set2|)
-  return (2 * intersection) / (bigrams1.size + bigrams2.size)
+  // Dice coefficient formula: 2 * |intersection| / (|array1| + |array2|)
+  return (2 * intersection) / (bigrams1.length + bigrams2.length)
 }
 
 /**
