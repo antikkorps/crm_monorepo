@@ -1,9 +1,10 @@
 import { logger } from '../utils/logger'
 import { MedicalInstitution } from '../models'
 import { InstitutionType } from '@medical-crm/shared'
+import { SageSettings } from '../models/SageSettings'
 
 /**
- * SageService - Service for integrating with Sage 100 Cloud accounting system
+ * SageService - Service for integrating with Sage accounting system
  *
  * This service handles unidirectional data sync from Sage → CRM (v1)
  * - Customer data sync (institutions with accountingNumber)
@@ -12,6 +13,12 @@ import { InstitutionType } from '@medical-crm/shared'
  *
  * @note Feature flag controlled - disabled by default (SAGE_INTEGRATION_ENABLED)
  * @note v2 will include CRM → Sage sync (create invoices in Sage from CRM quotes)
+ *
+ * TODO: Implement actual Sage API integration
+ * - Choose Sage product (Sage 50, Business Cloud, Intacct)
+ * - Add Sage SDK/API client library
+ * - Implement authentication (OAuth2, API key, etc.)
+ * - Handle rate limiting and pagination
  */
 
 export interface SageConfig {
@@ -85,6 +92,29 @@ export class SageService {
       apiUrl: this.apiUrl,
       companyId: this.companyId,
       enabled: this.enabled
+    })
+  }
+
+  /**
+   * Create SageService instance from settings
+   */
+  static async fromSettings(): Promise<SageService> {
+    const settings = await SageSettings.getSettings()
+
+    if (!settings.isConfigured()) {
+      throw new Error('Sage settings are not configured')
+    }
+
+    if (!settings.isEnabled) {
+      throw new Error('Sage integration is disabled')
+    }
+
+    const apiKey = settings.getDecryptedApiKey()
+    return new SageService({
+      apiKey,
+      apiUrl: settings.apiUrl,
+      companyId: settings.companyId,
+      enabled: settings.isEnabled,
     })
   }
 

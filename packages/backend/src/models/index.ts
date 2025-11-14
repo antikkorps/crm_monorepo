@@ -32,6 +32,7 @@ import { DigiformaContact } from "./DigiformaContact"
 import { DigiformaQuote } from "./DigiformaQuote"
 import { DigiformaInvoice } from "./DigiformaInvoice"
 import { DigiformaSettings } from "./DigiformaSettings"
+import { SageSettings } from "./SageSettings"
 import { SecurityLog } from "./SecurityLog"
 import { SystemSettings } from "./SystemSettings"
 
@@ -684,6 +685,7 @@ export {
   DigiformaQuote,
   DigiformaInvoice,
   DigiformaSettings,
+  SageSettings,
   SecurityLog,
   SystemSettings,
 }
@@ -723,6 +725,7 @@ export default {
   DigiformaQuote,
   DigiformaInvoice,
   DigiformaSettings,
+  SageSettings,
   SecurityLog,
   SystemSettings,
 }

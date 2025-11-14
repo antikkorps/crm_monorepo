@@ -13,6 +13,7 @@ import catalogRoutes from "./routes/catalog"
 import contactRoutes from "./routes/contacts"
 import dashboardRoutes from "./routes/dashboard"
 import digiformaRoutes from "./routes/digiforma"
+import sageRoutes from "./routes/sage"
 import filterOptionsRoutes from "./routes/filterOptions"
 import institutionRoutes from "./routes/institutions"
 import invoiceRoutes from "./routes/invoices"
@@ -235,6 +236,10 @@ export const createApp = (): Koa => {
   // Apply Digiforma routes
   app.use(digiformaRoutes.routes())
   app.use(digiformaRoutes.allowedMethods())
+
+  // Apply Sage routes
+  app.use(sageRoutes.routes())
+  app.use(sageRoutes.allowedMethods())
 
   // Apply revenue routes (consolidated revenue endpoints)
   app.use(revenueRoutes.routes())
