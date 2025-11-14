@@ -2303,14 +2303,52 @@ Améliorer le système d'import CSV existant pour gérer l'identifiant comptable
   - Migration pour table `sage_settings`
   - Controller et routes `/api/sage/*`
 
-- [ ] **29.5** - Frontend: Améliorer UI import avec statut sync (2-3h)
-  - Preview table avec colonnes:
-    - Status matching (exact/fuzzy/none)
-    - Status Digiforma (existe/sera créé)
-    - Status Sage (accountingNumber si présent)
-  - Options de sync: Switch "Créer dans Digiforma si manquant"
-  - Rapport d'import détaillé: Importées / Mises à jour / Créées Digiforma / Erreurs
-  - Alert: "Les institutions avec numéro client seront liées à Sage lors de la prochaine sync"
+- [x] **29.5** - Frontend: Améliorer UI import avec statut sync (2-3h) ✅
+
+  **Status:** ✅ Complété
+  **Date:** 2025-11-14
+
+  **Backend:**
+  - ✅ Méthode `previewCsvData()` dans CsvImportService
+  - ✅ Interfaces TypeScript: `CsvPreviewRow`, `CsvPreviewResult`
+  - ✅ Analyse du statut de matching (exact/fuzzy/none) via CsvMatchingService
+  - ✅ Détection statut Digiforma (exists/will_create/unknown)
+  - ✅ Détection statut Sage (linked/not_linked basé sur accountingNumber)
+  - ✅ Endpoint `/api/institutions/import/preview` ajouté au controller
+  - ✅ Route POST `/import/preview` configurée
+
+  **Frontend:**
+  - ✅ Preview table avec toutes les lignes et détails de matching
+  - ✅ Colonnes de statut:
+    * **Matching**: Exact (100%/95%), Fuzzy (60-85% avec score), ou Nouveau
+    * **Digiforma**: Existe, À créer, ou Inconnu (avec icônes)
+    * **Sage**: Lié (avec numéro comptable) ou Non lié
+  - ✅ Chips colorés avec tooltips pour visualisation des statuts
+  - ✅ Table preview collapsible (masquer/afficher détails)
+  - ✅ Switch "Créer dans Digiforma si manquant" pour auto-création
+  - ✅ Rapport d'import amélioré avec:
+    * Imports réussis / Total
+    * Erreurs
+    * Doublons trouvés et fusionnés
+    * Créations Digiforma (prêt pour future implémentation)
+  - ✅ Alert info pour institutions liées à Sage
+  - ✅ Surlignage des lignes avec erreurs
+
+  **Expérience utilisateur:**
+  - Visibilité complète sur ce qui va se passer avant l'import
+  - Scores de confiance pour matches fuzzy
+  - Indication claire des institutions existantes vs nouvelles
+  - Statut de sync Digiforma par ligne
+  - Conscience de l'intégration comptable Sage
+
+  **Fichiers modifiés:**
+  - `packages/backend/src/services/CsvImportService.ts` (+118 lignes)
+  - `packages/backend/src/controllers/MedicalInstitutionController.ts` (+60 lignes)
+  - `packages/backend/src/routes/institutions.ts` (+6 lignes)
+  - `packages/frontend/src/components/institutions/ImportInstitutionsDialog.vue` (+143 lignes)
+  - `packages/frontend/src/services/api/index.ts` (+13 lignes)
+
+  **Commit:** `ceed92d` - feat(frontend): implement advanced CSV import UI with preview (Task 29.5)
 
 - [x] **29.6** - Bug fix: URL encoding visuel dans champ API URL Digiforma (15min) 🐛 ✅
 
