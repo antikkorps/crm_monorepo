@@ -786,7 +786,7 @@ export class MedicalInstitutionController {
         csvData = file.buffer.toString("utf8")
       } else if ((file as any).filepath) {
         const fs = await import("fs")
-        csvData = fs.readFileSync((file as any).filepath, "utf8")
+        csvData = await fs.promises.readFile((file as any).filepath, "utf8")
       } else {
         throw createError("Unable to read uploaded file", 400, "FILE_READ_ERROR")
       }
@@ -881,7 +881,7 @@ export class MedicalInstitutionController {
         csvData = file.buffer.toString("utf8")
       } else if ((file as any).filepath) {
         const fs = await import("fs")
-        csvData = fs.readFileSync((file as any).filepath, "utf8")
+        csvData = await fs.promises.readFile((file as any).filepath, "utf8")
       } else {
         throw createError("Unable to read uploaded file", 400, "FILE_READ_ERROR")
       }
@@ -909,6 +909,67 @@ export class MedicalInstitutionController {
       })
     } catch (error) {
       logger.error("CSV validation failed", {
+        userId: ctx.state.user?.id,
+        error: (error as Error).message,
+        filename: fileName,
+      })
+      throw error
+    }
+  }
+
+  /**
+   * POST /api/institutions/import/preview
+   * Preview CSV import with detailed matching information
+   */
+  static async previewCsv(ctx: ContextWithFiles) {
+    // Support both multer (ctx.file) and koa-body (ctx.request.files)
+    const hasMulterFile = (ctx as any).file
+    const file = hasMulterFile
+      ? (ctx as any).file
+      : (Array.isArray(ctx.request.files?.file)
+        ? ctx.request.files?.file?.[0]
+        : ctx.request.files?.file)
+
+    if (!file) {
+      throw createError("CSV file is required", 400, "FILE_REQUIRED")
+    }
+
+    const fileName = file.originalname || file.originalFilename
+    const mime = file.mimetype
+    if (!(fileName?.toLowerCase().endsWith(".csv") || mime === "text/csv" || mime === "application/vnd.ms-excel")) {
+      throw createError("File must be a CSV file", 400, "INVALID_FILE_TYPE")
+    }
+
+    try {
+      // Read file content
+      let csvData = ""
+      if (hasMulterFile && file.buffer) {
+        csvData = file.buffer.toString("utf8")
+      } else if ((file as any).filepath) {
+        const fs = await import("fs")
+        csvData = await fs.promises.readFile((file as any).filepath, "utf8")
+      } else {
+        throw createError("Unable to read uploaded file", 400, "FILE_READ_ERROR")
+      }
+
+      // Generate preview with matching information
+      const result = await CsvImportService.previewCsvData(csvData)
+
+      ctx.body = {
+        success: true,
+        message: "CSV preview generated",
+        data: result,
+      }
+
+      logger.info("CSV preview generated", {
+        userId: ctx.state.user?.id,
+        filename: fileName,
+        totalRows: result.totalRows,
+        validRows: result.validRows,
+        invalidRows: result.invalidRows,
+      })
+    } catch (error) {
+      logger.error("CSV preview failed", {
         userId: ctx.state.user?.id,
         error: (error as Error).message,
         filename: fileName,

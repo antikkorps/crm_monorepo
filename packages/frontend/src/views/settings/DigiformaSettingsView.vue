@@ -508,7 +508,7 @@ async function loadSettings() {
 
     // Populate form with current settings
     formData.value = {
-      apiUrl: settings.value.apiUrl,
+      apiUrl: settings.value.apiUrl ? decodeURIComponent(settings.value.apiUrl) : '',
       bearerToken: '', // Don't show existing token
       isEnabled: settings.value.isEnabled,
       autoSyncEnabled: settings.value.autoSyncEnabled,
