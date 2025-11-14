@@ -61,10 +61,18 @@
 
       <!-- Invoices Table -->
       <v-card class="mt-6">
+        <TableSkeleton
+          v-if="loading && invoices.length === 0"
+          :rows="pagination.rowsPerPage"
+          :columns="7"
+          toolbar
+          pagination
+        />
         <v-data-table
+          v-else
           :headers="tableHeaders"
           :items="invoices"
-          :loading="loading"
+          :loading="loading && invoices.length > 0"
           :items-per-page="pagination.rowsPerPage"
           :page="pagination.currentPage"
           :items-length="totalRecords"
@@ -153,6 +161,7 @@
 import InvoiceForm from "@/components/billing/InvoiceForm.vue"
 import PaymentForm from "@/components/billing/PaymentForm.vue"
 import AppLayout from "@/components/layout/AppLayout.vue"
+import { TableSkeleton } from "@/components/skeletons"
 import { institutionsApi, invoicesApi, documentsApi } from "@/services/api"
 import { useAuthStore } from "@/stores/auth"
 import type { Invoice, InvoiceStatus } from "@medical-crm/shared"

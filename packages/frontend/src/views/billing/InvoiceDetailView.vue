@@ -1,10 +1,7 @@
 <template>
   <AppLayout>
     <div class="invoice-detail-view">
-      <div v-if="loading" class="text-center py-12">
-        <v-progress-circular indeterminate color="primary" size="64" />
-        <p class="mt-4">Chargement de la facture...</p>
-      </div>
+      <DetailSkeleton v-if="loading" />
 
       <div v-else-if="!invoice" class="text-center py-12">
         <v-icon size="64" color="warning">mdi-alert-circle-outline</v-icon>
@@ -280,6 +277,7 @@
 <script setup lang="ts">
 import { PaymentForm, PaymentHistory, InvoiceForm } from "@/components/billing"
 import AppLayout from "@/components/layout/AppLayout.vue"
+import { DetailSkeleton } from "@/components/skeletons"
 import { invoicesApi, documentsApi, institutionsApi } from "@/services/api"
 import { useAuthStore } from "@/stores/auth"
 import type { Invoice, InvoiceStatus } from "@medical-crm/shared"

@@ -193,9 +193,17 @@
 
       <!-- Desktop Data Table -->
       <v-card class="data-table-card d-none d-md-block" variant="flat">
+        <TableSkeleton
+          v-if="loading && institutions.length === 0"
+          :rows="lazyParams.rows"
+          :columns="7"
+          toolbar
+          pagination
+        />
         <v-data-table
+          v-else
           :items="institutions"
-          :loading="loading"
+          :loading="loading && institutions.length > 0"
           :items-per-page="lazyParams.rows"
           :page="Math.floor(lazyParams.first / lazyParams.rows) + 1"
           :headers="tableHeaders"
@@ -345,7 +353,15 @@
 
       <!-- Mobile Cards List -->
       <div class="mobile-cards-container d-md-none">
-        <div v-if="!loading && institutions.length === 0" class="empty-state">
+        <ListSkeleton
+          v-if="loading && institutions.length === 0"
+          :count="5"
+          avatar
+          actions
+          type="list-item-three-line"
+        />
+
+        <div v-else-if="!loading && institutions.length === 0" class="empty-state">
           <div class="text-center py-12">
             <v-icon size="64" class="mb-4" color="grey-lighten-2">mdi-domain-off</v-icon>
             <h3 class="text-h6 mb-2">{{ t("institutions.noInstitutionsFound") }}</h3>
@@ -355,7 +371,7 @@
           </div>
         </div>
 
-        <div class="mobile-cards-list">
+        <div v-else class="mobile-cards-list">
           <v-card
             v-for="institution in institutions"
             :key="institution.id"
@@ -489,6 +505,7 @@
 import ImportInstitutionsDialog from "@/components/institutions/ImportInstitutionsDialog.vue"
 import MedicalInstitutionForm from "@/components/institutions/MedicalInstitutionForm.vue"
 import AppLayout from "@/components/layout/AppLayout.vue"
+import { TableSkeleton, ListSkeleton } from "@/components/skeletons"
 import { institutionsApi } from "@/services/api"
 import type {
   MedicalInstitution,

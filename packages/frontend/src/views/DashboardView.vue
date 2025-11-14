@@ -38,6 +38,9 @@
       </v-col>
     </v-row>
 
+    <!-- Dashboard Loading Skeleton -->
+    <DashboardSkeleton v-else-if="metricsLoading && !metrics" />
+
     <!-- Dashboard Content -->
     <div v-else>
       <!-- Stats Cards -->
@@ -408,6 +411,7 @@ import TimelineWidget from "@/components/dashboard/TimelineWidget.vue"
 import SmartAlertsWidget from "@/components/dashboard/SmartAlertsWidget.vue"
 import KPIChartsWidget from "@/components/dashboard/KPIChartsWidget.vue"
 import QuickActionsWidget from "@/components/dashboard/QuickActionsWidget.vue"
+import { DashboardSkeleton } from "@/components/skeletons"
 import { useAuthStore } from "@/stores/auth"
 import { useInstitutionsStore } from "@/stores/institutions"
 import { useTasksStore } from "@/stores/tasks"
