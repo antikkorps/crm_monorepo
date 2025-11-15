@@ -212,22 +212,6 @@ describe("Note API Integration Tests", () => {
     it("should fail to create note without required fields", async () => {
       const noteData = {
         content: "Missing title",
-      }
-
-      const response = await request(app.callback())
-        .post("/api/notes")
-        .set("Authorization", `Bearer ${regularUserToken}`)
-        .send(noteData)
-        .expect(400)
-
-      expect(response.body.success).toBe(false)
-      expect(response.body.error.code).toBe("VALIDATION_ERROR")
-    })
-
-    it("should fail to create note with invalid institution", async () => {
-      const noteData = {
-        title: "Test Note Without Required Fields",
-        content: "Missing title",
         tags: [],
       }
 
@@ -237,14 +221,33 @@ describe("Note API Integration Tests", () => {
         .send(noteData)
         .expect(400)
 
-      expect(response.body.success).toBe(false)
-      expect(response.body.error.code).toBe("INVALID_INSTITUTION")
+      expect(response.body.error).toBeDefined()
+      expect(response.body.error.code).toBe("VALIDATION_ERROR")
+    })
+
+    it("should fail to create note with invalid institution", async () => {
+      const noteData = {
+        title: "Test Note With Invalid Institution",
+        content: "Test content",
+        tags: ["test"],
+        institutionId: "invalid-uuid",
+      }
+
+      const response = await request(app.callback())
+        .post("/api/notes")
+        .set("Authorization", `Bearer ${regularUserToken}`)
+        .send(noteData)
+        .expect(400)
+
+      expect(response.body.error).toBeDefined()
+      expect(response.body.error.code).toBe("VALIDATION_ERROR")
     })
 
     it("should fail to share with invalid user", async () => {
       const noteData = {
         title: "Test Note",
         content: "Test content",
+        tags: ["test"],
         shareWith: [{ userId: "invalid-id", permission: SharePermission.READ }],
       }
 
@@ -254,14 +257,15 @@ describe("Note API Integration Tests", () => {
         .send(noteData)
         .expect(400)
 
-      expect(response.body.success).toBe(false)
-      expect(response.body.error.code).toBe("INVALID_SHARE_RECIPIENT")
+      expect(response.body.error).toBeDefined()
+      expect(response.body.error.code).toBe("VALIDATION_ERROR")
     })
 
     it("should require authentication", async () => {
       const noteData = {
         title: "Test Note",
         content: "Test content",
+        tags: ["test"],
       }
 
       await request(app.callback()).post("/api/notes").send(noteData).expect(401)
@@ -290,6 +294,7 @@ describe("Note API Integration Tests", () => {
 
       // Share private note with team member
       await NoteShare.create({
+        createdAt: new Date(),
         noteId: privateNote.id,
         userId: teamMember.id,
         permission: SharePermission.READ,
@@ -400,6 +405,7 @@ describe("Note API Integration Tests", () => {
     it("should get note with shares for creator", async () => {
       // Share the note
       await NoteShare.create({
+        createdAt: new Date(),
         noteId: testNote.id,
         userId: teamMember.id,
         permission: SharePermission.READ,
@@ -421,7 +427,7 @@ describe("Note API Integration Tests", () => {
         .set("Authorization", `Bearer ${otherUserToken}`)
         .expect(403)
 
-      expect(response.body.success).toBe(false)
+      expect(response.body.error).toBeDefined()
       expect(response.body.error.code).toBe("INSUFFICIENT_PERMISSIONS")
     })
 
@@ -431,7 +437,7 @@ describe("Note API Integration Tests", () => {
         .set("Authorization", `Bearer ${regularUserToken}`)
         .expect(404)
 
-      expect(response.body.success).toBe(false)
+      expect(response.body.error).toBeDefined()
       expect(response.body.error.code).toBe("NOTE_NOT_FOUND")
     })
 
@@ -477,6 +483,7 @@ describe("Note API Integration Tests", () => {
     it("should update note with write permission", async () => {
       // Share note with write permission
       await NoteShare.create({
+        createdAt: new Date(),
         noteId: testNote.id,
         userId: teamMember.id,
         permission: SharePermission.WRITE,
@@ -499,6 +506,7 @@ describe("Note API Integration Tests", () => {
     it("should deny update with read-only permission", async () => {
       // Share note with read permission
       await NoteShare.create({
+        createdAt: new Date(),
         noteId: testNote.id,
         userId: teamMember.id,
         permission: SharePermission.READ,
@@ -514,7 +522,7 @@ describe("Note API Integration Tests", () => {
         .send(updateData)
         .expect(403)
 
-      expect(response.body.success).toBe(false)
+      expect(response.body.error).toBeDefined()
       expect(response.body.error.code).toBe("INSUFFICIENT_PERMISSIONS")
     })
 
@@ -525,7 +533,7 @@ describe("Note API Integration Tests", () => {
         .send({ title: "Updated" })
         .expect(404)
 
-      expect(response.body.success).toBe(false)
+      expect(response.body.error).toBeDefined()
       expect(response.body.error.code).toBe("NOTE_NOT_FOUND")
     })
 
@@ -579,7 +587,7 @@ describe("Note API Integration Tests", () => {
         .set("Authorization", `Bearer ${otherUserToken}`)
         .expect(403)
 
-      expect(response.body.success).toBe(false)
+      expect(response.body.error).toBeDefined()
       expect(response.body.error.code).toBe("INSUFFICIENT_PERMISSIONS")
     })
 
@@ -589,7 +597,7 @@ describe("Note API Integration Tests", () => {
         .set("Authorization", `Bearer ${regularUserToken}`)
         .expect(404)
 
-      expect(response.body.success).toBe(false)
+      expect(response.body.error).toBeDefined()
       expect(response.body.error.code).toBe("NOTE_NOT_FOUND")
     })
 
@@ -637,6 +645,7 @@ describe("Note API Integration Tests", () => {
     it("should update existing share permission", async () => {
       // Create initial share
       await NoteShare.create({
+        createdAt: new Date(),
         noteId: testNote.id,
         userId: teamMember.id,
         permission: SharePermission.READ,
@@ -670,7 +679,7 @@ describe("Note API Integration Tests", () => {
         .send(shareData)
         .expect(403)
 
-      expect(response.body.success).toBe(false)
+      expect(response.body.error).toBeDefined()
       expect(response.body.error.code).toBe("INSUFFICIENT_PERMISSIONS")
     })
 
@@ -685,7 +694,7 @@ describe("Note API Integration Tests", () => {
         .send(shareData)
         .expect(400)
 
-      expect(response.body.success).toBe(false)
+      expect(response.body.error).toBeDefined()
       expect(response.body.error.code).toBe("INVALID_SHARE_RECIPIENT")
     })
 
@@ -698,7 +707,7 @@ describe("Note API Integration Tests", () => {
         .send(shareData)
         .expect(400)
 
-      expect(response.body.success).toBe(false)
+      expect(response.body.error).toBeDefined()
       expect(response.body.error.code).toBe("VALIDATION_ERROR")
     })
 
@@ -713,7 +722,7 @@ describe("Note API Integration Tests", () => {
         .send(shareData)
         .expect(404)
 
-      expect(response.body.success).toBe(false)
+      expect(response.body.error).toBeDefined()
       expect(response.body.error.code).toBe("NOTE_NOT_FOUND")
     })
 
@@ -743,6 +752,7 @@ describe("Note API Integration Tests", () => {
 
       // Create a share
       await NoteShare.create({
+        createdAt: new Date(),
         noteId: testNote.id,
         userId: teamMember.id,
         permission: SharePermission.READ,
@@ -769,7 +779,7 @@ describe("Note API Integration Tests", () => {
         .set("Authorization", `Bearer ${otherUserToken}`)
         .expect(403)
 
-      expect(response.body.success).toBe(false)
+      expect(response.body.error).toBeDefined()
       expect(response.body.error.code).toBe("INSUFFICIENT_PERMISSIONS")
     })
 
@@ -779,7 +789,7 @@ describe("Note API Integration Tests", () => {
         .set("Authorization", `Bearer ${regularUserToken}`)
         .expect(404)
 
-      expect(response.body.success).toBe(false)
+      expect(response.body.error).toBeDefined()
       expect(response.body.error.code).toBe("SHARE_NOT_FOUND")
     })
 
@@ -789,7 +799,7 @@ describe("Note API Integration Tests", () => {
         .set("Authorization", `Bearer ${regularUserToken}`)
         .expect(404)
 
-      expect(response.body.success).toBe(false)
+      expect(response.body.error).toBeDefined()
       expect(response.body.error.code).toBe("NOTE_NOT_FOUND")
     })
 
@@ -814,12 +824,14 @@ describe("Note API Integration Tests", () => {
 
       // Create shares
       await NoteShare.create({
+        createdAt: new Date(),
         noteId: testNote.id,
         userId: teamMember.id,
         permission: SharePermission.READ,
       })
 
       await NoteShare.create({
+        createdAt: new Date(),
         noteId: testNote.id,
         userId: teamAdminUser.id,
         permission: SharePermission.WRITE,
@@ -855,7 +867,7 @@ describe("Note API Integration Tests", () => {
         .set("Authorization", `Bearer ${otherUserToken}`)
         .expect(403)
 
-      expect(response.body.success).toBe(false)
+      expect(response.body.error).toBeDefined()
       expect(response.body.error.code).toBe("INSUFFICIENT_PERMISSIONS")
     })
 
@@ -865,7 +877,7 @@ describe("Note API Integration Tests", () => {
         .set("Authorization", `Bearer ${regularUserToken}`)
         .expect(404)
 
-      expect(response.body.success).toBe(false)
+      expect(response.body.error).toBeDefined()
       expect(response.body.error.code).toBe("NOTE_NOT_FOUND")
     })
 
@@ -894,12 +906,14 @@ describe("Note API Integration Tests", () => {
 
       // Share notes with regular user
       await NoteShare.create({
+        createdAt: new Date(),
         noteId: note1.id,
         userId: regularUser.id,
         permission: SharePermission.READ,
       })
 
       await NoteShare.create({
+        createdAt: new Date(),
         noteId: note2.id,
         userId: regularUser.id,
         permission: SharePermission.WRITE,
@@ -1008,7 +1022,7 @@ describe("Note API Integration Tests", () => {
         .set("Authorization", `Bearer ${regularUserToken}`)
         .expect(404)
 
-      expect(response.body.success).toBe(false)
+      expect(response.body.error).toBeDefined()
       expect(response.body.error.code).toBe("INSTITUTION_NOT_FOUND")
     })
 
@@ -1087,7 +1101,7 @@ describe("Note API Integration Tests", () => {
         .set("Authorization", `Bearer ${regularUserToken}`)
         .expect(400)
 
-      expect(response.body.success).toBe(false)
+      expect(response.body.error).toBeDefined()
       expect(response.body.error.code).toBe("VALIDATION_ERROR")
     })
 

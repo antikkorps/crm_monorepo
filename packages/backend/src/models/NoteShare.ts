@@ -101,6 +101,7 @@ export class NoteShare
           noteId,
           userId: share.userId,
           permission: share.permission,
+          createdAt: new Date(),
         })
         createdShares.push(newShare)
       }

@@ -244,7 +244,7 @@ export class Note
     sharedWithUserId?: string
     userId?: string // For access control
   }): Promise<Note[]> {
-    const whereClause: any = {}
+    let whereClause: any = {}
 
     if (filters.creatorId) {
       whereClause.creatorId = filters.creatorId
@@ -286,22 +286,25 @@ export class Note
 
     // Apply access control if userId is provided
     if (filters.userId) {
-      whereClause[Op.and] = [
-        whereClause,
-        {
-          [Op.or]: [
-            { creatorId: filters.userId },
-            { isPrivate: false },
-            {
-              id: {
-                [Op.in]: sequelize.literal(`(
-                  SELECT note_id FROM note_shares WHERE user_id = '${filters.userId}'
-                )`),
-              },
+      const accessControlClause = {
+        [Op.or]: [
+          { creatorId: filters.userId },
+          { isPrivate: false },
+          {
+            id: {
+              [Op.in]: sequelize.literal(`(
+                SELECT note_id FROM note_shares WHERE user_id = '${filters.userId}'
+              )`),
             },
-          ],
-        },
-      ]
+          },
+        ],
+      }
+
+      // Combine existing where clause with access control
+      const existingConditions = Object.keys(whereClause).length > 0 ? [{ ...whereClause }] : []
+      whereClause = {
+        [Op.and]: [...existingConditions, accessControlClause],
+      }
     }
 
     // Filter by shared with specific user

@@ -47,11 +47,21 @@ export const validateNoteCreation = validate(
         "string.empty": "Tag cannot be empty",
         "string.max": "Tag cannot exceed 50 characters",
       })
-    ).max(10).required().messages({
+    ).max(10).optional().messages({
       "array.max": "Cannot have more than 10 tags",
-      "any.required": "At least one tag is required",
     }),
     isPrivate: Joi.boolean().default(false),
+    shareWith: Joi.array().items(
+      Joi.object({
+        userId: uuidSchema,
+        permission: Joi.string().valid(...Object.values(SharePermission)).required().messages({
+          "any.only": `Permission must be one of: ${Object.values(SharePermission).join(", ")}`,
+          "any.required": "Permission is required",
+        }),
+      })
+    ).max(50).optional().messages({
+      "array.max": "Cannot share with more than 50 users",
+    }),
   }),
   "body"
 )
