@@ -120,6 +120,13 @@ export class SystemSettings
         description: "Enable/disable segmentation module",
         isPublic: true,
       },
+      {
+        key: "features.sage_enabled",
+        value: false,
+        category: "features",
+        description: "Enable/disable Sage integration module",
+        isPublic: true,
+      },
     ]
 
     // Execute all findOrCreate operations in parallel for better performance

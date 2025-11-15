@@ -7,6 +7,7 @@ export interface FeatureFlags {
   tasks_enabled: boolean
   contacts_enabled: boolean
   segmentation_enabled: boolean
+  sage_enabled: boolean
 }
 
 export interface SystemSettings {
@@ -24,6 +25,7 @@ export const useSettingsStore = defineStore("settings", {
       tasks_enabled: true,
       contacts_enabled: true,
       segmentation_enabled: true,
+      sage_enabled: false,
     } as FeatureFlags,
     allSettings: [] as SystemSettings[],
     loading: false,
@@ -36,6 +38,7 @@ export const useSettingsStore = defineStore("settings", {
     isTasksEnabled: (state) => state.featureFlags.tasks_enabled,
     isContactsEnabled: (state) => state.featureFlags.contacts_enabled,
     isSegmentationEnabled: (state) => state.featureFlags.segmentation_enabled,
+    isSageEnabled: (state) => state.featureFlags.sage_enabled,
     isBillingEnabled: (state) =>
       state.featureFlags.quotes_enabled || state.featureFlags.invoices_enabled,
   },
@@ -72,6 +75,7 @@ export const useSettingsStore = defineStore("settings", {
             tasks_enabled: data.features.tasks_enabled ?? true,
             contacts_enabled: data.features.contacts_enabled ?? true,
             segmentation_enabled: data.features.segmentation_enabled ?? true,
+            sage_enabled: data.features.sage_enabled ?? false,
           }
         } else {
           console.warn("No features object in settings response, using defaults")
