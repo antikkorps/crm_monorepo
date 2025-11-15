@@ -71,7 +71,13 @@
             <template #item.status="{ item }">
               <v-chip :color="getStatusColor(item.status)" size="small">{{ getStatusLabel(item.status) }}</v-chip>
             </template>
-            <template #item.validUntil="{ item }">{{ formatDate(item.validUntil) }}</template>
+            <template #item.validUntil="{ item }">
+              <QuoteExpiryBadge
+                :valid-until="item.validUntil"
+                :status="item.status"
+                :days-until-expiry="item.daysUntilExpiry"
+              />
+            </template>
             <template #item.actions="{ item }">
               <div class="d-flex gap-1">
                 <v-btn icon="mdi-eye" variant="text" size="small" @click="viewQuote(item)" title="Voir"></v-btn>
@@ -113,6 +119,7 @@
 import type { Quote, QuoteStatus } from "@medical-crm/shared"
 import { onMounted, ref } from "vue"
 import QuoteBuilder from "@/components/billing/QuoteBuilder.vue"
+import QuoteExpiryBadge from "@/components/quotes/QuoteExpiryBadge.vue"
 import { quotesApi } from "@/services/api"
 import AppLayout from "@/components/layout/AppLayout.vue"
 import { TableSkeleton } from "@/components/skeletons"
