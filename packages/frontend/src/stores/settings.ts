@@ -7,6 +7,7 @@ export interface FeatureFlags {
   tasks_enabled: boolean
   contacts_enabled: boolean
   segmentation_enabled: boolean
+  sage_enabled: boolean
 }
 
 export interface SystemSettings {
@@ -14,6 +15,13 @@ export interface SystemSettings {
   value: any
   category: string
   isPublic: boolean
+}
+
+// API Response type
+interface SettingsApiResponse {
+  success: boolean
+  data: SystemSettings[]
+  count?: number
 }
 
 export const useSettingsStore = defineStore("settings", {
@@ -24,6 +32,7 @@ export const useSettingsStore = defineStore("settings", {
       tasks_enabled: true,
       contacts_enabled: true,
       segmentation_enabled: true,
+      sage_enabled: false,
     } as FeatureFlags,
     allSettings: [] as SystemSettings[],
     loading: false,
@@ -36,6 +45,7 @@ export const useSettingsStore = defineStore("settings", {
     isTasksEnabled: (state) => state.featureFlags.tasks_enabled,
     isContactsEnabled: (state) => state.featureFlags.contacts_enabled,
     isSegmentationEnabled: (state) => state.featureFlags.segmentation_enabled,
+    isSageEnabled: (state) => state.featureFlags.sage_enabled,
     isBillingEnabled: (state) =>
       state.featureFlags.quotes_enabled || state.featureFlags.invoices_enabled,
   },
@@ -56,10 +66,11 @@ export const useSettingsStore = defineStore("settings", {
           return
         }
 
-        const data = response.data
+        const typedResponse = response as SettingsApiResponse
+        const data = typedResponse.data
 
-        // Check if data exists and is an object
-        if (!data || typeof data !== 'object') {
+        // Check if data exists and is an array
+        if (!Array.isArray(data)) {
           console.error("Settings API returned invalid or null data")
           return
         }
@@ -72,6 +83,7 @@ export const useSettingsStore = defineStore("settings", {
             tasks_enabled: data.features.tasks_enabled ?? true,
             contacts_enabled: data.features.contacts_enabled ?? true,
             segmentation_enabled: data.features.segmentation_enabled ?? true,
+            sage_enabled: data.features.sage_enabled ?? false,
           }
         } else {
           console.warn("No features object in settings response, using defaults")
@@ -93,19 +105,20 @@ export const useSettingsStore = defineStore("settings", {
       try {
         this.loading = true
         const response = await settingsApi.getAll()
+        const typedResponse = response as SettingsApiResponse
 
         // Validate response structure
-        if (!response || typeof response !== 'object' || !response.data) {
+        if (!typedResponse || !typedResponse.data) {
           console.error("Invalid response structure from settings API")
           throw new Error("Invalid response from settings API")
         }
 
-        if (!Array.isArray(response.data)) {
+        if (!Array.isArray(typedResponse.data)) {
           console.error("Settings API returned non-array data")
           throw new Error("Expected array of settings")
         }
 
-        this.allSettings = response.data
+        this.allSettings = typedResponse.data
       } catch (error) {
         console.error("Failed to load all settings:", error)
         throw error

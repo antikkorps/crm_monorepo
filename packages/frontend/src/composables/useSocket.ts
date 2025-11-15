@@ -1,6 +1,6 @@
 import { useAuthStore } from "@/stores/auth"
 import { io, type Socket } from "socket.io-client"
-import { onMounted, onUnmounted, ref, watch } from "vue"
+import { onMounted, onUnmounted, ref, watch, type Ref } from "vue"
 
 export interface SocketNotification {
   type: string
@@ -9,7 +9,16 @@ export interface SocketNotification {
   timestamp: Date
 }
 
-export function useSocket() {
+export interface UseSocketReturn {
+  socket: Ref<any>
+  isConnected: Ref<boolean>
+  isConnecting: Ref<boolean>
+  connect: () => void
+  disconnect: () => void
+  emit: (event: string, data?: any) => boolean
+}
+
+export function useSocket(): UseSocketReturn {
   const authStore = useAuthStore()
   const socket = ref<Socket | null>(null)
   const isConnected = ref(false)

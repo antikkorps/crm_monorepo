@@ -154,6 +154,13 @@ const features = [
     icon: "mdi-filter-variant",
     color: "teal",
   },
+  {
+    key: "sage_enabled",
+    title: "Intégration Sage",
+    description: "Activer la synchronisation avec Sage pour la comptabilité",
+    icon: "mdi-cloud-sync",
+    color: "indigo",
+  },
 ]
 
 // Component state

@@ -1,6 +1,6 @@
-import { describe, it, expect, beforeEach, jest } from '@jest/globals'
+import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { Context, Next } from '../../types/koa'
-import { 
+import {
   collaborationErrorHandler,
   addCollaborationErrorContext,
   createCollaborationError,
@@ -14,8 +14,8 @@ describe('Collaboration Error Handling', () => {
   let mockNext: Next
 
   beforeEach(() => {
-    jest.clearAllMocks()
-    
+    vi.clearAllMocks()
+
     mockCtx = {
       method: 'POST',
       url: '/api/notes',
@@ -25,11 +25,11 @@ describe('Collaboration Error Handling', () => {
         user: { id: 'user-123', role: 'user', teamId: 'team-123' },
         requestId: 'req-123'
       },
-      get: jest.fn().mockReturnValue('test-user-agent'),
+      get: vi.fn().mockReturnValue('test-user-agent'),
       ip: '192.168.1.1'
     }
-    
-    mockNext = jest.fn()
+
+    mockNext = vi.fn()
   })
 
   describe('createCollaborationError', () => {

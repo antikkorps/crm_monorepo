@@ -160,13 +160,4 @@ DigiformaContact.init(
   }
 )
 
-// Define associations
-DigiformaContact.belongsTo(ContactPerson, {
-  foreignKey: 'contactPersonId',
-  as: 'contactPerson',
-})
-
-DigiformaContact.belongsTo(DigiformaCompany, {
-  foreignKey: 'digiformaCompanyId',
-  as: 'digiformaCompany',
-})
+// Note: Associations are defined in models/index.ts to avoid circular dependencies

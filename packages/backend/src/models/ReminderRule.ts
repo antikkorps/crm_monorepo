@@ -287,15 +287,6 @@ ReminderRule.init(
   }
 )
 
-// Define associations
-ReminderRule.belongsTo(User, {
-  foreignKey: "createdBy",
-  as: "creator",
-})
-
-ReminderRule.belongsTo(User, {
-  foreignKey: "updatedBy",
-  as: "updater",
-})
+// Note: Associations are defined in models/index.ts to avoid circular dependencies
 
 export default ReminderRule

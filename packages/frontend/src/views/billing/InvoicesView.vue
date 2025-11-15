@@ -286,9 +286,16 @@ const loadStatistics = async () => {
 }
 
 const onTableUpdate = (options: any) => {
+  // Only reload if pagination actually changed
+  const pageChanged = pagination.value.currentPage !== options.page
+  const rowsPerPageChanged = pagination.value.rowsPerPage !== options.itemsPerPage
+
   pagination.value.currentPage = options.page
   pagination.value.rowsPerPage = options.itemsPerPage
-  loadInvoices()
+
+  if (pageChanged || rowsPerPageChanged) {
+    loadInvoices()
+  }
 }
 
 const clearFilters = () => {

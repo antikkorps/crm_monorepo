@@ -285,18 +285,4 @@ DigiformaInvoice.init(
   }
 )
 
-// Define associations
-DigiformaInvoice.belongsTo(MedicalInstitution, {
-  foreignKey: 'institutionId',
-  as: 'institution',
-})
-
-DigiformaInvoice.belongsTo(DigiformaCompany, {
-  foreignKey: 'digiformaCompanyId',
-  as: 'digiformaCompany',
-})
-
-DigiformaInvoice.belongsTo(DigiformaQuote, {
-  foreignKey: 'digiformaQuoteId',
-  as: 'digiformaQuote',
-})
+// Note: Associations are defined in models/index.ts to avoid circular dependencies

@@ -17,7 +17,9 @@ import { NoteShare } from "./NoteShare"
 import { Payment } from "./Payment"
 import { Quote } from "./Quote"
 import { QuoteLine } from "./QuoteLine"
+import { QuoteReminder } from "./QuoteReminder"
 import { Reminder } from "./Reminder"
+import { ReminderTemplate } from "./ReminderTemplate"
 import { ReminderRule } from "./ReminderRule"
 import { ReminderNotificationLog } from "./ReminderNotificationLog"
 import { Segment } from "./Segment"
@@ -160,11 +162,43 @@ Quote.hasMany(QuoteLine, {
   onDelete: "CASCADE",
 })
 
+Quote.hasMany(QuoteReminder, {
+  foreignKey: "quoteId",
+  as: "reminders",
+  onDelete: "CASCADE",
+})
+
 // QuoteLine associations
 QuoteLine.belongsTo(Quote, {
   foreignKey: "quoteId",
   as: "quote",
   onDelete: "CASCADE",
+})
+
+// QuoteReminder associations
+QuoteReminder.belongsTo(Quote, {
+  foreignKey: "quoteId",
+  as: "quote",
+  onDelete: "CASCADE",
+})
+
+QuoteReminder.belongsTo(User, {
+  foreignKey: "sentByUserId",
+  as: "sentBy",
+  onDelete: "SET NULL",
+})
+
+// ReminderTemplate associations
+ReminderTemplate.belongsTo(Team, {
+  foreignKey: "teamId",
+  as: "team",
+  onDelete: "CASCADE",
+})
+
+ReminderTemplate.belongsTo(User, {
+  foreignKey: "createdBy",
+  as: "creator",
+  onDelete: "SET NULL",
 })
 
 // User quote associations
@@ -650,6 +684,123 @@ User.hasMany(ReminderNotificationLog, {
   onDelete: "CASCADE",
 })
 
+// ReminderRule associations
+ReminderRule.belongsTo(User, {
+  foreignKey: "createdBy",
+  as: "creator",
+  onDelete: "RESTRICT",
+})
+
+ReminderRule.belongsTo(User, {
+  foreignKey: "updatedBy",
+  as: "updater",
+  onDelete: "SET NULL",
+})
+
+ReminderRule.belongsTo(Team, {
+  foreignKey: "teamId",
+  as: "team",
+  onDelete: "SET NULL",
+})
+
+// Digiforma associations
+DigiformaCompany.belongsTo(MedicalInstitution, {
+  foreignKey: 'institutionId',
+  as: 'institution',
+  onDelete: 'SET NULL',
+})
+
+DigiformaContact.belongsTo(ContactPerson, {
+  foreignKey: 'contactPersonId',
+  as: 'contactPerson',
+  onDelete: 'SET NULL',
+})
+
+DigiformaContact.belongsTo(DigiformaCompany, {
+  foreignKey: 'digiformaCompanyId',
+  as: 'digiformaCompany',
+  onDelete: 'SET NULL',
+})
+
+DigiformaQuote.belongsTo(MedicalInstitution, {
+  foreignKey: 'institutionId',
+  as: 'institution',
+  onDelete: 'SET NULL',
+})
+
+DigiformaQuote.belongsTo(DigiformaCompany, {
+  foreignKey: 'digiformaCompanyId',
+  as: 'digiformaCompany',
+  onDelete: 'SET NULL',
+})
+
+DigiformaInvoice.belongsTo(MedicalInstitution, {
+  foreignKey: 'institutionId',
+  as: 'institution',
+  onDelete: 'SET NULL',
+})
+
+DigiformaInvoice.belongsTo(DigiformaCompany, {
+  foreignKey: 'digiformaCompanyId',
+  as: 'digiformaCompany',
+  onDelete: 'SET NULL',
+})
+
+DigiformaInvoice.belongsTo(DigiformaQuote, {
+  foreignKey: 'digiformaQuoteId',
+  as: 'digiformaQuote',
+  onDelete: 'SET NULL',
+})
+
+// Reverse associations for Digiforma
+MedicalInstitution.hasMany(DigiformaCompany, {
+  foreignKey: 'institutionId',
+  as: 'digiformaCompanies',
+  onDelete: 'SET NULL',
+})
+
+MedicalInstitution.hasMany(DigiformaQuote, {
+  foreignKey: 'institutionId',
+  as: 'digiformaQuotes',
+  onDelete: 'SET NULL',
+})
+
+MedicalInstitution.hasMany(DigiformaInvoice, {
+  foreignKey: 'institutionId',
+  as: 'digiformaInvoices',
+  onDelete: 'SET NULL',
+})
+
+ContactPerson.hasMany(DigiformaContact, {
+  foreignKey: 'contactPersonId',
+  as: 'digiformaContacts',
+  onDelete: 'SET NULL',
+})
+
+DigiformaCompany.hasMany(DigiformaContact, {
+  foreignKey: 'digiformaCompanyId',
+  as: 'digiformaContacts',
+  onDelete: 'SET NULL',
+})
+
+DigiformaCompany.hasMany(DigiformaQuote, {
+  foreignKey: 'digiformaCompanyId',
+  as: 'digiformaQuotes',
+  onDelete: 'SET NULL',
+})
+
+DigiformaCompany.hasMany(DigiformaInvoice, {
+  foreignKey: 'digiformaCompanyId',
+  as: 'digiformaInvoices',
+  onDelete: 'SET NULL',
+})
+
+DigiformaQuote.hasMany(DigiformaInvoice, {
+  foreignKey: 'digiformaQuoteId',
+  as: 'digiformaInvoices',
+  onDelete: 'SET NULL',
+})
+
 // Export all models
 export {
   Call,
@@ -670,8 +821,10 @@ export {
   Payment,
   Quote,
   QuoteLine,
+  QuoteReminder,
   Reminder,
   ReminderRule,
+  ReminderTemplate,
   ReminderNotificationLog,
   Segment,
   Task,
@@ -701,6 +854,7 @@ export default {
   Task,
   Quote,
   QuoteLine,
+  QuoteReminder,
   Invoice,
   InvoiceLine,
   Payment,
@@ -716,6 +870,7 @@ export default {
   Reminder,
   ReminderRule,
   ReminderNotificationLog,
+  ReminderTemplate,
   Segment,
   Webhook,
   WebhookLog,

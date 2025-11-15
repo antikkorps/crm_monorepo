@@ -1,6 +1,7 @@
 import { config } from '@vue/test-utils'
 import { createVuetify } from 'vuetify'
 import { createI18n } from 'vue-i18n'
+import { vi } from 'vitest'
 
 // Mock global window methods that might be used
 Object.defineProperty(window, 'confirm', {
@@ -13,25 +14,24 @@ Object.defineProperty(window, 'alert', {
 
 // Mock ResizeObserver
 global.ResizeObserver = class ResizeObserver {
-  constructor(cb: any) {
-    this.cb = cb
-  }
   observe() {}
   unobserve() {}
   disconnect() {}
-  private cb: any
 }
 
 // Mock IntersectionObserver
 global.IntersectionObserver = class IntersectionObserver {
-  constructor(cb: any) {
-    this.cb = cb
-  }
+  constructor(_callback: IntersectionObserverCallback, _options?: IntersectionObserverInit) {}
   observe() {}
   unobserve() {}
   disconnect() {}
-  private cb: any
-}
+  takeRecords(): IntersectionObserverEntry[] {
+    return []
+  }
+  root: Element | Document | null = null
+  rootMargin: string = ''
+  thresholds: ReadonlyArray<number> = []
+} as any
 
 // Configure Vue Test Utils global plugins
 config.global.plugins = [
