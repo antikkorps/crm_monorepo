@@ -1,6 +1,6 @@
-import { describe, it, expect, beforeEach } from '@jest/globals'
+import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { Context, Next } from '../../types/koa'
-import { 
+import {
   validateNoteCreation,
   validateNoteUpdate,
   validateMeetingCreation,
@@ -18,7 +18,7 @@ describe('Collaboration Validation Middleware', () => {
       query: {},
       params: {},
     }
-    mockNext = jest.fn()
+    mockNext = vi.fn()
   })
 
   describe('Note Validation', () => {

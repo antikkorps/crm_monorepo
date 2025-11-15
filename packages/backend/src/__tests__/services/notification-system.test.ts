@@ -1,11 +1,11 @@
-import { describe, it, expect, beforeEach, jest } from '@jest/globals'
+import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { NotificationService, NotificationType, NotificationPriority } from '../../services/NotificationService'
 import { ReminderNotificationService } from '../../services/ReminderNotificationService'
 import { MeetingNotificationService } from '../../services/MeetingNotificationService'
 
 describe('Notification System Integration', () => {
   beforeEach(() => {
-    jest.clearAllMocks()
+    vi.clearAllMocks()
   })
 
   describe('NotificationService', () => {

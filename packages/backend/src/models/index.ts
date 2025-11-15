@@ -650,6 +650,123 @@ User.hasMany(ReminderNotificationLog, {
   onDelete: "CASCADE",
 })
 
+// ReminderRule associations
+ReminderRule.belongsTo(User, {
+  foreignKey: "createdBy",
+  as: "creator",
+  onDelete: "RESTRICT",
+})
+
+ReminderRule.belongsTo(User, {
+  foreignKey: "updatedBy",
+  as: "updater",
+  onDelete: "SET NULL",
+})
+
+ReminderRule.belongsTo(Team, {
+  foreignKey: "teamId",
+  as: "team",
+  onDelete: "SET NULL",
+})
+
+// Digiforma associations
+DigiformaCompany.belongsTo(MedicalInstitution, {
+  foreignKey: 'institutionId',
+  as: 'institution',
+  onDelete: 'SET NULL',
+})
+
+DigiformaContact.belongsTo(ContactPerson, {
+  foreignKey: 'contactPersonId',
+  as: 'contactPerson',
+  onDelete: 'SET NULL',
+})
+
+DigiformaContact.belongsTo(DigiformaCompany, {
+  foreignKey: 'digiformaCompanyId',
+  as: 'digiformaCompany',
+  onDelete: 'SET NULL',
+})
+
+DigiformaQuote.belongsTo(MedicalInstitution, {
+  foreignKey: 'institutionId',
+  as: 'institution',
+  onDelete: 'SET NULL',
+})
+
+DigiformaQuote.belongsTo(DigiformaCompany, {
+  foreignKey: 'digiformaCompanyId',
+  as: 'digiformaCompany',
+  onDelete: 'SET NULL',
+})
+
+DigiformaInvoice.belongsTo(MedicalInstitution, {
+  foreignKey: 'institutionId',
+  as: 'institution',
+  onDelete: 'SET NULL',
+})
+
+DigiformaInvoice.belongsTo(DigiformaCompany, {
+  foreignKey: 'digiformaCompanyId',
+  as: 'digiformaCompany',
+  onDelete: 'SET NULL',
+})
+
+DigiformaInvoice.belongsTo(DigiformaQuote, {
+  foreignKey: 'digiformaQuoteId',
+  as: 'digiformaQuote',
+  onDelete: 'SET NULL',
+})
+
+// Reverse associations for Digiforma
+MedicalInstitution.hasMany(DigiformaCompany, {
+  foreignKey: 'institutionId',
+  as: 'digiformaCompanies',
+  onDelete: 'SET NULL',
+})
+
+MedicalInstitution.hasMany(DigiformaQuote, {
+  foreignKey: 'institutionId',
+  as: 'digiformaQuotes',
+  onDelete: 'SET NULL',
+})
+
+MedicalInstitution.hasMany(DigiformaInvoice, {
+  foreignKey: 'institutionId',
+  as: 'digiformaInvoices',
+  onDelete: 'SET NULL',
+})
+
+ContactPerson.hasMany(DigiformaContact, {
+  foreignKey: 'contactPersonId',
+  as: 'digiformaContacts',
+  onDelete: 'SET NULL',
+})
+
+DigiformaCompany.hasMany(DigiformaContact, {
+  foreignKey: 'digiformaCompanyId',
+  as: 'digiformaContacts',
+  onDelete: 'SET NULL',
+})
+
+DigiformaCompany.hasMany(DigiformaQuote, {
+  foreignKey: 'digiformaCompanyId',
+  as: 'digiformaQuotes',
+  onDelete: 'SET NULL',
+})
+
+DigiformaCompany.hasMany(DigiformaInvoice, {
+  foreignKey: 'digiformaCompanyId',
+  as: 'digiformaInvoices',
+  onDelete: 'SET NULL',
+})
+
+DigiformaQuote.hasMany(DigiformaInvoice, {
+  foreignKey: 'digiformaQuoteId',
+  as: 'digiformaInvoices',
+  onDelete: 'SET NULL',
+})
+
 // Export all models
 export {
   Call,

@@ -1,27 +1,28 @@
+import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest'
 import * as fs from "fs/promises"
 import * as path from "path"
 import { DefaultPluginManager } from "../../services/PluginManager"
 import { PluginCategory, PluginStatus } from "../../types/plugin"
 
 // Mock the logger
-jest.mock("../../utils/logger", () => ({
+vi.mock("../../utils/logger", () => ({
   logger: {
-    info: jest.fn(),
-    error: jest.fn(),
-    warn: jest.fn(),
-    debug: jest.fn(),
-    child: jest.fn(() => ({
-      info: jest.fn(),
-      error: jest.fn(),
-      warn: jest.fn(),
-      debug: jest.fn(),
+    info: vi.fn(),
+    error: vi.fn(),
+    warn: vi.fn(),
+    debug: vi.fn(),
+    child: vi.fn(() => ({
+      info: vi.fn(),
+      error: vi.fn(),
+      warn: vi.fn(),
+      debug: vi.fn(),
     })),
   },
 }))
 
 // Mock fs promises
-jest.mock("fs/promises")
-const mockFs = fs as jest.Mocked<typeof fs>
+vi.mock("fs/promises")
+const mockFs = fs as any
 
 describe("PluginManager", () => {
   let pluginManager: DefaultPluginManager
@@ -30,7 +31,7 @@ describe("PluginManager", () => {
   beforeEach(() => {
     testPluginDir = "/test/plugins"
     pluginManager = new DefaultPluginManager(testPluginDir)
-    jest.clearAllMocks()
+    vi.clearAllMocks()
   })
 
   afterEach(async () => {
@@ -116,13 +117,13 @@ describe("PluginManager", () => {
         category: PluginCategory.UTILITY,
         enabled: true,
       },
-      onLoad: jest.fn(),
-      onEnable: jest.fn(),
+      onLoad: vi.fn(),
+      onEnable: vi.fn(),
     }
 
     beforeEach(() => {
       // Mock plugin loading
-      jest.doMock(path.join(testPluginDir, "test-plugin", "index.js"), () => mockPlugin, {
+      vi.doMock(path.join(testPluginDir, "test-plugin", "index.js"), () => mockPlugin, {
         virtual: true,
       })
     })
@@ -176,9 +177,9 @@ describe("PluginManager", () => {
         enabled: true,
       },
       onLoad: jest.fn(),
-      onUnload: jest.fn(),
-      onEnable: jest.fn(),
-      onDisable: jest.fn(),
+      onUnload: vi.fn(),
+      onEnable: vi.fn(),
+      onDisable: vi.fn(),
     }
 
     beforeEach(async () => {
@@ -187,7 +188,7 @@ describe("PluginManager", () => {
       mockFs.readFile.mockResolvedValue(JSON.stringify(mockPlugin.manifest))
       mockFs.access.mockResolvedValue(undefined)
 
-      jest.doMock(
+      vi.doMock(
         path.join(testPluginDir, "lifecycle-plugin", "index.js"),
         () => mockPlugin,
         { virtual: true }
@@ -241,8 +242,8 @@ describe("PluginManager", () => {
         enabled: true,
         defaultConfig: { setting1: "value1" },
       },
-      validateConfig: jest.fn().mockResolvedValue(true),
-      onConfigChange: jest.fn(),
+      validateConfig: vi.fn().mockResolvedValue(true),
+      onConfigChange: vi.fn(),
     }
 
     beforeEach(async () => {
@@ -250,7 +251,7 @@ describe("PluginManager", () => {
       mockFs.readFile.mockResolvedValue(JSON.stringify(mockPlugin.manifest))
       mockFs.access.mockResolvedValue(undefined)
 
-      jest.doMock(
+      vi.doMock(
         path.join(testPluginDir, "config-plugin", "index.js"),
         () => mockPlugin,
         { virtual: true }
@@ -296,7 +297,7 @@ describe("PluginManager", () => {
         category: PluginCategory.UTILITY,
         enabled: true,
       },
-      healthCheck: jest.fn().mockResolvedValue({
+      healthCheck: vi.fn().mockResolvedValue({
         status: "healthy",
         message: "All good",
       }),
@@ -307,7 +308,7 @@ describe("PluginManager", () => {
       mockFs.readFile.mockResolvedValue(JSON.stringify(mockPlugin.manifest))
       mockFs.access.mockResolvedValue(undefined)
 
-      jest.doMock(
+      vi.doMock(
         path.join(testPluginDir, "health-plugin", "index.js"),
         () => mockPlugin,
         { virtual: true }
@@ -345,7 +346,7 @@ describe("PluginManager", () => {
         },
       }
 
-      jest.doMock(
+      vi.doMock(
         path.join(testPluginDir, "simple-plugin", "index.js"),
         () => simplePlugin,
         { virtual: true }
@@ -364,8 +365,8 @@ describe("PluginManager", () => {
 
   describe("hook system", () => {
     it("should execute hooks", async () => {
-      const callback1 = jest.fn()
-      const callback2 = jest.fn()
+      const callback1 = vi.fn()
+      const callback2 = vi.fn()
 
       pluginManager.hooks.register("test:event", callback1)
       pluginManager.hooks.register("test:event", callback2)
@@ -377,8 +378,8 @@ describe("PluginManager", () => {
     })
 
     it("should execute first hook only", async () => {
-      const callback1 = jest.fn().mockReturnValue("result1")
-      const callback2 = jest.fn().mockReturnValue("result2")
+      const callback1 = vi.fn().mockReturnValue("result1")
+      const callback2 = vi.fn().mockReturnValue("result2")
 
       pluginManager.hooks.register("test:event", callback1)
       pluginManager.hooks.register("test:event", callback2)
@@ -391,10 +392,10 @@ describe("PluginManager", () => {
     })
 
     it("should handle hook errors gracefully", async () => {
-      const errorCallback = jest.fn().mockImplementation(() => {
+      const errorCallback = vi.fn().mockImplementation(() => {
         throw new Error("Hook error")
       })
-      const successCallback = jest.fn()
+      const successCallback = vi.fn()
 
       pluginManager.hooks.register("test:event", errorCallback)
       pluginManager.hooks.register("test:event", successCallback)
@@ -429,7 +430,7 @@ describe("PluginManager", () => {
           category: PluginCategory.UTILITY,
           enabled: true,
         },
-        onDisable: jest.fn(),
+        onDisable: vi.fn(),
       }
 
       mockFs.stat.mockResolvedValue({ isDirectory: () => true } as any)
@@ -437,7 +438,7 @@ describe("PluginManager", () => {
       mockFs.access.mockResolvedValue(undefined)
       mockFs.readdir.mockResolvedValue([])
 
-      jest.doMock(
+      vi.doMock(
         path.join(testPluginDir, "shutdown-plugin", "index.js"),
         () => mockPlugin,
         { virtual: true }

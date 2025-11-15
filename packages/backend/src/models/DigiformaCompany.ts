@@ -168,8 +168,4 @@ DigiformaCompany.init(
   }
 )
 
-// Define associations
-DigiformaCompany.belongsTo(MedicalInstitution, {
-  foreignKey: 'institutionId',
-  as: 'institution',
-})
+// Note: Associations are defined in models/index.ts to avoid circular dependencies
