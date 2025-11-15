@@ -106,7 +106,10 @@ export class User
 
   // Static methods
   public static async hashPassword(password: string): Promise<string> {
-    const saltRounds = 10
+    // 2024+ security standard: 12 rounds minimum for bcrypt
+    // Provides strong protection against brute force attacks
+    // (~0.3s per hash on modern hardware)
+    const saltRounds = 12
     return bcrypt.hash(password, saltRounds)
   }
 

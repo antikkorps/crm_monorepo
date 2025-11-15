@@ -623,17 +623,40 @@ export class DocumentTemplateService {
   }
 
   private cleanHtmlForPreview(html: string): string {
-    // Remove any script tags
-    html = html.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+    // SECURITY: Comprehensive HTML sanitization for preview
+    // Note: For production, consider using a dedicated library like 'sanitize-html'
 
-    // Remove any link tags that might reference external scripts
-    html = html.replace(/<link[^>]*href[^>]*\.js[^>]*>/gi, '')
+    // Remove all script tags (multiple passes to handle nested/malformed tags)
+    // Handles: <script>, <script >, <SCRIPT>, etc.
+    let previousHtml = ''
+    while (previousHtml !== html) {
+      previousHtml = html
+      html = html.replace(/<script[\s\S]*?<\/script>/gi, '')
+      html = html.replace(/<script[^>]*>/gi, '') // Remove unclosed script tags
+    }
 
-    // Remove any event handlers (onclick, onload, etc.)
-    html = html.replace(/\s+on\w+\s*=\s*["'][^"']*["']/gi, '')
+    // Remove any link tags that might reference external scripts or styles
+    html = html.replace(/<link[^>]*>/gi, '')
 
-    // Remove any potentially dangerous URL protocols
-    html = html.replace(/(javascript:|data:|vbscript:)/gi, '')
+    // Remove ALL event handlers (onclick, onload, onerror, etc.)
+    // Handles both quoted and unquoted attribute values
+    html = html.replace(/\s+on\w+\s*=\s*["'][^"']*["']/gi, '') // with quotes
+    html = html.replace(/\s+on\w+\s*=\s*[^\s>]*/gi, '') // without quotes
+
+    // Remove dangerous attributes
+    html = html.replace(/\s+javascript:/gi, '')
+    html = html.replace(/\s+data:/gi, '')
+    html = html.replace(/\s+vbscript:/gi, '')
+
+    // Remove style tags that could contain expressions
+    html = html.replace(/<style[\s\S]*?<\/style>/gi, '')
+
+    // Remove iframe, embed, object tags
+    html = html.replace(/<(iframe|embed|object)[\s\S]*?<\/\1>/gi, '')
+    html = html.replace(/<(iframe|embed|object)[^>]*>/gi, '')
+
+    // Remove meta refresh tags
+    html = html.replace(/<meta[^>]*http-equiv[^>]*>/gi, '')
 
     return html
   }

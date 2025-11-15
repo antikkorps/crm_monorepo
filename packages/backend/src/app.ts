@@ -60,32 +60,20 @@ export const createApp = (): Koa => {
     })
   )
 
-  // CORS configuration - simplified to allow all origins in development
+  // CORS configuration
+  // Development: Allow all origins for local testing
+  // Production: Only allow configured origin from environment
   app.use(
     cors({
       origin: config.env === 'development' ? '*' : config.cors.origin,
-      credentials: config.env !== 'development', // Only credentials in prod
+      credentials: config.env !== 'development', // Only enable credentials in production
       allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
       allowHeaders: ["Origin", "X-Requested-With", "Content-Type", "Accept", "Authorization", "X-Request-ID"],
       exposeHeaders: ["X-Request-ID"],
       maxAge: 86400, // 24 hours
+      // @koa/cors handles OPTIONS preflight requests automatically
     })
   )
-
-  // Additional CORS handling for preflight requests
-  app.use(async (ctx, next) => {
-    if (ctx.method === 'OPTIONS') {
-      ctx.set('Access-Control-Allow-Origin', '*')
-      ctx.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH')
-      ctx.set('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization, X-Request-ID')
-      ctx.status = 200
-      return
-    }
-
-    // Ensure CORS headers are set for all responses
-    ctx.set('Access-Control-Allow-Origin', '*')
-    await next()
-  })
 
   // Body parser with size limits
   app.use(
