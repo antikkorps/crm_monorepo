@@ -63,11 +63,14 @@ export class ExportService {
       }
 
       // Apply search query
+      // SECURITY: Use parameterized queries to prevent SQL injection
       if (options.searchQuery) {
-        const searchQuery = options.searchQuery.replace(/'/g, "''")
         whereClause[Op.or] = [
           { name: { [Op.iLike]: `%${options.searchQuery}%` } },
-          Sequelize.literal(`"address"->>'city' ILIKE '%${searchQuery}%'`),
+          Sequelize.where(
+            Sequelize.literal("\"address\"->>'city'"),
+            { [Op.iLike]: `%${options.searchQuery}%` }
+          ),
         ] as any
       }
 

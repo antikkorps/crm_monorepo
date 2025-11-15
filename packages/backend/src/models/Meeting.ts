@@ -358,30 +358,55 @@ export class Meeting
     }
 
     // Apply access control if userId is provided
+    // SECURITY: Use parameterized queries to prevent SQL injection
     if (filters.userId) {
+      const { MeetingParticipant } = await import("./MeetingParticipant")
+      const participantMeetings = await MeetingParticipant.findAll({
+        where: { userId: filters.userId },
+        attributes: ["meetingId"],
+      })
+      const participantMeetingIds = participantMeetings.map((p) => p.meetingId)
+
       whereClause[Op.and] = [
         whereClause,
         {
           [Op.or]: [
             { organizerId: filters.userId },
-            {
-              id: {
-                [Op.in]: sequelize.literal(`(
-                  SELECT meeting_id FROM meeting_participants WHERE user_id = '${filters.userId}'
-                )`),
-              },
-            },
+            participantMeetingIds.length > 0
+              ? {
+                  id: {
+                    [Op.in]: participantMeetingIds,
+                  },
+                }
+              : {
+                  id: {
+                    [Op.in]: [-1],
+                  },
+                },
           ],
         },
       ]
     }
 
     // Filter by participant
+    // SECURITY: Use parameterized queries to prevent SQL injection
     if (filters.participantId) {
-      whereClause.id = {
-        [Op.in]: sequelize.literal(`(
-          SELECT meeting_id FROM meeting_participants WHERE user_id = '${filters.participantId}'
-        )`),
+      const { MeetingParticipant } = await import("./MeetingParticipant")
+      const participantMeetings = await MeetingParticipant.findAll({
+        where: { userId: filters.participantId },
+        attributes: ["meetingId"],
+      })
+      const participantMeetingIds = participantMeetings.map((p) => p.meetingId)
+
+      if (participantMeetingIds.length > 0) {
+        whereClause.id = {
+          [Op.in]: participantMeetingIds,
+        }
+      } else {
+        // No participant meetings found, return no results
+        whereClause.id = {
+          [Op.in]: [-1], // Use a condition that returns no results
+        }
       }
     }
 

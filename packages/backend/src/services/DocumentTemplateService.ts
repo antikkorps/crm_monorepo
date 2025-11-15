@@ -2,6 +2,7 @@ import { existsSync } from "fs"
 import { readdir, stat, unlink, writeFile } from "fs/promises"
 import { File as KoaFile } from "koa-multer"
 import { join } from "path"
+import sanitizeHtml from "sanitize-html"
 import {
   DocumentTemplate,
   DocumentTemplateCreationAttributes,
@@ -623,19 +624,24 @@ export class DocumentTemplateService {
   }
 
   private cleanHtmlForPreview(html: string): string {
-    // Remove any script tags
-    html = html.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
-
-    // Remove any link tags that might reference external scripts
-    html = html.replace(/<link[^>]*href[^>]*\.js[^>]*>/gi, '')
-
-    // Remove any event handlers (onclick, onload, etc.)
-    html = html.replace(/\s+on\w+\s*=\s*["'][^"']*["']/gi, '')
-
-    // Remove any potentially dangerous URL protocols
-    html = html.replace(/(javascript:|data:|vbscript:)/gi, '')
-
-    return html
+    // SECURITY: Comprehensive HTML sanitization for preview using 'sanitize-html'
+    // For production, this uses a robust and well-maintained library.
+    // Allow a minimal set of safe tags and attributes, or restrict further if needed.
+    return sanitizeHtml(html, {
+      allowedTags: ['b', 'i', 'em', 'strong', 'u', 'p', 'br', 'ul', 'ol', 'li', 'span', 'div', 'table', 'tr', 'td', 'th', 'thead', 'tbody', 'tfoot', 'pre', 'code'],
+      allowedAttributes: {
+        a: ['href', 'name', 'target', 'rel'],
+        img: ['src', 'alt', 'title', 'width', 'height'],
+        span: ['style'],
+        div: ['style'],
+        '*': ['style']
+      },
+      allowedSchemes: ['http', 'https', 'mailto'],
+      allowProtocolRelative: false,
+      allowedIframeHostnames: [],
+      // Disallow all scripts, event handlers, style elements, iframes, embeds, objects, etc.
+      disallowedTagsMode: 'discard'
+    });
   }
 
   private getDefaultStyles(): string {

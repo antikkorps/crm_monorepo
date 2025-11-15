@@ -41,16 +41,17 @@ const envSchema = Joi.object({
   DB_SYNC_ON_START: Joi.boolean().truthy("true").truthy("1").falsy("false").falsy("0").default(false),
 
   // JWT configuration
+  // Minimum 32 characters for production secrets to prevent brute force attacks
   JWT_SECRET: Joi.string().when("NODE_ENV", {
     is: "test",
-    then: Joi.string().default("test-jwt-secret"),
-    otherwise: Joi.string().required(),
+    then: Joi.string().default("test-jwt-secret-must-be-32-chars-long!"),
+    otherwise: Joi.string().min(32).required(),
   }),
   JWT_EXPIRES_IN: Joi.string().default("15m"),
   JWT_REFRESH_SECRET: Joi.string().when("NODE_ENV", {
     is: "test",
-    then: Joi.string().default("test-refresh-secret"),
-    otherwise: Joi.string().required(),
+    then: Joi.string().default("test-refresh-secret-must-be-32-chars!"),
+    otherwise: Joi.string().min(32).required(),
   }),
   JWT_REFRESH_EXPIRES_IN: Joi.string().default("7d"),
 

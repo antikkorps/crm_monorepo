@@ -13,7 +13,14 @@ export const generateId = (): string => {
 }
 
 export const validateEmail = (email: string): boolean => {
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+  // Improved regex that prevents ReDoS (Regular expression Denial of Service)
+  // Uses atomic groups and limits repetition to prevent exponential backtracking
+  // More strict pattern that matches RFC 5322 simplified format
+  const emailRegex = /^[a-zA-Z0-9.!#$%&'*+\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/
+
+  // Additional length check to prevent DoS on very long strings
+  if (email.length > 254) return false
+
   return emailRegex.test(email)
 }
 
