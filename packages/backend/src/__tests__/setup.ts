@@ -30,8 +30,8 @@ beforeAll(async () => {
     // Import all models to ensure they're registered
     await import("../models")
 
-    // Sync database schema without force to preserve test data
-    await sequelize.sync({ force: false })
+    // Sync database schema with force to ensure a clean state for each test run
+    await sequelize.sync({ force: true })
 
     isInitialized = true
     console.log("Test database initialized successfully")
