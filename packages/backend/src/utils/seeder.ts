@@ -14,36 +14,8 @@ export class DatabaseSeeder {
         return
       }
 
-      // Create admin user
-      const adminId = uuidv4()
-      const adminPasswordHash = await bcrypt.hash("admin123", 10)
-
-      await sequelize.query(
-        `
-        INSERT INTO users (
-          id, email, password_hash, first_name, last_name, role,
-          avatar_seed, is_active, created_at, updated_at
-        ) VALUES (
-          :id, :email, :password_hash, :first_name, :last_name, :role,
-          :avatar_seed, :is_active, NOW(), NOW()
-        )
-      `,
-        {
-          replacements: {
-            id: adminId,
-            email: "admin@medical-crm.com",
-            password_hash: adminPasswordHash,
-            first_name: "Admin",
-            last_name: "User",
-            role: "admin",
-            avatar_seed: "admin-user",
-            is_active: true,
-          },
-        }
-      )
-
       // Create team admin user
-      const teamAdminId = uuidv4()
+      const teamsuper_adminId = uuidv4()
       const teamAdminPasswordHash = await bcrypt.hash("teamadmin123", 10)
 
       await sequelize.query(
@@ -58,7 +30,7 @@ export class DatabaseSeeder {
       `,
         {
           replacements: {
-            id: teamAdminId,
+            id: teamsuper_adminId,
             email: "teamadmin@medical-crm.com",
             password_hash: teamAdminPasswordHash,
             first_name: "Team",
@@ -263,7 +235,10 @@ export class DatabaseSeeder {
           email: "michael.brown@citymedical.com",
           phone: "+1-555-0201",
           position: "Senior Physician",
-          institutionId: institutions.length > 1 ? (institutions[1] as any).id : (institutions[0] as any).id,
+          institutionId:
+            institutions.length > 1
+              ? (institutions[1] as any).id
+              : (institutions[0] as any).id,
         },
         {
           id: uuidv4(),
@@ -272,7 +247,10 @@ export class DatabaseSeeder {
           email: "lisa.davis@citymedical.com",
           phone: "+1-555-0202",
           position: "Procurement Manager",
-          institutionId: institutions.length > 1 ? (institutions[1] as any).id : (institutions[0] as any).id,
+          institutionId:
+            institutions.length > 1
+              ? (institutions[1] as any).id
+              : (institutions[0] as any).id,
         },
       ]
 
@@ -305,7 +283,9 @@ export class DatabaseSeeder {
 
   static async seedReminderRules() {
     try {
-      const [rules] = await sequelize.query("SELECT COUNT(*) as count FROM reminder_rules")
+      const [rules] = await sequelize.query(
+        "SELECT COUNT(*) as count FROM reminder_rules"
+      )
       const ruleCount = Number.parseInt((rules[0] as any).count)
 
       if (ruleCount > 0) {
@@ -314,12 +294,12 @@ export class DatabaseSeeder {
       }
 
       // Get admin user for createdBy field
-      const [adminUsers] = await sequelize.query(
-        "SELECT id FROM users WHERE role = 'admin' LIMIT 1"
+      const [super_adminUsers] = await sequelize.query(
+        "SELECT id FROM users WHERE role = 'super_admin' LIMIT 1"
       )
-      const adminId = (adminUsers as any)[0]?.id
+      const super_adminId = (super_adminUsers as any)[0]?.id
 
-      if (!adminId) {
+      if (!super_adminId) {
         logger.warn("No admin user found, skipping reminder rule seeding")
         return
       }
@@ -340,7 +320,7 @@ export class DatabaseSeeder {
           auto_create_task: false,
           task_title_template: null,
           task_priority: "medium",
-          created_by: adminId,
+          created_by: super_adminId,
         },
         {
           entity_type: "task",
@@ -355,7 +335,7 @@ export class DatabaseSeeder {
           auto_create_task: false,
           task_title_template: null,
           task_priority: "high",
-          created_by: adminId,
+          created_by: super_adminId,
         },
         // Quote reminders
         {
@@ -365,13 +345,14 @@ export class DatabaseSeeder {
           days_after: 7,
           priority: "medium",
           title_template: "Quote Expired",
-          message_template: "Quote '{quoteNumber}' for {institutionName} expired {days} days ago.",
+          message_template:
+            "Quote '{quoteNumber}' for {institutionName} expired {days} days ago.",
           action_url_template: "/quotes/{id}",
           action_text_template: "View Quote",
           auto_create_task: true,
           task_title_template: "Follow up on expired quote {quoteNumber}",
           task_priority: "medium",
-          created_by: adminId,
+          created_by: super_adminId,
         },
         {
           entity_type: "quote",
@@ -380,13 +361,14 @@ export class DatabaseSeeder {
           days_after: 0,
           priority: "low",
           title_template: "Quote Expiring Soon",
-          message_template: "Quote '{quoteNumber}' for {institutionName} expires in {days} days.",
+          message_template:
+            "Quote '{quoteNumber}' for {institutionName} expires in {days} days.",
           action_url_template: "/quotes/{id}",
           action_text_template: "View Quote",
           auto_create_task: false,
           task_title_template: null,
           task_priority: "low",
-          created_by: adminId,
+          created_by: super_adminId,
         },
         // Invoice reminders
         {
@@ -396,13 +378,14 @@ export class DatabaseSeeder {
           days_after: 30,
           priority: "high",
           title_template: "Invoice Overdue",
-          message_template: "Invoice '{invoiceNumber}' for {amount}€ is {days} days overdue.",
+          message_template:
+            "Invoice '{invoiceNumber}' for {amount}€ is {days} days overdue.",
           action_url_template: "/invoices/{id}",
           action_text_template: "View Invoice",
           auto_create_task: true,
           task_title_template: "Follow up on unpaid invoice {invoiceNumber}",
           task_priority: "high",
-          created_by: adminId,
+          created_by: super_adminId,
         },
         {
           entity_type: "invoice",
@@ -411,13 +394,14 @@ export class DatabaseSeeder {
           days_after: 0,
           priority: "medium",
           title_template: "Invoice Due Soon",
-          message_template: "Invoice '{invoiceNumber}' for {amount}€ is due in {days} days.",
+          message_template:
+            "Invoice '{invoiceNumber}' for {amount}€ is due in {days} days.",
           action_url_template: "/invoices/{id}",
           action_text_template: "View Invoice",
           auto_create_task: false,
           task_title_template: null,
           task_priority: "medium",
-          created_by: adminId,
+          created_by: super_adminId,
         },
       ]
 

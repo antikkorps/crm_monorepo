@@ -55,6 +55,30 @@
 - Test structure: `describe`/`it` with `beforeAll`/`afterAll`
 - Cover success/error scenarios
 
+#### Test vs Code Modification Guidelines
+
+**General Rule**: Tests should document expected behavior - modify tests to match existing code, not the other way around.
+
+**When to modify TESTS (not code):**
+- Tests are outdated/obsolete and don't reflect current requirements
+- Tests are too brittle and depend on implementation details
+- Code behavior is correct but tests expect wrong format/structure
+
+**When to modify CODE (not tests):**
+- **Bugs and logical inconsistencies** discovered during testing
+- Example: Controller handles `shareWith` but validation rejects it → fix validation
+- Features are implemented but inaccessible due to missing validation/routes
+- Security vulnerabilities or performance issues
+- Code doesn't match documented specifications
+
+**Decision Process:**
+1. Test fails → Is the test correct or the code correct?
+2. If test is wrong → modify test
+3. If code has a bug/inconsistency → modify code
+4. If both are valid but incompatible → clarify specifications first
+
+**Key Principle**: Don't work around bugs in tests - fix the actual bugs!
+
 ### Security
 - Input validation/sanitization, CORS, helmet middleware
 - No secrets in code (use environment variables)

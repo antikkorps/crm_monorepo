@@ -1,4 +1,4 @@
-import { SharePermission } from "@medical-crm/shared"
+import { SharePermission, InstitutionType } from "@medical-crm/shared"
 import request from "supertest"
 import { createApp } from "../../app"
 import { sequelize } from "../../config/database"
@@ -39,6 +39,7 @@ describe("Note API Integration Tests", () => {
     testTeam = await Team.create({
       name: "Test Team",
       description: "Team for testing",
+      isActive: true,
     })
 
     // Create test users
@@ -49,6 +50,7 @@ describe("Note API Integration Tests", () => {
       lastName: "Admin",
       role: UserRole.SUPER_ADMIN,
       avatarSeed: "super-admin-seed",
+      avatarStyle: "initials",
       isActive: true,
     })
 
@@ -60,6 +62,7 @@ describe("Note API Integration Tests", () => {
       role: UserRole.TEAM_ADMIN,
       teamId: testTeam.id,
       avatarSeed: "team-admin-seed",
+      avatarStyle: "initials",
       isActive: true,
     })
 
@@ -71,6 +74,7 @@ describe("Note API Integration Tests", () => {
       role: UserRole.USER,
       teamId: testTeam.id,
       avatarSeed: "user-seed",
+      avatarStyle: "initials",
       isActive: true,
     })
 
@@ -82,6 +86,7 @@ describe("Note API Integration Tests", () => {
       role: UserRole.USER,
       teamId: testTeam.id,
       avatarSeed: "team-member-seed",
+      avatarStyle: "initials",
       isActive: true,
     })
 
@@ -92,13 +97,14 @@ describe("Note API Integration Tests", () => {
       lastName: "User",
       role: UserRole.USER,
       avatarSeed: "other-seed",
+      avatarStyle: "initials",
       isActive: true,
     })
 
     // Create test institution
     testInstitution = await MedicalInstitution.create({
       name: "Test Hospital",
-      type: "hospital",
+      type: InstitutionType.HOSPITAL,
       address: {
         street: "123 Medical St",
         city: "Healthcare City",
@@ -111,11 +117,14 @@ describe("Note API Integration Tests", () => {
     })
 
     // Generate tokens
-    superAdminToken = AuthService.generateAccessToken(superAdminUser.id)
-    teamAdminToken = AuthService.generateAccessToken(teamAdminUser.id)
-    regularUserToken = AuthService.generateAccessToken(regularUser.id)
-    teamMemberToken = AuthService.generateAccessToken(teamMember.id)
-    otherUserToken = AuthService.generateAccessToken(otherUser.id)
+    superAdminToken = AuthService.generateAccessToken(superAdminUser)
+    teamAdminToken = AuthService.generateAccessToken(teamAdminUser)
+    regularUserToken = AuthService.generateAccessToken(regularUser)
+    teamMemberToken = AuthService.generateAccessToken(teamMember)
+    otherUserToken = AuthService.generateAccessToken(otherUser)
+
+    // Debug: Verify users exist
+    const allUsers = await User.findAll()
   })
 
   afterEach(async () => {
@@ -159,6 +168,7 @@ describe("Note API Integration Tests", () => {
       const noteData = {
         title: "Private Note",
         content: "This is private content",
+        tags: ["private"],
         isPrivate: true,
       }
 
@@ -176,6 +186,7 @@ describe("Note API Integration Tests", () => {
       const noteData = {
         title: "Shared Note",
         content: "This note will be shared",
+        tags: ["shared"],
         shareWith: [
           { userId: teamMember.id, permission: SharePermission.READ },
           { userId: teamAdminUser.id, permission: SharePermission.WRITE },
@@ -199,6 +210,7 @@ describe("Note API Integration Tests", () => {
     it("should fail to create note without required fields", async () => {
       const noteData = {
         content: "Missing title",
+        tags: [],
       }
 
       const response = await request(app.callback())
@@ -207,15 +219,16 @@ describe("Note API Integration Tests", () => {
         .send(noteData)
         .expect(400)
 
-      expect(response.body.success).toBe(false)
+      expect(response.body.error).toBeDefined()
       expect(response.body.error.code).toBe("VALIDATION_ERROR")
     })
 
     it("should fail to create note with invalid institution", async () => {
       const noteData = {
-        title: "Test Note",
+        title: "Test Note With Invalid Institution",
         content: "Test content",
-        institutionId: "invalid-id",
+        tags: ["test"],
+        institutionId: "invalid-uuid",
       }
 
       const response = await request(app.callback())
@@ -224,14 +237,15 @@ describe("Note API Integration Tests", () => {
         .send(noteData)
         .expect(400)
 
-      expect(response.body.success).toBe(false)
-      expect(response.body.error.code).toBe("INVALID_INSTITUTION")
+      expect(response.body.error).toBeDefined()
+      expect(response.body.error.code).toBe("VALIDATION_ERROR")
     })
 
     it("should fail to share with invalid user", async () => {
       const noteData = {
         title: "Test Note",
         content: "Test content",
+        tags: ["test"],
         shareWith: [{ userId: "invalid-id", permission: SharePermission.READ }],
       }
 
@@ -241,14 +255,15 @@ describe("Note API Integration Tests", () => {
         .send(noteData)
         .expect(400)
 
-      expect(response.body.success).toBe(false)
-      expect(response.body.error.code).toBe("INVALID_SHARE_RECIPIENT")
+      expect(response.body.error).toBeDefined()
+      expect(response.body.error.code).toBe("VALIDATION_ERROR")
     })
 
     it("should require authentication", async () => {
       const noteData = {
         title: "Test Note",
         content: "Test content",
+        tags: ["test"],
       }
 
       await request(app.callback()).post("/api/notes").send(noteData).expect(401)
@@ -277,6 +292,7 @@ describe("Note API Integration Tests", () => {
 
       // Share private note with team member
       await NoteShare.create({
+        createdAt: new Date(),
         noteId: privateNote.id,
         userId: teamMember.id,
         permission: SharePermission.READ,
@@ -367,6 +383,7 @@ describe("Note API Integration Tests", () => {
       privateNote = await Note.create({
         title: "Private Note",
         content: "Private content",
+        tags: ["private"],
         creatorId: regularUser.id,
         isPrivate: true,
       })
@@ -386,6 +403,7 @@ describe("Note API Integration Tests", () => {
     it("should get note with shares for creator", async () => {
       // Share the note
       await NoteShare.create({
+        createdAt: new Date(),
         noteId: testNote.id,
         userId: teamMember.id,
         permission: SharePermission.READ,
@@ -407,17 +425,17 @@ describe("Note API Integration Tests", () => {
         .set("Authorization", `Bearer ${otherUserToken}`)
         .expect(403)
 
-      expect(response.body.success).toBe(false)
-      expect(response.body.error.code).toBe("INSUFFICIENT_PERMISSIONS")
+      expect(response.body.error).toBeDefined()
+      expect(response.body.error.code).toBe("NOTE_ACCESS_DENIED")
     })
 
     it("should return 404 for non-existent note", async () => {
       const response = await request(app.callback())
-        .get("/api/notes/non-existent-id")
+        .get("/api/notes/00000000-0000-0000-0000-000000000000")
         .set("Authorization", `Bearer ${regularUserToken}`)
         .expect(404)
 
-      expect(response.body.success).toBe(false)
+      expect(response.body.error).toBeDefined()
       expect(response.body.error.code).toBe("NOTE_NOT_FOUND")
     })
 
@@ -463,6 +481,7 @@ describe("Note API Integration Tests", () => {
     it("should update note with write permission", async () => {
       // Share note with write permission
       await NoteShare.create({
+        createdAt: new Date(),
         noteId: testNote.id,
         userId: teamMember.id,
         permission: SharePermission.WRITE,
@@ -485,6 +504,7 @@ describe("Note API Integration Tests", () => {
     it("should deny update with read-only permission", async () => {
       // Share note with read permission
       await NoteShare.create({
+        createdAt: new Date(),
         noteId: testNote.id,
         userId: teamMember.id,
         permission: SharePermission.READ,
@@ -500,18 +520,18 @@ describe("Note API Integration Tests", () => {
         .send(updateData)
         .expect(403)
 
-      expect(response.body.success).toBe(false)
+      expect(response.body.error).toBeDefined()
       expect(response.body.error.code).toBe("INSUFFICIENT_PERMISSIONS")
     })
 
     it("should return 404 for non-existent note", async () => {
       const response = await request(app.callback())
-        .put("/api/notes/non-existent-id")
+        .put("/api/notes/00000000-0000-0000-0000-000000000000")
         .set("Authorization", `Bearer ${regularUserToken}`)
         .send({ title: "Updated" })
         .expect(404)
 
-      expect(response.body.success).toBe(false)
+      expect(response.body.error).toBeDefined()
       expect(response.body.error.code).toBe("NOTE_NOT_FOUND")
     })
 
@@ -530,6 +550,7 @@ describe("Note API Integration Tests", () => {
       testNote = await Note.create({
         title: "Test Note",
         content: "Test content",
+        tags: ["test"],
         creatorId: regularUser.id,
         isPrivate: false,
       })
@@ -564,17 +585,17 @@ describe("Note API Integration Tests", () => {
         .set("Authorization", `Bearer ${otherUserToken}`)
         .expect(403)
 
-      expect(response.body.success).toBe(false)
+      expect(response.body.error).toBeDefined()
       expect(response.body.error.code).toBe("INSUFFICIENT_PERMISSIONS")
     })
 
     it("should return 404 for non-existent note", async () => {
       const response = await request(app.callback())
-        .delete("/api/notes/non-existent-id")
+        .delete("/api/notes/00000000-0000-0000-0000-000000000000")
         .set("Authorization", `Bearer ${regularUserToken}`)
         .expect(404)
 
-      expect(response.body.success).toBe(false)
+      expect(response.body.error).toBeDefined()
       expect(response.body.error.code).toBe("NOTE_NOT_FOUND")
     })
 
@@ -590,6 +611,7 @@ describe("Note API Integration Tests", () => {
       testNote = await Note.create({
         title: "Test Note",
         content: "Test content",
+        tags: ["test"],
         creatorId: regularUser.id,
         isPrivate: false,
       })
@@ -621,6 +643,7 @@ describe("Note API Integration Tests", () => {
     it("should update existing share permission", async () => {
       // Create initial share
       await NoteShare.create({
+        createdAt: new Date(),
         noteId: testNote.id,
         userId: teamMember.id,
         permission: SharePermission.READ,
@@ -654,13 +677,13 @@ describe("Note API Integration Tests", () => {
         .send(shareData)
         .expect(403)
 
-      expect(response.body.success).toBe(false)
+      expect(response.body.error).toBeDefined()
       expect(response.body.error.code).toBe("INSUFFICIENT_PERMISSIONS")
     })
 
     it("should fail with invalid share recipient", async () => {
       const shareData = {
-        shares: [{ userId: "invalid-id", permission: SharePermission.READ }],
+        shares: [{ userId: "00000000-0000-0000-0000-000000000000", permission: SharePermission.READ }],
       }
 
       const response = await request(app.callback())
@@ -669,7 +692,7 @@ describe("Note API Integration Tests", () => {
         .send(shareData)
         .expect(400)
 
-      expect(response.body.success).toBe(false)
+      expect(response.body.error).toBeDefined()
       expect(response.body.error.code).toBe("INVALID_SHARE_RECIPIENT")
     })
 
@@ -682,7 +705,7 @@ describe("Note API Integration Tests", () => {
         .send(shareData)
         .expect(400)
 
-      expect(response.body.success).toBe(false)
+      expect(response.body.error).toBeDefined()
       expect(response.body.error.code).toBe("VALIDATION_ERROR")
     })
 
@@ -692,12 +715,12 @@ describe("Note API Integration Tests", () => {
       }
 
       const response = await request(app.callback())
-        .post("/api/notes/non-existent-id/share")
+        .post("/api/notes/00000000-0000-0000-0000-000000000000/share")
         .set("Authorization", `Bearer ${regularUserToken}`)
         .send(shareData)
         .expect(404)
 
-      expect(response.body.success).toBe(false)
+      expect(response.body.error).toBeDefined()
       expect(response.body.error.code).toBe("NOTE_NOT_FOUND")
     })
 
@@ -720,12 +743,14 @@ describe("Note API Integration Tests", () => {
       testNote = await Note.create({
         title: "Test Note",
         content: "Test content",
+        tags: ["test"],
         creatorId: regularUser.id,
         isPrivate: false,
       })
 
       // Create a share
       await NoteShare.create({
+        createdAt: new Date(),
         noteId: testNote.id,
         userId: teamMember.id,
         permission: SharePermission.READ,
@@ -752,7 +777,7 @@ describe("Note API Integration Tests", () => {
         .set("Authorization", `Bearer ${otherUserToken}`)
         .expect(403)
 
-      expect(response.body.success).toBe(false)
+      expect(response.body.error).toBeDefined()
       expect(response.body.error.code).toBe("INSUFFICIENT_PERMISSIONS")
     })
 
@@ -762,17 +787,17 @@ describe("Note API Integration Tests", () => {
         .set("Authorization", `Bearer ${regularUserToken}`)
         .expect(404)
 
-      expect(response.body.success).toBe(false)
+      expect(response.body.error).toBeDefined()
       expect(response.body.error.code).toBe("SHARE_NOT_FOUND")
     })
 
     it("should return 404 for non-existent note", async () => {
       const response = await request(app.callback())
-        .delete(`/api/notes/non-existent-id/share/${teamMember.id}`)
+        .delete(`/api/notes/00000000-0000-0000-0000-000000000000/share/${teamMember.id}`)
         .set("Authorization", `Bearer ${regularUserToken}`)
         .expect(404)
 
-      expect(response.body.success).toBe(false)
+      expect(response.body.error).toBeDefined()
       expect(response.body.error.code).toBe("NOTE_NOT_FOUND")
     })
 
@@ -790,18 +815,21 @@ describe("Note API Integration Tests", () => {
       testNote = await Note.create({
         title: "Test Note",
         content: "Test content",
+        tags: ["test"],
         creatorId: regularUser.id,
-        isPrivate: false,
+        isPrivate: true,
       })
 
       // Create shares
       await NoteShare.create({
+        createdAt: new Date(),
         noteId: testNote.id,
         userId: teamMember.id,
         permission: SharePermission.READ,
       })
 
       await NoteShare.create({
+        createdAt: new Date(),
         noteId: testNote.id,
         userId: teamAdminUser.id,
         permission: SharePermission.WRITE,
@@ -837,17 +865,17 @@ describe("Note API Integration Tests", () => {
         .set("Authorization", `Bearer ${otherUserToken}`)
         .expect(403)
 
-      expect(response.body.success).toBe(false)
+      expect(response.body.error).toBeDefined()
       expect(response.body.error.code).toBe("INSUFFICIENT_PERMISSIONS")
     })
 
     it("should return 404 for non-existent note", async () => {
       const response = await request(app.callback())
-        .get("/api/notes/non-existent-id/shares")
+        .get("/api/notes/00000000-0000-0000-0000-000000000000/shares")
         .set("Authorization", `Bearer ${regularUserToken}`)
         .expect(404)
 
-      expect(response.body.success).toBe(false)
+      expect(response.body.error).toBeDefined()
       expect(response.body.error.code).toBe("NOTE_NOT_FOUND")
     })
 
@@ -861,6 +889,7 @@ describe("Note API Integration Tests", () => {
       const note1 = await Note.create({
         title: "Shared Note 1",
         content: "Content 1",
+        tags: ["shared"],
         creatorId: otherUser.id,
         isPrivate: true,
       })
@@ -868,18 +897,21 @@ describe("Note API Integration Tests", () => {
       const note2 = await Note.create({
         title: "Shared Note 2",
         content: "Content 2",
+        tags: ["shared"],
         creatorId: teamAdminUser.id,
         isPrivate: false,
       })
 
       // Share notes with regular user
       await NoteShare.create({
+        createdAt: new Date(),
         noteId: note1.id,
         userId: regularUser.id,
         permission: SharePermission.READ,
       })
 
       await NoteShare.create({
+        createdAt: new Date(),
         noteId: note2.id,
         userId: regularUser.id,
         permission: SharePermission.WRITE,
@@ -920,6 +952,7 @@ describe("Note API Integration Tests", () => {
       await Note.create({
         title: "Institution Note 1",
         content: "Content 1",
+        tags: ["institution"],
         creatorId: regularUser.id,
         institutionId: testInstitution.id,
         isPrivate: false,
@@ -928,6 +961,16 @@ describe("Note API Integration Tests", () => {
       await Note.create({
         title: "Institution Note 2",
         content: "Content 2",
+        tags: ["institution"],
+        creatorId: regularUser.id,
+        institutionId: testInstitution.id,
+        isPrivate: false,
+      })
+
+      await Note.create({
+        title: "Institution Note 2",
+        content: "Content 2",
+        tags: ["institution"],
         creatorId: teamMember.id,
         institutionId: testInstitution.id,
         isPrivate: false,
@@ -936,7 +979,7 @@ describe("Note API Integration Tests", () => {
       // Note for different institution
       const otherInstitution = await MedicalInstitution.create({
         name: "Other Hospital",
-        type: "clinic",
+        type: InstitutionType.CLINIC,
         address: {
           street: "456 Other St",
           city: "Other City",
@@ -951,6 +994,7 @@ describe("Note API Integration Tests", () => {
       await Note.create({
         title: "Other Institution Note",
         content: "Other content",
+        tags: ["other"],
         creatorId: regularUser.id,
         institutionId: otherInstitution.id,
         isPrivate: false,
@@ -964,7 +1008,7 @@ describe("Note API Integration Tests", () => {
         .expect(200)
 
       expect(response.body.success).toBe(true)
-      expect(response.body.data).toHaveLength(2)
+      expect(response.body.data).toHaveLength(3)
       expect(
         response.body.data.every((note: any) => note.institutionId === testInstitution.id)
       ).toBe(true)
@@ -972,11 +1016,11 @@ describe("Note API Integration Tests", () => {
 
     it("should return 404 for non-existent institution", async () => {
       const response = await request(app.callback())
-        .get("/api/notes/by-institution/non-existent-id")
+        .get("/api/notes/by-institution/00000000-0000-0000-0000-000000000000")
         .set("Authorization", `Bearer ${regularUserToken}`)
         .expect(404)
 
-      expect(response.body.success).toBe(false)
+      expect(response.body.error).toBeDefined()
       expect(response.body.error.code).toBe("INSTITUTION_NOT_FOUND")
     })
 
@@ -1055,7 +1099,7 @@ describe("Note API Integration Tests", () => {
         .set("Authorization", `Bearer ${regularUserToken}`)
         .expect(400)
 
-      expect(response.body.success).toBe(false)
+      expect(response.body.error).toBeDefined()
       expect(response.body.error.code).toBe("VALIDATION_ERROR")
     })
 

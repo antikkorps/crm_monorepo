@@ -11,7 +11,21 @@ export class UserController {
    */
   public static async getUsers(ctx: Context, next: Next): Promise<void> {
     try {
+      const user = ctx.state.user as User
       const { teamId, role, isActive } = ctx.query
+
+      // Check permissions - only admins can list all users
+      if (!user.role || (user.role !== UserRole.SUPER_ADMIN && user.role !== UserRole.ADMIN)) {
+        ctx.status = 403
+        ctx.body = {
+          success: false,
+          error: {
+            code: "INSUFFICIENT_PERMISSIONS",
+            message: "Only administrators can list all users",
+          },
+        }
+        return
+      }
 
       const whereClause: any = {}
 

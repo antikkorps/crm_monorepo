@@ -1,6 +1,6 @@
 import dotenv from "dotenv"
 import { resolve } from "path"
-import { beforeAll } from "vitest"
+import { beforeAll, afterAll } from "vitest"
 
 // Load test environment variables first
 dotenv.config({ path: resolve(__dirname, "../../.env.test") })
@@ -18,16 +18,19 @@ process.env.DB_PORT = process.env.DB_PORT || "5432"
 
 // Initialize database connection and models once for all tests
 let isInitialized = false
+let sequelize: any
+
 beforeAll(async () => {
   if (isInitialized) return
 
   try {
-    const { sequelize } = await import("../config/database")
+    const db = await import("../config/database")
+    sequelize = db.sequelize
 
     // Import all models to ensure they're registered
     await import("../models")
 
-    // Sync database schema with force: true to reset test DB
+    // Sync database schema with force to ensure a clean state for each test run
     await sequelize.sync({ force: true })
 
     isInitialized = true
@@ -35,5 +38,11 @@ beforeAll(async () => {
   } catch (error) {
     console.error("Database initialization failed:", (error as Error).message)
     throw error
+  }
+})
+
+afterAll(async () => {
+  if (sequelize) {
+    await sequelize.close()
   }
 })

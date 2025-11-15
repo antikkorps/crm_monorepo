@@ -2,7 +2,7 @@ import Router from "@koa/router"
 import { NoteController } from "../controllers/NoteController"
 import { authenticate } from "../middleware/auth"
 import { requirePermission } from "../middleware/permissions"
-import { validateUUID, validatePagination } from "../middleware/validation"
+import { validateUUID, validatePagination, validateInstitutionId, validateIdAndUserId } from "../middleware/validation"
 import { collaborationErrorHandler, addCollaborationErrorContext } from "../middleware/collaborationErrorHandler"
 import {
   validateNoteCreation,
@@ -25,7 +25,7 @@ router.get("/", requirePermission("canViewAllTasks"), validateNoteSearch, NoteCo
 router.get("/shared-with-me", NoteController.getSharedNotes)
 
 // GET /api/notes/by-institution/:institutionId - Get notes for specific institution
-router.get("/by-institution/:institutionId", validateUUID, validatePagination, NoteController.getNotesByInstitution)
+router.get("/by-institution/:institutionId", validateInstitutionId, validatePagination, NoteController.getNotesByInstitution)
 
 // GET /api/notes/by-tags - Get notes filtered by tags
 router.get("/by-tags", NoteController.getNotesByTags)
@@ -46,7 +46,7 @@ router.delete("/:id", validateUUID, NoteController.deleteNote)
 router.post("/:id/share", validateUUID, validateNoteShare, NoteController.shareNote)
 
 // DELETE /api/notes/:id/share/:userId - Remove share access for a user
-router.delete("/:id/share/:userId", validateUUID, NoteController.removeNoteShare)
+router.delete("/:id/share/:userId", validateIdAndUserId, NoteController.removeNoteShare)
 
 // GET /api/notes/:id/shares - Get all shares for a note
 router.get("/:id/shares", validateUUID, NoteController.getNoteShares)

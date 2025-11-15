@@ -13,6 +13,38 @@ import { createCollaborationError, CollaborationErrorCode } from "../middleware/
 import { logger } from "../utils/logger"
 
 export class NoteController {
+  // Helper method to handle errors consistently
+  private static handleControllerError(
+    ctx: Context,
+    error: unknown,
+    defaultCode: string,
+    defaultMessage: string
+  ): void {
+    // Check if it's an AppError with specific status and code
+    if (error && typeof error === "object" && "status" in error && "code" in error) {
+      const appError = error as any
+      ctx.status = appError.status || 500
+      ctx.body = {
+        success: false,
+        error: {
+          code: appError.code || defaultCode,
+          message: appError.message || defaultMessage,
+          details: appError.details,
+        },
+      }
+    } else {
+      ctx.status = 500
+      ctx.body = {
+        success: false,
+        error: {
+          code: defaultCode,
+          message: defaultMessage,
+          details: error instanceof Error ? error.message : "Unknown error",
+        },
+      }
+    }
+  }
+
   // GET /api/notes - Get all notes with optional filtering
   static async getNotes(ctx: Context) {
     try {
@@ -141,15 +173,7 @@ export class NoteController {
         data: noteWithShares,
       }
     } catch (error) {
-      ctx.status = 500
-      ctx.body = {
-        success: false,
-        error: {
-          code: "NOTE_FETCH_ERROR",
-          message: "Failed to fetch note",
-          details: error instanceof Error ? error.message : "Unknown error",
-        },
-      }
+      NoteController.handleControllerError(ctx, error, "NOTE_FETCH_ERROR", "Failed to fetch note")
     }
   }
 
@@ -256,15 +280,7 @@ export class NoteController {
         data: createdNote,
       }
     } catch (error) {
-      ctx.status = 500
-      ctx.body = {
-        success: false,
-        error: {
-          code: "NOTE_CREATE_ERROR",
-          message: "Failed to create note",
-          details: error instanceof Error ? error.message : "Unknown error",
-        },
-      }
+      NoteController.handleControllerError(ctx, error, "NOTE_CREATE_ERROR", "Failed to create note")
     }
   }
 
@@ -350,15 +366,7 @@ export class NoteController {
         data: updatedNote,
       }
     } catch (error) {
-      ctx.status = 500
-      ctx.body = {
-        success: false,
-        error: {
-          code: "NOTE_UPDATE_ERROR",
-          message: "Failed to update note",
-          details: error instanceof Error ? error.message : "Unknown error",
-        },
-      }
+      NoteController.handleControllerError(ctx, error, "NOTE_UPDATE_ERROR", "Failed to update note")
     }
   }
 
@@ -406,15 +414,7 @@ export class NoteController {
         message: "Note deleted successfully",
       }
     } catch (error) {
-      ctx.status = 500
-      ctx.body = {
-        success: false,
-        error: {
-          code: "NOTE_DELETE_ERROR",
-          message: "Failed to delete note",
-          details: error instanceof Error ? error.message : "Unknown error",
-        },
-      }
+      NoteController.handleControllerError(ctx, error, "NOTE_DELETE_ERROR", "Failed to delete note")
     }
   }
 
@@ -503,15 +503,7 @@ export class NoteController {
         message: "Note shared successfully",
       }
     } catch (error) {
-      ctx.status = 500
-      ctx.body = {
-        success: false,
-        error: {
-          code: "NOTE_SHARE_ERROR",
-          message: "Failed to share note",
-          details: error instanceof Error ? error.message : "Unknown error",
-        },
-      }
+      NoteController.handleControllerError(ctx, error, "NOTE_SHARE_ERROR", "Failed to share note")
     }
   }
 
@@ -567,15 +559,7 @@ export class NoteController {
         message: "Share access removed successfully",
       }
     } catch (error) {
-      ctx.status = 500
-      ctx.body = {
-        success: false,
-        error: {
-          code: "NOTE_UNSHARE_ERROR",
-          message: "Failed to remove share access",
-          details: error instanceof Error ? error.message : "Unknown error",
-        },
-      }
+      NoteController.handleControllerError(ctx, error, "NOTE_UNSHARE_ERROR", "Failed to remove share access")
     }
   }
 
@@ -619,15 +603,7 @@ export class NoteController {
         data: shares,
       }
     } catch (error) {
-      ctx.status = 500
-      ctx.body = {
-        success: false,
-        error: {
-          code: "NOTE_SHARES_FETCH_ERROR",
-          message: "Failed to fetch note shares",
-          details: error instanceof Error ? error.message : "Unknown error",
-        },
-      }
+      NoteController.handleControllerError(ctx, error, "NOTE_SHARES_FETCH_ERROR", "Failed to fetch note shares")
     }
   }
 
@@ -659,15 +635,7 @@ export class NoteController {
         },
       }
     } catch (error) {
-      ctx.status = 500
-      ctx.body = {
-        success: false,
-        error: {
-          code: "SHARED_NOTES_FETCH_ERROR",
-          message: "Failed to fetch shared notes",
-          details: error instanceof Error ? error.message : "Unknown error",
-        },
-      }
+      NoteController.handleControllerError(ctx, error, "SHARED_NOTES_FETCH_ERROR", "Failed to fetch shared notes")
     }
   }
 
@@ -715,15 +683,7 @@ export class NoteController {
         },
       }
     } catch (error) {
-      ctx.status = 500
-      ctx.body = {
-        success: false,
-        error: {
-          code: "INSTITUTION_NOTES_FETCH_ERROR",
-          message: "Failed to fetch notes for institution",
-          details: error instanceof Error ? error.message : "Unknown error",
-        },
-      }
+      NoteController.handleControllerError(ctx, error, "INSTITUTION_NOTES_FETCH_ERROR", "Failed to fetch notes for institution")
     }
   }
 
@@ -769,15 +729,7 @@ export class NoteController {
         },
       }
     } catch (error) {
-      ctx.status = 500
-      ctx.body = {
-        success: false,
-        error: {
-          code: "TAGGED_NOTES_FETCH_ERROR",
-          message: "Failed to fetch notes by tags",
-          details: error instanceof Error ? error.message : "Unknown error",
-        },
-      }
+      NoteController.handleControllerError(ctx, error, "TAGGED_NOTES_FETCH_ERROR", "Failed to fetch notes by tags")
     }
   }
 

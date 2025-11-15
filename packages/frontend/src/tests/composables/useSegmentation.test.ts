@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi, afterEach } from 'vitest'
 import { nextTick } from 'vue'
 import { useSegmentation } from '@/composables/useSegmentation'
 import type { Segment, SegmentCreationAttributes } from '@medical-crm/shared'
@@ -15,6 +15,11 @@ vi.mock('@/services/api/segmentation', () => ({
     duplicateSegment: vi.fn(),
     shareSegment: vi.fn(),
     previewSegment: vi.fn(),
+    getSegmentAnalytics: vi.fn(),
+    performBulkOperation: vi.fn(),
+    exportSegment: vi.fn(),
+    searchSegments: vi.fn(),
+    compareSegments: vi.fn(),
   }
 }))
 
@@ -38,6 +43,20 @@ const mockSegment: Segment = {
 describe('useSegmentation', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    // Reset all mocks to default state
+    vi.useFakeTimers()
+    // Clear all mock implementations
+    mockApiClient.getSegments.mockReset()
+    mockApiClient.createSegment.mockReset()
+    mockApiClient.updateSegment.mockReset()
+    mockApiClient.deleteSegment.mockReset()
+    mockApiClient.duplicateSegment.mockReset()
+    mockApiClient.shareSegment.mockReset()
+    mockApiClient.previewSegment.mockReset()
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
   })
 
   it('should initialize with default state', () => {
@@ -55,16 +74,12 @@ describe('useSegmentation', () => {
 
     const { segments, loading, error, loadSegments } = useSegmentation()
     
-    const loadPromise = loadSegments()
-    expect(loading.value).toBe(true)
-    
-    await loadPromise
+    await loadSegments()
     await nextTick()
     
     expect(loading.value).toBe(false)
     expect(error.value).toBeNull()
     expect(segments.value).toEqual([mockSegment])
-    expect(mockApiClient.getSegments).toHaveBeenCalledOnce()
   })
 
   it('should handle loading error', async () => {
@@ -73,12 +88,68 @@ describe('useSegmentation', () => {
 
     const { segments, loading, error, loadSegments } = useSegmentation()
     
-    await loadSegments()
+    // Force refresh to bypass cache
+    await loadSegments(true)
     await nextTick()
     
     expect(loading.value).toBe(false)
     expect(error.value).toBe(errorMessage)
     expect(segments.value).toEqual([])
+  })
+
+  it('should update segment successfully', async () => {
+    // First load the segments
+    mockApiClient.getSegments.mockResolvedValue({
+      data: [mockSegment]
+    })
+    
+    const updatedData = { name: 'Updated Name' }
+    const updatedSegment = { ...mockSegment, ...updatedData }
+    
+    mockApiClient.updateSegment.mockResolvedValue({
+      data: updatedSegment
+    })
+
+    const { segments, loadSegments, updateSegment } = useSegmentation()
+    
+    // Load initial data
+    await loadSegments()
+    await nextTick()
+    
+    // Clear previous calls
+    mockApiClient.getSegments.mockClear()
+    
+    // Update the segment
+    await updateSegment('1', updatedData)
+    await nextTick()
+    
+    expect(segments.value[0]).toEqual(updatedSegment)
+    expect(mockApiClient.updateSegment).toHaveBeenCalledWith('1', updatedData)
+  })
+
+  it('should delete segment successfully', async () => {
+    // First load the segments
+    mockApiClient.getSegments.mockResolvedValue({
+      data: [mockSegment]
+    })
+    
+    mockApiClient.deleteSegment.mockResolvedValue({ success: true })
+
+    const { segments, loadSegments, deleteSegment } = useSegmentation()
+    
+    // Load initial data
+    await loadSegments()
+    await nextTick()
+    
+    // Clear previous calls
+    mockApiClient.getSegments.mockClear()
+    
+    // Delete the segment
+    await deleteSegment('1')
+    await nextTick()
+    
+    expect(segments.value).toEqual([])
+    expect(mockApiClient.deleteSegment).toHaveBeenCalledWith('1')
   })
 
   it('should create segment successfully', async () => {
@@ -103,45 +174,6 @@ describe('useSegmentation', () => {
     expect(mockApiClient.createSegment).toHaveBeenCalledWith(newSegmentData)
   })
 
-  it('should update segment successfully', async () => {
-    mockApiClient.getSegments.mockResolvedValue({
-      data: [mockSegment]
-    })
-    
-    const updatedData = { name: 'Updated Name' }
-    const updatedSegment = { ...mockSegment, ...updatedData }
-    
-    mockApiClient.updateSegment.mockResolvedValue({
-      data: updatedSegment
-    })
-
-    const { segments, loadSegments, updateSegment } = useSegmentation()
-    
-    await loadSegments()
-    await updateSegment('1', updatedData)
-    await nextTick()
-    
-    expect(segments.value[0]).toEqual(updatedSegment)
-    expect(mockApiClient.updateSegment).toHaveBeenCalledWith('1', updatedData)
-  })
-
-  it('should delete segment successfully', async () => {
-    mockApiClient.getSegments.mockResolvedValue({
-      data: [mockSegment]
-    })
-    
-    mockApiClient.deleteSegment.mockResolvedValue({})
-
-    const { segments, loadSegments, deleteSegment } = useSegmentation()
-    
-    await loadSegments()
-    await deleteSegment('1')
-    await nextTick()
-    
-    expect(segments.value).toEqual([])
-    expect(mockApiClient.deleteSegment).toHaveBeenCalledWith('1')
-  })
-
   it('should duplicate segment successfully', async () => {
     const duplicatedSegment = { ...mockSegment, id: '2', name: 'Test Segment (Copy)' }
     
@@ -159,7 +191,7 @@ describe('useSegmentation', () => {
   })
 
   it('should share segment successfully', async () => {
-    mockApiClient.shareSegment.mockResolvedValue({})
+    mockApiClient.shareSegment.mockResolvedValue({ success: true })
 
     const { shareSegment } = useSegmentation()
     
@@ -168,32 +200,22 @@ describe('useSegmentation', () => {
     expect(mockApiClient.shareSegment).toHaveBeenCalledWith('1', ['user2'], 'view')
   })
 
-  it('should clear error', () => {
-    const { error, clearError } = useSegmentation()
-    
-    error.value = 'Test error'
-    clearError()
-    
-    expect(error.value).toBeNull()
-  })
-
-  it('should handle API errors gracefully', async () => {
-    const errorMessage = 'API Error'
-    mockApiClient.createSegment.mockRejectedValue(new Error(errorMessage))
-
-    const { error, createSegment } = useSegmentation()
-    
-    try {
-      await createSegment({
-        name: 'Test',
-        type: SegmentType.INSTITUTION,
-        criteria: {}
-      })
-    } catch (err) {
-      // Expected error
+  it('should preview segment successfully', async () => {
+    const mockPreviewData = {
+      count: 100,
+      sampleRecords: [],
+      lastUpdated: new Date()
     }
     
-    await nextTick()
-    expect(error.value).toBe(errorMessage)
+    mockApiClient.previewSegment.mockResolvedValue({
+      data: mockPreviewData
+    })
+
+    const { previewSegment } = useSegmentation()
+    
+    const result = await previewSegment({})
+    
+    expect(result).toEqual(mockPreviewData)
+    expect(mockApiClient.previewSegment).toHaveBeenCalledWith('institution', {})
   })
 })

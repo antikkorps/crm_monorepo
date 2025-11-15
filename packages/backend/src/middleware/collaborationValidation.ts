@@ -38,7 +38,7 @@ export const validateNoteCreation = validate(
       "string.max": "Note content cannot exceed 50,000 characters",
       "any.required": "Note content is required",
     }),
-    institutionId: uuidSchema.messages({
+    institutionId: uuidSchema.optional().messages({
       "any.required": "Institution ID is required",
     }),
     // visibility removed; use isPrivate boolean instead
@@ -51,6 +51,17 @@ export const validateNoteCreation = validate(
       "array.max": "Cannot have more than 10 tags",
     }),
     isPrivate: Joi.boolean().default(false),
+    shareWith: Joi.array().items(
+      Joi.object({
+        userId: uuidSchema,
+        permission: Joi.string().valid(...Object.values(SharePermission)).required().messages({
+          "any.only": `Permission must be one of: ${Object.values(SharePermission).join(", ")}`,
+          "any.required": "Permission is required",
+        }),
+      })
+    ).max(50).optional().messages({
+      "array.max": "Cannot share with more than 50 users",
+    }),
   }),
   "body"
 )
@@ -81,12 +92,20 @@ export const validateNoteUpdate = validate(
 
 export const validateNoteShare = validate(
   Joi.object({
-    userId: uuidSchema.messages({
-      "any.required": "User ID is required for sharing",
-    }),
-    permission: Joi.string().valid(...Object.values(SharePermission)).required().messages({
-      "any.only": `Permission must be one of: ${Object.values(SharePermission).join(", ")}`,
-      "any.required": "Permission is required",
+    shares: Joi.array().items(
+      Joi.object({
+        userId: uuidSchema.messages({
+          "any.required": "User ID is required for sharing",
+        }),
+        permission: Joi.string().valid(...Object.values(SharePermission)).required().messages({
+          "any.only": `Permission must be one of: ${Object.values(SharePermission).join(", ")}`,
+          "any.required": "Permission is required",
+        }),
+      })
+    ).min(1).max(50).required().messages({
+      "array.min": "At least one share is required",
+      "array.max": "Cannot share with more than 50 users",
+      "any.required": "Shares array is required",
     }),
   }),
   "body"
@@ -100,7 +119,12 @@ export const validateNoteSearch = validate(
     }),
     institutionId: optionalUuidSchema,
     creatorId: optionalUuidSchema,
-    tags: Joi.array().items(Joi.string().min(1).max(50)).optional(),
+    tags: Joi.alternatives()
+      .try(
+        Joi.string().min(1).max(50),
+        Joi.array().items(Joi.string().min(1).max(50))
+      )
+      .optional(),
     isPrivate: Joi.boolean().optional(),
     // visibility removed
     page: Joi.number().integer().min(1).default(1),
