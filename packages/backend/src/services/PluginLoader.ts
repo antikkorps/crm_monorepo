@@ -1,5 +1,6 @@
 import * as fs from "fs/promises"
 import * as path from "path"
+import sanitize from "sanitize-filename"
 import { Plugin, PluginCategory, PluginLoader, PluginManifest } from "../types/plugin"
 import { logger } from "../utils/logger"
 import config from "../config/environment"
@@ -16,8 +17,22 @@ export class DefaultPluginLoader implements PluginLoader {
     const pluginDir = config.plugins.directory || path.join(process.cwd(), "packages", "plugins")
     const baseDir = path.resolve(pluginDir)
 
+    // --- SANITIZE REQUESTED PATH ---
+    const sanitizedPath = sanitize(requestedPath)
+    if (!sanitizedPath || sanitizedPath !== requestedPath) {
+      logger.warn(`Plugin path contained illegal/suspicious characters and was rejected: "${requestedPath}" -> "${sanitizedPath}"`)
+      throw new Error(`Security: Plugin path contains illegal/suspicious characters: ${requestedPath}`)
+    }
+
+    // --- ENFORCE SINGLE DIRECTORY LEVEL (NO PATH SEPARATORS) ---
+    // Only allow plugin directories that are direct children (no "/")
+    if (sanitizedPath.includes(path.sep) || sanitizedPath.includes("/") || sanitizedPath.includes("\\")) {
+      logger.warn(`Plugin path contains forbidden path separators: ${requestedPath}`)
+      throw new Error(`Security: Plugin path must be a single directory name`)
+    }
+
     // Always resolve user input relative to the plugin directory
-    const combinedPath = path.resolve(baseDir, requestedPath)
+    const combinedPath = path.resolve(baseDir, sanitizedPath)
 
     // Get real paths to eliminate symlink bypasses
     const baseRealPath = await fs.realpath(baseDir)
@@ -40,10 +55,10 @@ export class DefaultPluginLoader implements PluginLoader {
     }
 
     // Additional strict patterns: reject ".." segments anywhere, and absolute paths
-    const normalizedPath = path.normalize(requestedPath)
+    const normalizedPath = path.normalize(sanitizedPath)
     if (
       normalizedPath.includes("..") ||
-      path.isAbsolute(requestedPath)
+      path.isAbsolute(sanitizedPath)
     ) {
       logger.warn(`Suspicious plugin path rejected: ${requestedPath}`)
       throw new Error(`Security: Invalid plugin path pattern: ${requestedPath}`)

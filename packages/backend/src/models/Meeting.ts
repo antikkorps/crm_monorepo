@@ -397,7 +397,7 @@ export class Meeting
         attributes: ["meetingId"],
       })
       const participantMeetingIds = participantMeetings.map((p) => p.meetingId)
-      
+
       if (participantMeetingIds.length > 0) {
         whereClause.id = {
           [Op.in]: participantMeetingIds,
@@ -405,7 +405,7 @@ export class Meeting
       } else {
         // No participant meetings found, return no results
         whereClause.id = {
-          [Op.in]: [-1],
+          [Op.in]: [-1], // Use a condition that returns no results
         }
       }
     }
