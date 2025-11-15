@@ -176,7 +176,7 @@ describe("PluginManager", () => {
         category: PluginCategory.UTILITY,
         enabled: true,
       },
-      onLoad: jest.fn(),
+      onLoad: vi.fn(),
       onUnload: vi.fn(),
       onEnable: vi.fn(),
       onDisable: vi.fn(),

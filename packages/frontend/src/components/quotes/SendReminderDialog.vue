@@ -219,6 +219,9 @@ const sending = ref(false)
 const error = ref('')
 const success = ref(false)
 
+// Constants
+const SUCCESS_DISPLAY_DURATION_MS = 2000
+
 // Reminder types
 const reminderTypes: ReminderType[] = [
   {
@@ -307,7 +310,7 @@ async function sendReminder() {
     setTimeout(() => {
       emit('reminder-sent')
       close()
-    }, 2000)
+    }, SUCCESS_DISPLAY_DURATION_MS)
   } catch (err: any) {
     console.error('Error sending reminder:', err)
     error.value = err.message || 'Une erreur est survenue lors de l\'envoi du rappel'

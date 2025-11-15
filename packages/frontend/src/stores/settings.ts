@@ -17,6 +17,13 @@ export interface SystemSettings {
   isPublic: boolean
 }
 
+// API Response type
+interface SettingsApiResponse {
+  success: boolean
+  data: SystemSettings[]
+  count?: number
+}
+
 export const useSettingsStore = defineStore("settings", {
   state: () => ({
     featureFlags: {
@@ -59,10 +66,11 @@ export const useSettingsStore = defineStore("settings", {
           return
         }
 
-        const data = (response as any).data
+        const typedResponse = response as SettingsApiResponse
+        const data = typedResponse.data
 
-        // Check if data exists and is an object
-        if (!data || typeof data !== 'object') {
+        // Check if data exists and is an array
+        if (!Array.isArray(data)) {
           console.error("Settings API returned invalid or null data")
           return
         }
@@ -97,19 +105,20 @@ export const useSettingsStore = defineStore("settings", {
       try {
         this.loading = true
         const response = await settingsApi.getAll()
+        const typedResponse = response as SettingsApiResponse
 
         // Validate response structure
-        if (!response || typeof response !== 'object' || !(response as any).data) {
+        if (!typedResponse || !typedResponse.data) {
           console.error("Invalid response structure from settings API")
           throw new Error("Invalid response from settings API")
         }
 
-        if (!Array.isArray((response as any).data)) {
+        if (!Array.isArray(typedResponse.data)) {
           console.error("Settings API returned non-array data")
           throw new Error("Expected array of settings")
         }
 
-        this.allSettings = (response as any).data
+        this.allSettings = typedResponse.data
       } catch (error) {
         console.error("Failed to load all settings:", error)
         throw error

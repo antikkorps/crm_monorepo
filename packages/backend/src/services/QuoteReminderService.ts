@@ -2,10 +2,9 @@ import { Op } from "sequelize"
 import { QuoteStatus } from "@medical-crm/shared"
 import { Quote } from "../models/Quote"
 import { QuoteReminder, ReminderType, ReminderAction } from "../models/QuoteReminder"
-import { ReminderTemplate, TaskPriority as TemplatePriority } from "../models/ReminderTemplate"
+import { ReminderTemplate } from "../models/ReminderTemplate"
 import { Task, TaskPriority, TaskStatus } from "../models/Task"
 import { MedicalInstitution } from "../models/MedicalInstitution"
-import { ContactPerson } from "../models/ContactPerson"
 import { User } from "../models/User"
 import {
   NotificationService,
@@ -13,6 +12,10 @@ import {
   NotificationPriority,
 } from "./NotificationService"
 import { EmailService } from "./EmailService"
+
+// Constants for task due date calculation
+const TASK_DUE_DAYS_OFFSET = 2
+const MILLISECONDS_PER_DAY = 24 * 60 * 60 * 1000
 
 interface ReminderResult {
   quoteId: string
@@ -206,7 +209,7 @@ export class QuoteReminderService {
             assigneeId: quote.assignedUserId,
             creatorId: quote.assignedUserId, // System-created task
             institutionId: quote.institutionId,
-            dueDate: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000), // 2 days from now
+            dueDate: new Date(Date.now() + TASK_DUE_DAYS_OFFSET * MILLISECONDS_PER_DAY),
             priority: template.taskPriority || TaskPriority.MEDIUM,
             status: TaskStatus.TODO,
           })
