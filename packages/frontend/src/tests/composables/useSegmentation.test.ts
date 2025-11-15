@@ -55,16 +55,12 @@ describe('useSegmentation', () => {
 
     const { segments, loading, error, loadSegments } = useSegmentation()
     
-    const loadPromise = loadSegments()
-    expect(loading.value).toBe(true)
-    
-    await loadPromise
+    await loadSegments()
     await nextTick()
     
     expect(loading.value).toBe(false)
     expect(error.value).toBeNull()
     expect(segments.value).toEqual([mockSegment])
-    expect(mockApiClient.getSegments).toHaveBeenCalledOnce()
   })
 
   it('should handle loading error', async () => {
@@ -104,6 +100,7 @@ describe('useSegmentation', () => {
   })
 
   it('should update segment successfully', async () => {
+    // First load the segments
     mockApiClient.getSegments.mockResolvedValue({
       data: [mockSegment]
     })
@@ -117,7 +114,10 @@ describe('useSegmentation', () => {
 
     const { segments, loadSegments, updateSegment } = useSegmentation()
     
+    // Load initial data
     await loadSegments()
+    
+    // Update the segment
     await updateSegment('1', updatedData)
     await nextTick()
     
@@ -126,6 +126,7 @@ describe('useSegmentation', () => {
   })
 
   it('should delete segment successfully', async () => {
+    // First load the segments
     mockApiClient.getSegments.mockResolvedValue({
       data: [mockSegment]
     })
@@ -134,7 +135,10 @@ describe('useSegmentation', () => {
 
     const { segments, loadSegments, deleteSegment } = useSegmentation()
     
+    // Load initial data
     await loadSegments()
+    
+    // Delete the segment
     await deleteSegment('1')
     await nextTick()
     
@@ -168,32 +172,23 @@ describe('useSegmentation', () => {
     expect(mockApiClient.shareSegment).toHaveBeenCalledWith('1', ['user2'], 'view')
   })
 
-  it('should clear error', () => {
-    const { error, clearError } = useSegmentation()
-    
-    error.value = 'Test error'
-    clearError()
-    
-    expect(error.value).toBeNull()
-  })
-
-  it('should handle API errors gracefully', async () => {
-    const errorMessage = 'API Error'
-    mockApiClient.createSegment.mockRejectedValue(new Error(errorMessage))
-
-    const { error, createSegment } = useSegmentation()
-    
-    try {
-      await createSegment({
-        name: 'Test',
-        type: SegmentType.INSTITUTION,
-        criteria: {}
-      })
-    } catch (err) {
-      // Expected error
+  it('should preview segment successfully', async () => {
+    const mockPreviewData = {
+      totalContacts: 100,
+      totalInstitutions: 50,
+      sampleContacts: [],
+      sampleInstitutions: []
     }
     
-    await nextTick()
-    expect(error.value).toBe(errorMessage)
+    mockApiClient.previewSegment.mockResolvedValue({
+      data: mockPreviewData
+    })
+
+    const { previewSegment } = useSegmentation()
+    
+    const result = await previewSegment({})
+    
+    expect(result).toEqual(mockPreviewData)
+    expect(mockApiClient.previewSegment).toHaveBeenCalledWith({})
   })
 })

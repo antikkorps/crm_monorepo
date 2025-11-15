@@ -1,4 +1,4 @@
-import { SharePermission } from "@medical-crm/shared"
+import { SharePermission, InstitutionType } from "@medical-crm/shared"
 import request from "supertest"
 import { createApp } from "../../app"
 import { sequelize } from "../../config/database"
@@ -39,6 +39,7 @@ describe("Note API Integration Tests", () => {
     testTeam = await Team.create({
       name: "Test Team",
       description: "Team for testing",
+      isActive: true,
     })
 
     // Create test users
@@ -49,6 +50,7 @@ describe("Note API Integration Tests", () => {
       lastName: "Admin",
       role: UserRole.SUPER_ADMIN,
       avatarSeed: "super-admin-seed",
+      avatarStyle: "initials",
       isActive: true,
     })
 
@@ -60,6 +62,7 @@ describe("Note API Integration Tests", () => {
       role: UserRole.TEAM_ADMIN,
       teamId: testTeam.id,
       avatarSeed: "team-admin-seed",
+      avatarStyle: "initials",
       isActive: true,
     })
 
@@ -71,6 +74,7 @@ describe("Note API Integration Tests", () => {
       role: UserRole.USER,
       teamId: testTeam.id,
       avatarSeed: "user-seed",
+      avatarStyle: "initials",
       isActive: true,
     })
 
@@ -82,6 +86,7 @@ describe("Note API Integration Tests", () => {
       role: UserRole.USER,
       teamId: testTeam.id,
       avatarSeed: "team-member-seed",
+      avatarStyle: "initials",
       isActive: true,
     })
 
@@ -92,13 +97,14 @@ describe("Note API Integration Tests", () => {
       lastName: "User",
       role: UserRole.USER,
       avatarSeed: "other-seed",
+      avatarStyle: "initials",
       isActive: true,
     })
 
     // Create test institution
     testInstitution = await MedicalInstitution.create({
       name: "Test Hospital",
-      type: "hospital",
+      type: InstitutionType.HOSPITAL,
       address: {
         street: "123 Medical St",
         city: "Healthcare City",
@@ -111,11 +117,16 @@ describe("Note API Integration Tests", () => {
     })
 
     // Generate tokens
-    superAdminToken = AuthService.generateAccessToken(superAdminUser.id)
-    teamAdminToken = AuthService.generateAccessToken(teamAdminUser.id)
-    regularUserToken = AuthService.generateAccessToken(regularUser.id)
-    teamMemberToken = AuthService.generateAccessToken(teamMember.id)
-    otherUserToken = AuthService.generateAccessToken(otherUser.id)
+    superAdminToken = AuthService.generateAccessToken(superAdminUser)
+    teamAdminToken = AuthService.generateAccessToken(teamAdminUser)
+    regularUserToken = AuthService.generateAccessToken(regularUser)
+    teamMemberToken = AuthService.generateAccessToken(teamMember)
+    otherUserToken = AuthService.generateAccessToken(otherUser)
+
+    // Debug: Verify users exist
+    const allUsers = await User.findAll()
+    console.log('Users in database:', allUsers.map(u => ({ id: u.id, email: u.email })))
+    console.log('Generated token for user:', regularUser.id, regularUser.email)
   })
 
   afterEach(async () => {
