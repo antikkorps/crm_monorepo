@@ -372,11 +372,17 @@ export class Meeting
         {
           [Op.or]: [
             { organizerId: filters.userId },
-            {
-              id: {
-                [Op.in]: participantMeetingIds,
-              },
-            },
+            participantMeetingIds.length > 0
+              ? {
+                  id: {
+                    [Op.in]: participantMeetingIds,
+                  },
+                }
+              : {
+                  id: {
+                    [Op.in]: [-1],
+                  },
+                },
           ],
         },
       ]
