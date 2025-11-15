@@ -298,11 +298,17 @@ export class Note
         [Op.or]: [
           { creatorId: filters.userId },
           { isPrivate: false },
-          {
-            id: {
-              [Op.in]: sharedNoteIds,
-            },
-          },
+          sharedNoteIds.length > 0
+            ? {
+                id: {
+                  [Op.in]: sharedNoteIds,
+                },
+              }
+            : {
+                id: {
+                  [Op.in]: [-1],
+                },
+              },
         ],
       }
 
@@ -322,8 +328,16 @@ export class Note
         attributes: ["noteId"],
       })
       const sharedNoteIds = sharedNotes.map((share) => share.noteId)
-      whereClause.id = {
-        [Op.in]: sharedNoteIds,
+      
+      if (sharedNoteIds.length > 0) {
+        whereClause.id = {
+          [Op.in]: sharedNoteIds,
+        }
+      } else {
+        // No shared notes found, return no results
+        whereClause.id = {
+          [Op.in]: [-1],
+        }
       }
     }
 
