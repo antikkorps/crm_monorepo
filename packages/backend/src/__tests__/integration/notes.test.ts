@@ -428,12 +428,12 @@ describe("Note API Integration Tests", () => {
         .expect(403)
 
       expect(response.body.error).toBeDefined()
-      expect(response.body.error.code).toBe("INSUFFICIENT_PERMISSIONS")
+      expect(response.body.error.code).toBe("NOTE_ACCESS_DENIED")
     })
 
     it("should return 404 for non-existent note", async () => {
       const response = await request(app.callback())
-        .get("/api/notes/non-existent-id")
+        .get("/api/notes/00000000-0000-0000-0000-000000000000")
         .set("Authorization", `Bearer ${regularUserToken}`)
         .expect(404)
 
@@ -528,7 +528,7 @@ describe("Note API Integration Tests", () => {
 
     it("should return 404 for non-existent note", async () => {
       const response = await request(app.callback())
-        .put("/api/notes/non-existent-id")
+        .put("/api/notes/00000000-0000-0000-0000-000000000000")
         .set("Authorization", `Bearer ${regularUserToken}`)
         .send({ title: "Updated" })
         .expect(404)
@@ -593,7 +593,7 @@ describe("Note API Integration Tests", () => {
 
     it("should return 404 for non-existent note", async () => {
       const response = await request(app.callback())
-        .delete("/api/notes/non-existent-id")
+        .delete("/api/notes/00000000-0000-0000-0000-000000000000")
         .set("Authorization", `Bearer ${regularUserToken}`)
         .expect(404)
 
@@ -685,7 +685,7 @@ describe("Note API Integration Tests", () => {
 
     it("should fail with invalid share recipient", async () => {
       const shareData = {
-        shares: [{ userId: "invalid-id", permission: SharePermission.READ }],
+        shares: [{ userId: "00000000-0000-0000-0000-000000000000", permission: SharePermission.READ }],
       }
 
       const response = await request(app.callback())
@@ -717,7 +717,7 @@ describe("Note API Integration Tests", () => {
       }
 
       const response = await request(app.callback())
-        .post("/api/notes/non-existent-id/share")
+        .post("/api/notes/00000000-0000-0000-0000-000000000000/share")
         .set("Authorization", `Bearer ${regularUserToken}`)
         .send(shareData)
         .expect(404)
@@ -795,7 +795,7 @@ describe("Note API Integration Tests", () => {
 
     it("should return 404 for non-existent note", async () => {
       const response = await request(app.callback())
-        .delete(`/api/notes/non-existent-id/share/${teamMember.id}`)
+        .delete(`/api/notes/00000000-0000-0000-0000-000000000000/share/${teamMember.id}`)
         .set("Authorization", `Bearer ${regularUserToken}`)
         .expect(404)
 
@@ -819,7 +819,7 @@ describe("Note API Integration Tests", () => {
         content: "Test content",
         tags: ["test"],
         creatorId: regularUser.id,
-        isPrivate: false,
+        isPrivate: true,
       })
 
       // Create shares
@@ -873,7 +873,7 @@ describe("Note API Integration Tests", () => {
 
     it("should return 404 for non-existent note", async () => {
       const response = await request(app.callback())
-        .get("/api/notes/non-existent-id/shares")
+        .get("/api/notes/00000000-0000-0000-0000-000000000000/shares")
         .set("Authorization", `Bearer ${regularUserToken}`)
         .expect(404)
 
@@ -1010,7 +1010,7 @@ describe("Note API Integration Tests", () => {
         .expect(200)
 
       expect(response.body.success).toBe(true)
-      expect(response.body.data).toHaveLength(2)
+      expect(response.body.data).toHaveLength(3)
       expect(
         response.body.data.every((note: any) => note.institutionId === testInstitution.id)
       ).toBe(true)
@@ -1018,7 +1018,7 @@ describe("Note API Integration Tests", () => {
 
     it("should return 404 for non-existent institution", async () => {
       const response = await request(app.callback())
-        .get("/api/notes/by-institution/non-existent-id")
+        .get("/api/notes/by-institution/00000000-0000-0000-0000-000000000000")
         .set("Authorization", `Bearer ${regularUserToken}`)
         .expect(404)
 

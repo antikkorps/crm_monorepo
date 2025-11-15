@@ -92,12 +92,20 @@ export const validateNoteUpdate = validate(
 
 export const validateNoteShare = validate(
   Joi.object({
-    userId: uuidSchema.messages({
-      "any.required": "User ID is required for sharing",
-    }),
-    permission: Joi.string().valid(...Object.values(SharePermission)).required().messages({
-      "any.only": `Permission must be one of: ${Object.values(SharePermission).join(", ")}`,
-      "any.required": "Permission is required",
+    shares: Joi.array().items(
+      Joi.object({
+        userId: uuidSchema.messages({
+          "any.required": "User ID is required for sharing",
+        }),
+        permission: Joi.string().valid(...Object.values(SharePermission)).required().messages({
+          "any.only": `Permission must be one of: ${Object.values(SharePermission).join(", ")}`,
+          "any.required": "Permission is required",
+        }),
+      })
+    ).min(1).max(50).required().messages({
+      "array.min": "At least one share is required",
+      "array.max": "Cannot share with more than 50 users",
+      "any.required": "Shares array is required",
     }),
   }),
   "body"
@@ -111,7 +119,12 @@ export const validateNoteSearch = validate(
     }),
     institutionId: optionalUuidSchema,
     creatorId: optionalUuidSchema,
-    tags: Joi.array().items(Joi.string().min(1).max(50)).optional(),
+    tags: Joi.alternatives()
+      .try(
+        Joi.string().min(1).max(50),
+        Joi.array().items(Joi.string().min(1).max(50))
+      )
+      .optional(),
     isPrivate: Joi.boolean().optional(),
     // visibility removed
     page: Joi.number().integer().min(1).default(1),

@@ -55,6 +55,36 @@ export const validateUUID = validate(
 )
 
 /**
+ * Validate UUID for institutionId parameter
+ */
+export const validateInstitutionId = validate(
+  Joi.object({
+    institutionId: Joi.string().uuid().required().messages({
+      "string.guid": "Invalid institution ID format",
+      "any.required": "Institution ID is required",
+    }),
+  }),
+  "params"
+)
+
+/**
+ * Validate UUID for both id and userId parameters (for share routes)
+ */
+export const validateIdAndUserId = validate(
+  Joi.object({
+    id: Joi.string().uuid().required().messages({
+      "string.guid": "Invalid ID format",
+      "any.required": "ID is required",
+    }),
+    userId: Joi.string().uuid().required().messages({
+      "string.guid": "Invalid user ID format",
+      "any.required": "User ID is required",
+    }),
+  }),
+  "params"
+)
+
+/**
  * Validate pagination parameters
  */
 export const validatePagination = validate(
