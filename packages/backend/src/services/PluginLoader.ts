@@ -2,14 +2,44 @@ import * as fs from "fs/promises"
 import * as path from "path"
 import { Plugin, PluginCategory, PluginLoader, PluginManifest } from "../types/plugin"
 import { logger } from "../utils/logger"
+import config from "../config/environment"
 
 export class DefaultPluginLoader implements PluginLoader {
   private loadedPlugins: Map<string, any> = new Map()
 
+  /**
+   * SECURITY: Validates that a path is safe and within the allowed plugin directory
+   * Prevents path traversal attacks (../, absolute paths, symlinks, etc.)
+   */
+  private validatePluginPath(requestedPath: string): string {
+    // Get the allowed plugin directory from config
+    const pluginDir = config.plugins.directory || path.join(process.cwd(), "packages", "plugins")
+    const baseDir = path.resolve(pluginDir)
+
+    // Resolve the requested path
+    const resolvedPath = path.resolve(requestedPath)
+
+    // Check if the resolved path is within the allowed directory
+    if (!resolvedPath.startsWith(baseDir + path.sep) && resolvedPath !== baseDir) {
+      throw new Error(
+        `Security: Plugin path "${requestedPath}" is outside allowed directory "${baseDir}"`
+      )
+    }
+
+    // Additional check: reject paths containing suspicious patterns
+    const normalizedPath = path.normalize(requestedPath)
+    if (normalizedPath.includes("..") || path.isAbsolute(requestedPath)) {
+      logger.warn(`Suspicious plugin path rejected: ${requestedPath}`)
+      throw new Error(`Security: Invalid plugin path pattern: ${requestedPath}`)
+    }
+
+    return resolvedPath
+  }
+
   async load(pluginPath: string): Promise<Plugin> {
     try {
-      // Resolve absolute path
-      const absolutePath = path.resolve(pluginPath)
+      // SECURITY: Validate path before any filesystem operations
+      const absolutePath = this.validatePluginPath(pluginPath)
 
       // Check if plugin directory exists
       const stats = await fs.stat(absolutePath)
@@ -132,7 +162,9 @@ export class DefaultPluginLoader implements PluginLoader {
     const manifestPath = path.join(pluginPath, "package.json")
 
     try {
-      const manifestContent = await fs.readFile(manifestPath, "utf-8")
+      // SECURITY: Validate manifest path (pluginPath should already be validated by caller)
+      const validatedPath = this.validatePluginPath(manifestPath)
+      const manifestContent = await fs.readFile(validatedPath, "utf-8")
       const manifest = JSON.parse(manifestContent)
 
       // Validate manifest structure
@@ -149,26 +181,29 @@ export class DefaultPluginLoader implements PluginLoader {
 
   private async loadModule(modulePath: string): Promise<any> {
     try {
+      // SECURITY: Validate module path
+      const validatedPath = this.validatePluginPath(modulePath)
+
       // Check if file exists
-      await fs.access(modulePath)
+      await fs.access(validatedPath)
 
       // Dynamic import for ES modules or require for CommonJS
       let pluginModule
 
-      if (modulePath.endsWith(".mjs") || modulePath.endsWith(".js")) {
+      if (validatedPath.endsWith(".mjs") || validatedPath.endsWith(".js")) {
         // Try ES module import first
         try {
-          pluginModule = await import(modulePath)
+          pluginModule = await import(validatedPath)
           // Handle default export
           if (pluginModule.default) {
             pluginModule = pluginModule.default
           }
         } catch (importError) {
           // Fallback to require for CommonJS
-          delete require.cache[require.resolve(modulePath)]
-          pluginModule = require(modulePath)
+          delete require.cache[require.resolve(validatedPath)]
+          pluginModule = require(validatedPath)
         }
-      } else if (modulePath.endsWith(".ts")) {
+      } else if (validatedPath.endsWith(".ts")) {
         // For TypeScript files, we need to compile them first
         // This is a simplified approach - in production, you might want to use ts-node or pre-compile
         throw new Error(
@@ -176,8 +211,8 @@ export class DefaultPluginLoader implements PluginLoader {
         )
       } else {
         // Default to require
-        delete require.cache[require.resolve(modulePath)]
-        pluginModule = require(modulePath)
+        delete require.cache[require.resolve(validatedPath)]
+        pluginModule = require(validatedPath)
       }
 
       return pluginModule
