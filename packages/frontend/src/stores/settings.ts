@@ -59,7 +59,7 @@ export const useSettingsStore = defineStore("settings", {
           return
         }
 
-        const data = response.data
+        const data = (response as any).data
 
         // Check if data exists and is an object
         if (!data || typeof data !== 'object') {
@@ -99,17 +99,17 @@ export const useSettingsStore = defineStore("settings", {
         const response = await settingsApi.getAll()
 
         // Validate response structure
-        if (!response || typeof response !== 'object' || !response.data) {
+        if (!response || typeof response !== 'object' || !(response as any).data) {
           console.error("Invalid response structure from settings API")
           throw new Error("Invalid response from settings API")
         }
 
-        if (!Array.isArray(response.data)) {
+        if (!Array.isArray((response as any).data)) {
           console.error("Settings API returned non-array data")
           throw new Error("Expected array of settings")
         }
 
-        this.allSettings = response.data
+        this.allSettings = (response as any).data
       } catch (error) {
         console.error("Failed to load all settings:", error)
         throw error

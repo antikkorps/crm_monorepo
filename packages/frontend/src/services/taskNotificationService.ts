@@ -132,7 +132,7 @@ export class TaskNotificationService {
    */
   private isTaskOverdue(task: Task, now: Date): boolean {
     // Only check tasks that are not completed, cancelled, or on hold
-    if (!task.dueDate || task.status === 'completed' || task.status === 'cancelled' || task.status === 'on_hold') {
+    if (!task.dueDate || task.status === 'completed' || task.status === 'cancelled' || (task.status as any) === 'on_hold') {
       return false
     }
 
