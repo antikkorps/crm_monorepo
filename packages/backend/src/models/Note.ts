@@ -298,11 +298,11 @@ export class Note
         [Op.or]: [
           { creatorId: filters.userId },
           { isPrivate: false },
-          {
+          ...(sharedNoteIds.length > 0 ? [{
             id: {
               [Op.in]: sharedNoteIds,
             },
-          },
+          }] : []),
         ],
       }
 
