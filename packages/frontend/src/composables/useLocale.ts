@@ -40,9 +40,9 @@ export function useLocale() {
   }
 
   // Format currency based on current locale
-  const formatCurrency = (amount: number, currency?: string) => {
-    const currentCurrency = currency || getCurrencyForLocale(getCurrentLocale())
-    return n(amount, "currency", { currency: currentCurrency })
+  const formatCurrency = (amount: number, _currency?: string) => {
+    // Note: currency parameter kept for API compatibility but not used in i18n format
+    return n(amount, "currency")
   }
 
   // Format date based on current locale
@@ -96,7 +96,7 @@ export function useLocale() {
   // Translate with fallback
   const translate = (key: string, params?: Record<string, any>, fallback?: string) => {
     try {
-      const translation = t(key, params)
+      const translation = params ? t(key, params as any) : t(key)
       return translation !== key ? translation : fallback || key
     } catch (error) {
       console.warn(`Translation missing for key: ${key}`)

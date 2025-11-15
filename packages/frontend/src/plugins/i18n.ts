@@ -123,16 +123,16 @@ const dateTimeFormats = {
 const numberFormats = {
   fr: {
     currency: {
-      style: "currency",
+      style: "currency" as const,
       currency: "EUR",
-      notation: "standard",
+      notation: "standard" as const,
     },
     decimal: {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     },
     percent: {
-      style: "percent",
+      style: "percent" as const,
       minimumFractionDigits: 1,
     },
     integer: {
@@ -142,16 +142,16 @@ const numberFormats = {
   },
   en: {
     currency: {
-      style: "currency",
+      style: "currency" as const,
       currency: "USD",
-      notation: "standard",
+      notation: "standard" as const,
     },
     decimal: {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     },
     percent: {
-      style: "percent",
+      style: "percent" as const,
       minimumFractionDigits: 1,
     },
     integer: {
@@ -161,16 +161,16 @@ const numberFormats = {
   },
   es: {
     currency: {
-      style: "currency",
+      style: "currency" as const,
       currency: "EUR",
-      notation: "standard",
+      notation: "standard" as const,
     },
     decimal: {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     },
     percent: {
-      style: "percent",
+      style: "percent" as const,
       minimumFractionDigits: 1,
     },
     integer: {
@@ -180,16 +180,16 @@ const numberFormats = {
   },
   de: {
     currency: {
-      style: "currency",
+      style: "currency" as const,
       currency: "EUR",
-      notation: "standard",
+      notation: "standard" as const,
     },
     decimal: {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     },
     percent: {
-      style: "percent",
+      style: "percent" as const,
       minimumFractionDigits: 1,
     },
     integer: {
@@ -285,7 +285,7 @@ export async function setLocale(locale: SupportedLocale) {
   await loadLocaleMessages(locale)
 
   // Set the locale
-  i18n.global.locale = locale
+  i18n.global.locale.value = locale
 
   // Save to localStorage
   localStorage.setItem("user-locale", locale)
@@ -296,7 +296,7 @@ export async function setLocale(locale: SupportedLocale) {
 
 // Utility function to get current locale
 export function getCurrentLocale(): SupportedLocale {
-  return i18n.global.locale as SupportedLocale
+  return i18n.global.locale.value as SupportedLocale
 }
 
 // Utility function to check if locale is supported
