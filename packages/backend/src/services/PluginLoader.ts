@@ -11,35 +11,51 @@ export class DefaultPluginLoader implements PluginLoader {
    * SECURITY: Validates that a path is safe and within the allowed plugin directory
    * Prevents path traversal attacks (../, absolute paths, symlinks, etc.)
    */
-  private validatePluginPath(requestedPath: string): string {
+  private async validatePluginPath(requestedPath: string): Promise<string> {
     // Get the allowed plugin directory from config
     const pluginDir = config.plugins.directory || path.join(process.cwd(), "packages", "plugins")
     const baseDir = path.resolve(pluginDir)
 
-    // Resolve the requested path
-    const resolvedPath = path.resolve(requestedPath)
+    // Always resolve user input relative to the plugin directory
+    const combinedPath = path.resolve(baseDir, requestedPath)
 
-    // Check if the resolved path is within the allowed directory
-    if (!resolvedPath.startsWith(baseDir + path.sep) && resolvedPath !== baseDir) {
+    // Get real paths to eliminate symlink bypasses
+    const baseRealPath = await fs.realpath(baseDir)
+    let combinedRealPath: string
+    try {
+      combinedRealPath = await fs.realpath(combinedPath)
+    } catch (e) {
+      // If file does not exist yet, use the combined resolved path (for directory checks)
+      combinedRealPath = combinedPath
+    }
+
+    // Check: must reside within the allowed plugin directory after resolving symlinks and ".."
+    if (
+      !combinedRealPath.startsWith(baseRealPath + path.sep) &&
+      combinedRealPath !== baseRealPath
+    ) {
       throw new Error(
-        `Security: Plugin path "${requestedPath}" is outside allowed directory "${baseDir}"`
+        `Security: Plugin path "${requestedPath}" is outside allowed directory "${baseRealPath}"`
       )
     }
 
-    // Additional check: reject paths containing suspicious patterns
+    // Additional strict patterns: reject ".." segments anywhere, and absolute paths
     const normalizedPath = path.normalize(requestedPath)
-    if (normalizedPath.includes("..") || path.isAbsolute(requestedPath)) {
+    if (
+      normalizedPath.includes("..") ||
+      path.isAbsolute(requestedPath)
+    ) {
       logger.warn(`Suspicious plugin path rejected: ${requestedPath}`)
       throw new Error(`Security: Invalid plugin path pattern: ${requestedPath}`)
     }
 
-    return resolvedPath
+    return combinedRealPath
   }
 
   async load(pluginPath: string): Promise<Plugin> {
     try {
       // SECURITY: Validate path before any filesystem operations
-      const absolutePath = this.validatePluginPath(pluginPath)
+      const absolutePath = await this.validatePluginPath(pluginPath)
 
       // Check if plugin directory exists
       const stats = await fs.stat(absolutePath)
@@ -163,7 +179,7 @@ export class DefaultPluginLoader implements PluginLoader {
 
     try {
       // SECURITY: Validate manifest path (pluginPath should already be validated by caller)
-      const validatedPath = this.validatePluginPath(manifestPath)
+      const validatedPath = await this.validatePluginPath(manifestPath)
       const manifestContent = await fs.readFile(validatedPath, "utf-8")
       const manifest = JSON.parse(manifestContent)
 
