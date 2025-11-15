@@ -21,6 +21,7 @@
     "lint": "eslint src --ext .ts --fix"
   },
   "devDependencies": {
+    "@vitejs/plugin-vue": "^6.0.1",
     "typescript": "^5.9.3",
     "vitest": "^4.0.9"
   },
@@ -37,7 +38,6 @@
     "@types/nodemailer": "^7.0.3",
     "@typescript-eslint/eslint-plugin": "^8.46.4",
     "@typescript-eslint/parser": "^8.46.4",
-    "@vitejs/plugin-vue": "^6.0.1",
     "@vue/tsconfig": "^0.8.1",
     "axios": "^1.13.2",
     "bcryptjs": "^3.0.3",
