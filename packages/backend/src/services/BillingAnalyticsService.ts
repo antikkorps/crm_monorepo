@@ -727,14 +727,15 @@ export class BillingAnalyticsService {
     endDate?: Date,
     userId?: string
   ): Promise<MonthlyRevenue[]> {
-    const userFilter = userId ? `AND i.assigned_user_id = '${userId}'` : ""
+    // SECURITY: Use parameterized query to prevent SQL injection
+    const userFilter = userId ? `AND i.assigned_user_id = :userId` : ""
     const dateFilter =
       startDate && endDate
-        ? `AND i.created_at BETWEEN '${startDate.toISOString()}' AND '${endDate.toISOString()}'`
+        ? `AND i.created_at BETWEEN :startDate AND :endDate`
         : ""
 
     const query = `
-      SELECT 
+      SELECT
         EXTRACT(YEAR FROM i.created_at) as year,
         EXTRACT(MONTH FROM i.created_at) as month,
         TO_CHAR(i.created_at, 'Month') as month_name,
@@ -751,7 +752,14 @@ export class BillingAnalyticsService {
       LIMIT 12
     `
 
-    const results = (await sequelize.query(query, { type: QueryTypes.SELECT })) as any[]
+    const results = (await sequelize.query(query, {
+      replacements: {
+        userId: userId,
+        startDate: startDate?.toISOString(),
+        endDate: endDate?.toISOString(),
+      },
+      type: QueryTypes.SELECT,
+    })) as any[]
 
     return results.map((row) => ({
       month: row.month_name.trim(),
@@ -802,7 +810,8 @@ export class BillingAnalyticsService {
   }
 
   private static async calculateAveragePaymentTime(userId?: string): Promise<number> {
-    const userFilter = userId ? `AND i.assigned_user_id = '${userId}'` : ""
+    // SECURITY: Use parameterized query to prevent SQL injection
+    const userFilter = userId ? `AND i.assigned_user_id = :userId` : ""
 
     // Note: Since sent_at and paid_at columns don't exist in the current schema,
     // we'll calculate based on payment dates vs invoice creation dates
@@ -815,7 +824,10 @@ export class BillingAnalyticsService {
       ${userFilter}
     `
 
-    const result = (await sequelize.query(query, { type: QueryTypes.SELECT })) as any[]
+    const result = (await sequelize.query(query, {
+      replacements: { userId: userId },
+      type: QueryTypes.SELECT,
+    })) as any[]
     return result[0]?.avg_payment_days ? parseFloat(result[0].avg_payment_days) : 0
   }
 
@@ -895,14 +907,15 @@ export class BillingAnalyticsService {
     endDate?: Date,
     userId?: string
   ): Promise<PaymentTrend[]> {
-    const userFilter = userId ? `AND i.assigned_user_id = '${userId}'` : ""
+    // SECURITY: Use parameterized queries to prevent SQL injection
+    const userFilter = userId ? `AND i.assigned_user_id = :userId` : ""
     const dateFilter =
       startDate && endDate
-        ? `AND p.payment_date BETWEEN '${startDate.toISOString()}' AND '${endDate.toISOString()}'`
+        ? `AND p.payment_date BETWEEN :startDate AND :endDate`
         : "AND p.payment_date >= CURRENT_DATE - INTERVAL '30 days'"
 
     const query = `
-      SELECT 
+      SELECT
         DATE(p.payment_date) as date,
         SUM(p.amount) as amount,
         COUNT(p.id) as count
@@ -915,7 +928,14 @@ export class BillingAnalyticsService {
       ORDER BY date ASC
     `
 
-    const results = (await sequelize.query(query, { type: QueryTypes.SELECT })) as any[]
+    const results = (await sequelize.query(query, {
+      replacements: {
+        userId: userId,
+        startDate: startDate?.toISOString(),
+        endDate: endDate?.toISOString(),
+      },
+      type: QueryTypes.SELECT,
+    })) as any[]
 
     return results.map((row) => ({
       date: row.date,
@@ -927,10 +947,11 @@ export class BillingAnalyticsService {
   private static async getPartialPaymentStats(
     userId?: string
   ): Promise<PartialPaymentStats> {
-    const userFilter = userId ? `AND i.assigned_user_id = '${userId}'` : ""
+    // SECURITY: Use parameterized queries to prevent SQL injection
+    const userFilter = userId ? `AND i.assigned_user_id = :userId` : ""
 
     const query = `
-      SELECT 
+      SELECT
         COUNT(DISTINCT i.id) as invoices_with_partial_payments,
         AVG(i.total_paid / NULLIF(i.total, 0)) as avg_partial_payment_ratio,
         SUM(i.total_paid) as total_partially_paid_amount,
@@ -942,7 +963,10 @@ export class BillingAnalyticsService {
       ${userFilter}
     `
 
-    const result = (await sequelize.query(query, { type: QueryTypes.SELECT })) as any[]
+    const result = (await sequelize.query(query, {
+      replacements: { userId: userId },
+      type: QueryTypes.SELECT,
+    })) as any[]
     const row = result[0] as any
 
     return {
@@ -981,12 +1005,13 @@ export class BillingAnalyticsService {
   private static async calculatePaymentProbabilities(
     userId?: string
   ): Promise<Map<string, number>> {
-    const userFilter = userId ? `AND i.assigned_user_id = '${userId}'` : ""
+    // SECURITY: Use parameterized queries to prevent SQL injection
+    const userFilter = userId ? `AND i.assigned_user_id = :userId` : ""
 
     const query = `
-      SELECT 
+      SELECT
         i.institution_id,
-        CASE 
+        CASE
           WHEN COUNT(i.id) = 0 THEN 0
           ELSE COUNT(CASE WHEN i.status = 'paid' THEN 1 END)::float / COUNT(i.id)
         END as payment_rate
@@ -997,7 +1022,10 @@ export class BillingAnalyticsService {
       HAVING COUNT(i.id) >= 3
     `
 
-    const results = (await sequelize.query(query, { type: QueryTypes.SELECT })) as any[]
+    const results = (await sequelize.query(query, {
+      replacements: { userId: userId },
+      type: QueryTypes.SELECT,
+    })) as any[]
     const probabilityMap = new Map<string, number>()
 
     results.forEach((row: any) => {
@@ -1063,7 +1091,8 @@ export class BillingAnalyticsService {
   }
 
   private static async calculateCollectionMetrics(userId?: string) {
-    const userFilter = userId ? `AND assigned_user_id = '${userId}'` : ""
+    // SECURITY: Use parameterized queries to prevent SQL injection
+    const userFilter = userId ? `AND assigned_user_id = :userId` : ""
 
     const query = `
       SELECT
@@ -1079,7 +1108,10 @@ export class BillingAnalyticsService {
       ${userFilter}
     `
 
-    const result = (await sequelize.query(query, { type: QueryTypes.SELECT })) as any[]
+    const result = (await sequelize.query(query, {
+      replacements: { userId: userId },
+      type: QueryTypes.SELECT,
+    })) as any[]
     const row = result[0] as any
 
     return {
@@ -1090,11 +1122,12 @@ export class BillingAnalyticsService {
   }
 
   private static async calculateOverdueMetrics(userId?: string) {
-    const userFilter = userId ? `AND assigned_user_id = '${userId}'` : ""
+    // SECURITY: Use parameterized queries to prevent SQL injection
+    const userFilter = userId ? `AND assigned_user_id = :userId` : ""
 
     const query = `
-      SELECT 
-        CASE 
+      SELECT
+        CASE
           WHEN COUNT(*) = 0 THEN 0
           ELSE COUNT(CASE WHEN status = 'overdue' THEN 1 END)::float / COUNT(*) * 100
         END as overdue_rate
@@ -1103,7 +1136,10 @@ export class BillingAnalyticsService {
       ${userFilter}
     `
 
-    const result = (await sequelize.query(query, { type: QueryTypes.SELECT })) as any[]
+    const result = (await sequelize.query(query, {
+      replacements: { userId: userId },
+      type: QueryTypes.SELECT,
+    })) as any[]
     const row = result[0] as any
 
     return {
@@ -1112,11 +1148,12 @@ export class BillingAnalyticsService {
   }
 
   private static async calculateGrowthMetrics(userId?: string) {
-    const userFilter = userId ? `AND assigned_user_id = '${userId}'` : ""
+    // SECURITY: Use parameterized queries to prevent SQL injection
+    const userFilter = userId ? `AND assigned_user_id = :userId` : ""
 
     const query = `
       WITH monthly_revenue AS (
-        SELECT 
+        SELECT
           EXTRACT(YEAR FROM created_at) as year,
           EXTRACT(MONTH FROM created_at) as month,
           SUM(total) as revenue
@@ -1127,18 +1164,21 @@ export class BillingAnalyticsService {
         ORDER BY year DESC, month DESC
         LIMIT 2
       )
-      SELECT 
-        CASE 
-          WHEN LAG(revenue) OVER (ORDER BY year, month) > 0 
+      SELECT
+        CASE
+          WHEN LAG(revenue) OVER (ORDER BY year, month) > 0
           THEN ((revenue - LAG(revenue) OVER (ORDER BY year, month)) / LAG(revenue) OVER (ORDER BY year, month)) * 100
-          ELSE 0 
+          ELSE 0
         END as growth_rate
       FROM monthly_revenue
       ORDER BY year DESC, month DESC
       LIMIT 1
     `
 
-    const result = (await sequelize.query(query, { type: QueryTypes.SELECT })) as any[]
+    const result = (await sequelize.query(query, {
+      replacements: { userId: userId },
+      type: QueryTypes.SELECT,
+    })) as any[]
     const row = result[0] as any
 
     return {

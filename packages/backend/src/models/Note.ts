@@ -285,16 +285,22 @@ export class Note
     }
 
     // Apply access control if userId is provided
+    // SECURITY: Use parameterized queries to prevent SQL injection
     if (filters.userId) {
+      const { NoteShare } = await import("./NoteShare")
+      const sharedNotes = await NoteShare.findAll({
+        where: { userId: filters.userId },
+        attributes: ["noteId"],
+      })
+      const sharedNoteIds = sharedNotes.map((share) => share.noteId)
+
       const accessControlClause = {
         [Op.or]: [
           { creatorId: filters.userId },
           { isPrivate: false },
           {
             id: {
-              [Op.in]: sequelize.literal(`(
-                SELECT note_id FROM note_shares WHERE user_id = '${filters.userId}'
-              )`),
+              [Op.in]: sharedNoteIds,
             },
           },
         ],
@@ -308,11 +314,16 @@ export class Note
     }
 
     // Filter by shared with specific user
+    // SECURITY: Use parameterized queries to prevent SQL injection
     if (filters.sharedWithUserId) {
+      const { NoteShare } = await import("./NoteShare")
+      const sharedNotes = await NoteShare.findAll({
+        where: { userId: filters.sharedWithUserId },
+        attributes: ["noteId"],
+      })
+      const sharedNoteIds = sharedNotes.map((share) => share.noteId)
       whereClause.id = {
-        [Op.in]: sequelize.literal(`(
-          SELECT note_id FROM note_shares WHERE user_id = '${filters.sharedWithUserId}'
-        )`),
+        [Op.in]: sharedNoteIds,
       }
     }
 

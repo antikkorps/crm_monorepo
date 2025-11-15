@@ -358,7 +358,15 @@ export class Meeting
     }
 
     // Apply access control if userId is provided
+    // SECURITY: Use parameterized queries to prevent SQL injection
     if (filters.userId) {
+      const { MeetingParticipant } = await import("./MeetingParticipant")
+      const participantMeetings = await MeetingParticipant.findAll({
+        where: { userId: filters.userId },
+        attributes: ["meetingId"],
+      })
+      const participantMeetingIds = participantMeetings.map((p) => p.meetingId)
+
       whereClause[Op.and] = [
         whereClause,
         {
@@ -366,9 +374,7 @@ export class Meeting
             { organizerId: filters.userId },
             {
               id: {
-                [Op.in]: sequelize.literal(`(
-                  SELECT meeting_id FROM meeting_participants WHERE user_id = '${filters.userId}'
-                )`),
+                [Op.in]: participantMeetingIds,
               },
             },
           ],
@@ -377,11 +383,16 @@ export class Meeting
     }
 
     // Filter by participant
+    // SECURITY: Use parameterized queries to prevent SQL injection
     if (filters.participantId) {
+      const { MeetingParticipant } = await import("./MeetingParticipant")
+      const participantMeetings = await MeetingParticipant.findAll({
+        where: { userId: filters.participantId },
+        attributes: ["meetingId"],
+      })
+      const participantMeetingIds = participantMeetings.map((p) => p.meetingId)
       whereClause.id = {
-        [Op.in]: sequelize.literal(`(
-          SELECT meeting_id FROM meeting_participants WHERE user_id = '${filters.participantId}'
-        )`),
+        [Op.in]: participantMeetingIds,
       }
     }
 
