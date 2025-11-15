@@ -21,6 +21,7 @@
     "lint": "eslint src --ext .ts --fix"
   },
   "devDependencies": {
+    "jsdom": "^27.2.0",
     "typescript": "^5.9.3",
     "vitest": "^4.0.9",
     "vue-tsc": "^3.1.4"
@@ -48,7 +49,6 @@
     "graphql": "^16.12.0",
     "graphql-request": "^7.3.3",
     "joi": "^18.0.1",
-    "jsdom": "^27.2.0",
     "koa": "^3.1.1",
     "koa-helmet": "^8.0.1",
     "lerna": "^9.0.1",
