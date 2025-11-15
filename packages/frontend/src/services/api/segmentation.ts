@@ -1,7 +1,6 @@
 import type { 
   Segment, 
   SegmentCreationAttributes, 
-  SegmentAnalytics, 
   BulkOperationOptions,
   BulkOperationResult,
   SegmentPreviewData

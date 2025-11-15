@@ -1,4 +1,4 @@
-import { ref, reactive, computed } from "vue"
+import { ref, computed } from "vue"
 import { segmentationApi } from "@/services/api/segmentation"
 import { debounce, SimpleCache } from "@/utils/performance"
 import type {
@@ -205,7 +205,7 @@ export function useSegmentation() {
     loading.value = true
     error.value = null
     try {
-      const response = await segmentationApi.previewSegment(criteria)
+      const response = await segmentationApi.previewSegment('institution', criteria)
       // Cache the result for 2 minutes
       previewCache.set(cacheKey, response.data, 2 * 60 * 1000)
       return response.data

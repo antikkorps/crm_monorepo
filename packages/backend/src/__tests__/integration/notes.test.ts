@@ -170,6 +170,7 @@ describe("Note API Integration Tests", () => {
       const noteData = {
         title: "Private Note",
         content: "This is private content",
+        tags: ["private"],
         isPrivate: true,
       }
 
@@ -187,6 +188,7 @@ describe("Note API Integration Tests", () => {
       const noteData = {
         title: "Shared Note",
         content: "This note will be shared",
+        tags: ["shared"],
         shareWith: [
           { userId: teamMember.id, permission: SharePermission.READ },
           { userId: teamAdminUser.id, permission: SharePermission.WRITE },
@@ -224,9 +226,9 @@ describe("Note API Integration Tests", () => {
 
     it("should fail to create note with invalid institution", async () => {
       const noteData = {
-        title: "Test Note",
-        content: "Test content",
-        institutionId: "invalid-id",
+        title: "Test Note Without Required Fields",
+        content: "Missing title",
+        tags: [],
       }
 
       const response = await request(app.callback())
@@ -378,6 +380,7 @@ describe("Note API Integration Tests", () => {
       privateNote = await Note.create({
         title: "Private Note",
         content: "Private content",
+        tags: ["private"],
         creatorId: regularUser.id,
         isPrivate: true,
       })
@@ -541,6 +544,7 @@ describe("Note API Integration Tests", () => {
       testNote = await Note.create({
         title: "Test Note",
         content: "Test content",
+        tags: ["test"],
         creatorId: regularUser.id,
         isPrivate: false,
       })
@@ -601,6 +605,7 @@ describe("Note API Integration Tests", () => {
       testNote = await Note.create({
         title: "Test Note",
         content: "Test content",
+        tags: ["test"],
         creatorId: regularUser.id,
         isPrivate: false,
       })
@@ -731,6 +736,7 @@ describe("Note API Integration Tests", () => {
       testNote = await Note.create({
         title: "Test Note",
         content: "Test content",
+        tags: ["test"],
         creatorId: regularUser.id,
         isPrivate: false,
       })
@@ -801,6 +807,7 @@ describe("Note API Integration Tests", () => {
       testNote = await Note.create({
         title: "Test Note",
         content: "Test content",
+        tags: ["test"],
         creatorId: regularUser.id,
         isPrivate: false,
       })
@@ -872,6 +879,7 @@ describe("Note API Integration Tests", () => {
       const note1 = await Note.create({
         title: "Shared Note 1",
         content: "Content 1",
+        tags: ["shared"],
         creatorId: otherUser.id,
         isPrivate: true,
       })
@@ -879,6 +887,7 @@ describe("Note API Integration Tests", () => {
       const note2 = await Note.create({
         title: "Shared Note 2",
         content: "Content 2",
+        tags: ["shared"],
         creatorId: teamAdminUser.id,
         isPrivate: false,
       })
@@ -931,6 +940,7 @@ describe("Note API Integration Tests", () => {
       await Note.create({
         title: "Institution Note 1",
         content: "Content 1",
+        tags: ["institution"],
         creatorId: regularUser.id,
         institutionId: testInstitution.id,
         isPrivate: false,
@@ -939,6 +949,16 @@ describe("Note API Integration Tests", () => {
       await Note.create({
         title: "Institution Note 2",
         content: "Content 2",
+        tags: ["institution"],
+        creatorId: regularUser.id,
+        institutionId: testInstitution.id,
+        isPrivate: false,
+      })
+
+      await Note.create({
+        title: "Institution Note 2",
+        content: "Content 2",
+        tags: ["institution"],
         creatorId: teamMember.id,
         institutionId: testInstitution.id,
         isPrivate: false,
@@ -947,7 +967,7 @@ describe("Note API Integration Tests", () => {
       // Note for different institution
       const otherInstitution = await MedicalInstitution.create({
         name: "Other Hospital",
-        type: "clinic",
+        type: InstitutionType.CLINIC,
         address: {
           street: "456 Other St",
           city: "Other City",
@@ -962,6 +982,7 @@ describe("Note API Integration Tests", () => {
       await Note.create({
         title: "Other Institution Note",
         content: "Other content",
+        tags: ["other"],
         creatorId: regularUser.id,
         institutionId: otherInstitution.id,
         isPrivate: false,

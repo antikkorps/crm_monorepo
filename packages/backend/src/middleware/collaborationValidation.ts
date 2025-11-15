@@ -38,7 +38,7 @@ export const validateNoteCreation = validate(
       "string.max": "Note content cannot exceed 50,000 characters",
       "any.required": "Note content is required",
     }),
-    institutionId: uuidSchema.messages({
+    institutionId: uuidSchema.optional().messages({
       "any.required": "Institution ID is required",
     }),
     // visibility removed; use isPrivate boolean instead
@@ -47,8 +47,9 @@ export const validateNoteCreation = validate(
         "string.empty": "Tag cannot be empty",
         "string.max": "Tag cannot exceed 50 characters",
       })
-    ).max(10).optional().messages({
+    ).max(10).required().messages({
       "array.max": "Cannot have more than 10 tags",
+      "any.required": "At least one tag is required",
     }),
     isPrivate: Joi.boolean().default(false),
   }),
