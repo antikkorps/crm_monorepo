@@ -125,8 +125,6 @@ describe("Note API Integration Tests", () => {
 
     // Debug: Verify users exist
     const allUsers = await User.findAll()
-    console.log('Users in database:', allUsers.map(u => ({ id: u.id, email: u.email })))
-    console.log('Generated token for user:', regularUser.id, regularUser.email)
   })
 
   afterEach(async () => {
