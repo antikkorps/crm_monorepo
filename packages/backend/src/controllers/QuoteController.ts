@@ -989,4 +989,178 @@ export class QuoteController {
 
   // TODO: Implement email functionality later
   // static async sendQuoteEmail(ctx: Context) { ... }
+
+  // Quote reminder endpoints
+  /**
+   * GET /api/quotes/reminders/needing-attention
+   * Get quotes that need attention (expiring soon or expired)
+   */
+  static async getQuotesNeedingAttention(ctx: Context) {
+    try {
+      const { QuoteReminderService } = await import("../services/QuoteReminderService")
+
+      const quotes = await QuoteReminderService.getQuotesNeedingAttention()
+
+      ctx.body = {
+        success: true,
+        data: quotes,
+        count: quotes.length,
+      }
+    } catch (error) {
+      ctx.status = 500
+      ctx.body = {
+        success: false,
+        error: {
+          code: "QUOTES_FETCH_ERROR",
+          message: "Failed to fetch quotes needing attention",
+          details: error instanceof Error ? error.message : "Unknown error",
+        },
+      }
+    }
+  }
+
+  /**
+   * GET /api/quotes/:id/reminders
+   * Get all reminders sent for a specific quote
+   */
+  static async getQuoteReminders(ctx: Context) {
+    try {
+      const { id } = ctx.params
+      const { QuoteReminderService } = await import("../services/QuoteReminderService")
+
+      const reminders = await QuoteReminderService.getRemindersForQuote(id)
+
+      ctx.body = {
+        success: true,
+        data: reminders,
+        count: reminders.length,
+      }
+    } catch (error) {
+      ctx.status = 500
+      ctx.body = {
+        success: false,
+        error: {
+          code: "REMINDERS_FETCH_ERROR",
+          message: "Failed to fetch quote reminders",
+          details: error instanceof Error ? error.message : "Unknown error",
+        },
+      }
+    }
+  }
+
+  /**
+   * POST /api/quotes/:id/reminders
+   * Send a manual reminder for a quote
+   * Body: { reminderType: ReminderType, message?: string }
+   */
+  static async sendQuoteReminder(ctx: Context) {
+    try {
+      const { id } = ctx.params
+      const user = ctx.state.user as User
+      const { reminderType, message } = ctx.request.body as {
+        reminderType: string
+        message?: string
+      }
+
+      if (!reminderType) {
+        ctx.status = 400
+        ctx.body = {
+          success: false,
+          error: {
+            code: "INVALID_INPUT",
+            message: "reminderType is required",
+          },
+        }
+        return
+      }
+
+      const { QuoteReminderService } = await import("../services/QuoteReminderService")
+      const { ReminderType } = await import("../models/QuoteReminder")
+
+      // Validate reminderType
+      if (!Object.values(ReminderType).includes(reminderType as any)) {
+        ctx.status = 400
+        ctx.body = {
+          success: false,
+          error: {
+            code: "INVALID_REMINDER_TYPE",
+            message: `Invalid reminder type. Must be one of: ${Object.values(ReminderType).join(", ")}`,
+          },
+        }
+        return
+      }
+
+      const result = await QuoteReminderService.sendManualReminder(
+        id,
+        reminderType as any,
+        user.id,
+        message
+      )
+
+      if (!result.success) {
+        ctx.status = 500
+        ctx.body = {
+          success: false,
+          error: {
+            code: "REMINDER_SEND_ERROR",
+            message: "Failed to send reminder",
+            details: result.error,
+          },
+        }
+        return
+      }
+
+      ctx.body = {
+        success: true,
+        data: result,
+        message: "Reminder sent successfully",
+      }
+    } catch (error) {
+      ctx.status = 500
+      ctx.body = {
+        success: false,
+        error: {
+          code: "REMINDER_SEND_ERROR",
+          message: "Failed to send quote reminder",
+          details: error instanceof Error ? error.message : "Unknown error",
+        },
+      }
+    }
+  }
+
+  /**
+   * GET /api/quotes/reminders/statistics
+   * Get reminder statistics
+   * Query params: startDate, endDate
+   */
+  static async getReminderStatistics(ctx: Context) {
+    try {
+      const { startDate, endDate } = ctx.query as {
+        startDate?: string
+        endDate?: string
+      }
+
+      const { QuoteReminderService } = await import("../services/QuoteReminderService")
+
+      const statistics = await QuoteReminderService.getReminderStatistics(
+        startDate ? new Date(startDate) : undefined,
+        endDate ? new Date(endDate) : undefined
+      )
+
+      ctx.body = {
+        success: true,
+        data: statistics,
+      }
+    } catch (error) {
+      ctx.status = 500
+      ctx.body = {
+        success: false,
+        error: {
+          code: "STATISTICS_FETCH_ERROR",
+          message: "Failed to fetch reminder statistics",
+          details: error instanceof Error ? error.message : "Unknown error",
+        },
+      }
+    }
+  }
 }

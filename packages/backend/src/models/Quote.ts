@@ -21,6 +21,7 @@ export interface QuoteAttributes {
   orderedAt?: Date
   clientComments?: string
   internalNotes?: string
+  lastReminderSent?: Date
 
   // Financial totals
   subtotal: number
@@ -65,6 +66,7 @@ export class Quote
   declare orderedAt?: Date
   declare clientComments?: string
   declare internalNotes?: string
+  declare lastReminderSent?: Date
 
   // Financial totals
   declare subtotal: number
@@ -527,6 +529,11 @@ Quote.init(
       type: DataTypes.TEXT,
       allowNull: true,
       field: "internal_notes",
+    },
+    lastReminderSent: {
+      type: DataTypes.DATE,
+      allowNull: true,
+      field: "last_reminder_sent",
     },
     subtotal: {
       type: DataTypes.DECIMAL(10, 2),

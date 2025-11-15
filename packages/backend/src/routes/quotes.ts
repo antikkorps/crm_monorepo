@@ -81,4 +81,17 @@ router.get("/:id/versions", QuoteController.getQuoteVersions)
 // POST /api/quotes/:id/send-email - Send quote via email
 // router.post("/:id/send-email", requirePermission("canViewAllBilling"), QuoteController.sendQuoteEmail)
 
+// Quote reminder endpoints
+// GET /api/quotes/reminders/needing-attention - Get quotes needing attention
+router.get("/reminders/needing-attention", requirePermission("canViewAllBilling"), QuoteController.getQuotesNeedingAttention)
+
+// GET /api/quotes/:id/reminders - Get reminders for a specific quote
+router.get("/:id/reminders", QuoteController.getQuoteReminders)
+
+// POST /api/quotes/:id/reminders - Send manual reminder for a quote
+router.post("/:id/reminders", QuoteController.sendQuoteReminder)
+
+// GET /api/quotes/reminders/statistics - Get reminder statistics
+router.get("/reminders/statistics", requirePermission("canViewAllBilling"), QuoteController.getReminderStatistics)
+
 export default router
