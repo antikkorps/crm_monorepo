@@ -14,34 +14,6 @@ export class DatabaseSeeder {
         return
       }
 
-      // Create admin user
-      const super_adminId = uuidv4()
-      const adminPasswordHash = await bcrypt.hash("admin123", 10)
-
-      await sequelize.query(
-        `
-        INSERT INTO users (
-          id, email, password_hash, first_name, last_name, role,
-          avatar_seed, is_active, created_at, updated_at
-        ) VALUES (
-          :id, :email, :password_hash, :first_name, :last_name, :role,
-          :avatar_seed, :is_active, NOW(), NOW()
-        )
-      `,
-        {
-          replacements: {
-            id: super_adminId,
-            email: "admin@medical-crm.com",
-            password_hash: adminPasswordHash,
-            first_name: "Admin",
-            last_name: "User",
-            role: "admin",
-            avatar_seed: "admin-user",
-            is_active: true,
-          },
-        }
-      )
-
       // Create team admin user
       const teamsuper_adminId = uuidv4()
       const teamAdminPasswordHash = await bcrypt.hash("teamadmin123", 10)
