@@ -6,10 +6,18 @@ on:
   pull_request:
     branches: [main, develop]
 
+# SECURITY: Restrict permissions to minimum required (principle of least privilege)
+permissions:
+  contents: read
+
 jobs:
   backend-tests:
     name: Backend Tests & Coverage
     runs-on: ubuntu-latest
+    permissions:
+      contents: read       # Required to checkout code
+      checks: write        # Required for test results
+      pull-requests: write # Required for coverage comments
 
     services:
       postgres:
@@ -75,6 +83,8 @@ jobs:
   frontend-tests:
     name: Frontend Tests & Build
     runs-on: ubuntu-latest
+    permissions:
+      contents: read  # Required to checkout code
 
     steps:
       - name: Checkout code
@@ -106,6 +116,8 @@ jobs:
   security-audit:
     name: Security Audit
     runs-on: ubuntu-latest
+    permissions:
+      contents: read  # Required to checkout code
 
     steps:
       - name: Checkout code
