@@ -213,7 +213,7 @@ export class DefaultPluginLoader implements PluginLoader {
   private async loadModule(modulePath: string): Promise<any> {
     try {
       // SECURITY: Validate module path
-      const validatedPath = this.validatePluginPath(modulePath)
+      const validatedPath = await this.validatePluginPath(modulePath)
 
       // Check if file exists
       await fs.access(validatedPath)
