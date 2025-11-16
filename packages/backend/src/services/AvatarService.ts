@@ -1,6 +1,7 @@
 import crypto from "crypto"
 import fs from "fs/promises"
 import path from "path"
+import sanitize from "sanitize-filename"
 import { logger } from "../utils/logger"
 
 export interface AvatarOptions {
@@ -163,7 +164,14 @@ export class AvatarService {
    */
   public static getLocalAvatarPath(userId: string, style?: string): string {
     const avatarStyle = style && this.isValidStyle(style) ? style : this.DEFAULT_STYLE
-    return path.join(this.AVATARS_DIR, `${userId}-${avatarStyle}.svg`)
+    const safeUserId = sanitize(userId)
+    const fileName = `${safeUserId}-${avatarStyle}.svg`
+    const avatarPath = path.resolve(this.AVATARS_DIR, fileName)
+    // Enforce avatarPath stays under AVATARS_DIR
+    if (!avatarPath.startsWith(path.resolve(this.AVATARS_DIR))) {
+      throw new Error("Invalid avatar path")
+    }
+    return avatarPath
   }
 
   /**
