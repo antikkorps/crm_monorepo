@@ -672,7 +672,10 @@ export { revenueApi } from './revenue'
 export { timelineApi } from './timeline'
 
 // Export Health Score API
+export { analyticsApi } from './analytics'
 export { healthScoreApi } from './healthScore'
+
+// Export Analytics API
 
 // System Settings API
 export const settingsApi = {
