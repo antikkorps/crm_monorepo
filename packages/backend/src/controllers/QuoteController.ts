@@ -987,8 +987,73 @@ export class QuoteController {
     }
   }
 
-  // TODO: Implement email functionality later
-  // static async sendQuoteEmail(ctx: Context) { ... }
+  // POST /api/quotes/:id/send-email - Send quote by email with PDF attachment
+  static async sendQuoteEmail(ctx: Context) {
+    try {
+      const user = ctx.state.user as User
+      const { id } = ctx.params
+      const { recipients, customMessage, templateId } = ctx.request.body as {
+        recipients: string[]
+        customMessage?: string
+        templateId?: string
+      }
+
+      if (!recipients || recipients.length === 0) {
+        ctx.status = 400
+        ctx.body = {
+          success: false,
+          error: {
+            code: "VALIDATION_ERROR",
+            message: "At least one recipient email is required",
+          },
+        }
+        return
+      }
+
+      const { PdfService } = await import("../services/PdfService")
+      const pdfService = new PdfService()
+
+      const result = await pdfService.generateQuotePdf(id, user.id, templateId, {
+        emailOptions: {
+          recipients,
+          customMessage,
+        },
+      })
+
+      if (result.emailResult && !(result.emailResult as any).success) {
+        ctx.status = 500
+        ctx.body = {
+          success: false,
+          error: {
+            code: "EMAIL_SEND_ERROR",
+            message: "Failed to send email",
+            details: (result.emailResult as any).error,
+          },
+        }
+        return
+      }
+
+      ctx.body = {
+        success: true,
+        data: {
+          message: "Quote sent successfully",
+          recipients: (result.emailResult as any)?.recipients || recipients,
+          messageId: (result.emailResult as any)?.messageId,
+        },
+      }
+    } catch (error) {
+      logger.error("Send quote email failed", { error, quoteId: ctx.params.id })
+      ctx.status = 500
+      ctx.body = {
+        success: false,
+        error: {
+          code: "SEND_EMAIL_ERROR",
+          message: "Failed to send quote by email",
+          details: error instanceof Error ? error.message : "Unknown error",
+        },
+      }
+    }
+  }
 
   // Quote reminder endpoints
   /**

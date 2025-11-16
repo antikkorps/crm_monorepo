@@ -33,6 +33,10 @@
     "institutions": "Institutions",
     "contacts": "Contacts",
     "tasks": "Tâches",
+    "meetings": "Réunions",
+    "calls": "Appels",
+    "notes": "Notes",
+    "reminders": "Rappels",
     "quotes": "Devis",
     "invoices": "Factures",
     "templates": "Modèles",
@@ -51,6 +55,7 @@
   "sidebar": {
     "appName": "Medical CRM",
     "billing": "Facturation",
+    "collaboration": "Collaboration",
     "contactsSegmentation": "Contacts & Segmentation",
     "configuration": "Configuration",
     "viewProfile": "Voir le profil",

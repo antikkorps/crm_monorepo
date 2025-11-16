@@ -1,5 +1,40 @@
 # Agent Guidelines for Medical CRM Monorepo
 
+## Business Context
+
+### CRM Type: B2B Medical
+This is a **B2B CRM** for selling to medical institutions (clinics, hospitals, medical practices), NOT a patient management system.
+
+**Core Entities**:
+- Medical Institutions (clients/prospects)
+- Contacts (people within institutions)
+- Quotes, Invoices, Tasks, Notes, Calls, Meetings, Reminders
+
+**NOT in scope**:
+- Individual patient management
+- Patient records/prescriptions
+- Patient appointments
+- Medical histories
+
+### Integration Strategy: Outlook/Teams
+
+**Calendar & Meetings**:
+- **Do NOT build** an integrated calendar UI
+- Use Outlook/Teams for scheduling (primary enterprise tools)
+- CRM exports events as `.ics` files (iCalendar format) for Outlook import
+- CRM stores meeting follow-ups, notes, and minutes
+- Meetings can be sent by email with .ics attachment
+
+**Email Strategy**:
+- Send quotes by email directly from CRM
+- Send meeting invites as .ics attachments
+- EmailService handles SMTP delivery
+
+**Benefits**:
+- Leverage existing enterprise tools (Outlook/Teams)
+- No calendar UI duplication
+- Focus on CRM value: tracking, notes, follow-ups, sales pipeline
+
 ## Development Commands
 - **Dev all**: `npm run dev` (runs frontend, backend, shared concurrently)
 - **Dev backend**: `npm run dev:back` (tsx watch mode)

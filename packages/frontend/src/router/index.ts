@@ -24,6 +24,10 @@ const ExportCenter = () => import("@/views/export/ExportCenterView.vue")
 const Segmentation = () => import("@/views/segmentation/SegmentationView.vue")
 const Contacts = () => import("@/views/contacts/ContactsView.vue")
 const Catalog = () => import("@/views/catalog/CatalogView.vue")
+const Meetings = () => import("@/views/meetings/MeetingsView.vue")
+const Calls = () => import("@/views/calls/CallsView.vue")
+const Notes = () => import("@/views/notes/NotesView.vue")
+const Reminders = () => import("@/views/reminders/RemindersView.vue")
 const DigiformaSettings = () => import("@/views/settings/DigiformaSettingsView.vue")
 const SecurityLogs = () => import("@/views/settings/SecurityLogsView.vue")
 const FeaturesSettings = () => import("@/views/settings/FeaturesSettingsView.vue")
@@ -208,6 +212,42 @@ const routes: RouteRecordRaw[] = [
     meta: {
       requiresAuth: true,
       title: "Contacts",
+    },
+  },
+  {
+    path: "/meetings",
+    name: "Meetings",
+    component: Meetings,
+    meta: {
+      requiresAuth: true,
+      title: "Réunions",
+    },
+  },
+  {
+    path: "/calls",
+    name: "Calls",
+    component: Calls,
+    meta: {
+      requiresAuth: true,
+      title: "Appels",
+    },
+  },
+  {
+    path: "/notes",
+    name: "Notes",
+    component: Notes,
+    meta: {
+      requiresAuth: true,
+      title: "Notes",
+    },
+  },
+  {
+    path: "/reminders",
+    name: "Reminders",
+    component: Reminders,
+    meta: {
+      requiresAuth: true,
+      title: "Rappels",
     },
   },
   {
