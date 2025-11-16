@@ -1,14 +1,42 @@
 import { Context, Next } from "koa"
 import validator from "validator"
+import sanitizeHtml from "sanitize-html"
 
 /**
- * Simple XSS sanitization
+ * SECURITY: Input validation and sanitization middleware
+ *
+ * Purpose: This middleware is applied GLOBALLY to all routes for basic input sanitization.
+ * It strips ALL HTML tags from inputs to prevent XSS attacks.
+ *
+ * Difference from xssSanitization.ts:
+ * - inputSanitization: Global, strict (no HTML allowed), applied to all routes
+ * - xssSanitization: Optional, configurable (allows specific tags), applied per-route
+ *
+ * Use xssSanitization.ts when you need to allow safe HTML (e.g., rich text editors).
+ * This middleware provides defense-in-depth for all other routes.
+ *
+ * Addresses: High severity lodash.set vulnerability in koa-xss-sanitizer
+ */
+
+// Restrictive sanitization options - strips ALL HTML
+const strictOptions: sanitizeHtml.IOptions = {
+  allowedTags: [],
+  allowedAttributes: {},
+  disallowedTagsMode: 'discard',
+}
+
+/**
+ * Sanitize a string value by removing all HTML tags
+ * SECURITY: Always sanitizes to prevent XSS, even for short strings
  */
 function sanitizeString(value: string): string {
   if (typeof value !== "string") return value
 
-  // Escape HTML special characters
-  return validator.escape(value.trim())
+  const trimmed = value.trim()
+
+  // SECURITY: Always sanitize - even short strings or strings without obvious HTML
+  // can contain XSS vectors (encoded payloads, attribute-based attacks, etc.)
+  return sanitizeHtml(trimmed, strictOptions)
 }
 
 /**

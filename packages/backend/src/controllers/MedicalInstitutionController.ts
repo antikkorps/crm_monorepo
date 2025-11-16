@@ -8,6 +8,8 @@ import { ContactPerson, MedicalInstitution, MedicalProfile, User } from "../mode
 import { TaskStatus } from "../models/Task"
 import { CsvImportService } from "../services/CsvImportService"
 import { NotificationService } from "../services/NotificationService"
+import { MedicalInstitutionService } from "../services/MedicalInstitutionService"
+import { MedicalInstitutionAnalyticsService } from "../services/MedicalInstitutionAnalyticsService"
 import { logger } from "../utils/logger"
 
 // Temporary interface for file uploads
@@ -338,30 +340,7 @@ export class MedicalInstitutionController {
     }
 
     try {
-      const institution = await MedicalInstitution.findByPk(id, {
-        include: [
-          {
-            model: MedicalProfile,
-            as: "medicalProfile",
-          },
-          {
-            model: ContactPerson,
-            as: "contactPersons",
-            where: { isActive: true },
-            required: false,
-          },
-          {
-            model: User,
-            as: "assignedUser",
-            attributes: ["id", "firstName", "lastName", "email"],
-            required: false,
-          },
-        ],
-      })
-
-      if (!institution) {
-        throw createError("Medical institution not found", 404, "INSTITUTION_NOT_FOUND")
-      }
+      const institution = await MedicalInstitutionService.getInstitutionById(id)
 
       ctx.body = {
         success: true,
@@ -394,83 +373,25 @@ export class MedicalInstitutionController {
       throw createError(error.details[0].message, 400, "VALIDATION_ERROR", error.details)
     }
 
-    const { medicalProfile, contactPersons, ...institutionData } = value
-
     try {
-      // Create institution
-      const institution = await MedicalInstitution.create(institutionData)
-
-      // Create medical profile
-      await MedicalProfile.create({
-        ...medicalProfile,
-        institutionId: institution.id,
-      })
-
-      // Create contact persons
-      if (contactPersons && contactPersons.length > 0) {
-        // Ensure only one primary contact
-        let hasPrimary = false
-        const processedContacts = contactPersons.map((contact: any) => {
-          if (contact.isPrimary && hasPrimary) {
-            contact.isPrimary = false
-          } else if (contact.isPrimary) {
-            hasPrimary = true
-          }
-          return {
-            ...contact,
-            institutionId: institution.id,
-          }
-        })
-
-        await ContactPerson.bulkCreate(processedContacts)
-      }
-
-      // Fetch the complete institution with associations
-      const completeInstitution = await MedicalInstitution.findByPk(institution.id, {
-        include: [
-          {
-            model: MedicalProfile,
-            as: "medicalProfile",
-          },
-          {
-            model: ContactPerson,
-            as: "contactPersons",
-            where: { isActive: true },
-            required: false,
-          },
-          {
-            model: User,
-            as: "assignedUser",
-            attributes: ["id", "firstName", "lastName", "email"],
-            required: false,
-          },
-        ],
-      })
-
-      // Send notification to team
       const user = ctx.state.user as User
-      const notificationSvc = NotificationService.getInstance()
-      await notificationSvc.notifyInstitutionCreated(completeInstitution, user)
+      const institution = await MedicalInstitutionService.createInstitution(
+        value,
+        user.id
+      )
 
       ctx.status = 201
       ctx.body = {
         success: true,
         message: "Medical institution created successfully",
         data: {
-          institution: completeInstitution,
+          institution,
         },
       }
-
-      logger.info("Medical institution created", {
-        userId: ctx.state.user?.id,
-        institutionId: institution.id,
-        institutionName: institution.name,
-      })
     } catch (error) {
       logger.error("Failed to create medical institution", {
         userId: ctx.state.user?.id,
         error: (error as Error).message,
-        institutionData,
       })
       throw error
     }
@@ -493,58 +414,20 @@ export class MedicalInstitutionController {
     }
 
     try {
-      const institution = await MedicalInstitution.findByPk(id)
-
-      if (!institution) {
-        throw createError("Medical institution not found", 404, "INSTITUTION_NOT_FOUND")
-      }
-
-      // Track changes for notifications
-      const changes = Object.keys(value)
-
-      // Update institution
-      await institution.update(value)
-
-      // Fetch updated institution with associations
-      const updatedInstitution = await MedicalInstitution.findByPk(id, {
-        include: [
-          {
-            model: MedicalProfile,
-            as: "medicalProfile",
-          },
-          {
-            model: ContactPerson,
-            as: "contactPersons",
-            where: { isActive: true },
-            required: false,
-          },
-          {
-            model: User,
-            as: "assignedUser",
-            attributes: ["id", "firstName", "lastName", "email"],
-            required: false,
-          },
-        ],
-      })
-
-      // Send notification about the update
       const user = ctx.state.user as User
-      const notificationSvc = NotificationService.getInstance()
-      await notificationSvc.notifyInstitutionUpdated(updatedInstitution, user, changes)
+      const institution = await MedicalInstitutionService.updateInstitution(
+        id,
+        value,
+        user.id
+      )
 
       ctx.body = {
         success: true,
         message: "Medical institution updated successfully",
         data: {
-          institution: updatedInstitution,
+          institution,
         },
       }
-
-      logger.info("Medical institution updated", {
-        userId: ctx.state.user?.id,
-        institutionId: id,
-        changes: value,
-      })
     } catch (error) {
       logger.error("Failed to update medical institution", {
         userId: ctx.state.user?.id,
@@ -572,22 +455,12 @@ export class MedicalInstitutionController {
     }
 
     try {
-      const institution = await MedicalInstitution.findByPk(id)
-
-      if (!institution) {
-        throw createError("Medical institution not found", 404, "INSTITUTION_NOT_FOUND")
-      }
-
-      // Find and update medical profile
-      const medicalProfile = await MedicalProfile.findOne({
-        where: { institutionId: id },
-      })
-
-      if (!medicalProfile) {
-        throw createError("Medical profile not found", 404, "MEDICAL_PROFILE_NOT_FOUND")
-      }
-
-      await medicalProfile.update(value)
+      const user = ctx.state.user as User
+      const medicalProfile = await MedicalInstitutionService.updateMedicalProfile(
+        id,
+        value,
+        user.id
+      )
 
       ctx.body = {
         success: true,
@@ -596,12 +469,6 @@ export class MedicalInstitutionController {
           medicalProfile,
         },
       }
-
-      logger.info("Medical profile updated", {
-        userId: ctx.state.user?.id,
-        institutionId: id,
-        changes: value,
-      })
     } catch (error) {
       logger.error("Failed to update medical profile", {
         userId: ctx.state.user?.id,
@@ -624,25 +491,13 @@ export class MedicalInstitutionController {
     }
 
     try {
-      const institution = await MedicalInstitution.findByPk(id)
-
-      if (!institution) {
-        throw createError("Medical institution not found", 404, "INSTITUTION_NOT_FOUND")
-      }
-
-      // Soft delete by setting isActive to false
-      await institution.update({ isActive: false })
+      const user = ctx.state.user as User
+      await MedicalInstitutionService.deleteInstitution(id, user.id)
 
       ctx.body = {
         success: true,
         message: "Medical institution deleted successfully",
       }
-
-      logger.info("Medical institution deleted", {
-        userId: ctx.state.user?.id,
-        institutionId: id,
-        institutionName: institution.name,
-      })
     } catch (error) {
       logger.error("Failed to delete medical institution", {
         userId: ctx.state.user?.id,
@@ -670,30 +525,12 @@ export class MedicalInstitutionController {
     }
 
     try {
-      const institution = await MedicalInstitution.findByPk(id)
-
-      if (!institution) {
-        throw createError("Medical institution not found", 404, "INSTITUTION_NOT_FOUND")
-      }
-
-      // If this is set as primary, remove primary status from others
-      if (value.isPrimary) {
-        await ContactPerson.update(
-          { isPrimary: false },
-          {
-            where: {
-              institutionId: id,
-              isActive: true,
-            },
-          }
-        )
-      }
-
-      // Create contact person
-      const contactPerson = await ContactPerson.create({
-        ...value,
-        institutionId: id,
-      })
+      const user = ctx.state.user as User
+      const contactPerson = await MedicalInstitutionService.addContactPerson(
+        id,
+        value,
+        user.id
+      )
 
       ctx.status = 201
       ctx.body = {
@@ -703,12 +540,6 @@ export class MedicalInstitutionController {
           contactPerson,
         },
       }
-
-      logger.info("Contact person added", {
-        userId: ctx.state.user?.id,
-        institutionId: id,
-        contactPersonId: contactPerson.id,
-      })
     } catch (error) {
       logger.error("Failed to add contact person", {
         userId: ctx.state.user?.id,
@@ -987,108 +818,12 @@ export class MedicalInstitutionController {
       const institutionId = ctx.params.id
       const user = ctx.state.user as User
 
-      // Get collaboration data in parallel
-      const [notes, meetings, calls, reminders, tasks] = await Promise.all([
-        // Get notes related to this institution
-        import("../models/Note").then(({ Note }) =>
-          Note.findByInstitution(institutionId)
-        ),
-        // Get meetings related to this institution
-        import("../models/Meeting").then(({ Meeting }) =>
-          Meeting.findAll({
-            where: { institutionId },
-            include: [
-              {
-                model: User,
-                as: "organizer",
-                attributes: ["id", "firstName", "lastName", "email"],
-              },
-            ],
-            order: [["createdAt", "DESC"]],
-          })
-        ),
-        // Get calls related to this institution
-        import("../models/Call").then(({ Call }) =>
-          Call.findAll({
-            where: { institutionId },
-            include: [
-              {
-                model: User,
-                as: "user",
-                attributes: ["id", "firstName", "lastName", "email"],
-              },
-            ],
-            order: [["createdAt", "DESC"]],
-          })
-        ),
-        // Get reminders related to this institution
-        import("../models/Reminder").then(({ Reminder }) =>
-          Reminder.findAll({
-            where: { institutionId },
-            include: [
-              {
-                model: User,
-                as: "user",
-                attributes: ["id", "firstName", "lastName", "email"],
-              },
-            ],
-            // Reminder model uses "reminderDate"
-            order: [["reminderDate", "ASC"]],
-          })
-        ),
-        // Get tasks related to this institution
-        import("../models/Task").then(({ Task }) =>
-          Task.findAll({
-            where: { institutionId },
-            include: [
-              {
-                model: User,
-                as: "assignee",
-                attributes: ["id", "firstName", "lastName", "email"],
-              },
-              {
-                model: User,
-                as: "creator",
-                attributes: ["id", "firstName", "lastName", "email"],
-              },
-            ],
-            order: [["createdAt", "DESC"]],
-          })
-        ),
-      ])
-
-      // Get summary statistics
-      const stats = {
-        totalNotes: notes.length,
-        totalMeetings: meetings.length,
-        totalCalls: calls.length,
-        totalReminders: reminders.length,
-        totalTasks: tasks.length,
-        upcomingMeetings: meetings.filter(m => new Date(m.startDate) > new Date()).length,
-        pendingReminders: reminders.filter(r => !r.isCompleted && new Date(r.reminderDate) > new Date()).length,
-        openTasks: tasks.filter(t => t.status !== TaskStatus.COMPLETED && t.status !== TaskStatus.CANCELLED).length,
-      }
-
-      ctx.body = {
-        stats,
-        recentNotes: notes.slice(0, 5),
-        upcomingMeetings: meetings
-          .filter(m => new Date(m.startDate) > new Date())
-          .slice(0, 5),
-        recentCalls: calls.slice(0, 5),
-        pendingReminders: reminders
-          .filter(r => !r.isCompleted)
-          .slice(0, 5),
-        openTasks: tasks
-          .filter(t => t.status !== TaskStatus.COMPLETED && t.status !== TaskStatus.CANCELLED)
-          .slice(0, 10),
-      }
-
-      logger.info("Collaboration data retrieved", {
-        userId: user.id,
+      const data = await MedicalInstitutionAnalyticsService.getCollaborationData(
         institutionId,
-        stats,
-      })
+        user.id
+      )
+
+      ctx.body = data
     } catch (error) {
       logger.error("Failed to get collaboration data", {
         userId: ctx.state.user?.id,
@@ -1109,200 +844,16 @@ export class MedicalInstitutionController {
       const user = ctx.state.user as User
       const { limit = 50, offset = 0, startDate, endDate } = ctx.query
 
-      const whereClause: any = { institutionId }
-      
-      // Add date filtering if provided
-      if (startDate || endDate) {
-        whereClause.createdAt = {}
-        if (startDate) {
-          whereClause.createdAt.$gte = new Date(startDate as string)
-        }
-        if (endDate) {
-          whereClause.createdAt.$lte = new Date(endDate as string)
-        }
-      }
-
-      // Get all interactions for this institution
-      const [notes, meetings, calls, reminders, tasks] = await Promise.all([
-        import("../models/Note").then(({ Note }) =>
-          Note.findAll({
-            where: whereClause,
-            include: [
-              {
-                model: User,
-                as: "creator",
-                attributes: ["id", "firstName", "lastName", "email"],
-              },
-            ],
-          })
-        ),
-        import("../models/Meeting").then(({ Meeting }) =>
-          Meeting.findAll({
-            where: whereClause,
-            include: [
-              {
-                model: User,
-                as: "organizer",
-                attributes: ["id", "firstName", "lastName", "email"],
-              },
-            ],
-          })
-        ),
-        import("../models/Call").then(({ Call }) =>
-          Call.findAll({
-            where: whereClause,
-            include: [
-              {
-                model: User,
-                as: "user",
-                attributes: ["id", "firstName", "lastName", "email"],
-              },
-            ],
-          })
-        ),
-        import("../models/Reminder").then(({ Reminder }) =>
-          Reminder.findAll({
-            where: whereClause,
-            include: [
-              {
-                model: User,
-                as: "user",
-                attributes: ["id", "firstName", "lastName", "email"],
-              },
-            ],
-          })
-        ),
-        import("../models/Task").then(({ Task }) =>
-          Task.findAll({
-            where: whereClause,
-            include: [
-              {
-                model: User,
-                as: "assignee",
-                attributes: ["id", "firstName", "lastName", "email"],
-              },
-              {
-                model: User,
-                as: "creator",
-                attributes: ["id", "firstName", "lastName", "email"],
-              },
-            ],
-          })
-        ),
-      ])
-
-      // Combine all interactions into a timeline
-      const timelineItems: any[] = []
-
-      // Add notes to timeline
-      notes.forEach(note => {
-        timelineItems.push({
-          id: note.id,
-          type: 'note',
-          title: note.title,
-          description: note.content.slice(0, 200) + (note.content.length > 200 ? '...' : ''),
-          user: note.creator,
-          createdAt: note.createdAt,
-          metadata: {
-            tags: note.tags,
-            isPrivate: note.isPrivate,
-          },
-        })
-      })
-
-      // Add meetings to timeline
-      meetings.forEach(meeting => {
-        timelineItems.push({
-          id: meeting.id,
-          type: 'meeting',
-          title: meeting.title,
-          description: meeting.description || '',
-          user: meeting.organizer,
-          createdAt: meeting.createdAt,
-          metadata: {
-            startDate: meeting.startDate,
-            endDate: meeting.endDate,
-            location: meeting.location,
-            status: meeting.status,
-          },
-        })
-      })
-
-      // Add calls to timeline
-      calls.forEach(call => {
-        timelineItems.push({
-          id: call.id,
-          type: 'call',
-          title: `Call to ${call.phoneNumber}`,
-          description: call.summary || '',
-          user: call.user,
-          createdAt: call.createdAt,
-          metadata: {
-            phoneNumber: call.phoneNumber,
-            duration: call.duration,
-            callType: call.callType,
-          },
-        })
-      })
-
-      // Add reminders to timeline
-      reminders.forEach(reminder => {
-        timelineItems.push({
-          id: reminder.id,
-          type: 'reminder',
-          title: reminder.title,
-          description: reminder.description || '',
-          user: reminder.user,
-          createdAt: reminder.createdAt,
-          metadata: {
-            dueDate: reminder.reminderDate,
-            priority: reminder.priority,
-            isCompleted: reminder.isCompleted,
-          },
-        })
-      })
-
-      // Add tasks to timeline
-      tasks.forEach(task => {
-        timelineItems.push({
-          id: task.id,
-          type: 'task',
-          title: task.title,
-          description: task.description || '',
-          user: task.creator,
-          assignee: task.assignee,
-          createdAt: task.createdAt,
-          metadata: {
-            status: task.status,
-            priority: task.priority,
-            dueDate: task.dueDate,
-          },
-        })
-      })
-
-      // Sort by creation date (most recent first)
-      timelineItems.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-
-      // Apply pagination
-      const total = timelineItems.length
-      const paginatedItems = timelineItems.slice(Number(offset), Number(offset) + Number(limit))
-
-      ctx.body = {
-        items: paginatedItems,
-        pagination: {
-          total,
-          limit: Number(limit),
-          offset: Number(offset),
-          hasMore: Number(offset) + Number(limit) < total,
-        },
-      }
-
-      logger.info("Timeline retrieved", {
-        userId: user.id,
+      const data = await MedicalInstitutionAnalyticsService.getTimeline({
         institutionId,
-        totalItems: total,
-        itemsReturned: paginatedItems.length,
+        limit: Number(limit),
+        offset: Number(offset),
+        startDate: startDate ? new Date(startDate as string) : undefined,
+        endDate: endDate ? new Date(endDate as string) : undefined,
+        userId: user.id,
       })
+
+      ctx.body = data
     } catch (error) {
       logger.error("Failed to get timeline", {
         userId: ctx.state.user?.id,

@@ -68,7 +68,7 @@ export class ExportService {
         whereClause[Op.or] = [
           { name: { [Op.iLike]: `%${options.searchQuery}%` } },
           Sequelize.where(
-            Sequelize.literal("\"address\"->>'city'"),
+            Sequelize.literal(`"address"->>'city'`),
             { [Op.iLike]: `%${options.searchQuery}%` }
           ),
         ] as any
