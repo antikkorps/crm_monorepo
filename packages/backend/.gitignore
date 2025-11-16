@@ -9,6 +9,12 @@ dist/
 .env.local
 .env.production
 
+# Uploads
+# Ignore uploaded files directory
+uploads/
+
+
+
 # Logs
 logs/
 *.log
