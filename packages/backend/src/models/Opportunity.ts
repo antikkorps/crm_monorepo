@@ -10,8 +10,8 @@ import {
   InferCreationAttributes,
   Model,
   NonAttribute,
-  Sequelize,
 } from "sequelize"
+import { sequelize } from "../config/database"
 import { MedicalInstitution } from "./MedicalInstitution"
 import { ContactPerson } from "./ContactPerson"
 import { User } from "./User"
@@ -119,200 +119,6 @@ export class Opportunity extends Model<
     assignedUser: Association<Opportunity, User>
   }
 
-  /**
-   * Initialize the Opportunity model
-   */
-  static initModel(sequelize: Sequelize): typeof Opportunity {
-    Opportunity.init(
-      {
-        id: {
-          type: DataTypes.UUID,
-          defaultValue: DataTypes.UUIDV4,
-          primaryKey: true,
-        },
-        institutionId: {
-          type: DataTypes.UUID,
-          allowNull: false,
-          references: {
-            model: "medical_institutions",
-            key: "id",
-          },
-          onDelete: "CASCADE",
-        },
-        contactPersonId: {
-          type: DataTypes.UUID,
-          allowNull: true,
-          references: {
-            model: "contact_persons",
-            key: "id",
-          },
-          onDelete: "SET NULL",
-        },
-        assignedUserId: {
-          type: DataTypes.UUID,
-          allowNull: false,
-          references: {
-            model: "users",
-            key: "id",
-          },
-          onDelete: "RESTRICT",
-        },
-        name: {
-          type: DataTypes.STRING,
-          allowNull: false,
-          validate: {
-            notEmpty: true,
-            len: [3, 255],
-          },
-        },
-        description: {
-          type: DataTypes.TEXT,
-          allowNull: true,
-        },
-        stage: {
-          type: DataTypes.ENUM(...Object.values(OpportunityStage)),
-          allowNull: false,
-          defaultValue: OpportunityStage.PROSPECTING,
-        },
-        status: {
-          type: DataTypes.ENUM(...Object.values(OpportunityStatus)),
-          allowNull: false,
-          defaultValue: OpportunityStatus.ACTIVE,
-        },
-        value: {
-          type: DataTypes.DECIMAL(15, 2),
-          allowNull: false,
-          defaultValue: 0,
-          validate: {
-            min: 0,
-          },
-        },
-        probability: {
-          type: DataTypes.INTEGER,
-          allowNull: false,
-          defaultValue: 50,
-          validate: {
-            min: 0,
-            max: 100,
-          },
-        },
-        expectedCloseDate: {
-          type: DataTypes.DATE,
-          allowNull: false,
-        },
-        actualCloseDate: {
-          type: DataTypes.DATE,
-          allowNull: true,
-        },
-        products: {
-          type: DataTypes.JSONB,
-          allowNull: true,
-          defaultValue: [],
-        },
-        competitors: {
-          type: DataTypes.JSONB,
-          allowNull: true,
-          defaultValue: [],
-        },
-        wonReason: {
-          type: DataTypes.TEXT,
-          allowNull: true,
-        },
-        lostReason: {
-          type: DataTypes.TEXT,
-          allowNull: true,
-        },
-        tags: {
-          type: DataTypes.JSONB,
-          allowNull: true,
-          defaultValue: [],
-        },
-        notes: {
-          type: DataTypes.TEXT,
-          allowNull: true,
-        },
-        source: {
-          type: DataTypes.STRING,
-          allowNull: true,
-        },
-        createdAt: {
-          type: DataTypes.DATE,
-          allowNull: false,
-          defaultValue: DataTypes.NOW,
-        },
-        updatedAt: {
-          type: DataTypes.DATE,
-          allowNull: false,
-          defaultValue: DataTypes.NOW,
-        },
-        deletedAt: {
-          type: DataTypes.DATE,
-          allowNull: true,
-        },
-      },
-      {
-        sequelize,
-        tableName: "opportunities",
-        timestamps: true,
-        paranoid: true,
-        underscored: false,
-        indexes: [
-          {
-            fields: ["institutionId"],
-          },
-          {
-            fields: ["contactPersonId"],
-          },
-          {
-            fields: ["assignedUserId"],
-          },
-          {
-            fields: ["stage"],
-          },
-          {
-            fields: ["status"],
-          },
-          {
-            fields: ["expectedCloseDate"],
-          },
-          {
-            fields: ["value"],
-          },
-          {
-            fields: ["probability"],
-          },
-          {
-            fields: ["createdAt"],
-          },
-        ],
-      }
-    )
-
-    return Opportunity
-  }
-
-  /**
-   * Define associations
-   */
-  static associate() {
-    // Opportunity belongs to Institution
-    Opportunity.belongsTo(MedicalInstitution, {
-      foreignKey: "institutionId",
-      as: "institution",
-    })
-
-    // Opportunity optionally belongs to Contact Person
-    Opportunity.belongsTo(ContactPerson, {
-      foreignKey: "contactPersonId",
-      as: "contactPerson",
-    })
-
-    // Opportunity belongs to User (assigned)
-    Opportunity.belongsTo(User, {
-      foreignKey: "assignedUserId",
-      as: "assignedUser",
-    })
-  }
 
   /**
    * Calculate weighted value based on probability
@@ -374,3 +180,180 @@ export class Opportunity extends Model<
     await this.save()
   }
 }
+
+Opportunity.init(
+  {
+    id: {
+      type: DataTypes.UUID,
+      defaultValue: DataTypes.UUIDV4,
+      primaryKey: true,
+    },
+    institutionId: {
+      type: DataTypes.UUID,
+      allowNull: false,
+      field: "institution_id",
+      references: {
+        model: "medical_institutions",
+        key: "id",
+      },
+      onDelete: "CASCADE",
+    },
+    contactPersonId: {
+      type: DataTypes.UUID,
+      allowNull: true,
+      field: "contact_person_id",
+      references: {
+        model: "contact_persons",
+        key: "id",
+      },
+      onDelete: "SET NULL",
+    },
+    assignedUserId: {
+      type: DataTypes.UUID,
+      allowNull: false,
+      field: "assigned_user_id",
+      references: {
+        model: "users",
+        key: "id",
+      },
+      onDelete: "RESTRICT",
+    },
+    name: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      validate: {
+        notEmpty: true,
+        len: [3, 255],
+      },
+    },
+    description: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+    },
+    stage: {
+      type: DataTypes.ENUM(...Object.values(OpportunityStage)),
+      allowNull: false,
+      defaultValue: OpportunityStage.PROSPECTING,
+    },
+    status: {
+      type: DataTypes.ENUM(...Object.values(OpportunityStatus)),
+      allowNull: false,
+      defaultValue: OpportunityStatus.ACTIVE,
+    },
+    value: {
+      type: DataTypes.DECIMAL(15, 2),
+      allowNull: false,
+      defaultValue: 0,
+      validate: {
+        min: 0,
+      },
+    },
+    probability: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      defaultValue: 50,
+      validate: {
+        min: 0,
+        max: 100,
+      },
+    },
+    expectedCloseDate: {
+      type: DataTypes.DATE,
+      allowNull: false,
+      field: "expected_close_date",
+    },
+    actualCloseDate: {
+      type: DataTypes.DATE,
+      allowNull: true,
+      field: "actual_close_date",
+    },
+    products: {
+      type: DataTypes.JSONB,
+      allowNull: true,
+      defaultValue: [],
+    },
+    competitors: {
+      type: DataTypes.JSONB,
+      allowNull: true,
+      defaultValue: [],
+    },
+    wonReason: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+      field: "won_reason",
+    },
+    lostReason: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+      field: "lost_reason",
+    },
+    tags: {
+      type: DataTypes.JSONB,
+      allowNull: true,
+      defaultValue: [],
+    },
+    notes: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+    },
+    source: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    createdAt: {
+      type: DataTypes.DATE,
+      allowNull: false,
+      defaultValue: DataTypes.NOW,
+      field: "created_at",
+    },
+    updatedAt: {
+      type: DataTypes.DATE,
+      allowNull: false,
+      defaultValue: DataTypes.NOW,
+      field: "updated_at",
+    },
+    deletedAt: {
+      type: DataTypes.DATE,
+      allowNull: true,
+      field: "deleted_at",
+    },
+  },
+  {
+    sequelize,
+    tableName: "opportunities",
+    timestamps: true,
+    paranoid: true,
+    underscored: true,
+    indexes: [
+      {
+        fields: ["institution_id"],
+      },
+      {
+        fields: ["contact_person_id"],
+      },
+      {
+        fields: ["assigned_user_id"],
+      },
+      {
+        fields: ["stage"],
+      },
+      {
+        fields: ["status"],
+      },
+      {
+        fields: ["expected_close_date"],
+      },
+      {
+        fields: ["value"],
+      },
+      {
+        fields: ["probability"],
+      },
+      {
+        fields: ["created_at"],
+      },
+    ],
+  }
+)
+
+// Note: Associations are defined in models/index.ts to avoid circular dependencies
