@@ -671,6 +671,9 @@ export { revenueApi } from './revenue'
 // Export Timeline API
 export { timelineApi } from './timeline'
 
+// Export Health Score API
+export { healthScoreApi } from './healthScore'
+
 // System Settings API
 export const settingsApi = {
   getPublic: () => apiClient.get("/settings/public"),

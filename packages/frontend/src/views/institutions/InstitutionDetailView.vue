@@ -40,6 +40,11 @@
               {{ institution.isActive ? 'Actif' : 'Inactif' }}
             </v-chip>
           </div>
+
+          <!-- Health Score Badge -->
+          <div class="mt-4">
+            <HealthScoreBadge :institution-id="institution.id" />
+          </div>
         </div>
 
         <div v-if="editMode" class="mb-6">
@@ -263,6 +268,7 @@ import DigiformaTab from "@/components/institutions/DigiformaTab.vue"
 import RevenueTab from "@/components/institutions/RevenueTab.vue"
 import CollaborationTab from "@/components/institutions/CollaborationTab.vue"
 import TimelineTab from "@/components/institutions/TimelineTab.vue"
+import HealthScoreBadge from "@/components/institutions/HealthScoreBadge.vue"
 import AppLayout from "@/components/layout/AppLayout.vue"
 import { DetailSkeleton } from "@/components/skeletons"
 import { institutionsApi } from "@/services/api"

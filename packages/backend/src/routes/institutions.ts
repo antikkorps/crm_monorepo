@@ -151,6 +151,14 @@ router.get(
   MedicalInstitutionController.getRevenueAnalytics
 )
 
+// GET /api/institutions/:id/health-score - Get health score for institution
+router.get(
+  "/:id/health-score",
+  canViewInstitutionsFiltered(),
+  validateInstitutionOwnership(),
+  MedicalInstitutionController.getHealthScore
+)
+
 // GET /api/institutions/search/unified - Unified search across institutions, tasks, and collaboration features
 router.get(
   "/search/unified",

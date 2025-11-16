@@ -1496,4 +1496,36 @@ export class MedicalInstitutionController {
       throw error
     }
   }
+
+  /**
+   * GET /api/institutions/:id/health-score
+   * Get health score for an institution
+   */
+  static async getHealthScore(ctx: Context) {
+    try {
+      const { id } = ctx.params
+
+      const { InstitutionHealthScoreService } = await import("../services/InstitutionHealthScoreService")
+      const healthScore = await InstitutionHealthScoreService.calculateHealthScore(id)
+
+      ctx.body = {
+        success: true,
+        data: healthScore,
+      }
+
+      logger.info("Health score retrieved", {
+        userId: ctx.state.user?.id,
+        institutionId: id,
+        score: healthScore.total,
+        level: healthScore.level,
+      })
+    } catch (error) {
+      logger.error("Failed to retrieve health score", {
+        userId: ctx.state.user?.id,
+        institutionId: ctx.params.id,
+        error: (error as Error).message,
+      })
+      throw error
+    }
+  }
 }
