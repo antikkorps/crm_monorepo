@@ -33,6 +33,10 @@
     "institutions": "Institutions",
     "contacts": "Contacts",
     "tasks": "Tasks",
+    "meetings": "Meetings",
+    "calls": "Calls",
+    "notes": "Notes",
+    "reminders": "Reminders",
     "quotes": "Quotes",
     "invoices": "Invoices",
     "templates": "Templates",
@@ -44,6 +48,7 @@
     "exportCenter": "Export Center",
     "catalog": "Catalog",
     "profile": "Profile",
+    "systemSettings": "System Settings",
     "logout": "Logout"
   },
   "auth": {
@@ -63,6 +68,7 @@
   "sidebar": {
     "appName": "Medical CRM",
     "billing": "Billing",
+    "collaboration": "Collaboration",
     "contactsSegmentation": "Contacts & Segmentation",
     "configuration": "Configuration",
     "viewProfile": "View profile",

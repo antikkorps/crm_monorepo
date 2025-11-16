@@ -1,0 +1,535 @@
+<template>
+  <v-dialog
+    v-model="visible"
+    max-width="700px"
+    persistent
+  >
+    <v-card>
+      <v-card-title>
+        {{ isEditing ? 'Modifier la réunion' : 'Nouvelle réunion' }}
+      </v-card-title>
+
+      <v-card-text class="meeting-form">
+        <form @submit.prevent="handleSubmit" class="form-container">
+          <!-- Title -->
+          <div class="form-group">
+            <v-text-field
+              id="title"
+              v-model="formData.title"
+              :error-messages="errors.title ? [errors.title] : []"
+              label="Titre *"
+              placeholder="Réunion avec l'équipe médicale"
+              density="comfortable"
+              hide-details="auto"
+            />
+          </div>
+
+          <!-- Description -->
+          <div class="form-group">
+            <v-textarea
+              id="description"
+              v-model="formData.description"
+              label="Description"
+              placeholder="Détails de la réunion..."
+              density="comfortable"
+              :rows="$vuetify.display.mobile ? 2 : 3"
+              auto-grow
+              hide-details="auto"
+            />
+          </div>
+
+          <!-- Date and Time Row -->
+          <div class="form-row">
+            <div class="form-group">
+              <v-text-field
+                id="startDate"
+                v-model="formData.startDate"
+                :error-messages="errors.startDate ? [errors.startDate] : []"
+                label="Date et heure de début *"
+                type="datetime-local"
+                density="comfortable"
+                hide-details="auto"
+              />
+            </div>
+
+            <div class="form-group">
+              <v-text-field
+                id="endDate"
+                v-model="formData.endDate"
+                :error-messages="errors.endDate ? [errors.endDate] : []"
+                label="Date et heure de fin *"
+                type="datetime-local"
+                density="comfortable"
+                hide-details="auto"
+              />
+            </div>
+          </div>
+
+          <!-- Location -->
+          <div class="form-group">
+            <v-text-field
+              id="location"
+              v-model="formData.location"
+              label="Lieu"
+              placeholder="Salle de réunion A, Bâtiment principal"
+              prepend-inner-icon="mdi-map-marker"
+              density="comfortable"
+              hide-details="auto"
+            />
+          </div>
+
+          <!-- Institution and Status Row -->
+          <div class="form-row">
+            <div class="form-group">
+              <v-autocomplete
+                id="institutionId"
+                v-model="formData.institutionId"
+                :items="institutionOptions"
+                item-title="label"
+                item-value="value"
+                label="Institution"
+                placeholder="Sélectionner une institution"
+                clearable
+                :loading="loadingInstitutions"
+                density="comfortable"
+                hide-details="auto"
+                @update:search="onInstitutionSearch"
+                no-filter
+              />
+            </div>
+
+            <div class="form-group" v-if="isEditing">
+              <v-select
+                id="status"
+                v-model="formData.status"
+                :items="statusOptions"
+                item-title="label"
+                item-value="value"
+                label="Statut"
+                placeholder="Sélectionner un statut"
+                density="comfortable"
+                hide-details="auto"
+              />
+            </div>
+          </div>
+
+          <!-- Participants -->
+          <div class="form-group">
+            <v-autocomplete
+              id="participantIds"
+              v-model="formData.participantIds"
+              :items="userOptions"
+              item-title="label"
+              item-value="value"
+              label="Participants"
+              placeholder="Sélectionner les participants"
+              multiple
+              chips
+              closable-chips
+              :loading="loadingUsers"
+              density="comfortable"
+              hide-details="auto"
+            >
+              <template #chip="{ item, props }">
+                <v-chip
+                  v-bind="props"
+                  :text="item.title"
+                  closable
+                  size="small"
+                />
+              </template>
+            </v-autocomplete>
+          </div>
+        </form>
+      </v-card-text>
+
+      <v-card-actions class="dialog-footer">
+        <v-spacer />
+        <v-btn
+          color="secondary"
+          variant="outlined"
+          @click="handleCancel"
+        >
+          Annuler
+        </v-btn>
+        <v-btn
+          color="primary"
+          :loading="loading"
+          @click="handleSubmit"
+        >
+          {{ isEditing ? 'Modifier' : 'Créer' }}
+        </v-btn>
+      </v-card-actions>
+    </v-card>
+  </v-dialog>
+</template>
+
+<script setup lang="ts">
+import { institutionsApi } from "@/services/api"
+import { useInstitutionsStore } from "@/stores/institutions"
+import { useTeamStore } from "@/stores/team"
+import type {
+  Meeting,
+  MeetingCreateRequest,
+  MeetingUpdateRequest,
+  MeetingStatus,
+} from "@medical-crm/shared"
+import { computed, onMounted, ref, watch } from "vue"
+
+interface Props {
+  modelValue: boolean
+  meeting?: Meeting | null
+  loading?: boolean
+}
+
+interface Emits {
+  (e: "update:modelValue", visible: boolean): void
+  (e: "submit", data: MeetingCreateRequest | MeetingUpdateRequest): void
+  (e: "cancel"): void
+}
+
+const props = defineProps<Props>()
+const emit = defineEmits<Emits>()
+
+// Stores
+const teamStore = useTeamStore()
+const institutionsStore = useInstitutionsStore()
+
+const visible = computed({
+  get: () => props.modelValue,
+  set: (value) => emit("update:modelValue", value)
+})
+
+const formData = ref<MeetingCreateRequest & { status?: MeetingStatus; startDate: string; endDate: string }>({
+  title: "",
+  description: "",
+  startDate: "",
+  endDate: "",
+  location: "",
+  institutionId: "",
+  participantIds: [],
+  status: "scheduled" as MeetingStatus,
+})
+
+const errors = ref<Record<string, string>>({})
+const userOptions = ref<Array<{ label: string; value: string }>>([])
+const institutionOptions = ref<Array<{ label: string; value: string }>>([])
+const loadingInstitutionsSearch = ref(false)
+
+// Computed loading states from stores
+const loadingUsers = computed(() => teamStore.loading)
+const loadingInstitutions = computed(() => institutionsStore.loading || loadingInstitutionsSearch.value)
+
+const isEditing = computed(() => !!props.meeting)
+
+const statusOptions = computed(() => [
+  { label: "Planifiée", value: "scheduled" },
+  { label: "En cours", value: "in_progress" },
+  { label: "Terminée", value: "completed" },
+  { label: "Annulée", value: "cancelled" },
+])
+
+watch(
+  () => props.modelValue,
+  (isVisible) => {
+    if (isVisible) {
+      resetForm()
+      if (props.meeting) {
+        populateForm(props.meeting)
+      }
+    }
+  }
+)
+
+const resetForm = () => {
+  formData.value = {
+    title: "",
+    description: "",
+    startDate: "",
+    endDate: "",
+    location: "",
+    institutionId: "",
+    participantIds: [],
+    status: "scheduled" as MeetingStatus,
+  }
+  errors.value = {}
+}
+
+const populateForm = (meeting: Meeting) => {
+  formData.value = {
+    title: meeting.title,
+    description: meeting.description || "",
+    startDate: formatDateForInput(new Date(meeting.startDate)),
+    endDate: formatDateForInput(new Date(meeting.endDate)),
+    location: meeting.location || "",
+    institutionId: meeting.institutionId || "",
+    participantIds: meeting.participants?.map((p) => p.userId) || [],
+    status: meeting.status,
+  }
+}
+
+const validateForm = (): boolean => {
+  errors.value = {}
+
+  if (!formData.value.title.trim()) {
+    errors.value.title = "Le titre est requis"
+  }
+
+  if (!formData.value.startDate) {
+    errors.value.startDate = "La date de début est requise"
+  }
+
+  if (!formData.value.endDate) {
+    errors.value.endDate = "La date de fin est requise"
+  }
+
+  // Validate that endDate is after startDate
+  if (formData.value.startDate && formData.value.endDate) {
+    const start = new Date(formData.value.startDate)
+    const end = new Date(formData.value.endDate)
+    if (end <= start) {
+      errors.value.endDate = "La date de fin doit être après la date de début"
+    }
+  }
+
+  return Object.keys(errors.value).length === 0
+}
+
+const handleSubmit = () => {
+  if (!validateForm()) return
+
+  const submitData = { ...formData.value }
+
+  // Clean up empty values
+  if (!submitData.description?.trim()) {
+    delete submitData.description
+  }
+  if (!submitData.location?.trim()) {
+    delete submitData.location
+  }
+  if (!submitData.institutionId) {
+    delete submitData.institutionId
+  }
+  if (!submitData.participantIds || submitData.participantIds.length === 0) {
+    delete submitData.participantIds
+  }
+
+  // Convert string dates to Date objects for API
+  (submitData as any).startDate = new Date(submitData.startDate)
+  ;(submitData as any).endDate = new Date(submitData.endDate)
+
+  emit("submit", submitData)
+}
+
+const handleCancel = () => {
+  emit("cancel")
+  visible.value = false
+}
+
+const loadUsers = async () => {
+  try {
+    await teamStore.fetchTeamMembers()
+
+    // Convert team members to user options
+    const users: Array<{ label: string; value: string }> = []
+    if (Array.isArray(teamStore.teamMembers)) {
+      teamStore.teamMembers.forEach((member) => {
+        if (member.firstName && member.lastName && member.id) {
+          users.push({
+            label: `${member.firstName} ${member.lastName}`,
+            value: member.id,
+          })
+        }
+      })
+    } else {
+      console.warn("Team members is not an array:", teamStore.teamMembers)
+    }
+    userOptions.value = users
+  } catch (error) {
+    console.error("Error loading users:", error)
+    userOptions.value = []
+  }
+}
+
+const loadInstitutions = async () => {
+  try {
+    await institutionsStore.fetchInstitutions()
+
+    if (Array.isArray(institutionsStore.institutions)) {
+      institutionOptions.value = institutionsStore.institutions.map((institution) => ({
+        label: institution.name,
+        value: institution.id,
+      }))
+    } else {
+      console.warn("Institutions response is not an array:", institutionsStore.institutions)
+      institutionOptions.value = []
+    }
+  } catch (error) {
+    console.error("Error loading institutions:", error)
+    institutionOptions.value = []
+  }
+}
+
+// Debounce timer for institution search
+let searchDebounceTimer: NodeJS.Timeout | null = null
+
+const onInstitutionSearch = async (search: string | null) => {
+  // Clear previous timer
+  if (searchDebounceTimer) {
+    clearTimeout(searchDebounceTimer)
+  }
+
+  // If search is empty or too short, load all institutions
+  if (!search || search.length < 2) {
+    loadingInstitutionsSearch.value = true
+    await loadInstitutions()
+    loadingInstitutionsSearch.value = false
+    return
+  }
+
+  // Debounce search
+  searchDebounceTimer = setTimeout(async () => {
+    try {
+      loadingInstitutionsSearch.value = true
+      const response = await institutionsApi.search(search, { limit: 50 })
+      const data = (response as any).data || response
+
+      let institutionsArray: any[] = []
+      if (Array.isArray(data)) {
+        institutionsArray = data
+      } else if (data && Array.isArray(data.institutions)) {
+        institutionsArray = data.institutions
+      }
+
+      institutionOptions.value = institutionsArray.map((institution: any) => ({
+        label: institution.name,
+        value: institution.id,
+      }))
+    } catch (error) {
+      console.error("Error searching institutions:", error)
+      institutionOptions.value = []
+    } finally {
+      loadingInstitutionsSearch.value = false
+    }
+  }, 300) // 300ms debounce
+}
+
+// Helper function to format date for datetime-local input
+const formatDateForInput = (date: Date): string => {
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, "0")
+  const day = String(date.getDate()).padStart(2, "0")
+  const hours = String(date.getHours()).padStart(2, "0")
+  const minutes = String(date.getMinutes()).padStart(2, "0")
+  return `${year}-${month}-${day}T${hours}:${minutes}`
+}
+
+onMounted(() => {
+  loadUsers()
+  loadInstitutions()
+})
+</script>
+
+<style scoped>
+.meeting-form-dialog {
+  width: 90vw;
+  max-width: 700px;
+}
+
+.meeting-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  padding: 1rem 0;
+}
+
+.form-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.form-group.full-width {
+  grid-column: 1 / -1;
+}
+
+.dialog-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(var(--v-theme-surface-variant), 0.2);
+}
+
+@media (max-width: 768px) {
+  .meeting-form-dialog {
+    width: 95vw;
+    max-width: none;
+  }
+
+  .meeting-form {
+    gap: 1rem;
+    padding: 0.5rem 0;
+  }
+
+  .form-container {
+    gap: 1rem;
+  }
+
+  .form-row {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+
+  .dialog-footer {
+    flex-direction: column-reverse;
+    gap: 0.5rem;
+    padding-top: 1.5rem;
+
+    .v-btn {
+      width: 100%;
+    }
+  }
+}
+
+@media (max-width: 480px) {
+  .meeting-form-dialog {
+    width: 98vw;
+    margin: 1rem;
+  }
+
+  .meeting-form {
+    gap: 0.75rem;
+    padding: 0.25rem 0;
+  }
+
+  .form-container {
+    gap: 0.75rem;
+  }
+
+  .form-row {
+    gap: 0.5rem;
+  }
+
+  .v-card-text {
+    padding: 1rem !important;
+  }
+
+  .v-card-title {
+    padding: 1rem 1rem 0.5rem 1rem !important;
+    font-size: 1.25rem;
+  }
+}
+</style>

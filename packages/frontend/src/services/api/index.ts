@@ -650,6 +650,18 @@ export { dashboardApi } from './dashboard'
 // Export Reminder Rules API
 export { reminderRulesApi } from './reminderRules'
 
+// Export Meetings API
+export { meetingsApi } from './meetings'
+
+// Export Calls API
+export { callsApi } from './calls'
+
+// Export Notes API
+export { notesApi } from './notes'
+
+// Export Reminders API
+export { remindersApi } from './reminders'
+
 // System Settings API
 export const settingsApi = {
   getPublic: () => apiClient.get("/settings/public"),

@@ -51,6 +51,27 @@
           @click="onNavigationClick"
         ></v-list-item>
 
+        <!-- Collaboration Section -->
+        <v-list-group value="Collaboration">
+          <template v-slot:activator="{ props }">
+            <v-list-item
+              v-bind="props"
+              prepend-icon="mdi-calendar-account"
+              :title="$t('sidebar.collaboration')"
+            ></v-list-item>
+          </template>
+
+          <v-list-item
+            v-for="item in collaborationNavigation"
+            :key="item.title"
+            :prepend-icon="item.icon"
+            :title="$t(item.title)"
+            :to="item.to"
+            :value="item.value"
+            @click="onNavigationClick"
+          ></v-list-item>
+        </v-list-group>
+
         <!-- Billing Section (conditionally shown based on feature flags) -->
         <v-list-group v-if="filteredBillingNavigation.length > 0" value="Billing">
           <template v-slot:activator="{ props }">
@@ -355,6 +376,33 @@ const mainNavigation = [
     icon: "mdi-check-circle",
     to: "/tasks",
     value: "tasks",
+  },
+]
+
+const collaborationNavigation = [
+  {
+    title: "navigation.meetings",
+    icon: "mdi-calendar-account",
+    to: "/meetings",
+    value: "meetings",
+  },
+  {
+    title: "navigation.calls",
+    icon: "mdi-phone",
+    to: "/calls",
+    value: "calls",
+  },
+  {
+    title: "navigation.notes",
+    icon: "mdi-note-text",
+    to: "/notes",
+    value: "notes",
+  },
+  {
+    title: "navigation.reminders",
+    icon: "mdi-bell-alert",
+    to: "/reminders",
+    value: "reminders",
   },
 ]
 
