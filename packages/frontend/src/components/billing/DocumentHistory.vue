@@ -165,15 +165,14 @@
     </Dialog>
 
     <!-- Toast for notifications -->
-    <Toast />
   </div>
 </template>
 
 <script setup lang="ts">
 import type { DocumentVersion } from "@medical-crm/shared"
-import { useToast } from "primevue/usetoast"
 import { computed, onMounted, ref, watch } from "vue"
 import { documentsApi } from "../../services/api"
+import { useNotificationStore } from "@/stores/notification"
 
 interface Props {
   documentId: string
@@ -197,7 +196,7 @@ const emailing = ref(false)
 const emailErrors = ref<Record<string, string>>({})
 
 // Toast for notifications
-const toast = useToast()
+const notificationStore = useNotificationStore()
 
 // Computed properties
 const isEmailFormValid = computed(() => {
@@ -227,12 +226,7 @@ const loadVersions = async () => {
     }
   } catch (error) {
     console.error("Failed to load document versions:", error)
-    toast.add({
-      severity: "error",
-      summary: "Error",
-      detail: "Failed to load document history",
-      life: 3000,
-    })
+    notificationStore.showError("Failed to load document history")
   } finally {
     loading.value = false
   }
@@ -259,20 +253,10 @@ const downloadVersion = async (version: DocumentVersion) => {
       `${props.documentType}-${props.documentId}-v${version.version}.pdf`
     documentsApi.downloadBlob(blob, filename)
 
-    toast.add({
-      severity: "success",
-      summary: "Success",
-      detail: "Document downloaded successfully",
-      life: 3000,
-    })
+    notificationStore.showSuccess("Document downloaded successfully")
   } catch (error) {
     console.error("Failed to download document:", error)
-    toast.add({
-      severity: "error",
-      summary: "Error",
-      detail: "Failed to download document",
-      life: 3000,
-    })
+    notificationStore.showError("Failed to download document")
   } finally {
     downloadingVersions.value.delete(version.id)
   }
@@ -295,12 +279,7 @@ const previewVersion = async (version: DocumentVersion) => {
     documentsApi.openBlobInNewTab(blob)
   } catch (error) {
     console.error("Failed to preview document:", error)
-    toast.add({
-      severity: "error",
-      summary: "Error",
-      detail: "Failed to preview document",
-      life: 3000,
-    })
+    notificationStore.showError("Failed to preview document")
   }
 }
 
@@ -335,30 +314,15 @@ const confirmEmailVersion = async () => {
     }
 
     if (result.data?.emailSent) {
-      toast.add({
-        severity: "success",
-        summary: "Success",
-        detail: "Document emailed successfully",
-        life: 3000,
-      })
+      notificationStore.showSuccess("Document emailed successfully")
       closeEmailDialog()
       await loadVersions() // Refresh to show updated email status
     } else {
-      toast.add({
-        severity: "error",
-        summary: "Email Failed",
-        detail: result.data?.emailError || "Failed to send email",
-        life: 5000,
-      })
+      notificationStore.showError(result.data?.emailError || "Failed to send email")
     }
   } catch (error) {
     console.error("Failed to email document:", error)
-    toast.add({
-      severity: "error",
-      summary: "Error",
-      detail: "Failed to email document",
-      life: 3000,
-    })
+    notificationStore.showError("Failed to email document")
   } finally {
     emailing.value = false
   }
