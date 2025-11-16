@@ -277,38 +277,159 @@ export class MedicalInstitutionController {
         filters.complianceStatus = complianceStatus
       }
 
-      // Search institutions
-      const institutions = await MedicalInstitution.searchInstitutions(filters)
+      // Build Sequelize where clause and includes for efficient database-level pagination
+      const whereClause: any = { isActive: true }
+      const profileWhere: any = {}
+      const useRelational = process.env.USE_RELATIONAL_ADDRESSES === "true"
+      const include: any[] = []
 
-      // Apply sorting
-      const sortedInstitutions = institutions.sort((a, b) => {
-        const aValue = a[sortBy as keyof typeof a] as any
-        const bValue = b[sortBy as keyof typeof b] as any
-
-        if (sortOrder === "DESC") {
-          return aValue > bValue ? -1 : aValue < bValue ? 1 : 0
+      // Basic filters
+      if (filters.name) {
+        whereClause.name = {
+          [Op.iLike]: `%${filters.name}%`,
         }
-        return aValue < bValue ? -1 : aValue > bValue ? 1 : 0
+      }
+
+      if (filters.type) {
+        whereClause.type = filters.type
+      }
+
+      if (filters.accountingNumber) {
+        whereClause.accountingNumber = {
+          [Op.iLike]: `%${filters.accountingNumber}%`,
+        }
+      }
+
+      if (filters.digiformaId) {
+        whereClause.digiformaId = {
+          [Op.iLike]: `%${filters.digiformaId}%`,
+        }
+      }
+
+      // Address filters (city, state)
+      if (filters.city) {
+        whereClause[Op.and] = [
+          ...(whereClause[Op.and] || []),
+          sequelize.where(sequelize.json("address.city") as any, { [Op.iLike]: `%${filters.city}%` }),
+        ]
+      }
+
+      if (filters.state) {
+        whereClause[Op.and] = [
+          ...(whereClause[Op.and] || []),
+          sequelize.where(sequelize.json("address.state") as any, { [Op.iLike]: `%${filters.state}%` }),
+        ]
+      }
+
+      if (filters.assignedUserId) {
+        whereClause.assignedUserId = filters.assignedUserId
+      }
+
+      // Team-based filtering
+      if (filters.teamMemberIds && filters.teamMemberIds.length > 0) {
+        whereClause[Op.or] = [
+          {
+            assignedUserId: {
+              [Op.in]: filters.teamMemberIds,
+            },
+          },
+          {
+            assignedUserId: null,
+          },
+        ]
+      }
+
+      if (filters.tags && filters.tags.length > 0) {
+        whereClause.tags = {
+          [Op.overlap]: filters.tags,
+        }
+      }
+
+      // Medical profile filters
+      if (filters.specialties && filters.specialties.length > 0) {
+        profileWhere.specialties = {
+          [Op.overlap]: filters.specialties,
+        }
+      }
+
+      if (filters.minBedCapacity !== undefined) {
+        profileWhere.bedCapacity = { [Op.gte]: filters.minBedCapacity }
+      }
+      if (filters.maxBedCapacity !== undefined) {
+        profileWhere.bedCapacity = {
+          ...profileWhere.bedCapacity,
+          [Op.lte]: filters.maxBedCapacity,
+        }
+      }
+
+      if (filters.minSurgicalRooms !== undefined) {
+        profileWhere.surgicalRooms = {
+          [Op.gte]: filters.minSurgicalRooms,
+        }
+      }
+      if (filters.maxSurgicalRooms !== undefined) {
+        profileWhere.surgicalRooms = {
+          ...profileWhere.surgicalRooms,
+          [Op.lte]: filters.maxSurgicalRooms,
+        }
+      }
+
+      if (complianceStatus) {
+        profileWhere.complianceStatus = complianceStatus
+      }
+
+      // Build include for medical profile
+      const includeProfile =
+        Object.keys(profileWhere).length > 0
+          ? {
+              model: MedicalProfile,
+              as: "medicalProfile",
+              where: profileWhere,
+            }
+          : {
+              model: MedicalProfile,
+              as: "medicalProfile",
+            }
+
+      include.push(includeProfile)
+      include.push({
+        model: ContactPerson,
+        as: "contactPersons",
+        where: { isActive: true },
+        required: false,
+      })
+      include.push({
+        model: User,
+        as: "assignedUser",
+        attributes: ["id", "firstName", "lastName", "email"],
+        required: false,
       })
 
-      // Apply pagination (unless limit is -1, which means "all")
-      let paginatedInstitutions: typeof sortedInstitutions
-      if (limit === -1) {
-        paginatedInstitutions = sortedInstitutions
-      } else {
-        const offset = (page - 1) * limit
-        paginatedInstitutions = sortedInstitutions.slice(offset, offset + limit)
+      // Execute query with pagination at database level
+      const queryOptions: any = {
+        where: whereClause,
+        include,
+        order: [[sortBy, sortOrder]],
+        distinct: true, // Important for correct count with joins
       }
+
+      // Apply pagination (unless limit is -1, which means "all")
+      if (limit !== -1) {
+        queryOptions.limit = limit
+        queryOptions.offset = (page - 1) * limit
+      }
+
+      const { rows: institutions, count: total } = await MedicalInstitution.findAndCountAll(queryOptions)
 
       ctx.body = {
         success: true,
         data: {
-          institutions: paginatedInstitutions,
+          institutions,
           pagination: {
             page,
             limit,
-            total: institutions.length,
-            totalPages: limit === -1 ? 1 : Math.ceil(institutions.length / limit),
+            total,
+            totalPages: limit === -1 ? 1 : Math.ceil(total / limit),
           },
         },
       }
@@ -316,7 +437,7 @@ export class MedicalInstitutionController {
       logger.info("Medical institutions retrieved", {
         userId: ctx.state.user?.id,
         filters,
-        count: sortedInstitutions.length,
+        count: total,
       })
     } catch (error) {
       logger.error("Failed to retrieve medical institutions", {
