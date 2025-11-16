@@ -80,6 +80,20 @@ router.post(
   MedicalInstitutionController.importFromCsv
 )
 
+// GET /api/institutions/hot-leads - Get list of hot leads
+router.get(
+  "/hot-leads",
+  canViewInstitutionsFiltered(),
+  MedicalInstitutionController.getHotLeads
+)
+
+// GET /api/institutions/search/unified - Unified search across institutions, tasks, and collaboration features
+router.get(
+  "/search/unified",
+  canViewInstitutionsFiltered(),
+  MedicalInstitutionController.unifiedSearch
+)
+
 // GET /api/institutions/:id - Get a specific medical institution
 router.get(
   "/:id",
@@ -173,20 +187,6 @@ router.get(
   canViewInstitutionsFiltered(),
   validateInstitutionOwnership(),
   MedicalInstitutionController.getNextActions
-)
-
-// GET /api/institutions/hot-leads - Get list of hot leads
-router.get(
-  "/hot-leads",
-  canViewInstitutionsFiltered(),
-  MedicalInstitutionController.getHotLeads
-)
-
-// GET /api/institutions/search/unified - Unified search across institutions, tasks, and collaboration features
-router.get(
-  "/search/unified",
-  canViewInstitutionsFiltered(),
-  MedicalInstitutionController.unifiedSearch
 )
 
 export default router
