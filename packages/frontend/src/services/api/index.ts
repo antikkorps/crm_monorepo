@@ -668,6 +668,9 @@ export { opportunitiesApi } from './opportunities'
 // Export Revenue API
 export { revenueApi } from './revenue'
 
+// Export Timeline API
+export { timelineApi } from './timeline'
+
 // System Settings API
 export const settingsApi = {
   getPublic: () => apiClient.get("/settings/public"),

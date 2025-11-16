@@ -59,6 +59,7 @@
           <v-tabs v-model="activeTab" class="mb-6">
             <v-tab value="overview">Aperçu</v-tab>
             <v-tab value="activity">Activité</v-tab>
+            <v-tab value="timeline">Timeline</v-tab>
             <v-tab value="medical">Profil Médical</v-tab>
             <v-tab value="contacts">Contacts</v-tab>
             <v-tab value="revenue">Revenus</v-tab>
@@ -127,6 +128,10 @@
 
             <v-window-item value="activity">
               <CollaborationTab :institution-id="institution.id" />
+            </v-window-item>
+
+            <v-window-item value="timeline">
+              <TimelineTab :institution-id="institution.id" />
             </v-window-item>
 
             <v-window-item value="medical">
@@ -257,6 +262,7 @@ import MedicalInstitutionForm from "@/components/institutions/MedicalInstitution
 import DigiformaTab from "@/components/institutions/DigiformaTab.vue"
 import RevenueTab from "@/components/institutions/RevenueTab.vue"
 import CollaborationTab from "@/components/institutions/CollaborationTab.vue"
+import TimelineTab from "@/components/institutions/TimelineTab.vue"
 import AppLayout from "@/components/layout/AppLayout.vue"
 import { DetailSkeleton } from "@/components/skeletons"
 import { institutionsApi } from "@/services/api"
