@@ -77,9 +77,8 @@ router.get("/:id/order-pdf", QuoteController.generateOrderPdf)
 // GET /api/quotes/:id/versions - Get document versions for quote
 router.get("/:id/versions", QuoteController.getQuoteVersions)
 
-// TODO: Add email functionality later
 // POST /api/quotes/:id/send-email - Send quote via email
-// router.post("/:id/send-email", requirePermission("canViewAllBilling"), QuoteController.sendQuoteEmail)
+router.post("/:id/send-email", requirePermission("canViewAllBilling"), QuoteController.sendQuoteEmail)
 
 // Quote reminder endpoints
 // IMPORTANT: Specific routes must come before parameterized routes

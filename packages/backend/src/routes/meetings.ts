@@ -48,4 +48,8 @@ router.post("/:meetingId/comments", validateUUID, validateCommentCreation, Comme
 router.put("/:meetingId/comments/:commentId", validateUUID, validateCommentUpdate, CommentController.update)
 router.delete("/:meetingId/comments/:commentId", validateUUID, CommentController.remove)
 
+// Export and invitations
+router.get("/:id/export/ics", validateUUID, MeetingController.exportToIcs)
+router.post("/:id/send-invitation", validateUUID, MeetingController.sendInvitation)
+
 export default router

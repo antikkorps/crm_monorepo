@@ -10,6 +10,9 @@ import { MedicalInstitution } from "../models/MedicalInstitution"
 import { Meeting } from "../models/Meeting"
 import { MeetingParticipant } from "../models/MeetingParticipant"
 import { User } from "../models/User"
+import { createEvents, EventAttributes } from "ics"
+import { EmailService } from "../services/EmailService"
+import logger from "../utils/logger"
 
 export class MeetingController {
   // GET /api/meetings - List meetings with optional filters
@@ -439,6 +442,372 @@ export class MeetingController {
       ctx.body = {
         success: false,
         error: { code: "PARTICIPANT_REMOVE_ERROR", message: "Failed to remove participant" },
+      }
+    }
+  }
+
+  // GET /api/meetings/:id/export/ics - Export meeting as .ics file
+  static async exportToIcs(ctx: Context) {
+    try {
+      const user = ctx.state.user as User
+      const { id } = ctx.params
+
+      const meeting = await Meeting.findByPk(id, {
+        include: [
+          {
+            model: User,
+            as: "organizer",
+            attributes: ["id", "firstName", "lastName", "email"],
+          },
+          {
+            model: MedicalInstitution,
+            as: "institution",
+            attributes: ["id", "name"],
+          },
+          {
+            model: MeetingParticipant,
+            as: "participants",
+            include: [
+              {
+                model: User,
+                as: "user",
+                attributes: ["id", "firstName", "lastName", "email"],
+              },
+            ],
+          },
+        ],
+      })
+
+      if (!meeting) {
+        ctx.status = 404
+        ctx.body = {
+          success: false,
+          error: { code: "MEETING_NOT_FOUND", message: "Meeting not found" },
+        }
+        return
+      }
+
+      const canAccess = await meeting.canUserAccess(user.id)
+      if (!canAccess) {
+        ctx.status = 403
+        ctx.body = {
+          success: false,
+          error: {
+            code: "INSUFFICIENT_PERMISSIONS",
+            message: "You don't have access to this meeting",
+          },
+        }
+        return
+      }
+
+      // Prepare attendees list
+      const attendees = meeting.participants?.map((p) => ({
+        name: `${p.user?.firstName} ${p.user?.lastName}`,
+        email: p.user?.email || "",
+        rsvp: true,
+        partstat: p.status.toUpperCase() as "ACCEPTED" | "DECLINED" | "TENTATIVE" | "NEEDS-ACTION",
+        role: "REQ-PARTICIPANT",
+      })) || []
+
+      // Add organizer
+      attendees.push({
+        name: `${meeting.organizer?.firstName} ${meeting.organizer?.lastName}`,
+        email: meeting.organizer?.email || "",
+        rsvp: true,
+        partstat: "ACCEPTED",
+        role: "CHAIR",
+      })
+
+      // Convert dates to ICS format [year, month, day, hour, minute]
+      const startDate = new Date(meeting.startDate)
+      const endDate = new Date(meeting.endDate)
+
+      const event: EventAttributes = {
+        start: [
+          startDate.getFullYear(),
+          startDate.getMonth() + 1,
+          startDate.getDate(),
+          startDate.getHours(),
+          startDate.getMinutes(),
+        ],
+        end: [
+          endDate.getFullYear(),
+          endDate.getMonth() + 1,
+          endDate.getDate(),
+          endDate.getHours(),
+          endDate.getMinutes(),
+        ],
+        title: meeting.title,
+        description: meeting.description || "",
+        location: meeting.location || "",
+        status: meeting.status === MeetingStatus.CANCELLED ? "CANCELLED" : "CONFIRMED",
+        organizer: {
+          name: `${meeting.organizer?.firstName} ${meeting.organizer?.lastName}`,
+          email: meeting.organizer?.email || "",
+        },
+        attendees,
+        uid: `${meeting.id}@medical-crm.com`,
+        productId: "//Medical CRM//Meeting//EN",
+      }
+
+      const { error, value } = createEvents([event])
+
+      if (error) {
+        logger.error("ICS generation error", { error, meetingId: id })
+        ctx.status = 500
+        ctx.body = {
+          success: false,
+          error: {
+            code: "ICS_GENERATION_ERROR",
+            message: "Failed to generate calendar file",
+          },
+        }
+        return
+      }
+
+      // Set headers for file download
+      const filename = `meeting_${meeting.title.replace(/[^a-z0-9]/gi, "_").toLowerCase()}.ics`
+      ctx.set("Content-Type", "text/calendar; charset=utf-8")
+      ctx.set("Content-Disposition", `attachment; filename="${filename}"`)
+      ctx.body = value
+    } catch (error) {
+      logger.error("Export to ICS failed", { error, meetingId: ctx.params.id })
+      ctx.status = 500
+      ctx.body = {
+        success: false,
+        error: {
+          code: "ICS_EXPORT_ERROR",
+          message: "Failed to export meeting",
+          details: error instanceof Error ? error.message : "Unknown error",
+        },
+      }
+    }
+  }
+
+  // POST /api/meetings/:id/send-invitation - Send meeting invitation by email
+  static async sendInvitation(ctx: Context) {
+    try {
+      const user = ctx.state.user as User
+      const { id } = ctx.params
+      const { emails } = ctx.request.body as { emails?: string[] }
+
+      const meeting = await Meeting.findByPk(id, {
+        include: [
+          {
+            model: User,
+            as: "organizer",
+            attributes: ["id", "firstName", "lastName", "email"],
+          },
+          {
+            model: MedicalInstitution,
+            as: "institution",
+            attributes: ["id", "name"],
+          },
+          {
+            model: MeetingParticipant,
+            as: "participants",
+            include: [
+              {
+                model: User,
+                as: "user",
+                attributes: ["id", "firstName", "lastName", "email"],
+              },
+            ],
+          },
+        ],
+      })
+
+      if (!meeting) {
+        ctx.status = 404
+        ctx.body = {
+          success: false,
+          error: { code: "MEETING_NOT_FOUND", message: "Meeting not found" },
+        }
+        return
+      }
+
+      const canEdit = await meeting.canUserEdit(user.id)
+      if (!canEdit) {
+        ctx.status = 403
+        ctx.body = {
+          success: false,
+          error: {
+            code: "INSUFFICIENT_PERMISSIONS",
+            message: "You don't have permission to send invitations",
+          },
+        }
+        return
+      }
+
+      // Generate .ics file
+      const attendees = meeting.participants?.map((p) => ({
+        name: `${p.user?.firstName} ${p.user?.lastName}`,
+        email: p.user?.email || "",
+        rsvp: true,
+        partstat: "NEEDS-ACTION",
+        role: "REQ-PARTICIPANT",
+      })) || []
+
+      attendees.push({
+        name: `${meeting.organizer?.firstName} ${meeting.organizer?.lastName}`,
+        email: meeting.organizer?.email || "",
+        rsvp: true,
+        partstat: "ACCEPTED",
+        role: "CHAIR",
+      })
+
+      const startDate = new Date(meeting.startDate)
+      const endDate = new Date(meeting.endDate)
+
+      const event: EventAttributes = {
+        start: [
+          startDate.getFullYear(),
+          startDate.getMonth() + 1,
+          startDate.getDate(),
+          startDate.getHours(),
+          startDate.getMinutes(),
+        ],
+        end: [
+          endDate.getFullYear(),
+          endDate.getMonth() + 1,
+          endDate.getDate(),
+          endDate.getHours(),
+          endDate.getMinutes(),
+        ],
+        title: meeting.title,
+        description: meeting.description || "",
+        location: meeting.location || "",
+        status: "CONFIRMED",
+        organizer: {
+          name: `${meeting.organizer?.firstName} ${meeting.organizer?.lastName}`,
+          email: meeting.organizer?.email || "",
+        },
+        attendees,
+        uid: `${meeting.id}@medical-crm.com`,
+        productId: "//Medical CRM//Meeting//EN",
+      }
+
+      const { error, value } = createEvents([event])
+
+      if (error) {
+        logger.error("ICS generation error for invitation", { error, meetingId: id })
+        ctx.status = 500
+        ctx.body = {
+          success: false,
+          error: {
+            code: "ICS_GENERATION_ERROR",
+            message: "Failed to generate calendar invitation",
+          },
+        }
+        return
+      }
+
+      // Determine recipients
+      let recipients: string[] = []
+      if (emails && emails.length > 0) {
+        recipients = emails
+      } else {
+        // Send to all participants
+        recipients = meeting.participants
+          ?.map((p) => p.user?.email)
+          .filter((email): email is string => !!email) || []
+      }
+
+      if (recipients.length === 0) {
+        ctx.status = 400
+        ctx.body = {
+          success: false,
+          error: {
+            code: "NO_RECIPIENTS",
+            message: "No email recipients specified",
+          },
+        }
+        return
+      }
+
+      // Send emails
+      const emailService = new EmailService()
+      const startTime = startDate.toLocaleTimeString("fr-FR", {
+        hour: "2-digit",
+        minute: "2-digit",
+      })
+      const endTime = endDate.toLocaleTimeString("fr-FR", {
+        hour: "2-digit",
+        minute: "2-digit",
+      })
+      const dateStr = startDate.toLocaleDateString("fr-FR", {
+        weekday: "long",
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      })
+
+      const htmlBody = `
+        <h2>Invitation : ${meeting.title}</h2>
+        <p>Vous êtes invité(e) à la réunion suivante :</p>
+        <table style="border-collapse: collapse; margin: 20px 0;">
+          <tr>
+            <td style="padding: 8px; font-weight: bold;">Date :</td>
+            <td style="padding: 8px;">${dateStr}</td>
+          </tr>
+          <tr>
+            <td style="padding: 8px; font-weight: bold;">Heure :</td>
+            <td style="padding: 8px;">${startTime} - ${endTime}</td>
+          </tr>
+          ${meeting.location ? `<tr>
+            <td style="padding: 8px; font-weight: bold;">Lieu :</td>
+            <td style="padding: 8px;">${meeting.location}</td>
+          </tr>` : ""}
+          ${meeting.institution ? `<tr>
+            <td style="padding: 8px; font-weight: bold;">Institution :</td>
+            <td style="padding: 8px;">${meeting.institution.name}</td>
+          </tr>` : ""}
+        </table>
+        ${meeting.description ? `<p><strong>Description :</strong><br>${meeting.description}</p>` : ""}
+        <p style="margin-top: 20px;">
+          <small>Organisé par : ${meeting.organizer?.firstName} ${meeting.organizer?.lastName}</small>
+        </p>
+        <p style="margin-top: 10px; font-size: 12px; color: #666;">
+          Le fichier .ics joint peut être importé dans votre calendrier Outlook, Google Calendar ou tout autre outil compatible.
+        </p>
+      `
+
+      await emailService.sendEmail({
+        to: recipients,
+        subject: `Invitation : ${meeting.title}`,
+        html: htmlBody,
+        attachments: [
+          {
+            filename: `meeting_${meeting.title.replace(/[^a-z0-9]/gi, "_").toLowerCase()}.ics`,
+            content: Buffer.from(value || "", "utf-8"),
+            contentType: "text/calendar; charset=utf-8",
+          },
+        ],
+      })
+
+      logger.info("Meeting invitation sent", {
+        meetingId: id,
+        recipients,
+        organizerId: user.id,
+      })
+
+      ctx.body = {
+        success: true,
+        data: {
+          message: "Invitations sent successfully",
+          recipients,
+        },
+      }
+    } catch (error) {
+      logger.error("Send invitation failed", { error, meetingId: ctx.params.id })
+      ctx.status = 500
+      ctx.body = {
+        success: false,
+        error: {
+          code: "SEND_INVITATION_ERROR",
+          message: "Failed to send invitations",
+          details: error instanceof Error ? error.message : "Unknown error",
+        },
       }
     }
   }
