@@ -17,6 +17,7 @@ import { MedicalInstitution } from "../models/MedicalInstitution"
 import { Payment } from "../models/Payment"
 import { Quote } from "../models/Quote"
 import { User } from "../models/User"
+import { InvoicePaymentService } from "./InvoicePaymentService"
 
 // Define InvoiceLineUpdateRequest locally since it's not exported from shared
 interface InvoiceLineUpdateRequest {
@@ -699,152 +700,31 @@ export class InvoiceService {
     return InvoiceLine.findByInvoice(invoiceId)
   }
 
-  // Record payment
+  // Record payment - Delegated to InvoicePaymentService
   static async recordPayment(
     paymentData: PaymentCreateRequest,
     recordedBy: string
   ): Promise<Payment> {
-    const invoice = await this.getInvoiceById(paymentData.invoiceId)
-
-    // Check if invoice can receive payments
-    if (!invoice.canReceivePayments()) {
-      throw {
-        code: "INVOICE_CANNOT_RECEIVE_PAYMENTS",
-        message: "Invoice cannot receive payments in its current state",
-        status: 400,
-      }
-    }
-
-    // Validate payment amount
-    if (paymentData.amount <= 0) {
-      throw {
-        code: "INVALID_PAYMENT_AMOUNT",
-        message: "Payment amount must be greater than zero",
-        status: 400,
-      }
-    }
-
-    // Check if payment amount doesn't exceed remaining amount
-    if (paymentData.amount > invoice.remainingAmount) {
-      throw {
-        code: "PAYMENT_EXCEEDS_REMAINING",
-        message: "Payment amount exceeds remaining invoice amount",
-        status: 400,
-      }
-    }
-
-    const transaction = await sequelize.transaction()
-
-    try {
-      // Create payment
-      const payment = await Payment.createPayment({
-        invoiceId: paymentData.invoiceId,
-        amount: paymentData.amount,
-        paymentDate: paymentData.paymentDate,
-        paymentMethod: paymentData.paymentMethod,
-        reference: paymentData.reference,
-        notes: paymentData.notes,
-        recordedBy,
-      })
-
-      await transaction.commit()
-
-      // Return payment with associations
-      const paymentId = (payment as any).getDataValue ? (payment as any).getDataValue('id') : (payment as any).id
-      if (!paymentId) {
-        // As a fallback, fetch latest payment for invoiceId and amount/date combo
-        const fetched = await Payment.findOne({
-          where: {
-            invoiceId: paymentData.invoiceId,
-            amount: paymentData.amount,
-            paymentDate: paymentData.paymentDate,
-          },
-          order: [["created_at", "DESC"]],
-        })
-        if (fetched) {
-          return this.getPaymentById((fetched as any).getDataValue ? (fetched as any).getDataValue('id') : (fetched as any).id)
-        }
-      }
-      return this.getPaymentById(paymentId)
-    } catch (error) {
-      await transaction.rollback()
-      throw error
-    }
+    return InvoicePaymentService.recordPayment(paymentData, recordedBy)
   }
 
-  // Confirm payment
+  // Confirm payment - Delegated to InvoicePaymentService
   static async confirmPayment(paymentId: string, userId: string): Promise<Payment> {
-    const payment = await this.getPaymentById(paymentId)
-
-    // Check permissions (only the recorder or admin can confirm)
-    const recordedBy = (payment as any).getDataValue ? (payment as any).getDataValue('recordedBy') : (payment as any).recordedBy
-    if (recordedBy !== userId) {
-      // TODO: Add role-based permission check
-    }
-
-    try {
-      const currStatus = (payment as any).getDataValue ? (payment as any).getDataValue('status') : (payment as any).status
-      logger.debug("InvoiceService.confirmPayment: before confirm", { paymentId, status: currStatus })
-      await payment.confirm()
-      const updated = await this.getPaymentById(paymentId)
-      const updStatus = (updated as any).getDataValue ? (updated as any).getDataValue('status') : (updated as any).status
-      logger.debug("InvoiceService.confirmPayment: after confirm", { paymentId, status: updStatus })
-      return updated
-    } catch (e: any) {
-      logger.error("InvoiceService.confirmPayment failed", { paymentId, error: e?.message, stack: e?.stack })
-      throw {
-        code: "PAYMENT_CONFIRM_ERROR",
-        message: e?.message || "Failed to confirm payment",
-        status: e?.status || 500,
-      }
-    }
+    return InvoicePaymentService.confirmPayment(paymentId, userId)
   }
 
-  // Cancel payment
+  // Cancel payment - Delegated to InvoicePaymentService
   static async cancelPayment(
     paymentId: string,
     userId: string,
     reason?: string
   ): Promise<Payment> {
-    const payment = await this.getPaymentById(paymentId)
-
-    // Check permissions (only the recorder or admin can cancel)
-    const recordedBy = (payment as any).getDataValue ? (payment as any).getDataValue('recordedBy') : (payment as any).recordedBy
-    if (recordedBy !== userId) {
-      // TODO: Add role-based permission check
-    }
-
-    await payment.cancel(reason)
-
-    return this.getPaymentById(paymentId)
+    return InvoicePaymentService.cancelPayment(paymentId, userId, reason)
   }
 
-  // Get payment by ID
+  // Get payment by ID - Delegated to InvoicePaymentService
   static async getPaymentById(id: string): Promise<Payment> {
-    const payment = await Payment.findByPk(id, {
-      include: [
-        {
-          model: sequelize.models.Invoice,
-          as: "invoice",
-          attributes: ["id", "invoiceNumber", "title", "total"],
-        },
-        {
-          model: User,
-          as: "recordedByUser",
-          attributes: ["id", "firstName", "lastName", "email"],
-        },
-      ],
-    })
-
-    if (!payment) {
-      throw {
-        code: "PAYMENT_NOT_FOUND",
-        message: "Payment not found",
-        status: 404,
-      }
-    }
-
-    return payment
+    return InvoicePaymentService.getPaymentById(id)
   }
 
   // Search invoices
@@ -1137,7 +1017,7 @@ export class InvoiceService {
     }
   }
 
-  // Reconcile invoice payments
+  // Reconcile invoice payments - Delegated to InvoicePaymentService
   static async reconcileInvoicePayments(
     invoiceId: string,
     userId: string
@@ -1147,45 +1027,10 @@ export class InvoiceService {
     remainingAmount: number
     statusChanged: boolean
   }> {
-    const invoice = await this.getInvoiceById(invoiceId)
-
-    // Check permissions
-    if (!(await this.canUserModifyInvoice(invoice, userId))) {
-      throw {
-        code: "INSUFFICIENT_PERMISSIONS",
-        message: "You don't have permission to reconcile this invoice",
-        status: 403,
-      }
-    }
-
-    const transaction = await sequelize.transaction()
-
-    try {
-      const oldStatus = invoice.status
-
-      // Recalculate payment totals
-      await invoice.recalculatePaymentTotals()
-
-      // Update invoice status based on payments
-      await invoice.updateStatusFromPayments()
-
-      await transaction.commit()
-
-      const updatedInvoice = await this.getInvoiceById(invoiceId)
-
-      return {
-        invoice: updatedInvoice,
-        totalPaid: updatedInvoice.totalPaid,
-        remainingAmount: updatedInvoice.remainingAmount,
-        statusChanged: oldStatus !== updatedInvoice.status,
-      }
-    } catch (error) {
-      await transaction.rollback()
-      throw error
-    }
+    return InvoicePaymentService.reconcileInvoicePayments(invoiceId, userId)
   }
 
-  // Get payment history with filtering
+  // Get payment history with filtering - Delegated to InvoicePaymentService
   static async getPaymentHistory(
     filters: {
       userId?: string
@@ -1204,82 +1049,10 @@ export class InvoiceService {
     total: number
     pages: number
   }> {
-    const where: any = {}
-    const include: any[] = [
-      {
-        model: sequelize.models.Invoice,
-        as: "invoice",
-        attributes: ["id", "invoiceNumber", "title", "total", "assignedUserId"],
-        include: [
-          {
-            model: MedicalInstitution,
-            as: "institution",
-            attributes: ["id", "name", "type"],
-          },
-        ],
-      },
-      {
-        model: User,
-        as: "recordedByUser",
-        attributes: ["id", "firstName", "lastName", "email"],
-      },
-    ]
-
-    // Apply filters
-    if (filters.status) {
-      where.status = filters.status
-    }
-
-    if (filters.paymentMethod) {
-      where.paymentMethod = filters.paymentMethod
-    }
-
-    if (filters.dateFrom || filters.dateTo) {
-      where.paymentDate = {}
-      if (filters.dateFrom) {
-        where.paymentDate[Op.gte] = filters.dateFrom
-      }
-      if (filters.dateTo) {
-        where.paymentDate[Op.lte] = filters.dateTo
-      }
-    }
-
-    if (filters.invoiceId) {
-      where.invoiceId = filters.invoiceId
-    }
-
-    // Handle user-based filtering
-    if (filters.userId) {
-      where.recordedBy = filters.userId
-    } else if (userRole === "USER") {
-      // Regular users can only see payments they recorded or for their invoices
-      where[Op.or] = [
-        { recordedBy: requestingUserId },
-        {
-          "$invoice.assignedUserId$": requestingUserId,
-        },
-      ]
-    }
-
-    const offset = (page - 1) * limit
-
-    const { count, rows } = await Payment.findAndCountAll({
-      where,
-      include,
-      limit,
-      offset,
-      order: [["paymentDate", "DESC"]],
-      distinct: true,
-    })
-
-    return {
-      payments: rows,
-      total: count,
-      pages: Math.ceil(count / limit),
-    }
+    return InvoicePaymentService.getPaymentHistory(filters, requestingUserId, userRole, page, limit)
   }
 
-  // Get payment summary and analytics
+  // Get payment summary and analytics - Delegated to InvoicePaymentService
   static async getPaymentSummary(
     userId?: string,
     filters: {
@@ -1302,124 +1075,7 @@ export class InvoiceService {
       amount: number
     }>
   }> {
-    const where: any = {}
-    const invoiceWhere: any = {}
-
-    if (userId) {
-      invoiceWhere.assignedUserId = userId
-    }
-
-    if (filters.dateFrom || filters.dateTo) {
-      where.paymentDate = {}
-      if (filters.dateFrom) {
-        where.paymentDate[Op.gte] = filters.dateFrom
-      }
-      if (filters.dateTo) {
-        where.paymentDate[Op.lte] = filters.dateTo
-      }
-    }
-
-    const payments = await Payment.findAll({
-      where,
-      include: [
-        {
-          model: sequelize.models.Invoice,
-          as: "invoice",
-          where: invoiceWhere,
-          attributes: ["id", "assignedUserId"],
-        },
-      ],
-    })
-
-    // Calculate basic statistics
-    const totalPayments = payments.length
-    const totalAmount = payments.reduce((sum, payment) => sum + payment.amount, 0)
-    const confirmedAmount = payments
-      .filter((p) => p.status === PaymentStatus.CONFIRMED)
-      .reduce((sum, payment) => sum + payment.amount, 0)
-    const pendingAmount = payments
-      .filter((p) => p.status === PaymentStatus.PENDING)
-      .reduce((sum, payment) => sum + payment.amount, 0)
-    const cancelledAmount = payments
-      .filter((p) => p.status === PaymentStatus.CANCELLED)
-      .reduce((sum, payment) => sum + payment.amount, 0)
-    const averagePaymentAmount = totalPayments > 0 ? totalAmount / totalPayments : 0
-
-    // Payment method breakdown
-    const paymentMethodBreakdown: Record<
-      PaymentMethod,
-      { count: number; amount: number }
-    > = {
-      [PaymentMethod.BANK_TRANSFER]: { count: 0, amount: 0 },
-      [PaymentMethod.CHECK]: { count: 0, amount: 0 },
-      [PaymentMethod.CASH]: { count: 0, amount: 0 },
-      [PaymentMethod.CREDIT_CARD]: { count: 0, amount: 0 },
-      [PaymentMethod.OTHER]: { count: 0, amount: 0 },
-    }
-
-    payments.forEach((payment) => {
-      paymentMethodBreakdown[payment.paymentMethod].count++
-      paymentMethodBreakdown[payment.paymentMethod].amount += payment.amount
-    })
-
-    // Status breakdown
-    const statusBreakdown: Record<PaymentStatus, { count: number; amount: number }> = {
-      [PaymentStatus.PENDING]: { count: 0, amount: 0 },
-      [PaymentStatus.CONFIRMED]: { count: 0, amount: 0 },
-      [PaymentStatus.FAILED]: { count: 0, amount: 0 },
-      [PaymentStatus.CANCELLED]: { count: 0, amount: 0 },
-    }
-
-    payments.forEach((payment) => {
-      statusBreakdown[payment.status].count++
-      statusBreakdown[payment.status].amount += payment.amount
-    })
-
-    // Monthly trends
-    const monthlyData: Record<string, { count: number; amount: number }> = {}
-    payments.forEach((payment) => {
-      const date = new Date(payment.paymentDate)
-      const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`
-
-      if (!monthlyData[key]) {
-        monthlyData[key] = { count: 0, amount: 0 }
-      }
-
-      monthlyData[key].count++
-      monthlyData[key].amount += payment.amount
-    })
-
-    const monthlyTrends = Object.entries(monthlyData)
-      .map(([key, data]) => {
-        const [year, month] = key.split("-")
-        return {
-          month: new Date(Number.parseInt(year), Number.parseInt(month) - 1).toLocaleString("default", {
-            month: "long",
-          }),
-          year: Number.parseInt(year),
-          count: data.count,
-          amount: data.amount,
-        }
-      })
-      .sort((a, b) => {
-        if (a.year !== b.year) return a.year - b.year
-        return (
-          new Date(`${a.month} 1, ${a.year}`).getMonth() -
-          new Date(`${b.month} 1, ${b.year}`).getMonth()
-        )
-      })
-
-    return {
-      totalPayments,
-      totalAmount,
-      confirmedAmount,
-      pendingAmount,
-      cancelledAmount,
-      averagePaymentAmount,
-      paymentMethodBreakdown,
-      statusBreakdown,
-      monthlyTrends,
-    }
+    return InvoicePaymentService.getPaymentSummary(userId, filters)
   }
 
   // Permission helper

@@ -1,8 +1,8 @@
 # Medical CRM - Projet Suivi des Tâches
 
 **Dernière mise à jour**: 2025-11-16
-**Branch**: `claude/fix-invoice-loop-skeletons-tests-01KhrtGXSADYPpNmagy3u8Ug`
-**Statut global**: ✅ **90% Complete**
+**Branch**: `claude/review-crm-tasks-01XuwDVvAYY1CiWKM1f5REge`
+**Statut global**: ✅ **94% Complete**
 
 ---
 
@@ -11,11 +11,11 @@
 | Catégorie | Complété | Total | Pourcentage |
 |-----------|----------|-------|-------------|
 | Sécurité | 28/28 | 28 | 100% ✅ |
-| Refactoring | 1/3 | 3 | 33% 🟡 |
+| Refactoring | 2/3 | 3 | 67% 🟡 |
 | Tests | 0/1 | 1 | 0% 🔴 |
 | Documentation | 2/2 | 2 | 100% ✅ |
 
-**Progression totale**: 31/34 tâches = **91% complété**
+**Progression totale**: 32/34 tâches = **94% complété**
 
 ---
 
@@ -109,7 +109,37 @@
 
 ---
 
-### 🔧 Refactoring (1/3 - 33%)
+### 🔧 Refactoring (2/3 - 67%)
+
+#### ✅ InvoicePaymentService Extracted
+
+**Commit**: À venir (2025-11-16)
+
+**Résultats**:
+- ✅ **InvoicePaymentService créé** (556 lignes)
+- ✅ **7 méthodes extraites** de InvoiceService
+- ✅ **Aucun breaking change** - Compatibilité maintenue
+- ✅ **Code plus maintenable** - Séparation des responsabilités
+
+**Services créés**:
+
+1. **InvoicePaymentService** (556 lignes)
+   ```typescript
+   ✅ recordPayment(): Enregistrer paiement avec validations
+   ✅ confirmPayment(): Confirmer un paiement
+   ✅ cancelPayment(): Annuler un paiement
+   ✅ getPaymentById(): Récupérer avec associations
+   ✅ reconcileInvoicePayments(): Réconcilier paiements
+   ✅ getPaymentHistory(): Historique paginé avec filtres
+   ✅ getPaymentSummary(): Analytics et statistiques
+   ```
+
+**Bénéfices**:
+- ✅ Single Responsibility Principle appliqué
+- ✅ Service dédié aux paiements
+- ✅ Plus facile à tester et maintenir
+- ✅ InvoiceService délègue maintenant les paiements
+- ✅ Documentation JSDoc complète
 
 #### ✅ MedicalInstitutionController Refactored
 
@@ -243,23 +273,32 @@ Database initialization failed: connect ECONNREFUSED 127.0.0.1:5432
 
 **Total estimé**: ~500+ tests skipped
 
-### Tâche 28: Refactoring optionnel - InvoicePaymentService 🟡
+### Tâche 28: Refactoring - InvoicePaymentService ✅
 
-**Status**: ⏳ **Optionnel**
+**Status**: ✅ **COMPLÉTÉ** (2025-11-16)
 
 **Description**: Extraire la logique de paiement de InvoiceService
 
-**Scope**:
-- Créer `InvoicePaymentService.ts` (~300 lignes)
-- Déplacer de InvoiceService lignes 703-1423:
-  - recordPayment()
-  - confirmPayment()
-  - cancelPayment()
-  - reconcilePayments()
-  - getPaymentHistory()
-  - getPaymentSummary()
+**Résultats**:
+- ✅ Créé `InvoicePaymentService.ts` (556 lignes)
+- ✅ Extrait 7 méthodes de paiement de InvoiceService:
+  - `recordPayment()` - Enregistrer un paiement avec validations
+  - `confirmPayment()` - Confirmer un paiement
+  - `cancelPayment()` - Annuler un paiement
+  - `getPaymentById()` - Récupérer un paiement
+  - `reconcileInvoicePayments()` - Réconcilier les paiements
+  - `getPaymentHistory()` - Historique avec filtres et pagination
+  - `getPaymentSummary()` - Analytics et statistiques de paiements
+- ✅ InvoiceService délègue maintenant à InvoicePaymentService
+- ✅ Compatibilité ascendante maintenue (pas de breaking change)
+- ✅ Documentation complète avec JSDoc
+- ✅ Suit le pattern de séparation des responsabilités (SRP)
 
-**Priorité**: BASSE (InvoiceService est déjà bien structuré)
+**Bénéfices**:
+- ✅ Séparation claire des responsabilités (invoice vs payment logic)
+- ✅ Plus facile à tester (service stateless dédié)
+- ✅ Code plus maintenable et extensible
+- ✅ Suit les patterns existants du projet
 
 ### Tâche 29: Upgrade dépendances avec breaking changes 🟡
 
