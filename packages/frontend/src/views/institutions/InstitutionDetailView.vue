@@ -1,7 +1,7 @@
 <template>
   <AppLayout>
     <div class="institution-detail-view">
-      <DetailSkeleton v-if="loading" tabs :tabs-count="5" />
+      <DetailSkeleton v-if="loading" tabs :tabs-count="6" />
 
       <div v-else-if="error" class="text-center py-12">
         <v-icon size="64" color="error">mdi-alert-circle-outline</v-icon>
@@ -58,6 +58,7 @@
         <div v-else>
           <v-tabs v-model="activeTab" class="mb-6">
             <v-tab value="overview">Aperçu</v-tab>
+            <v-tab value="activity">Activité</v-tab>
             <v-tab value="medical">Profil Médical</v-tab>
             <v-tab value="contacts">Contacts</v-tab>
             <v-tab value="revenue">Revenus</v-tab>
@@ -122,6 +123,10 @@
                   </v-card>
                 </v-col>
               </v-row>
+            </v-window-item>
+
+            <v-window-item value="activity">
+              <CollaborationTab :institution-id="institution.id" />
             </v-window-item>
 
             <v-window-item value="medical">
@@ -251,6 +256,7 @@ import ContactPersonForm from "@/components/institutions/ContactPersonForm.vue"
 import MedicalInstitutionForm from "@/components/institutions/MedicalInstitutionForm.vue"
 import DigiformaTab from "@/components/institutions/DigiformaTab.vue"
 import RevenueTab from "@/components/institutions/RevenueTab.vue"
+import CollaborationTab from "@/components/institutions/CollaborationTab.vue"
 import AppLayout from "@/components/layout/AppLayout.vue"
 import { DetailSkeleton } from "@/components/skeletons"
 import { institutionsApi } from "@/services/api"
