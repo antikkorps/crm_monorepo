@@ -1,3 +1,4 @@
+import { Op } from "sequelize"
 import { User } from "../models"
 import { TaskStatus } from "../models/Task"
 import { logger } from "../utils/logger"
@@ -178,10 +179,10 @@ export class MedicalInstitutionAnalyticsService {
       if (startDate || endDate) {
         whereClause.createdAt = {}
         if (startDate) {
-          whereClause.createdAt.$gte = startDate
+          whereClause.createdAt[Op.gte] = startDate
         }
         if (endDate) {
-          whereClause.createdAt.$lte = endDate
+          whereClause.createdAt[Op.lte] = endDate
         }
       }
 
