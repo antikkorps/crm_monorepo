@@ -10,6 +10,7 @@ import { CsvImportService } from "../services/CsvImportService"
 import { NotificationService } from "../services/NotificationService"
 import { MedicalInstitutionService } from "../services/MedicalInstitutionService"
 import { MedicalInstitutionAnalyticsService } from "../services/MedicalInstitutionAnalyticsService"
+import { InstitutionRevenueService } from "../services/InstitutionRevenueService"
 import { logger } from "../utils/logger"
 
 // Temporary interface for file uploads
@@ -1456,6 +1457,40 @@ export class MedicalInstitutionController {
       logger.error("Unified search failed", {
         userId: ctx.state.user?.id,
         query: ctx.query.q,
+        error: (error as Error).message,
+      })
+      throw error
+    }
+  }
+
+  /**
+   * GET /api/institutions/:id/revenue
+   * Get comprehensive revenue analytics for an institution
+   */
+  static async getRevenueAnalytics(ctx: Context) {
+    try {
+      const { id } = ctx.params
+      const { months, includePaymentHistory } = ctx.query
+
+      const analytics = await InstitutionRevenueService.getRevenueAnalytics(id, {
+        months: months ? parseInt(months as string, 10) : 12,
+        includePaymentHistory: includePaymentHistory === "true",
+      })
+
+      ctx.body = {
+        success: true,
+        data: analytics,
+      }
+
+      logger.info("Revenue analytics retrieved", {
+        userId: ctx.state.user?.id,
+        institutionId: id,
+        totalRevenue: analytics.summary.totalRevenue,
+      })
+    } catch (error) {
+      logger.error("Failed to retrieve revenue analytics", {
+        userId: ctx.state.user?.id,
+        institutionId: ctx.params.id,
         error: (error as Error).message,
       })
       throw error
