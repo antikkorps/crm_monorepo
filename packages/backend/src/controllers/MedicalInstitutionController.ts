@@ -4,7 +4,7 @@ import { Op, literal } from "sequelize"
 import { sequelize } from "../config/database"
 import { Context } from "../types/koa"
 import { createError } from "../middleware/errorHandler"
-import { ContactPerson, MedicalInstitution, MedicalProfile, User } from "../models"
+import { ContactPerson, InstitutionAddress, MedicalInstitution, MedicalProfile, User } from "../models"
 import { TaskStatus } from "../models/Task"
 import { CsvImportService } from "../services/CsvImportService"
 import { NotificationService } from "../services/NotificationService"
@@ -307,18 +307,36 @@ export class MedicalInstitutionController {
       }
 
       // Address filters (city, state)
-      if (filters.city) {
-        whereClause[Op.and] = [
-          ...(whereClause[Op.and] || []),
-          sequelize.where(sequelize.json("address.city") as any, { [Op.iLike]: `%${filters.city}%` }),
-        ]
-      }
+      // Use relational address model if enabled, otherwise use JSON fields
+      if (useRelational && (filters.city || filters.state)) {
+        const addressWhere: any = {}
+        if (filters.city) {
+          addressWhere.city = { [Op.iLike]: `%${filters.city}%` }
+        }
+        if (filters.state) {
+          addressWhere.state = { [Op.iLike]: `%${filters.state}%` }
+        }
+        include.push({
+          model: InstitutionAddress,
+          as: "addressRel",
+          where: addressWhere,
+          required: true,
+        })
+      } else {
+        // Use JSON path queries for embedded address
+        if (filters.city) {
+          whereClause[Op.and] = [
+            ...(whereClause[Op.and] || []),
+            sequelize.where(sequelize.json("address.city") as any, { [Op.iLike]: `%${filters.city}%` }),
+          ]
+        }
 
-      if (filters.state) {
-        whereClause[Op.and] = [
-          ...(whereClause[Op.and] || []),
-          sequelize.where(sequelize.json("address.state") as any, { [Op.iLike]: `%${filters.state}%` }),
-        ]
+        if (filters.state) {
+          whereClause[Op.and] = [
+            ...(whereClause[Op.and] || []),
+            sequelize.where(sequelize.json("address.state") as any, { [Op.iLike]: `%${filters.state}%` }),
+          ]
+        }
       }
 
       if (filters.assignedUserId) {
@@ -341,14 +359,14 @@ export class MedicalInstitutionController {
 
       if (filters.tags && filters.tags.length > 0) {
         whereClause.tags = {
-          [Op.overlap]: filters.tags,
+          [Op.overlap]: filters.tags.map((tag: string) => tag.toLowerCase()),
         }
       }
 
       // Medical profile filters
       if (filters.specialties && filters.specialties.length > 0) {
         profileWhere.specialties = {
-          [Op.overlap]: filters.specialties,
+          [Op.overlap]: filters.specialties.map((s: string) => s.toLowerCase()),
         }
       }
 
