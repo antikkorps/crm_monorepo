@@ -143,6 +143,14 @@ router.get(
   MedicalInstitutionController.getTimeline
 )
 
+// GET /api/institutions/:id/revenue - Get revenue analytics for institution
+router.get(
+  "/:id/revenue",
+  canViewInstitutionsFiltered(),
+  validateInstitutionOwnership(),
+  MedicalInstitutionController.getRevenueAnalytics
+)
+
 // GET /api/institutions/search/unified - Unified search across institutions, tasks, and collaboration features
 router.get(
   "/search/unified",

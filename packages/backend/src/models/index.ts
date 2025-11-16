@@ -14,6 +14,7 @@ import { Meeting } from "./Meeting"
 import { MeetingParticipant } from "./MeetingParticipant"
 import { Note } from "./Note"
 import { NoteShare } from "./NoteShare"
+import { Opportunity } from "./Opportunity"
 import { Payment } from "./Payment"
 import { Quote } from "./Quote"
 import { QuoteLine } from "./QuoteLine"
@@ -213,6 +214,46 @@ MedicalInstitution.hasMany(Quote, {
   foreignKey: "institutionId",
   as: "quotes",
   onDelete: "CASCADE",
+})
+
+// MedicalInstitution opportunity associations
+MedicalInstitution.hasMany(Opportunity, {
+  foreignKey: "institutionId",
+  as: "opportunities",
+  onDelete: "CASCADE",
+})
+
+// Opportunity associations
+Opportunity.belongsTo(MedicalInstitution, {
+  foreignKey: "institutionId",
+  as: "institution",
+  onDelete: "CASCADE",
+})
+
+Opportunity.belongsTo(ContactPerson, {
+  foreignKey: "contactPersonId",
+  as: "contactPerson",
+  onDelete: "SET NULL",
+})
+
+Opportunity.belongsTo(User, {
+  foreignKey: "assignedUserId",
+  as: "assignedUser",
+  onDelete: "RESTRICT",
+})
+
+// ContactPerson opportunity associations
+ContactPerson.hasMany(Opportunity, {
+  foreignKey: "contactPersonId",
+  as: "opportunities",
+  onDelete: "SET NULL",
+})
+
+// User opportunity associations
+User.hasMany(Opportunity, {
+  foreignKey: "assignedUserId",
+  as: "assignedOpportunities",
+  onDelete: "RESTRICT",
 })
 
 // Invoice associations
@@ -818,6 +859,7 @@ export {
   MeetingParticipant,
   Note,
   NoteShare,
+  Opportunity,
   Payment,
   Quote,
   QuoteLine,
@@ -864,6 +906,7 @@ export default {
   MeetingParticipant,
   Note,
   NoteShare,
+  Opportunity,
   Comment,
   Call,
   CatalogItem,

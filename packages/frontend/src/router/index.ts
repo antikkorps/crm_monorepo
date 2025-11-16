@@ -28,6 +28,7 @@ const Meetings = () => import("@/views/meetings/MeetingsView.vue")
 const Calls = () => import("@/views/calls/CallsView.vue")
 const Notes = () => import("@/views/notes/NotesView.vue")
 const Reminders = () => import("@/views/reminders/RemindersView.vue")
+const Opportunities = () => import("@/views/opportunities/OpportunitiesView.vue")
 const DigiformaSettings = () => import("@/views/settings/DigiformaSettingsView.vue")
 const SecurityLogs = () => import("@/views/settings/SecurityLogsView.vue")
 const FeaturesSettings = () => import("@/views/settings/FeaturesSettingsView.vue")
@@ -248,6 +249,15 @@ const routes: RouteRecordRaw[] = [
     meta: {
       requiresAuth: true,
       title: "Rappels",
+    },
+  },
+  {
+    path: "/opportunities",
+    name: "Opportunities",
+    component: Opportunities,
+    meta: {
+      requiresAuth: true,
+      title: "Pipeline de Ventes",
     },
   },
   {

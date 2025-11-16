@@ -21,6 +21,7 @@ import invoiceRoutes from "./routes/invoices"
 import exportRoutes from "./routes/export"
 import noteRoutes from "./routes/notes"
 import meetingRoutes from "./routes/meetings"
+import opportunityRoutes from "./routes/opportunities"
 import pluginRoutes from "./routes/plugins"
 import quoteRoutes from "./routes/quotes"
 import reminderRoutes from "./routes/reminders"
@@ -201,6 +202,10 @@ export const createApp = (): Koa => {
   // Apply meeting routes
   app.use(meetingRoutes.routes())
   app.use(meetingRoutes.allowedMethods())
+
+  // Apply opportunity routes
+  app.use(opportunityRoutes.routes())
+  app.use(opportunityRoutes.allowedMethods())
 
   // Apply task routes
   app.use(taskRoutes.routes())
