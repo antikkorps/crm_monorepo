@@ -278,14 +278,12 @@ export class InstitutionInsightsService {
       }
 
       const now = new Date()
-      const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
-      const twoWeeksAgo = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000)
       const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)
 
       const actions: NextBestAction[] = []
 
       // Fetch relevant data
-      const [quotes, invoices, opportunities, meetings, calls, tasks] = await Promise.all([
+      const [quotes, invoices, opportunities, meetings, calls] = await Promise.all([
         Quote.findAll({
           where: { institutionId },
           order: [["createdAt", "DESC"]],
@@ -309,10 +307,6 @@ export class InstitutionInsightsService {
           where: { institutionId },
           order: [["callDate", "DESC"]],
           limit: 5,
-        }),
-        Task.findAll({
-          where: { institutionId, status: { [Op.in]: ["pending", "in_progress"] } },
-          order: [["dueDate", "ASC"]],
         }),
       ])
 

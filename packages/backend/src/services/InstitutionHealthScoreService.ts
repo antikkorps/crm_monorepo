@@ -1,4 +1,3 @@
-import { Op } from "sequelize"
 import { MedicalInstitution } from "../models/MedicalInstitution"
 import { Meeting } from "../models/Meeting"
 import { Call } from "../models/Call"
@@ -175,7 +174,6 @@ export class InstitutionHealthScoreService {
       const completedTasks = tasks.filter((t) => t.status === "completed")
       const completionRate = tasks.length > 0 ? (completedTasks.length / tasks.length) * 100 : 0
 
-      const completedReminders = reminders.filter((r) => r.isCompleted)
       const pendingReminders = reminders.filter((r) => !r.isCompleted)
 
       // Engagement score breakdown:

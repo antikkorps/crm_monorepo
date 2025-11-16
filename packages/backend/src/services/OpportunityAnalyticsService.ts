@@ -2,7 +2,6 @@ import { Op } from "sequelize"
 import { Opportunity } from "../models/Opportunity"
 import { User } from "../models/User"
 import { MedicalInstitution } from "../models/MedicalInstitution"
-import { ContactPerson } from "../models/ContactPerson"
 import { logger } from "../utils/logger"
 
 /**
