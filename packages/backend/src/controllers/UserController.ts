@@ -598,9 +598,24 @@ export class UserController {
   }
 
   /**
+   * Validate password strength
+   * @private
+   */
+  private static validatePasswordStrength(password: string): void {
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*(),.?":{}|<>])[A-Za-z\d!@#$%^&*(),.?":{}|<>]{8,}$/
+    if (!passwordRegex.test(password)) {
+      throw createError(
+        'Password must be at least 8 characters and contain uppercase, lowercase, number, and special character (!@#$%^&*(),.?":{}|<>)',
+        400,
+        "WEAK_PASSWORD"
+      )
+    }
+  }
+
+  /**
    * Create a new user (super admin only)
    */
-  public static async createUser(ctx: Context, next: Next): Promise<void> {
+  public static async createUser(ctx: Context): Promise<void> {
     try {
       const currentUser = ctx.state.user as User
 
@@ -638,14 +653,7 @@ export class UserController {
       }
 
       // Validate password strength
-      const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*(),.?":{}|<>])[A-Za-z\d!@#$%^&*(),.?":{}|<>]{8,}$/
-      if (!passwordRegex.test(password)) {
-        throw createError(
-          "Password must be at least 8 characters with uppercase, lowercase, number, and special character",
-          400,
-          "WEAK_PASSWORD"
-        )
-      }
+      UserController.validatePasswordStrength(password)
 
       // Validate role if provided
       const userRole = role && Object.values(UserRole).includes(role) ? role : UserRole.USER
@@ -700,7 +708,7 @@ export class UserController {
   /**
    * Reset user password (super admin only)
    */
-  public static async resetUserPassword(ctx: Context, next: Next): Promise<void> {
+  public static async resetUserPassword(ctx: Context): Promise<void> {
     try {
       const currentUser = ctx.state.user as User
 
@@ -728,14 +736,7 @@ export class UserController {
       }
 
       // Validate password strength
-      const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*(),.?":{}|<>])[A-Za-z\d!@#$%^&*(),.?":{}|<>]{8,}$/
-      if (!passwordRegex.test(newPassword)) {
-        throw createError(
-          "Password must be at least 8 characters with uppercase, lowercase, number, and special character",
-          400,
-          "WEAK_PASSWORD"
-        )
-      }
+      UserController.validatePasswordStrength(newPassword)
 
       // Hash and save new password
       user.passwordHash = await User.hashPassword(newPassword)

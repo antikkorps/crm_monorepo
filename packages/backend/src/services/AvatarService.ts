@@ -15,8 +15,7 @@ export class AvatarService {
   private static readonly DEFAULT_STYLE = "avataaars"
   private static readonly DEFAULT_SIZE = 200
   private static readonly BASE_URL = "https://api.dicebear.com/7.x"
-  private static readonly AVATARS_DIR = path.join(process.cwd(), "uploads", "avatars")
-  private static readonly USE_LOCAL_STORAGE = true // Enable local storage by default
+  private static readonly AVATARS_DIR = process.env.AVATARS_DIR || path.join(__dirname, "../../uploads/avatars")
 
   /**
    * Generate a DiceBear avatar URL based on a seed

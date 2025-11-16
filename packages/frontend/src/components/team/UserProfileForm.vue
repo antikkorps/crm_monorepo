@@ -80,7 +80,7 @@
             density="comfortable"
           />
           <small class="form-help">
-            Password must be at least 8 characters and contain uppercase, lowercase, number, and special character
+            Password must be at least 8 characters and contain uppercase, lowercase, number, and special character (!@#$%^&*(),.?":{}|&lt;&gt;)
           </small>
         </div>
       </div>

@@ -26,7 +26,7 @@
           />
 
           <small class="form-help">
-            Password must be at least 8 characters and contain uppercase, lowercase, number, and special character
+            Password must be at least 8 characters and contain uppercase, lowercase, number, and special character (!@#$%^&*(),.?":{}|&lt;&gt;)
           </small>
 
           <v-text-field
@@ -111,7 +111,7 @@ const resetForm = () => {
 
 const validatePassword = (password: string): boolean => {
   // Password must be at least 8 characters and contain uppercase, lowercase, number, and special character
-  const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/
+  const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*(),.?":{}|<>])[A-Za-z\d!@#$%^&*(),.?":{}|<>]{8,}$/
   return passwordRegex.test(password)
 }
 

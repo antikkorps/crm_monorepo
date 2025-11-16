@@ -14,7 +14,7 @@ module.exports = {
     const path = require('path')
 
     // Directory for storing avatars
-    const avatarsDir = path.join(process.cwd(), 'uploads', 'avatars')
+    const avatarsDir = process.env.AVATARS_DIR || path.join(__dirname, '../../uploads/avatars')
 
     // Ensure directory exists
     try {

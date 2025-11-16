@@ -9,7 +9,7 @@ import { logger } from "../utils/logger"
 import { Invoice } from "../models/Invoice"
 import { MedicalInstitution } from "../models/MedicalInstitution"
 import { Payment } from "../models/Payment"
-import { User } from "../models/User"
+import { User, UserRole } from "../models/User"
 
 /**
  * InvoicePaymentService
@@ -546,7 +546,7 @@ export class InvoicePaymentService {
     const user = await User.findByPk(userId)
     if (!user) return false
 
-    if (user.role === "super_admin" || user.role === "team_admin" || user.role === "manager") {
+    if (user.role === UserRole.SUPER_ADMIN || user.role === UserRole.TEAM_ADMIN || user.role === UserRole.MANAGER) {
       return true
     }
 
