@@ -257,6 +257,15 @@ const statusOptions = [
   { label: "Disabled", value: "disabled" },
 ]
 
+const tableHeaders = [
+  { title: "Name", key: "name" },
+  { title: "Events", key: "events" },
+  { title: "Status", key: "status" },
+  { title: "Statistics", key: "stats" },
+  { title: "Last Triggered", key: "lastTriggeredAt" },
+  { title: "Actions", key: "actions", sortable: false },
+]
+
 // Computed
 const hasFailedWebhooks = computed(() =>
   webhooks.value.some((w) => w.status === "disabled" || w.failureCount > 0)
@@ -293,8 +302,13 @@ const debouncedSearch = debounce(() => {
   loadWebhooks()
 }, 300)
 
-const onPageChange = (event: any) => {
-  filters.value.page = event.page + 1
+const onTableUpdate = (options: any) => {
+  if (options.page !== undefined) {
+    filters.value.page = options.page + 1
+  }
+  if (options.itemsPerPage !== undefined) {
+    filters.value.limit = options.itemsPerPage
+  }
   loadWebhooks()
 }
 
@@ -375,7 +389,7 @@ const formatEventName = (event: string) => {
   return event.replace(/\./g, " ").replace(/\b\w/g, (l) => l.toUpperCase())
 }
 
-const getStatusSeverity = (status: string) => {
+const getStatusColor = (status: string) => {
   switch (status) {
     case "active":
       return "success"
