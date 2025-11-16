@@ -6,177 +6,181 @@
         <p>Configure and monitor webhook endpoints for real-time integrations</p>
       </div>
       <div class="header-actions">
-        <Button
-          label="Retry Failed"
-          icon="pi pi-refresh"
-          severity="secondary"
+        <v-btn
           @click="retryFailedWebhooks"
           :loading="retryingFailed"
           :disabled="!hasFailedWebhooks"
-        />
-        <Button
-          label="Create Webhook"
-          icon="pi pi-plus"
-          @click="showCreateDialog = true"
-        />
+          color="secondary"
+          variant="outlined"
+        >
+          <v-icon start>mdi-refresh</v-icon>
+          Retry Failed
+        </v-btn>
+        <v-btn @click="showCreateDialog = true" color="primary">
+          <v-icon start>mdi-plus</v-icon>
+          Create Webhook
+        </v-btn>
       </div>
     </div>
 
     <!-- Filters -->
-    <Card class="filters-card">
-      <template #content>
+    <v-card class="filters-card">
+      <v-card-text>
         <div class="filters-grid">
           <div class="field">
             <label for="search">Search</label>
-            <InputText
+            <v-text-field
               id="search"
               v-model="filters.search"
               placeholder="Search webhooks..."
-              @input="debouncedSearch"
+              @update:model-value="debouncedSearch"
+              density="comfortable"
+              variant="outlined"
+              hide-details
             />
           </div>
           <div class="field">
             <label for="status">Status</label>
-            <Dropdown
+            <v-select
               id="status"
               v-model="filters.status"
-              :options="statusOptions"
-              option-label="label"
-              option-value="value"
+              :items="statusOptions"
+              item-title="label"
+              item-value="value"
               placeholder="All Statuses"
-              show-clear
-              @change="loadWebhooks"
+              clearable
+              @update:model-value="loadWebhooks"
+              density="comfortable"
+              variant="outlined"
+              hide-details
             />
           </div>
           <div class="field">
             <label for="event">Event</label>
-            <Dropdown
+            <v-select
               id="event"
               v-model="filters.event"
-              :options="eventOptions"
-              option-label="label"
-              option-value="value"
+              :items="eventOptions"
+              item-title="label"
+              item-value="value"
               placeholder="All Events"
-              show-clear
-              @change="loadWebhooks"
+              clearable
+              @update:model-value="loadWebhooks"
+              density="comfortable"
+              variant="outlined"
+              hide-details
             />
           </div>
         </div>
-      </template>
-    </Card>
+      </v-card-text>
+    </v-card>
 
     <!-- Webhooks Table -->
-    <Card class="webhooks-table-card">
-      <template #content>
-        <DataTable
-          :value="webhooks"
-          :loading="loading"
-          paginator
-          :rows="filters.limit"
-          :total-records="totalRecords"
-          :lazy="true"
-          @page="onPageChange"
-          data-key="id"
-          responsive-layout="scroll"
-          :empty-message="loading ? 'Loading...' : 'No webhooks found'"
-        >
-          <Column field="name" header="Name" sortable>
-            <template #body="{ data }">
-              <div class="webhook-name">
-                <strong>{{ data.name }}</strong>
-                <div class="webhook-url">{{ data.url }}</div>
-              </div>
-            </template>
-          </Column>
+    <v-card class="webhooks-table-card">
+      <v-data-table
+        :items="webhooks"
+        :loading="loading"
+        :items-per-page="filters.limit"
+        :items-length="totalRecords"
+        @update:options="onTableUpdate"
+        :headers="tableHeaders"
+        item-value="id"
+        :no-data-text="loading ? 'Loading...' : 'No webhooks found'"
+      >
+        <template #item.name="{ item }">
+          <div class="webhook-name">
+            <strong>{{ item.name }}</strong>
+            <div class="webhook-url">{{ item.url }}</div>
+          </div>
+        </template>
 
-          <Column field="events" header="Events">
-            <template #body="{ data }">
-              <div class="webhook-events">
-                <Tag
-                  v-for="event in data.events.slice(0, 2)"
-                  :key="event"
-                  :value="formatEventName(event)"
-                  severity="info"
-                  class="event-tag"
-                />
-                <Tag
-                  v-if="data.events.length > 2"
-                  :value="`+${data.events.length - 2} more`"
-                  severity="secondary"
-                  class="event-tag"
-                />
-              </div>
-            </template>
-          </Column>
+        <template #item.events="{ item }">
+          <div class="webhook-events">
+            <v-chip
+              v-for="event in item.events.slice(0, 2)"
+              :key="event"
+              size="small"
+              color="info"
+              class="event-tag"
+            >
+              {{ formatEventName(event) }}
+            </v-chip>
+            <v-chip
+              v-if="item.events.length > 2"
+              size="small"
+              color="secondary"
+              class="event-tag"
+            >
+              +{{ item.events.length - 2 }} more
+            </v-chip>
+          </div>
+        </template>
 
-          <Column field="status" header="Status" sortable>
-            <template #body="{ data }">
-              <Tag :value="data.status" :severity="getStatusSeverity(data.status)" />
-            </template>
-          </Column>
+        <template #item.status="{ item }">
+          <v-chip :color="getStatusColor(item.status)" size="small">
+            {{ item.status }}
+          </v-chip>
+        </template>
 
-          <Column field="stats" header="Statistics">
-            <template #body="{ data }">
-              <div class="webhook-stats" v-if="data.stats">
-                <div class="stat-item">
-                  <span class="stat-label">Success Rate:</span>
-                  <span class="stat-value">{{ data.stats.successRate }}%</span>
-                </div>
-                <div class="stat-item">
-                  <span class="stat-label">Total:</span>
-                  <span class="stat-value">{{ data.stats.totalDeliveries }}</span>
-                </div>
-              </div>
-            </template>
-          </Column>
+        <template #item.stats="{ item }">
+          <div class="webhook-stats" v-if="item.stats">
+            <div class="stat-item">
+              <span class="stat-label">Success Rate:</span>
+              <span class="stat-value">{{ item.stats.successRate }}%</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-label">Total:</span>
+              <span class="stat-value">{{ item.stats.totalDeliveries }}</span>
+            </div>
+          </div>
+        </template>
 
-          <Column field="lastTriggeredAt" header="Last Triggered" sortable>
-            <template #body="{ data }">
-              <span v-if="data.lastTriggeredAt">
-                {{ formatDate(data.lastTriggeredAt) }}
-              </span>
-              <span v-else class="text-muted">Never</span>
-            </template>
-          </Column>
+        <template #item.lastTriggeredAt="{ item }">
+          <span v-if="item.lastTriggeredAt">
+            {{ formatDate(item.lastTriggeredAt) }}
+          </span>
+          <span v-else class="text-muted">Never</span>
+        </template>
 
-          <Column header="Actions" :exportable="false">
-            <template #body="{ data }">
-              <div class="action-buttons">
-                <Button
-                  icon="pi pi-eye"
-                  severity="info"
-                  text
-                  @click="viewWebhook(data)"
-                  v-tooltip="'View Details'"
-                />
-                <Button
-                  icon="pi pi-play"
-                  severity="success"
-                  text
-                  @click="testWebhook(data)"
-                  :loading="testingWebhooks.has(data.id)"
-                  v-tooltip="'Test Webhook'"
-                />
-                <Button
-                  icon="pi pi-pencil"
-                  severity="warning"
-                  text
-                  @click="editWebhook(data)"
-                  v-tooltip="'Edit'"
-                />
-                <Button
-                  icon="pi pi-trash"
-                  severity="danger"
-                  text
-                  @click="confirmDelete(data)"
-                  v-tooltip="'Delete'"
-                />
-              </div>
-            </template>
-          </Column>
-        </DataTable>
-      </template>
-    </Card>
+        <template #item.actions="{ item }">
+          <div class="action-buttons">
+            <v-btn
+              icon="mdi-eye"
+              size="small"
+              variant="text"
+              color="info"
+              @click="viewWebhook(item)"
+              title="View Details"
+            />
+            <v-btn
+              icon="mdi-play"
+              size="small"
+              variant="text"
+              color="success"
+              @click="testWebhook(item)"
+              :loading="testingWebhooks.has(item.id)"
+              title="Test Webhook"
+            />
+            <v-btn
+              icon="mdi-pencil"
+              size="small"
+              variant="text"
+              color="warning"
+              @click="editWebhook(item)"
+              title="Edit"
+            />
+            <v-btn
+              icon="mdi-delete"
+              size="small"
+              variant="text"
+              color="error"
+              @click="confirmDelete(item)"
+              title="Delete"
+            />
+          </div>
+        </template>
+      </v-data-table>
+    </v-card>
 
     <!-- Create/Edit Dialog -->
     <WebhookForm
@@ -195,10 +199,19 @@
     />
 
     <!-- Delete Confirmation -->
-    <ConfirmDialog />
-
-    <!-- Toast Messages -->
-    <Toast />
+    <v-dialog v-model="showConfirmDialog" max-width="420">
+      <v-card>
+        <v-card-title class="text-h5">{{ confirmHeader }}</v-card-title>
+        <v-card-text>{{ confirmMessage }}</v-card-text>
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn color="secondary" variant="text" @click="showConfirmDialog = false"
+            >Cancel</v-btn
+          >
+          <v-btn color="error" variant="flat" @click="executeConfirm">Delete</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
   </div>
 </template>
 
@@ -206,14 +219,16 @@
 import WebhookDetails from "@/components/webhooks/WebhookDetails.vue"
 import WebhookForm from "@/components/webhooks/WebhookForm.vue"
 import { webhooksApi, type Webhook, type WebhookFilters } from "@/services/api/webhooks"
+import { useNotificationStore } from "@/stores/notification"
 import { debounce } from "lodash-es"
-import { useConfirm } from "primevue/useconfirm"
-import { useToast } from "primevue/usetoast"
 import { computed, onMounted, ref } from "vue"
 
 // Composables
-const toast = useToast()
-const confirm = useConfirm()
+const notificationStore = useNotificationStore()
+const showConfirmDialog = ref(false)
+const confirmMessage = ref("")
+const confirmHeader = ref("Confirm")
+const confirmCallback = ref<(() => void) | null>(null)
 
 // State
 const loading = ref(false)
@@ -255,12 +270,7 @@ const loadWebhooks = async () => {
     webhooks.value = response.data.webhooks
     totalRecords.value = response.data.pagination.total
   } catch (error) {
-    toast.add({
-      severity: "error",
-      summary: "Error",
-      detail: "Failed to load webhooks",
-      life: 3000,
-    })
+    notificationStore.showError("Failed to load webhooks")
   } finally {
     loading.value = false
   }
@@ -305,61 +315,38 @@ const testWebhook = async (webhook: Webhook) => {
     const result = response.data.result
 
     if (result.success) {
-      toast.add({
-        severity: "success",
-        summary: "Test Successful",
-        detail: `Webhook responded with status ${result.httpStatus}`,
-        life: 3000,
-      })
+      notificationStore.showSuccess(`Webhook responded with status ${result.httpStatus}`)
     } else {
-      toast.add({
-        severity: "error",
-        summary: "Test Failed",
-        detail: result.errorMessage || "Webhook test failed",
-        life: 5000,
-      })
+      notificationStore.showError(result.errorMessage || "Webhook test failed")
     }
   } catch (error) {
-    toast.add({
-      severity: "error",
-      summary: "Test Error",
-      detail: "Failed to test webhook",
-      life: 3000,
-    })
+    notificationStore.showError("Failed to test webhook")
   } finally {
     testingWebhooks.value.delete(webhook.id)
   }
 }
 
 const confirmDelete = (webhook: Webhook) => {
-  confirm.require({
-    message: `Are you sure you want to delete the webhook "${webhook.name}"?`,
-    header: "Confirm Deletion",
-    icon: "pi pi-exclamation-triangle",
-    rejectClass: "p-button-secondary p-button-outlined",
-    rejectLabel: "Cancel",
-    acceptLabel: "Delete",
-    accept: () => deleteWebhook(webhook),
-  })
+  confirmMessage.value = `Are you sure you want to delete the webhook "${webhook.name}"?`
+  confirmHeader.value = "Confirm Deletion"
+  confirmCallback.value = () => deleteWebhook(webhook)
+  showConfirmDialog.value = true
+}
+
+const executeConfirm = () => {
+  if (confirmCallback.value) {
+    confirmCallback.value()
+  }
+  showConfirmDialog.value = false
 }
 
 const deleteWebhook = async (webhook: Webhook) => {
   try {
     await webhooksApi.delete(webhook.id)
-    toast.add({
-      severity: "success",
-      summary: "Success",
-      detail: "Webhook deleted successfully",
-      life: 3000,
-    })
+    notificationStore.showSuccess("Webhook deleted successfully")
     loadWebhooks()
   } catch (error) {
-    toast.add({
-      severity: "error",
-      summary: "Error",
-      detail: "Failed to delete webhook",
-      life: 3000,
-    })
+    notificationStore.showError("Failed to delete webhook")
   }
 }
 
@@ -367,21 +354,11 @@ const retryFailedWebhooks = async () => {
   retryingFailed.value = true
   try {
     await webhooksApi.retryFailed()
-    toast.add({
-      severity: "success",
-      summary: "Success",
-      detail: "Failed webhooks are being retried",
-      life: 3000,
-    })
+    notificationStore.showSuccess("Failed webhooks are being retried")
     // Reload webhooks after a short delay to see updated stats
     setTimeout(loadWebhooks, 2000)
   } catch (error) {
-    toast.add({
-      severity: "error",
-      summary: "Error",
-      detail: "Failed to retry webhooks",
-      life: 3000,
-    })
+    notificationStore.showError("Failed to retry webhooks")
   } finally {
     retryingFailed.value = false
   }

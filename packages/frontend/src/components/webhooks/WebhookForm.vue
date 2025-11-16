@@ -229,8 +229,8 @@ import {
   type UpdateWebhookData,
   type Webhook,
 } from "@/services/api/webhooks"
-import { useToast } from "primevue/usetoast"
 import { computed, ref, watch } from "vue"
+import { useNotificationStore } from "@/stores/notification"
 
 // Props
 interface Props {
@@ -249,7 +249,7 @@ const emit = defineEmits<{
 }>()
 
 // Composables
-const toast = useToast()
+const notificationStore = useNotificationStore()
 
 // State
 const saving = ref(false)
@@ -389,12 +389,7 @@ const handleSubmit = async () => {
       }
 
       await webhooksApi.update(props.webhook.id, updateData)
-      toast.add({
-        severity: "success",
-        summary: "Success",
-        detail: "Webhook updated successfully",
-        life: 3000,
-      })
+      notificationStore.showSuccess("Webhook updated successfully")
     } else {
       const createData: CreateWebhookData = {
         name: form.value.name,
@@ -408,22 +403,12 @@ const handleSubmit = async () => {
       }
 
       await webhooksApi.create(createData)
-      toast.add({
-        severity: "success",
-        summary: "Success",
-        detail: "Webhook created successfully",
-        life: 3000,
-      })
+      notificationStore.showSuccess("Webhook created successfully")
     }
 
     emit("saved")
   } catch (error: any) {
-    toast.add({
-      severity: "error",
-      summary: "Error",
-      detail: error.message || "Failed to save webhook",
-      life: 3000,
-    })
+    notificationStore.showError(error.message || "Failed to save webhook")
   } finally {
     saving.value = false
   }
