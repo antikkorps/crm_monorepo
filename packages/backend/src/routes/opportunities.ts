@@ -12,21 +12,21 @@ router.use(authenticate)
 // GET /api/opportunities - List opportunities with filtering
 router.get(
   "/",
-  requirePermission("canViewAllTasks"),
+  requirePermission("canViewAllOpportunities"),
   OpportunityController.getOpportunities
 )
 
 // GET /api/opportunities/pipeline - Get pipeline view (grouped by stage)
 router.get(
   "/pipeline",
-  requirePermission("canViewAllTasks"),
+  requirePermission("canManagePipeline"),
   OpportunityController.getPipeline
 )
 
 // GET /api/opportunities/forecast - Get revenue forecast
 router.get(
   "/forecast",
-  requirePermission("canViewAllTasks"),
+  requirePermission("canViewForecast"),
   OpportunityController.getForecast
 )
 
@@ -34,13 +34,14 @@ router.get(
 router.get(
   "/:id",
   validateUUID,
+  requirePermission("canViewOwnOpportunities"),
   OpportunityController.getOpportunity
 )
 
 // POST /api/opportunities - Create new opportunity
 router.post(
   "/",
-  requirePermission("canCreateTasks"),
+  requirePermission("canCreateOpportunities"),
   OpportunityController.createOpportunity
 )
 
@@ -48,7 +49,7 @@ router.post(
 router.put(
   "/:id",
   validateUUID,
-  requirePermission("canEditOwnTasks"),
+  requirePermission("canEditOwnOpportunities"),
   OpportunityController.updateOpportunity
 )
 
@@ -56,7 +57,7 @@ router.put(
 router.put(
   "/:id/stage",
   validateUUID,
-  requirePermission("canEditOwnTasks"),
+  requirePermission("canEditOwnOpportunities"),
   OpportunityController.updateStage
 )
 
@@ -64,7 +65,7 @@ router.put(
 router.delete(
   "/:id",
   validateUUID,
-  requirePermission("canDeleteTasks"),
+  requirePermission("canDeleteOpportunities"),
   OpportunityController.deleteOpportunity
 )
 

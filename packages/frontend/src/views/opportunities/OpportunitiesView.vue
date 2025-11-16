@@ -237,7 +237,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from "vue"
+import { ref, computed, onMounted, watch } from "vue"
 import { storeToRefs } from "pinia"
 import draggable from "vuedraggable"
 import AppLayout from "@/components/layout/AppLayout.vue"
@@ -386,7 +386,6 @@ onMounted(async () => {
 })
 
 // Watch showForecast to load data when panel opens
-import { watch } from "vue"
 watch(showForecast, (newValue) => {
   if (newValue) {
     loadForecast()

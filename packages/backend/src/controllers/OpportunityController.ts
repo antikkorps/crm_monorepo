@@ -351,11 +351,14 @@ export class OpportunityController {
         throw createError("Opportunity not found", 404, "NOT_FOUND")
       }
 
+      // Store original stage before update
+      const oldStage = opportunity.stage
+
       // Update fields
       await opportunity.update(value)
 
       // Auto-update status based on stage if stage changed
-      if (value.stage && value.stage !== opportunity.stage) {
+      if (value.stage && value.stage !== oldStage) {
         await opportunity.updateStatusFromStage()
       }
 
@@ -520,7 +523,18 @@ export class OpportunityController {
           where: { teamId: user.teamId },
           attributes: ["id"],
         }).then((users) => users.map((u) => u.id))
-        where.assignedUserId = { [Op.in]: teamUserIds }
+
+        // Combine with existing assignedUserId filter if present
+        if (where.assignedUserId !== undefined) {
+          where.assignedUserId = {
+            [Op.and]: [
+              { [Op.eq]: where.assignedUserId },
+              { [Op.in]: teamUserIds }
+            ]
+          }
+        } else {
+          where.assignedUserId = { [Op.in]: teamUserIds }
+        }
       }
 
       const opportunities = await Opportunity.findAll({
@@ -596,7 +610,18 @@ export class OpportunityController {
           where: { teamId: user.teamId },
           attributes: ["id"],
         }).then((users) => users.map((u) => u.id))
-        where.assignedUserId = { [Op.in]: teamUserIds }
+
+        // Combine with existing assignedUserId filter if present
+        if (where.assignedUserId !== undefined) {
+          where.assignedUserId = {
+            [Op.and]: [
+              { [Op.eq]: where.assignedUserId },
+              { [Op.in]: teamUserIds }
+            ]
+          }
+        } else {
+          where.assignedUserId = { [Op.in]: teamUserIds }
+        }
       }
 
       // Get forecast period

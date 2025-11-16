@@ -116,6 +116,16 @@ interface RolePermissions {
   canEditCatalogItems: boolean
   canDeleteCatalogItems: boolean
   canViewCatalogItems: boolean
+
+  // Opportunities (Sales Pipeline)
+  canCreateOpportunities: boolean
+  canEditAllOpportunities: boolean
+  canEditOwnOpportunities: boolean
+  canDeleteOpportunities: boolean
+  canViewAllOpportunities: boolean
+  canViewOwnOpportunities: boolean
+  canManagePipeline: boolean
+  canViewForecast: boolean
 }
 
 /**
@@ -233,6 +243,16 @@ export const ROLE_PERMISSIONS: Record<UserRole, RolePermissions> = {
     canEditCatalogItems: true,
     canDeleteCatalogItems: true,
     canViewCatalogItems: true,
+
+    // Opportunities (Sales Pipeline) - Full Access
+    canCreateOpportunities: true,
+    canEditAllOpportunities: true,
+    canEditOwnOpportunities: true,
+    canDeleteOpportunities: true,
+    canViewAllOpportunities: true,
+    canViewOwnOpportunities: true,
+    canManagePipeline: true,
+    canViewForecast: true,
   },
 
   [UserRole.TEAM_ADMIN]: {
@@ -346,6 +366,16 @@ export const ROLE_PERMISSIONS: Record<UserRole, RolePermissions> = {
     canEditCatalogItems: true,
     canDeleteCatalogItems: true,
     canViewCatalogItems: true,
+
+    // Opportunities (Sales Pipeline) - Full Team Access
+    canCreateOpportunities: true,
+    canEditAllOpportunities: true,
+    canEditOwnOpportunities: true,
+    canDeleteOpportunities: true,
+    canViewAllOpportunities: true,
+    canViewOwnOpportunities: true,
+    canManagePipeline: true,
+    canViewForecast: true,
   },
 
   [UserRole.USER]: {
@@ -459,6 +489,16 @@ export const ROLE_PERMISSIONS: Record<UserRole, RolePermissions> = {
     canEditCatalogItems: false,
     canDeleteCatalogItems: false,
     canViewCatalogItems: true,
+
+    // Opportunities (Sales Pipeline) - Limited Access (Own Only)
+    canCreateOpportunities: true,
+    canEditAllOpportunities: false,
+    canEditOwnOpportunities: true,
+    canDeleteOpportunities: false,
+    canViewAllOpportunities: true,
+    canViewOwnOpportunities: true,
+    canManagePipeline: false,
+    canViewForecast: true,
   },
 
   [UserRole.ADMIN]: {
@@ -574,6 +614,16 @@ export const ROLE_PERMISSIONS: Record<UserRole, RolePermissions> = {
     canEditCatalogItems: true,
     canDeleteCatalogItems: true,
     canViewCatalogItems: true,
+
+    // Opportunities (Sales Pipeline) - Full Access
+    canCreateOpportunities: true,
+    canEditAllOpportunities: true,
+    canEditOwnOpportunities: true,
+    canDeleteOpportunities: true,
+    canViewAllOpportunities: true,
+    canViewOwnOpportunities: true,
+    canManagePipeline: true,
+    canViewForecast: true,
   },
 
   [UserRole.MANAGER]: {
@@ -689,6 +739,16 @@ export const ROLE_PERMISSIONS: Record<UserRole, RolePermissions> = {
     canEditCatalogItems: true,
     canDeleteCatalogItems: false,
     canViewCatalogItems: true,
+
+    // Opportunities (Sales Pipeline) - Limited Access
+    canCreateOpportunities: true,
+    canEditAllOpportunities: false,
+    canEditOwnOpportunities: true,
+    canDeleteOpportunities: false,
+    canViewAllOpportunities: true,
+    canViewOwnOpportunities: true,
+    canManagePipeline: true,
+    canViewForecast: true,
   },
 }
 
@@ -1124,3 +1184,10 @@ export const canCreateReminders = () => requirePermission("canCreateReminders")
 export const canEditReminders = () => requirePermission("canEditOwnReminders")
 export const canDeleteReminders = () => requirePermission("canDeleteReminders")
 export const canViewReminders = () => requirePermission("canViewOwnReminders")
+
+export const canCreateOpportunities = () => requirePermission("canCreateOpportunities")
+export const canEditOpportunities = () => requirePermission("canEditOwnOpportunities")
+export const canDeleteOpportunities = () => requirePermission("canDeleteOpportunities")
+export const canViewOpportunities = () => requirePermission("canViewAllOpportunities")
+export const canManagePipeline = () => requirePermission("canManagePipeline")
+export const canViewForecast = () => requirePermission("canViewForecast")

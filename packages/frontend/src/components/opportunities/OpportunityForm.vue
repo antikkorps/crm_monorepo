@@ -157,7 +157,7 @@
 
     <v-divider class="my-4"></v-divider>
 
-    <div class="d-flex justify-end gap-2">
+    <div class="d-flex justify-end ga-2">
       <v-btn variant="text" @click="handleCancel">Annuler</v-btn>
       <v-btn
         type="submit"
@@ -274,6 +274,18 @@ const handleSubmit = async () => {
   const { valid } = await formRef.value.validate()
   if (!valid) return
 
+  // Validate that contact belongs to the selected institution (if both are set)
+  if (form.value.contactPersonId && form.value.institutionId) {
+    const contactBelongsToInstitution = contacts.value.find(
+      (c) => c.id === form.value.contactPersonId
+    )
+    if (!contactBelongsToInstitution) {
+      console.error("Contact person does not belong to the selected institution")
+      // Reset contact if institution has changed
+      form.value.contactPersonId = null
+    }
+  }
+
   loading.value = true
 
   try {
@@ -324,9 +336,3 @@ onMounted(async () => {
   }
 })
 </script>
-
-<style scoped>
-.gap-2 {
-  gap: 0.5rem;
-}
-</style>
