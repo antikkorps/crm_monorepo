@@ -403,6 +403,20 @@
                  />
                </div>
              </div>
+
+             <div class="management-section">
+               <h4>Account Actions</h4>
+               <v-btn
+                 color="warning"
+                 variant="outlined"
+                 prepend-icon="mdi-lock-reset"
+                 @click="openPasswordResetDialog(selectedUser!)"
+                 :disabled="!selectedUser"
+                 block
+               >
+                 Reset Password
+               </v-btn>
+             </div>
            </v-card-text>
 
            <v-card-actions class="dialog-footer">
@@ -424,6 +438,16 @@
            </v-card-actions>
          </v-card>
        </v-dialog>
+
+       <!-- Password Reset Dialog -->
+       <PasswordResetDialog
+         v-model="showPasswordResetDialog"
+         :user-id="selectedUser?.id || ''"
+         :user-name="`${selectedUser?.firstName || ''} ${selectedUser?.lastName || ''}`"
+         :loading="passwordResetLoading"
+         @submit="resetUserPassword"
+         @cancel="showPasswordResetDialog = false"
+       />
     </div>
   </AppLayout>
 </template>
@@ -434,7 +458,8 @@ import TeamActivityFeed from "@/components/team/TeamActivityFeed.vue"
 import TeamCard from "@/components/team/TeamCard.vue"
 import UserCard from "@/components/team/UserCard.vue"
 import UserProfileForm from "@/components/team/UserProfileForm.vue"
-import { institutionsApi, teamApi } from "@/services/api"
+import PasswordResetDialog from "@/components/team/PasswordResetDialog.vue"
+import { institutionsApi, teamApi, usersApi } from "@/services/api"
 import { AvatarService } from "@/services/avatarService"
 import { useTeamStore } from "@/stores/team"
 import type {
@@ -457,8 +482,10 @@ const selectedStatus = ref("")
 const showCreateUserDialog = ref(false)
 const showEditUserDialog = ref(false)
 const showManageUserDialog = ref(false)
+const showPasswordResetDialog = ref(false)
 const selectedUser = ref<User | null>(null)
 const formLoading = ref(false)
+const passwordResetLoading = ref(false)
 
 // Management data
 const managementData = ref({
@@ -681,13 +708,13 @@ const loadOptions = async () => {
 const createUser = async (userData: UserCreationAttributes) => {
   try {
     formLoading.value = true
-    // In real app, this would call a user creation API
-    console.log("Creating user:", userData)
-     showCreateUserDialog.value = false
-     showSnackbar("User created successfully", "success")
+    const response = await usersApi.create(userData)
+    showCreateUserDialog.value = false
+    showSnackbar("User created successfully", "success")
     await loadTeamData()
-   } catch (error) {
-     showSnackbar("Failed to create user", "error")
+  } catch (error: any) {
+    const message = error?.message || "Failed to create user"
+    showSnackbar(message, "error")
   } finally {
     formLoading.value = false
   }
@@ -747,6 +774,26 @@ const saveUserManagement = async () => {
      showSnackbar("Failed to update user management", "error")
   } finally {
     formLoading.value = false
+  }
+}
+
+const openPasswordResetDialog = (user: User) => {
+  selectedUser.value = user
+  showPasswordResetDialog.value = true
+}
+
+const resetUserPassword = async (userId: string, newPassword: string) => {
+  try {
+    passwordResetLoading.value = true
+    await usersApi.resetPassword(userId, newPassword)
+    showPasswordResetDialog.value = false
+    selectedUser.value = null
+    showSnackbar("Password reset successfully", "success")
+  } catch (error: any) {
+    const message = error?.message || "Failed to reset password"
+    showSnackbar(message, "error")
+  } finally {
+    passwordResetLoading.value = false
   }
 }
 

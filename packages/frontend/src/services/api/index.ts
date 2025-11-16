@@ -538,6 +538,8 @@ export const usersApi = {
   create: (data: any) => apiClient.post("/users", data),
   update: (id: string, data: any) => apiClient.put(`/users/${id}`, data),
   delete: (id: string) => apiClient.delete(`/users/${id}`),
+  resetPassword: (userId: string, newPassword: string) =>
+    apiClient.post(`/users/${userId}/reset-password`, { newPassword }),
   assignTerritory: (userId: string, institutionIds: string[]) =>
     apiClient.post(`/users/${userId}/territory`, { institutionIds }),
 }

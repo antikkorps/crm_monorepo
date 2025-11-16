@@ -68,6 +68,21 @@
             density="comfortable"
           />
         </div>
+
+        <div class="form-group" v-if="!isEditing">
+          <v-text-field
+            id="password"
+            v-model="formData.password"
+            :error-messages="errors.password ? [errors.password] : []"
+            label="Password *"
+            placeholder="Enter password"
+            type="password"
+            density="comfortable"
+          />
+          <small class="form-help">
+            Password must be at least 8 characters and contain uppercase, lowercase, number, and special character
+          </small>
+        </div>
       </div>
 
       <!-- Role and Team Assignment -->
