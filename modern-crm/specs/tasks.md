@@ -11,11 +11,11 @@
 | Catégorie | Complété | Total | Pourcentage |
 |-----------|----------|-------|-------------|
 | Sécurité | 28/28 | 28 | 100% ✅ |
-| Refactoring | 3/4 | 4 | 75% 🟡 |
+| Refactoring | 4/5 | 5 | 80% 🟡 |
 | Tests | 0/1 | 1 | 0% 🔴 |
 | Documentation | 2/2 | 2 | 100% ✅ |
 
-**Progression totale**: 33/35 tâches = **94% complété**
+**Progression totale**: 34/36 tâches = **94% complété**
 
 ---
 
@@ -109,11 +109,25 @@
 
 ---
 
-### 🔧 Refactoring (3/4 - 75%)
+### 🔧 Refactoring (4/5 - 80%)
+
+#### ✅ User Management Enhancement
+
+**Commit**: À venir (2025-11-16)
+
+**Résultats**:
+- ✅ **createUser()** - Création utilisateur par super admin
+- ✅ **resetUserPassword()** - Réinitialisation mot de passe
+- ✅ **Routes POST /api/users** et **POST /api/users/:id/reset-password**
+
+**Impact**:
+- 🔐 Gestion complète des utilisateurs
+- ✅ Validation robuste des mots de passe
+- 🔒 Sécurité renforcée (super_admin only)
 
 #### ✅ DiceBear Avatars - Local Storage
 
-**Commit**: À venir (2025-11-16)
+**Commit**: `cfbd1e8` (2025-11-16)
 
 **Résultats**:
 - ✅ **AvatarService étendu** (+179 lignes)
@@ -331,6 +345,8 @@ Database initialization failed: connect ECONNREFUSED 127.0.0.1:5432
 
 **Status**: ✅ **COMPLÉTÉ** (2025-11-16)
 
+**Commit**: `cfbd1e8` (2025-11-16)
+
 **Description**: Stocker les avatars DiceBear localement au lieu de dépendre de l'API externe
 
 **Résultats**:
@@ -369,6 +385,61 @@ Database initialization failed: connect ECONNREFUSED 127.0.0.1:5432
 ```
 /uploads/avatars/{userId}-{style}.svg  ← Stockage local
 /api/avatars/{userId}-{style}.svg      ← Endpoint public
+```
+
+### Tâche 31: Gestion des utilisateurs par super admin ✅
+
+**Status**: ✅ **COMPLÉTÉ** (2025-11-16)
+
+**Description**: Permettre au super admin de créer des utilisateurs et réinitialiser les mots de passe
+
+**Résultats**:
+- ✅ **UserController.createUser()** (97 lignes):
+  - `POST /api/users` - Créer un nouvel utilisateur
+  - Validation email unique
+  - Validation force du mot de passe (8+ chars, majuscule, minuscule, chiffre, caractère spécial)
+  - Validation team (si fournie)
+  - Attribution role (default: USER)
+  - Génération automatique de l'avatar
+  - Restriction: super_admin uniquement
+
+- ✅ **UserController.resetUserPassword()** (58 lignes):
+  - `POST /api/users/:id/reset-password` - Réinitialiser le mot de passe d'un utilisateur
+  - Validation force du mot de passe
+  - Restriction: super_admin uniquement
+  - Log de sécurité
+
+- ✅ **Routes ajoutées** (`routes/users.ts`):
+  - POST /api/users
+  - POST /api/users/:id/reset-password
+
+**Fonctionnalités existantes confirmées**:
+- ✅ PUT /api/users/:id - Modifier utilisateur (role, team, email, nom)
+- ✅ POST /api/users/profile/password - Changer son propre mot de passe
+- ✅ GET /api/users - Lister tous les utilisateurs
+
+**Bénéfices**:
+- 🔐 **Gestion complète des utilisateurs** par super admin
+- ✅ **Validation robuste** des mots de passe
+- 🔒 **Sécurité** - Restrictions par role vérifiées
+- 📝 **Audit trail** - Logs de création et réinitialisation
+
+**API Endpoints**:
+```
+POST /api/users
+  Body: { email, firstName, lastName, password, role?, teamId? }
+  Role: super_admin
+  Returns: Created user (201)
+
+POST /api/users/:id/reset-password
+  Body: { newPassword }
+  Role: super_admin
+  Returns: Success message
+
+PUT /api/users/:id
+  Body: { firstName?, lastName?, email?, role?, teamId?, isActive? }
+  Role: team_admin, manager
+  Returns: Updated user
 ```
 
 ---

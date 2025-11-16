@@ -596,4 +596,166 @@ export class UserController {
       )
     }
   }
+
+  /**
+   * Create a new user (super admin only)
+   */
+  public static async createUser(ctx: Context, next: Next): Promise<void> {
+    try {
+      const currentUser = ctx.state.user as User
+
+      // Only super admins can create users
+      if (currentUser.role !== UserRole.SUPER_ADMIN) {
+        throw createError(
+          "Only super admins can create users",
+          403,
+          "INSUFFICIENT_PERMISSIONS"
+        )
+      }
+
+      const { email, firstName, lastName, password, role, teamId } = ctx.request.body as {
+        email: string
+        firstName: string
+        lastName: string
+        password: string
+        role?: UserRole
+        teamId?: string
+      }
+
+      // Validate required fields
+      if (!email || !firstName || !lastName || !password) {
+        throw createError(
+          "Email, first name, last name, and password are required",
+          400,
+          "VALIDATION_ERROR"
+        )
+      }
+
+      // Check if email already exists
+      const existingUser = await User.findByEmail(email)
+      if (existingUser) {
+        throw createError("Email already exists", 409, "EMAIL_EXISTS", { email })
+      }
+
+      // Validate password strength
+      const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*(),.?":{}|<>])[A-Za-z\d!@#$%^&*(),.?":{}|<>]{8,}$/
+      if (!passwordRegex.test(password)) {
+        throw createError(
+          "Password must be at least 8 characters with uppercase, lowercase, number, and special character",
+          400,
+          "WEAK_PASSWORD"
+        )
+      }
+
+      // Validate role if provided
+      const userRole = role && Object.values(UserRole).includes(role) ? role : UserRole.USER
+
+      // Validate team if provided
+      if (teamId) {
+        const team = await Team.findByPk(teamId)
+        if (!team) {
+          throw createError("Team not found", 404, "TEAM_NOT_FOUND", { teamId })
+        }
+      }
+
+      // Hash password
+      const passwordHash = await User.hashPassword(password)
+
+      // Generate avatar seed from name
+      const avatarSeed = AvatarService.generateSeedFromName(firstName, lastName)
+
+      // Create user
+      const user = await User.create({
+        email: email.toLowerCase(),
+        firstName: firstName.trim(),
+        lastName: lastName.trim(),
+        passwordHash,
+        role: userRole,
+        teamId: teamId || undefined,
+        avatarSeed,
+        avatarStyle: "avataaars",
+        isActive: true,
+      })
+
+      // Get user with team info
+      const team = await user.getTeam()
+
+      ctx.status = 201
+      ctx.body = {
+        success: true,
+        data: {
+          message: "User created successfully",
+          user: {
+            ...user.toJSON(),
+            team,
+          },
+        },
+      }
+    } catch (error) {
+      if (error && typeof error === "object" && "statusCode" in error) throw error
+      throw createError("Failed to create user", 500, "CREATE_USER_ERROR", { error })
+    }
+  }
+
+  /**
+   * Reset user password (super admin only)
+   */
+  public static async resetUserPassword(ctx: Context, next: Next): Promise<void> {
+    try {
+      const currentUser = ctx.state.user as User
+
+      // Only super admins can reset passwords
+      if (currentUser.role !== UserRole.SUPER_ADMIN) {
+        throw createError(
+          "Only super admins can reset user passwords",
+          403,
+          "INSUFFICIENT_PERMISSIONS"
+        )
+      }
+
+      const { id } = ctx.params
+      const { newPassword } = ctx.request.body as {
+        newPassword: string
+      }
+
+      if (!newPassword) {
+        throw createError("New password is required", 400, "VALIDATION_ERROR")
+      }
+
+      const user = await User.findByPk(id)
+      if (!user) {
+        throw createError("User not found", 404, "USER_NOT_FOUND", { userId: id })
+      }
+
+      // Validate password strength
+      const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*(),.?":{}|<>])[A-Za-z\d!@#$%^&*(),.?":{}|<>]{8,}$/
+      if (!passwordRegex.test(newPassword)) {
+        throw createError(
+          "Password must be at least 8 characters with uppercase, lowercase, number, and special character",
+          400,
+          "WEAK_PASSWORD"
+        )
+      }
+
+      // Hash and save new password
+      user.passwordHash = await User.hashPassword(newPassword)
+      await user.save()
+
+      ctx.body = {
+        success: true,
+        data: {
+          message: `Password reset successfully for user ${user.getFullName()}`,
+          user: {
+            id: user.id,
+            email: user.email,
+            firstName: user.firstName,
+            lastName: user.lastName,
+          },
+        },
+      }
+    } catch (error) {
+      if (error && typeof error === "object" && "statusCode" in error) throw error
+      throw createError("Failed to reset password", 500, "RESET_PASSWORD_ERROR", { error })
+    }
+  }
 }
