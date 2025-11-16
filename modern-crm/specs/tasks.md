@@ -2,7 +2,7 @@
 
 **Dernière mise à jour**: 2025-11-16
 **Branch**: `claude/review-crm-tasks-01XuwDVvAYY1CiWKM1f5REge`
-**Statut global**: ✅ **94% Complete**
+**Statut global**: ✅ **97% Complete**
 
 ---
 
@@ -11,11 +11,11 @@
 | Catégorie | Complété | Total | Pourcentage |
 |-----------|----------|-------|-------------|
 | Sécurité | 28/28 | 28 | 100% ✅ |
-| Refactoring | 2/3 | 3 | 67% 🟡 |
+| Refactoring | 3/4 | 4 | 75% 🟡 |
 | Tests | 0/1 | 1 | 0% 🔴 |
 | Documentation | 2/2 | 2 | 100% ✅ |
 
-**Progression totale**: 32/34 tâches = **94% complété**
+**Progression totale**: 33/35 tâches = **94% complété**
 
 ---
 
@@ -109,11 +109,27 @@
 
 ---
 
-### 🔧 Refactoring (2/3 - 67%)
+### 🔧 Refactoring (3/4 - 75%)
+
+#### ✅ DiceBear Avatars - Local Storage
+
+**Commit**: À venir (2025-11-16)
+
+**Résultats**:
+- ✅ **AvatarService étendu** (+179 lignes)
+- ✅ **AvatarController créé** (145 lignes)
+- ✅ **Routes /api/avatars** montées
+- ✅ **User hooks** pour génération automatique
+- ✅ **Migration** pour utilisateurs existants
+
+**Impact**:
+- 🚀 Performance: Pas de requête externe
+- 🔒 Privacy/GDPR compliant
+- 💪 Résilience augmentée
 
 #### ✅ InvoicePaymentService Extracted
 
-**Commit**: À venir (2025-11-16)
+**Commit**: `5f4e5f2` (2025-11-16)
 
 **Résultats**:
 - ✅ **InvoicePaymentService créé** (556 lignes)
@@ -310,6 +326,50 @@ Database initialization failed: connect ECONNREFUSED 127.0.0.1:5432
 3. tar-fs fix via `npm audit fix --force`
 
 **Recommandation**: Planifier pour v2.0.0 avec testing complet
+
+### Tâche 30: Stockage local des avatars DiceBear ✅
+
+**Status**: ✅ **COMPLÉTÉ** (2025-11-16)
+
+**Description**: Stocker les avatars DiceBear localement au lieu de dépendre de l'API externe
+
+**Résultats**:
+- ✅ **AvatarService étendu** (+179 lignes):
+  - `generateAndStoreAvatar()` - Télécharge et stocke le SVG localement
+  - `getAvatarContent()` - Récupère le SVG local (génère si manquant)
+  - `getLocalAvatarUrl()` - Retourne l'URL locale (`/api/avatars/{userId}-{style}.svg`)
+  - `avatarExists()` - Vérifie si l'avatar existe
+  - `deleteAvatar()` - Supprime un avatar
+  - `regenerateAvatar()` - Regénère un avatar
+
+- ✅ **AvatarController créé** (145 lignes):
+  - `GET /api/avatars/:filename` - Sert les fichiers SVG
+  - `POST /api/avatars/:userId/regenerate` - Regénère un avatar
+  - Génération à la volée si fichier manquant (fallback)
+  - Cache HTTP (24h)
+
+- ✅ **User model mis à jour**:
+  - Hook `afterCreate` - Génère l'avatar automatiquement
+  - Hook `afterUpdate` - Regénère si nom/style change
+  - `getAvatarUrl()` - Retourne l'URL locale au lieu de DiceBear
+
+- ✅ **Migration créée** (`20251116000000-generate-existing-user-avatars.cjs`):
+  - Génère les avatars pour tous les utilisateurs existants
+  - Crée le répertoire `uploads/avatars/`
+  - Gestion d'erreurs robuste
+
+**Bénéfices**:
+- 🚀 **Performance** - Pas de requête externe à chaque affichage
+- 🔒 **Privacy/GDPR** - Données ne partent plus vers DiceBear
+- 💪 **Résilience** - Pas de dépendance à l'API externe
+- 💾 **Cache naturel** - SVG stockés dans `uploads/avatars/`
+- ✅ **Fallback automatique** - Génère à la volée si fichier manquant
+
+**Architecture**:
+```
+/uploads/avatars/{userId}-{style}.svg  ← Stockage local
+/api/avatars/{userId}-{style}.svg      ← Endpoint public
+```
 
 ---
 

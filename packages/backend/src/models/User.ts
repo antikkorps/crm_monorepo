@@ -58,9 +58,8 @@ export class User
   }
 
   public getAvatarUrl(style?: string): string {
-    return AvatarService.generateAvatarFromSeed(this.avatarSeed, {
-      style: style || this.avatarStyle
-    })
+    // Return local avatar URL instead of external DiceBear URL
+    return AvatarService.getLocalAvatarUrl(this.id, style || this.avatarStyle)
   }
 
   public getAvatarMetadata(style?: string): {
@@ -68,7 +67,12 @@ export class User
     url: string
     style: string
   } {
-    return AvatarService.getAvatarMetadata(this.avatarSeed, style || this.avatarStyle)
+    const avatarStyle = style || this.avatarStyle
+    return {
+      seed: this.avatarSeed,
+      url: this.getAvatarUrl(avatarStyle),
+      style: avatarStyle,
+    }
   }
 
   public async updateAvatarSeed(forceNew: boolean = false): Promise<void> {
@@ -264,6 +268,57 @@ User.init(
     tableName: "users",
     timestamps: true,
     underscored: true,
+    hooks: {
+      /**
+       * After creating a user, generate and store their avatar locally
+       */
+      afterCreate: async (user: User) => {
+        try {
+          await AvatarService.generateAndStoreAvatar(
+            user.id,
+            user.avatarSeed,
+            user.avatarStyle
+          )
+        } catch (error: any) {
+          // Log error but don't fail user creation if avatar generation fails
+          const { logger } = await import("../utils/logger")
+          logger.error("Failed to generate avatar after user creation", {
+            userId: user.id,
+            error: error.message,
+          })
+        }
+      },
+
+      /**
+       * After updating a user, regenerate avatar if name or style changed
+       */
+      afterUpdate: async (user: User) => {
+        try {
+          // Check if firstName, lastName, avatarSeed, or avatarStyle changed
+          const changed = user.changed()
+          if (
+            changed &&
+            (changed.includes("firstName") ||
+              changed.includes("lastName") ||
+              changed.includes("avatarSeed") ||
+              changed.includes("avatarStyle"))
+          ) {
+            await AvatarService.regenerateAvatar(
+              user.id,
+              user.avatarSeed,
+              user.avatarStyle
+            )
+          }
+        } catch (error: any) {
+          // Log error but don't fail user update if avatar regeneration fails
+          const { logger } = await import("../utils/logger")
+          logger.error("Failed to regenerate avatar after user update", {
+            userId: user.id,
+            error: error.message,
+          })
+        }
+      },
+    },
     indexes: [
       {
         unique: true,

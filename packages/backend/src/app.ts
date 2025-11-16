@@ -7,6 +7,7 @@ import config from "./config/environment"
 import { errorHandler } from "./middleware/errorHandler"
 import { requestLogger } from "./middleware/requestLogger"
 import authRoutes from "./routes/auth"
+import avatarRoutes from "./routes/avatars"
 import billingAnalyticsRoutes from "./routes/billing-analytics"
 import callRoutes from "./routes/calls"
 import catalogRoutes from "./routes/catalog"
@@ -128,6 +129,10 @@ export const createApp = (): Koa => {
   // Apply auth routes first
   app.use(authRoutes.routes())
   app.use(authRoutes.allowedMethods())
+
+  // Apply avatar routes (public endpoints for serving avatars)
+  app.use(avatarRoutes.routes())
+  app.use(avatarRoutes.allowedMethods())
 
   // Apply other API routes
   app.use(router.routes())
