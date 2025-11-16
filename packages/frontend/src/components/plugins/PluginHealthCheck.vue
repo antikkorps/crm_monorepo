@@ -220,6 +220,10 @@ const runHealthCheck = async () => {
     const message = health.message || `Plugin is ${health.status}`
     if (health.status === "healthy") {
       notificationStore.showSuccess(message)
+    } else if (health.status === "unhealthy") {
+      notificationStore.showError(message)
+    } else if (health.status === "degraded") {
+      notificationStore.showWarning(message)
     } else {
       notificationStore.showWarning(message)
     }
