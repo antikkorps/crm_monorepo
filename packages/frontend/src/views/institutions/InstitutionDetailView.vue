@@ -1,7 +1,7 @@
 <template>
   <AppLayout>
     <div class="institution-detail-view">
-      <DetailSkeleton v-if="loading" tabs :tabs-count="6" />
+      <DetailSkeleton v-if="loading" tabs :tabs-count="8" />
 
       <div v-else-if="error" class="text-center py-12">
         <v-icon size="64" color="error">mdi-alert-circle-outline</v-icon>
@@ -40,6 +40,11 @@
               {{ institution.isActive ? 'Actif' : 'Inactif' }}
             </v-chip>
           </div>
+
+          <!-- Health Score Badge -->
+          <div class="mt-4">
+            <HealthScoreBadge :institution-id="institution.id" />
+          </div>
         </div>
 
         <div v-if="editMode" class="mb-6">
@@ -58,7 +63,9 @@
         <div v-else>
           <v-tabs v-model="activeTab" class="mb-6">
             <v-tab value="overview">Aperçu</v-tab>
+            <v-tab value="insights">Insights</v-tab>
             <v-tab value="activity">Activité</v-tab>
+            <v-tab value="timeline">Timeline</v-tab>
             <v-tab value="medical">Profil Médical</v-tab>
             <v-tab value="contacts">Contacts</v-tab>
             <v-tab value="revenue">Revenus</v-tab>
@@ -125,8 +132,25 @@
               </v-row>
             </v-window-item>
 
+            <v-window-item value="insights">
+              <v-row>
+                <v-col cols="12" md="6">
+                  <LeadScoreBadge :institution-id="institution.id" />
+                </v-col>
+              </v-row>
+              <v-row class="mt-4">
+                <v-col cols="12">
+                  <NextBestActionsCard :institution-id="institution.id" />
+                </v-col>
+              </v-row>
+            </v-window-item>
+
             <v-window-item value="activity">
               <CollaborationTab :institution-id="institution.id" />
+            </v-window-item>
+
+            <v-window-item value="timeline">
+              <TimelineTab :institution-id="institution.id" />
             </v-window-item>
 
             <v-window-item value="medical">
@@ -257,6 +281,10 @@ import MedicalInstitutionForm from "@/components/institutions/MedicalInstitution
 import DigiformaTab from "@/components/institutions/DigiformaTab.vue"
 import RevenueTab from "@/components/institutions/RevenueTab.vue"
 import CollaborationTab from "@/components/institutions/CollaborationTab.vue"
+import TimelineTab from "@/components/institutions/TimelineTab.vue"
+import HealthScoreBadge from "@/components/institutions/HealthScoreBadge.vue"
+import LeadScoreBadge from "@/components/institutions/LeadScoreBadge.vue"
+import NextBestActionsCard from "@/components/institutions/NextBestActionsCard.vue"
 import AppLayout from "@/components/layout/AppLayout.vue"
 import { DetailSkeleton } from "@/components/skeletons"
 import { institutionsApi } from "@/services/api"

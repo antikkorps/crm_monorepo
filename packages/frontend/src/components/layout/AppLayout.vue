@@ -60,6 +60,15 @@
           @click="onNavigationClick"
         ></v-list-item>
 
+        <!-- Analytics Section -->
+        <v-list-item
+          prepend-icon="mdi-chart-box-outline"
+          :title="$t('navigation.analyticsIntelligence')"
+          to="/analytics"
+          value="analytics"
+          @click="onNavigationClick"
+        ></v-list-item>
+
         <!-- Collaboration Section -->
         <v-list-group value="Collaboration">
           <template v-slot:activator="{ props }">
@@ -265,6 +274,9 @@
       <!-- Language Selector -->
       <LanguageSelector />
 
+      <!-- Tour Button -->
+      <TourButton />
+
       <!-- Notifications -->
       <NotificationCenterVuetify />
 
@@ -344,6 +356,7 @@
 import LanguageSelector from "@/components/common/LanguageSelector.vue"
 import NotificationCenterVuetify from "@/components/common/NotificationCenterVuetify.vue"
 import UserAvatar from "@/components/common/UserAvatar.vue"
+import TourButton from "@/components/common/TourButton.vue"
 import { useAuthStore } from "@/stores/auth"
 import { useSettingsStore } from "@/stores/settings"
 import { UserRole } from "@medical-crm/shared"

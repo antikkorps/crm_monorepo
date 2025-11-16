@@ -232,6 +232,13 @@
         </v-col>
       </v-row>
 
+      <!-- Hot Leads Widget -->
+      <v-row class="mb-6">
+        <v-col cols="12">
+          <HotLeadsWidget />
+        </v-col>
+      </v-row>
+
       <!-- Recent Tasks Widget -->
       <v-row class="mb-6">
         <v-col cols="12">
@@ -411,6 +418,7 @@ import TimelineWidget from "@/components/dashboard/TimelineWidget.vue"
 import SmartAlertsWidget from "@/components/dashboard/SmartAlertsWidget.vue"
 import KPIChartsWidget from "@/components/dashboard/KPIChartsWidget.vue"
 import QuickActionsWidget from "@/components/dashboard/QuickActionsWidget.vue"
+import HotLeadsWidget from "@/components/dashboard/HotLeadsWidget.vue"
 import { DashboardSkeleton } from "@/components/skeletons"
 import { useAuthStore } from "@/stores/auth"
 import { useInstitutionsStore } from "@/stores/institutions"

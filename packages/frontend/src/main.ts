@@ -7,6 +7,10 @@ import vuetify from "./plugins/vuetify"
 // i18n
 import i18n from "./i18n"
 
+// Shepherd.js tours CSS
+import "shepherd.js/dist/css/shepherd.css"
+import "./assets/tour-theme.css"
+
 import App from "./App.vue"
 import Card from "./components/base/Card.vue"
 import router from "./router"

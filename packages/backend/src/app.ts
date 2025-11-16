@@ -40,6 +40,7 @@ import { logger } from "./utils/logger"
 import { securityLoggingMiddleware } from "./middleware/securityLogging"
 import { generalRateLimiter } from "./middleware/rateLimiting"
 import { inputValidationMiddleware } from "./middleware/inputSanitization"
+import { setupSwagger } from "./config/swagger"
 
 export const createApp = (): Koa => {
   const app = new Koa()
@@ -98,6 +99,11 @@ export const createApp = (): Koa => {
 
   // Security logging middleware
   app.use(securityLoggingMiddleware)
+
+  // Setup Swagger API documentation
+  if (config.env !== 'test') {
+    setupSwagger(app)
+  }
 
   // Health check endpoint
   router.get("/health", async (ctx) => {

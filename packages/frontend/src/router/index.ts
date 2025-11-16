@@ -29,6 +29,8 @@ const Calls = () => import("@/views/calls/CallsView.vue")
 const Notes = () => import("@/views/notes/NotesView.vue")
 const Reminders = () => import("@/views/reminders/RemindersView.vue")
 const Opportunities = () => import("@/views/opportunities/OpportunitiesView.vue")
+const Analytics = () => import("@/views/analytics/AnalyticsView.vue")
+const HotLeads = () => import("@/views/analytics/HotLeadsView.vue")
 const DigiformaSettings = () => import("@/views/settings/DigiformaSettingsView.vue")
 const SecurityLogs = () => import("@/views/settings/SecurityLogsView.vue")
 const FeaturesSettings = () => import("@/views/settings/FeaturesSettingsView.vue")
@@ -258,6 +260,24 @@ const routes: RouteRecordRaw[] = [
     meta: {
       requiresAuth: true,
       title: "Pipeline de Ventes",
+    },
+  },
+  {
+    path: "/analytics",
+    name: "Analytics",
+    component: Analytics,
+    meta: {
+      requiresAuth: true,
+      title: "Analytics & Intelligence",
+    },
+  },
+  {
+    path: "/hot-leads",
+    name: "HotLeads",
+    component: HotLeads,
+    meta: {
+      requiresAuth: true,
+      title: "Leads Chauds",
     },
   },
   {

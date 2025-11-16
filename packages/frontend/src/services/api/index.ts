@@ -665,6 +665,18 @@ export { remindersApi } from './reminders'
 // Export Opportunities API
 export { opportunitiesApi } from './opportunities'
 
+// Export Revenue API
+export { revenueApi } from './revenue'
+
+// Export Timeline API
+export { timelineApi } from './timeline'
+
+// Export Health Score API
+export { analyticsApi } from './analytics'
+export { healthScoreApi } from './healthScore'
+
+// Export Analytics API
+
 // System Settings API
 export const settingsApi = {
   getPublic: () => apiClient.get("/settings/public"),

@@ -1,0 +1,163 @@
+/* Custom Shepherd.js theme for Medical CRM */
+
+.shepherd-element {
+  z-index: 9999;
+  max-width: 400px;
+}
+
+.shepherd-modal-overlay-container {
+  z-index: 9998;
+}
+
+.shepherd-theme-custom .shepherd-content {
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+}
+
+.shepherd-theme-custom .shepherd-header {
+  background: rgb(var(--v-theme-primary));
+  padding: 16px 20px;
+  border-radius: 8px 8px 0 0;
+}
+
+.shepherd-theme-custom .shepherd-title {
+  color: #fff;
+  font-size: 18px;
+  font-weight: 600;
+  margin: 0;
+}
+
+.shepherd-theme-custom .shepherd-cancel-icon {
+  color: #fff;
+  opacity: 0.8;
+  transition: opacity 0.2s;
+}
+
+.shepherd-theme-custom .shepherd-cancel-icon:hover {
+  opacity: 1;
+}
+
+.shepherd-theme-custom .shepherd-text {
+  padding: 20px;
+  font-size: 14px;
+  line-height: 1.6;
+  color: #333;
+}
+
+.shepherd-theme-custom .shepherd-footer {
+  padding: 12px 20px 16px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  border-top: 1px solid #e0e0e0;
+}
+
+.shepherd-theme-custom .shepherd-button {
+  padding: 8px 16px;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: none;
+  background: rgb(var(--v-theme-primary));
+  color: #fff;
+}
+
+.shepherd-theme-custom .shepherd-button:hover {
+  background: rgb(var(--v-theme-primary));
+  filter: brightness(0.9);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.shepherd-theme-custom .shepherd-button-secondary {
+  background: transparent;
+  color: rgb(var(--v-theme-primary));
+  border: 1px solid rgb(var(--v-theme-primary));
+}
+
+.shepherd-theme-custom .shepherd-button-secondary:hover {
+  background: rgba(var(--v-theme-primary), 0.1);
+  filter: none;
+}
+
+/* Arrow customization */
+.shepherd-element[data-popper-placement^='top'] > .shepherd-arrow {
+  bottom: -8px;
+}
+
+.shepherd-element[data-popper-placement^='bottom'] > .shepherd-arrow {
+  top: -8px;
+}
+
+.shepherd-element[data-popper-placement^='left'] > .shepherd-arrow {
+  right: -8px;
+}
+
+.shepherd-element[data-popper-placement^='right'] > .shepherd-arrow {
+  left: -8px;
+}
+
+.shepherd-arrow::before {
+  background: rgb(var(--v-theme-primary));
+}
+
+/* Modal overlay */
+.shepherd-modal-overlay-container.shepherd-modal-is-visible {
+  opacity: 0.5;
+}
+
+/* Highlight target element */
+.shepherd-enabled.shepherd-element-attached-top,
+.shepherd-enabled.shepherd-element-attached-bottom,
+.shepherd-enabled.shepherd-element-attached-left,
+.shepherd-enabled.shepherd-element-attached-right {
+  z-index: 9999;
+}
+
+/* Animation */
+.shepherd-element {
+  animation: shepherdFadeIn 0.3s ease-in-out;
+}
+
+@keyframes shepherdFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+  .shepherd-element {
+    max-width: 90vw;
+  }
+
+  .shepherd-theme-custom .shepherd-text {
+    padding: 16px;
+    font-size: 13px;
+  }
+
+  .shepherd-theme-custom .shepherd-header {
+    padding: 12px 16px;
+  }
+
+  .shepherd-theme-custom .shepherd-title {
+    font-size: 16px;
+  }
+
+  .shepherd-theme-custom .shepherd-footer {
+    padding: 10px 16px 12px;
+  }
+
+  .shepherd-theme-custom .shepherd-button {
+    padding: 6px 12px;
+    font-size: 13px;
+  }
+}

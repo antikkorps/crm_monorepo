@@ -696,4 +696,88 @@ export class OpportunityController {
       throw error
     }
   }
+
+  /**
+   * GET /api/opportunities/analytics
+   * Get comprehensive pipeline analytics (conversion rates, sales cycle, win/loss analysis)
+   */
+  static async getAnalytics(ctx: Context) {
+    try {
+      const user = ctx.state.user as User
+      const { startDate, endDate, assignedUserId } = ctx.query
+
+      const { OpportunityAnalyticsService } = await import("../services/OpportunityAnalyticsService")
+
+      const filters: any = {}
+
+      if (startDate) filters.startDate = new Date(startDate as string)
+      if (endDate) filters.endDate = new Date(endDate as string)
+      if (assignedUserId) filters.assignedUserId = assignedUserId as string
+
+      // Apply team filtering for non-super admins
+      if (user.role !== "SUPER_ADMIN" && user.teamId) {
+        filters.teamId = user.teamId
+      }
+
+      const analytics = await OpportunityAnalyticsService.getPipelineAnalytics(filters)
+
+      ctx.body = {
+        success: true,
+        data: analytics,
+      }
+
+      logger.info("Pipeline analytics retrieved", {
+        userId: user.id,
+        filters,
+      })
+    } catch (error) {
+      logger.error("Get analytics failed", {
+        userId: ctx.state.user?.id,
+        error: (error as Error).message,
+      })
+      throw error
+    }
+  }
+
+  /**
+   * GET /api/opportunities/forecast/advanced
+   * Get advanced revenue forecast with weighted pipeline and monthly breakdown
+   */
+  static async getForecastAdvanced(ctx: Context) {
+    try {
+      const user = ctx.state.user as User
+      const { months = 6, assignedUserId } = ctx.query
+
+      const { OpportunityAnalyticsService } = await import("../services/OpportunityAnalyticsService")
+
+      const filters: any = {
+        months: parseInt(months as string, 10),
+      }
+
+      if (assignedUserId) filters.assignedUserId = assignedUserId as string
+
+      // Apply team filtering for non-super admins
+      if (user.role !== "SUPER_ADMIN" && user.teamId) {
+        filters.teamId = user.teamId
+      }
+
+      const forecast = await OpportunityAnalyticsService.getRevenueForecast(filters)
+
+      ctx.body = {
+        success: true,
+        data: forecast,
+      }
+
+      logger.info("Advanced forecast retrieved", {
+        userId: user.id,
+        months: filters.months,
+      })
+    } catch (error) {
+      logger.error("Get advanced forecast failed", {
+        userId: ctx.state.user?.id,
+        error: (error as Error).message,
+      })
+      throw error
+    }
+  }
 }

@@ -2,273 +2,35 @@
   <div class="revenue-tab">
     <!-- Loading State -->
     <div v-if="loading" class="pa-4">
-      <!-- Period Selector Skeleton -->
       <v-row class="mb-6">
-        <v-col cols="12">
-          <div class="d-flex align-center justify-space-between flex-wrap ga-4">
-            <div class="d-flex align-center">
-              <v-skeleton-loader type="avatar" width="20" height="20" class="mr-2" />
-              <v-skeleton-loader type="text" width="150" />
-            </div>
-            <div class="d-flex ga-2">
-              <v-skeleton-loader type="chip" width="80" v-for="i in 4" :key="i" />
-            </div>
-          </div>
-        </v-col>
-      </v-row>
-
-      <!-- Total Revenue Card Skeleton -->
-      <v-row class="mb-6">
-        <v-col cols="12">
-          <v-card elevation="2" color="primary" variant="tonal">
-            <v-card-text class="text-center py-8">
-              <v-skeleton-loader type="text" width="300" class="mx-auto mb-2" />
-              <v-skeleton-loader type="text" width="200" class="mx-auto" />
-            </v-card-text>
-          </v-card>
-        </v-col>
-      </v-row>
-
-      <!-- Revenue Breakdown Skeletons -->
-      <v-row class="mb-6">
-        <v-col cols="12" md="4" v-for="i in 3" :key="i">
-          <v-card elevation="2" class="h-100">
-            <v-card-title class="d-flex align-center">
-              <v-skeleton-loader type="avatar" width="24" height="24" class="mr-2" />
-              <v-skeleton-loader type="text" width="120" />
-            </v-card-title>
+        <v-col cols="12" md="3" v-for="i in 4" :key="i">
+          <v-card elevation="2">
             <v-card-text>
-              <v-skeleton-loader type="text" width="180" class="mb-3" />
-              <v-divider class="my-3" />
-              <v-row class="mb-3">
-                <v-col cols="6">
-                  <v-skeleton-loader type="text" width="100" class="mb-1" />
-                  <v-skeleton-loader type="text" width="60" />
-                </v-col>
-                <v-col cols="6">
-                  <v-skeleton-loader type="text" width="100" class="mb-1" />
-                  <v-skeleton-loader type="text" width="60" />
-                </v-col>
-              </v-row>
+              <v-skeleton-loader type="text" width="100" class="mb-2" />
               <v-skeleton-loader type="text" width="150" />
             </v-card-text>
           </v-card>
         </v-col>
       </v-row>
 
-      <!-- Chart Skeleton -->
       <v-row class="mb-6">
-        <v-col cols="12">
+        <v-col cols="12" md="6">
           <v-card elevation="2">
-            <v-card-title class="d-flex align-center justify-space-between">
-              <div class="d-flex align-center">
-                <v-skeleton-loader type="avatar" width="24" height="24" class="mr-2" />
-                <v-skeleton-loader type="text" width="200" />
-              </div>
-              <div class="d-flex ga-1">
-                <v-skeleton-loader type="button" width="40" v-for="i in 2" :key="i" />
-              </div>
+            <v-card-title>
+              <v-skeleton-loader type="text" width="200" />
             </v-card-title>
             <v-card-text>
-              <div class="chart-container">
-                <v-skeleton-loader type="image" height="400" />
-              </div>
+              <v-skeleton-loader type="paragraph" />
             </v-card-text>
           </v-card>
         </v-col>
-      </v-row>
-    </div>
-
-    <!-- Content -->
-    <div v-else>
-      <!-- Period Selector -->
-      <v-row class="mb-6">
-        <v-col cols="12">
-          <div class="d-flex align-center justify-space-between flex-wrap ga-4">
-            <div class="d-flex align-center">
-              <v-icon icon="mdi-calendar-range" size="small" class="mr-2 text-medium-emphasis" />
-              <span class="text-subtitle-1 text-medium-emphasis">Période d'analyse</span>
-            </div>
-            <v-chip-group
-              v-model="period"
-              mandatory
-              selected-class="text-primary"
-              color="primary"
-            >
-              <v-chip value="month" variant="outlined">
-                Ce mois
-              </v-chip>
-              <v-chip value="quarter" variant="outlined">
-                Ce trimestre
-              </v-chip>
-              <v-chip value="year" variant="outlined">
-                Cette année
-              </v-chip>
-              <v-chip value="all" variant="outlined">
-                Total
-              </v-chip>
-            </v-chip-group>
-          </div>
-        </v-col>
-      </v-row>
-
-      <!-- Total Revenue Card -->
-      <v-row class="mb-6">
-        <v-col cols="12">
-          <v-card elevation="2" color="primary" variant="tonal">
-            <v-card-text class="text-center py-8">
-              <div class="text-h3 font-weight-bold mb-2">
-                {{ formatCurrency(revenue?.total.totalRevenue || 0) }}
-              </div>
-              <div class="text-h6 text-medium-emphasis">
-                Chiffre d'affaires total
-              </div>
-            </v-card-text>
-          </v-card>
-        </v-col>
-      </v-row>
-
-      <!-- Revenue Breakdown -->
-      <v-row class="mb-6">
-        <!-- Audit Revenue -->
-        <v-col cols="12" md="4">
-          <v-card elevation="2" class="h-100 audit-card">
-            <v-card-title class="d-flex align-center">
-              <v-icon icon="mdi-stethoscope" color="blue" class="mr-2" />
-              CA Audit
-            </v-card-title>
-            <v-card-text>
-              <div class="text-h4 font-weight-bold mb-3" style="color: #2196F3">
-                {{ formatCurrency(revenue?.audit.totalRevenue || 0) }}
-              </div>
-
-              <v-divider class="my-3" />
-
-              <v-row class="mb-3">
-                <v-col cols="6">
-                  <div class="text-subtitle-2 font-weight-bold" style="color: #4CAF50">
-                    {{ formatCurrency(revenue?.audit.paidRevenue || 0) }}
-                  </div>
-                  <div class="text-caption text-medium-emphasis">Payé</div>
-                </v-col>
-                <v-col cols="6">
-                  <div class="text-subtitle-2 font-weight-bold" style="color: #F44336">
-                    {{ formatCurrency(revenue?.audit.unpaidRevenue || 0) }}
-                  </div>
-                  <div class="text-caption text-medium-emphasis">Impayé</div>
-                </v-col>
-              </v-row>
-
-              <div class="text-body-2 text-medium-emphasis">
-                <v-icon icon="mdi-file-document" size="small" class="mr-1" />
-                {{ revenue?.audit.invoiceCount || 0 }} facture(s)
-              </div>
-            </v-card-text>
-          </v-card>
-        </v-col>
-
-        <!-- Formation Revenue -->
-        <v-col cols="12" md="4">
-          <v-card elevation="2" class="h-100 formation-card">
-            <v-card-title class="d-flex align-center">
-              <v-icon icon="mdi-school" color="green" class="mr-2" />
-              CA Formation
-            </v-card-title>
-            <v-card-text>
-              <div class="text-h4 font-weight-bold mb-3" style="color: #4CAF50">
-                {{ formatCurrency(revenue?.formation.totalRevenue || 0) }}
-              </div>
-
-              <v-divider class="my-3" />
-
-              <!-- TODO: Réactiver payé/impayé quand la connexion Sage sera mise en place -->
-              <!-- <v-row class="mb-3">
-                <v-col cols="6">
-                  <div class="text-subtitle-2 font-weight-bold" style="color: #4CAF50">
-                    {{ formatCurrency(revenue?.formation.paidRevenue || 0) }}
-                  </div>
-                  <div class="text-caption text-medium-emphasis">Payé</div>
-                </v-col>
-                <v-col cols="6">
-                  <div class="text-subtitle-2 font-weight-bold" style="color: #F44336">
-                    {{ formatCurrency(revenue?.formation.unpaidRevenue || 0) }}
-                  </div>
-                  <div class="text-caption text-medium-emphasis">Impayé</div>
-                </v-col>
-              </v-row> -->
-
-              <div class="text-body-2 text-medium-emphasis">
-                <v-icon icon="mdi-file-document" size="small" class="mr-1" />
-                {{ revenue?.formation.invoiceCount || 0 }} facture(s) (statut WON)
-              </div>
-            </v-card-text>
-          </v-card>
-        </v-col>
-
-        <!-- Other Revenue -->
-        <v-col cols="12" md="4">
-          <v-card elevation="2" class="h-100 other-card">
-            <v-card-title class="d-flex align-center">
-              <v-icon icon="mdi-dots-horizontal" color="orange" class="mr-2" />
-              CA Autre
-            </v-card-title>
-            <v-card-text>
-              <div class="text-h4 font-weight-bold mb-3" style="color: #FF9800">
-                {{ formatCurrency(revenue?.other.totalRevenue || 0) }}
-              </div>
-
-              <v-divider class="my-3" />
-
-              <v-row class="mb-3">
-                <v-col cols="6">
-                  <div class="text-subtitle-2 font-weight-bold" style="color: #4CAF50">
-                    {{ formatCurrency(revenue?.other.paidRevenue || 0) }}
-                  </div>
-                  <div class="text-caption text-medium-emphasis">Payé</div>
-                </v-col>
-                <v-col cols="6">
-                  <div class="text-subtitle-2 font-weight-bold" style="color: #F44336">
-                    {{ formatCurrency(revenue?.other.unpaidRevenue || 0) }}
-                  </div>
-                  <div class="text-caption text-medium-emphasis">Impayé</div>
-                </v-col>
-              </v-row>
-
-              <div class="text-body-2 text-medium-emphasis">
-                <v-icon icon="mdi-file-document" size="small" class="mr-1" />
-                {{ revenue?.other.invoiceCount || 0 }} facture(s)
-              </div>
-            </v-card-text>
-          </v-card>
-        </v-col>
-      </v-row>
-
-      <!-- Comparison Chart -->
-      <v-row class="mb-6">
-        <v-col cols="12">
+        <v-col cols="12" md="6">
           <v-card elevation="2">
-            <v-card-title class="d-flex align-center justify-space-between">
-              <div class="d-flex align-center">
-                <v-icon icon="mdi-chart-bar" color="primary" class="mr-2" />
-                Répartition des revenus
-              </div>
-              <v-btn-group variant="outlined" density="compact">
-                <v-btn
-                  :color="chartType === 'bar' ? 'primary' : undefined"
-                  @click="chartType = 'bar'"
-                  icon="mdi-chart-bar"
-                />
-                <v-btn
-                  :color="chartType === 'pie' ? 'primary' : undefined"
-                  @click="chartType = 'pie'"
-                  icon="mdi-chart-pie"
-                />
-              </v-btn-group>
+            <v-card-title>
+              <v-skeleton-loader type="text" width="200" />
             </v-card-title>
             <v-card-text>
-              <div class="chart-container">
-                <canvas ref="revenueChart" />
-              </div>
+              <v-skeleton-loader type="paragraph" />
             </v-card-text>
           </v-card>
         </v-col>
@@ -277,7 +39,7 @@
 
     <!-- Error State -->
     <v-alert
-      v-if="error"
+      v-else-if="error"
       type="error"
       variant="tonal"
       class="mb-6"
@@ -295,14 +57,241 @@
         </v-btn>
       </template>
     </v-alert>
+
+    <!-- Content -->
+    <div v-else-if="analytics">
+      <!-- Key Performance Indicators -->
+      <v-row class="mb-6">
+        <v-col cols="12" md="3">
+          <v-card elevation="2" class="h-100" color="primary" variant="tonal">
+            <v-card-text class="text-center">
+              <v-icon size="32" class="mb-2">mdi-currency-eur</v-icon>
+              <div class="text-h4 font-weight-bold">
+                {{ formatCurrency(analytics.summary.lifetimeValue) }}
+              </div>
+              <div class="text-body-2 text-medium-emphasis mt-1">
+                Lifetime Value (LTV)
+              </div>
+            </v-card-text>
+          </v-card>
+        </v-col>
+
+        <v-col cols="12" md="3">
+          <v-card elevation="2" class="h-100" color="success" variant="tonal">
+            <v-card-text class="text-center">
+              <v-icon size="32" class="mb-2">mdi-percent</v-icon>
+              <div class="text-h4 font-weight-bold">
+                {{ analytics.summary.conversionRate }}%
+              </div>
+              <div class="text-body-2 text-medium-emphasis mt-1">
+                Taux de conversion
+              </div>
+              <div class="text-caption text-medium-emphasis">
+                {{ analytics.summary.acceptedQuotes }} / {{ analytics.summary.totalQuotes }} devis
+              </div>
+            </v-card-text>
+          </v-card>
+        </v-col>
+
+        <v-col cols="12" md="3">
+          <v-card elevation="2" class="h-100" color="warning" variant="tonal">
+            <v-card-text class="text-center">
+              <v-icon size="32" class="mb-2">mdi-clock-outline</v-icon>
+              <div class="text-h4 font-weight-bold">
+                {{ formatCurrency(analytics.summary.pendingRevenue) }}
+              </div>
+              <div class="text-body-2 text-medium-emphasis mt-1">
+                Revenu en attente
+              </div>
+            </v-card-text>
+          </v-card>
+        </v-col>
+
+        <v-col cols="12" md="3">
+          <v-card elevation="2" class="h-100" color="error" variant="tonal">
+            <v-card-text class="text-center">
+              <v-icon size="32" class="mb-2">mdi-alert-circle-outline</v-icon>
+              <div class="text-h4 font-weight-bold">
+                {{ formatCurrency(analytics.summary.overdueRevenue) }}
+              </div>
+              <div class="text-body-2 text-medium-emphasis mt-1">
+                Revenu en retard
+              </div>
+            </v-card-text>
+          </v-card>
+        </v-col>
+      </v-row>
+
+      <!-- Secondary KPIs -->
+      <v-row class="mb-6">
+        <v-col cols="12" md="6">
+          <v-card elevation="2">
+            <v-card-text class="d-flex justify-space-between align-center">
+              <div>
+                <div class="text-caption text-medium-emphasis">Valeur moyenne devis</div>
+                <div class="text-h6 font-weight-bold">
+                  {{ formatCurrency(analytics.summary.averageQuoteValue) }}
+                </div>
+              </div>
+              <v-icon size="40" color="primary">mdi-file-document-outline</v-icon>
+            </v-card-text>
+          </v-card>
+        </v-col>
+
+        <v-col cols="12" md="6">
+          <v-card elevation="2">
+            <v-card-text class="d-flex justify-space-between align-center">
+              <div>
+                <div class="text-caption text-medium-emphasis">Valeur moyenne facture</div>
+                <div class="text-h6 font-weight-bold">
+                  {{ formatCurrency(analytics.summary.averageInvoiceValue) }}
+                </div>
+              </div>
+              <v-icon size="40" color="success">mdi-receipt-text-outline</v-icon>
+            </v-card-text>
+          </v-card>
+        </v-col>
+      </v-row>
+
+      <!-- Quote Analytics -->
+      <v-row class="mb-6">
+        <v-col cols="12" md="6">
+          <v-card elevation="2" class="h-100">
+            <v-card-title class="d-flex align-center">
+              <v-icon icon="mdi-file-document-outline" color="primary" class="mr-2" />
+              Analyse des Devis
+            </v-card-title>
+            <v-card-text>
+              <v-list lines="two">
+                <v-list-item>
+                  <template v-slot:prepend>
+                    <v-icon color="primary">mdi-file-multiple-outline</v-icon>
+                  </template>
+                  <v-list-item-title>Total devis</v-list-item-title>
+                  <v-list-item-subtitle>
+                    {{ analytics.quoteAnalytics.totalQuotes }} devis pour {{ formatCurrency(analytics.quoteAnalytics.totalQuoteValue) }}
+                  </v-list-item-subtitle>
+                </v-list-item>
+
+                <v-divider />
+
+                <v-list-item>
+                  <template v-slot:prepend>
+                    <v-icon color="success">mdi-check-circle-outline</v-icon>
+                  </template>
+                  <v-list-item-title>Devis acceptés</v-list-item-title>
+                  <v-list-item-subtitle>
+                    {{ analytics.quoteAnalytics.acceptedQuotes }} devis pour {{ formatCurrency(analytics.quoteAnalytics.acceptedQuoteValue) }}
+                  </v-list-item-subtitle>
+                </v-list-item>
+
+                <v-divider />
+
+                <v-list-item>
+                  <template v-slot:prepend>
+                    <v-icon color="info">mdi-send-outline</v-icon>
+                  </template>
+                  <v-list-item-title>Devis envoyés</v-list-item-title>
+                  <v-list-item-subtitle>
+                    {{ analytics.quoteAnalytics.sentQuotes }} devis en attente de réponse
+                  </v-list-item-subtitle>
+                </v-list-item>
+
+                <v-divider />
+
+                <v-list-item>
+                  <template v-slot:prepend>
+                    <v-icon color="error">mdi-close-circle-outline</v-icon>
+                  </template>
+                  <v-list-item-title>Devis rejetés</v-list-item-title>
+                  <v-list-item-subtitle>
+                    {{ analytics.quoteAnalytics.rejectedQuotes }} devis rejetés ou expirés
+                  </v-list-item-subtitle>
+                </v-list-item>
+              </v-list>
+            </v-card-text>
+          </v-card>
+        </v-col>
+
+        <!-- Invoice Analytics -->
+        <v-col cols="12" md="6">
+          <v-card elevation="2" class="h-100">
+            <v-card-title class="d-flex align-center">
+              <v-icon icon="mdi-receipt-text-outline" color="success" class="mr-2" />
+              Analyse des Factures
+            </v-card-title>
+            <v-card-text>
+              <v-list lines="two">
+                <v-list-item>
+                  <template v-slot:prepend>
+                    <v-icon color="primary">mdi-file-multiple-outline</v-icon>
+                  </template>
+                  <v-list-item-title>Total factures</v-list-item-title>
+                  <v-list-item-subtitle>
+                    {{ analytics.invoiceAnalytics.totalInvoices }} factures pour {{ formatCurrency(analytics.invoiceAnalytics.totalInvoiceValue) }}
+                  </v-list-item-subtitle>
+                </v-list-item>
+
+                <v-divider />
+
+                <v-list-item>
+                  <template v-slot:prepend>
+                    <v-icon color="success">mdi-check-circle-outline</v-icon>
+                  </template>
+                  <v-list-item-title>Factures payées</v-list-item-title>
+                  <v-list-item-subtitle>
+                    {{ analytics.invoiceAnalytics.paidInvoices }} factures pour {{ formatCurrency(analytics.invoiceAnalytics.paidValue) }}
+                  </v-list-item-subtitle>
+                </v-list-item>
+
+                <v-divider />
+
+                <v-list-item>
+                  <template v-slot:prepend>
+                    <v-icon color="warning">mdi-progress-clock</v-icon>
+                  </template>
+                  <v-list-item-title>Factures partiellement payées</v-list-item-title>
+                  <v-list-item-subtitle>
+                    {{ analytics.invoiceAnalytics.partiallyPaidInvoices }} factures
+                  </v-list-item-subtitle>
+                </v-list-item>
+
+                <v-divider />
+
+                <v-list-item>
+                  <template v-slot:prepend>
+                    <v-icon color="info">mdi-clock-outline</v-icon>
+                  </template>
+                  <v-list-item-title>Factures impayées</v-list-item-title>
+                  <v-list-item-subtitle>
+                    {{ analytics.invoiceAnalytics.unpaidInvoices }} factures pour {{ formatCurrency(analytics.invoiceAnalytics.pendingValue) }}
+                  </v-list-item-subtitle>
+                </v-list-item>
+
+                <v-divider />
+
+                <v-list-item>
+                  <template v-slot:prepend>
+                    <v-icon color="error">mdi-alert-circle-outline</v-icon>
+                  </template>
+                  <v-list-item-title>Factures en retard</v-list-item-title>
+                  <v-list-item-subtitle>
+                    {{ analytics.invoiceAnalytics.overdueInvoices }} factures en retard
+                  </v-list-item-subtitle>
+                </v-list-item>
+              </v-list>
+            </v-card-text>
+          </v-card>
+        </v-col>
+      </v-row>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, watch } from 'vue'
-import { digiformaApi } from '@/services/api'
-import type { ConsolidatedRevenue } from '@/services/api/digiforma'
-import Chart from 'chart.js/auto'
+import { ref, onMounted } from 'vue'
+import { revenueApi } from '@/services/api'
+import type { RevenueAnalytics } from '@/services/api/revenue'
 
 // Props
 const props = defineProps<{
@@ -310,168 +299,23 @@ const props = defineProps<{
 }>()
 
 // Refs
-const revenue = ref<ConsolidatedRevenue | null>(null)
+const analytics = ref<RevenueAnalytics | null>(null)
 const loading = ref(false)
 const error = ref<string | null>(null)
-const period = ref<'month' | 'quarter' | 'year' | 'all'>('year')
-const chartType = ref<'bar' | 'pie'>('bar')
-const revenueChart = ref<HTMLCanvasElement>()
-const chartInstance = ref<Chart | null>(null)
 
-// Load revenue
+// Load revenue analytics
 async function loadRevenue() {
   loading.value = true
   error.value = null
 
   try {
-    const [startDate, endDate] = getPeriodDates()
-    revenue.value = await digiformaApi.revenue.getInstitutionRevenue(
-      props.institutionId,
-      startDate,
-      endDate
-    )
-
-    // Update chart
-    if (revenueChart.value) {
-      updateChart()
-    }
+    const response = await revenueApi.getInstitutionRevenue(props.institutionId)
+    analytics.value = response.data.data
   } catch (err: any) {
-    error.value = err.message || 'Impossible de charger les revenus'
-    console.error('Failed to load revenue:', err)
+    error.value = err.message || 'Impossible de charger les analytics de revenus'
+    console.error('Failed to load revenue analytics:', err)
   } finally {
     loading.value = false
-  }
-}
-
-// Get period dates
-function getPeriodDates(): [string?, string?] {
-  if (period.value === 'all') {
-    return [undefined, undefined]
-  }
-
-  const now = new Date()
-  let startDate: Date
-
-  switch (period.value) {
-    case 'month':
-      startDate = new Date(now.getFullYear(), now.getMonth(), 1)
-      break
-    case 'quarter':
-      const quarterStartMonth = Math.floor(now.getMonth() / 3) * 3
-      startDate = new Date(now.getFullYear(), quarterStartMonth, 1)
-      break
-    case 'year':
-      startDate = new Date(now.getFullYear(), 0, 1)
-      break
-  }
-
-  return [startDate.toISOString(), now.toISOString()]
-}
-
-// Update chart
-function updateChart() {
-  if (!revenueChart.value || !revenue.value) return
-
-  // Destroy existing chart
-  if (chartInstance.value) {
-    chartInstance.value.destroy()
-  }
-
-  const ctx = revenueChart.value.getContext('2d')
-  if (!ctx) return
-
-  if (chartType.value === 'bar') {
-    chartInstance.value = new Chart(ctx, {
-      type: 'bar',
-      data: {
-        labels: ['Audit', 'Formation', 'Autre'],
-        datasets: [
-          {
-            label: 'Total',
-            data: [
-              revenue.value.audit.totalRevenue,
-              revenue.value.formation.totalRevenue,
-              revenue.value.other.totalRevenue
-            ],
-            backgroundColor: ['rgba(33, 150, 243, 0.7)', 'rgba(76, 175, 80, 0.7)', 'rgba(255, 152, 0, 0.7)'],
-            borderColor: ['#2196F3', '#4CAF50', '#FF9800'],
-            borderWidth: 2
-          },
-          {
-            label: 'Payé',
-            data: [
-              revenue.value.audit.paidRevenue,
-              revenue.value.formation.paidRevenue,
-              revenue.value.other.paidRevenue
-            ],
-            backgroundColor: ['rgba(33, 150, 243, 0.5)', 'rgba(76, 175, 80, 0.5)', 'rgba(255, 152, 0, 0.5)'],
-            borderColor: ['#2196F3', '#4CAF50', '#FF9800'],
-            borderWidth: 2
-          }
-        ]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: { display: true, position: 'top' },
-          tooltip: {
-            callbacks: {
-              label: (context) => `${context.dataset.label}: ${formatCurrency(context.parsed.y)}`
-            }
-          }
-        },
-        scales: {
-          y: {
-            beginAtZero: true,
-            ticks: {
-              callback: (value) => new Intl.NumberFormat('fr-FR', {
-                style: 'currency',
-                currency: 'EUR',
-                minimumFractionDigits: 0,
-                maximumFractionDigits: 0,
-                notation: 'compact'
-              }).format(value as number)
-            }
-          }
-        }
-      }
-    })
-  } else {
-    chartInstance.value = new Chart(ctx, {
-      type: 'pie',
-      data: {
-        labels: ['Audit', 'Formation', 'Autre'],
-        datasets: [{
-          data: [
-            revenue.value.audit.totalRevenue,
-            revenue.value.formation.totalRevenue,
-            revenue.value.other.totalRevenue
-          ],
-          backgroundColor: ['rgba(33, 150, 243, 0.7)', 'rgba(76, 175, 80, 0.7)', 'rgba(255, 152, 0, 0.7)'],
-          borderColor: ['#2196F3', '#4CAF50', '#FF9800'],
-          borderWidth: 2
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: { display: true, position: 'right' },
-          tooltip: {
-            callbacks: {
-              label: (context) => {
-                const label = context.label || ''
-                const value = formatCurrency(context.parsed)
-                const total = revenue.value?.total.totalRevenue || 0
-                const percentage = total > 0 ? ((context.parsed / total) * 100).toFixed(1) : '0'
-                return `${label}: ${value} (${percentage}%)`
-              }
-            }
-          }
-        }
-      }
-    })
   }
 }
 
@@ -489,22 +333,6 @@ function formatCurrency(amount: number): string {
 onMounted(() => {
   loadRevenue()
 })
-
-onUnmounted(() => {
-  if (chartInstance.value) {
-    chartInstance.value.destroy()
-  }
-})
-
-watch([chartType, revenueChart], () => {
-  if (revenueChart.value && revenue.value) {
-    updateChart()
-  }
-})
-
-watch(period, () => {
-  loadRevenue()
-})
 </script>
 
 <style scoped>
@@ -512,20 +340,7 @@ watch(period, () => {
   height: 100%;
 }
 
-.chart-container {
-  height: 400px;
-  position: relative;
-}
-
-.audit-card {
-  border-left: 4px solid #2196F3;
-}
-
-.formation-card {
-  border-left: 4px solid #4CAF50;
-}
-
-.other-card {
-  border-left: 4px solid #FF9800;
+.revenue-tab {
+  padding: 0.5rem;
 }
 </style>

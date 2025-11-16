@@ -151,6 +151,37 @@ router.get(
   MedicalInstitutionController.getRevenueAnalytics
 )
 
+// GET /api/institutions/:id/health-score - Get health score for institution
+router.get(
+  "/:id/health-score",
+  canViewInstitutionsFiltered(),
+  validateInstitutionOwnership(),
+  MedicalInstitutionController.getHealthScore
+)
+
+// GET /api/institutions/:id/lead-score - Get lead score for institution
+router.get(
+  "/:id/lead-score",
+  canViewInstitutionsFiltered(),
+  validateInstitutionOwnership(),
+  MedicalInstitutionController.getLeadScore
+)
+
+// GET /api/institutions/:id/next-actions - Get recommended next actions for institution
+router.get(
+  "/:id/next-actions",
+  canViewInstitutionsFiltered(),
+  validateInstitutionOwnership(),
+  MedicalInstitutionController.getNextActions
+)
+
+// GET /api/institutions/hot-leads - Get list of hot leads
+router.get(
+  "/hot-leads",
+  canViewInstitutionsFiltered(),
+  MedicalInstitutionController.getHotLeads
+)
+
 // GET /api/institutions/search/unified - Unified search across institutions, tasks, and collaboration features
 router.get(
   "/search/unified",
