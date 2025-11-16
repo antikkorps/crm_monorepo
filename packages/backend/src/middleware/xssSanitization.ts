@@ -45,12 +45,9 @@ function sanitizeValue(value: any, options: sanitizeHtml.IOptions = defaultOptio
 
   // String - sanitize HTML
   if (typeof value === 'string') {
-    // Skip sanitization for very short strings (likely not HTML)
-    if (value.length < 3) return value
-
-    // Skip if string doesn't contain HTML-like characters
-    if (!/<|>|&/.test(value)) return value
-
+    // SECURITY: Always sanitize strings to prevent XSS
+    // Even short strings or strings without obvious HTML chars can contain XSS vectors
+    // (e.g., encoded payloads, attribute-based attacks)
     return sanitizeHtml(value, options)
   }
 

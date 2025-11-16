@@ -1,4 +1,3 @@
-import { sequelize } from "../config/database"
 import { MedicalInstitution, MedicalProfile, ContactPerson, User } from "../models"
 import { createError } from "../middleware/errorHandler"
 import { NotificationService } from "./NotificationService"
@@ -295,7 +294,12 @@ export class MedicalInstitutionService {
 
       // Create contact person
       const contactPerson = await ContactPerson.create({
-        ...data,
+        firstName: data.firstName,
+        lastName: data.lastName,
+        email: data.email,
+        phone: data.phone,
+        title: data.title,
+        department: data.department,
         isPrimary: data.isPrimary || false,
         institutionId,
       })
