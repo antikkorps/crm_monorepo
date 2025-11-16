@@ -252,7 +252,7 @@
 </template>
 
 <script setup lang="ts">
-import { useToast } from "primevue/usetoast"
+import { useNotificationStore } from "@/stores/notification"
 import { computed, ref } from "vue"
 import {
   PluginCategory,
@@ -277,7 +277,7 @@ const emit = defineEmits<{
 
 // Composables
 const pluginStore = usePluginStore()
-const toast = useToast()
+const notificationStore = useNotificationStore()
 
 // State
 const loading = ref(false)
@@ -301,19 +301,9 @@ const enablePlugin = async () => {
   try {
     loading.value = true
     await pluginStore.enablePlugin(props.plugin.manifest.name)
-    toast.add({
-      severity: "success",
-      summary: "Success",
-      detail: `Plugin "${props.plugin.manifest.displayName}" enabled successfully`,
-      life: 3000,
-    })
+    notificationStore.showSuccess(`Plugin "${props.plugin.manifest.displayName}" enabled successfully`)
   } catch (error) {
-    toast.add({
-      severity: "error",
-      summary: "Error",
-      detail: `Failed to enable plugin "${props.plugin.manifest.displayName}"`,
-      life: 5000,
-    })
+    notificationStore.showError(`Failed to enable plugin "${props.plugin.manifest.displayName}"`)
   } finally {
     loading.value = false
   }
@@ -325,19 +315,9 @@ const disablePlugin = async () => {
   try {
     loading.value = true
     await pluginStore.disablePlugin(props.plugin.manifest.name)
-    toast.add({
-      severity: "success",
-      summary: "Success",
-      detail: `Plugin "${props.plugin.manifest.displayName}" disabled successfully`,
-      life: 3000,
-    })
+    notificationStore.showSuccess(`Plugin "${props.plugin.manifest.displayName}" disabled successfully`)
   } catch (error) {
-    toast.add({
-      severity: "error",
-      summary: "Error",
-      detail: `Failed to disable plugin "${props.plugin.manifest.displayName}"`,
-      life: 5000,
-    })
+    notificationStore.showError(`Failed to disable plugin "${props.plugin.manifest.displayName}"`)
   } finally {
     loading.value = false
   }
@@ -356,20 +336,14 @@ const performHealthCheck = async () => {
     healthCheckLoading.value = true
     const health = await pluginStore.healthCheck(props.plugin.manifest.name)
 
-    const severity = health.status === "healthy" ? "success" : "error"
-    toast.add({
-      severity,
-      summary: "Health Check",
-      detail: health.message || `Plugin is ${health.status}`,
-      life: 5000,
-    })
+    const message = health.message || `Plugin is ${health.status}`
+    if (health.status === "healthy") {
+      notificationStore.showSuccess(message)
+    } else {
+      notificationStore.showError(message)
+    }
   } catch (error) {
-    toast.add({
-      severity: "error",
-      summary: "Health Check Failed",
-      detail: `Failed to perform health check for "${props.plugin.manifest.displayName}"`,
-      life: 5000,
-    })
+    notificationStore.showError(`Failed to perform health check for "${props.plugin.manifest.displayName}"`)
   } finally {
     healthCheckLoading.value = false
   }

@@ -139,7 +139,7 @@
 </template>
 
 <script setup lang="ts">
-import { useToast } from "primevue/usetoast"
+import { useNotificationStore } from "@/stores/notification"
 import { computed, ref, watch } from "vue"
 import { usePluginStore } from "../../stores/plugins"
 
@@ -164,7 +164,7 @@ const emit = defineEmits<{
 
 // Composables
 const pluginStore = usePluginStore()
-const toast = useToast()
+const notificationStore = useNotificationStore()
 
 // State
 const loading = ref(false)
@@ -217,21 +217,19 @@ const runHealthCheck = async () => {
       healthHistory.value = healthHistory.value.slice(0, 5)
     }
 
-    const severity = health.status === "healthy" ? "success" : "warn"
-    toast.add({
-      severity,
-      summary: "Health Check Complete",
-      detail: health.message || `Plugin is ${health.status}`,
-      life: 3000,
-    })
+    const message = health.message || `Plugin is ${health.status}`
+    if (health.status === "healthy") {
+      notificationStore.showSuccess(message)
+    } else if (health.status === "unhealthy") {
+      notificationStore.showError(message)
+    } else if (health.status === "degraded") {
+      notificationStore.showWarning(message)
+    } else {
+      notificationStore.showWarning(message)
+    }
   } catch (err) {
     error.value = err instanceof Error ? err.message : "Health check failed"
-    toast.add({
-      severity: "error",
-      summary: "Health Check Failed",
-      detail: error.value,
-      life: 5000,
-    })
+    notificationStore.showError(error.value)
   } finally {
     loading.value = false
   }

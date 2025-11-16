@@ -225,7 +225,7 @@
 </template>
 
 <script setup lang="ts">
-import { useToast } from "primevue/usetoast"
+import { useNotificationStore } from "@/stores/notification"
 import { computed, nextTick, ref, watch } from "vue"
 import { PluginCategory, PluginInstance, PluginService } from "../../services/api/plugins"
 import { usePluginStore } from "../../stores/plugins"
@@ -245,7 +245,7 @@ const emit = defineEmits<{
 
 // Composables
 const pluginStore = usePluginStore()
-const toast = useToast()
+const notificationStore = useNotificationStore()
 
 // State
 const loading = ref(false)
@@ -372,12 +372,7 @@ const saveConfiguration = async () => {
   if (!props.plugin) return
 
   if (!validateConfiguration()) {
-    toast.add({
-      severity: "error",
-      summary: "Validation Error",
-      detail: "Please fix the configuration errors before saving",
-      life: 5000,
-    })
+    notificationStore.showError("Please fix the configuration errors before saving")
     return
   }
 
@@ -393,22 +388,13 @@ const saveConfiguration = async () => {
 
     await pluginStore.configurePlugin(props.plugin.manifest.name, configToSave)
 
-    toast.add({
-      severity: "success",
-      summary: "Success",
-      detail: "Plugin configuration saved successfully",
-      life: 3000,
-    })
+    notificationStore.showSuccess("Plugin configuration saved successfully")
 
     emit("configuration-saved")
     emit("update:visible", false)
   } catch (error) {
-    toast.add({
-      severity: "error",
-      summary: "Save Failed",
-      detail: error instanceof Error ? error.message : "Failed to save configuration",
-      life: 5000,
-    })
+    const message = error instanceof Error ? error.message : "Failed to save configuration"
+    notificationStore.showError(message)
   } finally {
     loading.value = false
   }
@@ -416,12 +402,7 @@ const saveConfiguration = async () => {
 
 const resetConfiguration = () => {
   initializeConfiguration()
-  toast.add({
-    severity: "info",
-    summary: "Reset",
-    detail: "Configuration reset to current values",
-    life: 3000,
-  })
+  notificationStore.showInfo("Configuration reset to current values")
 }
 
 const resetToDefaults = () => {
@@ -444,12 +425,7 @@ const resetToDefaults = () => {
   rawConfigData.value = JSON.stringify(configData.value, null, 2)
   errors.value = {}
 
-  toast.add({
-    severity: "info",
-    summary: "Reset",
-    detail: "Configuration reset to default values",
-    life: 3000,
-  })
+  notificationStore.showInfo("Configuration reset to default values")
 }
 
 const copyCurrentConfig = async () => {
@@ -457,19 +433,9 @@ const copyCurrentConfig = async () => {
 
   try {
     await navigator.clipboard.writeText(JSON.stringify(props.plugin.config, null, 2))
-    toast.add({
-      severity: "success",
-      summary: "Copied",
-      detail: "Current configuration copied to clipboard",
-      life: 3000,
-    })
+    notificationStore.showSuccess("Current configuration copied to clipboard")
   } catch (error) {
-    toast.add({
-      severity: "error",
-      summary: "Copy Failed",
-      detail: "Failed to copy configuration to clipboard",
-      life: 3000,
-    })
+    notificationStore.showError("Failed to copy configuration to clipboard")
   }
 }
 

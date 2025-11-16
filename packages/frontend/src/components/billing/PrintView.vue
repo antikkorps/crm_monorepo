@@ -3,19 +3,23 @@
     <div class="print-header">
       <h3>Print Preview</h3>
       <div class="print-actions">
-        <Button
-          label="Print"
-          icon="pi pi-print"
+        <v-btn
           @click="printDocument"
           :loading="printing"
-        />
-        <Button label="Close" severity="secondary" outlined @click="$emit('close')" />
+          color="primary"
+        >
+          <v-icon start>mdi-printer</v-icon>
+          Print
+        </v-btn>
+        <v-btn @click="$emit('close')" variant="outlined" color="secondary">
+          Close
+        </v-btn>
       </div>
     </div>
 
     <div class="print-content" ref="printContent">
       <div v-if="!documentData" class="no-data">
-        <i class="pi pi-file-o empty-icon"></i>
+        <v-icon class="empty-icon">mdi-file-outline</v-icon>
         <p>No document data to display</p>
       </div>
 
@@ -257,7 +261,7 @@ import type {
   Quote,
   QuoteLine,
 } from "@medical-crm/shared"
-import { useToast } from "primevue/usetoast"
+import { useNotificationStore } from "@/stores/notification"
 import { ref } from "vue"
 
 interface Props {
@@ -281,8 +285,8 @@ const emit = defineEmits<{
 const printing = ref(false)
 const printContent = ref<HTMLElement>()
 
-// Toast for notifications
-const toast = useToast()
+// Notifications
+const notificationStore = useNotificationStore()
 
 // Methods
 const printDocument = async () => {
@@ -329,20 +333,10 @@ const printDocument = async () => {
 
     printWindow.document.close()
 
-    toast.add({
-      severity: "success",
-      summary: "Success",
-      detail: "Print dialog opened",
-      life: 3000,
-    })
+    notificationStore.showSuccess("Print dialog opened")
   } catch (error) {
     console.error("Failed to print document:", error)
-    toast.add({
-      severity: "error",
-      summary: "Error",
-      detail: "Failed to print document",
-      life: 3000,
-    })
+    notificationStore.showError("Failed to print document")
   } finally {
     printing.value = false
   }

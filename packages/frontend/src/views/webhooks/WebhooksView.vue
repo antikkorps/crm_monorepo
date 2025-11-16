@@ -220,7 +220,7 @@ import WebhookDetails from "@/components/webhooks/WebhookDetails.vue"
 import WebhookForm from "@/components/webhooks/WebhookForm.vue"
 import { webhooksApi, type Webhook, type WebhookFilters } from "@/services/api/webhooks"
 import { useNotificationStore } from "@/stores/notification"
-import { debounce } from "lodash-es"
+import { debounce } from "@/utils/debounce"
 import { computed, onMounted, ref } from "vue"
 
 // Composables
