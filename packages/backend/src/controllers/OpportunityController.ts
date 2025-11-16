@@ -4,9 +4,8 @@ import { Op } from "sequelize"
 import { Opportunity, OpportunityStage, OpportunityStatus } from "../models/Opportunity"
 import { MedicalInstitution } from "../models/MedicalInstitution"
 import { ContactPerson } from "../models/ContactPerson"
-import { User } from "../models/User"
-import { createError } from "../utils/errorFactory"
-import { logger } from "../utils/logger"
+import { User, UserRole } from "../models/User"
+import { createError, logger } from "../utils/logger"
 
 /**
  * Opportunity Controller
@@ -157,7 +156,7 @@ export class OpportunityController {
       }
 
       // Team filtering (only see team's opportunities unless SUPER_ADMIN)
-      if (user.role !== "SUPER_ADMIN" && user.teamId) {
+      if (user.role !== UserRole.SUPER_ADMIN && user.teamId) {
         const teamUserIds = await User.findAll({
           where: { teamId: user.teamId },
           attributes: ["id"],
@@ -398,7 +397,7 @@ export class OpportunityController {
     try {
       const user = ctx.state.user as User
       const { id } = ctx.params
-      const { stage, wonReason, lostReason } = ctx.request.body
+      const body = ctx.request.body as { stage?: string; wonReason?: string; lostReason?: string }
 
       const stageSchema = Joi.object({
         stage: Joi.string()
@@ -408,7 +407,7 @@ export class OpportunityController {
         lostReason: Joi.string().allow("", null).optional(),
       })
 
-      const { error, value } = stageSchema.validate({ stage, wonReason, lostReason })
+      const { error, value } = stageSchema.validate(body)
 
       if (error) {
         throw createError(error.details[0].message, 400, "VALIDATION_ERROR", error.details)
@@ -518,7 +517,7 @@ export class OpportunityController {
       }
 
       // Team filtering
-      if (user.role !== "SUPER_ADMIN" && user.teamId) {
+      if (user.role !== UserRole.SUPER_ADMIN && user.teamId) {
         const teamUserIds = await User.findAll({
           where: { teamId: user.teamId },
           attributes: ["id"],
@@ -605,7 +604,7 @@ export class OpportunityController {
       }
 
       // Team filtering
-      if (user.role !== "SUPER_ADMIN" && user.teamId) {
+      if (user.role !== UserRole.SUPER_ADMIN && user.teamId) {
         const teamUserIds = await User.findAll({
           where: { teamId: user.teamId },
           attributes: ["id"],
