@@ -662,6 +662,9 @@ export { notesApi } from './notes'
 // Export Reminders API
 export { remindersApi } from './reminders'
 
+// Export Opportunities API
+export { opportunitiesApi } from './opportunities'
+
 // System Settings API
 export const settingsApi = {
   getPublic: () => apiClient.get("/settings/public"),

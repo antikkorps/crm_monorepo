@@ -51,6 +51,15 @@
           @click="onNavigationClick"
         ></v-list-item>
 
+        <!-- Commercial Section -->
+        <v-list-item
+          prepend-icon="mdi-chart-timeline-variant"
+          :title="$t('navigation.pipeline')"
+          to="/opportunities"
+          value="opportunities"
+          @click="onNavigationClick"
+        ></v-list-item>
+
         <!-- Collaboration Section -->
         <v-list-group value="Collaboration">
           <template v-slot:activator="{ props }">
