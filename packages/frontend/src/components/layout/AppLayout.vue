@@ -60,6 +60,15 @@
           @click="onNavigationClick"
         ></v-list-item>
 
+        <!-- Analytics Section -->
+        <v-list-item
+          prepend-icon="mdi-chart-box-outline"
+          :title="$t('navigation.analyticsIntelligence')"
+          to="/analytics"
+          value="analytics"
+          @click="onNavigationClick"
+        ></v-list-item>
+
         <!-- Collaboration Section -->
         <v-list-group value="Collaboration">
           <template v-slot:activator="{ props }">
