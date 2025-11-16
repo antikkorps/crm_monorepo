@@ -209,7 +209,7 @@
 </template>
 
 <script setup lang="ts">
-import { useToast } from "primevue/usetoast"
+import { useNotificationStore } from "@/stores/notification"
 import { ref, watch } from "vue"
 import { PluginCategory, PluginService } from "../../services/api/plugins"
 import { usePluginStore } from "../../stores/plugins"
@@ -228,7 +228,7 @@ const emit = defineEmits<{
 
 // Composables
 const pluginStore = usePluginStore()
-const toast = useToast()
+const notificationStore = useNotificationStore()
 
 // State
 const searchDirectory = ref("")
@@ -250,20 +250,11 @@ const discoverPlugins = async () => {
     hasSearched.value = true
 
     if (response.plugins.length === 0) {
-      toast.add({
-        severity: "info",
-        summary: "No Plugins Found",
-        detail: "No valid plugins were found in the specified directory",
-        life: 3000,
-      })
+      notificationStore.showInfo("No valid plugins were found in the specified directory")
     }
   } catch (error) {
-    toast.add({
-      severity: "error",
-      summary: "Discovery Failed",
-      detail: error instanceof Error ? error.message : "Failed to discover plugins",
-      life: 5000,
-    })
+    const message = error instanceof Error ? error.message : "Failed to discover plugins"
+    notificationStore.showError(message)
   } finally {
     loading.value = false
   }
@@ -293,12 +284,7 @@ const previewPlugin = async (pluginPath: string) => {
     previewPluginPath.value = pluginPath
     showPreviewDialog.value = true
   } catch (error) {
-    toast.add({
-      severity: "error",
-      summary: "Preview Failed",
-      detail: "Failed to load plugin preview",
-      life: 5000,
-    })
+    notificationStore.showError("Failed to load plugin preview")
   }
 }
 

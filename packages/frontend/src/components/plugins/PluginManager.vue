@@ -324,14 +324,27 @@
       :health-data="healthCheckData"
     />
 
-    <!-- Confirm Uninstall Dialog -->
-    <ConfirmDialog />
+    <!-- Confirm Dialog -->
+    <v-dialog v-model="showConfirmDialog" max-width="500">
+      <v-card>
+        <v-card-title class="text-h5">Confirm Action</v-card-title>
+        <v-card-text>{{ confirmMessage }}</v-card-text>
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn color="secondary" variant="text" @click="showConfirmDialog = false">
+            Cancel
+          </v-btn>
+          <v-btn color="error" variant="flat" @click="executeConfirm">
+            Confirm
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
   </div>
 </template>
 
 <script setup lang="ts">
-import { useConfirm } from "primevue/useconfirm"
-import { useToast } from "primevue/usetoast"
+import { useNotificationStore } from "@/stores/notification"
 import { computed, onMounted, ref } from "vue"
 import {
   PluginCategory,
@@ -347,8 +360,7 @@ import PluginHealthCheck from "./PluginHealthCheck.vue"
 
 // Composables
 const pluginStore = usePluginStore()
-const confirm = useConfirm()
-const toast = useToast()
+const notificationStore = useNotificationStore()
 
 // State
 const searchQuery = ref("")
@@ -359,6 +371,9 @@ const showDiscoveryDialog = ref(false)
 const showDetailsDialog = ref(false)
 const showConfigDialog = ref(false)
 const showHealthDialog = ref(false)
+const showConfirmDialog = ref(false)
+const confirmMessage = ref("")
+const confirmCallback = ref<(() => void) | null>(null)
 const installPluginPath = ref("")
 const selectedPluginForDetails = ref<PluginInstance | null>(null)
 const selectedPluginForConfig = ref<PluginInstance | null>(null)
@@ -400,44 +415,39 @@ const filteredPlugins = computed(() => {
   return filtered
 })
 
+// Helper for confirmation dialogs
+const showConfirm = (message: string, onConfirm: () => void) => {
+  confirmMessage.value = message
+  confirmCallback.value = onConfirm
+  showConfirmDialog.value = true
+}
+
+const executeConfirm = () => {
+  if (confirmCallback.value) {
+    confirmCallback.value()
+  }
+  showConfirmDialog.value = false
+}
+
 // Methods
 const refreshPlugins = async () => {
   try {
     await pluginStore.refreshAll()
-    toast.add({
-      severity: "success",
-      summary: "Success",
-      detail: "Plugins refreshed successfully",
-      life: 3000,
-    })
+    notificationStore.showSuccess("Plugins refreshed successfully")
   } catch (error) {
-    toast.add({
-      severity: "error",
-      summary: "Error",
-      detail: "Failed to refresh plugins",
-      life: 5000,
-    })
+    notificationStore.showError("Failed to refresh plugins")
   }
 }
 
 const handleInstallPlugin = async () => {
   try {
     await pluginStore.installPlugin(installPluginPath.value.trim())
-    toast.add({
-      severity: "success",
-      summary: "Success",
-      detail: "Plugin installed successfully",
-      life: 3000,
-    })
+    notificationStore.showSuccess("Plugin installed successfully")
     showInstallDialog.value = false
     installPluginPath.value = ""
   } catch (error) {
-    toast.add({
-      severity: "error",
-      summary: "Installation Failed",
-      detail: error instanceof Error ? error.message : "Failed to install plugin",
-      life: 5000,
-    })
+    const message = error instanceof Error ? error.message : "Failed to install plugin"
+    notificationStore.showError(message)
   }
 }
 
@@ -450,38 +460,18 @@ const handlePluginSelected = (pluginPath: string) => {
 const enablePlugin = async (name: string) => {
   try {
     await pluginStore.enablePlugin(name)
-    toast.add({
-      severity: "success",
-      summary: "Success",
-      detail: `Plugin "${name}" enabled successfully`,
-      life: 3000,
-    })
+    notificationStore.showSuccess(`Plugin "${name}" enabled successfully`)
   } catch (error) {
-    toast.add({
-      severity: "error",
-      summary: "Error",
-      detail: `Failed to enable plugin "${name}"`,
-      life: 5000,
-    })
+    notificationStore.showError(`Failed to enable plugin "${name}"`)
   }
 }
 
 const disablePlugin = async (name: string) => {
   try {
     await pluginStore.disablePlugin(name)
-    toast.add({
-      severity: "success",
-      summary: "Success",
-      detail: `Plugin "${name}" disabled successfully`,
-      life: 3000,
-    })
+    notificationStore.showSuccess(`Plugin "${name}" disabled successfully`)
   } catch (error) {
-    toast.add({
-      severity: "error",
-      summary: "Error",
-      detail: `Failed to disable plugin "${name}"`,
-      life: 5000,
-    })
+    notificationStore.showError(`Failed to disable plugin "${name}"`)
   }
 }
 
@@ -502,51 +492,28 @@ const performHealthCheck = async (name: string) => {
     healthCheckData.value = health
     showHealthDialog.value = true
   } catch (error) {
-    toast.add({
-      severity: "error",
-      summary: "Health Check Failed",
-      detail: `Failed to perform health check for "${name}"`,
-      life: 5000,
-    })
+    notificationStore.showError(`Failed to perform health check for "${name}"`)
   }
 }
 
 const confirmUninstall = (plugin: PluginInstance) => {
-  confirm.require({
-    message: `Are you sure you want to uninstall "${plugin.manifest.displayName}"? This action cannot be undone.`,
-    header: "Confirm Uninstall",
-    icon: "pi pi-exclamation-triangle",
-    acceptClass: "p-button-danger",
-    accept: () => uninstallPlugin(plugin.manifest.name),
-  })
+  showConfirm(
+    `Are you sure you want to uninstall "${plugin.manifest.displayName}"? This action cannot be undone.`,
+    () => uninstallPlugin(plugin.manifest.name)
+  )
 }
 
 const uninstallPlugin = async (name: string) => {
   try {
     await pluginStore.uninstallPlugin(name)
-    toast.add({
-      severity: "success",
-      summary: "Success",
-      detail: `Plugin "${name}" uninstalled successfully`,
-      life: 3000,
-    })
+    notificationStore.showSuccess(`Plugin "${name}" uninstalled successfully`)
   } catch (error) {
-    toast.add({
-      severity: "error",
-      summary: "Error",
-      detail: `Failed to uninstall plugin "${name}"`,
-      life: 5000,
-    })
+    notificationStore.showError(`Failed to uninstall plugin "${name}"`)
   }
 }
 
 const handleConfigurationSaved = () => {
-  toast.add({
-    severity: "success",
-    summary: "Success",
-    detail: "Plugin configuration saved successfully",
-    life: 3000,
-  })
+  notificationStore.showSuccess("Plugin configuration saved successfully")
 }
 
 // Utility methods
