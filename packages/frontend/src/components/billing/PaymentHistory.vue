@@ -1,7 +1,7 @@
 <template>
   <div class="payment-history">
     <div class="header">
-      <h3>Payment History</h3>
+      <h3>{{ t('billing.paymentHistory.title') }}</h3>
       <div class="header-actions">
         <v-btn
           v-if="canRecordPayments"
@@ -10,7 +10,7 @@
           size="small"
           @click="$emit('record-payment')"
         >
-          Record Payment
+          {{ t('billing.paymentHistory.recordPayment') }}
         </v-btn>
         <v-btn
           icon="mdi-refresh"
@@ -20,7 +20,7 @@
           :loading="loading"
         >
           <v-icon>mdi-refresh</v-icon>
-          <v-tooltip activator="parent" location="top">Refresh</v-tooltip>
+          <v-tooltip activator="parent" location="top">{{ t('billing.paymentHistory.refresh') }}</v-tooltip>
         </v-btn>
       </div>
     </div>
@@ -36,7 +36,7 @@
               </v-avatar>
               <div class="summary-details">
                 <h4>{{ formatCurrency(invoice.total) }}</h4>
-                <p>Invoice Total</p>
+                <p>{{ t('billing.paymentHistory.summary.invoiceTotal') }}</p>
               </div>
             </div>
           </v-card-text>
@@ -50,7 +50,7 @@
               </v-avatar>
               <div class="summary-details">
                 <h4>{{ formatCurrency(invoice.totalPaid) }}</h4>
-                <p>Total Paid</p>
+                <p>{{ t('billing.paymentHistory.summary.totalPaid') }}</p>
               </div>
             </div>
           </v-card-text>
@@ -64,7 +64,7 @@
               </v-avatar>
               <div class="summary-details">
                 <h4>{{ formatCurrency(invoice.remainingAmount) }}</h4>
-                <p>Remaining</p>
+                <p>{{ t('billing.paymentHistory.summary.remaining') }}</p>
               </div>
             </div>
           </v-card-text>
@@ -73,7 +73,7 @@
 
       <!-- Payment Progress -->
       <div class="payment-progress">
-        <label>Payment Progress</label>
+        <label>{{ t('billing.paymentHistory.progress.label') }}</label>
         <v-progress-linear
           :model-value="paymentPercentage"
           :color="getProgressColor()"
@@ -359,6 +359,9 @@
 import { invoicesApi } from "@/services/api"
 import type { Invoice, Payment, PaymentMethod, PaymentStatus } from "@medical-crm/shared"
 import { computed, onMounted, ref, watch } from "vue"
+import { useI18n } from "vue-i18n"
+
+const { t } = useI18n()
 
 interface Props {
   invoice?: Invoice | null
@@ -393,31 +396,31 @@ const filters = ref({
 })
 
 // Options
-const statusOptions = [
-  { label: "Pending", value: "pending" },
-  { label: "Confirmed", value: "confirmed" },
-  { label: "Failed", value: "failed" },
-  { label: "Cancelled", value: "cancelled" },
-]
+const statusOptions = computed(() => [
+  { label: t("billing.paymentHistory.status.pending"), value: "pending" },
+  { label: t("billing.paymentHistory.status.confirmed"), value: "confirmed" },
+  { label: t("billing.paymentHistory.status.failed"), value: "failed" },
+  { label: t("billing.paymentHistory.status.cancelled"), value: "cancelled" },
+])
 
-const methodOptions = [
-  { label: "Bank Transfer", value: "bank_transfer" },
-  { label: "Check", value: "check" },
-  { label: "Cash", value: "cash" },
-  { label: "Credit Card", value: "credit_card" },
-  { label: "Other", value: "other" },
-]
+const methodOptions = computed(() => [
+  { label: t("billing.paymentHistory.methods.bankTransfer"), value: "bank_transfer" },
+  { label: t("billing.paymentHistory.methods.check"), value: "check" },
+  { label: t("billing.paymentHistory.methods.cash"), value: "cash" },
+  { label: t("billing.paymentHistory.methods.creditCard"), value: "credit_card" },
+  { label: t("billing.paymentHistory.methods.other"), value: "other" },
+])
 
-const paymentHeaders = [
-  { title: "Date", value: "paymentDate", sortable: true },
-  { title: "Amount", value: "amount", sortable: true, align: "end" },
-  { title: "Method", value: "paymentMethod", sortable: true },
-  { title: "Reference", value: "reference" },
-  { title: "Status", value: "status", sortable: true },
-  { title: "Recorded By", value: "recordedBy" },
-  { title: "Notes", value: "notes" },
-  { title: "Actions", value: "actions", sortable: false },
-] as const
+const paymentHeaders = computed(() => [
+  { title: t("billing.paymentHistory.table.date"), value: "paymentDate", sortable: true },
+  { title: t("billing.paymentHistory.table.amount"), value: "amount", sortable: true, align: "end" as const },
+  { title: t("billing.paymentHistory.table.method"), value: "paymentMethod", sortable: true },
+  { title: t("billing.paymentHistory.table.reference"), value: "reference" },
+  { title: t("billing.paymentHistory.table.status"), value: "status", sortable: true },
+  { title: t("billing.paymentHistory.table.recordedBy"), value: "recordedBy" },
+  { title: t("billing.paymentHistory.table.notes"), value: "notes" },
+  { title: t("billing.paymentHistory.table.actions"), value: "actions", sortable: false },
+])
 
 // Computed
 const paymentPercentage = computed(() => {
@@ -426,7 +429,7 @@ const paymentPercentage = computed(() => {
 })
 
 const emptyMessage = computed(() => {
-  return props.invoice ? "No payments recorded for this invoice" : "No payments found"
+  return props.invoice ? t("billing.paymentHistory.messages.noPayments") : t("billing.paymentHistory.messages.noPaymentsFound")
 })
 
 // Methods
@@ -443,7 +446,7 @@ const loadPayments = async () => {
     }
   } catch (error) {
     console.error("Error loading payments:", error)
-    emit("notify", { message: "Failed to load payments", color: "error" })
+    emit("notify", { message: t("billing.paymentHistory.messages.loadFailed"), color: "error" })
   } finally {
     loading.value = false
   }
@@ -454,13 +457,13 @@ const confirmPayment = async (paymentId: string) => {
     const response = await invoicesApi.payments.confirm(paymentId) as any
 
     if (response.success) {
-      emit("notify", { message: "Payment confirmed successfully", color: "success" })
+      emit("notify", { message: t("billing.paymentHistory.messages.confirmSuccess"), color: "success" })
       loadPayments()
       emit("payment-updated")
     }
   } catch (error) {
     console.error("Error confirming payment:", error)
-    emit("notify", { message: "Failed to confirm payment", color: "error" })
+    emit("notify", { message: t("billing.paymentHistory.messages.confirmFailed"), color: "error" })
   }
 }
 
@@ -482,14 +485,14 @@ const confirmCancelPayment = async () => {
     ) as any
 
     if (response.success) {
-      emit("notify", { message: "Payment cancelled successfully", color: "success" })
+      emit("notify", { message: t("billing.paymentHistory.messages.cancelSuccess"), color: "success" })
       showCancelDialog.value = false
       loadPayments()
       emit("payment-updated")
     }
   } catch (error) {
     console.error("Error cancelling payment:", error)
-    emit("notify", { message: "Failed to cancel payment", color: "error" })
+    emit("notify", { message: t("billing.paymentHistory.messages.cancelFailed"), color: "error" })
   } finally {
     cancelling.value = false
   }
@@ -519,22 +522,22 @@ const getMethodVuetifyIcon = (method: PaymentMethod) => {
 }
 
 const getMethodLabel = (method: PaymentMethod) => {
-  const labelMap = {
-    bank_transfer: "Bank Transfer",
-    check: "Check",
-    cash: "Cash",
-    credit_card: "Credit Card",
-    other: "Other",
+  const labelMap: Record<PaymentMethod, string> = {
+    bank_transfer: t("billing.paymentHistory.methods.bankTransfer"),
+    check: t("billing.paymentHistory.methods.check"),
+    cash: t("billing.paymentHistory.methods.cash"),
+    credit_card: t("billing.paymentHistory.methods.creditCard"),
+    other: t("billing.paymentHistory.methods.other"),
   }
   return labelMap[method] || method
 }
 
 const getStatusLabel = (status: PaymentStatus) => {
-  const labelMap = {
-    pending: "Pending",
-    confirmed: "Confirmed",
-    failed: "Failed",
-    cancelled: "Cancelled",
+  const labelMap: Record<PaymentStatus, string> = {
+    pending: t("billing.paymentHistory.status.pending"),
+    confirmed: t("billing.paymentHistory.status.confirmed"),
+    failed: t("billing.paymentHistory.status.failed"),
+    cancelled: t("billing.paymentHistory.status.cancelled"),
   }
   return labelMap[status] || status
 }

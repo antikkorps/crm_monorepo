@@ -6,7 +6,7 @@
   >
     <v-card>
       <v-card-title>
-        {{ isEditing ? 'Modifier l\'appel' : 'Nouvel appel' }}
+        {{ isEditing ? $t('calls.edit') : $t('calls.new') }}
       </v-card-title>
 
       <v-card-text class="call-form">
@@ -18,8 +18,8 @@
                 id="phoneNumber"
                 v-model="formData.phoneNumber"
                 :error-messages="errors.phoneNumber ? [errors.phoneNumber] : []"
-                label="Numéro de téléphone *"
-                placeholder="+33 1 23 45 67 89"
+                :label="t('calls.phoneNumberField') + ' *'"
+                :placeholder="t('calls.phoneNumberPlaceholder')"
                 prepend-inner-icon="mdi-phone"
                 density="comfortable"
                 hide-details="auto"
@@ -34,8 +34,8 @@
                 :error-messages="errors.callType ? [errors.callType] : []"
                 item-title="label"
                 item-value="value"
-                label="Type d'appel *"
-                placeholder="Sélectionner un type"
+                :label="t('calls.callTypeField') + ' *'"
+                :placeholder="t('calls.callTypePlaceholder')"
                 prepend-inner-icon="mdi-phone-log"
                 density="comfortable"
                 hide-details="auto"
@@ -48,14 +48,14 @@
             <v-text-field
               id="duration"
               v-model.number="formData.duration"
-              label="Durée (en secondes)"
-              placeholder="120"
+              :label="t('calls.durationField')"
+              :placeholder="t('calls.durationPlaceholder')"
               type="number"
               min="0"
               prepend-inner-icon="mdi-clock-outline"
               density="comfortable"
               hide-details="auto"
-              hint="La durée de l'appel en secondes (optionnel)"
+              :hint="t('calls.durationHint')"
               persistent-hint
             />
           </div>
@@ -65,8 +65,8 @@
             <v-textarea
               id="summary"
               v-model="formData.summary"
-              label="Résumé"
-              placeholder="Notes sur l'appel..."
+              :label="t('calls.summaryField')"
+              :placeholder="t('calls.summaryPlaceholder')"
               density="comfortable"
               :rows="$vuetify.display.mobile ? 2 : 3"
               auto-grow
@@ -83,8 +83,8 @@
                 :items="institutionOptions"
                 item-title="label"
                 item-value="value"
-                label="Institution"
-                placeholder="Sélectionner une institution"
+                :label="t('calls.institutionField')"
+                :placeholder="t('calls.institutionPlaceholder')"
                 clearable
                 :loading="loadingInstitutions"
                 density="comfortable"
@@ -101,8 +101,8 @@
                 :items="contactOptions"
                 item-title="label"
                 item-value="value"
-                label="Personne de contact"
-                placeholder="Sélectionner un contact"
+                :label="t('calls.contactPersonField')"
+                :placeholder="t('calls.contactPersonPlaceholder')"
                 clearable
                 :loading="loadingContacts"
                 :disabled="!formData.institutionId"
@@ -121,14 +121,14 @@
           variant="outlined"
           @click="handleCancel"
         >
-          Annuler
+          {{ $t('calls.cancel') }}
         </v-btn>
         <v-btn
           color="primary"
           :loading="loading"
           @click="handleSubmit"
         >
-          {{ isEditing ? 'Modifier' : 'Créer' }}
+          {{ isEditing ? $t('calls.update') : $t('calls.create') }}
         </v-btn>
       </v-card-actions>
     </v-card>
@@ -145,6 +145,7 @@ import type {
   CallType,
 } from "@medical-crm/shared"
 import { computed, onMounted, ref, watch } from "vue"
+import { useI18n } from "vue-i18n"
 
 interface Props {
   modelValue: boolean
@@ -189,10 +190,12 @@ const loadingInstitutions = computed(() => institutionsStore.loading || loadingI
 
 const isEditing = computed(() => !!props.call)
 
+const { t } = useI18n()
+
 const callTypeOptions = computed(() => [
-  { label: "Entrant", value: "incoming" },
-  { label: "Sortant", value: "outgoing" },
-  { label: "Manqué", value: "missed" },
+  { label: t('calls.direction.inbound'), value: "incoming" },
+  { label: t('calls.direction.outbound'), value: "outgoing" },
+  { label: t('calls.status.missed'), value: "missed" },
 ])
 
 watch(
@@ -253,11 +256,11 @@ const validateForm = (): boolean => {
   errors.value = {}
 
   if (!formData.value.phoneNumber.trim()) {
-    errors.value.phoneNumber = "Le numéro de téléphone est requis"
+    errors.value.phoneNumber = t('calls.phoneNumberRequired')
   }
 
   if (!formData.value.callType) {
-    errors.value.callType = "Le type d'appel est requis"
+    errors.value.callType = t('calls.callTypeRequired')
   }
 
   return Object.keys(errors.value).length === 0

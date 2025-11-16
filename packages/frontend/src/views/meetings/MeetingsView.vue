@@ -6,10 +6,10 @@
         <div class="header-content">
           <h1 class="page-title">
             <v-icon class="me-2">mdi-calendar-multiple</v-icon>
-            Réunions
+            {{ $t('meetings.title') }}
           </h1>
           <p class="page-description">
-            Gérez vos réunions professionnelles et collaborations
+            {{ $t('meetings.description') }}
           </p>
         </div>
         <div class="header-actions">
@@ -20,8 +20,8 @@
             @click="showCreateDialog = true"
             class="create-meeting-btn"
           >
-            <span class="btn-text-desktop">Nouvelle réunion</span>
-            <span class="btn-text-mobile">Créer</span>
+            <span class="btn-text-desktop">{{ $t('meetings.newMeeting') }}</span>
+            <span class="btn-text-mobile">{{ $t('common.create') }}</span>
           </v-btn>
         </div>
       </div>
@@ -39,7 +39,7 @@
       <div class="view-controls">
         <div class="view-info">
           <v-chip variant="outlined" size="small">
-            {{ meetingsStore.filteredMeetings.length }} réunion(s)
+            {{ meetingsStore.filteredMeetings.length }} {{ $t('meetings.unit') }}
           </v-chip>
         </div>
 
@@ -49,7 +49,7 @@
             :items="sortOptions"
             item-title="label"
             item-value="value"
-            label="Trier par"
+            :label="$t('common.sortBy')"
             @update:modelValue="applySorting"
             class="sort-dropdown"
             density="comfortable"
@@ -91,12 +91,12 @@
       <div v-else-if="meetingsStore.filteredMeetings.length === 0" class="empty-state">
         <div class="empty-content">
           <v-icon class="empty-icon">mdi-calendar-multiple</v-icon>
-          <h3>Aucune réunion trouvée</h3>
+          <h3>{{ $t('meetings.empty.title') }}</h3>
           <p v-if="hasActiveFilters">
-            Aucune réunion ne correspond à vos critères de recherche.
+            {{ $t('meetings.empty.noFilter') }}
           </p>
           <p v-else>
-            Commencez par créer votre première réunion.
+            {{ $t('meetings.empty.noData') }}
           </p>
           <div class="empty-actions">
             <v-btn
@@ -106,7 +106,7 @@
               prepend-icon="mdi-filter-off"
               @click="meetingsStore.clearFilters"
             >
-              Effacer les filtres
+              {{ $t('common.clearFilters') }}
             </v-btn>
             <v-btn
               color="primary"
@@ -115,8 +115,8 @@
               @click="showCreateDialog = true"
               class="create-meeting-btn"
             >
-              <span class="btn-text-desktop">Créer une réunion</span>
-              <span class="btn-text-mobile">Créer</span>
+              <span class="btn-text-desktop">{{ $t('meetings.createMeeting') }}</span>
+              <span class="btn-text-mobile">{{ $t('common.create') }}</span>
             </v-btn>
           </div>
         </div>
@@ -162,12 +162,12 @@
       >
         <v-card>
           <v-card-title class="text-h6">
-            Confirmer la suppression
+            {{ $t('common.confirmDelete') }}
           </v-card-title>
 
           <v-card-text>
-            Êtes-vous sûr de vouloir supprimer la réunion "{{ meetingToDelete?.title || '' }}" ?
-            Cette action est irréversible.
+            {{ $t('meetings.deleteConfirm', { name: meetingToDelete?.title || '' }) }}
+            {{ $t('common.irreversible') }}
           </v-card-text>
 
           <v-card-actions>
@@ -177,14 +177,14 @@
               variant="outlined"
               @click="cancelDelete"
             >
-              Annuler
+              {{ $t('common.cancel') }}
             </v-btn>
             <v-btn
               color="error"
               variant="elevated"
               @click="confirmDelete"
             >
-              Supprimer
+              {{ $t('common.delete') }}
             </v-btn>
           </v-card-actions>
         </v-card>
@@ -198,18 +198,18 @@
       >
         <v-card>
           <v-card-title class="text-h6">
-            Envoyer une invitation
+            {{ $t('meetings.invitation.title') }}
           </v-card-title>
 
           <v-card-text>
             <p class="mb-4">
-              Envoyer l'invitation pour "{{ selectedMeeting?.title || '' }}" aux participants.
+              {{ $t('meetings.invitation.message', { name: selectedMeeting?.title || '' }) }}
             </p>
             <v-textarea
               v-model="invitationEmails"
-              label="Emails supplémentaires (optionnel)"
+              :label="$t('meetings.invitation.emailsLabel')"
               placeholder="email1@example.com, email2@example.com"
-              hint="Séparez les emails par des virgules. Les participants existants recevront automatiquement l'invitation."
+              :hint="$t('meetings.invitation.hint')"
               persistent-hint
               rows="3"
               variant="outlined"
@@ -223,7 +223,7 @@
               variant="outlined"
               @click="cancelInvitation"
             >
-              Annuler
+              {{ $t('common.cancel') }}
             </v-btn>
             <v-btn
               color="primary"
@@ -231,7 +231,7 @@
               :loading="invitationLoading"
               @click="confirmSendInvitation"
             >
-              Envoyer
+              {{ $t('meetings.invitation.send') }}
             </v-btn>
           </v-card-actions>
         </v-card>
@@ -249,6 +249,7 @@ import MeetingStats from "@/components/meetings/MeetingStats.vue"
 import { ListSkeleton } from "@/components/skeletons"
 import { useSnackbar } from "@/composables/useSnackbar"
 import { useMeetingsStore } from "@/stores/meetings"
+import { useI18n } from "vue-i18n"
 import type {
   Meeting,
   MeetingCreateRequest,
@@ -259,6 +260,7 @@ import { computed, onMounted, ref } from "vue"
 
 const meetingsStore = useMeetingsStore()
 const { showSnackbar } = useSnackbar()
+const { t } = useI18n()
 
 // Component state
 const sortBy = ref("startDate")
@@ -277,11 +279,11 @@ const invitationEmails = ref("")
 const invitationLoading = ref(false)
 
 const sortOptions = computed(() => [
-  { label: "Date de début", value: "startDate" },
-  { label: "Date de fin", value: "endDate" },
-  { label: "Titre", value: "title" },
-  { label: "Statut", value: "status" },
-  { label: "Date de création", value: "createdAt" },
+  { label: t('meetings.sort.byStartDate'), value: "startDate" },
+  { label: t('meetings.sort.byEndDate'), value: "endDate" },
+  { label: t('meetings.sort.byTitle'), value: "title" },
+  { label: t('meetings.sort.byStatus'), value: "status" },
+  { label: t('meetings.sort.byCreated'), value: "createdAt" },
 ])
 
 const hasActiveFilters = computed(() => {
@@ -324,7 +326,7 @@ const loadMeetings = async () => {
   try {
     await meetingsStore.fetchMeetings()
   } catch (error) {
-    showSnackbar("Erreur lors du chargement des réunions", "error")
+    showSnackbar(t('meetings.errors.load'), "error")
   }
 }
 
@@ -333,9 +335,9 @@ const createMeeting = async (meetingData: MeetingCreateRequest) => {
     formLoading.value = true
     await meetingsStore.createMeeting(meetingData)
     showCreateDialog.value = false
-    showSnackbar("Réunion créée avec succès", "success")
+    showSnackbar(t('meetings.success.created'), "success")
   } catch (error) {
-    showSnackbar("Erreur lors de la création de la réunion", "error")
+    showSnackbar(t('meetings.errors.create'), "error")
   } finally {
     formLoading.value = false
   }
@@ -354,9 +356,9 @@ const updateMeeting = async (updates: MeetingUpdateRequest) => {
     await meetingsStore.updateMeeting(selectedMeeting.value.id, updates)
     showEditDialog.value = false
     selectedMeeting.value = null
-    showSnackbar("Réunion mise à jour avec succès", "success")
+    showSnackbar(t('meetings.success.updated'), "success")
   } catch (error) {
-    showSnackbar("Erreur lors de la mise à jour de la réunion", "error")
+    showSnackbar(t('meetings.errors.update'), "error")
   } finally {
     formLoading.value = false
   }
@@ -365,15 +367,9 @@ const updateMeeting = async (updates: MeetingUpdateRequest) => {
 const updateMeetingStatus = async (meeting: Meeting, newStatus: MeetingStatus) => {
   try {
     await meetingsStore.updateMeetingStatus(meeting.id, newStatus)
-    const statusLabels = {
-      scheduled: "Planifiée",
-      in_progress: "En cours",
-      completed: "Terminée",
-      cancelled: "Annulée",
-    }
-    showSnackbar(`Statut mis à jour: ${statusLabels[newStatus]}`, "success")
+    showSnackbar(t('meetings.success.statusUpdated', { status: t(`meetings.status.${newStatus}`) }), "success")
   } catch (error) {
-    showSnackbar("Erreur lors de la mise à jour du statut", "error")
+    showSnackbar(t('meetings.errors.statusUpdate'), "error")
   }
 }
 
@@ -385,9 +381,9 @@ const confirmDeleteMeeting = (meeting: Meeting) => {
 const deleteMeeting = async (meeting: Meeting) => {
   try {
     await meetingsStore.deleteMeeting(meeting.id)
-    showSnackbar("Réunion supprimée avec succès", "success")
+    showSnackbar(t('meetings.success.deleted'), "success")
   } catch (error) {
-    showSnackbar("Erreur lors de la suppression de la réunion", "error")
+    showSnackbar(t('meetings.errors.delete'), "error")
   }
 }
 
@@ -407,9 +403,9 @@ const cancelDelete = () => {
 const exportMeeting = async (meeting: Meeting) => {
   try {
     await meetingsStore.exportToIcs(meeting.id)
-    showSnackbar("Réunion exportée avec succès (.ics)", "success")
+    showSnackbar(t('meetings.success.exported'), "success")
   } catch (error) {
-    showSnackbar("Erreur lors de l'export de la réunion", "error")
+    showSnackbar(t('meetings.errors.export'), "error")
   }
 }
 
@@ -435,12 +431,12 @@ const confirmSendInvitation = async () => {
     }
 
     await meetingsStore.sendInvitation(selectedMeeting.value.id, emails)
-    showSnackbar("Invitation envoyée avec succès", "success")
+    showSnackbar(t('meetings.success.invitationSent'), "success")
     showInvitationDialog.value = false
     selectedMeeting.value = null
     invitationEmails.value = ""
   } catch (error) {
-    showSnackbar("Erreur lors de l'envoi de l'invitation", "error")
+    showSnackbar(t('meetings.errors.invitationSend'), "error")
   } finally {
     invitationLoading.value = false
   }

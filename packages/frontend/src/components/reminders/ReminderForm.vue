@@ -7,7 +7,7 @@
   >
     <v-card>
       <v-card-title class="dialog-header">
-        <span class="text-h5">{{ isEdit ? 'Modifier le rappel' : 'Nouveau rappel' }}</span>
+        <span class="text-h5">{{ isEdit ? $t('reminders.edit') : $t('reminders.new') }}</span>
         <v-btn
           icon="mdi-close"
           variant="text"
@@ -20,8 +20,8 @@
           <!-- Title -->
           <v-text-field
             v-model="formData.title"
-            label="Titre *"
-            placeholder="Titre du rappel"
+            :label="`${$t('reminders.titleField')} *`"
+            :placeholder="$t('reminders.titlePlaceholder')"
             prepend-inner-icon="mdi-format-title"
             :rules="[required]"
             variant="outlined"
@@ -32,8 +32,8 @@
           <!-- Description -->
           <v-textarea
             v-model="formData.description"
-            label="Description"
-            placeholder="Description du rappel..."
+            :label="$t('reminders.descriptionField')"
+            :placeholder="$t('reminders.descriptionPlaceholder')"
             prepend-inner-icon="mdi-text"
             variant="outlined"
             density="comfortable"
@@ -45,7 +45,7 @@
           <div class="date-time-row mb-4">
             <v-text-field
               v-model="formData.reminderDate"
-              label="Date et heure *"
+              :label="`${$t('reminders.dateTimeField')} *`"
               type="datetime-local"
               prepend-inner-icon="mdi-calendar-clock"
               :rules="[required]"
@@ -60,7 +60,7 @@
             :items="priorityOptions"
             item-title="label"
             item-value="value"
-            label="Priorité *"
+            :label="`${$t('reminders.priorityField')} *`"
             prepend-inner-icon="mdi-flag"
             :rules="[required]"
             variant="outlined"
@@ -88,8 +88,8 @@
             :items="institutionOptions"
             item-title="label"
             item-value="value"
-            label="Institution"
-            placeholder="Sélectionner une institution (optionnel)"
+            :label="$t('reminders.institutionField')"
+            :placeholder="$t('reminders.institutionPlaceholder')"
             prepend-inner-icon="mdi-office-building"
             clearable
             :loading="loadingInstitutions"
@@ -104,8 +104,8 @@
             :items="contactOptions"
             item-title="label"
             item-value="value"
-            label="Personne de contact"
-            placeholder="Sélectionner un contact (optionnel)"
+            :label="$t('reminders.contactPersonField')"
+            :placeholder="$t('reminders.contactPersonPlaceholder')"
             prepend-inner-icon="mdi-account"
             clearable
             :loading="loadingContacts"
@@ -120,12 +120,12 @@
             <v-divider class="mb-4" />
             <h3 class="recurring-title mb-3">
               <v-icon class="me-2">mdi-repeat</v-icon>
-              Récurrence
+              {{ $t('reminders.recurring.title') }}
             </h3>
 
             <v-switch
               v-model="isRecurring"
-              label="Rappel récurrent"
+              :label="$t('reminders.recurring.label')"
               color="info"
               hide-details
               class="mb-3"
@@ -138,7 +138,7 @@
                   :items="frequencyOptions"
                   item-title="label"
                   item-value="value"
-                  label="Fréquence *"
+                  :label="`${$t('reminders.recurring.frequency')} *`"
                   prepend-inner-icon="mdi-calendar-refresh"
                   :rules="isRecurring ? [required] : []"
                   variant="outlined"
@@ -148,13 +148,13 @@
 
                 <v-text-field
                   v-model="formData.recurring.endDate"
-                  label="Date de fin"
+                  :label="$t('reminders.recurring.endDate')"
                   type="date"
                   prepend-inner-icon="mdi-calendar-end"
                   variant="outlined"
                   density="comfortable"
                   clearable
-                  hint="Laisser vide pour une récurrence sans fin"
+                  :hint="$t('reminders.recurring.endDateHint')"
                   persistent-hint
                 />
               </div>
@@ -171,7 +171,7 @@
           @click="handleCancel"
           :disabled="loading"
         >
-          Annuler
+          {{ $t('reminders.cancel') }}
         </v-btn>
         <v-btn
           color="primary"
@@ -179,7 +179,7 @@
           @click="handleSubmit"
           :loading="loading"
         >
-          {{ isEdit ? 'Mettre à jour' : 'Créer' }}
+          {{ isEdit ? $t('reminders.update') : $t('reminders.create') }}
         </v-btn>
       </v-card-actions>
     </v-card>
@@ -190,6 +190,7 @@
 import { institutionsApi, contactsApi } from "@/services/api"
 import type { Reminder, ReminderCreateRequest, ReminderPriority } from "@medical-crm/shared"
 import { computed, onMounted, ref, watch } from "vue"
+import { useI18n } from "vue-i18n"
 
 interface Props {
   modelValue: boolean
@@ -228,40 +229,45 @@ const formData = ref<any>({
 
 const isEdit = computed(() => !!props.reminder)
 
-const priorityOptions = [
+const { t } = useI18n()
+
+const getPriorityOptions = () => [
   {
-    label: "Faible",
+    label: t('reminders.priority.low'),
     value: "low" as ReminderPriority,
     color: "blue",
     icon: "mdi-information-outline"
   },
   {
-    label: "Moyenne",
+    label: t('reminders.priority.medium'),
     value: "medium" as ReminderPriority,
     color: "orange",
     icon: "mdi-alert-circle-outline"
   },
   {
-    label: "Haute",
+    label: t('reminders.priority.high'),
     value: "high" as ReminderPriority,
     color: "red",
     icon: "mdi-alert"
   },
   {
-    label: "Urgent",
+    label: t('reminders.priority.urgent'),
     value: "urgent" as ReminderPriority,
     color: "purple",
     icon: "mdi-alert-octagon"
   },
 ]
 
-const frequencyOptions = [
-  { label: "Quotidien", value: "daily" },
-  { label: "Hebdomadaire", value: "weekly" },
-  { label: "Mensuel", value: "monthly" },
+const getFrequencyOptions = () => [
+  { label: t('reminders.recurring.frequencies.daily'), value: "daily" },
+  { label: t('reminders.recurring.frequencies.weekly'), value: "weekly" },
+  { label: t('reminders.recurring.frequencies.monthly'), value: "monthly" },
 ]
 
-const required = (value: any) => !!value || "Ce champ est requis"
+const priorityOptions = getPriorityOptions()
+const frequencyOptions = getFrequencyOptions()
+
+const required = (value: any) => !!value || t('reminders.requiredField')
 
 watch(
   () => props.reminder,

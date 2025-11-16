@@ -2,7 +2,7 @@
   <v-card variant="outlined" class="catalog-selection">
     <v-card-title class="text-subtitle-1 pa-3">
       <v-icon class="mr-2">mdi-package-variant</v-icon>
-      Sélection d'article
+      {{ t('billing.catalogSelector.title') }}
     </v-card-title>
     <v-card-text class="pt-0">
       <v-row>
@@ -16,11 +16,11 @@
             @update:model-value="onItemSelect"
             item-title="name"
             item-value="id"
-            label="Rechercher un article du catalogue"
+            :label="t('billing.catalogSelector.search')"
             variant="outlined"
             clearable
             persistent-hint
-            hint="Tapez pour rechercher ou laissez vide pour une ligne personnalisée"
+            :hint="t('billing.catalogSelector.searchHint')"
             density="compact"
           >
             <template #item="{ props, item }">
@@ -32,7 +32,7 @@
                 </template>
                 <v-list-item-title>{{ item.raw.name }}</v-list-item-title>
                 <v-list-item-subtitle>
-                  {{ item.raw.description || 'Aucune description' }} •
+                  {{ item.raw.description || t('billing.catalogSelector.noDescription') }} •
                   <span class="font-weight-bold">{{ formatCurrency(item.raw.unitPrice) }}</span>
                   <span v-if="item.raw.category"> • {{ item.raw.category }}</span>
                 </v-list-item-subtitle>
@@ -41,10 +41,10 @@
             <template #no-data>
               <div class="text-center pa-4">
                 <div v-if="catalogSearch && catalogSearch.length > 0">
-                  Aucun article trouvé pour "{{ catalogSearch }}"
+                  {{ t('billing.catalogSelector.noResults', { search: catalogSearch }) }}
                 </div>
                 <div v-else>
-                  Tapez pour rechercher dans le catalogue
+                  {{ t('billing.catalogSelector.searchPrompt') }}
                 </div>
               </div>
             </template>
@@ -53,7 +53,7 @@
         <v-col cols="12" md="4">
           <v-switch
             v-model="isCustomLine"
-            label="Ligne personnalisée"
+            :label="t('billing.catalogSelector.customLine')"
             @update:model-value="onCustomLineToggle"
             color="primary"
             density="compact"
@@ -67,7 +67,10 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useCatalogStore, type CatalogItem } from '@/stores/catalog'
+
+const { t } = useI18n()
 
 interface Props {
   modelValue?: string | null

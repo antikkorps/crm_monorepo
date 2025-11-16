@@ -4,10 +4,10 @@
       <div v-if="!showBuilder">
         <div class="d-flex justify-space-between align-center mb-4">
           <div>
-            <h1 class="text-h4 font-weight-bold">Devis</h1>
-            <p class="text-medium-emphasis">Gérez vos devis et propositions pour les institutions médicales</p>
+            <h1 class="text-h4 font-weight-bold">{{ t('quotes.title') }}</h1>
+            <p class="text-medium-emphasis">{{ t('quotes.subtitle') }}</p>
           </div>
-          <v-btn color="primary" prepend-icon="mdi-plus" @click="createNewQuote">Nouveau Devis</v-btn>
+          <v-btn color="primary" prepend-icon="mdi-plus" @click="createNewQuote">{{ t('quotes.createNew') }}</v-btn>
         </div>
 
         <v-card class="mb-6" variant="outlined">
@@ -22,7 +22,7 @@
                   :items="statusOptions"
                   item-title="label"
                   item-value="value"
-                  label="Statut"
+                  :label="t('quotes.filters.status')"
                   variant="outlined"
                   density="compact"
                   clearable
@@ -45,9 +45,9 @@
 
         <div v-else-if="!loading && quotes.length === 0" class="text-center py-12">
           <v-icon size="64" color="grey-lighten-2">mdi-file-document-outline</v-icon>
-          <h3 class="text-h6 mt-4">Aucun devis trouvé</h3>
-          <p class="text-medium-emphasis">Créez votre premier devis pour commencer.</p>
-          <v-btn color="primary" @click="createNewQuote">Créer un devis</v-btn>
+          <h3 class="text-h6 mt-4">{{ t('quotes.noQuotesFound') }}</h3>
+          <p class="text-medium-emphasis">{{ t('quotes.noQuotesMessage') }}</p>
+          <v-btn color="primary" @click="createNewQuote">{{ t('quotes.createQuote') }}</v-btn>
         </div>
 
         <v-card v-else>
@@ -118,12 +118,15 @@
 <script setup lang="ts">
 import type { Quote, QuoteStatus } from "@medical-crm/shared"
 import { onMounted, ref } from "vue"
+import { useI18n } from "vue-i18n"
 import QuoteBuilder from "@/components/billing/QuoteBuilder.vue"
 import QuoteExpiryBadge from "@/components/quotes/QuoteExpiryBadge.vue"
 import { quotesApi } from "@/services/api"
 import AppLayout from "@/components/layout/AppLayout.vue"
 import { TableSkeleton } from "@/components/skeletons"
 import { useAuthStore } from "@/stores/auth"
+
+const { t } = useI18n()
 
 const quotes = ref<Quote[]>([])
 const loading = ref(false)
@@ -133,24 +136,24 @@ const filters = ref({ status: null as QuoteStatus | null, search: "" })
 const snackbar = ref({ visible: false, message: '', color: 'info' })
 const authStore = useAuthStore()
 
-const statusOptions = [
-  { label: "Brouillon", value: "draft" },
-  { label: "Envoyé", value: "sent" },
-  { label: "Bon de commande", value: "ordered" },
-  { label: "Accepté", value: "accepted" },
-  { label: "Rejeté", value: "rejected" },
-  { label: "Expiré", value: "expired" },
-  { label: "Annulé", value: "cancelled" },
-]
+const statusOptions = computed(() => [
+  { label: t("quotes.status.draft"), value: "draft" },
+  { label: t("quotes.status.sent"), value: "sent" },
+  { label: t("quotes.status.ordered"), value: "ordered" },
+  { label: t("quotes.status.accepted"), value: "accepted" },
+  { label: t("quotes.status.rejected"), value: "rejected" },
+  { label: t("quotes.status.expired"), value: "expired" },
+  { label: t("quotes.status.cancelled"), value: "cancelled" },
+])
 
-const tableHeaders = [
-  { title: 'Devis #', value: 'quoteNumber' },
-  { title: 'Titre', value: 'title' },
-  { title: 'Montant', value: 'total', align: 'end' },
-  { title: 'Statut', value: 'status' },
-  { title: 'Valide Jusqu\'au', value: 'validUntil', align: 'end' },
-  { title: 'Actions', value: 'actions', align: 'end', sortable: false },
-]
+const tableHeaders = computed(() => [
+  { title: t('quotes.table.quoteNumber'), value: 'quoteNumber' },
+  { title: t('quotes.table.title'), value: 'title' },
+  { title: t('quotes.table.amount'), value: 'total', align: 'end' as const },
+  { title: t('quotes.table.status'), value: 'status' },
+  { title: t('quotes.table.validUntil'), value: 'validUntil', align: 'end' as const },
+  { title: t('quotes.table.actions'), value: 'actions', align: 'end' as const, sortable: false },
+])
 
 let searchTimeout: any
 const debouncedSearch = () => {
@@ -164,7 +167,7 @@ const loadQuotes = async () => {
     const response = await quotesApi.getAll(filters.value)
     quotes.value = response.data || []
   } catch (error) {
-    showSnackbar("Erreur lors du chargement des devis", "error")
+    showSnackbar(t("quotes.messages.loadError"), "error")
   } finally {
     loading.value = false
   }
@@ -233,10 +236,10 @@ const downloadQuotePDF = async (quote: Quote) => {
     document.body.removeChild(link)
     window.URL.revokeObjectURL(url)
 
-    showSnackbar("PDF du devis téléchargé", "success")
+    showSnackbar(t("quotes.messages.quotePdfDownloaded"), "success")
   } catch (error) {
     console.error("Error downloading quote PDF:", error)
-    showSnackbar("Erreur lors du téléchargement du PDF", "error")
+    showSnackbar(t("quotes.messages.quotePdfError"), "error")
   }
 }
 
@@ -252,10 +255,10 @@ const downloadOrderPDF = async (quote: Quote) => {
     link.click()
     document.body.removeChild(link)
     window.URL.revokeObjectURL(url)
-    showSnackbar("Bon de commande téléchargé", "success")
+    showSnackbar(t("quotes.messages.orderPdfDownloaded"), "success")
   } catch (error) {
     console.error("Error downloading order PDF:", error)
-    showSnackbar("Erreur lors du téléchargement du bon de commande", "error")
+    showSnackbar(t("quotes.messages.orderPdfError"), "error")
   }
 }
 
@@ -268,14 +271,14 @@ const canDeleteQuote = (quote: Quote) => {
 
 const deleteQuote = async (quote: Quote) => {
   if (!canDeleteQuote(quote)) return
-  if (!confirm(`Supprimer le devis ${quote.quoteNumber} ?`)) return
+  if (!confirm(t('quotes.confirmDelete', { number: quote.quoteNumber }))) return
   try {
     await quotesApi.delete(quote.id)
-    showSnackbar('Devis supprimé', 'success')
+    showSnackbar(t('quotes.messages.deleted'), 'success')
     loadQuotes()
   } catch (e) {
     console.error('Delete quote failed:', e)
-    showSnackbar("Impossible de supprimer le devis", 'error')
+    showSnackbar(t("quotes.messages.deleteError"), 'error')
   }
 }
 
@@ -283,7 +286,7 @@ const handleQuoteSaved = (quote: Quote) => {
   showBuilder.value = false
   selectedQuote.value = null
   loadQuotes()
-  showSnackbar("Devis sauvegardé avec succès", "success")
+  showSnackbar(t("quotes.messages.saved"), "success")
 }
 
 const handleBuilderCancelled = () => {
@@ -293,7 +296,18 @@ const handleBuilderCancelled = () => {
 
 const formatCurrency = (amount: number) => new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(amount || 0)
 const formatDate = (date: Date | string) => new Date(date).toLocaleDateString('fr-FR')
-const getStatusLabel = (status: QuoteStatus) => ({ draft: "Brouillon", sent: "Envoyé", ordered: "Bon de commande", accepted: "Accepté", rejected: "Rejeté", expired: "Expiré", cancelled: "Annulé" }[status] || "Inconnu")
+const getStatusLabel = (status: QuoteStatus) => {
+  const labels: Record<QuoteStatus, string> = {
+    draft: t("quotes.status.draft"),
+    sent: t("quotes.status.sent"),
+    ordered: t("quotes.status.ordered"),
+    accepted: t("quotes.status.accepted"),
+    rejected: t("quotes.status.rejected"),
+    expired: t("quotes.status.expired"),
+    cancelled: t("quotes.status.cancelled")
+  }
+  return labels[status] || status
+}
 const getStatusColor = (status: QuoteStatus) => ({ draft: "grey", sent: "info", ordered: "purple", accepted: "success", rejected: "error", expired: "warning", cancelled: "secondary" }[status] || "secondary")
 
 const showSnackbar = (message: string, color: string = 'info') => {

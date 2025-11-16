@@ -2,14 +2,14 @@
   <div class="quote-builder">
     <div class="quote-header">
       <div class="header-content">
-        <h2>{{ isEditing ? "Modifier le devis" : "Créer un nouveau devis" }}</h2>
+        <h2>{{ isEditing ? t('billing.quoteBuilder.editTitle') : t('billing.quoteBuilder.createTitle') }}</h2>
         <div class="quote-status" v-if="isEditing && quote">
           <v-chip :color="statusSeverity" size="small">{{ statusLabel }}</v-chip>
         </div>
       </div>
       <div class="header-actions">
         <v-btn variant="text" prepend-icon="mdi-arrow-left" @click="emit('cancelled')">
-          Retour à la liste
+          {{ t('billing.quoteBuilder.backToList') }}
         </v-btn>
       </div>
     </div>
@@ -17,7 +17,7 @@
     <div class="quote-form">
       <!-- Basic Information -->
       <v-card class="form-section mb-6">
-        <v-card-title>Informations de base</v-card-title>
+        <v-card-title>{{ t('billing.quoteBuilder.basicInfo') }}</v-card-title>
         <v-card-text>
           <v-row>
             <v-col cols="12" md="6">
@@ -26,7 +26,7 @@
                 :items="institutionOptions"
                 item-title="name"
                 item-value="id"
-                label="Institution médicale *"
+                :label="t('billing.quoteBuilder.institution') + ' *'"
                 variant="outlined"
                 :error-messages="errors.institutionId"
                 :loading="loadingInstitutions"
@@ -43,7 +43,7 @@
                 :items="templates"
                 item-title="name"
                 item-value="id"
-                label="Modèle de document"
+                :label="t('billing.quoteBuilder.template')"
                 variant="outlined"
                 clearable
               />
@@ -52,7 +52,7 @@
             <v-col cols="12" md="6">
               <v-text-field
                 v-model="formData.title"
-                label="Titre du devis *"
+                :label="t('billing.quoteBuilder.title') + ' *'"
                 variant="outlined"
                 :error-messages="errors.title"
               />
@@ -61,7 +61,7 @@
             <v-col cols="12" md="6">
               <v-text-field
                 v-model="formData.validUntil"
-                label="Valide jusqu'au *"
+                :label="t('billing.quoteBuilder.validUntil') + ' *'"
                 type="date"
                 variant="outlined"
                 :error-messages="errors.validUntil"
@@ -71,7 +71,7 @@
             <v-col cols="12">
               <v-textarea
                 v-model="formData.description"
-                label="Description"
+                :label="t('billing.quoteBuilder.description')"
                 variant="outlined"
                 rows="3"
               />
@@ -80,10 +80,10 @@
             <v-col cols="12">
               <v-textarea
                 v-model="formData.internalNotes"
-                label="Notes internes"
+                :label="t('billing.quoteBuilder.internalNotes')"
                 variant="outlined"
                 rows="2"
-                hint="Non visible par le client"
+                :hint="t('billing.quoteBuilder.internalNotesHint')"
                 persistent-hint
               />
             </v-col>
@@ -94,7 +94,7 @@
       <!-- Line Items -->
       <v-card class="form-section mb-6">
         <v-card-title class="d-flex justify-space-between align-center">
-          <span>Lignes de devis</span>
+          <span>{{ t('billing.quoteBuilder.quoteLines') }}</span>
           <v-btn
             color="primary"
             variant="outlined"
@@ -102,15 +102,15 @@
             size="small"
             @click="addLine"
           >
-            Ajouter une ligne
+            {{ t('billing.quoteBuilder.addLine') }}
           </v-btn>
         </v-card-title>
         <v-card-text>
           <div v-if="formData.lines.length === 0" class="empty-lines">
             <v-icon size="64" color="grey-lighten-2">mdi-format-list-bulleted</v-icon>
-            <p class="text-h6 mt-4">Aucune ligne ajoutée</p>
+            <p class="text-h6 mt-4">{{ t('billing.quoteBuilder.noLines') }}</p>
             <v-btn color="primary" prepend-icon="mdi-plus" @click="addLine">
-              Ajouter la première ligne
+              {{ t('billing.quoteBuilder.addFirstLine') }}
             </v-btn>
           </div>
 
@@ -131,13 +131,13 @@
 
       <!-- Totals Summary -->
       <v-card class="form-section totals-section">
-        <v-card-title>Résumé du devis</v-card-title>
+        <v-card-title>{{ t('billing.quoteBuilder.summary') }}</v-card-title>
         <v-card-text>
           <v-row>
             <v-col cols="12" md="8">
               <div class="totals-breakdown">
                 <v-row class="total-row">
-                  <v-col cols="6">Sous-total:</v-col>
+                  <v-col cols="6">{{ t('billing.quoteBuilder.subtotal') }}</v-col>
                   <v-col cols="6" class="text-right">
                     <span class="amount">{{
                       formatCurrency(calculatedTotals.subtotal)
@@ -145,7 +145,7 @@
                   </v-col>
                 </v-row>
                 <v-row class="total-row">
-                  <v-col cols="6">Remise totale:</v-col>
+                  <v-col cols="6">{{ t('billing.quoteBuilder.totalDiscount') }}</v-col>
                   <v-col cols="6" class="text-right">
                     <span class="amount discount"
                       >-{{ formatCurrency(calculatedTotals.totalDiscountAmount) }}</span
@@ -153,7 +153,7 @@
                   </v-col>
                 </v-row>
                 <v-row class="total-row">
-                  <v-col cols="6">Taxes totales:</v-col>
+                  <v-col cols="6">{{ t('billing.quoteBuilder.totalTax') }}</v-col>
                   <v-col cols="6" class="text-right">
                     <span class="amount">{{
                       formatCurrency(calculatedTotals.totalTaxAmount)
@@ -162,7 +162,7 @@
                 </v-row>
                 <v-divider class="my-3" />
                 <v-row class="total-row final-total">
-                  <v-col cols="6"><strong>Total:</strong></v-col>
+                  <v-col cols="6"><strong>{{ t('billing.quoteBuilder.total') }}</strong></v-col>
                   <v-col cols="6" class="text-right">
                     <span class="amount"
                       ><strong>{{ formatCurrency(calculatedTotals.total) }}</strong></span
@@ -183,7 +183,7 @@
                   :loading="sending"
                   class="mb-3"
                 >
-                  Envoyer au client
+                  {{ t('billing.quoteBuilder.actions.sendToClient') }}
                 </v-btn>
                 <v-btn
                   v-if="isEditing && ['draft','sent'].includes(String(props.quote?.status || ''))"
@@ -194,7 +194,7 @@
                   class="mb-3"
                   @click="confirmOrder"
                 >
-                  Confirmer bon de commande
+                  {{ t('billing.quoteBuilder.actions.confirmOrder') }}
                 </v-btn>
                 <v-btn
                   color="warning"
@@ -204,7 +204,7 @@
                   @click="convertToInvoice"
                   :disabled="!canConvertToInvoice"
                 >
-                  Convertir en facture
+                  {{ t('billing.quoteBuilder.actions.convertToInvoice') }}
                 </v-btn>
               </div>
             </v-col>
@@ -225,7 +225,7 @@
               :disabled="!isFormValid"
               size="large"
             >
-              Sauvegarder brouillon
+              {{ t('billing.quoteBuilder.actions.saveDraft') }}
             </v-btn>
             <v-btn
               variant="outlined"
@@ -235,7 +235,7 @@
               :disabled="!isFormValid"
               size="large"
             >
-              Aperçu
+              {{ t('billing.quoteBuilder.actions.preview') }}
             </v-btn>
             <v-btn
               color="primary"
@@ -245,7 +245,7 @@
               :disabled="!isFormValid"
               size="large"
             >
-              {{ isEditing ? "Mettre à jour" : "Créer le devis" }}
+              {{ isEditing ? t('billing.quoteBuilder.actions.update') : t('billing.quoteBuilder.actions.create') }}
             </v-btn>
           </div>
         </v-card-text>
@@ -314,10 +314,13 @@ import type {
   QuoteStatus,
 } from "@medical-crm/shared"
 import { computed, onMounted, ref, watch } from "vue"
+import { useI18n } from "vue-i18n"
 import { useRouter } from "vue-router"
 import { quotesApi, templatesApi } from "../../services/api"
 import QuoteLine from "./QuoteLine.vue"
 import QuotePreview from "./QuotePreview.vue"
+
+const { t } = useI18n()
 
 interface Props {
   quote?: Quote | null
@@ -588,21 +591,21 @@ const validateForm = () => {
   const newErrors: Record<string, string> = {}
 
   if (!formData.value.institutionId) {
-    newErrors.institutionId = "L'institution médicale est requise"
+    newErrors.institutionId = t('billing.quoteBuilder.institutionRequired')
   }
 
   if (!formData.value.title.trim()) {
-    newErrors.title = "Le titre du devis est requis"
+    newErrors.title = t('billing.quoteBuilder.titleRequired')
   }
 
   if (!formData.value.validUntil) {
-    newErrors.validUntil = "La date de validité est requise"
+    newErrors.validUntil = t('billing.quoteBuilder.validUntilRequired')
   } else if (new Date(formData.value.validUntil) <= new Date()) {
-    newErrors.validUntil = "La date de validité doit être dans le futur"
+    newErrors.validUntil = t('billing.quoteBuilder.validUntilFuture')
   }
 
   if (formData.value.lines.length === 0) {
-    newErrors.lines = "Au moins une ligne est requise"
+    newErrors.lines = t('billing.quoteBuilder.atLeastOneLine')
   }
 
   errors.value = newErrors
@@ -638,12 +641,12 @@ const saveDraft = async () => {
       savedQuote = (await quotesApi.create(quoteData)) as Quote
     }
 
-    showSnackbar("Devis sauvegardé comme brouillon", "success")
+    showSnackbar(t("billing.quoteBuilder.messages.draftSaved"), "success")
 
     emit("saved", savedQuote)
   } catch (error) {
     console.error("Failed to save quote:", error)
-    showSnackbar("Erreur lors de la sauvegarde du devis", "error")
+    showSnackbar(t("billing.quoteBuilder.messages.saveError"), "error")
   } finally {
     saving.value = false
   }
@@ -673,13 +676,13 @@ const confirmSendQuote = async () => {
     // Then send it (this would be implemented in the API)
     // await quotesApi.send(props.quote.id, { emailMessage: emailMessage.value })
 
-    showSnackbar("Devis envoyé au client avec succès", "success")
+    showSnackbar(t("billing.quoteBuilder.messages.sent"), "success")
 
     showSendDialog.value = false
     emailMessage.value = ""
   } catch (error) {
     console.error("Failed to send quote:", error)
-    showSnackbar("Erreur lors de l'envoi du devis", "error")
+    showSnackbar(t("billing.quoteBuilder.messages.sendError"), "error")
   } finally {
     sending.value = false
   }
@@ -700,11 +703,11 @@ const confirmOrder = async () => {
   try {
     saving.value = true
     const updated = await quotesApi.order(props.quote.id)
-    showSnackbar("Bon de commande confirmé", "success")
+    showSnackbar(t("billing.quoteBuilder.messages.orderConfirmed"), "success")
     emit("saved", updated as any)
   } catch (e) {
     console.error("Confirm order failed:", e)
-    showSnackbar("Impossible de confirmer le bon de commande", "error")
+    showSnackbar(t("billing.quoteBuilder.messages.orderConfirmError"), "error")
   } finally {
     saving.value = false
   }

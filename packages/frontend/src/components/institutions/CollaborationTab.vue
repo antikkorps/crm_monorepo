@@ -2,13 +2,13 @@
   <div class="collaboration-tab">
     <div v-if="loading" class="text-center py-12">
       <v-progress-circular indeterminate color="primary" size="64"></v-progress-circular>
-      <p class="mt-4 text-body-1">Chargement des données de collaboration...</p>
+      <p class="mt-4 text-body-1">{{ t('collaboration.loading') }}</p>
     </div>
 
     <div v-else-if="error" class="text-center py-12">
       <v-icon size="64" color="error">mdi-alert-circle-outline</v-icon>
       <p class="text-h6 mt-4">{{ error }}</p>
-      <v-btn prepend-icon="mdi-refresh" @click="loadData" class="mt-4">Réessayer</v-btn>
+      <v-btn prepend-icon="mdi-refresh" @click="loadData" class="mt-4">{{ t('collaboration.retry') }}</v-btn>
     </div>
 
     <div v-else-if="collaborationData">
@@ -32,7 +32,7 @@
             <v-card-title class="d-flex align-center justify-space-between">
               <div class="d-flex align-center">
                 <v-icon class="mr-2" color="primary">mdi-calendar-account</v-icon>
-                <span>Réunions à venir</span>
+                <span>{{ t('collaboration.upcomingMeetings') }}</span>
                 <v-chip class="ml-2" size="small" color="primary" variant="tonal">
                   {{ collaborationData.stats.upcomingMeetings }}
                 </v-chip>
@@ -44,13 +44,13 @@
                 color="primary"
                 @click="navigateTo('/meetings')"
               >
-                Ajouter
+                {{ t('collaboration.add') }}
               </v-btn>
             </v-card-title>
             <v-divider></v-divider>
             <div v-if="collaborationData.upcomingMeetings.length === 0" class="text-center py-8">
               <v-icon size="48" color="grey-lighten-2">mdi-calendar-blank</v-icon>
-              <p class="mt-2 text-medium-emphasis">Aucune réunion à venir</p>
+              <p class="mt-2 text-medium-emphasis">{{ t('collaboration.noUpcomingMeetings') }}</p>
             </div>
             <v-list v-else lines="two">
               <v-list-item
@@ -85,7 +85,7 @@
             <v-card-title class="d-flex align-center justify-space-between">
               <div class="d-flex align-center">
                 <v-icon class="mr-2" color="success">mdi-phone</v-icon>
-                <span>Appels récents</span>
+                <span>{{ t('collaboration.recentCalls') }}</span>
                 <v-chip class="ml-2" size="small" color="success" variant="tonal">
                   {{ collaborationData.stats.totalCalls }}
                 </v-chip>
@@ -97,13 +97,13 @@
                 color="success"
                 @click="navigateTo('/calls')"
               >
-                Ajouter
+                {{ t('collaboration.add') }}
               </v-btn>
             </v-card-title>
             <v-divider></v-divider>
             <div v-if="collaborationData.recentCalls.length === 0" class="text-center py-8">
               <v-icon size="48" color="grey-lighten-2">mdi-phone-off</v-icon>
-              <p class="mt-2 text-medium-emphasis">Aucun appel récent</p>
+              <p class="mt-2 text-medium-emphasis">{{ t('collaboration.noRecentCalls') }}</p>
             </div>
             <v-list v-else lines="two">
               <v-list-item
@@ -140,7 +140,7 @@
             <v-card-title class="d-flex align-center justify-space-between">
               <div class="d-flex align-center">
                 <v-icon class="mr-2" color="warning">mdi-note-text</v-icon>
-                <span>Notes récentes</span>
+                <span>{{ t('collaboration.recentNotes') }}</span>
                 <v-chip class="ml-2" size="small" color="warning" variant="tonal">
                   {{ collaborationData.stats.totalNotes }}
                 </v-chip>
@@ -152,13 +152,13 @@
                 color="warning"
                 @click="navigateTo('/notes')"
               >
-                Ajouter
+                {{ t('collaboration.add') }}
               </v-btn>
             </v-card-title>
             <v-divider></v-divider>
             <div v-if="collaborationData.recentNotes.length === 0" class="text-center py-8">
               <v-icon size="48" color="grey-lighten-2">mdi-note-off-outline</v-icon>
-              <p class="mt-2 text-medium-emphasis">Aucune note récente</p>
+              <p class="mt-2 text-medium-emphasis">{{ t('collaboration.noRecentNotes') }}</p>
             </div>
             <v-list v-else lines="two">
               <v-list-item
@@ -175,7 +175,7 @@
                   {{ note.title }}
                   <v-chip v-if="note.isPrivate" size="x-small" class="ml-2" color="error" variant="tonal">
                     <v-icon size="x-small" start>mdi-lock</v-icon>
-                    Privé
+                    {{ t('collaboration.private') }}
                   </v-chip>
                 </v-list-item-title>
                 <v-list-item-subtitle>
@@ -196,7 +196,7 @@
             <v-card-title class="d-flex align-center justify-space-between">
               <div class="d-flex align-center">
                 <v-icon class="mr-2" color="info">mdi-bell-alert</v-icon>
-                <span>Rappels en attente</span>
+                <span>{{ t('collaboration.pendingReminders') }}</span>
                 <v-chip class="ml-2" size="small" color="info" variant="tonal">
                   {{ collaborationData.stats.pendingReminders }}
                 </v-chip>
@@ -208,13 +208,13 @@
                 color="info"
                 @click="navigateTo('/reminders')"
               >
-                Ajouter
+                {{ t('collaboration.add') }}
               </v-btn>
             </v-card-title>
             <v-divider></v-divider>
             <div v-if="collaborationData.pendingReminders.length === 0" class="text-center py-8">
               <v-icon size="48" color="grey-lighten-2">mdi-bell-off-outline</v-icon>
-              <p class="mt-2 text-medium-emphasis">Aucun rappel en attente</p>
+              <p class="mt-2 text-medium-emphasis">{{ t('collaboration.noPendingReminders') }}</p>
             </div>
             <v-list v-else lines="two">
               <v-list-item
@@ -251,7 +251,7 @@
             <v-card-title class="d-flex align-center justify-space-between">
               <div class="d-flex align-center">
                 <v-icon class="mr-2" color="secondary">mdi-checkbox-marked-circle-outline</v-icon>
-                <span>Tâches ouvertes</span>
+                <span>{{ t('tasks.open') }}</span>
                 <v-chip class="ml-2" size="small" color="secondary" variant="tonal">
                   {{ collaborationData.stats.openTasks }}
                 </v-chip>
@@ -263,13 +263,13 @@
                 color="secondary"
                 @click="navigateTo('/tasks')"
               >
-                Ajouter
+                {{ t('collaboration.add') }}
               </v-btn>
             </v-card-title>
             <v-divider></v-divider>
             <div v-if="collaborationData.openTasks.length === 0" class="text-center py-8">
               <v-icon size="48" color="grey-lighten-2">mdi-checkbox-marked-circle-outline</v-icon>
-              <p class="mt-2 text-medium-emphasis">Aucune tâche ouverte</p>
+              <p class="mt-2 text-medium-emphasis">{{ t('tasks.noOpenTasks') }}</p>
             </div>
             <v-list v-else lines="two">
               <v-list-item
@@ -298,7 +298,7 @@
                   </div>
                   <div v-if="task.dueDate" class="d-flex align-center mt-1">
                     <v-icon size="small" class="mr-1">mdi-calendar-clock</v-icon>
-                    Échéance: {{ formatDate(task.dueDate) }}
+                    {{ t('tasks.dueDate') }}: {{ formatDate(task.dueDate) }}
                   </div>
                 </v-list-item-subtitle>
               </v-list-item>
@@ -314,6 +314,7 @@
 import { institutionsApi } from "@/services/api"
 import { computed, onMounted, ref } from "vue"
 import { useRouter } from "vue-router"
+import { useI18n } from "vue-i18n"
 
 interface Props {
   institutionId: string
@@ -321,6 +322,7 @@ interface Props {
 
 const props = defineProps<Props>()
 const router = useRouter()
+const { t } = useI18n()
 
 const collaborationData = ref<any>(null)
 const loading = ref(false)
@@ -331,37 +333,37 @@ const statsCards = computed(() => {
   const stats = collaborationData.value.stats
   return [
     {
-      label: "Réunions",
+      label: t('collaboration.stats.meetings'),
       value: stats.totalMeetings,
       icon: "mdi-calendar-account",
       color: "primary",
     },
     {
-      label: "Appels",
+      label: t('collaboration.stats.calls'),
       value: stats.totalCalls,
       icon: "mdi-phone",
       color: "success",
     },
     {
-      label: "Notes",
+      label: t('collaboration.stats.notes'),
       value: stats.totalNotes,
       icon: "mdi-note-text",
       color: "warning",
     },
     {
-      label: "Rappels",
+      label: t('collaboration.stats.reminders'),
       value: stats.totalReminders,
       icon: "mdi-bell-alert",
       color: "info",
     },
     {
-      label: "Tâches",
+      label: t('collaboration.stats.tasks'),
       value: stats.totalTasks,
       icon: "mdi-clipboard-text",
       color: "secondary",
     },
     {
-      label: "À venir",
+      label: t('collaboration.stats.upcoming'),
       value: stats.upcomingMeetings,
       icon: "mdi-calendar-clock",
       color: "primary",
@@ -378,7 +380,7 @@ const loadData = async () => {
     collaborationData.value = response.data || response
   } catch (err) {
     console.error("Error loading collaboration data:", err)
-    error.value = "Impossible de charger les données de collaboration"
+    error.value = t('collaboration.loadError')
   } finally {
     loading.value = false
   }
@@ -406,9 +408,9 @@ const formatDuration = (seconds: number): string => {
 
 const formatCallType = (type: string): string => {
   const typeMap: Record<string, string> = {
-    incoming: "Appel entrant",
-    outgoing: "Appel sortant",
-    missed: "Appel manqué",
+    incoming: t('collaboration.callTypes.incoming'),
+    outgoing: t('collaboration.callTypes.outgoing'),
+    missed: t('collaboration.callTypes.missed'),
   }
   return typeMap[type] || type
 }
@@ -443,10 +445,10 @@ const getPriorityColor = (priority: string): string => {
 
 const formatPriority = (priority: string): string => {
   const priorityMap: Record<string, string> = {
-    low: "Basse",
-    medium: "Moyenne",
-    high: "Haute",
-    urgent: "Urgente",
+    low: t('tasks.priority.low'),
+    medium: t('tasks.priority.medium'),
+    high: t('tasks.priority.high'),
+    urgent: t('tasks.priority.urgent'),
   }
   return priorityMap[priority] || priority
 }
@@ -464,11 +466,11 @@ const getTaskStatusColor = (status: string): string => {
 
 const formatTaskStatus = (status: string): string => {
   const statusMap: Record<string, string> = {
-    pending: "En attente",
-    in_progress: "En cours",
-    blocked: "Bloquée",
-    completed: "Terminée",
-    cancelled: "Annulée",
+    pending: t('tasks.status.pending'),
+    in_progress: t('tasks.status.in_progress'),
+    blocked: t('tasks.status.blocked'),
+    completed: t('tasks.status.completed'),
+    cancelled: t('tasks.status.cancelled'),
   }
   return statusMap[status] || status
 }

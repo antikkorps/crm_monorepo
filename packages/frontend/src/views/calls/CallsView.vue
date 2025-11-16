@@ -6,10 +6,10 @@
         <div class="header-content">
           <h1 class="page-title">
             <v-icon class="me-2">mdi-phone</v-icon>
-            Appels
+            {{ $t('calls.title') }}
           </h1>
           <p class="page-description">
-            Gérez vos appels téléphoniques et historique de communication
+            {{ $t('calls.description') }}
           </p>
         </div>
         <div class="header-actions">
@@ -20,8 +20,8 @@
             @click="showCreateDialog = true"
             class="create-call-btn"
           >
-            <span class="btn-text-desktop">Nouvel appel</span>
-            <span class="btn-text-mobile">Créer</span>
+            <span class="btn-text-desktop">{{ $t('calls.newCall') }}</span>
+            <span class="btn-text-mobile">{{ $t('common.create') }}</span>
           </v-btn>
         </div>
       </div>
@@ -39,7 +39,7 @@
       <div class="view-controls">
         <div class="view-info">
           <v-chip variant="outlined" size="small">
-            {{ callsStore.filteredCalls.length }} appel(s)
+            {{ callsStore.filteredCalls.length }} {{ $t('calls.unit') }}
           </v-chip>
         </div>
 
@@ -49,7 +49,7 @@
             :items="sortOptions"
             item-title="label"
             item-value="value"
-            label="Trier par"
+            :label="$t('common.sortBy')"
             @update:modelValue="applySorting"
             class="sort-dropdown"
             density="comfortable"
@@ -91,12 +91,12 @@
       <div v-else-if="callsStore.filteredCalls.length === 0" class="empty-state">
         <div class="empty-content">
           <v-icon class="empty-icon">mdi-phone</v-icon>
-          <h3>Aucun appel trouvé</h3>
+          <h3>{{ $t('calls.empty.title') }}</h3>
           <p v-if="hasActiveFilters">
-            Aucun appel ne correspond à vos critères de recherche.
+            {{ $t('calls.empty.noFilter') }}
           </p>
           <p v-else>
-            Commencez par enregistrer votre premier appel.
+            {{ $t('calls.empty.noData') }}
           </p>
           <div class="empty-actions">
             <v-btn
@@ -106,7 +106,7 @@
               prepend-icon="mdi-filter-off"
               @click="callsStore.clearFilters"
             >
-              Effacer les filtres
+              {{ $t('common.clearFilters') }}
             </v-btn>
             <v-btn
               color="primary"
@@ -115,8 +115,8 @@
               @click="showCreateDialog = true"
               class="create-call-btn"
             >
-              <span class="btn-text-desktop">Créer un appel</span>
-              <span class="btn-text-mobile">Créer</span>
+              <span class="btn-text-desktop">{{ $t('calls.createCall') }}</span>
+              <span class="btn-text-mobile">{{ $t('common.create') }}</span>
             </v-btn>
           </div>
         </div>
@@ -159,12 +159,12 @@
       >
         <v-card>
           <v-card-title class="text-h6">
-            Confirmer la suppression
+            {{ $t('common.confirmDelete') }}
           </v-card-title>
 
           <v-card-text>
-            Êtes-vous sûr de vouloir supprimer cet appel ?
-            Cette action est irréversible.
+            {{ $t('calls.deleteConfirm') }}
+            {{ $t('common.irreversible') }}
           </v-card-text>
 
           <v-card-actions>
@@ -174,14 +174,14 @@
               variant="outlined"
               @click="cancelDelete"
             >
-              Annuler
+              {{ $t('common.cancel') }}
             </v-btn>
             <v-btn
               color="error"
               variant="elevated"
               @click="confirmDelete"
             >
-              Supprimer
+              {{ $t('common.delete') }}
             </v-btn>
           </v-card-actions>
         </v-card>
@@ -199,6 +199,7 @@ import CallStats from "@/components/calls/CallStats.vue"
 import { ListSkeleton } from "@/components/skeletons"
 import { useSnackbar } from "@/composables/useSnackbar"
 import { useCallsStore } from "@/stores/calls"
+import { useI18n } from "vue-i18n"
 import type {
   Call,
   CallCreateRequest,
@@ -208,6 +209,7 @@ import { computed, onMounted, ref } from "vue"
 
 const callsStore = useCallsStore()
 const { showSnackbar } = useSnackbar()
+const { t } = useI18n()
 
 // Component state
 const sortBy = ref("createdAt")
@@ -221,10 +223,10 @@ const showConfirmDialog = ref(false)
 const callToDelete = ref<Call | null>(null)
 
 const sortOptions = computed(() => [
-  { label: "Date (plus récent)", value: "createdAt" },
-  { label: "Type d'appel", value: "callType" },
-  { label: "Numéro de téléphone", value: "phoneNumber" },
-  { label: "Durée", value: "duration" },
+  { label: t('calls.sort.byDate'), value: "createdAt" },
+  { label: t('calls.sort.byType'), value: "callType" },
+  { label: t('calls.sort.byPhone'), value: "phoneNumber" },
+  { label: t('calls.sort.byDuration'), value: "duration" },
 ])
 
 const hasActiveFilters = computed(() => {
@@ -266,7 +268,7 @@ const loadCalls = async () => {
   try {
     await callsStore.fetchCalls()
   } catch (error) {
-    showSnackbar("Erreur lors du chargement des appels", "error")
+    showSnackbar(t('calls.errors.load'), "error")
   }
 }
 
@@ -275,9 +277,9 @@ const createCall = async (callData: CallCreateRequest) => {
     formLoading.value = true
     await callsStore.createCall(callData)
     showCreateDialog.value = false
-    showSnackbar("Appel créé avec succès", "success")
+    showSnackbar(t('calls.success.created'), "success")
   } catch (error) {
-    showSnackbar("Erreur lors de la création de l'appel", "error")
+    showSnackbar(t('calls.errors.create'), "error")
   } finally {
     formLoading.value = false
   }
@@ -296,9 +298,9 @@ const updateCall = async (updates: CallUpdateRequest) => {
     await callsStore.updateCall(selectedCall.value.id, updates)
     showEditDialog.value = false
     selectedCall.value = null
-    showSnackbar("Appel mis à jour avec succès", "success")
+    showSnackbar(t('calls.success.updated'), "success")
   } catch (error) {
-    showSnackbar("Erreur lors de la mise à jour de l'appel", "error")
+    showSnackbar(t('calls.errors.update'), "error")
   } finally {
     formLoading.value = false
   }
@@ -312,9 +314,9 @@ const confirmDeleteCall = (call: Call) => {
 const deleteCall = async (call: Call) => {
   try {
     await callsStore.deleteCall(call.id)
-    showSnackbar("Appel supprimé avec succès", "success")
+    showSnackbar(t('calls.success.deleted'), "success")
   } catch (error) {
-    showSnackbar("Erreur lors de la suppression de l'appel", "error")
+    showSnackbar(t('calls.errors.delete'), "error")
   }
 }
 

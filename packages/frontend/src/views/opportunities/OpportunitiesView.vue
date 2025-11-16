@@ -5,8 +5,8 @@
       <div class="page-header mb-6">
         <div class="d-flex flex-column flex-md-row align-center justify-space-between">
           <div>
-            <h1 class="text-h4 font-weight-bold">Pipeline de Ventes</h1>
-            <p class="text-body-1 text-medium-emphasis">Gérez vos opportunités commerciales</p>
+            <h1 class="text-h4 font-weight-bold">{{ $t('opportunities.title') }}</h1>
+            <p class="text-body-1 text-medium-emphasis">{{ $t('opportunities.description') }}</p>
           </div>
           <div class="page-actions mt-4 mt-md-0">
             <v-btn
@@ -15,10 +15,10 @@
               class="mr-2"
               @click="showForecast = !showForecast"
             >
-              Prévisions
+              {{ $t('opportunities.forecast') }}
             </v-btn>
             <v-btn prepend-icon="mdi-plus" color="primary" @click="openCreateDialog">
-              Nouvelle Opportunité
+              {{ $t('opportunities.newOpportunity') }}
             </v-btn>
           </div>
         </div>
@@ -31,7 +31,7 @@
             <v-card-text class="text-center">
               <div class="text-h4 font-weight-bold">{{
  activeOpportunities.length }}</div>
-              <div class="text-body-2">Opportunités Actives</div>
+              <div class="text-body-2">{{ $t('opportunities.stats.active') }}</div>
             </v-card-text>
           </v-card>
         </v-col>
@@ -39,7 +39,7 @@
           <v-card color="success" variant="tonal">
             <v-card-text class="text-center">
               <div class="text-h4 font-weight-bold">{{ formatCurrency(totalValue) }}</div>
-              <div class="text-body-2">Valeur Totale</div>
+              <div class="text-body-2">{{ $t('opportunities.stats.totalValue') }}</div>
             </v-card-text>
           </v-card>
         </v-col>
@@ -47,7 +47,7 @@
           <v-card color="info" variant="tonal">
             <v-card-text class="text-center">
               <div class="text-h4 font-weight-bold">{{ formatCurrency(weightedValue) }}</div>
-              <div class="text-body-2">Valeur Pondérée</div>
+              <div class="text-body-2">{{ $t('opportunities.stats.weightedValue') }}</div>
             </v-card-text>
           </v-card>
         </v-col>
@@ -55,7 +55,7 @@
           <v-card color="warning" variant="tonal">
             <v-card-text class="text-center">
               <div class="text-h4 font-weight-bold">{{ overdueOpportunities.length }}</div>
-              <div class="text-body-2">En Retard</div>
+              <div class="text-body-2">{{ $t('opportunities.stats.overdue') }}</div>
             </v-card-text>
           </v-card>
         </v-col>
@@ -66,25 +66,25 @@
         <v-card v-if="showForecast" class="mb-6">
           <v-card-title>
             <v-icon class="mr-2">mdi-chart-line</v-icon>
-            Prévisions de Revenus
+            {{ $t('opportunities.forecastTitle') }}
           </v-card-title>
           <v-card-text v-if="forecast">
             <v-row>
               <v-col cols="12" md="4">
                 <div class="text-h6">{{ forecast.summary.totalOpportunities }}</div>
-                <div class="text-caption text-medium-emphasis">Opportunités</div>
+                <div class="text-caption text-medium-emphasis">{{ $t('opportunities.forecast.opportunities') }}</div>
               </v-col>
               <v-col cols="12" md="4">
                 <div class="text-h6">{{ formatCurrency(forecast.summary.totalValue) }}</div>
-                <div class="text-caption text-medium-emphasis">Valeur Totale</div>
+                <div class="text-caption text-medium-emphasis">{{ $t('opportunities.forecast.totalValue') }}</div>
               </v-col>
               <v-col cols="12" md="4">
                 <div class="text-h6">{{ formatCurrency(forecast.summary.weightedValue) }}</div>
-                <div class="text-caption text-medium-emphasis">Valeur Pondérée</div>
+                <div class="text-caption text-medium-emphasis">{{ $t('opportunities.forecast.weightedValue') }}</div>
               </v-col>
             </v-row>
             <v-divider class="my-4"></v-divider>
-            <div class="text-subtitle-2 mb-2">Par Mois</div>
+            <div class="text-subtitle-2 mb-2">{{ $t('opportunities.forecast.byMonth') }}</div>
             <v-row>
               <v-col
                 v-for="month in forecast.monthlyForecast"
@@ -97,7 +97,7 @@
                   <v-card-text>
                     <div class="text-overline">{{ formatMonth(month.month) }}</div>
                     <div class="text-h6">{{ formatCurrency(month.weightedValue) }}</div>
-                    <div class="text-caption">{{ month.count }} opportunités</div>
+                    <div class="text-caption">{{ month.count }} {{ $t('opportunities.unit') }}</div>
                   </v-card-text>
                 </v-card>
               </v-col>
@@ -105,7 +105,7 @@
           </v-card-text>
           <v-card-text v-else class="text-center py-8">
             <v-progress-circular indeterminate color="primary"></v-progress-circular>
-            <p class="mt-4">Chargement des prévisions...</p>
+            <p class="mt-4">{{ $t('opportunities.loading.forecast') }}</p>
           </v-card-text>
         </v-card>
       </v-expand-transition>
@@ -113,13 +113,13 @@
       <!-- Kanban Pipeline -->
       <div v-if="loading && pipeline.length === 0" class="text-center py-12">
         <v-progress-circular indeterminate color="primary" size="64"></v-progress-circular>
-        <p class="mt-4 text-body-1">Chargement du pipeline...</p>
+        <p class="mt-4 text-body-1">{{ $t('opportunities.loading.pipeline') }}</p>
       </div>
 
       <div v-else-if="error" class="text-center py-12">
         <v-icon size="64" color="error">mdi-alert-circle-outline</v-icon>
         <p class="text-h6 mt-4">{{ error }}</p>
-        <v-btn prepend-icon="mdi-refresh" @click="loadPipeline" class="mt-4">Réessayer</v-btn>
+        <v-btn prepend-icon="mdi-refresh" @click="loadPipeline" class="mt-4">{{ $t('common.retry') }}</v-btn>
       </div>
 
       <div v-else class="pipeline-kanban">
@@ -139,7 +139,7 @@
               >
                 <div>
                   <div class="text-subtitle-1 font-weight-bold">{{ getStageLabel(stage.stage) }}</div>
-                  <div class="text-caption">{{ stage.count }} opportunités</div>
+                  <div class="text-caption">{{ stage.count }} {{ $t('opportunities.unit') }}</div>
                 </div>
                 <v-chip :color="getStageColor(stage.stage)" size="small">
                   {{ formatCurrency(stage.totalValue) }}
@@ -154,7 +154,7 @@
                   class="text-center py-8 text-medium-emphasis"
                 >
                   <v-icon size="48" color="grey-lighten-2">mdi-inbox-outline</v-icon>
-                  <p class="mt-2">Aucune opportunité</p>
+                  <p class="mt-2">{{ $t('opportunities.empty') }}</p>
                 </div>
 
                 <draggable
@@ -205,7 +205,7 @@
                         </div>
 
                         <div v-if="isOverdue(element)" class="mt-2">
-                          <v-chip size="x-small" color="error" prepend-icon="mdi-alert">En retard</v-chip>
+                          <v-chip size="x-small" color="error" prepend-icon="mdi-alert">{{ $t('opportunities.overdue') }}</v-chip>
                         </div>
                       </v-card-text>
                     </v-card>
@@ -221,7 +221,7 @@
       <v-dialog v-model="dialogVisible" max-width="800" persistent>
         <v-card>
           <v-card-title>
-            {{ editingOpportunity ? "Modifier l'Opportunité" : "Nouvelle Opportunité" }}
+            {{ editingOpportunity ? $t('opportunities.editTitle') : $t('opportunities.newOpportunity') }}
           </v-card-title>
           <v-card-text>
             <OpportunityForm
@@ -240,12 +240,14 @@
 import { ref, computed, onMounted, watch } from "vue"
 import { storeToRefs } from "pinia"
 import draggable from "vuedraggable"
+import { useI18n } from "vue-i18n"
 import AppLayout from "@/components/layout/AppLayout.vue"
 import OpportunityForm from "@/components/opportunities/OpportunityForm.vue"
 import { useOpportunitiesStore } from "@/stores/opportunities"
 import type { Opportunity, OpportunityStage } from "@medical-crm/shared"
 
 const opportunitiesStore = useOpportunitiesStore()
+const { t } = useI18n()
 const {
   pipeline,
   forecast,
@@ -312,15 +314,15 @@ const handleDragChange = async (event: any, targetStage: OpportunityStage) => {
 }
 
 const getStageLabel = (stage: OpportunityStage): string => {
-  const labels: Record<OpportunityStage, string> = {
-    prospecting: "Prospection",
-    qualification: "Qualification",
-    proposal: "Proposition",
-    negotiation: "Négociation",
-    closed_won: "Gagné",
-    closed_lost: "Perdu",
+  const labelKeys: Record<OpportunityStage, string> = {
+    prospecting: "opportunities.stages.prospecting",
+    qualification: "opportunities.stages.qualification",
+    proposal: "opportunities.stages.proposal",
+    negotiation: "opportunities.stages.negotiation",
+    closed_won: "opportunities.stages.closedWon",
+    closed_lost: "opportunities.stages.closedLost",
   }
-  return labels[stage] || stage
+  return t(labelKeys[stage] || stage)
 }
 
 const getStageColor = (stage: OpportunityStage): string => {

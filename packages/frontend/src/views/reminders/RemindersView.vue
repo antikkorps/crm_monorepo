@@ -6,10 +6,10 @@
         <div class="header-content">
           <h1 class="page-title">
             <v-icon class="me-2">mdi-bell</v-icon>
-            Rappels
+            {{ $t('reminders.title') }}
           </h1>
           <p class="page-description">
-            Gérez vos rappels et restez informé des événements importants
+            {{ $t('reminders.description') }}
           </p>
         </div>
         <div class="header-actions">
@@ -20,8 +20,8 @@
             @click="showCreateDialog = true"
             class="create-reminder-btn"
           >
-            <span class="btn-text-desktop">Nouveau rappel</span>
-            <span class="btn-text-mobile">Créer</span>
+            <span class="btn-text-desktop">{{ $t('reminders.newReminder') }}</span>
+            <span class="btn-text-mobile">{{ $t('common.create') }}</span>
           </v-btn>
         </div>
       </div>
@@ -39,7 +39,7 @@
       <div class="view-controls">
         <div class="view-info">
           <v-chip variant="outlined" size="small">
-            {{ remindersStore.filteredReminders.length }} rappel(s)
+            {{ remindersStore.filteredReminders.length }} {{ $t('reminders.unit') }}
           </v-chip>
         </div>
 
@@ -49,7 +49,7 @@
             :items="sortOptions"
             item-title="label"
             item-value="value"
-            label="Trier par"
+            :label="$t('common.sortBy')"
             @update:modelValue="applySorting"
             class="sort-dropdown"
             density="comfortable"
@@ -91,12 +91,12 @@
       <div v-else-if="remindersStore.filteredReminders.length === 0" class="empty-state">
         <div class="empty-content">
           <v-icon class="empty-icon">mdi-bell</v-icon>
-          <h3>Aucun rappel trouvé</h3>
+          <h3>{{ $t('reminders.empty.title') }}</h3>
           <p v-if="hasActiveFilters">
-            Aucun rappel ne correspond à vos critères de recherche.
+            {{ $t('reminders.empty.noFilter') }}
           </p>
           <p v-else>
-            Commencez par créer votre premier rappel.
+            {{ $t('reminders.empty.noData') }}
           </p>
           <div class="empty-actions">
             <v-btn
@@ -106,7 +106,7 @@
               prepend-icon="mdi-filter-off"
               @click="remindersStore.clearFilters"
             >
-              Effacer les filtres
+              {{ $t('common.clearFilters') }}
             </v-btn>
             <v-btn
               color="primary"
@@ -115,8 +115,8 @@
               @click="showCreateDialog = true"
               class="create-reminder-btn"
             >
-              <span class="btn-text-desktop">Créer un rappel</span>
-              <span class="btn-text-mobile">Créer</span>
+              <span class="btn-text-desktop">{{ $t('reminders.createReminder') }}</span>
+              <span class="btn-text-mobile">{{ $t('common.create') }}</span>
             </v-btn>
           </div>
         </div>
@@ -160,12 +160,12 @@
       >
         <v-card>
           <v-card-title class="text-h6">
-            Confirmer la suppression
+            {{ $t('common.confirmDelete') }}
           </v-card-title>
 
           <v-card-text>
-            Êtes-vous sûr de vouloir supprimer ce rappel ?
-            Cette action est irréversible.
+            {{ $t('reminders.deleteConfirm') }}
+            {{ $t('common.irreversible') }}
           </v-card-text>
 
           <v-card-actions>
@@ -175,14 +175,14 @@
               variant="outlined"
               @click="cancelDelete"
             >
-              Annuler
+              {{ $t('common.cancel') }}
             </v-btn>
             <v-btn
               color="error"
               variant="elevated"
               @click="confirmDelete"
             >
-              Supprimer
+              {{ $t('common.delete') }}
             </v-btn>
           </v-card-actions>
         </v-card>
@@ -200,6 +200,7 @@ import ReminderStats from "@/components/reminders/ReminderStats.vue"
 import { ListSkeleton } from "@/components/skeletons"
 import { useSnackbar } from "@/composables/useSnackbar"
 import { useRemindersStore } from "@/stores/reminders"
+import { useI18n } from "vue-i18n"
 import type {
   Reminder,
   ReminderCreateRequest,
@@ -209,6 +210,7 @@ import { computed, onMounted, ref } from "vue"
 
 const remindersStore = useRemindersStore()
 const { showSnackbar } = useSnackbar()
+const { t } = useI18n()
 
 // Component state
 const sortBy = ref("reminderDate")
@@ -222,10 +224,10 @@ const showConfirmDialog = ref(false)
 const reminderToDelete = ref<Reminder | null>(null)
 
 const sortOptions = computed(() => [
-  { label: "Date du rappel (plus proche)", value: "reminderDate" },
-  { label: "Priorité (plus haute)", value: "priority" },
-  { label: "Date de création (plus récent)", value: "createdAt" },
-  { label: "Titre", value: "title" },
+  { label: t('reminders.sort.byDate'), value: "reminderDate" },
+  { label: t('reminders.sort.byPriority'), value: "priority" },
+  { label: t('reminders.sort.byCreated'), value: "createdAt" },
+  { label: t('reminders.sort.byTitle'), value: "title" },
 ])
 
 const hasActiveFilters = computed(() => {
@@ -266,7 +268,7 @@ const loadReminders = async () => {
   try {
     await remindersStore.fetchReminders()
   } catch (error) {
-    showSnackbar("Erreur lors du chargement des rappels", "error")
+    showSnackbar(t('reminders.errors.load'), "error")
   }
 }
 
@@ -275,9 +277,9 @@ const createReminder = async (reminderData: ReminderCreateRequest) => {
     formLoading.value = true
     await remindersStore.createReminder(reminderData)
     showCreateDialog.value = false
-    showSnackbar("Rappel créé avec succès", "success")
+    showSnackbar(t('reminders.success.created'), "success")
   } catch (error) {
-    showSnackbar("Erreur lors de la création du rappel", "error")
+    showSnackbar(t('reminders.errors.create'), "error")
   } finally {
     formLoading.value = false
   }
@@ -296,9 +298,9 @@ const updateReminder = async (updates: ReminderUpdateRequest) => {
     await remindersStore.updateReminder(selectedReminder.value.id, updates)
     showEditDialog.value = false
     selectedReminder.value = null
-    showSnackbar("Rappel mis à jour avec succès", "success")
+    showSnackbar(t('reminders.success.updated'), "success")
   } catch (error) {
-    showSnackbar("Erreur lors de la mise à jour du rappel", "error")
+    showSnackbar(t('reminders.errors.update'), "error")
   } finally {
     formLoading.value = false
   }
@@ -312,9 +314,9 @@ const confirmDeleteReminder = (reminder: Reminder) => {
 const deleteReminder = async (reminder: Reminder) => {
   try {
     await remindersStore.deleteReminder(reminder.id)
-    showSnackbar("Rappel supprimé avec succès", "success")
+    showSnackbar(t('reminders.success.deleted'), "success")
   } catch (error) {
-    showSnackbar("Erreur lors de la suppression du rappel", "error")
+    showSnackbar(t('reminders.errors.delete'), "error")
   }
 }
 
@@ -334,9 +336,9 @@ const cancelDelete = () => {
 const handleCompleteReminder = async (reminder: Reminder) => {
   try {
     await remindersStore.completeReminder(reminder.id)
-    showSnackbar("Rappel marqué comme terminé", "success")
+    showSnackbar(t('reminders.success.completed'), "success")
   } catch (error) {
-    showSnackbar("Erreur lors de la mise à jour du rappel", "error")
+    showSnackbar(t('reminders.errors.update'), "error")
   }
 }
 

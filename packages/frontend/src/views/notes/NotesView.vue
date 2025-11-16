@@ -6,10 +6,10 @@
         <div class="header-content">
           <h1 class="page-title">
             <v-icon class="me-2">mdi-note-text</v-icon>
-            Notes
+            {{ $t('notes.title') }}
           </h1>
           <p class="page-description">
-            Gérez vos notes et partagez-les avec votre équipe
+            {{ $t('notes.description') }}
           </p>
         </div>
         <div class="header-actions">
@@ -20,8 +20,8 @@
             @click="showCreateDialog = true"
             class="create-note-btn"
           >
-            <span class="btn-text-desktop">Nouvelle note</span>
-            <span class="btn-text-mobile">Créer</span>
+            <span class="btn-text-desktop">{{ $t('notes.newNote') }}</span>
+            <span class="btn-text-mobile">{{ $t('common.create') }}</span>
           </v-btn>
         </div>
       </div>
@@ -40,7 +40,7 @@
       <div class="view-controls">
         <div class="view-info">
           <v-chip variant="outlined" size="small">
-            {{ notesStore.filteredNotes.length }} note(s)
+            {{ notesStore.filteredNotes.length }} {{ $t('notes.unit') }}
           </v-chip>
         </div>
 
@@ -50,7 +50,7 @@
             :items="sortOptions"
             item-title="label"
             item-value="value"
-            label="Trier par"
+            :label="$t('common.sortBy')"
             @update:modelValue="applySorting"
             class="sort-dropdown"
             density="comfortable"
@@ -92,12 +92,12 @@
       <div v-else-if="notesStore.filteredNotes.length === 0" class="empty-state">
         <div class="empty-content">
           <v-icon class="empty-icon">mdi-note-text</v-icon>
-          <h3>Aucune note trouvée</h3>
+          <h3>{{ $t('notes.empty.title') }}</h3>
           <p v-if="hasActiveFilters">
-            Aucune note ne correspond à vos critères de recherche.
+            {{ $t('notes.empty.noFilter') }}
           </p>
           <p v-else>
-            Commencez par créer votre première note.
+            {{ $t('notes.empty.noData') }}
           </p>
           <div class="empty-actions">
             <v-btn
@@ -107,7 +107,7 @@
               prepend-icon="mdi-filter-off"
               @click="notesStore.clearFilters"
             >
-              Effacer les filtres
+              {{ $t('common.clearFilters') }}
             </v-btn>
             <v-btn
               color="primary"
@@ -116,8 +116,8 @@
               @click="showCreateDialog = true"
               class="create-note-btn"
             >
-              <span class="btn-text-desktop">Créer une note</span>
-              <span class="btn-text-mobile">Créer</span>
+              <span class="btn-text-desktop">{{ $t('notes.createNote') }}</span>
+              <span class="btn-text-mobile">{{ $t('common.create') }}</span>
             </v-btn>
           </div>
         </div>
@@ -161,7 +161,7 @@
       >
         <v-card>
           <v-card-title class="text-h6">
-            Partager la note
+            {{ $t('notes.share.title') }}
           </v-card-title>
 
           <v-card-text>
@@ -170,7 +170,7 @@
             </p>
 
             <div v-if="selectedNote?.shares && selectedNote.shares.length > 0" class="current-shares mb-4">
-              <h4 class="mb-2">Actuellement partagée avec :</h4>
+              <h4 class="mb-2">{{ $t('notes.share.current') }}</h4>
               <v-list>
                 <v-list-item
                   v-for="share in selectedNote.shares"
@@ -184,7 +184,7 @@
                     {{ share.user?.firstName }} {{ share.user?.lastName }}
                   </v-list-item-title>
                   <v-list-item-subtitle>
-                    {{ share.permission === 'write' ? 'Lecture et écriture' : 'Lecture seule' }}
+                    {{ share.permission === 'write' ? $t('notes.share.write') : $t('notes.share.read') }}
                   </v-list-item-subtitle>
                   <template #append>
                     <v-btn
@@ -200,7 +200,7 @@
             </div>
 
             <p class="text-caption text-grey">
-              Utilisez le formulaire principal pour ajouter de nouveaux partages
+              {{ $t('notes.share.help') }}
             </p>
           </v-card-text>
 
@@ -211,7 +211,7 @@
               variant="outlined"
               @click="showShareDialog = false"
             >
-              Fermer
+              {{ $t('common.close') }}
             </v-btn>
           </v-card-actions>
         </v-card>
@@ -225,12 +225,12 @@
       >
         <v-card>
           <v-card-title class="text-h6">
-            Confirmer la suppression
+            {{ $t('common.confirmDelete') }}
           </v-card-title>
 
           <v-card-text>
-            Êtes-vous sûr de vouloir supprimer cette note ?
-            Cette action est irréversible.
+            {{ $t('notes.deleteConfirm') }}
+            {{ $t('common.irreversible') }}
           </v-card-text>
 
           <v-card-actions>
@@ -240,14 +240,14 @@
               variant="outlined"
               @click="cancelDelete"
             >
-              Annuler
+              {{ $t('common.cancel') }}
             </v-btn>
             <v-btn
               color="error"
               variant="elevated"
               @click="confirmDelete"
             >
-              Supprimer
+              {{ $t('common.delete') }}
             </v-btn>
           </v-card-actions>
         </v-card>
@@ -265,6 +265,7 @@ import NoteStats from "@/components/notes/NoteStats.vue"
 import { ListSkeleton } from "@/components/skeletons"
 import { useSnackbar } from "@/composables/useSnackbar"
 import { useNotesStore } from "@/stores/notes"
+import { useI18n } from "vue-i18n"
 import type {
   Note,
   NoteCreateRequest,
@@ -274,6 +275,7 @@ import { computed, onMounted, ref } from "vue"
 
 const notesStore = useNotesStore()
 const { showSnackbar } = useSnackbar()
+const { t } = useI18n()
 
 // Component state
 const sortBy = ref("createdAt")
@@ -288,9 +290,9 @@ const showConfirmDialog = ref(false)
 const noteToDelete = ref<Note | null>(null)
 
 const sortOptions = computed(() => [
-  { label: "Date (plus récent)", value: "createdAt" },
-  { label: "Titre", value: "title" },
-  { label: "Date de mise à jour", value: "updatedAt" },
+  { label: t('notes.sort.byDate'), value: "createdAt" },
+  { label: t('notes.sort.byTitle'), value: "title" },
+  { label: t('notes.sort.byUpdated'), value: "updatedAt" },
 ])
 
 const hasActiveFilters = computed(() => {
@@ -334,7 +336,7 @@ const loadNotes = async () => {
   try {
     await notesStore.fetchNotes()
   } catch (error) {
-    showSnackbar("Erreur lors du chargement des notes", "error")
+    showSnackbar(t('notes.errors.load'), "error")
   }
 }
 
@@ -343,9 +345,9 @@ const createNote = async (noteData: NoteCreateRequest) => {
     formLoading.value = true
     await notesStore.createNote(noteData)
     showCreateDialog.value = false
-    showSnackbar("Note créée avec succès", "success")
+    showSnackbar(t('notes.success.created'), "success")
   } catch (error) {
-    showSnackbar("Erreur lors de la création de la note", "error")
+    showSnackbar(t('notes.errors.create'), "error")
   } finally {
     formLoading.value = false
   }
@@ -364,9 +366,9 @@ const updateNote = async (updates: NoteUpdateRequest) => {
     await notesStore.updateNote(selectedNote.value.id, updates)
     showEditDialog.value = false
     selectedNote.value = null
-    showSnackbar("Note mise à jour avec succès", "success")
+    showSnackbar(t('notes.success.updated'), "success")
   } catch (error) {
-    showSnackbar("Erreur lors de la mise à jour de la note", "error")
+    showSnackbar(t('notes.errors.update'), "error")
   } finally {
     formLoading.value = false
   }
@@ -380,9 +382,9 @@ const confirmDeleteNote = (note: Note) => {
 const deleteNote = async (note: Note) => {
   try {
     await notesStore.deleteNote(note.id)
-    showSnackbar("Note supprimée avec succès", "success")
+    showSnackbar(t('notes.success.deleted'), "success")
   } catch (error) {
-    showSnackbar("Erreur lors de la suppression de la note", "error")
+    showSnackbar(t('notes.errors.delete'), "error")
   }
 }
 
@@ -409,14 +411,14 @@ const removeNoteShare = async (shareId: string) => {
 
   try {
     await notesStore.removeShare(selectedNote.value.id, shareId)
-    showSnackbar("Partage supprimé avec succès", "success")
+    showSnackbar(t('notes.success.shareRemoved'), "success")
     // Refresh the selected note
     const updatedNote = notesStore.getNoteById(selectedNote.value.id)
     if (updatedNote) {
       selectedNote.value = updatedNote
     }
   } catch (error) {
-    showSnackbar("Erreur lors de la suppression du partage", "error")
+    showSnackbar(t('notes.errors.shareRemove'), "error")
   }
 }
 

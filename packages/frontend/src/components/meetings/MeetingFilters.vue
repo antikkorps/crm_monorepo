@@ -40,8 +40,8 @@
             :items="userOptions"
             item-title="label"
             item-value="value"
-            label="Organisateur"
-            placeholder="Tous les organisateurs"
+            :label="t('meetings.status.scheduled')"
+            placeholder="All organizers"
             prepend-inner-icon="mdi-account"
             @update:modelValue="onFiltersChange"
             clearable
@@ -58,8 +58,8 @@
             :items="institutionOptions"
             item-title="label"
             item-value="value"
-            label="Institution"
-            placeholder="Toutes les institutions"
+            :label="t('institution.name')"
+            placeholder="All institutions"
             prepend-inner-icon="mdi-office-building"
             @update:modelValue="onFiltersChange"
             clearable
@@ -75,8 +75,8 @@
         <div class="filter-group">
           <v-text-field
             v-model="localFilters.startDateFrom"
-            label="Date de début - Du"
-            placeholder="Date de début"
+            :label="t('segmentation.filters.dateRange.startDate')"
+            placeholder="Start date"
             type="date"
             prepend-inner-icon="mdi-calendar-start"
             @change="onFiltersChange"
@@ -89,8 +89,8 @@
         <div class="filter-group">
           <v-text-field
             v-model="localFilters.startDateTo"
-            label="Date de début - Au"
-            placeholder="Date de fin"
+            :label="t('segmentation.filters.dateRange.endDate')"
+            placeholder="End date"
             type="date"
             prepend-inner-icon="mdi-calendar-end"
             @change="onFiltersChange"
@@ -110,7 +110,7 @@
               prepend-icon="mdi-calendar-today"
               @click="toggleTodayFilter"
             >
-              Aujourd'hui
+              {{ t('time.today') }}
             </v-btn>
             <v-btn
               :color="showUpcoming ? 'info' : 'secondary'"
@@ -119,7 +119,7 @@
               prepend-icon="mdi-calendar-clock"
               @click="toggleUpcomingFilter"
             >
-              À venir
+              {{ t('common.next') }}
             </v-btn>
             <v-btn
               color="secondary"
@@ -128,7 +128,7 @@
               prepend-icon="mdi-filter-off"
               @click="clearAllFilters"
             >
-              Tout effacer
+              Clear all
             </v-btn>
           </div>
         </div>
@@ -140,7 +140,8 @@
 <script setup lang="ts">
 import { institutionsApi, usersApi } from "@/services/api"
 import type { MeetingFilters } from "@/services/api/meetings"
-import { onMounted, ref, watch } from "vue"
+import { onMounted, ref, watch, computed } from "vue"
+import { useI18n } from "vue-i18n"
 
 interface Props {
   filters: MeetingFilters
@@ -152,6 +153,7 @@ interface Emits {
 
 const props = defineProps<Props>()
 const emit = defineEmits<Emits>()
+const { t } = useI18n()
 
 const localFilters = ref<MeetingFilters>({ ...props.filters })
 const loadingUsers = ref(false)
@@ -161,12 +163,12 @@ const institutionOptions = ref<Array<{ label: string; value: string }>>([])
 const showToday = ref(false)
 const showUpcoming = ref(false)
 
-const statusOptions = [
-  { label: "Planifiée", value: "scheduled" },
-  { label: "En cours", value: "in_progress" },
-  { label: "Terminée", value: "completed" },
-  { label: "Annulée", value: "cancelled" },
-]
+const statusOptions = computed(() => [
+  { label: t('meetings.status.scheduled'), value: "scheduled" },
+  { label: t('meetings.status.in_progress'), value: "in_progress" },
+  { label: t('meetings.status.completed'), value: "completed" },
+  { label: t('meetings.status.cancelled'), value: "cancelled" },
+])
 
 watch(
   () => props.filters,

@@ -58,7 +58,7 @@
             class="action-btn"
             @click="$emit('complete', reminder)"
           >
-            <v-tooltip text="Marquer comme terminé">
+            <v-tooltip :text="t('actions.finish')">
               <template #activator="{ props }">
                 <v-icon v-bind="props">mdi-check</v-icon>
               </template>
@@ -72,7 +72,7 @@
             class="action-btn"
             @click="$emit('edit', reminder)"
           >
-            <v-tooltip text="Modifier">
+            <v-tooltip :text="$t('actions.edit')">
               <template #activator="{ props }">
                 <v-icon v-bind="props">mdi-pencil</v-icon>
               </template>
@@ -86,7 +86,7 @@
             class="action-btn"
             @click="$emit('delete', reminder)"
           >
-            <v-tooltip text="Supprimer">
+            <v-tooltip :text="$t('actions.delete')">
               <template #activator="{ props }">
                 <v-icon v-bind="props">mdi-delete</v-icon>
               </template>
@@ -133,7 +133,7 @@
             </v-avatar>
           </div>
           <div class="meta-content">
-            <div class="meta-label">Utilisateur</div>
+            <div class="meta-label">{{ $t('labels.creator').toUpperCase() }}</div>
             <div class="meta-value">{{ reminder.user.firstName }} {{ reminder.user.lastName }}</div>
           </div>
         </div>
@@ -144,7 +144,7 @@
             <v-icon size="20" color="primary">mdi-office-building</v-icon>
           </div>
           <div class="meta-content">
-            <div class="meta-label">Institution</div>
+            <div class="meta-label">{{ $t('labels.category').toUpperCase() }}</div>
             <div class="meta-value">{{ reminder.institution.name }}</div>
           </div>
         </div>
@@ -155,7 +155,7 @@
             <v-icon size="20" color="primary">mdi-account</v-icon>
           </div>
           <div class="meta-content">
-            <div class="meta-label">Contact</div>
+            <div class="meta-label">{{ $t('labels.name').toUpperCase() }}</div>
             <div class="meta-value">{{ reminder.contactPerson.firstName }} {{ reminder.contactPerson.lastName }}</div>
           </div>
         </div>
@@ -166,7 +166,7 @@
             <v-icon size="20" color="info">mdi-repeat</v-icon>
           </div>
           <div class="meta-content">
-            <div class="meta-label">Récurrence</div>
+            <div class="meta-label">{{ $t('reminders.recurring.title').toUpperCase() }}</div>
             <div class="meta-value">{{ recurringLabel }}</div>
           </div>
         </div>
@@ -178,6 +178,7 @@
 <script setup lang="ts">
 import type { Reminder } from "@medical-crm/shared"
 import { computed } from "vue"
+import { useI18n } from "vue-i18n"
 
 interface Props {
   reminder: Reminder
@@ -188,6 +189,8 @@ interface Emits {
   (e: "delete", reminder: Reminder): void
   (e: "complete", reminder: Reminder): void
 }
+
+const { t } = useI18n()
 
 const props = defineProps<Props>()
 const emit = defineEmits<Emits>()
@@ -240,15 +243,15 @@ const priorityIcon = computed(() => {
 const priorityLabel = computed(() => {
   switch (props.reminder.priority) {
     case "low":
-      return "Faible"
+      return t('reminders.priority.low')
     case "medium":
-      return "Moyenne"
+      return t('reminders.priority.medium')
     case "high":
-      return "Haute"
+      return t('reminders.priority.high')
     case "urgent":
-      return "Urgent"
+      return t('reminders.priority.urgent')
     default:
-      return "Inconnu"
+      return "Unknown"
   }
 })
 
@@ -285,8 +288,8 @@ const timeRemaining = computed(() => {
   const reminderDate = new Date(props.reminder.reminderDate)
   const diff = reminderDate.getTime() - now.getTime()
 
-  if (isCompleted.value) return "Terminé"
-  if (isCancelled.value) return "Annulé"
+  if (isCompleted.value) return t('reminders.status.completed')
+  if (isCancelled.value) return t('reminders.status.cancelled')
 
   if (diff < 0) {
     const absDiff = Math.abs(diff)
@@ -312,15 +315,15 @@ const recurringLabel = computed(() => {
   if (!props.reminder.recurring) return ""
 
   const frequencyMap = {
-    daily: "Quotidien",
-    weekly: "Hebdomadaire",
-    monthly: "Mensuel",
+    daily: t('reminders.recurring.frequencies.daily'),
+    weekly: t('reminders.recurring.frequencies.weekly'),
+    monthly: t('reminders.recurring.frequencies.monthly'),
   }
 
   const frequency = frequencyMap[props.reminder.recurring.frequency] || props.reminder.recurring.frequency
 
   if (props.reminder.recurring.endDate) {
-    return `${frequency} (jusqu'au ${formatReminderDate(props.reminder.recurring.endDate)})`
+    return `${frequency} (${t('time.thisMonth')} ${formatReminderDate(props.reminder.recurring.endDate)})`
   }
 
   return frequency

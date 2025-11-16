@@ -5,9 +5,9 @@
       <v-col cols="12">
         <div class="d-flex justify-space-between align-center">
           <div>
-            <h1 class="text-h3 font-weight-bold mb-2">Dashboard</h1>
+            <h1 class="text-h3 font-weight-bold mb-2">{{ t('dashboard.title') }}</h1>
             <p class="text-h6 text-medium-emphasis">
-              Bienvenue, <strong>{{ authStore.userName }}</strong>
+              {{ t('dashboard.welcome') }}, <strong>{{ authStore.userName }}</strong>
             </p>
           </div>
           <v-chip
@@ -32,8 +32,8 @@
           <template v-slot:prepend>
             <v-progress-circular indeterminate size="24" />
           </template>
-          <v-alert-title>Redirection en cours...</v-alert-title>
-          Redirection vers le dashboard de facturation...
+          <v-alert-title>{{ t('dashboard.redirecting') }}</v-alert-title>
+          {{ t('dashboard.redirectingToBilling') }}
         </v-alert>
       </v-col>
     </v-row>
@@ -96,7 +96,7 @@
             <v-card-title class="d-flex align-center justify-space-between">
               <div class="d-flex align-center">
                 <v-icon icon="mdi-chart-timeline-variant" color="primary" class="mr-2" />
-                Indicateurs de performance
+                {{ t('dashboard.performanceIndicators') }}
               </div>
               <v-btn-group variant="outlined" density="compact">
                 <v-btn
@@ -104,21 +104,21 @@
                   size="small"
                   @click="setPeriod('week')"
                 >
-                  7 jours
+                  {{ t('dashboard.period.week') }}
                 </v-btn>
                 <v-btn
                   :color="period === 'month' ? 'primary' : undefined"
                   size="small"
                   @click="setPeriod('month')"
                 >
-                  30 jours
+                  {{ t('dashboard.period.month') }}
                 </v-btn>
                 <v-btn
                   :color="period === 'quarter' ? 'primary' : undefined"
                   size="small"
                   @click="setPeriod('quarter')"
                 >
-                  90 jours
+                  {{ t('dashboard.period.quarter') }}
                 </v-btn>
               </v-btn-group>
             </v-card-title>
@@ -130,7 +130,7 @@
                   <v-card variant="outlined" class="performance-card">
                     <v-card-text>
                       <div class="d-flex align-center justify-space-between mb-2">
-                        <span class="text-subtitle-2 text-medium-emphasis">Croissance CA</span>
+                        <span class="text-subtitle-2 text-medium-emphasis">{{ t('dashboard.metrics.revenueGrowth') }}</span>
                         <v-icon :icon="metrics.growth.revenueGrowth >= 0 ? 'mdi-trending-up' : 'mdi-trending-down'"
                                 :color="metrics.growth.revenueGrowth >= 0 ? 'success' : 'error'"
                                 size="24" />
@@ -139,7 +139,7 @@
                         {{ metrics.growth.revenueGrowth > 0 ? '+' : '' }}{{ metrics.growth.revenueGrowth.toFixed(1) }}%
                       </div>
                       <div class="text-caption text-medium-emphasis mt-2">
-                        vs période précédente
+                        {{ t('dashboard.metrics.vsPreviousPeriod') }}
                       </div>
                     </v-card-text>
                   </v-card>
@@ -150,7 +150,7 @@
                   <v-card variant="outlined" class="performance-card">
                     <v-card-text>
                       <div class="d-flex align-center justify-space-between mb-2">
-                        <span class="text-subtitle-2 text-medium-emphasis">Nouveaux clients</span>
+                        <span class="text-subtitle-2 text-medium-emphasis">{{ t('dashboard.metrics.newClients') }}</span>
                         <v-icon icon="mdi-account-multiple-plus" color="blue" size="24" />
                       </div>
                       <div class="text-h4 font-weight-bold text-blue">
@@ -159,7 +159,7 @@
                       <div class="text-caption text-medium-emphasis mt-2">
                         <span :class="metrics.newClients.percentageChange >= 0 ? 'text-success' : 'text-error'">
                           {{ metrics.newClients.percentageChange > 0 ? '+' : '' }}{{ metrics.newClients.percentageChange.toFixed(1) }}%
-                        </span> ce mois
+                        </span> {{ t('dashboard.metrics.thisMonth') }}
                       </div>
                     </v-card-text>
                   </v-card>
@@ -170,14 +170,14 @@
                   <v-card variant="outlined" class="performance-card">
                     <v-card-text>
                       <div class="d-flex align-center justify-space-between mb-2">
-                        <span class="text-subtitle-2 text-medium-emphasis">Taux de conversion</span>
+                        <span class="text-subtitle-2 text-medium-emphasis">{{ t('dashboard.metrics.conversionRate') }}</span>
                         <v-icon icon="mdi-percent" color="orange" size="24" />
                       </div>
                       <div class="text-h4 font-weight-bold text-orange">
                         {{ metrics.conversionRate.rate.toFixed(1) }}%
                       </div>
                       <div class="text-caption text-medium-emphasis mt-2">
-                        {{ metrics.conversionRate.quotesAccepted }} / {{ metrics.conversionRate.quotesTotal }} devis acceptés
+                        {{ metrics.conversionRate.quotesAccepted }} / {{ metrics.conversionRate.quotesTotal }} {{ t('dashboard.metrics.quotesAccepted') }}
                       </div>
                     </v-card-text>
                   </v-card>
@@ -197,7 +197,7 @@
                       <v-icon :icon="metrics.growth.tasksCompletedGrowth >= 0 ? 'mdi-check-circle' : 'mdi-information'" class="mr-2" />
                       <span class="text-body-2">
                         <strong>{{ metrics.growth.tasksCompletedGrowth > 0 ? '+' : '' }}{{ metrics.growth.tasksCompletedGrowth.toFixed(1) }}%</strong>
-                        de tâches complétées par rapport à la période précédente
+                        {{ t('dashboard.metrics.vsPreviousPeriod') }}
                       </span>
                     </div>
                   </v-alert>
@@ -239,10 +239,10 @@
             <v-card-title class="d-flex align-center justify-space-between">
               <div class="d-flex align-center">
                 <v-icon icon="mdi-check-circle" color="primary" class="mr-2" />
-                Tâches récentes
+                {{ t('tasks.recent') }}
               </div>
               <v-btn
-                text="Voir tout"
+                :text="t('dashboard.stats.viewAll')"
                 prepend-icon="mdi-arrow-right"
                 color="primary"
                 variant="text"
@@ -259,12 +259,12 @@
             <v-card-text v-else-if="recentTasks.length === 0">
               <div class="text-center py-8">
                 <v-icon size="48" color="grey-lighten-1" class="mb-4">mdi-check-all</v-icon>
-                <p class="text-h6 text-medium-emphasis mb-2">Aucune tâche en cours</p>
+                <p class="text-h6 text-medium-emphasis mb-2">{{ t('tasks.noTasks') }}</p>
                 <p class="text-body-2 text-medium-emphasis">
-                  Toutes vos tâches sont terminées ou vous n'avez pas de tâches assignées.
+                  {{ t('tasks.noTasksDescription') }}
                 </p>
                 <v-btn
-                  text="Créer une tâche"
+                  :text="t('tasks.createTask')"
                   prepend-icon="mdi-plus"
                   color="primary"
                   variant="elevated"
@@ -310,7 +310,7 @@
                             variant="outlined"
                           >
                             <v-icon start size="small">mdi-alert-circle</v-icon>
-                            En retard
+                            {{ t('tasks.overdue') }}
                           </v-chip>
                           <v-chip
                             v-else-if="isDueSoon(task)"
@@ -319,7 +319,7 @@
                             variant="outlined"
                           >
                             <v-icon start size="small">mdi-clock-outline</v-icon>
-                            Bientôt
+                            {{ t('tasks.dueSoon') }}
                           </v-chip>
                         </div>
                       </div>
@@ -383,16 +383,15 @@
             closable
           >
             <v-alert-title class="text-h6 mb-2">
-              Dashboard en développement
+              {{ t('dashboard.development.title') }}
             </v-alert-title>
-            
+
             <p class="mb-4">
-              Le dashboard principal est en cours de développement. 
-              Explorez les différentes sections via la navigation latérale.
+              {{ t('dashboard.development.description') }}
             </p>
-            
+
             <v-btn
-              text="Découvrir Billing Analytics"
+              :text="t('dashboard.development.discoverBilling')"
               prepend-icon="mdi-chart-bar"
               color="primary"
               variant="elevated"
@@ -418,11 +417,13 @@ import { useTasksStore } from "@/stores/tasks"
 import { computed, onMounted, ref } from "vue"
 import { useRouter } from "vue-router"
 import { dashboardApi, type DashboardMetrics } from "@/services/api/dashboard"
+import { useI18n } from "vue-i18n"
 
 const authStore = useAuthStore()
 const institutionsStore = useInstitutionsStore()
 const tasksStore = useTasksStore()
 const router = useRouter()
+const { t } = useI18n()
 
 // Dashboard metrics state
 const metrics = ref<DashboardMetrics | null>(null)
@@ -493,10 +494,10 @@ const getCurrentDate = () => {
 // Task widget helper functions
 const getPriorityLabel = (priority: string) => {
   const labels = {
-    low: "Faible",
-    medium: "Moyenne",
-    high: "Élevée",
-    urgent: "Urgente",
+    low: t('tasks.priority.low'),
+    medium: t('tasks.priority.medium'),
+    high: t('tasks.priority.high'),
+    urgent: t('tasks.priority.urgent'),
   }
   return labels[priority as keyof typeof labels] || priority
 }
@@ -552,11 +553,11 @@ const formatDueDate = (date: Date | string) => {
   const diffTime = dueDate.getTime() - now.getTime()
   const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
 
-  if (diffDays === 0) return "Aujourd'hui"
-  if (diffDays === 1) return "Demain"
-  if (diffDays === -1) return "Hier"
-  if (diffDays < 0) return `En retard de ${Math.abs(diffDays)} j.`
-  if (diffDays <= 7) return `Dans ${diffDays} j.`
+  if (diffDays === 0) return t('tasks.today')
+  if (diffDays === 1) return t('tasks.tomorrow')
+  if (diffDays === -1) return t('tasks.yesterday')
+  if (diffDays < 0) return `${t('tasks.overdueBy')} ${Math.abs(diffDays)} ${t('tasks.days')}`
+  if (diffDays <= 7) return `${t('tasks.dueIn')} ${diffDays} ${t('tasks.days')}`
 
   return dueDate.toLocaleDateString('fr-FR', {
     day: 'numeric',
@@ -583,42 +584,42 @@ const statsCards = computed(() => {
     // Fallback to store data while loading
     return [
       {
-        title: 'Institutions',
+        title: t('dashboard.stats.institutions'),
         value: institutionsStore.institutions.length.toString(),
-        description: `${institutionsStore.institutions.filter(inst => inst.isActive).length} actives`,
+        description: `${institutionsStore.institutions.filter(inst => inst.isActive).length} ${t('dashboard.stats.active')}`,
         icon: 'mdi-domain',
         color: 'blue',
-        actionLabel: 'Voir tout',
+        actionLabel: t('dashboard.stats.viewAll'),
         actionIcon: 'mdi-arrow-right',
         route: '/institutions'
       },
       {
-        title: 'Tâches',
+        title: t('dashboard.stats.tasks'),
         value: tasksStore.taskStats.total.toString(),
-        description: `${tasksStore.taskStats.inProgress} en cours, ${tasksStore.taskStats.overdue} en retard`,
+        description: `${tasksStore.taskStats.inProgress} ${t('dashboard.stats.inProgress')}, ${tasksStore.taskStats.overdue} ${t('tasks.overdue')}`,
         icon: 'mdi-check-circle',
         color: tasksStore.taskStats.overdue > 0 ? 'error' : 'green',
-        actionLabel: 'Gérer',
+        actionLabel: t('dashboard.stats.manage'),
         actionIcon: 'mdi-arrow-right',
         route: '/tasks'
       },
       {
-        title: 'Équipe',
+        title: t('dashboard.stats.team'),
         value: '...',
-        description: 'Chargement...',
+        description: t('messages.loading'),
         icon: 'mdi-account-group',
         color: 'purple',
-        actionLabel: 'Voir équipe',
+        actionLabel: t('dashboard.stats.viewTeam'),
         actionIcon: 'mdi-arrow-right',
         route: '/team'
       },
       {
-        title: 'CA du mois',
+        title: t('dashboard.stats.monthlyRevenue'),
         value: '...',
-        description: 'Chargement...',
+        description: t('messages.loading'),
         icon: 'mdi-chart-line',
         color: 'orange',
-        actionLabel: 'Analyser',
+        actionLabel: t('dashboard.stats.analyze'),
         actionIcon: 'mdi-arrow-right',
         route: '/billing/analytics'
       }
@@ -629,42 +630,42 @@ const statsCards = computed(() => {
 
   return [
     {
-      title: 'Institutions',
+      title: t('dashboard.stats.institutions'),
       value: institutions.total.toString(),
-      description: `${institutions.active} actives, ${institutions.inactive} inactives`,
+      description: `${institutions.active} ${t('dashboard.stats.active')}, ${institutions.inactive} ${t('dashboard.stats.inactive')}`,
       icon: 'mdi-domain',
       color: 'blue',
-      actionLabel: 'Voir tout',
+      actionLabel: t('dashboard.stats.viewAll'),
       actionIcon: 'mdi-arrow-right',
       route: '/institutions'
     },
     {
-      title: 'Tâches',
+      title: t('dashboard.stats.tasks'),
       value: tasks.total.toString(),
-      description: `${tasks.inProgress} en cours, ${tasks.overdue} en retard`,
+      description: `${tasks.inProgress} ${t('dashboard.stats.inProgress')}, ${tasks.overdue} ${t('tasks.overdue')}`,
       icon: 'mdi-check-circle',
       color: tasks.overdue > 0 ? 'error' : 'green',
-      actionLabel: 'Gérer',
+      actionLabel: t('dashboard.stats.manage'),
       actionIcon: 'mdi-arrow-right',
       route: '/tasks'
     },
     {
-      title: 'Équipe',
+      title: t('dashboard.stats.team'),
       value: team.activeMembers.toString(),
-      description: `${team.totalMembers} membres, ${team.teams} équipe(s)`,
+      description: `${team.totalMembers} ${t('dashboard.stats.members')}, ${team.teams} ${t('dashboard.stats.teams')}`,
       icon: 'mdi-account-group',
       color: 'purple',
-      actionLabel: 'Voir équipe',
+      actionLabel: t('dashboard.stats.viewTeam'),
       actionIcon: 'mdi-arrow-right',
       route: '/team'
     },
     {
-      title: 'CA du mois',
+      title: t('dashboard.stats.monthlyRevenue'),
       value: formatCurrency(billing.totalRevenue),
-      description: `${billing.invoicesCount} factures, ${billing.quotesCount} devis`,
+      description: `${billing.invoicesCount} ${t('dashboard.stats.invoices')}, ${billing.quotesCount} ${t('dashboard.stats.quotes')}`,
       icon: 'mdi-chart-line',
       color: 'orange',
-      actionLabel: 'Analyser',
+      actionLabel: t('dashboard.stats.analyze'),
       actionIcon: 'mdi-arrow-right',
       route: '/billing/analytics'
     }
