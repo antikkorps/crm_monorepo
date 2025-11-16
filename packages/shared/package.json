@@ -20,27 +20,6 @@
     "test:watch": "vitest",
     "lint": "eslint src --ext .ts --fix"
   },
-  "devDependencies": {
-    "@pinia/testing": "^1.0.3",
-    "@types/koa": "^3.0.1",
-    "@types/koa__cors": "^5.0.1",
-    "@types/koa__multer": "^2.0.8",
-    "@types/koa__router": "^12.0.5",
-    "@types/koa-bodyparser": "^4.3.13",
-    "@types/koa-multer": "^1.0.5",
-    "@types/koa-router": "^7.4.9",
-    "@types/node": "^24.10.1",
-    "@types/nodemailer": "^7.0.3",
-    "@vitejs/plugin-vue": "^6.0.1",
-    "@vue/tsconfig": "^0.8.1",
-    "eslint": "^9.39.1",
-    "jsdom": "^27.2.0",
-    "tsx": "^4.20.6",
-    "typescript": "^5.9.3",
-    "vite": "^7.2.2",
-    "vitest": "^4.0.9",
-    "vue-tsc": "^3.1.4"
-  },
   "dependencies": {
     "axios": "^1.13.2",
     "bcryptjs": "^3.0.3",
@@ -63,5 +42,28 @@
     "vue-router": "^4.6.3",
     "vuetify": "^3.10.11",
     "winston": "^3.18.3"
+  },
+  "devDependencies": {
+    "@pinia/testing": "^1.0.3",
+    "@types/koa": "^3.0.1",
+    "@types/koa__cors": "^5.0.1",
+    "@types/koa__multer": "^2.0.8",
+    "@types/koa__router": "^12.0.5",
+    "@types/koa-bodyparser": "^4.3.13",
+    "@types/koa-multer": "^1.0.5",
+    "@types/koa-router": "^7.4.9",
+    "@types/node": "^24.10.1",
+    "@types/nodemailer": "^7.0.3",
+    "@typescript-eslint/eslint-plugin": "^8.46.4",
+    "@typescript-eslint/parser": "^8.46.4",
+    "@vitejs/plugin-vue": "^6.0.1",
+    "@vue/tsconfig": "^0.8.1",
+    "eslint": "^9.39.1",
+    "jsdom": "^27.2.0",
+    "tsx": "^4.20.6",
+    "typescript": "^5.9.3",
+    "vite": "^7.2.2",
+    "vitest": "^4.0.9",
+    "vue-tsc": "^3.1.4"
   }
 }
