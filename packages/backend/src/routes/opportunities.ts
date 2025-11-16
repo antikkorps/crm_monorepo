@@ -30,6 +30,20 @@ router.get(
   OpportunityController.getForecast
 )
 
+// GET /api/opportunities/forecast/advanced - Get advanced revenue forecast
+router.get(
+  "/forecast/advanced",
+  requirePermission("canViewForecast"),
+  OpportunityController.getForecastAdvanced
+)
+
+// GET /api/opportunities/analytics - Get pipeline analytics
+router.get(
+  "/analytics",
+  requirePermission("canManagePipeline"),
+  OpportunityController.getAnalytics
+)
+
 // GET /api/opportunities/:id - Get single opportunity
 router.get(
   "/:id",

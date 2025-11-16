@@ -1529,3 +1529,188 @@ export class MedicalInstitutionController {
     }
   }
 }
+
+  /**
+   * GET /api/institutions/:id/lead-score
+   * Get lead score for an institution
+   */
+  static async getLeadScore(ctx: Context) {
+    try {
+      const { id } = ctx.params
+
+      const { InstitutionInsightsService } = await import("../services/InstitutionInsightsService")
+      const leadScore = await InstitutionInsightsService.calculateLeadScore(id)
+
+      ctx.body = {
+        success: true,
+        data: leadScore,
+      }
+
+      logger.info("Lead score retrieved", {
+        userId: ctx.state.user?.id,
+        institutionId: id,
+        score: leadScore.score,
+        level: leadScore.level,
+      })
+    } catch (error) {
+      logger.error("Failed to retrieve lead score", {
+        userId: ctx.state.user?.id,
+        institutionId: ctx.params.id,
+        error: (error as Error).message,
+      })
+      throw error
+    }
+  }
+
+  /**
+   * GET /api/institutions/:id/next-actions
+   * Get recommended next best actions for an institution
+   */
+  static async getNextActions(ctx: Context) {
+    try {
+      const { id } = ctx.params
+
+      const { InstitutionInsightsService } = await import("../services/InstitutionInsightsService")
+      const actions = await InstitutionInsightsService.getNextBestActions(id)
+
+      ctx.body = {
+        success: true,
+        data: actions,
+      }
+
+      logger.info("Next actions retrieved", {
+        userId: ctx.state.user?.id,
+        institutionId: id,
+        actionCount: actions.length,
+      })
+    } catch (error) {
+      logger.error("Failed to retrieve next actions", {
+        userId: ctx.state.user?.id,
+        institutionId: ctx.params.id,
+        error: (error as Error).message,
+      })
+      throw error
+    }
+  }
+
+  /**
+   * GET /api/institutions/hot-leads
+   * Get list of hot leads
+   */
+  static async getHotLeads(ctx: Context) {
+    try {
+      const { limit = 20 } = ctx.query
+
+      const { InstitutionInsightsService } = await import("../services/InstitutionInsightsService")
+      const hotLeads = await InstitutionInsightsService.getHotLeads(parseInt(limit as string, 10))
+
+      ctx.body = {
+        success: true,
+        data: hotLeads,
+      }
+
+      logger.info("Hot leads retrieved", {
+        userId: ctx.state.user?.id,
+        count: hotLeads.length,
+      })
+    } catch (error) {
+      logger.error("Failed to retrieve hot leads", {
+        userId: ctx.state.user?.id,
+        error: (error as Error).message,
+      })
+      throw error
+    }
+  }
+
+  /**
+   * GET /api/institutions/:id/lead-score
+   * Get lead score for an institution
+   */
+  static async getLeadScore(ctx: Context) {
+    try {
+      const { id } = ctx.params
+
+      const { InstitutionInsightsService } = await import("../services/InstitutionInsightsService")
+      const leadScore = await InstitutionInsightsService.calculateLeadScore(id)
+
+      ctx.body = {
+        success: true,
+        data: leadScore,
+      }
+
+      logger.info("Lead score retrieved", {
+        userId: ctx.state.user?.id,
+        institutionId: id,
+        score: leadScore.score,
+        level: leadScore.level,
+      })
+    } catch (error) {
+      logger.error("Failed to retrieve lead score", {
+        userId: ctx.state.user?.id,
+        institutionId: ctx.params.id,
+        error: (error as Error).message,
+      })
+      throw error
+    }
+  }
+
+  /**
+   * GET /api/institutions/:id/next-actions
+   * Get recommended next best actions for an institution
+   */
+  static async getNextActions(ctx: Context) {
+    try {
+      const { id } = ctx.params
+
+      const { InstitutionInsightsService } = await import("../services/InstitutionInsightsService")
+      const actions = await InstitutionInsightsService.getNextBestActions(id)
+
+      ctx.body = {
+        success: true,
+        data: actions,
+      }
+
+      logger.info("Next actions retrieved", {
+        userId: ctx.state.user?.id,
+        institutionId: id,
+        actionCount: actions.length,
+      })
+    } catch (error) {
+      logger.error("Failed to retrieve next actions", {
+        userId: ctx.state.user?.id,
+        institutionId: ctx.params.id,
+        error: (error as Error).message,
+      })
+      throw error
+    }
+  }
+
+  /**
+   * GET /api/institutions/hot-leads
+   * Get list of hot leads
+   */
+  static async getHotLeads(ctx: Context) {
+    try {
+      const { limit = 20 } = ctx.query
+
+      const { InstitutionInsightsService } = await import("../services/InstitutionInsightsService")
+      const hotLeads = await InstitutionInsightsService.getHotLeads(parseInt(limit as string, 10))
+
+      ctx.body = {
+        success: true,
+        data: hotLeads,
+      }
+
+      logger.info("Hot leads retrieved", {
+        userId: ctx.state.user?.id,
+        count: hotLeads.length,
+      })
+    } catch (error) {
+      logger.error("Failed to retrieve hot leads", {
+        userId: ctx.state.user?.id,
+        error: (error as Error).message,
+      })
+      throw error
+    }
+  }
+}
