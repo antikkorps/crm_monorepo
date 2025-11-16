@@ -1,5 +1,6 @@
 import * as fs from "fs/promises"
 import * as path from "path"
+import sanitize from "sanitize-filename"
 import { Plugin, PluginCategory, PluginLoader, PluginManifest } from "../types/plugin"
 import { logger } from "../utils/logger"
 import config from "../config/environment"
@@ -11,35 +12,65 @@ export class DefaultPluginLoader implements PluginLoader {
    * SECURITY: Validates that a path is safe and within the allowed plugin directory
    * Prevents path traversal attacks (../, absolute paths, symlinks, etc.)
    */
-  private validatePluginPath(requestedPath: string): string {
+  private async validatePluginPath(requestedPath: string): Promise<string> {
     // Get the allowed plugin directory from config
     const pluginDir = config.plugins.directory || path.join(process.cwd(), "packages", "plugins")
     const baseDir = path.resolve(pluginDir)
 
-    // Resolve the requested path
-    const resolvedPath = path.resolve(requestedPath)
+    // --- SANITIZE REQUESTED PATH ---
+    const sanitizedPath = sanitize(requestedPath)
+    if (!sanitizedPath || sanitizedPath !== requestedPath) {
+      logger.warn(`Plugin path contained illegal/suspicious characters and was rejected: "${requestedPath}" -> "${sanitizedPath}"`)
+      throw new Error(`Security: Plugin path contains illegal/suspicious characters: ${requestedPath}`)
+    }
 
-    // Check if the resolved path is within the allowed directory
-    if (!resolvedPath.startsWith(baseDir + path.sep) && resolvedPath !== baseDir) {
+    // --- ENFORCE SINGLE DIRECTORY LEVEL (NO PATH SEPARATORS) ---
+    // Only allow plugin directories that are direct children (no "/")
+    if (sanitizedPath.includes(path.sep) || sanitizedPath.includes("/") || sanitizedPath.includes("\\")) {
+      logger.warn(`Plugin path contains forbidden path separators: ${requestedPath}`)
+      throw new Error(`Security: Plugin path must be a single directory name`)
+    }
+
+    // Always resolve user input relative to the plugin directory
+    const combinedPath = path.resolve(baseDir, sanitizedPath)
+
+    // Get real paths to eliminate symlink bypasses
+    const baseRealPath = await fs.realpath(baseDir)
+    let combinedRealPath: string
+    try {
+      combinedRealPath = await fs.realpath(combinedPath)
+    } catch (e) {
+      // If file does not exist yet, use the combined resolved path (for directory checks)
+      combinedRealPath = combinedPath
+    }
+
+    // Check: must reside within the allowed plugin directory after resolving symlinks and ".."
+    if (
+      !combinedRealPath.startsWith(baseRealPath + path.sep) &&
+      combinedRealPath !== baseRealPath
+    ) {
       throw new Error(
-        `Security: Plugin path "${requestedPath}" is outside allowed directory "${baseDir}"`
+        `Security: Plugin path "${requestedPath}" is outside allowed directory "${baseRealPath}"`
       )
     }
 
-    // Additional check: reject paths containing suspicious patterns
-    const normalizedPath = path.normalize(requestedPath)
-    if (normalizedPath.includes("..") || path.isAbsolute(requestedPath)) {
+    // Additional strict patterns: reject ".." segments anywhere, and absolute paths
+    const normalizedPath = path.normalize(sanitizedPath)
+    if (
+      normalizedPath.includes("..") ||
+      path.isAbsolute(sanitizedPath)
+    ) {
       logger.warn(`Suspicious plugin path rejected: ${requestedPath}`)
       throw new Error(`Security: Invalid plugin path pattern: ${requestedPath}`)
     }
 
-    return resolvedPath
+    return combinedRealPath
   }
 
   async load(pluginPath: string): Promise<Plugin> {
     try {
       // SECURITY: Validate path before any filesystem operations
-      const absolutePath = this.validatePluginPath(pluginPath)
+      const absolutePath = await this.validatePluginPath(pluginPath)
 
       // Check if plugin directory exists
       const stats = await fs.stat(absolutePath)
@@ -163,7 +194,7 @@ export class DefaultPluginLoader implements PluginLoader {
 
     try {
       // SECURITY: Validate manifest path (pluginPath should already be validated by caller)
-      const validatedPath = this.validatePluginPath(manifestPath)
+      const validatedPath = await this.validatePluginPath(manifestPath)
       const manifestContent = await fs.readFile(validatedPath, "utf-8")
       const manifest = JSON.parse(manifestContent)
 

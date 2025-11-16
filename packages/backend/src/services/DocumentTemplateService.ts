@@ -2,6 +2,7 @@ import { existsSync } from "fs"
 import { readdir, stat, unlink, writeFile } from "fs/promises"
 import { File as KoaFile } from "koa-multer"
 import { join } from "path"
+import sanitizeHtml from "sanitize-html"
 import {
   DocumentTemplate,
   DocumentTemplateCreationAttributes,
@@ -623,42 +624,24 @@ export class DocumentTemplateService {
   }
 
   private cleanHtmlForPreview(html: string): string {
-    // SECURITY: Comprehensive HTML sanitization for preview
-    // Note: For production, consider using a dedicated library like 'sanitize-html'
-
-    // Remove all script tags (multiple passes to handle nested/malformed tags)
-    // Handles: <script>, <script >, <SCRIPT>, etc.
-    let previousHtml = ''
-    while (previousHtml !== html) {
-      previousHtml = html
-      html = html.replace(/<script[\s\S]*?<\/script>/gi, '')
-      html = html.replace(/<script[^>]*>/gi, '') // Remove unclosed script tags
-    }
-
-    // Remove any link tags that might reference external scripts or styles
-    html = html.replace(/<link[^>]*>/gi, '')
-
-    // Remove ALL event handlers (onclick, onload, onerror, etc.)
-    // Handles both quoted and unquoted attribute values
-    html = html.replace(/\s+on\w+\s*=\s*["'][^"']*["']/gi, '') // with quotes
-    html = html.replace(/\s+on\w+\s*=\s*[^\s>]*/gi, '') // without quotes
-
-    // Remove dangerous attributes
-    html = html.replace(/\s+javascript:/gi, '')
-    html = html.replace(/\s+data:/gi, '')
-    html = html.replace(/\s+vbscript:/gi, '')
-
-    // Remove style tags that could contain expressions
-    html = html.replace(/<style[\s\S]*?<\/style>/gi, '')
-
-    // Remove iframe, embed, object tags
-    html = html.replace(/<(iframe|embed|object)[\s\S]*?<\/\1>/gi, '')
-    html = html.replace(/<(iframe|embed|object)[^>]*>/gi, '')
-
-    // Remove meta refresh tags
-    html = html.replace(/<meta[^>]*http-equiv[^>]*>/gi, '')
-
-    return html
+    // SECURITY: Comprehensive HTML sanitization for preview using 'sanitize-html'
+    // For production, this uses a robust and well-maintained library.
+    // Allow a minimal set of safe tags and attributes, or restrict further if needed.
+    return sanitizeHtml(html, {
+      allowedTags: ['b', 'i', 'em', 'strong', 'u', 'p', 'br', 'ul', 'ol', 'li', 'span', 'div', 'table', 'tr', 'td', 'th', 'thead', 'tbody', 'tfoot', 'pre', 'code'],
+      allowedAttributes: {
+        a: ['href', 'name', 'target', 'rel'],
+        img: ['src', 'alt', 'title', 'width', 'height'],
+        span: ['style'],
+        div: ['style'],
+        '*': ['style']
+      },
+      allowedSchemes: ['http', 'https', 'mailto'],
+      allowProtocolRelative: false,
+      allowedIframeHostnames: [],
+      // Disallow all scripts, event handlers, style elements, iframes, embeds, objects, etc.
+      disallowedTagsMode: 'discard'
+    });
   }
 
   private getDefaultStyles(): string {

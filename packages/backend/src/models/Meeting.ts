@@ -372,11 +372,17 @@ export class Meeting
         {
           [Op.or]: [
             { organizerId: filters.userId },
-            {
-              id: {
-                [Op.in]: participantMeetingIds,
-              },
-            },
+            participantMeetingIds.length > 0
+              ? {
+                  id: {
+                    [Op.in]: participantMeetingIds,
+                  },
+                }
+              : {
+                  id: {
+                    [Op.in]: [-1],
+                  },
+                },
           ],
         },
       ]
@@ -391,8 +397,16 @@ export class Meeting
         attributes: ["meetingId"],
       })
       const participantMeetingIds = participantMeetings.map((p) => p.meetingId)
-      whereClause.id = {
-        [Op.in]: participantMeetingIds,
+
+      if (participantMeetingIds.length > 0) {
+        whereClause.id = {
+          [Op.in]: participantMeetingIds,
+        }
+      } else {
+        // No participant meetings found, return no results
+        whereClause.id = {
+          [Op.in]: [-1], // Use a condition that returns no results
+        }
       }
     }
 

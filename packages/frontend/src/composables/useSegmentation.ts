@@ -193,8 +193,8 @@ export function useSegmentation() {
   }
 
   // Preview segment with caching
-  const previewSegment = async (criteria: any): Promise<SegmentPreviewData | null> => {
-    const cacheKey = JSON.stringify(criteria)
+  const previewSegment = async (type: string, criteria: any): Promise<SegmentPreviewData | null> => {
+    const cacheKey = JSON.stringify({ type, criteria })
     
     // Check cache first
     const cachedPreview = previewCache.get(cacheKey)
@@ -205,7 +205,7 @@ export function useSegmentation() {
     loading.value = true
     error.value = null
     try {
-      const response = await segmentationApi.previewSegment('institution', criteria)
+      const response = await segmentationApi.previewSegment(type, criteria)
       // Cache the result for 2 minutes
       previewCache.set(cacheKey, response.data, 2 * 60 * 1000)
       return response.data

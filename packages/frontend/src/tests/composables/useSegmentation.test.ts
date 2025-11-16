@@ -213,9 +213,28 @@ describe('useSegmentation', () => {
 
     const { previewSegment } = useSegmentation()
     
-    const result = await previewSegment({})
+    const result = await previewSegment('institution', {})
     
     expect(result).toEqual(mockPreviewData)
     expect(mockApiClient.previewSegment).toHaveBeenCalledWith('institution', {})
+  })
+
+  it('should preview contact segment successfully', async () => {
+    const mockPreviewData = {
+      count: 50,
+      sampleRecords: [],
+      lastUpdated: new Date()
+    }
+    
+    mockApiClient.previewSegment.mockResolvedValue({
+      data: mockPreviewData
+    })
+
+    const { previewSegment } = useSegmentation()
+    
+    const result = await previewSegment('contact', {})
+    
+    expect(result).toEqual(mockPreviewData)
+    expect(mockApiClient.previewSegment).toHaveBeenCalledWith('contact', {})
   })
 })
