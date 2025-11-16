@@ -27,7 +27,7 @@
             class="action-btn"
             @click="$emit('edit', call)"
           >
-            <v-tooltip text="Modifier">
+            <v-tooltip :text="t('common.edit')">
               <template #activator="{ props }">
                 <v-icon v-bind="props">mdi-pencil</v-icon>
               </template>
@@ -41,7 +41,7 @@
             class="action-btn"
             @click="$emit('delete', call)"
           >
-            <v-tooltip text="Supprimer">
+            <v-tooltip :text="t('common.delete')">
               <template #activator="{ props }">
                 <v-icon v-bind="props">mdi-delete</v-icon>
               </template>
@@ -76,7 +76,7 @@
             <v-icon size="20" color="primary">mdi-calendar-clock</v-icon>
           </div>
           <div class="meta-content">
-            <div class="meta-label">Date</div>
+            <div class="meta-label">{{ t('labels.date') }}</div>
             <div class="meta-value">{{ formatDate(call.createdAt) }}</div>
           </div>
         </div>
@@ -94,7 +94,7 @@
             </v-avatar>
           </div>
           <div class="meta-content">
-            <div class="meta-label">Utilisateur</div>
+            <div class="meta-label">{{ t('contact.firstName') }}</div>
             <div class="meta-value">{{ call.user.firstName }} {{ call.user.lastName }}</div>
           </div>
         </div>
@@ -105,7 +105,7 @@
             <v-icon size="20" color="primary">mdi-office-building</v-icon>
           </div>
           <div class="meta-content">
-            <div class="meta-label">Institution</div>
+            <div class="meta-label">{{ t('institution.name') }}</div>
             <div class="meta-value">{{ call.institution.name }}</div>
           </div>
         </div>
@@ -116,7 +116,7 @@
             <v-icon size="20" color="info">mdi-account</v-icon>
           </div>
           <div class="meta-content">
-            <div class="meta-label">Contact</div>
+            <div class="meta-label">{{ t('calls.contactPersonField') }}</div>
             <div class="meta-value">{{ call.contactPerson.firstName }} {{ call.contactPerson.lastName }}</div>
           </div>
         </div>
@@ -128,6 +128,7 @@
 <script setup lang="ts">
 import type { Call } from "@medical-crm/shared"
 import { computed } from "vue"
+import { useI18n } from "vue-i18n"
 
 interface Props {
   call: Call
@@ -140,12 +141,13 @@ interface Emits {
 
 const props = defineProps<Props>()
 const emit = defineEmits<Emits>()
+const { t } = useI18n()
 
 const typeLabel = computed(() => {
   const labels = {
-    incoming: "Entrant",
-    outgoing: "Sortant",
-    missed: "Manqué",
+    incoming: t('calls.direction.inbound'),
+    outgoing: t('calls.direction.outbound'),
+    missed: t('common.warning'),
   }
   return labels[props.call.callType]
 })

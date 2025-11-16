@@ -7,7 +7,7 @@
   >
     <v-card>
       <v-card-title class="dialog-header">
-        <span class="text-h5">{{ isEdit ? 'Modifier la note' : 'Nouvelle note' }}</span>
+        <span class="text-h5">{{ isEdit ? $t('notes.edit') : $t('notes.new') }}</span>
         <v-btn
           icon="mdi-close"
           variant="text"
@@ -20,8 +20,8 @@
           <!-- Title -->
           <v-text-field
             v-model="formData.title"
-            label="Titre *"
-            placeholder="Titre de la note"
+            :label="`${$t('notes.titleField')} *`"
+            :placeholder="$t('notes.titlePlaceholder')"
             prepend-inner-icon="mdi-format-title"
             :rules="[required]"
             variant="outlined"
@@ -32,8 +32,8 @@
           <!-- Content -->
           <v-textarea
             v-model="formData.content"
-            label="Contenu *"
-            placeholder="Contenu de la note..."
+            :label="`${$t('notes.contentField')} *`"
+            :placeholder="$t('notes.contentPlaceholder')"
             prepend-inner-icon="mdi-text"
             :rules="[required]"
             variant="outlined"
@@ -44,7 +44,7 @@
 
           <!-- Tags -->
           <div class="mb-4">
-            <v-label class="mb-2">Tags</v-label>
+            <v-label class="mb-2">{{ $t('notes.tagsField') }}</v-label>
             <div class="tags-input-container">
               <v-chip
                 v-for="(tag, index) in formData.tags"
@@ -59,7 +59,7 @@
               </v-chip>
               <v-text-field
                 v-model="newTag"
-                placeholder="Ajouter un tag..."
+                :placeholder="$t('notes.tagsPlaceholder')"
                 variant="plain"
                 density="compact"
                 hide-details
@@ -76,8 +76,8 @@
             :items="institutionOptions"
             item-title="label"
             item-value="value"
-            label="Institution"
-            placeholder="Sélectionner une institution (optionnel)"
+            :label="$t('notes.institutionField')"
+            :placeholder="$t('notes.institutionPlaceholder')"
             prepend-inner-icon="mdi-office-building"
             clearable
             :loading="loadingInstitutions"
@@ -90,7 +90,7 @@
           <div class="privacy-section mb-4">
             <v-switch
               v-model="formData.isPrivate"
-              label="Note privée"
+              :label="$t('notes.privacySection.private')"
               color="error"
               hide-details
             >
@@ -99,7 +99,7 @@
               </template>
             </v-switch>
             <p class="privacy-hint">
-              Les notes privées ne peuvent être vues que par vous
+              {{ $t('notes.privacySection.hint') }}
             </p>
           </div>
 
@@ -109,7 +109,7 @@
               <v-divider class="mb-4" />
               <h3 class="share-title mb-3">
                 <v-icon class="me-2">mdi-share-variant</v-icon>
-                Partager avec d'autres utilisateurs
+                {{ $t('notes.sharingSection.title') }}
               </h3>
 
               <!-- Share User Selection -->
@@ -119,8 +119,8 @@
                   :items="availableUserOptions"
                   item-title="label"
                   item-value="value"
-                  label="Sélectionner un utilisateur"
-                  placeholder="Choisir un utilisateur..."
+                  :label="$t('notes.sharingSection.selectUser')"
+                  :placeholder="$t('notes.sharingSection.selectUserPlaceholder')"
                   prepend-inner-icon="mdi-account-plus"
                   clearable
                   :loading="loadingUsers"
@@ -132,7 +132,7 @@
                   :items="permissionOptions"
                   item-title="label"
                   item-value="value"
-                  label="Permission"
+                  :label="$t('notes.sharingSection.permission')"
                   variant="outlined"
                   density="comfortable"
                   class="permission-select"
@@ -144,7 +144,7 @@
                   @click="addShare"
                   :disabled="!selectedUserId"
                 >
-                  Ajouter
+                  {{ $t('notes.sharingSection.addUser') }}
                 </v-btn>
               </div>
 
@@ -167,7 +167,7 @@
                         size="small"
                         variant="flat"
                       >
-                        {{ share.permission === 'write' ? 'Écriture' : 'Lecture' }}
+                        {{ share.permission === 'write' ? $t('notes.sharingSection.permissions.write') : $t('notes.sharingSection.permissions.read') }}
                       </v-chip>
                       <v-btn
                         icon="mdi-delete"
@@ -193,7 +193,7 @@
           @click="handleCancel"
           :disabled="loading"
         >
-          Annuler
+          {{ $t('notes.cancel') }}
         </v-btn>
         <v-btn
           color="primary"
@@ -201,7 +201,7 @@
           @click="handleSubmit"
           :loading="loading"
         >
-          {{ isEdit ? 'Mettre à jour' : 'Créer' }}
+          {{ isEdit ? $t('notes.update') : $t('notes.create') }}
         </v-btn>
       </v-card-actions>
     </v-card>
@@ -212,6 +212,7 @@
 import { institutionsApi, usersApi } from "@/services/api"
 import type { Note, NoteCreateRequest, SharePermission } from "@medical-crm/shared"
 import { computed, onMounted, ref, watch } from "vue"
+import { useI18n } from "vue-i18n"
 
 interface Props {
   modelValue: boolean
@@ -248,10 +249,12 @@ const formData = ref<NoteCreateRequest>({
 
 const isEdit = computed(() => !!props.note)
 
-const permissionOptions = [
-  { label: "Lecture seule", value: "read" as SharePermission },
-  { label: "Lecture et écriture", value: "write" as SharePermission },
-]
+const { t } = useI18n()
+
+const permissionOptions = computed(() => [
+  { label: t('notes.sharingSection.permissions.read'), value: "read" as SharePermission },
+  { label: t('notes.sharingSection.permissions.write'), value: "write" as SharePermission },
+])
 
 const availableUserOptions = computed(() => {
   // Filter out users already in shareWith
@@ -259,7 +262,7 @@ const availableUserOptions = computed(() => {
   return userOptions.value.filter((user) => !sharedUserIds.includes(user.value))
 })
 
-const required = (value: any) => !!value || "Ce champ est requis"
+const required = (value: any) => !!value || t('notes.requiredField')
 
 watch(
   () => props.note,
@@ -331,7 +334,7 @@ const removeShare = (index: number) => {
 
 const getUserName = (userId: string): string => {
   const user = userOptions.value.find((u) => u.value === userId)
-  return user?.label || "Utilisateur inconnu"
+  return user?.label || t('notes.sharingSection.userUnknown')
 }
 
 const handleSubmit = async () => {

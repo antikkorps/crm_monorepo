@@ -4,7 +4,7 @@
       <v-col cols="12">
         <v-text-field
           v-model="form.name"
-          label="Nom de l'opportunité *"
+          :label="t('opportunities.titleField') + ' *'"
           :rules="[rules.required]"
           variant="outlined"
           density="comfortable"
@@ -17,7 +17,7 @@
           :items="institutions"
           item-title="name"
           item-value="id"
-          label="Institution *"
+          :label="t('opportunities.institutionField') + ' *'"
           :rules="[rules.required]"
           variant="outlined"
           density="comfortable"
@@ -32,7 +32,7 @@
           :items="contacts"
           item-title="fullName"
           item-value="id"
-          label="Contact Principal"
+          :label="t('opportunities.contactPersonField')"
           variant="outlined"
           density="comfortable"
           :loading="loadingContacts"
@@ -44,7 +44,7 @@
       <v-col cols="12" md="6">
         <v-text-field
           v-model.number="form.value"
-          label="Valeur (€) *"
+          :label="t('opportunities.valueField') + ' *'"
           type="number"
           :rules="[rules.required, rules.positive]"
           variant="outlined"
@@ -56,7 +56,7 @@
       <v-col cols="12" md="6">
         <v-slider
           v-model="form.probability"
-          label="Probabilité (%)"
+          :label="t('opportunities.probabilityField')"
           :min="0"
           :max="100"
           :step="5"
@@ -82,7 +82,7 @@
         <v-select
           v-model="form.stage"
           :items="stageOptions"
-          label="Étape *"
+          :label="t('opportunities.stageField') + ' *'"
           :rules="[rules.required]"
           variant="outlined"
           density="comfortable"
@@ -92,7 +92,7 @@
       <v-col cols="12" md="6">
         <v-text-field
           v-model="form.expectedCloseDate"
-          label="Date de clôture prévue *"
+          :label="t('opportunities.expectedCloseDateField') + ' *'"
           type="date"
           :rules="[rules.required]"
           variant="outlined"
@@ -125,7 +125,7 @@
       <v-col cols="12">
         <v-combobox
           v-model="form.competitors"
-          label="Concurrents"
+          :label="t('opportunities.competitorsField')"
           variant="outlined"
           density="comfortable"
           multiple
@@ -137,10 +137,10 @@
       <v-col cols="12">
         <v-text-field
           v-model="form.source"
-          label="Source"
+          :label="t('opportunities.sourceField')"
           variant="outlined"
           density="comfortable"
-          placeholder="Ex: Recommandation, Site Web, Salon..."
+          :placeholder="t('opportunities.sourcePlaceholder')"
         ></v-text-field>
       </v-col>
 
@@ -158,14 +158,14 @@
     <v-divider class="my-4"></v-divider>
 
     <div class="d-flex justify-end ga-2">
-      <v-btn variant="text" @click="handleCancel">Annuler</v-btn>
+      <v-btn variant="text" @click="handleCancel">{{ $t('opportunities.cancel') }}</v-btn>
       <v-btn
         type="submit"
         color="primary"
         :loading="loading"
         :disabled="loading"
       >
-        {{ opportunity ? "Mettre à jour" : "Créer" }}
+        {{ opportunity ? $t('opportunities.update') : $t('opportunities.create') }}
       </v-btn>
     </div>
   </v-form>
@@ -177,6 +177,7 @@ import type { Opportunity, OpportunityStage } from "@medical-crm/shared"
 import { useOpportunitiesStore } from "@/stores/opportunities"
 import { institutionsApi } from "@/services/api"
 import { useAuthStore } from "@/stores/auth"
+import { useI18n } from "vue-i18n"
 
 interface Props {
   opportunity?: Opportunity | null
@@ -188,6 +189,7 @@ const emit = defineEmits<{
   cancel: []
 }>()
 
+const { t } = useI18n()
 const opportunitiesStore = useOpportunitiesStore()
 const authStore = useAuthStore()
 const formRef = ref<any>(null)
@@ -213,17 +215,17 @@ const form = ref({
   notes: "",
 })
 
-const stageOptions = [
-  { title: "Prospection", value: "prospecting" },
-  { title: "Qualification", value: "qualification" },
-  { title: "Proposition", value: "proposal" },
-  { title: "Négociation", value: "negotiation" },
-]
+const stageOptions = computed(() => [
+  { title: t('opportunities.stage.prospecting'), value: "prospecting" },
+  { title: t('opportunities.stage.qualification'), value: "qualification" },
+  { title: t('opportunities.stage.proposal'), value: "proposal" },
+  { title: t('opportunities.stage.negotiation'), value: "negotiation" },
+])
 
-const rules = {
-  required: (value: any) => !!value || "Ce champ est requis",
-  positive: (value: number) => value >= 0 || "La valeur doit être positive",
-}
+const rules = computed(() => ({
+  required: (value: any) => !!value || t('validation.required', { field: 'Field' }),
+  positive: (value: number) => value >= 0 || "Value must be positive",
+}))
 
 const loadInstitutions = async () => {
   loadingInstitutions.value = true

@@ -25,7 +25,7 @@
               class="overdue-badge"
             >
               <v-icon start>mdi-alert-circle</v-icon>
-              En retard
+              {{ t('tasks.overdue') }}
             </v-chip>
             <v-chip
               v-else-if="isDueSoon"
@@ -35,7 +35,7 @@
               class="due-soon-badge"
             >
               <v-icon start>mdi-clock-outline</v-icon>
-              Bientôt
+              {{ t('tasks.dueSoon') }}
             </v-chip>
           </div>
         </div>
@@ -49,7 +49,7 @@
             class="action-btn"
             @click="$emit('edit', task)"
           >
-            <v-tooltip text="Modifier">
+            <v-tooltip :text="t('actions.edit')">
               <template #activator="{ props }">
                 <v-icon v-bind="props">mdi-pencil</v-icon>
               </template>
@@ -63,7 +63,7 @@
             class="action-btn"
             @click="$emit('delete', task)"
           >
-            <v-tooltip text="Supprimer">
+            <v-tooltip :text="t('actions.delete')">
               <template #activator="{ props }">
                 <v-icon v-bind="props">mdi-delete</v-icon>
               </template>
@@ -108,7 +108,7 @@
             </v-avatar>
           </div>
           <div class="meta-content">
-            <div class="meta-label">Assigné à</div>
+            <div class="meta-label">{{ t('tasks.assignedTo') }}</div>
             <div class="meta-value">{{ task.assignee.firstName }} {{ task.assignee.lastName }}</div>
           </div>
         </div>
@@ -119,7 +119,7 @@
             <v-icon size="20" color="primary">mdi-office-building</v-icon>
           </div>
           <div class="meta-content">
-            <div class="meta-label">Institution</div>
+            <div class="meta-label">{{ t('labels.type') }}</div>
             <div class="meta-value">{{ task.institution.name }}</div>
           </div>
         </div>
@@ -130,7 +130,7 @@
             <v-icon size="20" :color="dueDateColor">mdi-calendar</v-icon>
           </div>
           <div class="meta-content">
-            <div class="meta-label">Échéance</div>
+            <div class="meta-label">{{ t('tasks.dueDate') }}</div>
             <div class="meta-value" :class="dueDateClass">{{ formatDueDate(task.dueDate) }}</div>
           </div>
         </div>
@@ -148,7 +148,7 @@
           density="compact"
           variant="outlined"
           hide-details
-          :placeholder="`Changer le statut (${statusLabel})`"
+          :placeholder="`${t('tasks.changeStatus')} (${statusLabel})`"
         />
       </div>
     </v-card-text>
@@ -159,6 +159,7 @@
 import type { Task, TaskStatus } from "@medical-crm/shared"
 // Vuetify components are auto-imported
 import { computed, ref, watch } from "vue"
+import { useI18n } from "vue-i18n"
 
 interface Props {
   task: Task
@@ -172,6 +173,7 @@ interface Emits {
 
 const props = defineProps<Props>()
 const emit = defineEmits<Emits>()
+const { t } = useI18n()
 
 const localStatus = ref(props.task.status)
 
@@ -182,19 +184,19 @@ watch(
   }
 )
 
-const statusOptions = [
-  { label: "À faire", value: "todo" },
-  { label: "En cours", value: "in_progress" },
-  { label: "Terminée", value: "completed" },
-  { label: "Annulée", value: "cancelled" },
-]
+const statusOptions = computed(() => [
+  { label: t('tasks.status.todo'), value: "todo" },
+  { label: t('tasks.status.in_progress'), value: "in_progress" },
+  { label: t('tasks.status.completed'), value: "completed" },
+  { label: t('tasks.status.cancelled'), value: "cancelled" },
+])
 
 const priorityLabel = computed(() => {
   const labels = {
-    low: "Faible",
-    medium: "Moyenne",
-    high: "Élevée",
-    urgent: "Urgente",
+    low: t('tasks.priority.low'),
+    medium: t('tasks.priority.medium'),
+    high: t('tasks.priority.high'),
+    urgent: t('tasks.priority.urgent'),
   }
   return labels[props.task.priority]
 })
@@ -221,10 +223,10 @@ const priorityIcon = computed(() => {
 
 const statusLabel = computed(() => {
   const labels = {
-    todo: "À faire",
-    in_progress: "En cours",
-    completed: "Terminée",
-    cancelled: "Annulée",
+    todo: t('tasks.status.todo'),
+    in_progress: t('tasks.status.in_progress'),
+    completed: t('tasks.status.completed'),
+    cancelled: t('tasks.status.cancelled'),
   }
   return labels[props.task.status]
 })
@@ -290,11 +292,11 @@ const formatDueDate = (date: Date | string) => {
   const diffTime = dueDate.getTime() - now.getTime()
   const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
 
-  if (diffDays === 0) return "Due today"
-  if (diffDays === 1) return "Due tomorrow"
-  if (diffDays === -1) return "Due yesterday"
-  if (diffDays < 0) return `Overdue by ${Math.abs(diffDays)} days`
-  if (diffDays <= 7) return `Due in ${diffDays} days`
+  if (diffDays === 0) return t('tasks.today')
+  if (diffDays === 1) return t('tasks.tomorrow')
+  if (diffDays === -1) return t('tasks.yesterday')
+  if (diffDays < 0) return `${t('tasks.overdueBy')} ${Math.abs(diffDays)} ${t('tasks.days')}`
+  if (diffDays <= 7) return `${t('tasks.dueIn')} ${diffDays} ${t('tasks.days')}`
 
   return dueDate.toLocaleDateString()
 }

@@ -60,8 +60,8 @@
           <v-switch
             v-model="createInDigiforma"
             color="primary"
-            label="Créer dans Digiforma si manquant"
-            hint="Les institutions non trouvées dans Digiforma y seront créées automatiquement"
+            :label="t('institutions.createInDigiforma')"
+            :hint="t('institutions.createInDigiformaHint')"
             persistent-hint
             density="comfortable"
           />
@@ -72,10 +72,10 @@
           <v-alert :type="preview.invalidRows === 0 ? 'success' : 'warning'" variant="tonal" class="mb-2">
             <div class="d-flex justify-space-between align-center">
               <span>
-                Lignes: {{ preview.totalRows }} total, {{ preview.validRows }} valides, {{ preview.invalidRows }} invalides
+                {{ t('institutions.validationSummary', { total: preview.totalRows, errors: preview.invalidRows, duplicates: 0 }) }}
               </span>
               <v-btn v-if="preview.preview.length > 0" size="small" variant="text" @click="showPreview = !showPreview">
-                <v-icon start>mdi-table</v-icon>{{ showPreview ? 'Masquer' : 'Voir' }} le détail
+                <v-icon start>mdi-table</v-icon>{{ showPreview ? t('institutions.hideErrors') : t('institutions.showErrors') }} {{ t('institutions.preview') }}
               </v-btn>
             </div>
           </v-alert>
@@ -85,11 +85,11 @@
               <thead>
                 <tr>
                   <th class="text-left">#</th>
-                  <th class="text-left">Nom</th>
-                  <th class="text-left">Ville</th>
-                  <th class="text-center">Matching</th>
-                  <th class="text-center">Digiforma</th>
-                  <th class="text-center">Sage</th>
+                  <th class="text-left">{{ t('institutions.tableHeaders.institution') }}</th>
+                  <th class="text-left">{{ t('institutions.city') }}</th>
+                  <th class="text-center">{{ t('institutions.matching') }}</th>
+                  <th class="text-center">{{ t('institutions.digiforma') }}</th>
+                  <th class="text-center">{{ t('institutions.sage') }}</th>
                 </tr>
               </thead>
               <tbody>
@@ -104,30 +104,30 @@
                   <td>{{ row.city }}</td>
                   <td class="text-center">
                     <v-chip v-if="row.matchStatus === 'exact'" size="small" color="success" variant="flat">
-                      Exact
+                      {{ t('institutions.exact') }}
                       <v-tooltip activator="parent" location="top">
-                        {{ row.matchType === 'accountingNumber' ? 'Par numéro comptable' : 'Par nom et adresse' }}
+                        {{ row.matchType === 'accountingNumber' ? t('institutions.byAccountingNumber') : t('institutions.byNameAndAddress') }}
                       </v-tooltip>
                     </v-chip>
                     <v-chip v-else-if="row.matchStatus === 'fuzzy'" size="small" color="warning" variant="flat">
-                      Fuzzy {{ row.matchConfidence }}%
+                      {{ t('institutions.fuzzy') }} {{ row.matchConfidence }}%
                       <v-tooltip activator="parent" location="top">
-                        Correspondance approximative par nom et ville
+                        {{ t('institutions.fuzzyMatchHint') }}
                       </v-tooltip>
                     </v-chip>
                     <v-chip v-else size="small" color="info" variant="flat">
-                      Nouveau
+                      {{ t('institutions.new') }}
                     </v-chip>
                   </td>
                   <td class="text-center">
                     <v-chip v-if="row.digiformaStatus === 'exists'" size="small" color="success" variant="tonal">
-                      <v-icon start size="16">mdi-check</v-icon>Existe
+                      <v-icon start size="16">mdi-check</v-icon>{{ t('institutions.digiformaExists') }}
                     </v-chip>
                     <v-chip v-else-if="row.digiformaStatus === 'will_create'" size="small" color="info" variant="tonal">
-                      <v-icon start size="16">mdi-plus</v-icon>À créer
+                      <v-icon start size="16">mdi-plus</v-icon>{{ t('institutions.digiformaWillCreate') }}
                     </v-chip>
                     <v-chip v-else size="small" color="grey" variant="tonal">
-                      <v-icon start size="16">mdi-help</v-icon>Inconnu
+                      <v-icon start size="16">mdi-help</v-icon>{{ t('institutions.digiformaUnknown') }}
                     </v-chip>
                   </td>
                   <td class="text-center">
@@ -154,34 +154,34 @@
         <!-- Sage Alert -->
         <v-alert v-if="hasAccountingNumbers" type="info" variant="tonal" density="compact" class="mb-4">
           <v-icon start>mdi-information</v-icon>
-          Les institutions avec numéro comptable seront liées à Sage lors de la prochaine synchronisation
+          {{ t('institutions.sageAlert') }}
         </v-alert>
 
         <v-alert v-if="errorMessage" type="error" variant="tonal" class="mb-2">{{ errorMessage }}</v-alert>
 
         <div v-if="result" class="mb-2">
           <v-alert :type="result.success ? 'success' : 'warning'" variant="tonal">
-            <div class="text-subtitle-2 mb-2">Résultat de l'import</div>
+            <div class="text-subtitle-2 mb-2">{{ t('institutions.importResultTitle') }}</div>
             <div class="d-flex flex-column gap-1">
               <div>
                 <v-icon size="small" class="mr-1">mdi-check-circle</v-icon>
-                <strong>{{ result.successfulImports || 0 }}</strong> importées / <strong>{{ result.totalRows || 0 }}</strong> total
+                <strong>{{ result.successfulImports || 0 }}</strong> {{ t('institutions.imported') }} / <strong>{{ result.totalRows || 0 }}</strong> {{ t('institutions.total') }}
               </div>
               <div v-if="result.failedImports > 0" class="text-error">
                 <v-icon size="small" class="mr-1">mdi-alert-circle</v-icon>
-                <strong>{{ result.failedImports }}</strong> erreurs
+                <strong>{{ result.failedImports }}</strong> {{ t('institutions.errors') }}
               </div>
               <div v-if="result.duplicatesFound > 0">
                 <v-icon size="small" class="mr-1">mdi-content-copy</v-icon>
-                <strong>{{ result.duplicatesFound }}</strong> doublons trouvés
+                <strong>{{ result.duplicatesFound }}</strong> {{ t('institutions.duplicatesFound') }}
               </div>
               <div v-if="result.duplicatesMerged > 0">
                 <v-icon size="small" class="mr-1">mdi-merge</v-icon>
-                <strong>{{ result.duplicatesMerged }}</strong> doublons fusionnés
+                <strong>{{ result.duplicatesMerged }}</strong> {{ t('institutions.duplicatesMerged') }}
               </div>
               <div v-if="result.digiformaCreated > 0" class="text-info">
                 <v-icon size="small" class="mr-1">mdi-cloud-upload</v-icon>
-                <strong>{{ result.digiformaCreated }}</strong> créées dans Digiforma
+                <strong>{{ result.digiformaCreated }}</strong> {{ t('institutions.createdInDigiforma') }}
               </div>
             </div>
           </v-alert>

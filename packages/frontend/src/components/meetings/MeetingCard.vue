@@ -25,7 +25,7 @@
               class="today-badge"
             >
               <v-icon start>mdi-calendar-today</v-icon>
-              Aujourd'hui
+              {{ t('time.today') }}
             </v-chip>
             <v-chip
               v-else-if="isUpcoming"
@@ -35,7 +35,7 @@
               class="upcoming-badge"
             >
               <v-icon start>mdi-clock-outline</v-icon>
-              À venir
+              {{ t('common.next') }}
             </v-chip>
           </div>
         </div>
@@ -49,7 +49,7 @@
             class="action-btn"
             @click="$emit('edit', meeting)"
           >
-            <v-tooltip text="Modifier">
+            <v-tooltip :text="t('common.edit')">
               <template #activator="{ props }">
                 <v-icon v-bind="props">mdi-pencil</v-icon>
               </template>
@@ -63,7 +63,7 @@
             class="action-btn"
             @click="$emit('export', meeting)"
           >
-            <v-tooltip text="Exporter (.ics)">
+            <v-tooltip text="Export (.ics)">
               <template #activator="{ props }">
                 <v-icon v-bind="props">mdi-download</v-icon>
               </template>
@@ -77,7 +77,7 @@
             class="action-btn"
             @click="$emit('send-invitation', meeting)"
           >
-            <v-tooltip text="Envoyer invitation">
+            <v-tooltip text="Send invitation">
               <template #activator="{ props }">
                 <v-icon v-bind="props">mdi-email-send</v-icon>
               </template>
@@ -91,7 +91,7 @@
             class="action-btn"
             @click="$emit('delete', meeting)"
           >
-            <v-tooltip text="Supprimer">
+            <v-tooltip :text="t('common.delete')">
               <template #activator="{ props }">
                 <v-icon v-bind="props">mdi-delete</v-icon>
               </template>
@@ -118,7 +118,7 @@
             <v-icon size="20" color="primary">mdi-calendar-clock</v-icon>
           </div>
           <div class="meta-content">
-            <div class="meta-label">Date et heure</div>
+            <div class="meta-label">{{ t('meetings.startDateField') }}</div>
             <div class="meta-value">{{ formatMeetingDate(meeting.startDate, meeting.endDate) }}</div>
           </div>
         </div>
@@ -129,7 +129,7 @@
             <v-icon size="20" color="secondary">mdi-map-marker</v-icon>
           </div>
           <div class="meta-content">
-            <div class="meta-label">Lieu</div>
+            <div class="meta-label">{{ t('meetings.locationField') }}</div>
             <div class="meta-value">{{ meeting.location }}</div>
           </div>
         </div>
@@ -147,7 +147,7 @@
             </v-avatar>
           </div>
           <div class="meta-content">
-            <div class="meta-label">Organisateur</div>
+            <div class="meta-label">{{ t('meetings.status.scheduled') }}</div>
             <div class="meta-value">{{ meeting.organizer.firstName }} {{ meeting.organizer.lastName }}</div>
           </div>
         </div>
@@ -158,7 +158,7 @@
             <v-icon size="20" color="primary">mdi-office-building</v-icon>
           </div>
           <div class="meta-content">
-            <div class="meta-label">Institution</div>
+            <div class="meta-label">{{ t('institution.name') }}</div>
             <div class="meta-value">{{ meeting.institution.name }}</div>
           </div>
         </div>
@@ -169,8 +169,8 @@
             <v-icon size="20" color="info">mdi-account-group</v-icon>
           </div>
           <div class="meta-content">
-            <div class="meta-label">Participants</div>
-            <div class="meta-value">{{ meeting.participants.length }} participant(s)</div>
+            <div class="meta-label">{{ t('meetings.participantsField') }}</div>
+            <div class="meta-value">{{ meeting.participants.length }} participants</div>
           </div>
         </div>
       </div>
@@ -187,7 +187,7 @@
           density="compact"
           variant="outlined"
           hide-details
-          :placeholder="`Changer le statut (${statusLabel})`"
+          :placeholder="`Change status (${statusLabel})`"
         />
       </div>
     </v-card-text>
@@ -197,6 +197,7 @@
 <script setup lang="ts">
 import type { Meeting, MeetingStatus } from "@medical-crm/shared"
 import { computed, ref, watch } from "vue"
+import { useI18n } from "vue-i18n"
 
 interface Props {
   meeting: Meeting
@@ -212,6 +213,7 @@ interface Emits {
 
 const props = defineProps<Props>()
 const emit = defineEmits<Emits>()
+const { t } = useI18n()
 
 const localStatus = ref(props.meeting.status)
 
@@ -222,19 +224,19 @@ watch(
   }
 )
 
-const statusOptions = [
-  { label: "Planifiée", value: "scheduled" },
-  { label: "En cours", value: "in_progress" },
-  { label: "Terminée", value: "completed" },
-  { label: "Annulée", value: "cancelled" },
-]
+const statusOptions = computed(() => [
+  { label: t('meetings.status.scheduled'), value: "scheduled" },
+  { label: t('meetings.status.in_progress'), value: "in_progress" },
+  { label: t('meetings.status.completed'), value: "completed" },
+  { label: t('meetings.status.cancelled'), value: "cancelled" },
+])
 
 const statusLabel = computed(() => {
   const labels = {
-    scheduled: "Planifiée",
-    in_progress: "En cours",
-    completed: "Terminée",
-    cancelled: "Annulée",
+    scheduled: t('meetings.status.scheduled'),
+    in_progress: t('meetings.status.in_progress'),
+    completed: t('meetings.status.completed'),
+    cancelled: t('meetings.status.cancelled'),
   }
   return labels[props.meeting.status]
 })

@@ -6,7 +6,7 @@
   >
     <v-card>
       <v-card-title>
-        {{ isEditing ? 'Modifier la réunion' : 'Nouvelle réunion' }}
+        {{ isEditing ? $t('meetings.edit') : $t('meetings.new') }}
       </v-card-title>
 
       <v-card-text class="meeting-form">
@@ -17,8 +17,8 @@
               id="title"
               v-model="formData.title"
               :error-messages="errors.title ? [errors.title] : []"
-              label="Titre *"
-              placeholder="Réunion avec l'équipe médicale"
+              :label="`${$t('meetings.titleField')} *`"
+              :placeholder="$t('meetings.titlePlaceholder')"
               density="comfortable"
               hide-details="auto"
             />
@@ -29,8 +29,8 @@
             <v-textarea
               id="description"
               v-model="formData.description"
-              label="Description"
-              placeholder="Détails de la réunion..."
+              :label="$t('meetings.descriptionField')"
+              :placeholder="$t('meetings.descriptionPlaceholder')"
               density="comfortable"
               :rows="$vuetify.display.mobile ? 2 : 3"
               auto-grow
@@ -45,7 +45,7 @@
                 id="startDate"
                 v-model="formData.startDate"
                 :error-messages="errors.startDate ? [errors.startDate] : []"
-                label="Date et heure de début *"
+                :label="`${$t('meetings.startDateField')} *`"
                 type="datetime-local"
                 density="comfortable"
                 hide-details="auto"
@@ -57,7 +57,7 @@
                 id="endDate"
                 v-model="formData.endDate"
                 :error-messages="errors.endDate ? [errors.endDate] : []"
-                label="Date et heure de fin *"
+                :label="`${$t('meetings.endDateField')} *`"
                 type="datetime-local"
                 density="comfortable"
                 hide-details="auto"
@@ -70,8 +70,8 @@
             <v-text-field
               id="location"
               v-model="formData.location"
-              label="Lieu"
-              placeholder="Salle de réunion A, Bâtiment principal"
+              :label="$t('meetings.locationField')"
+              :placeholder="$t('meetings.locationPlaceholder')"
               prepend-inner-icon="mdi-map-marker"
               density="comfortable"
               hide-details="auto"
@@ -87,8 +87,8 @@
                 :items="institutionOptions"
                 item-title="label"
                 item-value="value"
-                label="Institution"
-                placeholder="Sélectionner une institution"
+                :label="$t('meetings.institutionField')"
+                :placeholder="$t('meetings.institutionPlaceholder')"
                 clearable
                 :loading="loadingInstitutions"
                 density="comfortable"
@@ -105,8 +105,8 @@
                 :items="statusOptions"
                 item-title="label"
                 item-value="value"
-                label="Statut"
-                placeholder="Sélectionner un statut"
+                :label="$t('meetings.statusField')"
+                :placeholder="$t('meetings.statusPlaceholder')"
                 density="comfortable"
                 hide-details="auto"
               />
@@ -121,8 +121,8 @@
               :items="userOptions"
               item-title="label"
               item-value="value"
-              label="Participants"
-              placeholder="Sélectionner les participants"
+              :label="$t('meetings.participantsField')"
+              :placeholder="$t('meetings.participantsPlaceholder')"
               multiple
               chips
               closable-chips
@@ -150,14 +150,14 @@
           variant="outlined"
           @click="handleCancel"
         >
-          Annuler
+          {{ $t('meetings.cancel') }}
         </v-btn>
         <v-btn
           color="primary"
           :loading="loading"
           @click="handleSubmit"
         >
-          {{ isEditing ? 'Modifier' : 'Créer' }}
+          {{ isEditing ? $t('meetings.update') : $t('meetings.create') }}
         </v-btn>
       </v-card-actions>
     </v-card>
@@ -168,6 +168,7 @@
 import { institutionsApi } from "@/services/api"
 import { useInstitutionsStore } from "@/stores/institutions"
 import { useTeamStore } from "@/stores/team"
+import { useI18n } from "vue-i18n"
 import type {
   Meeting,
   MeetingCreateRequest,
@@ -222,11 +223,13 @@ const loadingInstitutions = computed(() => institutionsStore.loading || loadingI
 
 const isEditing = computed(() => !!props.meeting)
 
+const { t } = useI18n()
+
 const statusOptions = computed(() => [
-  { label: "Planifiée", value: "scheduled" },
-  { label: "En cours", value: "in_progress" },
-  { label: "Terminée", value: "completed" },
-  { label: "Annulée", value: "cancelled" },
+  { label: t('meetings.status.scheduled'), value: "scheduled" },
+  { label: t('meetings.status.in_progress'), value: "in_progress" },
+  { label: t('meetings.status.completed'), value: "completed" },
+  { label: t('meetings.status.cancelled'), value: "cancelled" },
 ])
 
 watch(
@@ -272,15 +275,15 @@ const validateForm = (): boolean => {
   errors.value = {}
 
   if (!formData.value.title.trim()) {
-    errors.value.title = "Le titre est requis"
+    errors.value.title = t('meetings.titleRequired')
   }
 
   if (!formData.value.startDate) {
-    errors.value.startDate = "La date de début est requise"
+    errors.value.startDate = t('meetings.startDateRequired')
   }
 
   if (!formData.value.endDate) {
-    errors.value.endDate = "La date de fin est requise"
+    errors.value.endDate = t('meetings.endDateRequired')
   }
 
   // Validate that endDate is after startDate
@@ -288,7 +291,7 @@ const validateForm = (): boolean => {
     const start = new Date(formData.value.startDate)
     const end = new Date(formData.value.endDate)
     if (end <= start) {
-      errors.value.endDate = "La date de fin doit être après la date de début"
+      errors.value.endDate = t('meetings.endDateAfterStart')
     }
   }
 

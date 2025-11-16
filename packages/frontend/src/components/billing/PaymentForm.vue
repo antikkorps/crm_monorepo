@@ -1,15 +1,15 @@
 <template>
   <v-dialog v-model="dialogVisible" max-width="600px">
     <v-card>
-      <v-card-title class="text-h5">Enregistrer un paiement</v-card-title>
+      <v-card-title class="text-h5">{{ t('billing.paymentForm.title') }}</v-card-title>
       <v-card-text v-if="invoice">
         <div class="mb-4 pa-4 border rounded">
-          <h4 class="text-subtitle-1 font-weight-medium">Détails de la facture</h4>
+          <h4 class="text-subtitle-1 font-weight-medium">{{ t('billing.paymentForm.invoiceDetails') }}</h4>
           <v-row dense class="mt-2 text-body-2">
-            <v-col cols="12" sm="6"><strong>N° de facture:</strong> {{ invoice.invoiceNumber }}</v-col>
-            <v-col cols="12" sm="6"><strong>Institution:</strong> {{ invoice.institution?.name }}</v-col>
-            <v-col cols="12" sm="6"><strong>Montant Total:</strong> {{ formatCurrency(invoice.total) }}</v-col>
-            <v-col cols="12" sm="6"><strong>Montant Restant:</strong> <span class="font-weight-bold text-warning">{{ formatCurrency(invoice.remainingAmount) }}</span></v-col>
+            <v-col cols="12" sm="6"><strong>{{ t('billing.paymentForm.invoiceNumber') }}</strong> {{ invoice.invoiceNumber }}</v-col>
+            <v-col cols="12" sm="6"><strong>{{ t('billing.paymentForm.institution') }}</strong> {{ invoice.institution?.name }}</v-col>
+            <v-col cols="12" sm="6"><strong>{{ t('billing.paymentForm.totalAmount') }}</strong> {{ formatCurrency(invoice.total) }}</v-col>
+            <v-col cols="12" sm="6"><strong>{{ t('billing.paymentForm.remainingAmount') }}</strong> <span class="font-weight-bold text-warning">{{ formatCurrency(invoice.remainingAmount) }}</span></v-col>
           </v-row>
         </div>
 
@@ -18,19 +18,19 @@
             <v-col cols="12" sm="6">
               <v-text-field
                 v-model.number="form.amount"
-                label="Montant du paiement *"
+                :label="t('billing.paymentForm.amount') + ' *'"
                 type="number"
                 :max="invoice.remainingAmount"
                 :error-messages="errors.amount"
                 prefix="€"
-                :hint="`Montant restant: ${formatCurrency(invoice.remainingAmount)}. Vous pouvez saisir un montant partiel.`"
+                :hint="t('billing.paymentForm.amountHint', { amount: formatCurrency(invoice.remainingAmount) })"
                 persistent-hint
               />
             </v-col>
             <v-col cols="12" sm="6">
               <v-text-field
                 v-model="form.paymentDate"
-                label="Date du paiement *"
+                :label="t('billing.paymentForm.paymentDate') + ' *'"
                 type="date"
                 :error-messages="errors.paymentDate"
               />
@@ -39,22 +39,22 @@
               <v-select
                 v-model="form.paymentMethod"
                 :items="paymentMethods"
-                label="Moyen de paiement *"
+                :label="t('billing.paymentForm.paymentMethod') + ' *'"
                 :error-messages="errors.paymentMethod"
               />
             </v-col>
             <v-col cols="12" sm="6">
               <v-text-field
                 v-model="form.reference"
-                label="Référence"
-                hint="N° de chèque, ID de transaction, etc."
+                :label="t('billing.paymentForm.reference')"
+                :hint="t('billing.paymentForm.referenceHint')"
                 persistent-hint
               />
             </v-col>
             <v-col cols="12">
               <v-textarea
                 v-model="form.notes"
-                label="Notes"
+                :label="t('billing.paymentForm.notes')"
                 rows="3"
               />
             </v-col>
@@ -63,8 +63,8 @@
       </v-card-text>
       <v-card-actions class="pa-4">
         <v-spacer></v-spacer>
-        <v-btn text @click="closeDialog">Annuler</v-btn>
-        <v-btn color="primary" :loading="submitting" :disabled="!isFormValid" @click="handleSubmit">Enregistrer</v-btn>
+        <v-btn text @click="closeDialog">{{ t('billing.paymentForm.cancel') }}</v-btn>
+        <v-btn color="primary" :loading="submitting" :disabled="!isFormValid" @click="handleSubmit">{{ t('billing.paymentForm.save') }}</v-btn>
       </v-card-actions>
     </v-card>
   </v-dialog>
@@ -74,6 +74,9 @@
 import { invoicesApi } from "@/services/api"
 import type { Invoice, PaymentCreateRequest } from "@medical-crm/shared"
 import { computed, ref, watch } from "vue"
+import { useI18n } from "vue-i18n"
+
+const { t } = useI18n()
 
 const props = defineProps<{ visible: boolean, invoice?: Invoice | null }>()
 const emit = defineEmits<{
@@ -88,22 +91,22 @@ const submitting = ref(false)
 const form = ref<Omit<PaymentCreateRequest, "invoiceId">>({ amount: 0, paymentDate: new Date().toISOString().split('T')[0] as any, paymentMethod: "bank_transfer" as any, reference: "", notes: "" })
 const errors = ref<Record<string, string>>({})
 
-const paymentMethods = [
-  { title: "Virement bancaire", value: "bank_transfer" },
-  { title: "Chèque", value: "check" },
-  { title: "Espèces", value: "cash" },
-  { title: "Carte de crédit", value: "credit_card" },
-  { title: "Autre", value: "other" },
-]
+const paymentMethods = computed(() => [
+  { title: t("billing.paymentForm.methods.bankTransfer"), value: "bank_transfer" },
+  { title: t("billing.paymentForm.methods.check"), value: "check" },
+  { title: t("billing.paymentForm.methods.cash"), value: "cash" },
+  { title: t("billing.paymentForm.methods.creditCard"), value: "credit_card" },
+  { title: t("billing.paymentForm.methods.other"), value: "other" },
+])
 
 const isFormValid = computed(() => form.value.amount > 0 && form.value.paymentDate && form.value.paymentMethod && Object.keys(errors.value).length === 0)
 
 const validateForm = () => {
   errors.value = {}
-  if (!form.value.amount || form.value.amount <= 0) errors.value.amount = "Le montant doit être positif"
-  else if (props.invoice && form.value.amount > props.invoice.remainingAmount) errors.value.amount = "Le montant ne peut pas dépasser le solde restant"
-  if (!form.value.paymentDate) errors.value.paymentDate = "Date requise"
-  if (!form.value.paymentMethod) errors.value.paymentMethod = "Moyen de paiement requis"
+  if (!form.value.amount || form.value.amount <= 0) errors.value.amount = t('billing.paymentForm.amountRequired')
+  else if (props.invoice && form.value.amount > props.invoice.remainingAmount) errors.value.amount = t('billing.paymentForm.amountExceedsRemaining')
+  if (!form.value.paymentDate) errors.value.paymentDate = t('billing.paymentForm.paymentDateRequired')
+  if (!form.value.paymentMethod) errors.value.paymentMethod = t('billing.paymentForm.paymentMethodRequired')
   return Object.keys(errors.value).length === 0
 }
 
@@ -114,11 +117,11 @@ const handleSubmit = async () => {
     const paymentData: PaymentCreateRequest = { ...form.value, invoiceId: props.invoice.id }
     const response = await invoicesApi.payments.create(props.invoice.id, paymentData)
     emit("payment-recorded", (response as any).data)
-    emit("notify", { message: "Paiement enregistré avec succès", color: "success" })
+    emit("notify", { message: t('billing.paymentForm.messages.success'), color: "success" })
     closeDialog()
   } catch (error: any) {
     console.error("Payment creation error:", error)
-    const errorMessage = error?.message || error?.response?.data?.error?.message || "Erreur lors de l'enregistrement du paiement"
+    const errorMessage = error?.message || error?.response?.data?.error?.message || t('billing.paymentForm.messages.error')
     emit("notify", { message: errorMessage, color: "error" })
   } finally {
     submitting.value = false

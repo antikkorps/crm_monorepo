@@ -15,7 +15,7 @@
             prepend-icon="mdi-lock"
             class="privacy-chip"
           >
-            Privée
+            {{ t('notes.sharingSection.title') }}
           </v-chip>
           <v-chip
             v-if="shareCount > 0"
@@ -25,7 +25,7 @@
             prepend-icon="mdi-share-variant"
             class="share-chip"
           >
-            {{ shareCount }} partage{{ shareCount > 1 ? 's' : '' }}
+            {{ shareCount }} {{ t('common.copy') }}{{ shareCount > 1 ? 's' : '' }}
           </v-chip>
         </div>
 
@@ -38,7 +38,7 @@
             class="action-btn"
             @click="$emit('share', note)"
           >
-            <v-tooltip text="Partager">
+            <v-tooltip :text="t('segmentation.sharing.share')">
               <template #activator="{ props }">
                 <v-icon v-bind="props">mdi-share-variant</v-icon>
               </template>
@@ -52,7 +52,7 @@
             class="action-btn"
             @click="$emit('edit', note)"
           >
-            <v-tooltip text="Modifier">
+            <v-tooltip :text="t('common.edit')">
               <template #activator="{ props }">
                 <v-icon v-bind="props">mdi-pencil</v-icon>
               </template>
@@ -66,7 +66,7 @@
             class="action-btn"
             @click="$emit('delete', note)"
           >
-            <v-tooltip text="Supprimer">
+            <v-tooltip :text="t('common.delete')">
               <template #activator="{ props }">
                 <v-icon v-bind="props">mdi-delete</v-icon>
               </template>
@@ -114,7 +114,7 @@
             </v-avatar>
           </div>
           <div class="meta-content">
-            <div class="meta-label">Créateur</div>
+            <div class="meta-label">{{ t('labels.creator') }}</div>
             <div class="meta-value">{{ note.creator.firstName }} {{ note.creator.lastName }}</div>
           </div>
         </div>
@@ -125,7 +125,7 @@
             <v-icon size="20" color="primary">mdi-office-building</v-icon>
           </div>
           <div class="meta-content">
-            <div class="meta-label">Institution</div>
+            <div class="meta-label">{{ t('institution.name') }}</div>
             <div class="meta-value">{{ note.institution.name }}</div>
           </div>
         </div>
@@ -136,7 +136,7 @@
             <v-icon size="20" color="primary">mdi-calendar-clock</v-icon>
           </div>
           <div class="meta-content">
-            <div class="meta-label">Date</div>
+            <div class="meta-label">{{ t('labels.date') }}</div>
             <div class="meta-value">{{ formatDate(note.createdAt) }}</div>
           </div>
         </div>
@@ -148,6 +148,7 @@
 <script setup lang="ts">
 import type { Note } from "@medical-crm/shared"
 import { computed } from "vue"
+import { useI18n } from "vue-i18n"
 
 interface Props {
   note: Note
@@ -161,6 +162,7 @@ interface Emits {
 
 const props = defineProps<Props>()
 const emit = defineEmits<Emits>()
+const { t } = useI18n()
 
 const shareCount = computed(() => {
   return props.note.shares?.length || 0

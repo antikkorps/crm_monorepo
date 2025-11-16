@@ -6,8 +6,8 @@
           <div class="filter-group">
             <v-text-field
               v-model="localFilters.search"
-              label="Search"
-              placeholder="Search tasks..."
+              :label="t('tasks.filters.search')"
+              :placeholder="t('tasks.filters.searchPlaceholder')"
               @input="onFiltersChange"
               density="comfortable"
               variant="outlined"
@@ -21,8 +21,8 @@
               :items="statusOptions"
               item-title="label"
               item-value="value"
-              label="Status"
-              placeholder="All Statuses"
+              :label="t('tasks.filters.status')"
+              :placeholder="t('tasks.filters.allStatuses')"
               @update:modelValue="onFiltersChange"
               clearable
               density="comfortable"
@@ -37,8 +37,8 @@
               :items="priorityOptions"
               item-title="label"
               item-value="value"
-              label="Priority"
-              placeholder="All Priorities"
+              :label="t('tasks.filters.priority')"
+              :placeholder="t('tasks.filters.allPriorities')"
               @update:modelValue="onFiltersChange"
               clearable
               density="comfortable"
@@ -53,8 +53,8 @@
               :items="assigneeOptions"
               item-title="label"
               item-value="value"
-              label="Assignee"
-              placeholder="All Assignees"
+              :label="t('tasks.filters.assignee')"
+              :placeholder="t('tasks.filters.allAssignees')"
               @update:modelValue="onFiltersChange"
               clearable
               :loading="loadingUsers"
@@ -72,8 +72,8 @@
               :items="institutionOptions"
               item-title="label"
               item-value="value"
-              label="Institution"
-              placeholder="All Institutions"
+              :label="t('tasks.filters.institution')"
+              :placeholder="t('tasks.filters.allInstitutions')"
               @update:modelValue="onFiltersChange"
               clearable
               :loading="loadingInstitutions"
@@ -86,8 +86,7 @@
           <div class="filter-group">
             <v-text-field
               v-model="localFilters.dueDateFrom"
-              label="Due Date From"
-              placeholder="From date"
+              :label="t('tasks.filters.dueDateFrom')"
               type="date"
               @change="onFiltersChange"
               density="comfortable"
@@ -98,8 +97,7 @@
           <div class="filter-group">
             <v-text-field
               v-model="localFilters.dueDateTo"
-              label="Due Date To"
-              placeholder="To date"
+              :label="t('tasks.filters.dueDateTo')"
               type="date"
               @change="onFiltersChange"
               density="comfortable"
@@ -116,7 +114,7 @@
                 size="small"
                 @click="toggleOverdueFilter"
               >
-                Overdue
+                {{ t('tasks.overdue') }}
               </v-btn>
               <v-btn
                 color="secondary"
@@ -124,7 +122,7 @@
                 size="small"
                 @click="clearAllFilters"
               >
-                Clear All
+                {{ t('tasks.filters.clearAll') }}
               </v-btn>
             </div>
           </div>
@@ -137,7 +135,8 @@
 import { institutionsApi, teamApi } from "@/services/api"
 import type { TaskSearchFilters } from "@medical-crm/shared"
 // Vuetify components are auto-imported
-import { onMounted, ref, watch } from "vue"
+import { onMounted, ref, watch, computed } from "vue"
+import { useI18n } from "vue-i18n"
 
 interface Props {
   filters: TaskSearchFilters
@@ -149,6 +148,7 @@ interface Emits {
 
 const props = defineProps<Props>()
 const emit = defineEmits<Emits>()
+const { t } = useI18n()
 
 const localFilters = ref<TaskSearchFilters>({ ...props.filters })
 const loadingUsers = ref(false)
@@ -156,19 +156,19 @@ const loadingInstitutions = ref(false)
 const assigneeOptions = ref<Array<{ label: string; value: string }>>([])
 const institutionOptions = ref<Array<{ label: string; value: string }>>([])
 
-const statusOptions = [
-  { label: "To Do", value: "todo" },
-  { label: "In Progress", value: "in_progress" },
-  { label: "Completed", value: "completed" },
-  { label: "Cancelled", value: "cancelled" },
-]
+const statusOptions = computed(() => [
+  { label: t('tasks.status.todo'), value: "todo" },
+  { label: t('tasks.status.in_progress'), value: "in_progress" },
+  { label: t('tasks.status.completed'), value: "completed" },
+  { label: t('tasks.status.cancelled'), value: "cancelled" },
+])
 
-const priorityOptions = [
-  { label: "Low", value: "low" },
-  { label: "Medium", value: "medium" },
-  { label: "High", value: "high" },
-  { label: "Urgent", value: "urgent" },
-]
+const priorityOptions = computed(() => [
+  { label: t('tasks.priority.low'), value: "low" },
+  { label: t('tasks.priority.medium'), value: "medium" },
+  { label: t('tasks.priority.high'), value: "high" },
+  { label: t('tasks.priority.urgent'), value: "urgent" },
+])
 
 watch(
   () => props.filters,

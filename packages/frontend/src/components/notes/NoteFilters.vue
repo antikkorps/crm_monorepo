@@ -40,8 +40,8 @@
             :items="userOptions"
             item-title="label"
             item-value="value"
-            label="Créateur"
-            placeholder="Tous les créateurs"
+            :label="t('labels.creator')"
+            placeholder="All creators"
             prepend-inner-icon="mdi-account"
             @update:modelValue="onFiltersChange"
             clearable
@@ -58,8 +58,8 @@
             :items="institutionOptions"
             item-title="label"
             item-value="value"
-            label="Institution"
-            placeholder="Toutes les institutions"
+            :label="t('institution.name')"
+            placeholder="All institutions"
             prepend-inner-icon="mdi-office-building"
             @update:modelValue="onFiltersChange"
             clearable
@@ -78,8 +78,8 @@
             :items="privacyOptions"
             item-title="label"
             item-value="value"
-            label="Confidentialité"
-            placeholder="Toutes les notes"
+            :label="t('notes.privacySection.title')"
+            placeholder="All notes"
             prepend-inner-icon="mdi-lock-outline"
             @update:modelValue="onFiltersChange"
             clearable
@@ -98,7 +98,7 @@
               prepend-icon="mdi-account"
               @click="toggleMyNotesFilter"
             >
-              Mes notes
+              {{ t('notes.new') }}
             </v-btn>
             <v-btn
               :color="showShared ? 'primary' : 'secondary'"
@@ -107,7 +107,7 @@
               prepend-icon="mdi-share-variant"
               @click="toggleSharedFilter"
             >
-              Partagées avec moi
+              Shared with me
             </v-btn>
             <v-btn
               :color="showPrivate ? 'error' : 'secondary'"
@@ -116,7 +116,7 @@
               prepend-icon="mdi-lock"
               @click="togglePrivateFilter"
             >
-              Notes privées
+              {{ t('notes.privacySection.private') }}
             </v-btn>
             <v-btn
               color="secondary"
@@ -125,7 +125,7 @@
               prepend-icon="mdi-filter-off"
               @click="clearAllFilters"
             >
-              Tout effacer
+              Clear all
             </v-btn>
           </div>
         </div>
@@ -139,6 +139,7 @@ import { institutionsApi, usersApi } from "@/services/api"
 import type { NoteFilters } from "@/services/api/notes"
 import { useAuthStore } from "@/stores/auth"
 import { onMounted, ref, watch, computed } from "vue"
+import { useI18n } from "vue-i18n"
 
 interface Props {
   filters: NoteFilters
@@ -155,6 +156,7 @@ const props = withDefaults(defineProps<Props>(), {
 const emit = defineEmits<Emits>()
 
 const authStore = useAuthStore()
+const { t } = useI18n()
 const localFilters = ref<NoteFilters>({ ...props.filters })
 const loadingUsers = ref(false)
 const loadingInstitutions = ref(false)
@@ -164,10 +166,10 @@ const showMyNotes = ref(false)
 const showShared = ref(false)
 const showPrivate = ref(false)
 
-const privacyOptions = [
-  { label: "Notes privées", value: true },
-  { label: "Notes partagées", value: false },
-]
+const privacyOptions = computed(() => [
+  { label: t('notes.privacySection.private'), value: true },
+  { label: "Shared Notes", value: false },
+])
 
 watch(
   () => props.filters,

@@ -934,6 +934,228 @@
     }
   },
   "billing": {
+    "invoiceForm": {
+      "createTitle": "Créer une facture",
+      "editTitle": "Modifier la facture",
+      "institution": "Institution",
+      "institutionRequired": "Institution requise",
+      "template": "Modèle de document",
+      "title": "Titre",
+      "titleRequired": "Titre requis",
+      "dueDate": "Date d'échéance",
+      "dueDateRequired": "Date d'échéance requise",
+      "description": "Description",
+      "billingLines": "Lignes de facturation",
+      "addLine": "Ajouter une ligne",
+      "noLines": "Aucune ligne ajoutée.",
+      "subtotal": "Sous-total",
+      "totalDiscount": "Remise totale",
+      "vat": "TVA",
+      "total": "Total",
+      "cancel": "Annuler",
+      "create": "Créer",
+      "update": "Mettre à jour",
+      "validation": {
+        "institutionRequired": "Institution requise",
+        "titleRequired": "Titre requis",
+        "dueDateRequired": "Date d'échéance requise",
+        "descriptionRequired": "Description requise",
+        "quantityPositive": "Qté > 0",
+        "pricePositive": "Prix ≥ 0"
+      },
+      "messages": {
+        "created": "Facture créée avec succès",
+        "updated": "Facture mise à jour avec succès",
+        "createError": "Erreur lors de la création",
+        "updateError": "Erreur lors de la mise à jour"
+      }
+    },
+    "paymentForm": {
+      "title": "Enregistrer un paiement",
+      "invoiceDetails": "Détails de la facture",
+      "invoiceNumber": "N° de facture:",
+      "institution": "Institution:",
+      "totalAmount": "Montant Total:",
+      "remainingAmount": "Montant Restant:",
+      "amount": "Montant du paiement",
+      "amountRequired": "Le montant doit être positif",
+      "amountExceedsRemaining": "Le montant ne peut pas dépasser le solde restant",
+      "amountHint": "Montant restant: {amount}. Vous pouvez saisir un montant partiel.",
+      "paymentDate": "Date du paiement",
+      "paymentDateRequired": "Date requise",
+      "paymentMethod": "Moyen de paiement",
+      "paymentMethodRequired": "Moyen de paiement requis",
+      "reference": "Référence",
+      "referenceHint": "N° de chèque, ID de transaction, etc.",
+      "notes": "Notes",
+      "cancel": "Annuler",
+      "save": "Enregistrer",
+      "methods": {
+        "bankTransfer": "Virement bancaire",
+        "check": "Chèque",
+        "cash": "Espèces",
+        "creditCard": "Carte de crédit",
+        "other": "Autre"
+      },
+      "messages": {
+        "success": "Paiement enregistré avec succès",
+        "error": "Erreur lors de l'enregistrement du paiement"
+      }
+    },
+    "paymentHistory": {
+      "title": "Payment History",
+      "recordPayment": "Record Payment",
+      "refresh": "Refresh",
+      "summary": {
+        "invoiceTotal": "Invoice Total",
+        "totalPaid": "Total Paid",
+        "remaining": "Remaining"
+      },
+      "progress": {
+        "label": "Payment Progress",
+        "text": "{paid} of {total} paid ({percentage}%)"
+      },
+      "filters": {
+        "status": "Status",
+        "paymentMethod": "Payment Method",
+        "dateFrom": "Date From",
+        "dateTo": "Date To"
+      },
+      "table": {
+        "title": "Payments",
+        "date": "Date",
+        "amount": "Amount",
+        "method": "Method",
+        "reference": "Reference",
+        "status": "Status",
+        "recordedBy": "Recorded By",
+        "notes": "Notes",
+        "actions": "Actions"
+      },
+      "status": {
+        "pending": "Pending",
+        "confirmed": "Confirmed",
+        "failed": "Failed",
+        "cancelled": "Cancelled"
+      },
+      "methods": {
+        "bankTransfer": "Bank Transfer",
+        "check": "Check",
+        "cash": "Cash",
+        "creditCard": "Credit Card",
+        "other": "Other"
+      },
+      "actions": {
+        "confirm": "Confirm Payment",
+        "cancel": "Cancel Pending Payment",
+        "viewDetails": "View Details"
+      },
+      "dialogs": {
+        "details": {
+          "title": "Payment Details",
+          "paymentDate": "Payment Date:",
+          "amount": "Amount:",
+          "method": "Payment Method:",
+          "reference": "Reference:",
+          "status": "Status:",
+          "recordedBy": "Recorded By:",
+          "recordedAt": "Recorded At:",
+          "notes": "Notes:",
+          "close": "Close"
+        },
+        "cancel": {
+          "title": "Cancel Payment",
+          "message": "Are you sure you want to cancel this payment?",
+          "reason": "Reason for cancellation",
+          "reasonPlaceholder": "Enter reason for cancellation",
+          "cancel": "Cancel",
+          "confirm": "Confirm Cancellation"
+        }
+      },
+      "messages": {
+        "noPayments": "No payments recorded for this invoice",
+        "noPaymentsFound": "No payments found",
+        "loadFailed": "Failed to load payments",
+        "confirmSuccess": "Payment confirmed successfully",
+        "confirmFailed": "Failed to confirm payment",
+        "cancelSuccess": "Payment cancelled successfully",
+        "cancelFailed": "Failed to cancel payment"
+      }
+    },
+    "quoteBuilder": {
+      "createTitle": "Créer un nouveau devis",
+      "editTitle": "Modifier le devis",
+      "backToList": "Retour à la liste",
+      "basicInfo": "Informations de base",
+      "institution": "Institution médicale",
+      "institutionRequired": "L'institution médicale est requise",
+      "template": "Modèle de document",
+      "title": "Titre du devis",
+      "titleRequired": "Le titre du devis est requis",
+      "validUntil": "Valide jusqu'au",
+      "validUntilRequired": "La date de validité est requise",
+      "validUntilFuture": "La date de validité doit être dans le futur",
+      "description": "Description",
+      "internalNotes": "Notes internes",
+      "internalNotesHint": "Non visible par le client",
+      "quoteLines": "Lignes de devis",
+      "addLine": "Ajouter une ligne",
+      "noLines": "Aucune ligne ajoutée",
+      "addFirstLine": "Ajouter la première ligne",
+      "atLeastOneLine": "Au moins une ligne est requise",
+      "summary": "Résumé du devis",
+      "subtotal": "Sous-total:",
+      "totalDiscount": "Remise totale:",
+      "totalTax": "Taxes totales:",
+      "total": "Total:",
+      "actions": {
+        "sendToClient": "Envoyer au client",
+        "confirmOrder": "Confirmer bon de commande",
+        "convertToInvoice": "Convertir en facture",
+        "saveDraft": "Sauvegarder brouillon",
+        "preview": "Aperçu",
+        "create": "Créer le devis",
+        "update": "Mettre à jour"
+      },
+      "sendDialog": {
+        "title": "Envoyer le devis au client",
+        "recipient": "Destinataire",
+        "recipientName": "{name}",
+        "recipientEmail": "{email}",
+        "noContactEmail": "No contact email",
+        "message": "Message personnalisé (optionnel)",
+        "messagePlaceholder": "Ajoutez un message personnel à inclure avec le devis...",
+        "cancel": "Annuler",
+        "send": "Envoyer le devis"
+      },
+      "status": {
+        "draft": "Draft",
+        "sent": "Sent",
+        "ordered": "Ordered",
+        "accepted": "Accepted",
+        "rejected": "Rejected",
+        "expired": "Expired",
+        "cancelled": "Cancelled"
+      },
+      "messages": {
+        "saved": "Devis sauvegardé avec succès",
+        "draftSaved": "Devis sauvegardé comme brouillon",
+        "sent": "Devis envoyé au client avec succès",
+        "orderConfirmed": "Bon de commande confirmé",
+        "saveError": "Erreur lors de la sauvegarde du devis",
+        "sendError": "Erreur lors de l'envoi du devis",
+        "orderConfirmError": "Impossible de confirmer le bon de commande"
+      }
+    },
+    "catalogSelector": {
+      "title": "Sélection d'article",
+      "search": "Rechercher un article du catalogue",
+      "searchHint": "Tapez pour rechercher ou laissez vide pour une ligne personnalisée",
+      "noDescription": "Aucune description",
+      "noResults": "Aucun article trouvé pour \"{search}\"",
+      "searchPrompt": "Tapez pour rechercher dans le catalogue",
+      "customLine": "Ligne personnalisée"
+    },
     "payment": {
       "form": {
         "title": "Enregistrer un paiement",
@@ -1179,6 +1401,54 @@
       "invalidUrlProtocol": "Protocole d'URL invalide",
       "invalidUrl": "URL invalide"
     }
+  },
+  "quotes": {
+    "title": "Devis",
+    "subtitle": "Gérez vos devis et propositions pour les institutions médicales",
+    "createNew": "Nouveau Devis",
+    "searchPlaceholder": "Rechercher...",
+    "noQuotesFound": "Aucun devis trouvé",
+    "noQuotesMessage": "Créez votre premier devis pour commencer.",
+    "createQuote": "Créer un devis",
+    "table": {
+      "quoteNumber": "Devis #",
+      "title": "Titre",
+      "amount": "Montant",
+      "status": "Statut",
+      "validUntil": "Valide Jusqu'au",
+      "actions": "Actions"
+    },
+    "status": {
+      "draft": "Brouillon",
+      "sent": "Envoyé",
+      "ordered": "Bon de commande",
+      "accepted": "Accepté",
+      "rejected": "Rejeté",
+      "expired": "Expiré",
+      "cancelled": "Annulé"
+    },
+    "filters": {
+      "status": "Statut",
+      "search": "Rechercher..."
+    },
+    "actions": {
+      "view": "Voir",
+      "edit": "Modifier",
+      "downloadQuote": "Télécharger le devis",
+      "downloadOrder": "Télécharger le bon de commande",
+      "delete": "Supprimer"
+    },
+    "messages": {
+      "saved": "Devis sauvegardé avec succès",
+      "loadError": "Erreur lors du chargement des devis",
+      "quotePdfDownloaded": "PDF du devis téléchargé",
+      "quotePdfError": "Erreur lors du téléchargement du PDF",
+      "orderPdfDownloaded": "Bon de commande téléchargé",
+      "orderPdfError": "Erreur lors du téléchargement du bon de commande",
+      "deleted": "Devis supprimé",
+      "deleteError": "Impossible de supprimer le devis"
+    },
+    "confirmDelete": "Supprimer le devis {number} ?"
   },
   "catalog": {
     "title": "Catalogue d'Articles",

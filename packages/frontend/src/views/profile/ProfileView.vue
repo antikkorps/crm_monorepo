@@ -5,7 +5,7 @@
         <v-col cols="12">
           <h1 class="text-h4 mb-6">
             <v-icon start size="large">mdi-account-circle</v-icon>
-            Mon Profil
+            {{ t('profile.title') }}
           </h1>
         </v-col>
       </v-row>
@@ -16,7 +16,7 @@
           <v-card class="profile-info-card">
             <v-card-title class="d-flex align-center">
               <v-icon start>mdi-account</v-icon>
-              Informations personnelles
+              {{ t('profile.personalInfo') }}
               <v-spacer />
               <v-btn
                 variant="text"
@@ -25,7 +25,7 @@
                 @click="toggleEditMode"
                 :disabled="isLoading"
               >
-                {{ isEditing ? 'Annuler' : 'Modifier' }}
+                {{ isEditing ? t('profile.cancel') : t('profile.edit') }}
               </v-btn>
             </v-card-title>
 
@@ -35,7 +35,7 @@
                   <v-col cols="12" sm="6">
                     <v-text-field
                       v-model="profileForm.firstName"
-                      label="Prénom"
+                      :label="t('profile.firstName')"
                       variant="outlined"
                       density="comfortable"
                       :readonly="!isEditing"
@@ -46,7 +46,7 @@
                   <v-col cols="12" sm="6">
                     <v-text-field
                       v-model="profileForm.lastName"
-                      label="Nom"
+                      :label="t('profile.lastName')"
                       variant="outlined"
                       density="comfortable"
                       :readonly="!isEditing"
@@ -60,7 +60,7 @@
                   <v-col cols="12" sm="6">
                     <v-text-field
                       v-model="profileForm.email"
-                      label="Email"
+                      :label="t('profile.email')"
                       type="email"
                       variant="outlined"
                       density="comfortable"
@@ -73,7 +73,7 @@
                     <v-select
                       v-model="profileForm.role"
                       :items="roleOptions"
-                      label="Rôle"
+                      :label="t('profile.role')"
                       variant="outlined"
                       density="comfortable"
                       readonly
@@ -90,7 +90,7 @@
                         @click="cancelEdit"
                         :disabled="isLoading"
                       >
-                        Annuler
+                        {{ t('profile.cancel') }}
                       </v-btn>
                       <v-btn
                         color="primary"
@@ -99,7 +99,7 @@
                         :disabled="!isProfileFormValid"
                         :loading="isLoading"
                       >
-                        Enregistrer
+                        {{ t('profile.save') }}
                       </v-btn>
                     </div>
                   </v-col>
@@ -114,7 +114,7 @@
           <v-card class="avatar-card">
             <v-card-title>
               <v-icon start>mdi-account-circle</v-icon>
-              Avatar
+              {{ t('profile.avatar') }}
             </v-card-title>
             <v-card-text class="text-center">
               <div class="mb-4">
@@ -140,7 +140,7 @@
                 @click="showAvatarSelector = true"
                 block
               >
-                Changer d'avatar
+                {{ t('profile.changeAvatar') }}
               </v-btn>
             </v-card-text>
           </v-card>
@@ -153,16 +153,16 @@
           <v-card class="security-card">
             <v-card-title>
               <v-icon start>mdi-security</v-icon>
-              Sécurité
+              {{ t('profile.security') }}
             </v-card-title>
             <v-card-text>
               <div class="security-info mb-4">
                 <p class="text-body-2 mb-2">
-                  <strong>Dernière connexion:</strong>
+                  <strong>{{ t('profile.lastLogin') }}</strong>
                   {{ formatLastLogin(user.lastLoginAt) }}
                 </p>
                 <p class="text-body-2">
-                  <strong>Compte créé:</strong>
+                  <strong>{{ t('profile.accountCreated') }}</strong>
                   {{ formatDate(user.createdAt) }}
                 </p>
               </div>
@@ -173,7 +173,7 @@
                 @click="showPasswordChange = true"
                 block
               >
-                Changer le mot de passe
+                {{ t('profile.changePassword') }}
               </v-btn>
             </v-card-text>
           </v-card>
@@ -184,12 +184,12 @@
           <v-card class="settings-card">
             <v-card-title>
               <v-icon start>mdi-cog</v-icon>
-              Paramètres du compte
+              {{ t('profile.accountSettings') }}
             </v-card-title>
             <v-card-text>
               <v-switch
                 v-model="accountSettings.isActive"
-                label="Compte actif"
+                :label="t('profile.accountActive')"
                 color="primary"
                 readonly
                 disabled
@@ -198,10 +198,10 @@
               <v-divider class="my-4" />
               <div class="text-body-2 text-medium-emphasis">
                 <p class="mb-2">
-                  <strong>ID utilisateur:</strong> {{ user.id }}
+                  <strong>{{ t('profile.userId') }}</strong> {{ user.id }}
                 </p>
                 <p v-if="user.teamId" class="mb-2">
-                  <strong>Équipe:</strong> {{ user.teamId }}
+                  <strong>{{ t('profile.team') }}</strong> {{ user.teamId }}
                 </p>
               </div>
             </v-card-text>
@@ -236,6 +236,7 @@ import AppLayout from '@/components/layout/AppLayout.vue'
 import AvatarSelector from '@/components/profile/AvatarSelector.vue'
 import PasswordChangeForm from '@/components/profile/PasswordChangeForm.vue'
 import UserAvatar from '@/components/common/UserAvatar.vue'
+import { useI18n } from 'vue-i18n'
 
 interface ProfileForm {
   firstName: string
@@ -250,6 +251,7 @@ interface AccountSettings {
 
 const authStore = useAuthStore()
 const notificationStore = useNotificationStore()
+const { t } = useI18n()
 
 const user = computed(() => authStore.user!)
 const profileFormRef = ref()
@@ -279,29 +281,29 @@ const roleOptions = [
 ]
 
 const roleLabels: Record<string, string> = {
-  super_admin: 'Super Administrateur',
-  admin: 'Administrateur',
-  team_admin: 'Administrateur d\'équipe',
-  manager: 'Manager',
-  user: 'Utilisateur'
+  super_admin: t('profile.roles.super_admin'),
+  admin: t('profile.roles.admin'),
+  team_admin: t('profile.roles.team_admin'),
+  manager: t('profile.roles.manager'),
+  user: t('profile.roles.user')
 }
 
 // Validation rules
 const firstNameRules = [
-  (v: string) => !!v || 'Le prénom est requis',
-  (v: string) => (v && v.length >= 2) || 'Le prénom doit contenir au moins 2 caractères',
-  (v: string) => (v && v.length <= 50) || 'Le prénom ne peut pas dépasser 50 caractères'
+  (v: string) => !!v || t('profile.validation.firstNameRequired'),
+  (v: string) => (v && v.length >= 2) || t('profile.validation.firstNameMinLength'),
+  (v: string) => (v && v.length <= 50) || t('profile.validation.firstNameMaxLength')
 ]
 
 const lastNameRules = [
-  (v: string) => !!v || 'Le nom est requis',
-  (v: string) => (v && v.length >= 2) || 'Le nom doit contenir au moins 2 caractères',
-  (v: string) => (v && v.length <= 50) || 'Le nom ne peut pas dépasser 50 caractères'
+  (v: string) => !!v || t('profile.validation.lastNameRequired'),
+  (v: string) => (v && v.length >= 2) || t('profile.validation.lastNameMinLength'),
+  (v: string) => (v && v.length <= 50) || t('profile.validation.lastNameMaxLength')
 ]
 
 const emailRules = [
-  (v: string) => !!v || 'L\'email est requis',
-  (v: string) => /.+@.+\..+/.test(v) || 'Format d\'email invalide'
+  (v: string) => !!v || t('profile.validation.emailRequired'),
+  (v: string) => /.+@.+\..+/.test(v) || t('profile.validation.emailInvalid')
 ]
 
 const initializeForm = () => {
@@ -340,11 +342,11 @@ const saveProfile = async () => {
       email: profileForm.email
     })
 
-    notificationStore.showSuccess('Profil mis à jour avec succès')
+    notificationStore.showSuccess(t('profile.updated'))
     isEditing.value = false
   } catch (error: any) {
     notificationStore.showError(
-      error.response?.data?.message || 'Erreur lors de la mise à jour du profil'
+      error.response?.data?.message || t('profile.updateError')
     )
   } finally {
     isLoading.value = false
@@ -360,7 +362,7 @@ const handlePasswordChanged = () => {
 }
 
 const formatDate = (dateString: string | Date) => {
-  if (!dateString) return 'Non disponible'
+  if (!dateString) return t('profile.notAvailable')
   const date = new Date(dateString)
   return date.toLocaleDateString('fr-FR', {
     year: 'numeric',
@@ -372,7 +374,7 @@ const formatDate = (dateString: string | Date) => {
 }
 
 const formatLastLogin = (dateString: string | Date | null) => {
-  if (!dateString) return 'Jamais connecté'
+  if (!dateString) return t('profile.neverLoggedIn')
   return formatDate(dateString)
 }
 

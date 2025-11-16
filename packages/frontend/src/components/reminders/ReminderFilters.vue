@@ -6,8 +6,8 @@
         <div class="filter-group">
           <v-text-field
             v-model="localFilters.search"
-            label="Rechercher"
-            placeholder="Rechercher dans les rappels..."
+            :label="t('common.search')"
+            :placeholder="`${t('common.search')} ${t('navigation.reminders').toLowerCase()}...`"
             prepend-inner-icon="mdi-magnify"
             @input="onFiltersChange"
             density="comfortable"
@@ -23,8 +23,8 @@
             :items="priorityOptions"
             item-title="label"
             item-value="value"
-            label="Priorité"
-            placeholder="Toutes les priorités"
+            :label="t('labels.priority')"
+            :placeholder="`All ${t('labels.priority').toLowerCase()}`"
             prepend-inner-icon="mdi-flag"
             @update:modelValue="onFiltersChange"
             clearable
@@ -48,8 +48,8 @@
             :items="statusOptions"
             item-title="label"
             item-value="value"
-            label="Statut"
-            placeholder="Tous les statuts"
+            :label="t('labels.status')"
+            :placeholder="`All ${t('labels.status').toLowerCase()}`"
             prepend-inner-icon="mdi-information-outline"
             @update:modelValue="onFiltersChange"
             clearable
@@ -73,8 +73,8 @@
             :items="userOptions"
             item-title="label"
             item-value="value"
-            label="Utilisateur"
-            placeholder="Tous les utilisateurs"
+            :label="t('contact.firstName')"
+            placeholder="All users"
             prepend-inner-icon="mdi-account"
             @update:modelValue="onFiltersChange"
             clearable
@@ -93,8 +93,8 @@
             :items="institutionOptions"
             item-title="label"
             item-value="value"
-            label="Institution"
-            placeholder="Toutes les institutions"
+            :label="t('institution.name')"
+            placeholder="All institutions"
             prepend-inner-icon="mdi-office-building"
             @update:modelValue="onFiltersChange"
             clearable
@@ -108,7 +108,7 @@
         <div class="filter-group">
           <v-text-field
             v-model="localFilters.dateFrom"
-            label="Date de début"
+            :label="t('segmentation.filters.dateRange.startDate')"
             type="date"
             prepend-inner-icon="mdi-calendar-start"
             @update:modelValue="onFiltersChange"
@@ -121,7 +121,7 @@
         <div class="filter-group">
           <v-text-field
             v-model="localFilters.dateTo"
-            label="Date de fin"
+            :label="t('segmentation.filters.dateRange.endDate')"
             type="date"
             prepend-inner-icon="mdi-calendar-end"
             @update:modelValue="onFiltersChange"
@@ -141,7 +141,7 @@
               prepend-icon="mdi-calendar-today"
               @click="toggleTodayFilter"
             >
-              Aujourd'hui
+              {{ t('time.today') }}
             </v-btn>
             <v-btn
               :color="showUpcoming ? 'info' : 'secondary'"
@@ -150,7 +150,7 @@
               prepend-icon="mdi-calendar-arrow-right"
               @click="toggleUpcomingFilter"
             >
-              À venir
+              {{ t('common.next') }}
             </v-btn>
             <v-btn
               :color="showOverdue ? 'error' : 'secondary'"
@@ -159,7 +159,7 @@
               prepend-icon="mdi-alert-circle"
               @click="toggleOverdueFilter"
             >
-              En retard
+              Overdue
             </v-btn>
             <v-btn
               :color="showCompleted ? 'success' : 'secondary'"
@@ -168,7 +168,7 @@
               prepend-icon="mdi-check-circle"
               @click="toggleCompletedFilter"
             >
-              Complétés
+              {{ t('reminders.status.completed') }}
             </v-btn>
             <v-btn
               color="secondary"
@@ -177,7 +177,7 @@
               prepend-icon="mdi-filter-off"
               @click="clearAllFilters"
             >
-              Tout effacer
+              Clear all
             </v-btn>
           </div>
         </div>
@@ -190,7 +190,8 @@
 import { institutionsApi, usersApi } from "@/services/api"
 import type { ReminderFilters } from "@/services/api/reminders"
 import type { ReminderPriority, ReminderStatus } from "@medical-crm/shared"
-import { onMounted, ref, watch } from "vue"
+import { onMounted, ref, watch, computed } from "vue"
+import { useI18n } from "vue-i18n"
 
 interface Props {
   filters: ReminderFilters
@@ -202,6 +203,7 @@ interface Emits {
 
 const props = defineProps<Props>()
 const emit = defineEmits<Emits>()
+const { t } = useI18n()
 
 const localFilters = ref<ReminderFilters>({ ...props.filters })
 const loadingUsers = ref(false)
@@ -213,53 +215,53 @@ const showUpcoming = ref(false)
 const showOverdue = ref(false)
 const showCompleted = ref(false)
 
-const priorityOptions = [
+const priorityOptions = computed(() => [
   {
-    label: "Faible",
+    label: t('reminders.priority.low'),
     value: "low" as ReminderPriority,
     color: "blue",
     icon: "mdi-information-outline"
   },
   {
-    label: "Moyenne",
+    label: t('reminders.priority.medium'),
     value: "medium" as ReminderPriority,
     color: "orange",
     icon: "mdi-alert-circle-outline"
   },
   {
-    label: "Haute",
+    label: t('reminders.priority.high'),
     value: "high" as ReminderPriority,
     color: "red",
     icon: "mdi-alert"
   },
   {
-    label: "Urgent",
+    label: t('reminders.priority.urgent'),
     value: "urgent" as ReminderPriority,
     color: "purple",
     icon: "mdi-alert-octagon"
   },
-]
+])
 
-const statusOptions = [
+const statusOptions = computed(() => [
   {
-    label: "En attente",
+    label: t('reminders.status.pending'),
     value: "pending" as ReminderStatus,
     color: "grey",
     icon: "mdi-clock-outline"
   },
   {
-    label: "Complété",
+    label: t('reminders.status.completed'),
     value: "completed" as ReminderStatus,
     color: "success",
     icon: "mdi-check-circle"
   },
   {
-    label: "Annulé",
+    label: t('reminders.status.cancelled'),
     value: "cancelled" as ReminderStatus,
     color: "error",
     icon: "mdi-close-circle"
   },
-]
+])
 
 watch(
   () => props.filters,

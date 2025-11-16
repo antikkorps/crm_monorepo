@@ -16,7 +16,7 @@
               :disabled="index === 0"
             >
               <v-icon>mdi-arrow-up</v-icon>
-              <v-tooltip activator="parent" location="top">Déplacer vers le haut</v-tooltip>
+              <v-tooltip activator="parent" location="top">{{ t('billing.quoteBuilder.moveUp') }}</v-tooltip>
             </v-btn>
             <v-btn
               icon="mdi-arrow-down"
@@ -26,7 +26,7 @@
               :disabled="isLast"
             >
               <v-icon>mdi-arrow-down</v-icon>
-              <v-tooltip activator="parent" location="top">Déplacer vers le bas</v-tooltip>
+              <v-tooltip activator="parent" location="top">{{ t('billing.quoteBuilder.moveDown') }}</v-tooltip>
             </v-btn>
             <v-btn
               icon="mdi-delete"
@@ -36,7 +36,7 @@
               @click="$emit('remove', index)"
             >
               <v-icon>mdi-delete</v-icon>
-              <v-tooltip activator="parent" location="top">Supprimer la ligne</v-tooltip>
+              <v-tooltip activator="parent" location="top">{{ t('billing.quoteBuilder.removeLine') }}</v-tooltip>
             </v-btn>
           </div>
         </div>
@@ -126,12 +126,12 @@
           <!-- Discount Section -->
           <v-card class="discount-section mt-4" variant="outlined">
             <v-card-title class="d-flex justify-space-between align-center">
-              <span>Remise</span>
+              <span>{{ t('billing.catalogSelector.discount') }}</span>
               <div class="discount-toggle">
                 <v-switch
                   :model-value="hasDiscount"
                   @update:model-value="toggleDiscount"
-                  label="Appliquer une remise"
+                  :label="t('billing.quoteBuilder.applyDiscount')"
                   hide-details
                 />
               </div>
@@ -145,7 +145,7 @@
                     :items="discountTypeOptions"
                     item-title="label"
                     item-value="value"
-                    label="Type de remise"
+                    :label="t('billing.quoteBuilder.discountType')"
                     variant="outlined"
                     @update:model-value="updateLine"
                   />
@@ -168,7 +168,7 @@
                 <v-col cols="12" md="4">
                   <v-text-field
                     :model-value="`-${formatCurrency(calculatedValues.discountAmount)}`"
-                    label="Montant de remise"
+                    :label="t('billing.quoteBuilder.discountAmount')"
                     variant="outlined"
                     readonly
                     class="calculated-field discount-amount"
@@ -180,7 +180,7 @@
 
           <!-- Tax Section -->
           <v-card class="tax-section mt-4" variant="outlined">
-            <v-card-title>Taxes et total</v-card-title>
+            <v-card-title>{{ t('billing.quoteBuilder.taxesAndTotal') }}</v-card-title>
             <v-card-text>
               <v-row>
                 <v-col cols="12" md="4">
@@ -245,6 +245,7 @@
 import type { QuoteLine as QuoteLineType } from "@medical-crm/shared"
 import { DiscountType } from "@medical-crm/shared"
 import { computed, ref, watch } from "vue"
+import { useI18n } from "vue-i18n"
 import { type CatalogItem } from "@/stores/catalog"
 import CatalogItemSelector from "./CatalogItemSelector.vue"
 
@@ -255,6 +256,7 @@ interface Props {
 }
 
 const props = defineProps<Props>()
+const { t } = useI18n()
 
 // Emits
 const emit = defineEmits<{
@@ -285,16 +287,16 @@ const originalCatalogPrice = ref<number | null>((props.line as any).originalCata
 const originalCatalogTaxRate = ref<number | null>((props.line as any).originalCatalogTaxRate || null)
 
 // Discount type options
-const discountTypeOptions = [
-  { label: "Pourcentage (%)", value: DiscountType.PERCENTAGE },
-  { label: "Montant fixe (€)", value: DiscountType.FIXED_AMOUNT },
-]
+const discountTypeOptions = computed(() => [
+  { label: t('billing.quoteBuilder.discountTypePercentage'), value: DiscountType.PERCENTAGE },
+  { label: t('billing.quoteBuilder.discountTypeFixed'), value: DiscountType.FIXED_AMOUNT },
+])
 
 // Computed properties
 const discountValueLabel = computed(() => {
   return localLine.value.discountType === DiscountType.PERCENTAGE
-    ? "Pourcentage de remise"
-    : "Montant de remise"
+    ? t('billing.quoteBuilder.discountPercentage')
+    : t('billing.quoteBuilder.discountAmount')
 })
 
 const calculatedValues = computed(() => {
@@ -373,15 +375,15 @@ const validateLine = () => {
   const newErrors: Record<string, string> = {}
 
   if (!localLine.value.description?.trim()) {
-    newErrors.description = "La description est requise"
+    newErrors.description = t('billing.quoteBuilder.validation.descriptionRequired')
   }
 
   if (!localLine.value.quantity || localLine.value.quantity <= 0) {
-    newErrors.quantity = "La quantité doit être supérieure à 0"
+    newErrors.quantity = t('billing.quoteBuilder.validation.quantityRequired')
   }
 
   if (localLine.value.unitPrice < 0) {
-    newErrors.unitPrice = "Le prix unitaire ne peut pas être négatif"
+    newErrors.unitPrice = t('billing.quoteBuilder.validation.priceNegative')
   }
 
   errors.value = newErrors

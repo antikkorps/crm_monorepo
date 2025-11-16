@@ -23,8 +23,8 @@
             :items="callTypeOptions"
             item-title="label"
             item-value="value"
-            label="Type d'appel"
-            placeholder="Tous les types"
+            :label="t('calls.typeField')"
+            placeholder="All types"
             prepend-inner-icon="mdi-phone-log"
             @update:modelValue="onFiltersChange"
             clearable
@@ -40,8 +40,8 @@
             :items="userOptions"
             item-title="label"
             item-value="value"
-            label="Utilisateur"
-            placeholder="Tous les utilisateurs"
+            :label="t('contact.firstName')"
+            placeholder="All users"
             prepend-inner-icon="mdi-account"
             @update:modelValue="onFiltersChange"
             clearable
@@ -58,8 +58,8 @@
             :items="institutionOptions"
             item-title="label"
             item-value="value"
-            label="Institution"
-            placeholder="Toutes les institutions"
+            :label="t('institution.name')"
+            placeholder="All institutions"
             prepend-inner-icon="mdi-office-building"
             @update:modelValue="onFiltersChange"
             clearable
@@ -75,8 +75,8 @@
         <div class="filter-group">
           <v-text-field
             v-model="localFilters.dateFrom"
-            label="Date - Du"
-            placeholder="Date de début"
+            :label="t('segmentation.filters.dateRange.startDate')"
+            placeholder="Start date"
             type="date"
             prepend-inner-icon="mdi-calendar-start"
             @change="onFiltersChange"
@@ -89,8 +89,8 @@
         <div class="filter-group">
           <v-text-field
             v-model="localFilters.dateTo"
-            label="Date - Au"
-            placeholder="Date de fin"
+            :label="t('segmentation.filters.dateRange.endDate')"
+            placeholder="End date"
             type="date"
             prepend-inner-icon="mdi-calendar-end"
             @change="onFiltersChange"
@@ -110,7 +110,7 @@
               prepend-icon="mdi-calendar-today"
               @click="toggleTodayFilter"
             >
-              Aujourd'hui
+              {{ t('time.today') }}
             </v-btn>
             <v-btn
               :color="showMissed ? 'error' : 'secondary'"
@@ -119,7 +119,7 @@
               prepend-icon="mdi-phone-missed"
               @click="toggleMissedFilter"
             >
-              Appels manqués
+              Missed calls
             </v-btn>
             <v-btn
               color="secondary"
@@ -128,7 +128,7 @@
               prepend-icon="mdi-filter-off"
               @click="clearAllFilters"
             >
-              Tout effacer
+              Clear all
             </v-btn>
           </div>
         </div>
@@ -140,7 +140,8 @@
 <script setup lang="ts">
 import { institutionsApi, usersApi } from "@/services/api"
 import type { CallFilters } from "@/services/api/calls"
-import { onMounted, ref, watch } from "vue"
+import { onMounted, ref, watch, computed } from "vue"
+import { useI18n } from "vue-i18n"
 
 interface Props {
   filters: CallFilters
@@ -152,6 +153,7 @@ interface Emits {
 
 const props = defineProps<Props>()
 const emit = defineEmits<Emits>()
+const { t } = useI18n()
 
 const localFilters = ref<CallFilters>({ ...props.filters })
 const loadingUsers = ref(false)
@@ -161,11 +163,11 @@ const institutionOptions = ref<Array<{ label: string; value: string }>>([])
 const showToday = ref(false)
 const showMissed = ref(false)
 
-const callTypeOptions = [
-  { label: "Entrant", value: "incoming" },
-  { label: "Sortant", value: "outgoing" },
-  { label: "Manqué", value: "missed" },
-]
+const callTypeOptions = computed(() => [
+  { label: t('calls.direction.inbound'), value: "incoming" },
+  { label: t('calls.direction.outbound'), value: "outgoing" },
+  { label: "Missed", value: "missed" },
+])
 
 watch(
   () => props.filters,

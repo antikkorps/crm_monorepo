@@ -5,7 +5,7 @@
     @update:model-value="closeDialog"
   >
     <v-card>
-      <v-card-title class="text-h5">{{ isEditing ? 'Modifier la facture' : 'Créer une facture' }}</v-card-title>
+      <v-card-title class="text-h5">{{ isEditing ? t('billing.invoiceForm.editTitle') : t('billing.invoiceForm.createTitle') }}</v-card-title>
       <v-card-text>
         <v-form @submit.prevent="handleSubmit">
           <v-row dense>
@@ -15,7 +15,7 @@
                 :items="institutions"
                 item-title="name"
                 item-value="id"
-                label="Institution *"
+                :label="t('billing.invoiceForm.institution') + ' *'"
                 :error-messages="errors.institutionId"
                 :disabled="isEditing"
                 :loading="loadingInstitutions"
@@ -30,7 +30,7 @@
                 :items="templates"
                 item-title="name"
                 item-value="id"
-                label="Modèle de document"
+                :label="t('billing.invoiceForm.template')"
                 variant="outlined"
                 density="compact"
                 clearable
@@ -39,7 +39,7 @@
             <v-col cols="12" md="6">
               <v-text-field
                 v-model="form.title"
-                label="Titre *"
+                :label="t('billing.invoiceForm.title') + ' *'"
                 :error-messages="errors.title"
                 variant="outlined"
                 density="compact"
@@ -48,7 +48,7 @@
             <v-col cols="12" md="6">
               <v-text-field
                 v-model="form.dueDate"
-                label="Date d'échéance *"
+                :label="t('billing.invoiceForm.dueDate') + ' *'"
                 type="date"
                 :error-messages="errors.dueDate"
                 variant="outlined"
@@ -58,7 +58,7 @@
             <v-col cols="12">
               <v-textarea
                 v-model="form.description"
-                label="Description"
+                :label="t('billing.invoiceForm.description')"
                 rows="3"
               />
             </v-col>
@@ -67,11 +67,11 @@
           <v-divider class="my-4"></v-divider>
 
           <div class="d-flex justify-space-between align-center mb-4">
-            <h3 class="text-h6">Lignes de facturation</h3>
-            <v-btn size="small" prepend-icon="mdi-plus" @click="addLine">Ajouter une ligne</v-btn>
+            <h3 class="text-h6">{{ t('billing.invoiceForm.billingLines') }}</h3>
+            <v-btn size="small" prepend-icon="mdi-plus" @click="addLine">{{ t('billing.invoiceForm.addLine') }}</v-btn>
           </div>
 
-          <div v-if="form.lines.length === 0" class="text-center text-medium-emphasis py-4">Aucune ligne ajoutée.</div>
+          <div v-if="form.lines.length === 0" class="text-center text-medium-emphasis py-4">{{ t('billing.invoiceForm.noLines') }}</div>
 
           <div v-else class="lines-container">
             <QuoteLine
@@ -89,19 +89,19 @@
 
           <div v-if="form.lines.length > 0" class="d-flex justify-end mt-4">
             <div style="width: 300px">
-              <div class="d-flex justify-space-between"><span class="text-medium-emphasis">Sous-total</span><span>{{ formatCurrency(invoiceTotals.subtotal) }}</span></div>
-              <div class="d-flex justify-space-between"><span class="text-medium-emphasis">Remise totale</span><span class="text-error">-{{ formatCurrency(invoiceTotals.totalDiscountAmount) }}</span></div>
-              <div class="d-flex justify-space-between"><span class="text-medium-emphasis">TVA</span><span>{{ formatCurrency(invoiceTotals.totalTaxAmount) }}</span></div>
+              <div class="d-flex justify-space-between"><span class="text-medium-emphasis">{{ t('billing.invoiceForm.subtotal') }}</span><span>{{ formatCurrency(invoiceTotals.subtotal) }}</span></div>
+              <div class="d-flex justify-space-between"><span class="text-medium-emphasis">{{ t('billing.invoiceForm.totalDiscount') }}</span><span class="text-error">-{{ formatCurrency(invoiceTotals.totalDiscountAmount) }}</span></div>
+              <div class="d-flex justify-space-between"><span class="text-medium-emphasis">{{ t('billing.invoiceForm.vat') }}</span><span>{{ formatCurrency(invoiceTotals.totalTaxAmount) }}</span></div>
               <v-divider class="my-2"></v-divider>
-              <div class="d-flex justify-space-between font-weight-bold text-h6"><span>Total</span><span>{{ formatCurrency(invoiceTotals.total) }}</span></div>
+              <div class="d-flex justify-space-between font-weight-bold text-h6"><span>{{ t('billing.invoiceForm.total') }}</span><span>{{ formatCurrency(invoiceTotals.total) }}</span></div>
             </div>
           </div>
         </v-form>
       </v-card-text>
       <v-card-actions class="pa-4">
         <v-spacer></v-spacer>
-        <v-btn text @click="closeDialog">Annuler</v-btn>
-        <v-btn color="primary" :loading="submitting" :disabled="!isFormValid" @click="handleSubmit">{{ isEditing ? 'Mettre à jour' : 'Créer' }}</v-btn>
+        <v-btn text @click="closeDialog">{{ t('billing.invoiceForm.cancel') }}</v-btn>
+        <v-btn color="primary" :loading="submitting" :disabled="!isFormValid" @click="handleSubmit">{{ isEditing ? t('billing.invoiceForm.update') : t('billing.invoiceForm.create') }}</v-btn>
       </v-card-actions>
     </v-card>
   </v-dialog>
@@ -111,8 +111,11 @@
 import { institutionsApi, invoicesApi, templatesApi } from "@/services/api"
 import type { Invoice, InvoiceCreateRequest, InvoiceLineCreateRequest, DocumentTemplate } from "@medical-crm/shared"
 import { computed, onMounted, ref, watch } from "vue"
+import { useI18n } from "vue-i18n"
 import { createInvoiceLineDefaults, calculateTotals, type LineWithCatalog } from "@/utils/billing"
 import QuoteLine from "./QuoteLine.vue"
+
+const { t } = useI18n()
 
 const props = defineProps<{ visible: boolean, invoice?: Invoice | null }>()
 const emit = defineEmits<{
@@ -280,14 +283,14 @@ const moveLineDown = (index: number) => {
 const validateForm = () => {
   errors.value = {}
   lineErrors.value = {}
-  if (!form.value.institutionId) errors.value.institutionId = "Institution requise"
-  if (!form.value.title) errors.value.title = "Titre requis"
-  if (!form.value.dueDate) errors.value.dueDate = "Date d'échéance requise"
+  if (!form.value.institutionId) errors.value.institutionId = t('billing.invoiceForm.validation.institutionRequired')
+  if (!form.value.title) errors.value.title = t('billing.invoiceForm.validation.titleRequired')
+  if (!form.value.dueDate) errors.value.dueDate = t('billing.invoiceForm.validation.dueDateRequired')
   form.value.lines.forEach((line, index) => {
     const lineError: Record<string, string> = {}
-    if (!line.description) lineError.description = "Description requise"
-    if (!line.quantity || line.quantity <= 0) lineError.quantity = "Qté > 0"
-    if (line.unitPrice === undefined || line.unitPrice < 0) lineError.unitPrice = "Prix ≥ 0"
+    if (!line.description) lineError.description = t('billing.invoiceForm.validation.descriptionRequired')
+    if (!line.quantity || line.quantity <= 0) lineError.quantity = t('billing.invoiceForm.validation.quantityPositive')
+    if (line.unitPrice === undefined || line.unitPrice < 0) lineError.unitPrice = t('billing.invoiceForm.validation.pricePositive')
     if (Object.keys(lineError).length > 0) lineErrors.value[index] = lineError
   })
   return Object.keys(errors.value).length === 0 && Object.keys(lineErrors.value).length === 0
@@ -301,15 +304,15 @@ const handleSubmit = async () => {
     if (isEditing.value && props.invoice) {
       const response = await invoicesApi.update(props.invoice.id, invoiceData)
       emit("invoice-updated", (response as any).data)
-      emit("notify", { message: "Facture mise à jour avec succès", color: "success" })
+      emit("notify", { message: t('billing.invoiceForm.messages.updated'), color: "success" })
     } else {
       const response = await invoicesApi.create(invoiceData)
       emit("invoice-created", (response as any).data)
-      emit("notify", { message: "Facture créée avec succès", color: "success" })
+      emit("notify", { message: t('billing.invoiceForm.messages.created'), color: "success" })
     }
     closeDialog()
   } catch (error) {
-    emit("notify", { message: isEditing.value ? "Erreur lors de la mise à jour" : "Erreur lors de la création", color: "error" })
+    emit("notify", { message: isEditing.value ? t('billing.invoiceForm.messages.updateError') : t('billing.invoiceForm.messages.createError'), color: "error" })
   } finally {
     submitting.value = false
   }
