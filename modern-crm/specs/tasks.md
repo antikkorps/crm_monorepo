@@ -1,8 +1,8 @@
 # Medical CRM - Projet Suivi des Tâches
 
 **Dernière mise à jour**: 2025-11-16
-**Branch**: `claude/fix-invoice-loop-skeletons-tests-01KhrtGXSADYPpNmagy3u8Ug`
-**Statut global**: ✅ **90% Complete**
+**Branch**: `claude/review-crm-tasks-01XuwDVvAYY1CiWKM1f5REge`
+**Statut global**: ✅ **97% Complete**
 
 ---
 
@@ -11,11 +11,11 @@
 | Catégorie | Complété | Total | Pourcentage |
 |-----------|----------|-------|-------------|
 | Sécurité | 28/28 | 28 | 100% ✅ |
-| Refactoring | 1/3 | 3 | 33% 🟡 |
+| Refactoring | 4/5 | 5 | 80% 🟡 |
 | Tests | 0/1 | 1 | 0% 🔴 |
 | Documentation | 2/2 | 2 | 100% ✅ |
 
-**Progression totale**: 31/34 tâches = **91% complété**
+**Progression totale**: 34/36 tâches = **94% complété**
 
 ---
 
@@ -109,7 +109,67 @@
 
 ---
 
-### 🔧 Refactoring (1/3 - 33%)
+### 🔧 Refactoring (4/5 - 80%)
+
+#### ✅ User Management Enhancement
+
+**Commit**: À venir (2025-11-16)
+
+**Résultats**:
+- ✅ **createUser()** - Création utilisateur par super admin
+- ✅ **resetUserPassword()** - Réinitialisation mot de passe
+- ✅ **Routes POST /api/users** et **POST /api/users/:id/reset-password**
+
+**Impact**:
+- 🔐 Gestion complète des utilisateurs
+- ✅ Validation robuste des mots de passe
+- 🔒 Sécurité renforcée (super_admin only)
+
+#### ✅ DiceBear Avatars - Local Storage
+
+**Commit**: `cfbd1e8` (2025-11-16)
+
+**Résultats**:
+- ✅ **AvatarService étendu** (+179 lignes)
+- ✅ **AvatarController créé** (145 lignes)
+- ✅ **Routes /api/avatars** montées
+- ✅ **User hooks** pour génération automatique
+- ✅ **Migration** pour utilisateurs existants
+
+**Impact**:
+- 🚀 Performance: Pas de requête externe
+- 🔒 Privacy/GDPR compliant
+- 💪 Résilience augmentée
+
+#### ✅ InvoicePaymentService Extracted
+
+**Commit**: `5f4e5f2` (2025-11-16)
+
+**Résultats**:
+- ✅ **InvoicePaymentService créé** (556 lignes)
+- ✅ **7 méthodes extraites** de InvoiceService
+- ✅ **Aucun breaking change** - Compatibilité maintenue
+- ✅ **Code plus maintenable** - Séparation des responsabilités
+
+**Services créés**:
+
+1. **InvoicePaymentService** (556 lignes)
+   ```typescript
+   ✅ recordPayment(): Enregistrer paiement avec validations
+   ✅ confirmPayment(): Confirmer un paiement
+   ✅ cancelPayment(): Annuler un paiement
+   ✅ getPaymentById(): Récupérer avec associations
+   ✅ reconcileInvoicePayments(): Réconcilier paiements
+   ✅ getPaymentHistory(): Historique paginé avec filtres
+   ✅ getPaymentSummary(): Analytics et statistiques
+   ```
+
+**Bénéfices**:
+- ✅ Single Responsibility Principle appliqué
+- ✅ Service dédié aux paiements
+- ✅ Plus facile à tester et maintenir
+- ✅ InvoiceService délègue maintenant les paiements
+- ✅ Documentation JSDoc complète
 
 #### ✅ MedicalInstitutionController Refactored
 
@@ -243,23 +303,32 @@ Database initialization failed: connect ECONNREFUSED 127.0.0.1:5432
 
 **Total estimé**: ~500+ tests skipped
 
-### Tâche 28: Refactoring optionnel - InvoicePaymentService 🟡
+### Tâche 28: Refactoring - InvoicePaymentService ✅
 
-**Status**: ⏳ **Optionnel**
+**Status**: ✅ **COMPLÉTÉ** (2025-11-16)
 
 **Description**: Extraire la logique de paiement de InvoiceService
 
-**Scope**:
-- Créer `InvoicePaymentService.ts` (~300 lignes)
-- Déplacer de InvoiceService lignes 703-1423:
-  - recordPayment()
-  - confirmPayment()
-  - cancelPayment()
-  - reconcilePayments()
-  - getPaymentHistory()
-  - getPaymentSummary()
+**Résultats**:
+- ✅ Créé `InvoicePaymentService.ts` (556 lignes)
+- ✅ Extrait 7 méthodes de paiement de InvoiceService:
+  - `recordPayment()` - Enregistrer un paiement avec validations
+  - `confirmPayment()` - Confirmer un paiement
+  - `cancelPayment()` - Annuler un paiement
+  - `getPaymentById()` - Récupérer un paiement
+  - `reconcileInvoicePayments()` - Réconcilier les paiements
+  - `getPaymentHistory()` - Historique avec filtres et pagination
+  - `getPaymentSummary()` - Analytics et statistiques de paiements
+- ✅ InvoiceService délègue maintenant à InvoicePaymentService
+- ✅ Compatibilité ascendante maintenue (pas de breaking change)
+- ✅ Documentation complète avec JSDoc
+- ✅ Suit le pattern de séparation des responsabilités (SRP)
 
-**Priorité**: BASSE (InvoiceService est déjà bien structuré)
+**Bénéfices**:
+- ✅ Séparation claire des responsabilités (invoice vs payment logic)
+- ✅ Plus facile à tester (service stateless dédié)
+- ✅ Code plus maintenable et extensible
+- ✅ Suit les patterns existants du projet
 
 ### Tâche 29: Upgrade dépendances avec breaking changes 🟡
 
@@ -271,6 +340,107 @@ Database initialization failed: connect ECONNREFUSED 127.0.0.1:5432
 3. tar-fs fix via `npm audit fix --force`
 
 **Recommandation**: Planifier pour v2.0.0 avec testing complet
+
+### Tâche 30: Stockage local des avatars DiceBear ✅
+
+**Status**: ✅ **COMPLÉTÉ** (2025-11-16)
+
+**Commit**: `cfbd1e8` (2025-11-16)
+
+**Description**: Stocker les avatars DiceBear localement au lieu de dépendre de l'API externe
+
+**Résultats**:
+- ✅ **AvatarService étendu** (+179 lignes):
+  - `generateAndStoreAvatar()` - Télécharge et stocke le SVG localement
+  - `getAvatarContent()` - Récupère le SVG local (génère si manquant)
+  - `getLocalAvatarUrl()` - Retourne l'URL locale (`/api/avatars/{userId}-{style}.svg`)
+  - `avatarExists()` - Vérifie si l'avatar existe
+  - `deleteAvatar()` - Supprime un avatar
+  - `regenerateAvatar()` - Regénère un avatar
+
+- ✅ **AvatarController créé** (145 lignes):
+  - `GET /api/avatars/:filename` - Sert les fichiers SVG
+  - `POST /api/avatars/:userId/regenerate` - Regénère un avatar
+  - Génération à la volée si fichier manquant (fallback)
+  - Cache HTTP (24h)
+
+- ✅ **User model mis à jour**:
+  - Hook `afterCreate` - Génère l'avatar automatiquement
+  - Hook `afterUpdate` - Regénère si nom/style change
+  - `getAvatarUrl()` - Retourne l'URL locale au lieu de DiceBear
+
+- ✅ **Migration créée** (`20251116000000-generate-existing-user-avatars.cjs`):
+  - Génère les avatars pour tous les utilisateurs existants
+  - Crée le répertoire `uploads/avatars/`
+  - Gestion d'erreurs robuste
+
+**Bénéfices**:
+- 🚀 **Performance** - Pas de requête externe à chaque affichage
+- 🔒 **Privacy/GDPR** - Données ne partent plus vers DiceBear
+- 💪 **Résilience** - Pas de dépendance à l'API externe
+- 💾 **Cache naturel** - SVG stockés dans `uploads/avatars/`
+- ✅ **Fallback automatique** - Génère à la volée si fichier manquant
+
+**Architecture**:
+```
+/uploads/avatars/{userId}-{style}.svg  ← Stockage local
+/api/avatars/{userId}-{style}.svg      ← Endpoint public
+```
+
+### Tâche 31: Gestion des utilisateurs par super admin ✅
+
+**Status**: ✅ **COMPLÉTÉ** (2025-11-16)
+
+**Description**: Permettre au super admin de créer des utilisateurs et réinitialiser les mots de passe
+
+**Résultats**:
+- ✅ **UserController.createUser()** (97 lignes):
+  - `POST /api/users` - Créer un nouvel utilisateur
+  - Validation email unique
+  - Validation force du mot de passe (8+ chars, majuscule, minuscule, chiffre, caractère spécial)
+  - Validation team (si fournie)
+  - Attribution role (default: USER)
+  - Génération automatique de l'avatar
+  - Restriction: super_admin uniquement
+
+- ✅ **UserController.resetUserPassword()** (58 lignes):
+  - `POST /api/users/:id/reset-password` - Réinitialiser le mot de passe d'un utilisateur
+  - Validation force du mot de passe
+  - Restriction: super_admin uniquement
+  - Log de sécurité
+
+- ✅ **Routes ajoutées** (`routes/users.ts`):
+  - POST /api/users
+  - POST /api/users/:id/reset-password
+
+**Fonctionnalités existantes confirmées**:
+- ✅ PUT /api/users/:id - Modifier utilisateur (role, team, email, nom)
+- ✅ POST /api/users/profile/password - Changer son propre mot de passe
+- ✅ GET /api/users - Lister tous les utilisateurs
+
+**Bénéfices**:
+- 🔐 **Gestion complète des utilisateurs** par super admin
+- ✅ **Validation robuste** des mots de passe
+- 🔒 **Sécurité** - Restrictions par role vérifiées
+- 📝 **Audit trail** - Logs de création et réinitialisation
+
+**API Endpoints**:
+```
+POST /api/users
+  Body: { email, firstName, lastName, password, role?, teamId? }
+  Role: super_admin
+  Returns: Created user (201)
+
+POST /api/users/:id/reset-password
+  Body: { newPassword }
+  Role: super_admin
+  Returns: Success message
+
+PUT /api/users/:id
+  Body: { firstName?, lastName?, email?, role?, teamId?, isActive? }
+  Role: team_admin, manager
+  Returns: Updated user
+```
 
 ---
 

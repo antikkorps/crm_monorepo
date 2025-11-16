@@ -1,4 +1,8 @@
 import crypto from "crypto"
+import fs from "fs/promises"
+import path from "path"
+import sanitize from "sanitize-filename"
+import { logger } from "../utils/logger"
 
 export interface AvatarOptions {
   seed?: string
@@ -11,6 +15,7 @@ export class AvatarService {
   private static readonly DEFAULT_STYLE = "avataaars"
   private static readonly DEFAULT_SIZE = 200
   private static readonly BASE_URL = "https://api.dicebear.com/7.x"
+  private static readonly AVATARS_DIR = process.env.AVATARS_DIR || path.join(__dirname, "../../uploads/avatars")
 
   /**
    * Generate a DiceBear avatar URL based on a seed
@@ -139,6 +144,187 @@ export class AvatarService {
       url: this.generateAvatarFromSeed(avatarSeed, { style: avatarStyle }),
       style: avatarStyle,
     }
+  }
+
+  /**
+   * Ensure avatars directory exists
+   */
+  private static async ensureAvatarsDirectory(): Promise<void> {
+    try {
+      await fs.access(this.AVATARS_DIR)
+    } catch {
+      await fs.mkdir(this.AVATARS_DIR, { recursive: true })
+      logger.info(`Created avatars directory: ${this.AVATARS_DIR}`)
+    }
+  }
+
+  /**
+   * Get local file path for a user's avatar
+   */
+  public static getLocalAvatarPath(userId: string, style?: string): string {
+    const avatarStyle = style && this.isValidStyle(style) ? style : this.DEFAULT_STYLE
+    const safeUserId = sanitize(userId)
+    const fileName = `${safeUserId}-${avatarStyle}.svg`
+    const avatarPath = path.resolve(this.AVATARS_DIR, fileName)
+    // Enforce avatarPath stays under AVATARS_DIR
+    if (!avatarPath.startsWith(path.resolve(this.AVATARS_DIR))) {
+      throw new Error("Invalid avatar path")
+    }
+    return avatarPath
+  }
+
+  /**
+   * Get URL for locally stored avatar
+   */
+  public static getLocalAvatarUrl(userId: string, style?: string): string {
+    const avatarStyle = style && this.isValidStyle(style) ? style : this.DEFAULT_STYLE
+    return `/api/avatars/${userId}-${avatarStyle}.svg`
+  }
+
+  /**
+   * Download SVG from DiceBear API
+   */
+  private static async downloadSvgFromDiceBear(
+    seed: string,
+    style: string
+  ): Promise<string> {
+    const url = this.generateAvatarUrl({ seed, style, size: 200 })
+
+    try {
+      const response = await fetch(url)
+      if (!response.ok) {
+        throw new Error(`Failed to fetch avatar: ${response.statusText}`)
+      }
+      return await response.text()
+    } catch (error: any) {
+      logger.error(`Failed to download avatar from DiceBear`, {
+        error: error.message,
+        seed,
+        style,
+        url,
+      })
+      throw error
+    }
+  }
+
+  /**
+   * Generate and store avatar SVG locally
+   * @param userId - User ID
+   * @param seed - Avatar seed
+   * @param style - Avatar style (default: avataaars)
+   * @returns Path to stored SVG file
+   */
+  public static async generateAndStoreAvatar(
+    userId: string,
+    seed: string,
+    style?: string
+  ): Promise<string> {
+    const avatarStyle = style && this.isValidStyle(style) ? style : this.DEFAULT_STYLE
+    const filePath = this.getLocalAvatarPath(userId, avatarStyle)
+
+    try {
+      // Ensure directory exists
+      await this.ensureAvatarsDirectory()
+
+      // Download SVG from DiceBear
+      const svgContent = await this.downloadSvgFromDiceBear(seed, avatarStyle)
+
+      // Store SVG file
+      await fs.writeFile(filePath, svgContent, "utf-8")
+
+      logger.info(`Avatar generated and stored`, {
+        userId,
+        seed,
+        style: avatarStyle,
+        path: filePath,
+      })
+
+      return filePath
+    } catch (error: any) {
+      logger.error(`Failed to generate and store avatar`, {
+        error: error.message,
+        userId,
+        seed,
+        style: avatarStyle,
+      })
+      throw error
+    }
+  }
+
+  /**
+   * Check if local avatar exists
+   */
+  public static async avatarExists(userId: string, style?: string): Promise<boolean> {
+    const avatarStyle = style && this.isValidStyle(style) ? style : this.DEFAULT_STYLE
+    const filePath = this.getLocalAvatarPath(userId, avatarStyle)
+
+    try {
+      await fs.access(filePath)
+      return true
+    } catch {
+      return false
+    }
+  }
+
+  /**
+   * Get avatar content (reads from local storage or generates if missing)
+   */
+  public static async getAvatarContent(
+    userId: string,
+    seed: string,
+    style?: string
+  ): Promise<string> {
+    const avatarStyle = style && this.isValidStyle(style) ? style : this.DEFAULT_STYLE
+    const filePath = this.getLocalAvatarPath(userId, avatarStyle)
+
+    // Try to read existing file
+    try {
+      const content = await fs.readFile(filePath, "utf-8")
+      return content
+    } catch (error) {
+      // File doesn't exist, generate it
+      logger.info(`Avatar not found, generating new one`, { userId, seed, style: avatarStyle })
+      await this.generateAndStoreAvatar(userId, seed, avatarStyle)
+      return await fs.readFile(filePath, "utf-8")
+    }
+  }
+
+  /**
+   * Delete local avatar file
+   */
+  public static async deleteAvatar(userId: string, style?: string): Promise<void> {
+    const avatarStyle = style && this.isValidStyle(style) ? style : this.DEFAULT_STYLE
+    const filePath = this.getLocalAvatarPath(userId, avatarStyle)
+
+    try {
+      await fs.unlink(filePath)
+      logger.info(`Avatar deleted`, { userId, style: avatarStyle })
+    } catch (error: any) {
+      if (error.code !== "ENOENT") {
+        logger.error(`Failed to delete avatar`, {
+          error: error.message,
+          userId,
+          style: avatarStyle,
+        })
+      }
+    }
+  }
+
+  /**
+   * Regenerate avatar (delete old and create new)
+   */
+  public static async regenerateAvatar(
+    userId: string,
+    seed: string,
+    style?: string
+  ): Promise<string> {
+    const avatarStyle = style && this.isValidStyle(style) ? style : this.DEFAULT_STYLE
+
+    // Delete old avatar
+    await this.deleteAvatar(userId, avatarStyle)
+
+    // Generate new one
+    return await this.generateAndStoreAvatar(userId, seed, avatarStyle)
   }
 }
 
