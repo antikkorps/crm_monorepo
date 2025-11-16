@@ -1,14 +1,37 @@
 import { Context, Next } from "koa"
 import validator from "validator"
+import sanitizeHtml from "sanitize-html"
 
 /**
- * Simple XSS sanitization
+ * SECURITY: Improved XSS sanitization using sanitize-html
+ * Replaces basic validator.escape() with comprehensive HTML sanitization
+ * Addresses: High severity lodash.set vulnerability in koa-xss-sanitizer
+ */
+
+// Restrictive sanitization options for general input
+const strictOptions: sanitizeHtml.IOptions = {
+  allowedTags: [],
+  allowedAttributes: {},
+  disallowedTagsMode: 'discard',
+}
+
+/**
+ * Sanitize a string value
+ * Removes all HTML tags for security
  */
 function sanitizeString(value: string): string {
   if (typeof value !== "string") return value
 
-  // Escape HTML special characters
-  return validator.escape(value.trim())
+  const trimmed = value.trim()
+
+  // Skip sanitization for very short strings (performance optimization)
+  if (trimmed.length < 3) return trimmed
+
+  // If no HTML-like characters, return as-is (performance optimization)
+  if (!/<|>|&/.test(trimmed)) return trimmed
+
+  // Use sanitize-html to strip all HTML
+  return sanitizeHtml(trimmed, strictOptions)
 }
 
 /**
