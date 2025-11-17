@@ -398,17 +398,58 @@ export class MeetingController {
 
       // Invite contact persons
       if (Array.isArray(contactPersonIds) && contactPersonIds.length > 0) {
+        // Validate that contact persons belong to the meeting's institution (if one is set)
+        if (meeting.institutionId) {
+          const contacts = await ContactPerson.findAll({
+            where: { id: contactPersonIds },
+            attributes: ["id", "institutionId"],
+          })
+          
+          const invalidContacts = contacts.filter(
+            contact => contact.institutionId !== meeting.institutionId
+          )
+          
+          if (invalidContacts.length > 0) {
+            ctx.status = 400
+            ctx.body = {
+              success: false,
+              error: {
+                code: "INVALID_CONTACT",
+                message: "One or more contact persons do not belong to this meeting's institution",
+              },
+            }
+            return
+          }
+        }
+        
         const contactsInvited = await MeetingParticipant.bulkInviteContactPersons(meeting.id, contactPersonIds)
         invited = [...invited, ...contactsInvited]
       } else if (contactPersonId) {
-        // Verify contact person exists before creating participant record
-        const contactPerson = await ContactPerson.findByPk(contactPersonId)
-        if (!contactPerson) {
-          ctx.status = 404
-          ctx.body = { success: false, error: { code: "CONTACT_PERSON_NOT_FOUND", message: "Contact person not found" } }
-          return
+        // Validate that contact person belongs to the meeting's institution (if one is set)
+        if (meeting.institutionId) {
+          const contact = await ContactPerson.findByPk(contactPersonId)
+          if (!contact) {
+            ctx.status = 404
+            ctx.body = {
+              success: false,
+              error: { code: "NOT_FOUND", message: "Contact person not found" },
+            }
+            return
+          }
+          
+          if (contact.institutionId !== meeting.institutionId) {
+            ctx.status = 400
+            ctx.body = {
+              success: false,
+              error: {
+                code: "INVALID_CONTACT",
+                message: "Contact person does not belong to this meeting's institution",
+              },
+            }
+            return
+          }
         }
-
+        
         const contactInvited = await MeetingParticipant.create({
           meetingId: meeting.id,
           contactPersonId,
@@ -429,7 +470,11 @@ export class MeetingController {
       ctx.status = 500
       ctx.body = {
         success: false,
-        error: { code: "PARTICIPANT_INVITE_ERROR", message: "Failed to invite participants" },
+        error: {
+          code: "PARTICIPANT_INVITE_ERROR",
+          message: "Failed to invite participants",
+          details: error instanceof Error ? error.message : "Unknown error",
+        },
       }
     }
   }
@@ -576,7 +621,7 @@ export class MeetingController {
         const email = isUser ? p.user?.email : p.contactPerson?.email
 
         return {
-          name: `${firstName} ${lastName}`,
+          name: `${firstName || 'Unknown'} ${lastName || 'Unknown'}`,
           email: email || "",
           rsvp: true,
           partstat: p.status.toUpperCase() as "ACCEPTED" | "DECLINED" | "TENTATIVE" | "NEEDS-ACTION",
@@ -586,7 +631,7 @@ export class MeetingController {
 
       // Add organizer
       attendees.push({
-        name: `${meeting.organizer?.firstName} ${meeting.organizer?.lastName}`,
+        name: `${meeting.organizer?.firstName || 'Unknown'} ${meeting.organizer?.lastName || 'Unknown'}`,
         email: meeting.organizer?.email || "",
         rsvp: true,
         partstat: "ACCEPTED",
@@ -728,8 +773,11 @@ export class MeetingController {
         const lastName = isUser ? p.user?.lastName : p.contactPerson?.lastName
         const email = isUser ? p.user?.email : p.contactPerson?.email
 
+        // Fallback to 'Unknown' if firstName or lastName is undefined
+        const displayName = `${firstName || 'Unknown'} ${lastName || 'Unknown'}`
+
         return {
-          name: `${firstName} ${lastName}`,
+          name: displayName,
           email: email || "",
           rsvp: true,
           partstat: "NEEDS-ACTION",
@@ -737,8 +785,10 @@ export class MeetingController {
         }
       }) || []
 
+      // Add organizer with fallback for undefined values
+      const organizerName = `${meeting.organizer?.firstName || 'Unknown'} ${meeting.organizer?.lastName || 'Unknown'}`
       attendees.push({
-        name: `${meeting.organizer?.firstName} ${meeting.organizer?.lastName}`,
+        name: organizerName,
         email: meeting.organizer?.email || "",
         rsvp: true,
         partstat: "ACCEPTED",
