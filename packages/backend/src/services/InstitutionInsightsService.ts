@@ -82,21 +82,14 @@ export class InstitutionInsightsService {
         Opportunity.findAll({ where: { institutionId }, attributes: ["id", "stage", "value", "createdAt"] }),
       ])
 
-      // Extract successful results or provide default values
+      // Extract successful results or use empty arrays as defaults
       const [quotes, invoices, meetings, calls, notes, opportunities] = results.map((result, index) => {
         if (result.status === 'fulfilled') {
           return result.value
         } else {
-          // Log the specific error
-          const queryNames = [
-            'Quote.findAll',
-            'Invoice.findAll',
-            'Meeting.findAll',
-            'Call.findAll',
-            'Note.findAll',
-            'Opportunity.findAll'
-          ]
-          logger.error(`Error in calculateLeadScore ${queryNames[index]} for institution ${institutionId}:`, result.reason)
+          // Log the specific error for debugging
+          const queryNames = ['Quote.findAll', 'Invoice.findAll', 'Meeting.findAll', 'Call.findAll', 'Note.findAll', 'Opportunity.findAll']
+          logger.error(`Error in calculateLeadScore - ${queryNames[index]} for institution ${institutionId}:`, result.reason)
           return []
         }
       })
@@ -329,20 +322,14 @@ export class InstitutionInsightsService {
         }),
       ])
 
-      // Extract successful results or provide default values
+      // Extract successful results or use empty arrays as defaults
       const [quotes, invoices, opportunities, meetings, calls] = results.map((result, index) => {
         if (result.status === 'fulfilled') {
           return result.value
         } else {
-          // Log the specific error
-          const queryNames = [
-            'Quote.findAll',
-            'Invoice.findAll',
-            'Opportunity.findAll',
-            'Meeting.findAll',
-            'Call.findAll'
-          ]
-          logger.error(`Error in getNextBestActions ${queryNames[index]} for institution ${institutionId}:`, result.reason)
+          // Log the specific error for debugging
+          const queryNames = ['Quote.findAll', 'Invoice.findAll', 'Opportunity.findAll', 'Meeting.findAll', 'Call.findAll']
+          logger.error(`Error in getNextBestActions - ${queryNames[index]} for institution ${institutionId}:`, result.reason)
           return []
         }
       })
