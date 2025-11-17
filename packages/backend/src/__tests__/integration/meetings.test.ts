@@ -5,12 +5,14 @@ import { createApp } from "../../app"
 import { Meeting } from "../../models/Meeting"
 import { MeetingParticipant } from "../../models/MeetingParticipant"
 import { User, UserRole } from "../../models/User"
+import { ContactPerson } from "../../models/ContactPerson"
 import { AuthService } from "../../services/AuthService"
 
 vi.mock("../../models/Meeting")
 vi.mock("../../models/MeetingParticipant")
 vi.mock("../../models/User")
 vi.mock("../../models/MedicalInstitution")
+vi.mock("../../models/ContactPerson")
 
 describe("Meetings API (Mocked)", () => {
   let app: any
@@ -209,6 +211,54 @@ describe("Meetings API (Mocked)", () => {
         .expect(201)
       expect(res.body.success).toBe(true)
       expect(mockMeeting.addParticipant).toHaveBeenCalledWith("user-2")
+    })
+
+    it("invites contact person (single) - success", async () => {
+      const mockContactPerson = {
+        id: "contact-1",
+        firstName: "John",
+        lastName: "Doe",
+        email: "john.doe@example.com",
+        institutionId: "inst-1",
+      }
+      const mockParticipant = {
+        id: "participant-1",
+        meetingId: mockMeeting.id,
+        contactPersonId: mockContactPerson.id,
+        status: ParticipantStatus.INVITED,
+      }
+
+      vi.mocked(ContactPerson.findByPk).mockResolvedValue(mockContactPerson as any)
+      vi.mocked(MeetingParticipant.create).mockResolvedValue(mockParticipant as any)
+
+      const res = await request(app.callback())
+        .post(`/api/meetings/${mockMeeting.id}/participants`)
+        .set("Authorization", `Bearer ${userToken}`)
+        .send({ contactPersonId: "contact-1" })
+        .expect(201)
+
+      expect(res.body.success).toBe(true)
+      expect(ContactPerson.findByPk).toHaveBeenCalledWith("contact-1")
+      expect(MeetingParticipant.create).toHaveBeenCalledWith({
+        meetingId: mockMeeting.id,
+        contactPersonId: "contact-1",
+        status: ParticipantStatus.INVITED,
+      })
+    })
+
+    it("invites contact person (single) - contact person not found", async () => {
+      vi.mocked(ContactPerson.findByPk).mockResolvedValue(null)
+
+      const res = await request(app.callback())
+        .post(`/api/meetings/${mockMeeting.id}/participants`)
+        .set("Authorization", `Bearer ${userToken}`)
+        .send({ contactPersonId: "non-existent-contact" })
+        .expect(404)
+
+      expect(res.body.success).toBe(false)
+      expect(res.body.error.code).toBe("CONTACT_PERSON_NOT_FOUND")
+      expect(ContactPerson.findByPk).toHaveBeenCalledWith("non-existent-contact")
+      expect(MeetingParticipant.create).not.toHaveBeenCalled()
     })
 
     it("lists participants", async () => {
