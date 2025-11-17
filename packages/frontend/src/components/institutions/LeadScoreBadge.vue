@@ -196,6 +196,14 @@ const loadLeadScore = async () => {
     const response = await analyticsApi.getLeadScore(props.institutionId)
     const data = response.data.data
 
+    // Check if data exists before accessing properties
+    if (!data) {
+      console.warn("No lead score data returned from API")
+      leadScore.value = null
+      loading.value = false
+      return
+    }
+
     // Add color based on level
     leadScore.value = {
       ...data,
