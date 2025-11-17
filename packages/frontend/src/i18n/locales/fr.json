@@ -2105,10 +2105,10 @@
       "endDateHint": "Sélectionnez la date de fin du rappel récurrent"
     },
     "priority": {
-      "low": "",
-      "medium": "",
-      "high": "",
-      "urgent": ""
+      "low": "Faible",
+      "medium": "Moyen",
+      "high": "Élevé",
+      "urgent": "Urgent"
     },
     "dateTimeField": "",
     "contactPersonField": "",
