@@ -176,6 +176,25 @@ export class MeetingController {
 
       // Invite contact persons if provided
       if (data.contactPersonIds && data.contactPersonIds.length > 0) {
+        if (data.institutionId) {
+          const contactPersons = await ContactPerson.findAll({
+            where: { id: data.contactPersonIds }
+          });
+          const invalidContacts = contactPersons.filter(
+            contact => contact.institutionId !== data.institutionId
+          );
+          if (invalidContacts.length > 0) {
+            ctx.status = 400;
+            ctx.body = {
+              success: false,
+              error: {
+                code: "INVALID_CONTACT_PERSON",
+                message: "One or more contact persons do not belong to the meeting's institution"
+              }
+            };
+            return;
+          }
+        }
         await MeetingParticipant.bulkInviteContactPersons(meeting.id, data.contactPersonIds)
       }
 
