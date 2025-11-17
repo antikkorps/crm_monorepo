@@ -72,8 +72,8 @@ export class InstitutionInsightsService {
       const now = new Date()
       const threeMonthsAgo = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000)
 
-      // Fetch data in parallel
-      const [quotes, invoices, meetings, calls, notes, opportunities] = await Promise.all([
+      // Fetch data in parallel using Promise.allSettled for graceful error handling
+      const results = await Promise.allSettled([
         Quote.findAll({ where: { institutionId }, attributes: ["id", "status", "total", "createdAt", "updatedAt"] }),
         Invoice.findAll({ where: { institutionId }, attributes: ["id", "status", "total", "totalPaid", "createdAt"] }),
         Meeting.findAll({ where: { institutionId, createdAt: { [Op.gte]: threeMonthsAgo } }, attributes: ["id", "createdAt"] }),
@@ -81,6 +81,18 @@ export class InstitutionInsightsService {
         Note.findAll({ where: { institutionId, createdAt: { [Op.gte]: threeMonthsAgo } }, attributes: ["id", "createdAt"] }),
         Opportunity.findAll({ where: { institutionId }, attributes: ["id", "stage", "value", "createdAt"] }),
       ])
+
+      // Extract successful results or use empty arrays as defaults
+      const [quotes, invoices, meetings, calls, notes, opportunities] = results.map((result, index) => {
+        if (result.status === 'fulfilled') {
+          return result.value
+        } else {
+          // Log the specific error for debugging
+          const queryNames = ['Quote.findAll', 'Invoice.findAll', 'Meeting.findAll', 'Call.findAll', 'Note.findAll', 'Opportunity.findAll']
+          logger.error(`Error in calculateLeadScore - ${queryNames[index]} for institution ${institutionId}:`, result.reason)
+          return []
+        }
+      })
 
       const signals: Array<{ type: "positive" | "negative" | "neutral"; signal: string; impact: number }> = []
       const recommendations: string[] = []
@@ -282,8 +294,8 @@ export class InstitutionInsightsService {
 
       const actions: NextBestAction[] = []
 
-      // Fetch relevant data
-      const [quotes, invoices, opportunities, meetings, calls] = await Promise.all([
+      // Fetch relevant data using Promise.allSettled for graceful error handling
+      const results = await Promise.allSettled([
         Quote.findAll({
           where: { institutionId },
           order: [["createdAt", "DESC"]],
@@ -309,6 +321,18 @@ export class InstitutionInsightsService {
           limit: 5,
         }),
       ])
+
+      // Extract successful results or use empty arrays as defaults
+      const [quotes, invoices, opportunities, meetings, calls] = results.map((result, index) => {
+        if (result.status === 'fulfilled') {
+          return result.value
+        } else {
+          // Log the specific error for debugging
+          const queryNames = ['Quote.findAll', 'Invoice.findAll', 'Opportunity.findAll', 'Meeting.findAll', 'Call.findAll']
+          logger.error(`Error in getNextBestActions - ${queryNames[index]} for institution ${institutionId}:`, result.reason)
+          return []
+        }
+      })
 
       // 1. OVERDUE INVOICES - Highest priority
       const overdueInvoices = invoices.filter(

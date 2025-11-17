@@ -101,6 +101,10 @@ import {
   VExpansionPanelTitle,
   VExpansionPanelText,
 
+  // Timeline
+  VTimeline,
+  VTimelineItem,
+
   // Other
   VExpandTransition,
   VFadeTransition,
@@ -232,6 +236,10 @@ export default createVuetify({
     VExpansionPanel,
     VExpansionPanelTitle,
     VExpansionPanelText,
+
+    // Timeline
+    VTimeline,
+    VTimelineItem,
 
     // Transitions
     VExpandTransition,
