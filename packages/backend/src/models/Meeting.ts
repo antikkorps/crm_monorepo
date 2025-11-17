@@ -384,9 +384,24 @@ export class Meeting
       }
 
       // Combine with existing whereClause conditions
-      const combinedWhere = {
-        ...whereClause,
-        ...accessControlClause,
+      let combinedWhere;
+      if (whereClause[Op.or] && accessControlClause[Op.or]) {
+        // Both have Op.or, combine them under Op.and
+        combinedWhere = {
+          [Op.and]: [
+            { [Op.or]: whereClause[Op.or] },
+            { [Op.or]: accessControlClause[Op.or] }
+          ],
+          // Include other keys from whereClause and accessControlClause except Op.or
+          ...Object.fromEntries(Object.entries(whereClause).filter(([k]) => k !== Op.or)),
+          ...Object.fromEntries(Object.entries(accessControlClause).filter(([k]) => k !== Op.or)),
+        };
+      } else {
+        // Only one or neither has Op.or, merge as before
+        combinedWhere = {
+          ...whereClause,
+          ...accessControlClause,
+        };
       }
 
       // Replace whereClause with combined conditions
