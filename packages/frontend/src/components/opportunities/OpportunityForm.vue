@@ -22,6 +22,8 @@
           variant="outlined"
           density="comfortable"
           :loading="loadingInstitutions"
+          :search="institutionSearch"
+          @update:search="handleInstitutionSearch"
           @update:modelValue="loadContacts"
         ></v-autocomplete>
       </v-col>
@@ -198,6 +200,8 @@ const loadingInstitutions = ref(false)
 const loadingContacts = ref(false)
 const institutions = ref<any[]>([])
 const contacts = ref<any[]>([])
+const institutionSearch = ref("")
+let searchTimeout: ReturnType<typeof setTimeout> | null = null
 
 const form = ref({
   institutionId: "",
@@ -227,17 +231,37 @@ const rules = computed(() => ({
   positive: (value: number) => value >= 0 || "Value must be positive",
 }))
 
-const loadInstitutions = async () => {
+const searchInstitutions = async (query: string) => {
+  if (!query || query.length < 2) {
+    institutions.value = []
+    return
+  }
+
   loadingInstitutions.value = true
   try {
-    const response = await institutionsApi.getAll({ limit: 1000 })
+    const response = await institutionsApi.search(query, { limit: 50 })
     const data = response.data?.data || response.data || response
     institutions.value = data.institutions || data || []
   } catch (err) {
-    console.error("Failed to load institutions:", err)
+    console.error("Failed to search institutions:", err)
+    institutions.value = []
   } finally {
     loadingInstitutions.value = false
   }
+}
+
+const handleInstitutionSearch = (query: string | null) => {
+  institutionSearch.value = query || ""
+
+  // Clear previous timeout
+  if (searchTimeout) {
+    clearTimeout(searchTimeout)
+  }
+
+  // Debounce search with 300ms delay
+  searchTimeout = setTimeout(() => {
+    searchInstitutions(institutionSearch.value)
+  }, 300)
 }
 
 const loadContacts = async () => {
@@ -309,8 +333,6 @@ const handleCancel = () => {
 }
 
 onMounted(async () => {
-  await loadInstitutions()
-
   if (props.opportunity) {
     form.value = {
       institutionId: props.opportunity.institutionId,
@@ -328,6 +350,10 @@ onMounted(async () => {
       competitors: props.opportunity.competitors || [],
       source: props.opportunity.source || "",
       notes: props.opportunity.notes || "",
+    }
+    // Load the selected institution to display in autocomplete
+    if (props.opportunity.institution) {
+      institutions.value = [props.opportunity.institution]
     }
     await loadContacts()
   } else {
