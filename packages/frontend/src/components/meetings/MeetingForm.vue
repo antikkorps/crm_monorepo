@@ -455,11 +455,12 @@ const loadContactPersons = async (institutionId: string) => {
 watch(
   () => formData.value.institutionId,
   (newInstitutionId) => {
+    // Always clear selected contact persons when institution changes
+    formData.value.contactPersonIds = []
     if (newInstitutionId) {
       loadContactPersons(newInstitutionId)
     } else {
       contactPersonOptions.value = []
-      formData.value.contactPersonIds = []
     }
   }
 )
