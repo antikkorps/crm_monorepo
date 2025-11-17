@@ -165,7 +165,7 @@
             <div class="d-flex flex-column gap-1">
               <div>
                 <v-icon size="small" class="mr-1">mdi-check-circle</v-icon>
-                <strong>{{ result.successfulImports || 0 }}</strong> {{ t('institutions.imported') }} / <strong>{{ result.totalRows || 0 }}</strong> {{ t('institutions.total') }}
+                <strong>{{ result.successfulImports || 0 }}</strong> {{ t('institutions.imported') }} / <strong>{{ result.totalRows || 0 }}</strong> {{ t('common.total') }}
               </div>
               <div v-if="result.failedImports > 0" class="text-error">
                 <v-icon size="small" class="mr-1">mdi-alert-circle</v-icon>
