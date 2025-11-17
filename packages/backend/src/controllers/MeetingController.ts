@@ -621,7 +621,7 @@ export class MeetingController {
         const email = isUser ? p.user?.email : p.contactPerson?.email
 
         return {
-          name: `${firstName} ${lastName}`,
+          name: `${firstName || 'Unknown'} ${lastName || 'Unknown'}`,
           email: email || "",
           rsvp: true,
           partstat: p.status.toUpperCase() as "ACCEPTED" | "DECLINED" | "TENTATIVE" | "NEEDS-ACTION",
@@ -631,7 +631,7 @@ export class MeetingController {
 
       // Add organizer
       attendees.push({
-        name: `${meeting.organizer?.firstName} ${meeting.organizer?.lastName}`,
+        name: `${meeting.organizer?.firstName || 'Unknown'} ${meeting.organizer?.lastName || 'Unknown'}`,
         email: meeting.organizer?.email || "",
         rsvp: true,
         partstat: "ACCEPTED",
