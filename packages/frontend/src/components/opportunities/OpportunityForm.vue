@@ -174,7 +174,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from "vue"
+import { ref, computed, onMounted, onUnmounted, watch } from "vue"
 import type { Opportunity, OpportunityStage } from "@medical-crm/shared"
 import { useOpportunitiesStore } from "@/stores/opportunities"
 import { institutionsApi } from "@/services/api"
@@ -361,6 +361,12 @@ onMounted(async () => {
     const defaultDate = new Date()
     defaultDate.setDate(defaultDate.getDate() + 30)
     form.value.expectedCloseDate = defaultDate.toISOString().split("T")[0]
+  }
+})
+
+onUnmounted(() => {
+  if (searchTimeout) {
+    clearTimeout(searchTimeout)
   }
 })
 </script>
