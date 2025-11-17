@@ -118,6 +118,65 @@
     "notFound": "Resource not found",
     "serverError": "Internal server error"
   },
+  "dashboard": {
+    "title": "Dashboard",
+    "welcome": "Welcome",
+    "redirecting": "Redirecting...",
+    "redirectingToBilling": "You will be redirected to billing analytics",
+    "performanceIndicators": "Performance Indicators",
+    "period": {
+      "week": "Week",
+      "month": "Month",
+      "quarter": "Quarter"
+    },
+    "metrics": {
+      "revenueGrowth": "Revenue Growth",
+      "newClients": "New Clients",
+      "conversionRate": "Conversion Rate",
+      "vsPreviousPeriod": "vs previous period",
+      "thisMonth": "this month",
+      "quotesAccepted": "quotes accepted"
+    },
+    "stats": {
+      "institutions": "Institutions",
+      "tasks": "Tasks",
+      "team": "Team",
+      "monthlyRevenue": "Monthly Revenue",
+      "active": "active",
+      "inactive": "inactive",
+      "inProgress": "in progress",
+      "members": "members",
+      "teams": "teams",
+      "invoices": "invoices",
+      "quotes": "quotes",
+      "viewAll": "View all",
+      "manage": "Manage",
+      "viewTeam": "View team",
+      "analyze": "Analyze"
+    },
+    "development": {
+      "title": "Dashboard in Development",
+      "description": "This dashboard is under development. New features will be added regularly.",
+      "discoverBilling": "Discover billing analytics"
+    }
+  },
+  "tasks": {
+    "recent": "Recent Tasks",
+    "noTasks": "No tasks",
+    "noTasksDescription": "You don't have any assigned tasks yet",
+    "createTask": "Create task",
+    "overdue": "overdue",
+    "dueSoon": "Due soon",
+    "today": "Today",
+    "tomorrow": "Tomorrow",
+    "yesterday": "Yesterday",
+    "overdueBy": "Overdue by",
+    "dueIn": "In",
+    "days": "days"
+  },
+  "messages": {
+    "loading": "Loading..."
+  },
   "segmentation": {
     "builder": {
       "title": "Segment Builder",

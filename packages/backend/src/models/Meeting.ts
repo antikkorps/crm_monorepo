@@ -367,25 +367,46 @@ export class Meeting
       })
       const participantMeetingIds = participantMeetings.map((p) => p.meetingId)
 
-      whereClause[Op.and] = [
-        whereClause,
-        {
-          [Op.or]: [
-            { organizerId: filters.userId },
-            participantMeetingIds.length > 0
-              ? {
-                  id: {
-                    [Op.in]: participantMeetingIds,
-                  },
-                }
-              : {
-                  id: {
-                    [Op.in]: [-1],
-                  },
-                },
+      // Add access control to whereClause
+      const accessControlClause: any = {
+        [Op.or]: [
+          { organizerId: filters.userId },
+        ]
+      }
+
+      // Only add participant filter if there are participant meetings
+      if (participantMeetingIds.length > 0) {
+        accessControlClause[Op.or].push({
+          id: {
+            [Op.in]: participantMeetingIds,
+          },
+        })
+      }
+
+      // Combine with existing whereClause conditions
+      let combinedWhere;
+      if (whereClause[Op.or] && accessControlClause[Op.or]) {
+        // Both have Op.or, combine them under Op.and
+        combinedWhere = {
+          [Op.and]: [
+            { [Op.or]: whereClause[Op.or] },
+            { [Op.or]: accessControlClause[Op.or] }
           ],
-        },
-      ]
+          // Include other keys from whereClause and accessControlClause except Op.or
+          ...Object.fromEntries(Object.entries(whereClause).filter(([k]) => k !== Op.or)),
+          ...Object.fromEntries(Object.entries(accessControlClause).filter(([k]) => k !== Op.or)),
+        };
+      } else {
+        // Only one or neither has Op.or, merge as before
+        combinedWhere = {
+          ...whereClause,
+          ...accessControlClause,
+        };
+      }
+
+      // Replace whereClause with combined conditions
+      Object.keys(whereClause).forEach(key => delete whereClause[key])
+      Object.assign(whereClause, combinedWhere)
     }
 
     // Filter by participant
@@ -403,10 +424,8 @@ export class Meeting
           [Op.in]: participantMeetingIds,
         }
       } else {
-        // No participant meetings found, return no results
-        whereClause.id = {
-          [Op.in]: [-1], // Use a condition that returns no results
-        }
+        // No participant meetings found, return empty array directly
+        return []
       }
     }
 
