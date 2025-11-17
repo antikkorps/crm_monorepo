@@ -10,6 +10,7 @@ import { MedicalInstitution } from "../models/MedicalInstitution"
 import { Meeting } from "../models/Meeting"
 import { MeetingParticipant } from "../models/MeetingParticipant"
 import { User } from "../models/User"
+import { ContactPerson } from "../models/ContactPerson"
 import { createEvents, EventAttributes } from "ics"
 import { EmailService } from "../services/EmailService"
 import logger from "../utils/logger"
@@ -167,6 +168,16 @@ export class MeetingController {
         institutionId: data.institutionId,
         status: MeetingStatus.SCHEDULED,
       })
+
+      // Invite participants if provided
+      if (data.participantIds && data.participantIds.length > 0) {
+        await MeetingParticipant.bulkInviteUsers(meeting.id, data.participantIds)
+      }
+
+      // Invite contact persons if provided
+      if (data.contactPersonIds && data.contactPersonIds.length > 0) {
+        await MeetingParticipant.bulkInviteContactPersons(meeting.id, data.contactPersonIds)
+      }
 
       const created = await Meeting.findByPk(meeting.id)
 
@@ -334,7 +345,12 @@ export class MeetingController {
     try {
       const user = ctx.state.user as User
       const { id } = ctx.params
-      const { userIds, userId } = ctx.request.body as { userIds?: string[]; userId?: string }
+      const { userIds, userId, contactPersonIds, contactPersonId } = ctx.request.body as {
+        userIds?: string[]
+        userId?: string
+        contactPersonIds?: string[]
+        contactPersonId?: string
+      }
 
       const meeting = await Meeting.findByPk(id)
       if (!meeting) {
@@ -351,14 +367,32 @@ export class MeetingController {
       }
 
       let invited: any[] = []
+
+      // Invite users
       if (Array.isArray(userIds) && userIds.length > 0) {
-        invited = await MeetingParticipant.bulkInviteUsers(meeting.id, userIds)
+        const userInvited = await MeetingParticipant.bulkInviteUsers(meeting.id, userIds)
+        invited = [...invited, ...userInvited]
       } else if (userId) {
         const participant = await meeting.addParticipant(userId)
         invited = [participant]
-      } else {
+      }
+
+      // Invite contact persons
+      if (Array.isArray(contactPersonIds) && contactPersonIds.length > 0) {
+        const contactsInvited = await MeetingParticipant.bulkInviteContactPersons(meeting.id, contactPersonIds)
+        invited = [...invited, ...contactsInvited]
+      } else if (contactPersonId) {
+        const contactInvited = await MeetingParticipant.create({
+          meetingId: meeting.id,
+          contactPersonId,
+          status: ParticipantStatus.INVITED,
+        })
+        invited.push(contactInvited)
+      }
+
+      if (invited.length === 0) {
         ctx.status = 400
-        ctx.body = { success: false, error: { code: "VALIDATION_ERROR", message: "userId(s) required" } }
+        ctx.body = { success: false, error: { code: "VALIDATION_ERROR", message: "userId(s) or contactPersonId(s) required" } }
         return
       }
 
@@ -472,6 +506,13 @@ export class MeetingController {
                 model: User,
                 as: "user",
                 attributes: ["id", "firstName", "lastName", "email"],
+                required: false,
+              },
+              {
+                model: ContactPerson,
+                as: "contactPerson",
+                attributes: ["id", "firstName", "lastName", "email"],
+                required: false,
               },
             ],
           },
@@ -501,13 +542,20 @@ export class MeetingController {
       }
 
       // Prepare attendees list
-      const attendees = meeting.participants?.map((p) => ({
-        name: `${p.user?.firstName} ${p.user?.lastName}`,
-        email: p.user?.email || "",
-        rsvp: true,
-        partstat: p.status.toUpperCase() as "ACCEPTED" | "DECLINED" | "TENTATIVE" | "NEEDS-ACTION",
-        role: "REQ-PARTICIPANT",
-      })) || []
+      const attendees = meeting.participants?.map((p) => {
+        const isUser = !!p.user
+        const firstName = isUser ? p.user?.firstName : p.contactPerson?.firstName
+        const lastName = isUser ? p.user?.lastName : p.contactPerson?.lastName
+        const email = isUser ? p.user?.email : p.contactPerson?.email
+
+        return {
+          name: `${firstName} ${lastName}`,
+          email: email || "",
+          rsvp: true,
+          partstat: p.status.toUpperCase() as "ACCEPTED" | "DECLINED" | "TENTATIVE" | "NEEDS-ACTION",
+          role: "REQ-PARTICIPANT",
+        }
+      }) || []
 
       // Add organizer
       attendees.push({
@@ -611,6 +659,13 @@ export class MeetingController {
                 model: User,
                 as: "user",
                 attributes: ["id", "firstName", "lastName", "email"],
+                required: false,
+              },
+              {
+                model: ContactPerson,
+                as: "contactPerson",
+                attributes: ["id", "firstName", "lastName", "email"],
+                required: false,
               },
             ],
           },
@@ -640,13 +695,20 @@ export class MeetingController {
       }
 
       // Generate .ics file
-      const attendees = meeting.participants?.map((p) => ({
-        name: `${p.user?.firstName} ${p.user?.lastName}`,
-        email: p.user?.email || "",
-        rsvp: true,
-        partstat: "NEEDS-ACTION",
-        role: "REQ-PARTICIPANT",
-      })) || []
+      const attendees = meeting.participants?.map((p) => {
+        const isUser = !!p.user
+        const firstName = isUser ? p.user?.firstName : p.contactPerson?.firstName
+        const lastName = isUser ? p.user?.lastName : p.contactPerson?.lastName
+        const email = isUser ? p.user?.email : p.contactPerson?.email
+
+        return {
+          name: `${firstName} ${lastName}`,
+          email: email || "",
+          rsvp: true,
+          partstat: "NEEDS-ACTION",
+          role: "REQ-PARTICIPANT",
+        }
+      }) || []
 
       attendees.push({
         name: `${meeting.organizer?.firstName} ${meeting.organizer?.lastName}`,
@@ -707,9 +769,9 @@ export class MeetingController {
       if (emails && emails.length > 0) {
         recipients = emails
       } else {
-        // Send to all participants
+        // Send to all participants (both users and contact persons)
         recipients = meeting.participants
-          ?.map((p) => p.user?.email)
+          ?.map((p) => p.user?.email || p.contactPerson?.email)
           .filter((email): email is string => !!email) || []
       }
 

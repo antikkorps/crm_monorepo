@@ -85,6 +85,12 @@ ContactPerson.belongsTo(MedicalInstitution, {
   onDelete: "CASCADE",
 })
 
+ContactPerson.hasMany(MeetingParticipant, {
+  foreignKey: "contactPersonId",
+  as: "meetingParticipations",
+  onDelete: "CASCADE",
+})
+
 // Team associations
 Team.hasMany(User, {
   foreignKey: "teamId",
@@ -513,6 +519,12 @@ MeetingParticipant.belongsTo(Meeting, {
 MeetingParticipant.belongsTo(User, {
   foreignKey: "userId",
   as: "user",
+  onDelete: "CASCADE",
+})
+
+MeetingParticipant.belongsTo(ContactPerson, {
+  foreignKey: "contactPersonId",
+  as: "contactPerson",
   onDelete: "CASCADE",
 })
 

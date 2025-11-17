@@ -113,7 +113,7 @@
             </div>
           </div>
 
-          <!-- Participants -->
+          <!-- Participants (Team Members) -->
           <div class="form-group">
             <v-autocomplete
               id="participantIds"
@@ -140,6 +140,38 @@
               </template>
             </v-autocomplete>
           </div>
+
+          <!-- Contact Persons (Clients) -->
+          <div class="form-group">
+            <v-autocomplete
+              id="contactPersonIds"
+              v-model="formData.contactPersonIds"
+              :items="contactPersonOptions"
+              item-title="label"
+              item-value="value"
+              :label="$t('meetings.contactPersonsField')"
+              :placeholder="$t('meetings.contactPersonsPlaceholder')"
+              multiple
+              chips
+              closable-chips
+              :loading="loadingContactPersons"
+              :disabled="!formData.institutionId"
+              density="comfortable"
+              hide-details="auto"
+            >
+              <template #chip="{ item, props }">
+                <v-chip
+                  v-bind="props"
+                  :text="item.title"
+                  closable
+                  size="small"
+                />
+              </template>
+            </v-autocomplete>
+            <span v-if="!formData.institutionId" class="text-caption text-disabled">
+              {{ $t('meetings.selectInstitutionFirst') }}
+            </span>
+          </div>
         </form>
       </v-card-text>
 
@@ -165,7 +197,7 @@
 </template>
 
 <script setup lang="ts">
-import { institutionsApi } from "@/services/api"
+import { institutionsApi, contactsApi } from "@/services/api"
 import { useInstitutionsStore } from "@/stores/institutions"
 import { useTeamStore } from "@/stores/team"
 import { useI18n } from "vue-i18n"
@@ -209,13 +241,16 @@ const formData = ref<MeetingCreateRequest & { status?: MeetingStatus; startDate:
   location: "",
   institutionId: "",
   participantIds: [],
+  contactPersonIds: [],
   status: "scheduled" as MeetingStatus,
 })
 
 const errors = ref<Record<string, string>>({})
 const userOptions = ref<Array<{ label: string; value: string }>>([])
+const contactPersonOptions = ref<Array<{ label: string; value: string }>>([])
 const institutionOptions = ref<Array<{ label: string; value: string }>>([])
 const loadingInstitutionsSearch = ref(false)
+const loadingContactPersons = ref(false)
 
 // Computed loading states from stores
 const loadingUsers = computed(() => teamStore.loading)
@@ -253,9 +288,11 @@ const resetForm = () => {
     location: "",
     institutionId: "",
     participantIds: [],
+    contactPersonIds: [],
     status: "scheduled" as MeetingStatus,
   }
   errors.value = {}
+  contactPersonOptions.value = []
 }
 
 const populateForm = (meeting: Meeting) => {
@@ -266,8 +303,14 @@ const populateForm = (meeting: Meeting) => {
     endDate: formatDateForInput(new Date(meeting.endDate)),
     location: meeting.location || "",
     institutionId: meeting.institutionId || "",
-    participantIds: meeting.participants?.map((p) => p.userId) || [],
+    participantIds: meeting.participants?.filter((p) => p.userId).map((p) => p.userId!) || [],
+    contactPersonIds: meeting.participants?.filter((p) => p.contactPersonId).map((p) => p.contactPersonId!) || [],
     status: meeting.status,
+  }
+
+  // Load contact persons for the selected institution
+  if (meeting.institutionId) {
+    loadContactPersons(meeting.institutionId)
   }
 }
 
@@ -315,6 +358,9 @@ const handleSubmit = () => {
   }
   if (!submitData.participantIds || submitData.participantIds.length === 0) {
     delete submitData.participantIds
+  }
+  if (!submitData.contactPersonIds || submitData.contactPersonIds.length === 0) {
+    delete submitData.contactPersonIds
   }
 
   // Convert string dates to Date objects for API
@@ -372,6 +418,51 @@ const loadInstitutions = async () => {
     institutionOptions.value = []
   }
 }
+
+const loadContactPersons = async (institutionId: string) => {
+  if (!institutionId) {
+    contactPersonOptions.value = []
+    return
+  }
+
+  try {
+    loadingContactPersons.value = true
+    const response = await contactsApi.getAll({ institutionId })
+    const data = (response as any).data || response
+
+    let contactsArray: any[] = []
+    if (Array.isArray(data)) {
+      contactsArray = data
+    } else if (data && Array.isArray(data.contacts)) {
+      contactsArray = data.contacts
+    } else if (data && Array.isArray(data.data)) {
+      contactsArray = data.data
+    }
+
+    contactPersonOptions.value = contactsArray.map((contact: any) => ({
+      label: `${contact.firstName} ${contact.lastName}${contact.title ? ` (${contact.title})` : ""}`,
+      value: contact.id,
+    }))
+  } catch (error) {
+    console.error("Error loading contact persons:", error)
+    contactPersonOptions.value = []
+  } finally {
+    loadingContactPersons.value = false
+  }
+}
+
+// Watch for institution changes to reload contact persons
+watch(
+  () => formData.value.institutionId,
+  (newInstitutionId) => {
+    if (newInstitutionId) {
+      loadContactPersons(newInstitutionId)
+    } else {
+      contactPersonOptions.value = []
+      formData.value.contactPersonIds = []
+    }
+  }
+)
 
 // Debounce timer for institution search
 let searchDebounceTimer: NodeJS.Timeout | null = null

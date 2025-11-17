@@ -115,7 +115,8 @@ export interface Meeting {
 export interface MeetingParticipant {
   id: string
   meetingId: string
-  userId: string
+  userId?: string
+  contactPersonId?: string
   status: ParticipantStatus
   createdAt: Date
 
@@ -125,6 +126,13 @@ export interface MeetingParticipant {
     firstName: string
     lastName: string
     email: string
+  }
+  contactPerson?: {
+    id: string
+    firstName: string
+    lastName: string
+    email: string
+    institutionId: string
   }
 }
 
@@ -153,6 +161,7 @@ export interface MeetingCreateRequest {
   location?: string
   institutionId?: string
   participantIds?: string[]
+  contactPersonIds?: string[]
 }
 
 export interface MeetingUpdateRequest {

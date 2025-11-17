@@ -3,12 +3,14 @@ import { DataTypes, Model, Optional } from "sequelize"
 import { sequelize } from "../config/database"
 import { CollaborationValidation } from "../types/collaboration"
 import { User } from "./User"
+import { ContactPerson } from "./ContactPerson"
 import type { Meeting } from "./Meeting"
 
 export interface MeetingParticipantAttributes {
   id: string
   meetingId: string
-  userId: string
+  userId?: string
+  contactPersonId?: string
   status: ParticipantStatus
   createdAt: Date
 }
@@ -22,12 +24,14 @@ export class MeetingParticipant
 {
   declare id: string
   declare meetingId: string
-  declare userId: string
+  declare userId?: string
+  declare contactPersonId?: string
   declare status: ParticipantStatus
   declare readonly createdAt: Date
 
   // Associations
   declare user?: User
+  declare contactPerson?: ContactPerson
   declare meeting?: Meeting
 
   // Instance methods
@@ -80,6 +84,14 @@ export class MeetingParticipant
     return this.status === ParticipantStatus.INVITED
   }
 
+  public isUser(): boolean {
+    return !!this.userId
+  }
+
+  public isContactPerson(): boolean {
+    return !!this.contactPersonId
+  }
+
   public override toJSON(): any {
     const values = { ...this.get() } as any
     return {
@@ -88,6 +100,8 @@ export class MeetingParticipant
       isDeclined: this.isDeclined(),
       isTentative: this.isTentative(),
       isInvited: this.isInvited(),
+      isUser: this.isUser(),
+      isContactPerson: this.isContactPerson(),
     }
   }
 
@@ -100,6 +114,13 @@ export class MeetingParticipant
           model: User,
           as: "user",
           attributes: ["id", "firstName", "lastName", "email"],
+          required: false,
+        },
+        {
+          model: ContactPerson,
+          as: "contactPerson",
+          attributes: ["id", "firstName", "lastName", "email", "institutionId"],
+          required: false,
         },
       ],
       order: [["createdAt", "ASC"]],
@@ -110,6 +131,23 @@ export class MeetingParticipant
     const { Meeting } = await import("./Meeting")
     return this.findAll({
       where: { userId },
+      include: [
+        {
+          model: Meeting,
+          as: "meeting",
+          attributes: ["id", "title", "startDate", "endDate", "status"],
+        },
+      ],
+      order: [["createdAt", "DESC"]],
+    })
+  }
+
+  public static async findByContactPerson(
+    contactPersonId: string
+  ): Promise<MeetingParticipant[]> {
+    const { Meeting } = await import("./Meeting")
+    return this.findAll({
+      where: { contactPersonId },
       include: [
         {
           model: Meeting,
@@ -148,6 +186,22 @@ export class MeetingParticipant
           model: User,
           as: "user",
           attributes: ["id", "firstName", "lastName", "email"],
+        },
+      ],
+    })
+  }
+
+  public static async findByMeetingAndContactPerson(
+    meetingId: string,
+    contactPersonId: string
+  ): Promise<MeetingParticipant | null> {
+    return this.findOne({
+      where: { meetingId, contactPersonId },
+      include: [
+        {
+          model: ContactPerson,
+          as: "contactPerson",
+          attributes: ["id", "firstName", "lastName", "email", "institutionId"],
         },
       ],
     })
@@ -256,7 +310,7 @@ export class MeetingParticipant
       attributes: ["userId"],
     })
 
-    const existingUserIds = existingParticipants.map((p) => p.userId)
+    const existingUserIds = existingParticipants.map((p) => p.userId!)
     const newUserIds = userIds.filter((id) => !existingUserIds.includes(id))
 
     if (newUserIds.length === 0) {
@@ -266,6 +320,34 @@ export class MeetingParticipant
     const participantsData = newUserIds.map((userId) => ({
       meetingId,
       userId,
+      status: ParticipantStatus.INVITED,
+    }))
+
+    return this.bulkCreate(participantsData)
+  }
+
+  public static async bulkInviteContactPersons(
+    meetingId: string,
+    contactPersonIds: string[]
+  ): Promise<MeetingParticipant[]> {
+    // Check for existing participants to avoid duplicates
+    const existingParticipants = await this.findAll({
+      where: { meetingId, contactPersonId: contactPersonIds },
+      attributes: ["contactPersonId"],
+    })
+
+    const existingContactPersonIds = existingParticipants.map((p) => p.contactPersonId!)
+    const newContactPersonIds = contactPersonIds.filter(
+      (id) => !existingContactPersonIds.includes(id)
+    )
+
+    if (newContactPersonIds.length === 0) {
+      return []
+    }
+
+    const participantsData = newContactPersonIds.map((contactPersonId) => ({
+      meetingId,
+      contactPersonId,
       status: ParticipantStatus.INVITED,
     }))
 
@@ -289,8 +371,16 @@ export class MeetingParticipant
       throw new Error("Meeting ID is required")
     }
 
-    if (!participantData.userId) {
-      throw new Error("User ID is required")
+    // Either userId or contactPersonId must be provided, but not both
+    const hasUserId = !!participantData.userId
+    const hasContactPersonId = !!participantData.contactPersonId
+
+    if (!hasUserId && !hasContactPersonId) {
+      throw new Error("Either User ID or Contact Person ID is required")
+    }
+
+    if (hasUserId && hasContactPersonId) {
+      throw new Error("Cannot specify both User ID and Contact Person ID")
     }
 
     if (
@@ -317,8 +407,13 @@ MeetingParticipant.init(
     },
     userId: {
       type: DataTypes.UUID,
-      allowNull: false,
+      allowNull: true,
       field: "user_id",
+    },
+    contactPersonId: {
+      type: DataTypes.UUID,
+      allowNull: true,
+      field: "contact_person_id",
     },
     status: {
       type: DataTypes.ENUM(...Object.values(ParticipantStatus)),
