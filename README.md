@@ -121,6 +121,15 @@ Pour générer une clé d'encryption pour le plugin Digiforma, vous pouvez utili
 openssl rand -base64 32
 ```
 
+## Translations
+
+Pour vérifier les traductions manquantes dans le frontend :
+
+```bash
+cd packages/frontend
+npx vue-i18n-extract report --vueFiles './src/**/*.{vue,ts,js}' --languageFiles './src/i18n/locales/fr.json'
+```
+
 ## License
 
 Private - All rights reserved
