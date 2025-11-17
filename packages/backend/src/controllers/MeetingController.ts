@@ -10,6 +10,7 @@ import { MedicalInstitution } from "../models/MedicalInstitution"
 import { Meeting } from "../models/Meeting"
 import { MeetingParticipant } from "../models/MeetingParticipant"
 import { User } from "../models/User"
+import { ContactPerson } from "../models/ContactPerson"
 import { createEvents, EventAttributes } from "ics"
 import { EmailService } from "../services/EmailService"
 import logger from "../utils/logger"
@@ -167,6 +168,35 @@ export class MeetingController {
         institutionId: data.institutionId,
         status: MeetingStatus.SCHEDULED,
       })
+
+      // Invite participants if provided
+      if (data.participantIds && data.participantIds.length > 0) {
+        await MeetingParticipant.bulkInviteUsers(meeting.id, data.participantIds)
+      }
+
+      // Invite contact persons if provided
+      if (data.contactPersonIds && data.contactPersonIds.length > 0) {
+        if (data.institutionId) {
+          const contactPersons = await ContactPerson.findAll({
+            where: { id: data.contactPersonIds }
+          });
+          const invalidContacts = contactPersons.filter(
+            contact => contact.institutionId !== data.institutionId
+          );
+          if (invalidContacts.length > 0) {
+            ctx.status = 400;
+            ctx.body = {
+              success: false,
+              error: {
+                code: "INVALID_CONTACT_PERSON",
+                message: "One or more contact persons do not belong to the meeting's institution"
+              }
+            };
+            return;
+          }
+        }
+        await MeetingParticipant.bulkInviteContactPersons(meeting.id, data.contactPersonIds)
+      }
 
       const created = await Meeting.findByPk(meeting.id)
 
@@ -334,7 +364,12 @@ export class MeetingController {
     try {
       const user = ctx.state.user as User
       const { id } = ctx.params
-      const { userIds, userId } = ctx.request.body as { userIds?: string[]; userId?: string }
+      const { userIds, userId, contactPersonIds, contactPersonId } = ctx.request.body as {
+        userIds?: string[]
+        userId?: string
+        contactPersonIds?: string[]
+        contactPersonId?: string
+      }
 
       const meeting = await Meeting.findByPk(id)
       if (!meeting) {
@@ -351,14 +386,81 @@ export class MeetingController {
       }
 
       let invited: any[] = []
+
+      // Invite users
       if (Array.isArray(userIds) && userIds.length > 0) {
-        invited = await MeetingParticipant.bulkInviteUsers(meeting.id, userIds)
+        const userInvited = await MeetingParticipant.bulkInviteUsers(meeting.id, userIds)
+        invited = [...invited, ...userInvited]
       } else if (userId) {
         const participant = await meeting.addParticipant(userId)
         invited = [participant]
-      } else {
+      }
+
+      // Invite contact persons
+      if (Array.isArray(contactPersonIds) && contactPersonIds.length > 0) {
+        // Validate that contact persons belong to the meeting's institution (if one is set)
+        if (meeting.institutionId) {
+          const contacts = await ContactPerson.findAll({
+            where: { id: contactPersonIds },
+            attributes: ["id", "institutionId"],
+          })
+          
+          const invalidContacts = contacts.filter(
+            contact => contact.institutionId !== meeting.institutionId
+          )
+          
+          if (invalidContacts.length > 0) {
+            ctx.status = 400
+            ctx.body = {
+              success: false,
+              error: {
+                code: "INVALID_CONTACT",
+                message: "One or more contact persons do not belong to this meeting's institution",
+              },
+            }
+            return
+          }
+        }
+        
+        const contactsInvited = await MeetingParticipant.bulkInviteContactPersons(meeting.id, contactPersonIds)
+        invited = [...invited, ...contactsInvited]
+      } else if (contactPersonId) {
+        // Validate that contact person belongs to the meeting's institution (if one is set)
+        if (meeting.institutionId) {
+          const contact = await ContactPerson.findByPk(contactPersonId)
+          if (!contact) {
+            ctx.status = 404
+            ctx.body = {
+              success: false,
+              error: { code: "NOT_FOUND", message: "Contact person not found" },
+            }
+            return
+          }
+          
+          if (contact.institutionId !== meeting.institutionId) {
+            ctx.status = 400
+            ctx.body = {
+              success: false,
+              error: {
+                code: "INVALID_CONTACT",
+                message: "Contact person does not belong to this meeting's institution",
+              },
+            }
+            return
+          }
+        }
+        
+        const contactInvited = await MeetingParticipant.create({
+          meetingId: meeting.id,
+          contactPersonId,
+          status: ParticipantStatus.INVITED,
+        })
+        invited.push(contactInvited)
+      }
+
+      if (invited.length === 0) {
         ctx.status = 400
-        ctx.body = { success: false, error: { code: "VALIDATION_ERROR", message: "userId(s) required" } }
+        ctx.body = { success: false, error: { code: "VALIDATION_ERROR", message: "userId(s) or contactPersonId(s) required" } }
         return
       }
 
@@ -368,7 +470,11 @@ export class MeetingController {
       ctx.status = 500
       ctx.body = {
         success: false,
-        error: { code: "PARTICIPANT_INVITE_ERROR", message: "Failed to invite participants" },
+        error: {
+          code: "PARTICIPANT_INVITE_ERROR",
+          message: "Failed to invite participants",
+          details: error instanceof Error ? error.message : "Unknown error",
+        },
       }
     }
   }
@@ -472,6 +578,13 @@ export class MeetingController {
                 model: User,
                 as: "user",
                 attributes: ["id", "firstName", "lastName", "email"],
+                required: false,
+              },
+              {
+                model: ContactPerson,
+                as: "contactPerson",
+                attributes: ["id", "firstName", "lastName", "email"],
+                required: false,
               },
             ],
           },
@@ -501,17 +614,24 @@ export class MeetingController {
       }
 
       // Prepare attendees list
-      const attendees = meeting.participants?.map((p) => ({
-        name: `${p.user?.firstName} ${p.user?.lastName}`,
-        email: p.user?.email || "",
-        rsvp: true,
-        partstat: p.status.toUpperCase() as "ACCEPTED" | "DECLINED" | "TENTATIVE" | "NEEDS-ACTION",
-        role: "REQ-PARTICIPANT",
-      })) || []
+      const attendees = meeting.participants?.map((p) => {
+        const isUser = !!p.user
+        const firstName = isUser ? p.user?.firstName : p.contactPerson?.firstName
+        const lastName = isUser ? p.user?.lastName : p.contactPerson?.lastName
+        const email = isUser ? p.user?.email : p.contactPerson?.email
+
+        return {
+          name: `${firstName || 'Unknown'} ${lastName || 'Unknown'}`,
+          email: email || "",
+          rsvp: true,
+          partstat: p.status.toUpperCase() as "ACCEPTED" | "DECLINED" | "TENTATIVE" | "NEEDS-ACTION",
+          role: "REQ-PARTICIPANT",
+        }
+      }) || []
 
       // Add organizer
       attendees.push({
-        name: `${meeting.organizer?.firstName} ${meeting.organizer?.lastName}`,
+        name: `${meeting.organizer?.firstName || 'Unknown'} ${meeting.organizer?.lastName || 'Unknown'}`,
         email: meeting.organizer?.email || "",
         rsvp: true,
         partstat: "ACCEPTED",
@@ -611,6 +731,13 @@ export class MeetingController {
                 model: User,
                 as: "user",
                 attributes: ["id", "firstName", "lastName", "email"],
+                required: false,
+              },
+              {
+                model: ContactPerson,
+                as: "contactPerson",
+                attributes: ["id", "firstName", "lastName", "email"],
+                required: false,
               },
             ],
           },
@@ -640,16 +767,28 @@ export class MeetingController {
       }
 
       // Generate .ics file
-      const attendees = meeting.participants?.map((p) => ({
-        name: `${p.user?.firstName} ${p.user?.lastName}`,
-        email: p.user?.email || "",
-        rsvp: true,
-        partstat: "NEEDS-ACTION",
-        role: "REQ-PARTICIPANT",
-      })) || []
+      const attendees = meeting.participants?.map((p) => {
+        const isUser = !!p.user
+        const firstName = isUser ? p.user?.firstName : p.contactPerson?.firstName
+        const lastName = isUser ? p.user?.lastName : p.contactPerson?.lastName
+        const email = isUser ? p.user?.email : p.contactPerson?.email
 
+        // Fallback to 'Unknown' if firstName or lastName is undefined
+        const displayName = `${firstName || 'Unknown'} ${lastName || 'Unknown'}`
+
+        return {
+          name: displayName,
+          email: email || "",
+          rsvp: true,
+          partstat: "NEEDS-ACTION",
+          role: "REQ-PARTICIPANT",
+        }
+      }) || []
+
+      // Add organizer with fallback for undefined values
+      const organizerName = `${meeting.organizer?.firstName || 'Unknown'} ${meeting.organizer?.lastName || 'Unknown'}`
       attendees.push({
-        name: `${meeting.organizer?.firstName} ${meeting.organizer?.lastName}`,
+        name: organizerName,
         email: meeting.organizer?.email || "",
         rsvp: true,
         partstat: "ACCEPTED",
@@ -707,9 +846,9 @@ export class MeetingController {
       if (emails && emails.length > 0) {
         recipients = emails
       } else {
-        // Send to all participants
+        // Send to all participants (both users and contact persons)
         recipients = meeting.participants
-          ?.map((p) => p.user?.email)
+          ?.map((p) => p.user?.email || p.contactPerson?.email)
           .filter((email): email is string => !!email) || []
       }
 
