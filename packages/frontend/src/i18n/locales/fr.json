@@ -2302,11 +2302,11 @@
   "labels": {
     "date": "Date",
     "creator": "Créateur",
-    "category": "",
-    "name": "",
-    "priority": "",
-    "status": "",
-    "type": ""
+    "category": "Catégorie",
+    "name": "Nom",
+    "priority": "Priorité",
+    "status": "Statut",
+    "type": "Type"
   },
   "time": {
     "today": "Aujourd'hui",
