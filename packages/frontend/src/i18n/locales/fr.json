@@ -183,7 +183,42 @@
     "lastName": "Nom",
     "email": "Email",
     "phone": "Téléphone",
-    "updateSuccess": "Profil mis à jour avec succès"
+    "updateSuccess": "Profil mis à jour avec succès",
+    "cancel": "Annuler",
+    "edit": "Modifier",
+    "role": "Rôle",
+    "save": "Enregistrer",
+    "avatar": "Avatar",
+    "changeAvatar": "Changer d'avatar",
+    "security": "Sécurité",
+    "lastLogin": "Dernière connexion",
+    "accountCreated": "Compte créé",
+    "changePassword": "Changer le mot de passe",
+    "accountSettings": "Paramètres du compte",
+    "accountActive": "Compte actif",
+    "userId": "ID utilisateur",
+    "team": "Équipe",
+    "roles": {
+      "super_admin": "Super administrateur",
+      "admin": "Administrateur",
+      "team_admin": "Administrateur d'équipe",
+      "manager": "Gestionnaire",
+      "user": "Utilisateur"
+    },
+    "validation": {
+      "firstNameRequired": "Le prénom est requis.",
+      "firstNameMinLength": "Le prénom doit comporter au moins 2 caractères.",
+      "firstNameMaxLength": "Le prénom ne doit pas dépasser 50 caractères.",
+      "lastNameRequired": "Le nom est requis.",
+      "lastNameMinLength": "Le nom doit comporter au moins 2 caractères.",
+      "lastNameMaxLength": "Le nom ne doit pas dépasser 50 caractères.",
+      "emailRequired": "L'email est requis.",
+      "emailInvalid": "L'email n'est pas valide."
+    },
+    "updated": "Profil mis à jour.",
+    "updateError": "Erreur lors de la mise à jour du profil.",
+    "notAvailable": "Non disponible",
+    "neverLoggedIn": "Jamais connecté"
   },
   "errors": {
     "generic": "Une erreur est survenue",
@@ -384,7 +419,25 @@
       "in_progress": "En cours",
       "blocked": "Bloquée",
       "completed": "Terminée",
-      "cancelled": "Annulée"
+      "cancelled": "Annulée",
+      "todo": "À faire"
+    },
+    "assignedTo": "",
+    "changeStatus": "",
+    "filters": {
+      "search": "Rechercher",
+      "searchPlaceholder": "Rechercher une tâche...",
+      "status": "Statut",
+      "allStatuses": "Tous les statuts",
+      "priority": "Priorité",
+      "allPriorities": "Toutes les priorités",
+      "assignee": "Assigné à",
+      "allAssignees": "Tous les assignés",
+      "institution": "Institution",
+      "allInstitutions": "Toutes les institutions",
+      "dueDateFrom": "Date d'échéance (début)",
+      "dueDateTo": "Date d'échéance (fin)",
+      "clearAll": "Tout effacer"
     }
   },
   "messages": {
@@ -660,7 +713,12 @@
       "addFilters": "Ajouter des Filtres",
       "exportResults": "Exporter les Résultats",
       "saveAsSegment": "Enregistrer comme Segment",
-      "applyFilters": "Appliquer les Filtres"
+      "applyFilters": "Appliquer les Filtres",
+      "name": "",
+      "type": "",
+      "city": "",
+      "status": "",
+      "department": ""
     },
     "analytics": {
       "title": "Analyses du Segment",
@@ -719,7 +777,9 @@
         "basicInfo": "Informations de Base",
         "contactInfo": "Informations de Contact",
         "medicalInfo": "Informations Médicales",
-        "activityInfo": "Informations d'Activité"
+        "activityInfo": "Informations d'Activité",
+        "customFields": "",
+        "noCustomFields": ""
       },
       "includeFields": "Inclure les Champs",
       "selectAll": "Tout Sélectionner",
@@ -728,7 +788,21 @@
       "export": "Exporter les Données",
       "exporting": "Exportation des données...",
       "exportComplete": "Exportation terminée avec succès",
-      "exportError": "Erreur lors de l'exportation"
+      "exportError": "Erreur lors de l'exportation",
+      "options": {
+        "title": "Options d'exportation",
+        "includeHeaders": "Inclure les en-têtes",
+        "includeFilters": "Inclure les filtres appliqués",
+        "dateFormat": "Format de date",
+        "delimiter": "Délimiteur"
+      },
+      "summary": {
+        "title": "Résumé de l'exportation",
+        "fieldsSelected": "Champs sélectionnés",
+        "recordsToExport": "Enregistrements à exporter",
+        "estimatedSize": "Taille estimée"
+      },
+      "startExport": "Démarrer l'exportation"
     },
     "sharing": {
       "title": "Partager le Segment",
@@ -802,7 +876,11 @@
         "value": "Valeur Moyenne"
       },
       "visualComparison": "Comparaison Visuelle",
-      "exportComparison": "Exporter la Comparaison"
+      "exportComparison": "Exporter la Comparaison",
+      "validation": {
+        "minSegments": "",
+        "maxSegments": ""
+      }
     },
     "bulk": {
       "title": "Actions en Masse",
@@ -876,7 +954,8 @@
     "visibility": {
       "private": "Privé",
       "team": "Équipe",
-      "public": "Public"
+      "public": "Public",
+      "custom": ""
     }
   },
   "task": {
@@ -1501,7 +1580,8 @@
       "termsAndConditions": "Conditions Générales",
       "termsAndConditionsPlaceholder": "Conditions générales...",
       "paymentInstructions": "Instructions de Paiement",
-      "paymentInstructionsPlaceholder": "Instructions de paiement..."
+      "paymentInstructionsPlaceholder": "Instructions de paiement...",
+      "invalidEmailFormat": ""
     },
     "logoPositions": {
       "topLeft": "En haut à gauche",
@@ -1887,18 +1967,21 @@
     "sort": {
       "byDate": "Date",
       "byTitle": "Titre",
-      "byPriority": "Priorité"
+      "byPriority": "Priorité",
+      "byUpdated": ""
     },
     "errors": {
       "create": "Erreur lors de la création de la note",
       "update": "Erreur lors de la mise à jour de la note",
       "delete": "Erreur lors de la suppression de la note",
-      "load": "Erreur lors du chargement des notes"
+      "load": "Erreur lors du chargement des notes",
+      "shareRemove": ""
     },
     "success": {
       "created": "Note créée avec succès",
       "updated": "Note mise à jour avec succès",
-      "deleted": "Note supprimée avec succès"
+      "deleted": "Note supprimée avec succès",
+      "shareRemoved": ""
     },
     "form": {
       "title": "Titre",
@@ -1938,6 +2021,14 @@
         "read": "Lecture",
         "write": "Écriture"
       }
+    },
+    "description": "",
+    "share": {
+      "title": "",
+      "current": "",
+      "write": "",
+      "read": "",
+      "help": ""
     }
   },
   "reminders": {
@@ -1957,7 +2048,8 @@
       "byDate": "Date",
       "byTitle": "Titre",
       "byPriority": "Priorité",
-      "byStatus": "Statut"
+      "byStatus": "Statut",
+      "byCreated": ""
     },
     "errors": {
       "create": "Erreur lors de la création du rappel",
@@ -1968,7 +2060,8 @@
     "success": {
       "created": "Rappel créé avec succès",
       "updated": "Rappel mis à jour avec succès",
-      "deleted": "Rappel supprimé avec succès"
+      "deleted": "Rappel supprimé avec succès",
+      "completed": ""
     },
     "form": {
       "title": "Titre",
@@ -1982,7 +2075,8 @@
     "status": {
       "pending": "En attente",
       "completed": "Terminé",
-      "dismissed": "Ignoré"
+      "dismissed": "Ignoré",
+      "cancelled": ""
     },
     "titleField": "Titre",
     "descriptionField": "Description",
@@ -1997,7 +2091,30 @@
     "descriptionPlaceholder": "Description du rappel",
     "priorityField": "Priorité",
     "institutionField": "Institution",
-    "institutionPlaceholder": "Sélectionnez une institution"
+    "institutionPlaceholder": "Sélectionnez une institution",
+    "recurring": {
+      "title": "Récurrent",
+      "frequencies": {
+        "daily": "Quotidien",
+        "weekly": "Hebdomadaire",
+        "monthly": "Mensuel"
+      },
+      "label": "Rappel récurrent",
+      "frequency": "Fréquence",
+      "endDate": "Date de fin",
+      "endDateHint": "Sélectionnez la date de fin du rappel récurrent"
+    },
+    "priority": {
+      "low": "Faible",
+      "medium": "Moyen",
+      "high": "Élevé",
+      "urgent": "Urgent"
+    },
+    "dateTimeField": "",
+    "contactPersonField": "",
+    "contactPersonPlaceholder": "",
+    "requiredField": "",
+    "description": ""
   },
   "opportunities": {
     "title": "Opportunités",
@@ -2010,6 +2127,7 @@
     "empty": "Aucune opportunité trouvée",
     "overdue": "En retard",
     "forecast": {
+      "title": "Prévisions",
       "byMonth": "Par mois",
       "opportunities": "Opportunités",
       "totalValue": "Valeur totale",
@@ -2043,7 +2161,9 @@
       "proposal": "Proposition",
       "negotiation": "Négociation",
       "won": "Gagnée",
-      "lost": "Perdue"
+      "lost": "Perdue",
+      "closedWon": "Gagnée",
+      "closedLost": "Perdue"
     },
     "errors": {
       "create": "Erreur lors de la création de l'opportunité",
@@ -2181,10 +2301,16 @@
   },
   "labels": {
     "date": "Date",
-    "creator": "Créateur"
+    "creator": "Créateur",
+    "category": "Catégorie",
+    "name": "Nom",
+    "priority": "Priorité",
+    "status": "Statut",
+    "type": "Type"
   },
   "time": {
-    "today": "Aujourd'hui"
+    "today": "Aujourd'hui",
+    "thisMonth": ""
   },
   "contacts": {
     "edit": "Modifier le contact",
