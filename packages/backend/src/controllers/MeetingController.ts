@@ -398,9 +398,58 @@ export class MeetingController {
 
       // Invite contact persons
       if (Array.isArray(contactPersonIds) && contactPersonIds.length > 0) {
+        // Validate that contact persons belong to the meeting's institution (if one is set)
+        if (meeting.institutionId) {
+          const contacts = await ContactPerson.findAll({
+            where: { id: contactPersonIds },
+            attributes: ["id", "institutionId"],
+          })
+          
+          const invalidContacts = contacts.filter(
+            contact => contact.institutionId !== meeting.institutionId
+          )
+          
+          if (invalidContacts.length > 0) {
+            ctx.status = 400
+            ctx.body = {
+              success: false,
+              error: {
+                code: "INVALID_CONTACT",
+                message: "One or more contact persons do not belong to this meeting's institution",
+              },
+            }
+            return
+          }
+        }
+        
         const contactsInvited = await MeetingParticipant.bulkInviteContactPersons(meeting.id, contactPersonIds)
         invited = [...invited, ...contactsInvited]
       } else if (contactPersonId) {
+        // Validate that contact person belongs to the meeting's institution (if one is set)
+        if (meeting.institutionId) {
+          const contact = await ContactPerson.findByPk(contactPersonId)
+          if (!contact) {
+            ctx.status = 404
+            ctx.body = {
+              success: false,
+              error: { code: "NOT_FOUND", message: "Contact person not found" },
+            }
+            return
+          }
+          
+          if (contact.institutionId !== meeting.institutionId) {
+            ctx.status = 400
+            ctx.body = {
+              success: false,
+              error: {
+                code: "INVALID_CONTACT",
+                message: "Contact person does not belong to this meeting's institution",
+              },
+            }
+            return
+          }
+        }
+        
         const contactInvited = await MeetingParticipant.create({
           meetingId: meeting.id,
           contactPersonId,
