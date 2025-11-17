@@ -72,7 +72,7 @@ export class InstitutionInsightsService {
       const now = new Date()
       const threeMonthsAgo = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000)
 
-      // Fetch data in parallel using Promise.allSettled for graceful degradation
+      // Fetch data in parallel using Promise.allSettled for graceful error handling
       const results = await Promise.allSettled([
         Quote.findAll({ where: { institutionId }, attributes: ["id", "status", "total", "createdAt", "updatedAt"] }),
         Invoice.findAll({ where: { institutionId }, attributes: ["id", "status", "total", "totalPaid", "createdAt"] }),
@@ -82,13 +82,14 @@ export class InstitutionInsightsService {
         Opportunity.findAll({ where: { institutionId }, attributes: ["id", "stage", "value", "createdAt"] }),
       ])
 
-      // Extract successful results or provide default values with error logging
-      const queryNames = ['Quote.findAll', 'Invoice.findAll', 'Meeting.findAll', 'Call.findAll', 'Note.findAll', 'Opportunity.findAll']
+      // Extract successful results or use empty arrays as defaults
       const [quotes, invoices, meetings, calls, notes, opportunities] = results.map((result, index) => {
         if (result.status === 'fulfilled') {
           return result.value
         } else {
-          logger.error(`Error in ${queryNames[index]} for institution ${institutionId}:`, result.reason)
+          // Log the specific error for debugging
+          const queryNames = ['Quote.findAll', 'Invoice.findAll', 'Meeting.findAll', 'Call.findAll', 'Note.findAll', 'Opportunity.findAll']
+          logger.error(`Error in calculateLeadScore - ${queryNames[index]} for institution ${institutionId}:`, result.reason)
           return []
         }
       })
@@ -293,7 +294,7 @@ export class InstitutionInsightsService {
 
       const actions: NextBestAction[] = []
 
-      // Fetch relevant data using Promise.allSettled for graceful degradation
+      // Fetch relevant data using Promise.allSettled for graceful error handling
       const results = await Promise.allSettled([
         Quote.findAll({
           where: { institutionId },
@@ -321,13 +322,14 @@ export class InstitutionInsightsService {
         }),
       ])
 
-      // Extract successful results or provide default values with error logging
-      const actionQueryNames = ['Quote.findAll', 'Invoice.findAll', 'Opportunity.findAll', 'Meeting.findAll', 'Call.findAll']
+      // Extract successful results or use empty arrays as defaults
       const [quotes, invoices, opportunities, meetings, calls] = results.map((result, index) => {
         if (result.status === 'fulfilled') {
           return result.value
         } else {
-          logger.error(`Error in ${actionQueryNames[index]} for institution ${institutionId} (getNextBestActions):`, result.reason)
+          // Log the specific error for debugging
+          const queryNames = ['Quote.findAll', 'Invoice.findAll', 'Opportunity.findAll', 'Meeting.findAll', 'Call.findAll']
+          logger.error(`Error in getNextBestActions - ${queryNames[index]} for institution ${institutionId}:`, result.reason)
           return []
         }
       })
