@@ -425,19 +425,19 @@
     "assignedTo": "",
     "changeStatus": "",
     "filters": {
-      "search": "",
-      "searchPlaceholder": "",
-      "status": "",
-      "allStatuses": "",
-      "priority": "",
-      "allPriorities": "",
-      "assignee": "",
-      "allAssignees": "",
-      "institution": "",
-      "allInstitutions": "",
-      "dueDateFrom": "",
-      "dueDateTo": "",
-      "clearAll": ""
+      "search": "Rechercher",
+      "searchPlaceholder": "Rechercher une tâche...",
+      "status": "Statut",
+      "allStatuses": "Tous les statuts",
+      "priority": "Priorité",
+      "allPriorities": "Toutes les priorités",
+      "assignee": "Assigné à",
+      "allAssignees": "Tous les assignés",
+      "institution": "Institution",
+      "allInstitutions": "Toutes les institutions",
+      "dueDateFrom": "Date d'échéance (début)",
+      "dueDateTo": "Date d'échéance (fin)",
+      "clearAll": "Tout effacer"
     }
   },
   "messages": {
