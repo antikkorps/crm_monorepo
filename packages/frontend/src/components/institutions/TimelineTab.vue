@@ -279,6 +279,7 @@ const loadTimeline = async (reset = false) => {
     if (!data || !data.items || !data.pagination) {
       console.warn("Invalid timeline data structure returned from API:", data)
       error.value = "Format de données invalide"
+      loading.value = false
       return
     }
 
