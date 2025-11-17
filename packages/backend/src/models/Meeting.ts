@@ -367,25 +367,31 @@ export class Meeting
       })
       const participantMeetingIds = participantMeetings.map((p) => p.meetingId)
 
-      whereClause[Op.and] = [
-        whereClause,
-        {
-          [Op.or]: [
-            { organizerId: filters.userId },
-            participantMeetingIds.length > 0
-              ? {
-                  id: {
-                    [Op.in]: participantMeetingIds,
-                  },
-                }
-              : {
-                  id: {
-                    [Op.in]: [-1],
-                  },
-                },
-          ],
-        },
-      ]
+      // Add access control to whereClause
+      const accessControlClause: any = {
+        [Op.or]: [
+          { organizerId: filters.userId },
+        ]
+      }
+
+      // Only add participant filter if there are participant meetings
+      if (participantMeetingIds.length > 0) {
+        accessControlClause[Op.or].push({
+          id: {
+            [Op.in]: participantMeetingIds,
+          },
+        })
+      }
+
+      // Combine with existing whereClause conditions
+      const combinedWhere = {
+        ...whereClause,
+        ...accessControlClause,
+      }
+
+      // Replace whereClause with combined conditions
+      Object.keys(whereClause).forEach(key => delete whereClause[key])
+      Object.assign(whereClause, combinedWhere)
     }
 
     // Filter by participant
@@ -403,10 +409,8 @@ export class Meeting
           [Op.in]: participantMeetingIds,
         }
       } else {
-        // No participant meetings found, return no results
-        whereClause.id = {
-          [Op.in]: [-1], // Use a condition that returns no results
-        }
+        // No participant meetings found, return empty array directly
+        return []
       }
     }
 

@@ -164,11 +164,9 @@ const authStore = useAuthStore()
 const notificationStore = useNotificationStore()
 const { t } = useI18n()
 const {
-  notifications,
   isConnected,
   connect,
   disconnect,
-  clearNotifications: clearSocketNotifications,
 } = useSocket()
 
 // Reactive state
@@ -189,30 +187,8 @@ const displayNotifications = computed(() => {
 const unreadCount = computed(() => notificationStore.unreadCount)
 const hasUnreadNotifications = computed(() => unreadCount.value > 0)
 
-// Watch for new socket notifications and add them to the store
-watch(
-  notifications,
-  (newNotifications, oldNotifications) => {
-    // Only process new notifications
-    const newCount = newNotifications.length - (oldNotifications?.length || 0)
-    if (newCount > 0) {
-      // Add the newest notifications to the store
-      for (let i = 0; i < newCount; i++) {
-        const notification = newNotifications[i]
-        notificationStore.addNotification({
-          type: notification.type,
-          message: notification.message,
-          data: notification.data,
-          timestamp: notification.timestamp,
-        })
-      }
-
-      // Play notification sound for new notifications
-      notificationStore.playNotificationSound()
-    }
-  },
-  { deep: true }
-)
+// Note: Socket notifications are now handled via the backend notification system
+// and directly added to the notificationStore when they arrive via WebSocket events
 
 // Connect to socket when authenticated
 watch(
@@ -254,7 +230,6 @@ const markAllAsRead = () => {
 
 const clearAllNotifications = () => {
   notificationStore.clearAllNotifications()
-  clearSocketNotifications()
 }
 
 const removeNotification = (notificationId: string) => {

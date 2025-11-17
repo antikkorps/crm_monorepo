@@ -158,7 +158,8 @@ const loadHotLeads = async () => {
   try {
     const response = await analyticsApi.getHotLeads(5)
     // Filter only hot leads (score >= 70)
-    hotLeads.value = response.data.data.filter(lead => lead.score >= 70).slice(0, 5)
+    const data = response?.data?.data || []
+    hotLeads.value = data.filter(lead => lead.score >= 70).slice(0, 5)
   } catch (err: any) {
     error.value = err.message || "Impossible de charger les leads chauds"
     console.error("Failed to load hot leads:", err)

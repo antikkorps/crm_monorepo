@@ -53,6 +53,7 @@ import {
   // Navigation
   VNavigationDrawer,
   VAppBar,
+  VAppBarNavIcon,
   VToolbar,
   VToolbarTitle,
   VTabs,
@@ -80,6 +81,7 @@ import {
 
   // Feedback
   VAlert,
+  VAlertTitle,
   VDialog,
   VMenu,
   VTooltip,
@@ -183,6 +185,7 @@ export default createVuetify({
     // Navigation
     VNavigationDrawer,
     VAppBar,
+    VAppBarNavIcon,
     VToolbar,
     VToolbarTitle,
     VTabs,
@@ -210,6 +213,7 @@ export default createVuetify({
 
     // Feedback
     VAlert,
+    VAlertTitle,
     VDialog,
     VMenu,
     VTooltip,

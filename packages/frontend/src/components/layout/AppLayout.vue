@@ -457,7 +457,7 @@ const billingNavigation = [
     title: "navigation.analytics",
     icon: "mdi-chart-bar",
     to: "/billing/analytics",
-    value: "analytics",
+    value: "billing-analytics",
   },
 ]
 

@@ -214,6 +214,65 @@
       "1y": "1 an"
     }
   },
+  "dashboard": {
+    "title": "Tableau de Bord",
+    "welcome": "Bienvenue",
+    "redirecting": "Redirection en cours...",
+    "redirectingToBilling": "Vous allez être redirigé vers l'analyse de facturation",
+    "performanceIndicators": "Indicateurs de Performance",
+    "period": {
+      "week": "Semaine",
+      "month": "Mois",
+      "quarter": "Trimestre"
+    },
+    "metrics": {
+      "revenueGrowth": "Croissance du Chiffre d'Affaires",
+      "newClients": "Nouveaux Clients",
+      "conversionRate": "Taux de Conversion",
+      "vsPreviousPeriod": "vs période précédente",
+      "thisMonth": "ce mois",
+      "quotesAccepted": "devis acceptés"
+    },
+    "stats": {
+      "institutions": "Institutions",
+      "tasks": "Tâches",
+      "team": "Équipe",
+      "monthlyRevenue": "Revenu Mensuel",
+      "active": "actives",
+      "inactive": "inactives",
+      "inProgress": "en cours",
+      "members": "membres",
+      "teams": "équipes",
+      "invoices": "factures",
+      "quotes": "devis",
+      "viewAll": "Voir tout",
+      "manage": "Gérer",
+      "viewTeam": "Voir l'équipe",
+      "analyze": "Analyser"
+    },
+    "development": {
+      "title": "Tableau de Bord en Développement",
+      "description": "Ce tableau de bord est en cours de développement. De nouvelles fonctionnalités seront ajoutées régulièrement.",
+      "discoverBilling": "Découvrir l'analytique de facturation"
+    }
+  },
+  "tasks": {
+    "recent": "Tâches Récentes",
+    "noTasks": "Aucune tâche",
+    "noTasksDescription": "Vous n'avez pas encore de tâches assignées",
+    "createTask": "Créer une tâche",
+    "overdue": "en retard",
+    "dueSoon": "À échéance bientôt",
+    "today": "Aujourd'hui",
+    "tomorrow": "Demain",
+    "yesterday": "Hier",
+    "overdueBy": "En retard de",
+    "dueIn": "Dans",
+    "days": "jours"
+  },
+  "messages": {
+    "loading": "Chargement..."
+  },
   "segmentation": {
     "title": "Segmentation Avancée",
     "subtitle": "Créez et gérez des segments de clients avec des filtres et analyses avancés",
