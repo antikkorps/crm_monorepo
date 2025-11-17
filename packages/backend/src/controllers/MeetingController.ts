@@ -401,6 +401,14 @@ export class MeetingController {
         const contactsInvited = await MeetingParticipant.bulkInviteContactPersons(meeting.id, contactPersonIds)
         invited = [...invited, ...contactsInvited]
       } else if (contactPersonId) {
+        // Verify contact person exists before creating participant record
+        const contactPerson = await ContactPerson.findByPk(contactPersonId)
+        if (!contactPerson) {
+          ctx.status = 404
+          ctx.body = { success: false, error: { code: "CONTACT_PERSON_NOT_FOUND", message: "Contact person not found" } }
+          return
+        }
+
         const contactInvited = await MeetingParticipant.create({
           meetingId: meeting.id,
           contactPersonId,
