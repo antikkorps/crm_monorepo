@@ -330,6 +330,21 @@ export class MeetingParticipant
     meetingId: string,
     contactPersonIds: string[]
   ): Promise<MeetingParticipant[]> {
+    // Validate that all contact persons exist
+    const existingContactPersons = await ContactPerson.findAll({
+      where: { id: contactPersonIds },
+      attributes: ["id"],
+    })
+
+    const existingIds = existingContactPersons.map((cp) => cp.id)
+    const invalidIds = contactPersonIds.filter((id) => !existingIds.includes(id))
+
+    if (invalidIds.length > 0) {
+      throw new Error(
+        `Contact person(s) with id(s) ${invalidIds.join(", ")} do not exist`
+      )
+    }
+
     // Check for existing participants to avoid duplicates
     const existingParticipants = await this.findAll({
       where: { meetingId, contactPersonId: contactPersonIds },

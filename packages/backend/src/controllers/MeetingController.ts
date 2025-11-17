@@ -470,7 +470,11 @@ export class MeetingController {
       ctx.status = 500
       ctx.body = {
         success: false,
-        error: { code: "PARTICIPANT_INVITE_ERROR", message: "Failed to invite participants" },
+        error: {
+          code: "PARTICIPANT_INVITE_ERROR",
+          message: "Failed to invite participants",
+          details: error instanceof Error ? error.message : "Unknown error",
+        },
       }
     }
   }
