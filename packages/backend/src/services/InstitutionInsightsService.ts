@@ -282,33 +282,53 @@ export class InstitutionInsightsService {
 
       const actions: NextBestAction[] = []
 
-      // Fetch relevant data
-      const [quotes, invoices, opportunities, meetings, calls] = await Promise.all([
+      // Fetch relevant data using Promise.allSettled for graceful error handling
+      const results = await Promise.allSettled([
         Quote.findAll({
           where: { institutionId },
           order: [["createdAt", "DESC"]],
           limit: 10,
-        }).catch(() => []),
+        }),
         Invoice.findAll({
           where: { institutionId },
           order: [["createdAt", "DESC"]],
           limit: 10,
-        }).catch(() => []),
+        }),
         Opportunity.findAll({
           where: { institutionId },
           order: [["createdAt", "DESC"]],
-        }).catch(() => []),
+        }),
         Meeting.findAll({
           where: { institutionId },
           order: [["startDate", "DESC"]],
           limit: 5,
-        }).catch(() => []),
+        }),
         Call.findAll({
           where: { institutionId },
           order: [["callDate", "DESC"]],
           limit: 5,
-        }).catch(() => []),
+        }),
       ])
+
+      // Extract successful results or provide default values
+      const [quotes, invoices, opportunities, meetings, calls] = results.map((result, index) => {
+        if (result.status === 'fulfilled') {
+          return result.value
+        } else {
+          // Log the specific error
+          const queryNames = [
+            'Quote.findAll',
+            'Invoice.findAll',
+            'Opportunity.findAll',
+            'Meeting.findAll',
+            'Call.findAll'
+          ]
+          logger.error(`Error in ${queryNames[index]} for institution ${institutionId}:`, result.reason)
+          
+          // Return empty array as default
+          return []
+        }
+      })
 
       // 1. OVERDUE INVOICES - Highest priority
       const overdueInvoices = invoices.filter(
