@@ -26,7 +26,81 @@
     "create": "Créer",
     "retry": "Réessayer",
     "active": "Actif",
-    "inactive": "Inactif"
+    "inactive": "Inactif",
+    "confirmDelete": "Confirmer la suppression",
+    "irreversible": "Cette action est irréversible",
+    "sortBy": "Trier par",
+    "clearFilters": "Effacer les filtres",
+    "filter": "Filtrer",
+    "filters": "Filtres",
+    "actions": "Actions",
+    "status": "Statut",
+    "name": "Nom",
+    "description": "Description",
+    "createdAt": "Créé le",
+    "updatedAt": "Mis à jour le",
+    "apply": "Appliquer",
+    "reset": "Réinitialiser",
+    "selectAll": "Tout sélectionner",
+    "deselectAll": "Tout désélectionner",
+    "selected": "sélectionné(s)",
+    "download": "Télécharger",
+    "upload": "Téléverser",
+    "or": "ou",
+    "and": "et",
+    "date": "Date",
+    "time": "Heure",
+    "dateTime": "Date et heure",
+    "startDate": "Date de début",
+    "endDate": "Date de fin",
+    "all": "Tous",
+    "none": "Aucun",
+    "other": "Autre",
+    "optional": "Optionnel",
+    "required": "Requis",
+    "success": "Succès",
+    "error": "Erreur",
+    "info": "Information",
+    "title": "Titre",
+    "subtitle": "Sous-titre",
+    "message": "Message",
+    "details": "Détails",
+    "settings": "Paramètres",
+    "preferences": "Préférences",
+    "value": "Valeur",
+    "total": "Total",
+    "subtotal": "Sous-total",
+    "quantity": "Quantité",
+    "price": "Prix",
+    "discount": "Remise",
+    "tax": "Taxe",
+    "amount": "Montant",
+    "comments": "Commentaires",
+    "notes": "Notes",
+    "tags": "Tags",
+    "category": "Catégorie",
+    "priority": "Priorité",
+    "enabled": "Activé",
+    "disabled": "Désactivé",
+    "public": "Public",
+    "private": "Privé",
+    "shared": "Partagé",
+    "owner": "Propriétaire",
+    "assignedTo": "Assigné à",
+    "createdBy": "Créé par",
+    "updatedBy": "Mis à jour par",
+    "lastModified": "Dernière modification",
+    "items": "Éléments",
+    "results": "Résultats",
+    "showing": "Affichage",
+    "of": "de",
+    "to": "à",
+    "page": "Page",
+    "perPage": "Par page",
+    "first": "Premier",
+    "last": "Dernier",
+    "prev": "Précédent",
+    "goto": "Aller à"
   },
   "navigation": {
     "dashboard": "Tableau de bord",
@@ -204,7 +278,30 @@
       "medicalProfile": "Profil médical",
       "status": "Statut",
       "actions": "Actions"
-    }
+    },
+    "preview": "Aperçu",
+    "matching": "Correspondance",
+    "digiforma": "Digiforma",
+    "sage": "Sage",
+    "exact": "Exacte",
+    "byAccountingNumber": "Par numéro comptable",
+    "byNameAndAddress": "Par nom et adresse",
+    "fuzzy": "Approximative",
+    "fuzzyMatchHint": "Correspondance approximative basée sur la similarité",
+    "new": "Nouveau",
+    "digiformaExists": "Existe dans Digiforma",
+    "digiformaWillCreate": "Sera créé dans Digiforma",
+    "digiformaUnknown": "Statut Digiforma inconnu",
+    "sageAlert": "Les données Sage nécessitent une attention particulière",
+    "importResultTitle": "Résultats de l'importation",
+    "imported": "Importées",
+    "total": "Total",
+    "errors": "Erreurs",
+    "duplicatesFound": "Doublons trouvés",
+    "duplicatesMerged": "Doublons fusionnés",
+    "createdInDigiforma": "Créées dans Digiforma",
+    "createInDigiforma": "Créer dans Digiforma",
+    "createInDigiformaHint": "Créer automatiquement les institutions dans Digiforma"
   },
   "analytics": {
     "timeRange": {
@@ -212,7 +309,12 @@
       "30d": "30 jours",
       "90d": "90 jours",
       "1y": "1 an"
-    }
+    },
+    "title": "Analytique",
+    "subtitle": "Analyses et statistiques",
+    "performance": "Performance",
+    "trends": "Tendances",
+    "reports": "Rapports"
   },
   "dashboard": {
     "title": "Tableau de Bord",
@@ -268,7 +370,23 @@
     "yesterday": "Hier",
     "overdueBy": "En retard de",
     "dueIn": "Dans",
-    "days": "jours"
+    "days": "jours",
+    "open": "Ouvertes",
+    "noOpenTasks": "Aucune tâche ouverte",
+    "dueDate": "Date d'échéance",
+    "priority": {
+      "low": "Faible",
+      "medium": "Moyenne",
+      "high": "Élevée",
+      "urgent": "Urgente"
+    },
+    "status": {
+      "pending": "En attente",
+      "in_progress": "En cours",
+      "blocked": "Bloquée",
+      "completed": "Terminée",
+      "cancelled": "Annulée"
+    }
   },
   "messages": {
     "loading": "Chargement..."
@@ -310,7 +428,7 @@
         "message": "Commencez à créer un nouveau segment avec des filtres personnalisés"
       },
       "preview": {
-        "title": "Aperçu des Résultats",
+        "title": "Titre",
         "city": "Ville",
         "status": "Statut",
         "totalRecords": "Total des Enregistrements",
@@ -322,7 +440,6 @@
         "addFilters": "Ajoutez des filtres pour voir les résultats",
         "name": "Nom",
         "type": "Type",
-        "title": "Titre",
         "department": "Département"
       }
     },
@@ -763,81 +880,81 @@
       "public": "Public"
     }
   },
-   "task": {
-     "title": "Gestion des Tâches",
-     "subtitle": "Gérer et suivre les tâches d'équipe, les assignations et les délais",
-     "createNew": "Créer une Nouvelle Tâche",
-     "createShort": "Tâche",
-     "edit": "Modifier la Tâche",
-     "update": "Mettre à Jour la Tâche",
-     "create": "Créer la Tâche",
-     "delete": "Supprimer la Tâche",
-     "cancel": "Annuler",
-     "save": "Enregistrer",
-     "loading": "Chargement des tâches...",
-     "noTasksFound": "Aucune tâche trouvée",
-     "noTasksMatchFilters": "Aucune tâche ne correspond à vos filtres actuels. Essayez d'ajuster vos critères de recherche.",
-     "getStarted": "Commencez par créer votre première tâche pour suivre les activités et délais d'équipe.",
-     "clearFilters": "Effacer les Filtres",
-     "createTask": "Créer une Tâche",
-     "listView": "Vue Liste",
-     "boardView": "Vue Tableau",
-     "sortBy": "Trier par",
-     "sortOptions": {
-       "dueDate": "Date d'échéance",
-       "priority": "Priorité",
-       "status": "Statut",
-       "createdAt": "Date de création",
-       "title": "Titre"
-     },
-     "status": {
-       "todo": "À faire",
-       "in_progress": "En cours",
-       "completed": "Terminée",
-       "cancelled": "Annulée"
-     },
-     "priority": {
-       "low": "Faible",
-       "medium": "Moyenne",
-       "high": "Élevée",
-       "urgent": "Urgente"
-     },
-     "form": {
-       "title": "Titre",
-       "titlePlaceholder": "Saisir le titre de la tâche",
-       "titleRequired": "Le titre est requis",
-       "description": "Description",
-       "descriptionPlaceholder": "Saisir la description de la tâche (optionnel)",
-       "priority": "Priorité",
-       "priorityPlaceholder": "Sélectionner la priorité",
-       "status": "Statut",
-       "statusPlaceholder": "Sélectionner le statut",
-        "assignee": "Assigné à",
-        "assigneePlaceholder": "Sélectionner l'assigné",
-        "assigneeRequired": "L'assigné est requis",
-        "institution": "Institution",
-        "institutionPlaceholder": "Sélectionner l'institution (optionnel)",
-        "contact": "Contact",
-        "contactPlaceholder": "Sélectionner le contact (optionnel)",
-        "dueDate": "Date d'échéance",
-        "dueDatePlaceholder": "Sélectionner la date d'échéance (optionnel)"
-     },
-     "messages": {
-       "created": "Tâche créée avec succès",
-       "updated": "Tâche mise à jour avec succès",
-       "deleted": "Tâche supprimée avec succès",
-       "statusUpdated": "Statut de la tâche mis à jour vers {status}",
-       "createFailed": "Échec de la création de la tâche",
-       "updateFailed": "Échec de la mise à jour de la tâche",
-       "deleteFailed": "Échec de la suppression de la tâche",
-       "statusUpdateFailed": "Échec de la mise à jour du statut de la tâche",
-       "loadFailed": "Échec du chargement des tâches"
-     },
-     "confirm": {
-       "deleteTitle": "Supprimer la Tâche",
-       "deleteMessage": "Êtes-vous sûr de vouloir supprimer la tâche \"{title}\" ?"
-     }
-   },
+  "task": {
+    "title": "Gestion des Tâches",
+    "subtitle": "Gérer et suivre les tâches d'équipe, les assignations et les délais",
+    "createNew": "Créer une Nouvelle Tâche",
+    "createShort": "Tâche",
+    "edit": "Modifier la Tâche",
+    "update": "Mettre à Jour la Tâche",
+    "create": "Créer la Tâche",
+    "delete": "Supprimer la Tâche",
+    "cancel": "Annuler",
+    "save": "Enregistrer",
+    "loading": "Chargement des tâches...",
+    "noTasksFound": "Aucune tâche trouvée",
+    "noTasksMatchFilters": "Aucune tâche ne correspond à vos filtres actuels. Essayez d'ajuster vos critères de recherche.",
+    "getStarted": "Commencez par créer votre première tâche pour suivre les activités et délais d'équipe.",
+    "clearFilters": "Effacer les Filtres",
+    "createTask": "Créer une Tâche",
+    "listView": "Vue Liste",
+    "boardView": "Vue Tableau",
+    "sortBy": "Trier par",
+    "sortOptions": {
+      "dueDate": "Date d'échéance",
+      "priority": "Priorité",
+      "status": "Statut",
+      "createdAt": "Date de création",
+      "title": "Titre"
+    },
+    "status": {
+      "todo": "À faire",
+      "in_progress": "En cours",
+      "completed": "Terminée",
+      "cancelled": "Annulée"
+    },
+    "priority": {
+      "low": "Faible",
+      "medium": "Moyenne",
+      "high": "Élevée",
+      "urgent": "Urgente"
+    },
+    "form": {
+      "title": "Titre",
+      "titlePlaceholder": "Saisir le titre de la tâche",
+      "titleRequired": "Le titre est requis",
+      "description": "Description",
+      "descriptionPlaceholder": "Saisir la description de la tâche (optionnel)",
+      "priority": "Priorité",
+      "priorityPlaceholder": "Sélectionner la priorité",
+      "status": "Statut",
+      "statusPlaceholder": "Sélectionner le statut",
+      "assignee": "Assigné à",
+      "assigneePlaceholder": "Sélectionner l'assigné",
+      "assigneeRequired": "L'assigné est requis",
+      "institution": "Institution",
+      "institutionPlaceholder": "Sélectionner l'institution (optionnel)",
+      "contact": "Contact",
+      "contactPlaceholder": "Sélectionner le contact (optionnel)",
+      "dueDate": "Date d'échéance",
+      "dueDatePlaceholder": "Sélectionner la date d'échéance (optionnel)"
+    },
+    "messages": {
+      "created": "Tâche créée avec succès",
+      "updated": "Tâche mise à jour avec succès",
+      "deleted": "Tâche supprimée avec succès",
+      "statusUpdated": "Statut de la tâche mis à jour vers {status}",
+      "createFailed": "Échec de la création de la tâche",
+      "updateFailed": "Échec de la mise à jour de la tâche",
+      "deleteFailed": "Échec de la suppression de la tâche",
+      "statusUpdateFailed": "Échec de la mise à jour du statut de la tâche",
+      "loadFailed": "Échec du chargement des tâches"
+    },
+    "confirm": {
+      "deleteTitle": "Supprimer la Tâche",
+      "deleteMessage": "Êtes-vous sûr de vouloir supprimer la tâche \"{title}\" ?"
+    }
+  },
   "communication": {
     "type": {
       "email": "Email",
@@ -875,7 +992,18 @@
     "maxLength": "Ce champ ne peut pas dépasser {max} caractères",
     "email": "Veuillez saisir un email valide",
     "number": "Veuillez saisir un nombre valide",
-    "positive": "La valeur doit être positive"
+    "positive": "La valeur doit être positive",
+    "phone": "Numéro de téléphone invalide",
+    "url": "URL invalide",
+    "min": "La valeur doit être au moins {min}",
+    "max": "La valeur ne peut pas dépasser {max}",
+    "pattern": "Format invalide",
+    "numeric": "Doit être un nombre",
+    "integer": "Doit être un entier",
+    "date": "Date invalide",
+    "dateAfter": "La date doit être après {date}",
+    "dateBefore": "La date doit être avant {date}",
+    "unique": "Cette valeur existe déjà"
   },
   "invoices": {
     "title": "Factures",
@@ -1204,6 +1332,21 @@
         "saveError": "Erreur lors de la sauvegarde du devis",
         "sendError": "Erreur lors de l'envoi du devis",
         "orderConfirmError": "Impossible de confirmer le bon de commande"
+      },
+      "moveUp": "Déplacer vers le haut",
+      "moveDown": "Déplacer vers le bas",
+      "removeLine": "Supprimer la ligne",
+      "applyDiscount": "Appliquer une remise",
+      "discountType": "Type de remise",
+      "discountAmount": "Montant de la remise",
+      "taxesAndTotal": "Taxes et total",
+      "discountTypePercentage": "Pourcentage",
+      "discountTypeFixed": "Montant fixe",
+      "discountPercentage": "Pourcentage de remise",
+      "validation": {
+        "descriptionRequired": "La description est requise",
+        "quantityRequired": "La quantité est requise",
+        "priceNegative": "Le prix ne peut pas être négatif"
       }
     },
     "catalogSelector": {
@@ -1213,7 +1356,8 @@
       "noDescription": "Aucune description",
       "noResults": "Aucun article trouvé pour \"{search}\"",
       "searchPrompt": "Tapez pour rechercher dans le catalogue",
-      "customLine": "Ligne personnalisée"
+      "customLine": "Ligne personnalisée",
+      "discount": "Remise"
     },
     "payment": {
       "form": {
@@ -1560,5 +1704,569 @@
         "taxRateMax": "Le taux de TVA ne peut pas dépasser 100%"
       }
     }
+  },
+  "meetings": {
+    "title": "Réunions",
+    "subtitle": "Gérez vos réunions et rendez-vous",
+    "createMeeting": "Créer une réunion",
+    "newMeeting": "Nouvelle réunion",
+    "editMeeting": "Modifier la réunion",
+    "description": "Description de la réunion",
+    "deleteConfirm": "Êtes-vous sûr de vouloir supprimer cette réunion ?",
+    "unit": "réunion",
+    "empty": {
+      "title": "Aucune réunion trouvée",
+      "noData": "Aucune réunion disponible",
+      "noFilter": "Aucune réunion ne correspond à vos filtres"
+    },
+    "sort": {
+      "byStartDate": "Date de début",
+      "byEndDate": "Date de fin",
+      "byStatus": "Statut",
+      "byTitle": "Titre",
+      "byCreated": "Date de création"
+    },
+    "errors": {
+      "create": "Erreur lors de la création de la réunion",
+      "update": "Erreur lors de la mise à jour de la réunion",
+      "delete": "Erreur lors de la suppression de la réunion",
+      "load": "Erreur lors du chargement des réunions",
+      "statusUpdate": "Erreur lors de la mise à jour du statut",
+      "export": "Erreur lors de l'export",
+      "invitationSend": "Erreur lors de l'envoi de l'invitation"
+    },
+    "success": {
+      "created": "Réunion créée avec succès",
+      "updated": "Réunion mise à jour avec succès",
+      "deleted": "Réunion supprimée avec succès",
+      "statusUpdated": "Statut mis à jour avec succès",
+      "exported": "Réunions exportées avec succès",
+      "invitationSent": "Invitation envoyée avec succès"
+    },
+    "invitation": {
+      "title": "Inviter des participants",
+      "emailsLabel": "Emails des participants",
+      "hint": "Entrez les adresses email séparées par des virgules",
+      "message": "Message personnalisé (optionnel)",
+      "send": "Envoyer les invitations"
+    },
+    "form": {
+      "title": "Titre",
+      "description": "Description",
+      "startDate": "Date de début",
+      "endDate": "Date de fin",
+      "location": "Lieu",
+      "organizer": "Organisateur",
+      "participants": "Participants",
+      "institution": "Institution",
+      "status": "Statut",
+      "addParticipant": "Ajouter un participant",
+      "removeParticipant": "Retirer le participant"
+    },
+    "status": {
+      "scheduled": "Planifiée",
+      "in_progress": "En cours",
+      "completed": "Terminée",
+      "cancelled": "Annulée"
+    },
+    "edit": "Modifier la réunion",
+    "new": "Nouvelle réunion",
+    "cancel": "Annuler",
+    "update": "Mettre à jour",
+    "create": "Créer",
+    "titleField": "Titre",
+    "titlePlaceholder": "Titre de la réunion",
+    "descriptionField": "Description",
+    "descriptionPlaceholder": "Description de la réunion",
+    "startDateField": "Date de début",
+    "endDateField": "Date de fin",
+    "locationField": "Lieu",
+    "locationPlaceholder": "Lieu de la réunion",
+    "institutionField": "Institution",
+    "institutionPlaceholder": "Sélectionnez une institution",
+    "statusField": "Statut",
+    "statusPlaceholder": "Sélectionnez le statut",
+    "participantsField": "Participants",
+    "participantsPlaceholder": "Ajouter des participants",
+    "titleRequired": "Le titre est requis",
+    "startDateRequired": "La date de début est requise",
+    "endDateRequired": "La date de fin est requise",
+    "endDateAfterStart": "La date de fin doit être après la date de début"
+  },
+  "calls": {
+    "title": "Appels",
+    "subtitle": "Gérez vos appels et communications téléphoniques",
+    "createCall": "Créer un appel",
+    "newCall": "Nouvel appel",
+    "editCall": "Modifier l'appel",
+    "description": "Description de l'appel",
+    "deleteConfirm": "Êtes-vous sûr de vouloir supprimer cet appel ?",
+    "unit": "appel",
+    "empty": {
+      "title": "Aucun appel trouvé",
+      "noData": "Aucun appel disponible",
+      "noFilter": "Aucun appel ne correspond à vos filtres"
+    },
+    "sort": {
+      "byDate": "Date",
+      "byDuration": "Durée",
+      "byPhone": "Numéro de téléphone",
+      "byType": "Type"
+    },
+    "errors": {
+      "create": "Erreur lors de la création de l'appel",
+      "update": "Erreur lors de la mise à jour de l'appel",
+      "delete": "Erreur lors de la suppression de l'appel",
+      "load": "Erreur lors du chargement des appels"
+    },
+    "success": {
+      "created": "Appel créé avec succès",
+      "updated": "Appel mis à jour avec succès",
+      "deleted": "Appel supprimé avec succès"
+    },
+    "form": {
+      "title": "Titre",
+      "description": "Description",
+      "phoneNumber": "Numéro de téléphone",
+      "direction": "Direction",
+      "duration": "Durée (minutes)",
+      "callDate": "Date de l'appel",
+      "outcome": "Résultat",
+      "notes": "Notes",
+      "contact": "Contact",
+      "institution": "Institution"
+    },
+    "direction": {
+      "inbound": "Entrant",
+      "outbound": "Sortant"
+    },
+    "outcome": {
+      "successful": "Réussi",
+      "no_answer": "Pas de réponse",
+      "busy": "Occupé",
+      "voicemail": "Messagerie vocale",
+      "failed": "Échoué"
+    },
+    "edit": "Modifier l'appel",
+    "new": "Nouvel appel",
+    "cancel": "Annuler",
+    "update": "Mettre à jour",
+    "create": "Créer",
+    "contactPersonField": "Contact",
+    "typeField": "Type",
+    "phoneNumberField": "Numéro de téléphone",
+    "phoneNumberPlaceholder": "Entrez le numéro",
+    "callTypeField": "Type d'appel",
+    "callTypePlaceholder": "Sélectionnez le type",
+    "durationField": "Durée (minutes)",
+    "durationPlaceholder": "Durée en minutes",
+    "durationHint": "Durée de l'appel en minutes",
+    "summaryField": "Résumé",
+    "summaryPlaceholder": "Résumé de l'appel",
+    "institutionField": "Institution",
+    "institutionPlaceholder": "Sélectionnez une institution",
+    "contactPersonPlaceholder": "Sélectionnez un contact",
+    "phoneNumberRequired": "Le numéro de téléphone est requis",
+    "callTypeRequired": "Le type d'appel est requis",
+    "status": {
+      "missed": "Manqué"
+    }
+  },
+  "notes": {
+    "title": "Notes",
+    "subtitle": "Gérez vos notes et annotations",
+    "createNote": "Créer une note",
+    "newNote": "Nouvelle note",
+    "editNote": "Modifier la note",
+    "deleteConfirm": "Êtes-vous sûr de vouloir supprimer cette note ?",
+    "unit": "note",
+    "empty": {
+      "title": "Aucune note trouvée",
+      "noData": "Aucune note disponible",
+      "noFilter": "Aucune note ne correspond à vos filtres"
+    },
+    "sort": {
+      "byDate": "Date",
+      "byTitle": "Titre",
+      "byPriority": "Priorité"
+    },
+    "errors": {
+      "create": "Erreur lors de la création de la note",
+      "update": "Erreur lors de la mise à jour de la note",
+      "delete": "Erreur lors de la suppression de la note",
+      "load": "Erreur lors du chargement des notes"
+    },
+    "success": {
+      "created": "Note créée avec succès",
+      "updated": "Note mise à jour avec succès",
+      "deleted": "Note supprimée avec succès"
+    },
+    "form": {
+      "title": "Titre",
+      "content": "Contenu",
+      "isPinned": "Épingler",
+      "institution": "Institution",
+      "contact": "Contact",
+      "tags": "Tags"
+    },
+    "edit": "Modifier la note",
+    "new": "Nouvelle note",
+    "cancel": "Annuler",
+    "update": "Mettre à jour",
+    "create": "Créer",
+    "titleField": "Titre",
+    "titlePlaceholder": "Titre de la note",
+    "contentField": "Contenu",
+    "contentPlaceholder": "Contenu de la note",
+    "tagsField": "Tags",
+    "tagsPlaceholder": "Ajouter des tags",
+    "institutionField": "Institution",
+    "institutionPlaceholder": "Sélectionnez une institution",
+    "requiredField": "Ce champ est requis",
+    "privacySection": {
+      "title": "Confidentialité",
+      "private": "Privé",
+      "hint": "Les notes privées ne sont visibles que par vous"
+    },
+    "sharingSection": {
+      "title": "Partage",
+      "selectUser": "Sélectionner un utilisateur",
+      "selectUserPlaceholder": "Sélectionnez un utilisateur",
+      "permission": "Permission",
+      "addUser": "Ajouter un utilisateur",
+      "userUnknown": "Utilisateur inconnu",
+      "permissions": {
+        "read": "Lecture",
+        "write": "Écriture"
+      }
+    }
+  },
+  "reminders": {
+    "title": "Rappels",
+    "subtitle": "Gérez vos rappels et alertes",
+    "createReminder": "Créer un rappel",
+    "newReminder": "Nouveau rappel",
+    "editReminder": "Modifier le rappel",
+    "deleteConfirm": "Êtes-vous sûr de vouloir supprimer ce rappel ?",
+    "unit": "rappel",
+    "empty": {
+      "title": "Aucun rappel trouvé",
+      "noData": "Aucun rappel disponible",
+      "noFilter": "Aucun rappel ne correspond à vos filtres"
+    },
+    "sort": {
+      "byDate": "Date",
+      "byTitle": "Titre",
+      "byPriority": "Priorité",
+      "byStatus": "Statut"
+    },
+    "errors": {
+      "create": "Erreur lors de la création du rappel",
+      "update": "Erreur lors de la mise à jour du rappel",
+      "delete": "Erreur lors de la suppression du rappel",
+      "load": "Erreur lors du chargement des rappels"
+    },
+    "success": {
+      "created": "Rappel créé avec succès",
+      "updated": "Rappel mis à jour avec succès",
+      "deleted": "Rappel supprimé avec succès"
+    },
+    "form": {
+      "title": "Titre",
+      "description": "Description",
+      "reminderDate": "Date du rappel",
+      "priority": "Priorité",
+      "status": "Statut",
+      "institution": "Institution",
+      "contact": "Contact"
+    },
+    "status": {
+      "pending": "En attente",
+      "completed": "Terminé",
+      "dismissed": "Ignoré"
+    },
+    "titleField": "Titre",
+    "descriptionField": "Description",
+    "dateField": "Date du rappel",
+    "statusField": "Statut",
+    "edit": "Modifier le rappel",
+    "new": "Nouveau rappel",
+    "cancel": "Annuler",
+    "update": "Mettre à jour",
+    "create": "Créer",
+    "titlePlaceholder": "Titre du rappel",
+    "descriptionPlaceholder": "Description du rappel",
+    "priorityField": "Priorité",
+    "institutionField": "Institution",
+    "institutionPlaceholder": "Sélectionnez une institution"
+  },
+  "opportunities": {
+    "title": "Opportunités",
+    "subtitle": "Gérez votre pipeline de ventes et opportunités",
+    "newOpportunity": "Nouvelle opportunité",
+    "editTitle": "Modifier l'opportunité",
+    "description": "Description de l'opportunité",
+    "deleteConfirm": "Êtes-vous sûr de vouloir supprimer cette opportunité ?",
+    "unit": "opportunité",
+    "empty": "Aucune opportunité trouvée",
+    "overdue": "En retard",
+    "forecast": {
+      "byMonth": "Par mois",
+      "opportunities": "Opportunités",
+      "totalValue": "Valeur totale",
+      "weightedValue": "Valeur pondérée"
+    },
+    "forecastTitle": "Prévisions de ventes",
+    "stats": {
+      "active": "Opportunités actives",
+      "overdue": "En retard",
+      "totalValue": "Valeur totale",
+      "weightedValue": "Valeur pondérée"
+    },
+    "loading": {
+      "pipeline": "Chargement du pipeline...",
+      "forecast": "Chargement des prévisions..."
+    },
+    "form": {
+      "name": "Nom",
+      "description": "Description",
+      "value": "Valeur",
+      "probability": "Probabilité (%)",
+      "expectedCloseDate": "Date de clôture prévue",
+      "stage": "Étape",
+      "institution": "Institution",
+      "contact": "Contact",
+      "assignedTo": "Assigné à"
+    },
+    "stages": {
+      "prospecting": "Prospection",
+      "qualification": "Qualification",
+      "proposal": "Proposition",
+      "negotiation": "Négociation",
+      "won": "Gagnée",
+      "lost": "Perdue"
+    },
+    "errors": {
+      "create": "Erreur lors de la création de l'opportunité",
+      "update": "Erreur lors de la mise à jour de l'opportunité",
+      "delete": "Erreur lors de la suppression de l'opportunité",
+      "load": "Erreur lors du chargement des opportunités"
+    },
+    "success": {
+      "created": "Opportunité créée avec succès",
+      "updated": "Opportunité mise à jour avec succès",
+      "deleted": "Opportunité supprimée avec succès"
+    },
+    "titleField": "Titre",
+    "institutionField": "Institution",
+    "contactPersonField": "Contact",
+    "valueField": "Valeur",
+    "probabilityField": "Probabilité",
+    "stageField": "Étape",
+    "expectedCloseDateField": "Date de clôture prévue",
+    "competitorsField": "Concurrents",
+    "sourceField": "Source",
+    "sourcePlaceholder": "Source de l'opportunité",
+    "cancel": "Annuler",
+    "update": "Mettre à jour",
+    "create": "Créer"
+  },
+  "webhooks": {
+    "title": "Webhooks",
+    "subtitle": "Gérez vos webhooks et intégrations",
+    "createWebhook": "Créer un webhook",
+    "newWebhook": "Nouveau webhook",
+    "editWebhook": "Modifier le webhook",
+    "deleteConfirm": "Êtes-vous sûr de vouloir supprimer ce webhook ?",
+    "unit": "webhook",
+    "empty": {
+      "title": "Aucun webhook configuré",
+      "noData": "Aucun webhook disponible",
+      "message": "Commencez par créer votre premier webhook"
+    },
+    "form": {
+      "name": "Nom",
+      "url": "URL",
+      "events": "Événements",
+      "secret": "Secret",
+      "isActive": "Actif",
+      "description": "Description"
+    },
+    "events": {
+      "institution_created": "Institution créée",
+      "institution_updated": "Institution mise à jour",
+      "institution_deleted": "Institution supprimée",
+      "task_created": "Tâche créée",
+      "task_updated": "Tâche mise à jour",
+      "task_completed": "Tâche terminée",
+      "meeting_created": "Réunion créée",
+      "meeting_updated": "Réunion mise à jour",
+      "opportunity_created": "Opportunité créée",
+      "opportunity_updated": "Opportunité mise à jour",
+      "opportunity_won": "Opportunité gagnée",
+      "opportunity_lost": "Opportunité perdue"
+    },
+    "errors": {
+      "create": "Erreur lors de la création du webhook",
+      "update": "Erreur lors de la mise à jour du webhook",
+      "delete": "Erreur lors de la suppression du webhook",
+      "load": "Erreur lors du chargement des webhooks",
+      "test": "Erreur lors du test du webhook"
+    },
+    "success": {
+      "created": "Webhook créé avec succès",
+      "updated": "Webhook mis à jour avec succès",
+      "deleted": "Webhook supprimé avec succès",
+      "tested": "Test du webhook réussi"
+    },
+    "actions": {
+      "test": "Tester",
+      "viewLogs": "Voir les logs",
+      "regenerateSecret": "Régénérer le secret"
+    }
+  },
+  "export": {
+    "title": "Export",
+    "subtitle": "Exportez vos données",
+    "exportData": "Exporter les données",
+    "selectFormat": "Sélectionner le format",
+    "selectFields": "Sélectionner les champs",
+    "format": {
+      "csv": "CSV",
+      "excel": "Excel",
+      "json": "JSON",
+      "pdf": "PDF"
+    },
+    "errors": {
+      "export": "Erreur lors de l'export",
+      "noData": "Aucune donnée à exporter"
+    },
+    "success": {
+      "exported": "Export réussi"
+    }
+  },
+  "exportCenter": {
+    "title": "Centre d'Export",
+    "subtitle": "Gérez tous vos exports de données",
+    "newExport": "Nouvel export",
+    "dataType": "Type de données",
+    "format": "Format",
+    "status": {
+      "pending": "En attente",
+      "processing": "En cours",
+      "completed": "Terminé",
+      "failed": "Échoué"
+    },
+    "createdAt": "Créé le",
+    "download": "Télécharger",
+    "empty": {
+      "title": "Aucun export",
+      "message": "Créez votre premier export pour commencer"
+    },
+    "dataTypes": {
+      "institutions": "Institutions",
+      "contacts": "Contacts",
+      "tasks": "Tâches",
+      "meetings": "Réunions",
+      "opportunities": "Opportunités",
+      "invoices": "Factures",
+      "quotes": "Devis"
+    }
+  },
+  "actions": {
+    "cancel": "Annuler",
+    "create": "Créer",
+    "edit": "Modifier",
+    "delete": "Supprimer",
+    "finish": "Terminer"
+  },
+  "labels": {
+    "date": "Date",
+    "creator": "Créateur"
+  },
+  "time": {
+    "today": "Aujourd'hui"
+  },
+  "contacts": {
+    "edit": "Modifier le contact",
+    "new": "Nouveau contact",
+    "firstName": "Prénom",
+    "lastName": "Nom",
+    "email": "Email",
+    "phone": "Téléphone",
+    "title": "Titre",
+    "institution": "Institution",
+    "isPrimary": "Contact principal",
+    "firstNameRequired": "Le prénom est requis",
+    "lastNameRequired": "Le nom est requis",
+    "emailRequired": "L'email est requis",
+    "institutionRequired": "L'institution est requise",
+    "updated": "Contact mis à jour",
+    "created": "Contact créé",
+    "saveError": "Erreur lors de l'enregistrement"
+  },
+  "collaboration": {
+    "loading": "Chargement...",
+    "retry": "Réessayer",
+    "upcomingMeetings": "Réunions à venir",
+    "add": "Ajouter",
+    "noUpcomingMeetings": "Aucune réunion à venir",
+    "recentCalls": "Appels récents",
+    "noRecentCalls": "Aucun appel récent",
+    "recentNotes": "Notes récentes",
+    "noRecentNotes": "Aucune note récente",
+    "private": "Privé",
+    "pendingReminders": "Rappels en attente",
+    "noPendingReminders": "Aucun rappel en attente",
+    "loadError": "Erreur lors du chargement",
+    "stats": {
+      "meetings": "Réunions",
+      "calls": "Appels",
+      "notes": "Notes",
+      "reminders": "Rappels",
+      "tasks": "Tâches",
+      "upcoming": "À venir"
+    },
+    "callTypes": {
+      "incoming": "Entrant",
+      "outgoing": "Sortant",
+      "missed": "Manqué"
+    }
+  },
+  "team": {
+    "title": "Équipe",
+    "subtitle": "Gérez votre équipe et les membres",
+    "members": "Membres",
+    "addMember": "Ajouter un membre",
+    "removeMember": "Retirer le membre",
+    "role": "Rôle",
+    "permissions": "Permissions"
+  },
+  "success": {
+    "saved": "Enregistré avec succès",
+    "updated": "Mis à jour avec succès",
+    "created": "Créé avec succès",
+    "deleted": "Supprimé avec succès",
+    "imported": "Importé avec succès",
+    "exported": "Exporté avec succès",
+    "sent": "Envoyé avec succès",
+    "completed": "Terminé avec succès"
+  },
+  "error": {
+    "generic": "Une erreur est survenue",
+    "network": "Erreur de connexion réseau",
+    "timeout": "Délai d'attente dépassé",
+    "unauthorized": "Non autorisé",
+    "forbidden": "Interdit",
+    "notFound": "Non trouvé",
+    "conflict": "Conflit",
+    "validation": "Erreur de validation",
+    "server": "Erreur serveur",
+    "unknown": "Erreur inconnue",
+    "loadFailed": "Échec du chargement",
+    "saveFailed": "Échec de l'enregistrement",
+    "deleteFailed": "Échec de la suppression",
+    "importFailed": "Échec de l'importation",
+    "exportFailed": "Échec de l'exportation"
   }
 }
