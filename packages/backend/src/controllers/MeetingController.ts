@@ -773,8 +773,11 @@ export class MeetingController {
         const lastName = isUser ? p.user?.lastName : p.contactPerson?.lastName
         const email = isUser ? p.user?.email : p.contactPerson?.email
 
+        // Fallback to 'Unknown' if firstName or lastName is undefined
+        const displayName = `${firstName || 'Unknown'} ${lastName || 'Unknown'}`
+
         return {
-          name: `${firstName} ${lastName}`,
+          name: displayName,
           email: email || "",
           rsvp: true,
           partstat: "NEEDS-ACTION",
@@ -782,8 +785,10 @@ export class MeetingController {
         }
       }) || []
 
+      // Add organizer with fallback for undefined values
+      const organizerName = `${meeting.organizer?.firstName || 'Unknown'} ${meeting.organizer?.lastName || 'Unknown'}`
       attendees.push({
-        name: `${meeting.organizer?.firstName} ${meeting.organizer?.lastName}`,
+        name: organizerName,
         email: meeting.organizer?.email || "",
         rsvp: true,
         partstat: "ACCEPTED",
