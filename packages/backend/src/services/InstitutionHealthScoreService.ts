@@ -52,16 +52,16 @@ export class InstitutionHealthScoreService {
       const whereClause = { institutionId }
 
       const [meetings, calls, notes, tasks, reminders, quotes, invoices] = await Promise.all([
-        Meeting.findAll({ where: whereClause, attributes: ["id", "createdAt", "startDate"] }),
-        Call.findAll({ where: whereClause, attributes: ["id", "createdAt", "callDate"] }),
-        Note.findAll({ where: whereClause, attributes: ["id", "createdAt"] }),
-        Task.findAll({ where: whereClause, attributes: ["id", "status", "dueDate", "createdAt"] }),
-        Reminder.findAll({ where: whereClause, attributes: ["id", "isCompleted", "createdAt"] }),
-        Quote.findAll({ where: whereClause, attributes: ["id", "status", "total", "createdAt"] }),
+        Meeting.findAll({ where: whereClause, attributes: ["id", "createdAt", "startDate"] }).catch(() => []),
+        Call.findAll({ where: whereClause, attributes: ["id", "createdAt", "callDate"] }).catch(() => []),
+        Note.findAll({ where: whereClause, attributes: ["id", "createdAt"] }).catch(() => []),
+        Task.findAll({ where: whereClause, attributes: ["id", "status", "dueDate", "createdAt"] }).catch(() => []),
+        Reminder.findAll({ where: whereClause, attributes: ["id", "isCompleted", "createdAt"] }).catch(() => []),
+        Quote.findAll({ where: whereClause, attributes: ["id", "status", "total", "createdAt"] }).catch(() => []),
         Invoice.findAll({
           where: whereClause,
           attributes: ["id", "status", "total", "totalPaid", "dueDate", "createdAt"],
-        }),
+        }).catch(() => []),
       ])
 
       // 1. ACTIVITY SCORE (30 points)

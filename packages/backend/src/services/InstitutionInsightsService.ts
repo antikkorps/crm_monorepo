@@ -74,12 +74,12 @@ export class InstitutionInsightsService {
 
       // Fetch data in parallel
       const [quotes, invoices, meetings, calls, notes, opportunities] = await Promise.all([
-        Quote.findAll({ where: { institutionId }, attributes: ["id", "status", "total", "createdAt", "updatedAt"] }),
-        Invoice.findAll({ where: { institutionId }, attributes: ["id", "status", "total", "totalPaid", "createdAt"] }),
-        Meeting.findAll({ where: { institutionId, createdAt: { [Op.gte]: threeMonthsAgo } }, attributes: ["id", "createdAt"] }),
-        Call.findAll({ where: { institutionId, createdAt: { [Op.gte]: threeMonthsAgo } }, attributes: ["id", "createdAt"] }),
-        Note.findAll({ where: { institutionId, createdAt: { [Op.gte]: threeMonthsAgo } }, attributes: ["id", "createdAt"] }),
-        Opportunity.findAll({ where: { institutionId }, attributes: ["id", "stage", "value", "createdAt"] }),
+        Quote.findAll({ where: { institutionId }, attributes: ["id", "status", "total", "createdAt", "updatedAt"] }).catch(() => []),
+        Invoice.findAll({ where: { institutionId }, attributes: ["id", "status", "total", "totalPaid", "createdAt"] }).catch(() => []),
+        Meeting.findAll({ where: { institutionId, createdAt: { [Op.gte]: threeMonthsAgo } }, attributes: ["id", "createdAt"] }).catch(() => []),
+        Call.findAll({ where: { institutionId, createdAt: { [Op.gte]: threeMonthsAgo } }, attributes: ["id", "createdAt"] }).catch(() => []),
+        Note.findAll({ where: { institutionId, createdAt: { [Op.gte]: threeMonthsAgo } }, attributes: ["id", "createdAt"] }).catch(() => []),
+        Opportunity.findAll({ where: { institutionId }, attributes: ["id", "stage", "value", "createdAt"] }).catch(() => []),
       ])
 
       const signals: Array<{ type: "positive" | "negative" | "neutral"; signal: string; impact: number }> = []
@@ -288,26 +288,26 @@ export class InstitutionInsightsService {
           where: { institutionId },
           order: [["createdAt", "DESC"]],
           limit: 10,
-        }),
+        }).catch(() => []),
         Invoice.findAll({
           where: { institutionId },
           order: [["createdAt", "DESC"]],
           limit: 10,
-        }),
+        }).catch(() => []),
         Opportunity.findAll({
           where: { institutionId },
           order: [["createdAt", "DESC"]],
-        }),
+        }).catch(() => []),
         Meeting.findAll({
           where: { institutionId },
           order: [["startDate", "DESC"]],
           limit: 5,
-        }),
+        }).catch(() => []),
         Call.findAll({
           where: { institutionId },
           order: [["callDate", "DESC"]],
           limit: 5,
-        }),
+        }).catch(() => []),
       ])
 
       // 1. OVERDUE INVOICES - Highest priority
