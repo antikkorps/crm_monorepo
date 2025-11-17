@@ -2093,16 +2093,16 @@
     "institutionField": "Institution",
     "institutionPlaceholder": "Sélectionnez une institution",
     "recurring": {
-      "title": "",
+      "title": "Récurrent",
       "frequencies": {
-        "daily": "",
-        "weekly": "",
-        "monthly": ""
+        "daily": "Quotidien",
+        "weekly": "Hebdomadaire",
+        "monthly": "Mensuel"
       },
-      "label": "",
-      "frequency": "",
-      "endDate": "",
-      "endDateHint": ""
+      "label": "Rappel récurrent",
+      "frequency": "Fréquence",
+      "endDate": "Date de fin",
+      "endDateHint": "Sélectionnez la date de fin du rappel récurrent"
     },
     "priority": {
       "low": "",
