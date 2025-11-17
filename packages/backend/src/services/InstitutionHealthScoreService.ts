@@ -51,18 +51,107 @@ export class InstitutionHealthScoreService {
       const threeMonthsAgo = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000)
       const whereClause = { institutionId }
 
-      const [meetings, calls, notes, tasks, reminders, quotes, invoices] = await Promise.all([
-        Meeting.findAll({ where: whereClause, attributes: ["id", "createdAt", "startDate"] }).catch(() => []),
-        Call.findAll({ where: whereClause, attributes: ["id", "createdAt", "callDate"] }).catch(() => []),
-        Note.findAll({ where: whereClause, attributes: ["id", "createdAt"] }).catch(() => []),
-        Task.findAll({ where: whereClause, attributes: ["id", "status", "dueDate", "createdAt"] }).catch(() => []),
-        Reminder.findAll({ where: whereClause, attributes: ["id", "isCompleted", "createdAt"] }).catch(() => []),
-        Quote.findAll({ where: whereClause, attributes: ["id", "status", "total", "createdAt"] }).catch(() => []),
+      // Use Promise.allSettled to handle individual failures gracefully
+      const results = await Promise.allSettled([
+        Meeting.findAll({ where: whereClause, attributes: ["id", "createdAt", "startDate"] }),
+        Call.findAll({ where: whereClause, attributes: ["id", "createdAt", "callDate"] }),
+        Note.findAll({ where: whereClause, attributes: ["id", "createdAt"] }),
+        Task.findAll({ where: whereClause, attributes: ["id", "status", "dueDate", "createdAt"] }),
+        Reminder.findAll({ where: whereClause, attributes: ["id", "isCompleted", "createdAt"] }),
+        Quote.findAll({ where: whereClause, attributes: ["id", "status", "total", "createdAt"] }),
         Invoice.findAll({
           where: whereClause,
           attributes: ["id", "status", "total", "totalPaid", "dueDate", "createdAt"],
-        }).catch(() => []),
+        }),
       ])
+
+      // Extract successful results or provide default values
+      const queryNames = [
+        'Meeting.findAll',
+        'Call.findAll',
+        'Note.findAll',
+        'Task.findAll',
+        'Reminder.findAll',
+        'Quote.findAll',
+        'Invoice.findAll',
+      ]
+
+      // Extract meetings
+      const meetings: Meeting[] = results[0].status === 'fulfilled' 
+        ? results[0].value 
+        : (() => {
+            logger.warn(`Failed to fetch ${queryNames[0]} for institution ${institutionId}`, {
+              error: (results[0] as PromiseRejectedResult).reason?.message || String((results[0] as PromiseRejectedResult).reason),
+              institutionId,
+            })
+            return []
+          })()
+
+      // Extract calls
+      const calls: Call[] = results[1].status === 'fulfilled' 
+        ? results[1].value 
+        : (() => {
+            logger.warn(`Failed to fetch ${queryNames[1]} for institution ${institutionId}`, {
+              error: (results[1] as PromiseRejectedResult).reason?.message || String((results[1] as PromiseRejectedResult).reason),
+              institutionId,
+            })
+            return []
+          })()
+
+      // Extract notes
+      const notes: Note[] = results[2].status === 'fulfilled' 
+        ? results[2].value 
+        : (() => {
+            logger.warn(`Failed to fetch ${queryNames[2]} for institution ${institutionId}`, {
+              error: (results[2] as PromiseRejectedResult).reason?.message || String((results[2] as PromiseRejectedResult).reason),
+              institutionId,
+            })
+            return []
+          })()
+
+      // Extract tasks
+      const tasks: Task[] = results[3].status === 'fulfilled' 
+        ? results[3].value 
+        : (() => {
+            logger.warn(`Failed to fetch ${queryNames[3]} for institution ${institutionId}`, {
+              error: (results[3] as PromiseRejectedResult).reason?.message || String((results[3] as PromiseRejectedResult).reason),
+              institutionId,
+            })
+            return []
+          })()
+
+      // Extract reminders
+      const reminders: Reminder[] = results[4].status === 'fulfilled' 
+        ? results[4].value 
+        : (() => {
+            logger.warn(`Failed to fetch ${queryNames[4]} for institution ${institutionId}`, {
+              error: (results[4] as PromiseRejectedResult).reason?.message || String((results[4] as PromiseRejectedResult).reason),
+              institutionId,
+            })
+            return []
+          })()
+
+      // Extract quotes
+      const quotes: Quote[] = results[5].status === 'fulfilled' 
+        ? results[5].value 
+        : (() => {
+            logger.warn(`Failed to fetch ${queryNames[5]} for institution ${institutionId}`, {
+              error: (results[5] as PromiseRejectedResult).reason?.message || String((results[5] as PromiseRejectedResult).reason),
+              institutionId,
+            })
+            return []
+          })()
+
+      // Extract invoices
+      const invoices: Invoice[] = results[6].status === 'fulfilled' 
+        ? results[6].value 
+        : (() => {
+            logger.warn(`Failed to fetch ${queryNames[6]} for institution ${institutionId}`, {
+              error: (results[6] as PromiseRejectedResult).reason?.message || String((results[6] as PromiseRejectedResult).reason),
+              institutionId,
+            })
+            return []
+          })()
 
       // 1. ACTIVITY SCORE (30 points)
       // Based on frequency of interactions in the last 3 months
