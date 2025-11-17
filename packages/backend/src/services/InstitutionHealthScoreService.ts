@@ -51,18 +51,48 @@ export class InstitutionHealthScoreService {
       const threeMonthsAgo = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000)
       const whereClause = { institutionId }
 
-      const [meetings, calls, notes, tasks, reminders, quotes, invoices] = await Promise.all([
-        Meeting.findAll({ where: whereClause, attributes: ["id", "createdAt", "startDate"] }).catch(() => []),
-        Call.findAll({ where: whereClause, attributes: ["id", "createdAt", "callDate"] }).catch(() => []),
-        Note.findAll({ where: whereClause, attributes: ["id", "createdAt"] }).catch(() => []),
-        Task.findAll({ where: whereClause, attributes: ["id", "status", "dueDate", "createdAt"] }).catch(() => []),
-        Reminder.findAll({ where: whereClause, attributes: ["id", "isCompleted", "createdAt"] }).catch(() => []),
-        Quote.findAll({ where: whereClause, attributes: ["id", "status", "total", "createdAt"] }).catch(() => []),
+      // Use Promise.allSettled to handle individual failures gracefully
+      const results = await Promise.allSettled([
+        Meeting.findAll({ where: whereClause, attributes: ["id", "createdAt", "startDate"] }),
+        Call.findAll({ where: whereClause, attributes: ["id", "createdAt", "callDate"] }),
+        Note.findAll({ where: whereClause, attributes: ["id", "createdAt"] }),
+        Task.findAll({ where: whereClause, attributes: ["id", "status", "dueDate", "createdAt"] }),
+        Reminder.findAll({ where: whereClause, attributes: ["id", "isCompleted", "createdAt"] }),
+        Quote.findAll({ where: whereClause, attributes: ["id", "status", "total", "createdAt"] }),
         Invoice.findAll({
           where: whereClause,
           attributes: ["id", "status", "total", "totalPaid", "dueDate", "createdAt"],
-        }).catch(() => []),
+        }),
       ])
+
+      // Extract successful results or provide default values
+      const modelNames = [
+        'Meeting',
+        'Call',
+        'Note',
+        'Task',
+        'Reminder',
+        'Quote',
+        'Invoice'
+      ]
+
+      const meetings = results[0].status === 'fulfilled' ? results[0].value : []
+      const calls = results[1].status === 'fulfilled' ? results[1].value : []
+      const notes = results[2].status === 'fulfilled' ? results[2].value : []
+      const tasks = results[3].status === 'fulfilled' ? results[3].value : []
+      const reminders = results[4].status === 'fulfilled' ? results[4].value : []
+      const quotes = results[5].status === 'fulfilled' ? results[5].value : []
+      const invoices = results[6].status === 'fulfilled' ? results[6].value : []
+
+      // Log any failures
+      results.forEach((result, index) => {
+        if (result.status === 'rejected') {
+          logger.error(`Error fetching ${modelNames[index]} for health score calculation`, {
+            institutionId,
+            error: result.reason
+          })
+        }
+      })
 
       // 1. ACTIVITY SCORE (30 points)
       // Based on frequency of interactions in the last 3 months
