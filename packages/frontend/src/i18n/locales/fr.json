@@ -790,19 +790,19 @@
       "exportComplete": "Exportation terminée avec succès",
       "exportError": "Erreur lors de l'exportation",
       "options": {
-        "title": "",
-        "includeHeaders": "",
-        "includeFilters": "",
-        "dateFormat": "",
-        "delimiter": ""
+        "title": "Options d'exportation",
+        "includeHeaders": "Inclure les en-têtes",
+        "includeFilters": "Inclure les filtres appliqués",
+        "dateFormat": "Format de date",
+        "delimiter": "Délimiteur"
       },
       "summary": {
-        "title": "",
-        "fieldsSelected": "",
-        "recordsToExport": "",
-        "estimatedSize": ""
+        "title": "Résumé de l'exportation",
+        "fieldsSelected": "Champs sélectionnés",
+        "recordsToExport": "Enregistrements à exporter",
+        "estimatedSize": "Taille estimée"
       },
-      "startExport": ""
+      "startExport": "Démarrer l'exportation"
     },
     "sharing": {
       "title": "Partager le Segment",
