@@ -164,7 +164,7 @@ const searchSchema = Joi.object({
     .optional(),
   isActive: Joi.boolean().optional(),
   page: Joi.number().integer().min(1).default(1),
-  limit: Joi.number().integer().min(-1).max(10000).default(20),
+  limit: Joi.number().integer().min(-1).max(100).default(20),
   sortBy: Joi.string().valid("name", "type", "createdAt", "updatedAt").default("name"),
   sortOrder: Joi.string().uppercase().valid("ASC", "DESC").default("ASC"),
 })
