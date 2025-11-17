@@ -174,8 +174,14 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, watch } from "vue"
-import type { Opportunity, OpportunityStage } from "@medical-crm/shared"
+import { ref, computed, onMounted, onUnmounted } from "vue"
+import type {
+  Opportunity,
+  OpportunityStage,
+  MedicalInstitution,
+  ContactPerson,
+  ApiResponse
+} from "@medical-crm/shared"
 import { useOpportunitiesStore } from "@/stores/opportunities"
 import { institutionsApi } from "@/services/api"
 import { useAuthStore } from "@/stores/auth"
@@ -220,10 +226,10 @@ const form = ref({
 })
 
 const stageOptions = computed(() => [
-  { title: t('opportunities.stage.prospecting'), value: "prospecting" },
-  { title: t('opportunities.stage.qualification'), value: "qualification" },
-  { title: t('opportunities.stage.proposal'), value: "proposal" },
-  { title: t('opportunities.stage.negotiation'), value: "negotiation" },
+  { title: t('opportunities.stages.prospecting'), value: "prospecting" },
+  { title: t('opportunities.stages.qualification'), value: "qualification" },
+  { title: t('opportunities.stages.proposal'), value: "proposal" },
+  { title: t('opportunities.stages.negotiation'), value: "negotiation" },
 ])
 
 const rules = computed(() => ({
@@ -239,9 +245,8 @@ const searchInstitutions = async (query: string) => {
 
   loadingInstitutions.value = true
   try {
-    const response = await institutionsApi.search(query, { limit: 50 })
-    const data = response.data?.data || response.data || response
-    institutions.value = data.institutions || data || []
+    const response = await institutionsApi.search(query, { limit: 50 }) as ApiResponse<{ institutions: MedicalInstitution[] }>
+    institutions.value = response.data?.institutions || []
   } catch (err) {
     console.error("Failed to search institutions:", err)
     institutions.value = []
@@ -272,11 +277,11 @@ const loadContacts = async () => {
 
   loadingContacts.value = true
   try {
-    const response = await institutionsApi.getById(form.value.institutionId)
-    const data = response.data?.data?.institution || response.data?.institution || response.data
-    const contactPersons = data.contactPersons || []
+    const response = await institutionsApi.getById(form.value.institutionId) as ApiResponse<{ institution: MedicalInstitution }>
+    const institution = response.data?.institution
+    const contactPersons = institution?.contactPersons || []
 
-    contacts.value = contactPersons.map((contact: any) => ({
+    contacts.value = contactPersons.map((contact: ContactPerson) => ({
       ...contact,
       fullName: `${contact.firstName} ${contact.lastName}`,
     }))

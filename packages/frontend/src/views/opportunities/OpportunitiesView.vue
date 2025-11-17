@@ -15,7 +15,7 @@
               class="mr-2"
               @click="showForecast = !showForecast"
             >
-              {{ $t('opportunities.forecast') }}
+              {{ $t('opportunities.forecast.title') }}
             </v-btn>
             <v-btn prepend-icon="mdi-plus" color="primary" @click="openCreateDialog">
               {{ $t('opportunities.newOpportunity') }}
