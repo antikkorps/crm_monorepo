@@ -145,6 +145,12 @@ module.exports = {
       }
     }
 
+    // Remove index on contact_person_id before dropping the column
+    try {
+      await queryInterface.removeIndex("meeting_participants", ["contact_person_id"])
+    } catch (error) {
+      console.log("Index on contact_person_id does not exist, skipping...")
+    }
     if (await columnExists("meeting_participants", "contact_person_id")) {
       await queryInterface.removeColumn("meeting_participants", "contact_person_id")
     }
