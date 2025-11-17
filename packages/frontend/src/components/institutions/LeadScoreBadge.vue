@@ -200,6 +200,7 @@ const loadLeadScore = async () => {
     if (!data) {
       console.warn("No lead score data returned from API")
       leadScore.value = null
+      loading.value = false
       return
     }
 
