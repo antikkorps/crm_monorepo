@@ -492,10 +492,6 @@ export class MedicalInstitutionController {
    * POST /api/institutions
    * Create a new medical institution
    */
-  /**
-   * POST /api/institutions
-   * Create a new medical institution
-   */
   static async createInstitution(ctx: Context) {
     const { error, value } = createInstitutionSchema.validate(ctx.request.body)
     if (error) {
