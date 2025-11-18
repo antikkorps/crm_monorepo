@@ -1520,6 +1520,7 @@ export class MedicalInstitutionController {
 
       const analytics = await InstitutionRevenueService.getRevenueAnalytics(id, {
         months: months ? parseInt(months as string, 10) : 12,
+        includePaymentHistory: includePaymentHistory === "true",
       })
 
       ctx.body = {

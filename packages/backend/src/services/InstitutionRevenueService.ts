@@ -53,6 +53,7 @@ export class InstitutionRevenueService {
     institutionId: string,
     options: {
       months?: number // For future use
+      includePaymentHistory?: boolean
     } = {}
   ): Promise<InstitutionRevenueAnalytics> {
     // Fetch institution
