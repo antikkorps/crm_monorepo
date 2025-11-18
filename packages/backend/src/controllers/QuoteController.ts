@@ -73,7 +73,7 @@ export class QuoteController {
     const quote = await QuoteService.getQuoteById(id)
 
     if (!quote) {
-      throw new NotFoundError("Quote not found", "QUOTE_NOT_FOUND")
+      throw new NotFoundError("Quote not found")
     }
 
     ctx.body = {
