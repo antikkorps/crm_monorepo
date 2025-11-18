@@ -1,13 +1,13 @@
-import { Context } from "../types/koa";
-import { User, UserRole } from "../models/User";
-import { MedicalInstitution } from "../models/MedicalInstitution";
-import { Task } from "../models/Task";
-import { Quote } from "../models/Quote";
-import { Invoice } from "../models/Invoice";
-import { Team } from "../models/Team";
+import { formatCurrency } from "@medical-crm/shared";
 import { Op } from "sequelize";
 import { sequelize } from "../config/database";
-import { formatCurrency } from "@medical-crm/shared";
+import { Invoice } from "../models/Invoice";
+import { MedicalInstitution } from "../models/MedicalInstitution";
+import { Quote } from "../models/Quote";
+import { Task } from "../models/Task";
+import { Team } from "../models/Team";
+import { User, UserRole } from "../models/User";
+import { Context } from "../types/koa";
 
 /**
  * DashboardController
@@ -22,29 +22,19 @@ export class DashboardController {
   static async getActivities(ctx: Context): Promise<void> {
     const user = ctx.state.user as User;
 
-    try {
-      const { limit = 20, offset = 0, type } = ctx.query;
+    const { limit = 20, offset = 0, type } = ctx.query;
 
-      const activities = await DashboardController.getRecentActivities(
-        user,
-        Number.parseInt(limit as string),
-        Number.parseInt(offset as string),
-        type as string | undefined
-      );
+    const activities = await DashboardController.getRecentActivities(
+      user,
+      Number.parseInt(limit as string),
+      Number.parseInt(offset as string),
+      type as string | undefined
+    );
 
-      ctx.body = {
-        success: true,
-        data: activities,
-      };
-    } catch (error) {
-      console.error("Error fetching dashboard activities:", error);
-      ctx.status = 500;
-      ctx.body = {
-        success: false,
-        message: "Failed to fetch dashboard activities",
-        error: error instanceof Error ? error.message : "Unknown error",
-      };
-    }
+    ctx.body = {
+      success: true,
+      data: activities,
+    };
   }
 
   /**
@@ -54,22 +44,12 @@ export class DashboardController {
   static async getAlerts(ctx: Context): Promise<void> {
     const user = ctx.state.user as User;
 
-    try {
-      const alerts = await DashboardController.getSmartAlerts(user);
+    const alerts = await DashboardController.getSmartAlerts(user);
 
-      ctx.body = {
-        success: true,
-        data: alerts,
-      };
-    } catch (error) {
-      console.error("Error fetching dashboard alerts:", error);
-      ctx.status = 500;
-      ctx.body = {
-        success: false,
-        message: "Failed to fetch dashboard alerts",
-        error: error instanceof Error ? error.message : "Unknown error",
-      };
-    }
+    ctx.body = {
+      success: true,
+      data: alerts,
+    };
   }
 
   /**
@@ -79,24 +59,14 @@ export class DashboardController {
   static async getQuickActions(ctx: Context): Promise<void> {
     const user = ctx.state.user as User;
 
-    try {
-      const actions = await DashboardController.getPersonalizedQuickActions(
-        user
-      );
+    const actions = await DashboardController.getPersonalizedQuickActions(
+      user
+    );
 
-      ctx.body = {
-        success: true,
-        data: actions,
-      };
-    } catch (error) {
-      console.error("Error fetching quick actions:", error);
-      ctx.status = 500;
-      ctx.body = {
-        success: false,
-        message: "Failed to fetch quick actions",
-        error: error instanceof Error ? error.message : "Unknown error",
-      };
-    }
+    ctx.body = {
+      success: true,
+      data: actions,
+    };
   }
 
   /**
@@ -106,15 +76,34 @@ export class DashboardController {
   static async getMetrics(ctx: Context): Promise<void> {
     const user = ctx.state.user as User;
 
-    try {
-      // Get period dates (default: current month)
-      const { period = "month" } = ctx.query;
-      const { startDate, endDate } = DashboardController.getPeriodDates(
-        period as string
-      );
+    // Get period dates (default: current month)
+    const { period = "month" } = ctx.query;
+    const { startDate, endDate } = DashboardController.getPeriodDates(
+      period as string
+    );
 
-      // Execute all metric queries in parallel for performance
-      const [
+    // Execute all metric queries in parallel for performance
+    const [
+      institutions,
+      tasks,
+      team,
+      billing,
+      newClients,
+      conversionRate,
+      growth,
+    ] = await Promise.all([
+      DashboardController.getInstitutionsMetrics(user),
+      DashboardController.getTasksMetrics(user),
+      DashboardController.getTeamMetrics(user),
+      DashboardController.getBillingMetrics(user, startDate, endDate),
+      DashboardController.getNewClientsMetrics(user, startDate, endDate),
+      DashboardController.getConversionRate(user, startDate, endDate),
+      DashboardController.getGrowthMetrics(user, startDate, endDate),
+    ]);
+
+    ctx.body = {
+      success: true,
+      data: {
         institutions,
         tasks,
         team,
@@ -122,42 +111,13 @@ export class DashboardController {
         newClients,
         conversionRate,
         growth,
-      ] = await Promise.all([
-        DashboardController.getInstitutionsMetrics(user),
-        DashboardController.getTasksMetrics(user),
-        DashboardController.getTeamMetrics(user),
-        DashboardController.getBillingMetrics(user, startDate, endDate),
-        DashboardController.getNewClientsMetrics(user, startDate, endDate),
-        DashboardController.getConversionRate(user, startDate, endDate),
-        DashboardController.getGrowthMetrics(user, startDate, endDate),
-      ]);
-
-      ctx.body = {
-        success: true,
-        data: {
-          institutions,
-          tasks,
-          team,
-          billing,
-          newClients,
-          conversionRate,
-          growth,
-          period: {
-            type: period,
-            startDate,
-            endDate,
-          },
+        period: {
+          type: period,
+          startDate,
+          endDate,
         },
-      };
-    } catch (error) {
-      console.error("Error fetching dashboard metrics:", error);
-      ctx.status = 500;
-      ctx.body = {
-        success: false,
-        message: "Failed to fetch dashboard metrics",
-        error: error instanceof Error ? error.message : "Unknown error",
-      };
-    }
+      },
+    };
   }
 
   /**

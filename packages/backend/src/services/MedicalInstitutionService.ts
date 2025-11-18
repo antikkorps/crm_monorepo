@@ -1,8 +1,8 @@
-import { MedicalInstitution, MedicalProfile, ContactPerson, User } from "../models"
-import { createError } from "../middleware/errorHandler"
-import { NotificationService } from "./NotificationService"
 import { ComplianceStatus, InstitutionType } from "@medical-crm/shared"
+import { createError } from "../middleware/errorHandler"
+import { ContactPerson, MedicalInstitution, MedicalProfile, Note, Task, User } from "../models"
 import { logger } from "../utils/logger"
+import { NotificationService } from "./NotificationService"
 
 /**
  * Medical Institution Service
@@ -318,6 +318,74 @@ export class MedicalInstitutionService {
         error: (error as Error).message,
       })
       throw error
+    }
+  }
+
+  /**
+   * Get all contact persons for an institution
+   */
+  static async getInstitutionContacts(institutionId: string): Promise<ContactPerson[]> {
+    return ContactPerson.findAll({
+      where: { institutionId, isActive: true },
+    })
+  }
+
+  /**
+   * Get all tasks for an institution
+   */
+  static async getInstitutionTasks(institutionId: string, status?: string): Promise<Task[]> {
+    const where: any = { institutionId }
+    if (status) {
+      where.status = status
+    }
+    return Task.findAll({
+      where,
+      include: [
+        {
+          model: User,
+          as: "assignee",
+          attributes: ["id", "firstName", "lastName", "email"],
+        },
+      ],
+      order: [["dueDate", "ASC"]],
+    })
+  }
+
+  /**
+   * Get all notes for an institution
+   */
+  static async getInstitutionNotes(institutionId: string): Promise<Note[]> {
+    return Note.findAll({
+      where: { institutionId },
+      include: [
+        {
+          model: User,
+          as: "creator",
+          attributes: ["id", "firstName", "lastName", "email"],
+        },
+      ],
+      order: [["createdAt", "DESC"]],
+    })
+  }
+
+  /**
+   * Get all documents for an institution
+   * TODO: Implement Document model
+   */
+  static async getInstitutionDocuments(institutionId: string): Promise<any[]> {
+    // Placeholder until Document model is implemented
+    return []
+  }
+
+  /**
+   * Get audit log for an institution
+   * TODO: Implement AuditLog model
+   */
+  static async getInstitutionAuditLog(institutionId: string, options: { page: number; limit: number }): Promise<any> {
+    // Placeholder until AuditLog model is implemented
+    return {
+      rows: [],
+      count: 0,
     }
   }
 }

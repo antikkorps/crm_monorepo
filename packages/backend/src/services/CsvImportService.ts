@@ -1,9 +1,8 @@
 import { ComplianceStatus, InstitutionType } from "@medical-crm/shared"
-import { Op, Sequelize } from "sequelize"
-import { ContactPerson, MedicalInstitution, MedicalProfile, User } from "../models"
+import { ContactPerson, MedicalInstitution, MedicalProfile } from "../models"
 import { logger } from "../utils/logger"
-import { DigiformaService } from "./DigiformaService"
 import { CsvMatchingService, type MatchInput } from "./CsvMatchingService"
+import { DigiformaService } from "./DigiformaService"
 
 export interface CsvImportResult {
   success: boolean
@@ -91,6 +90,14 @@ export class CsvImportService {
     contactTitle: ["contactTitle", "contact_title", "title", "fonction_contact", "titre_contact"],
     contactDepartment: ["contactDepartment", "contact_department", "departement_contact", "département_contact", "service_contact"],
     contactIsPrimary: ["contactIsPrimary", "contact_is_primary", "is_primary", "contact_principal", "est_principal", "principal"]
+  }
+
+  static getMedicalInstitutionTemplate(): string {
+    return [
+      "name,type,street,city,state,zipCode,country,accountingNumber,bedCapacity,surgicalRooms,specialties,contactFirstName,contactLastName,contactEmail,contactPhone,contactTitle,contactIsPrimary",
+      "Hôpital Saint-Louis,PUBLIC_HOSPITAL,1 Avenue Claude Vellefaux,Paris,Île-de-France,75010,France,CLI001,650,25,Dermatologie;Hématologie,Jean,Dupont,jean.dupont@aphp.fr,0142494949,Directeur,true",
+      "Clinique des Lilas,PRIVATE_CLINIC,41 Avenue du Maréchal Juin,Les Lilas,Île-de-France,93260,France,CLI002,120,8,Orthopédie,Marie,Martin,marie.martin@cliniquelilas.fr,0143622222,Cadre de santé,true"
+    ].join("\n")
   }
 
   static async importMedicalInstitutions(

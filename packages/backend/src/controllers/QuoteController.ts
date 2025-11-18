@@ -1,702 +1,326 @@
 import {
-  BillingSearchFilters,
-  QuoteCreateRequest,
-  QuoteLineCreateRequest,
-  QuoteLineUpdateRequest,
-  QuoteStatus,
-  QuoteUpdateRequest,
+    BillingSearchFilters,
+    QuoteCreateRequest,
+    QuoteLineCreateRequest,
+    QuoteLineUpdateRequest,
+    QuoteStatus,
+    QuoteUpdateRequest,
 } from "@medical-crm/shared"
-import { Context } from "../types/koa"
 import { QuoteLine } from "../models/QuoteLine"
 import { User, UserRole } from "../models/User"
 import { NotificationService } from "../services/NotificationService"
 import { QuoteService } from "../services/QuoteService"
 import { EmailOptionsBody } from "../types"
+import { Context } from "../types/koa"
+import { BadRequestError, NotFoundError } from "../utils/AppError"
+import { logger } from "../utils/logger"
 
 export class QuoteController {
   // GET /api/quotes - Get all quotes with optional filtering
   static async getQuotes(ctx: Context) {
-    try {
-      const user = ctx.state.user as User
-      const {
-        institutionId,
-        assignedUserId,
-        status,
-        dateFrom,
-        dateTo,
-        amountMin,
-        amountMax,
-        search,
-        page = 1,
-        limit = 20,
-      } = ctx.query
+    const user = ctx.state.user as User
+    const {
+      institutionId,
+      assignedUserId,
+      status,
+      dateFrom,
+      dateTo,
+      amountMin,
+      amountMax,
+      search,
+      page = 1,
+      limit = 20,
+    } = ctx.query
 
-      // Build filters
-      const filters: BillingSearchFilters = {}
+    // Build filters
+    const filters: BillingSearchFilters = {}
 
-      if (institutionId) filters.institutionId = institutionId as string
-      if (assignedUserId) filters.assignedUserId = assignedUserId as string
-      if (status) filters.status = status as QuoteStatus
-      if (dateFrom) filters.dateFrom = new Date(dateFrom as string)
-      if (dateTo) filters.dateTo = new Date(dateTo as string)
-      if (amountMin) filters.amountMin = parseFloat(amountMin as string)
-      if (amountMax) filters.amountMax = parseFloat(amountMax as string)
-      if (search) filters.search = search as string
+    if (institutionId) filters.institutionId = institutionId as string
+    if (assignedUserId) filters.assignedUserId = assignedUserId as string
+    if (status) filters.status = status as QuoteStatus
+    if (dateFrom) filters.dateFrom = new Date(dateFrom as string)
+    if (dateTo) filters.dateTo = new Date(dateTo as string)
+    if (amountMin) filters.amountMin = parseFloat(amountMin as string)
+    if (amountMax) filters.amountMax = parseFloat(amountMax as string)
+    if (search) filters.search = search as string
 
-      // Determine user filter based on role
-      const userId = user.role === UserRole.SUPER_ADMIN ? undefined : user.id
+    // Determine user filter based on role
+    const userId = user.role === UserRole.SUPER_ADMIN ? undefined : user.id
 
-      const result = await QuoteService.getQuotes(
-        filters,
-        userId,
-        Number(page),
-        Number(limit)
-      )
+    const result = await QuoteService.getQuotes(
+      filters,
+      userId,
+      Number(page),
+      Number(limit)
+    )
 
-      ctx.body = {
-        success: true,
-        data: result.quotes,
-        meta: {
-          total: result.pagination.total,
-          page: result.pagination.page,
-          limit: result.pagination.limit,
-          totalPages: result.pagination.totalPages,
-        },
-      }
-    } catch (error) {
-      console.error('GET /api/quotes failed:', error)
-      ctx.status = 500
-      ctx.body = {
-        success: false,
-        error: {
-          code: "QUOTE_FETCH_ERROR",
-          message: "Failed to fetch quotes",
-          details: error instanceof Error ? error.message : "Unknown error",
-        },
-      }
+    ctx.body = {
+      success: true,
+      data: result.quotes,
+      meta: {
+        total: result.pagination.total,
+        page: result.pagination.page,
+        limit: result.pagination.limit,
+        totalPages: result.pagination.totalPages,
+      },
     }
   }
 
   // GET /api/quotes/:id - Get a specific quote
   static async getQuote(ctx: Context) {
-    try {
-      const { id } = ctx.params
+    const { id } = ctx.params
 
-      const quote = await QuoteService.getQuoteById(id)
+    const quote = await QuoteService.getQuoteById(id)
 
-      ctx.body = {
-        success: true,
-        data: quote,
-      }
-    } catch (error) {
-      if (error && typeof error === "object" && "code" in error) {
-        ctx.status = (error as any).status || 500
-        ctx.body = {
-          success: false,
-          error: {
-            code: (error as any).code,
-            message: (error as any).message,
-          },
-        }
-      } else {
-        ctx.status = 500
-        ctx.body = {
-          success: false,
-          error: {
-            code: "QUOTE_FETCH_ERROR",
-            message: "Failed to fetch quote",
-            details: error instanceof Error ? error.message : "Unknown error",
-          },
-        }
-      }
+    if (!quote) {
+      throw new NotFoundError("Quote not found")
+    }
+
+    ctx.body = {
+      success: true,
+      data: quote,
     }
   }
 
   // POST /api/quotes - Create a new quote
   static async createQuote(ctx: Context) {
-    try {
-      console.log("=== DEBUG: Creating quote ===")
-      const user = ctx.state.user as User
-      console.log("User:", user?.id)
-      const quoteData = ctx.request.body as QuoteCreateRequest
-      console.log("Quote data:", JSON.stringify(quoteData, null, 2))
+    const user = ctx.state.user as User
+    const quoteData = ctx.request.body as QuoteCreateRequest
 
-      // Validate required fields
-      if (!quoteData.institutionId || !quoteData.title || !quoteData.validUntil) {
-        console.log("=== DEBUG: Validation failed ===")
-        ctx.status = 400
-        ctx.body = {
-          success: false,
-          error: {
-            code: "VALIDATION_ERROR",
-            message: "Institution ID, title, and valid until date are required",
-          },
-        }
-        return
-      }
+    // Validate required fields
+    if (!quoteData.institutionId || !quoteData.title || !quoteData.validUntil) {
+      throw new BadRequestError("Institution ID, title, and valid until date are required", "VALIDATION_ERROR")
+    }
 
-      console.log("=== DEBUG: Basic validation passed ===")
+    // Validate quote data
+    QuoteService.validateQuoteData(quoteData)
 
-      // Validate quote data
-      console.log("=== DEBUG: About to validate quote data ===")
-      QuoteService.validateQuoteData(quoteData)
-      console.log("=== DEBUG: Quote validation passed ===")
+    const quote = await QuoteService.createQuote(quoteData, user.id)
 
-      console.log("=== DEBUG: About to create quote ===")
-      const quote = await QuoteService.createQuote(quoteData, user.id)
-      console.log("=== DEBUG: Quote created successfully ===", quote.id)
-
-      ctx.status = 201
-      ctx.body = {
-        success: true,
-        data: quote,
-      }
-    } catch (error) {
-      console.log("=== DEBUG: Error creating quote ===", error)
-      if (error && typeof error === "object" && "code" in error) {
-        ctx.status = (error as any).status || 500
-        ctx.body = {
-          success: false,
-          error: {
-            code: (error as any).code,
-            message: (error as any).message,
-          },
-        }
-      } else {
-        ctx.status = 500
-        ctx.body = {
-          success: false,
-          error: {
-            code: "QUOTE_CREATE_ERROR",
-            message: "Failed to create quote",
-            details: error instanceof Error ? error.message : "Unknown error",
-          },
-        }
-      }
+    ctx.status = 201
+    ctx.body = {
+      success: true,
+      data: quote,
     }
   }
 
   // PUT /api/quotes/:id - Update a quote
   static async updateQuote(ctx: Context) {
-    try {
-      const user = ctx.state.user as User
-      const { id } = ctx.params
-      const updateData = ctx.request.body as QuoteUpdateRequest
+    const user = ctx.state.user as User
+    const { id } = ctx.params
+    const updateData = ctx.request.body as QuoteUpdateRequest
 
-      // Validate update data
-      QuoteService.validateQuoteData(updateData)
+    // Validate update data
+    QuoteService.validateQuoteData(updateData)
 
-      const quote = await QuoteService.updateQuote(id, updateData, user.id)
+    const quote = await QuoteService.updateQuote(id, updateData, user.id)
 
-      ctx.body = {
-        success: true,
-        data: quote,
-      }
-    } catch (error) {
-      if (error && typeof error === "object" && "code" in error) {
-        ctx.status = (error as any).status || 500
-        ctx.body = {
-          success: false,
-          error: {
-            code: (error as any).code,
-            message: (error as any).message,
-          },
-        }
-      } else {
-        ctx.status = 500
-        ctx.body = {
-          success: false,
-          error: {
-            code: "QUOTE_UPDATE_ERROR",
-            message: "Failed to update quote",
-            details: error instanceof Error ? error.message : "Unknown error",
-          },
-        }
-      }
+    ctx.body = {
+      success: true,
+      data: quote,
     }
   }
 
   // DELETE /api/quotes/:id - Delete a quote
   static async deleteQuote(ctx: Context) {
-    try {
-      const user = ctx.state.user as User
-      const { id } = ctx.params
+    const user = ctx.state.user as User
+    const { id } = ctx.params
 
-      await QuoteService.deleteQuote(id, user.id)
+    await QuoteService.deleteQuote(id, user.id)
 
-      ctx.body = {
-        success: true,
-        message: "Quote deleted successfully",
-      }
-    } catch (error) {
-      if (error && typeof error === "object" && "code" in error) {
-        ctx.status = (error as any).status || 500
-        ctx.body = {
-          success: false,
-          error: {
-            code: (error as any).code,
-            message: (error as any).message,
-          },
-        }
-      } else {
-        ctx.status = 500
-        ctx.body = {
-          success: false,
-          error: {
-            code: "QUOTE_DELETE_ERROR",
-            message: "Failed to delete quote",
-            details: error instanceof Error ? error.message : "Unknown error",
-          },
-        }
-      }
+    ctx.body = {
+      success: true,
+      message: "Quote deleted successfully",
     }
   }
 
   // PUT /api/quotes/:id/send - Send quote to client
   static async sendQuote(ctx: Context) {
-    try {
-      const user = ctx.state.user as User
-      const { id } = ctx.params
+    const user = ctx.state.user as User
+    const { id } = ctx.params
 
-      const quote = await QuoteService.sendQuote(id, user.id)
+    const quote = await QuoteService.sendQuote(id, user.id)
 
-      // Send notification about quote being sent
-      const notificationSvc = NotificationService.getInstance()
-      await notificationSvc.notifyQuoteSent(quote, user)
+    // Send notification about quote being sent
+    const notificationSvc = NotificationService.getInstance()
+    await notificationSvc.notifyQuoteSent(quote, user)
 
-      ctx.body = {
-        success: true,
-        data: quote,
-        message: "Quote sent successfully",
-      }
-    } catch (error) {
-      if (error && typeof error === "object" && "code" in error) {
-        ctx.status = (error as any).status || 500
-        ctx.body = {
-          success: false,
-          error: {
-            code: (error as any).code,
-            message: (error as any).message,
-          },
-        }
-      } else {
-        ctx.status = 500
-        ctx.body = {
-          success: false,
-          error: {
-            code: "QUOTE_SEND_ERROR",
-            message: "Failed to send quote",
-            details: error instanceof Error ? error.message : "Unknown error",
-          },
-        }
-      }
+    ctx.body = {
+      success: true,
+      data: quote,
+      message: "Quote sent successfully",
     }
   }
 
   // PUT /api/quotes/:id/accept - Accept quote (client action)
   static async acceptQuote(ctx: Context) {
-    try {
-      const { id } = ctx.params
-      const { clientComments } = ctx.request.body as { clientComments?: string }
+    const { id } = ctx.params
+    const { clientComments } = ctx.request.body as { clientComments?: string }
 
-      const quote = await QuoteService.acceptQuote(id, clientComments)
+    const quote = await QuoteService.acceptQuote(id, clientComments)
 
-      // Send notification about quote acceptance
-      const notificationSvc = NotificationService.getInstance()
-      await notificationSvc.notifyQuoteAccepted(quote)
+    // Send notification about quote acceptance
+    const notificationSvc = NotificationService.getInstance()
+    await notificationSvc.notifyQuoteAccepted(quote)
 
-      ctx.body = {
-        success: true,
-        data: quote,
-        message: "Quote accepted successfully",
-      }
-    } catch (error) {
-      if (error && typeof error === "object" && "code" in error) {
-        ctx.status = (error as any).status || 500
-        ctx.body = {
-          success: false,
-          error: {
-            code: (error as any).code,
-            message: (error as any).message,
-          },
-        }
-      } else {
-        ctx.status = 500
-        ctx.body = {
-          success: false,
-          error: {
-            code: "QUOTE_ACCEPT_ERROR",
-            message: "Failed to accept quote",
-            details: error instanceof Error ? error.message : "Unknown error",
-          },
-        }
-      }
+    ctx.body = {
+      success: true,
+      data: quote,
+      message: "Quote accepted successfully",
     }
   }
 
   // PUT /api/quotes/:id/reject - Reject quote (client action)
   static async rejectQuote(ctx: Context) {
-    try {
-      const { id } = ctx.params
-      const { clientComments } = ctx.request.body as { clientComments?: string }
+    const { id } = ctx.params
+    const { clientComments } = ctx.request.body as { clientComments?: string }
 
-      const quote = await QuoteService.rejectQuote(id, clientComments)
+    const quote = await QuoteService.rejectQuote(id, clientComments)
 
-      // Send notification about quote rejection
-      const notificationSvc = NotificationService.getInstance()
-      await notificationSvc.notifyQuoteRejected(quote)
+    // Send notification about quote rejection
+    const notificationSvc = NotificationService.getInstance()
+    await notificationSvc.notifyQuoteRejected(quote)
 
-      ctx.body = {
-        success: true,
-        data: quote,
-        message: "Quote rejected",
-      }
-    } catch (error) {
-      if (error && typeof error === "object" && "code" in error) {
-        ctx.status = (error as any).status || 500
-        ctx.body = {
-          success: false,
-          error: {
-            code: (error as any).code,
-            message: (error as any).message,
-          },
-        }
-      } else {
-        ctx.status = 500
-        ctx.body = {
-          success: false,
-          error: {
-            code: "QUOTE_REJECT_ERROR",
-            message: "Failed to reject quote",
-            details: error instanceof Error ? error.message : "Unknown error",
-          },
-        }
-      }
+    ctx.body = {
+      success: true,
+      data: quote,
+      message: "Quote rejected",
     }
   }
 
   // PUT /api/quotes/:id/cancel - Cancel quote
   static async cancelQuote(ctx: Context) {
-    try {
-      const user = ctx.state.user as User
-      const { id } = ctx.params
+    const user = ctx.state.user as User
+    const { id } = ctx.params
 
-      const quote = await QuoteService.cancelQuote(id, user.id)
+    const quote = await QuoteService.cancelQuote(id, user.id)
 
-      ctx.body = {
-        success: true,
-        data: quote,
-        message: "Quote cancelled successfully",
-      }
-    } catch (error) {
-      if (error && typeof error === "object" && "code" in error) {
-        ctx.status = (error as any).status || 500
-        ctx.body = {
-          success: false,
-          error: {
-            code: (error as any).code,
-            message: (error as any).message,
-          },
-        }
-      } else {
-        ctx.status = 500
-        ctx.body = {
-          success: false,
-          error: {
-            code: "QUOTE_CANCEL_ERROR",
-            message: "Failed to cancel quote",
-            details: error instanceof Error ? error.message : "Unknown error",
-          },
-        }
-      }
+    ctx.body = {
+      success: true,
+      data: quote,
+      message: "Quote cancelled successfully",
     }
   }
 
   // PUT /api/quotes/:id/order - Confirm order
   static async confirmOrder(ctx: Context) {
-    try {
-      const user = ctx.state.user as User
-      const { id } = ctx.params
+    const user = ctx.state.user as User
+    const { id } = ctx.params
 
-      const quote = await QuoteService.confirmOrder(id, user.id)
-      ctx.body = {
-        success: true,
-        data: quote,
-      }
-    } catch (error) {
-      if (error && typeof error === "object" && "code" in error) {
-        ctx.status = (error as any).status || 500
-        ctx.body = {
-          success: false,
-          error: {
-            code: (error as any).code,
-            message: (error as any).message,
-          },
-        }
-      } else {
-        ctx.status = 500
-        ctx.body = {
-          success: false,
-          error: {
-            code: "QUOTE_ORDER_ERROR",
-            message: "Failed to confirm order",
-            details: error instanceof Error ? error.message : "Unknown error",
-          },
-        }
-      }
+    const quote = await QuoteService.confirmOrder(id, user.id)
+    ctx.body = {
+      success: true,
+      data: quote,
     }
   }
 
   // POST /api/quotes/:id/convert-to-invoice - Convert quote to invoice
   static async convertToInvoice(ctx: Context) {
-    try {
-      const user = ctx.state.user as User
-      const { id } = ctx.params
+    const user = ctx.state.user as User
+    const { id } = ctx.params
 
-      // Import InvoiceService dynamically to avoid circular dependency
-      const { InvoiceService } = await import("../services/InvoiceService")
+    // Import InvoiceService dynamically to avoid circular dependency
+    const { InvoiceService } = await import("../services/InvoiceService")
 
-      const invoice = await InvoiceService.createInvoiceFromQuote(id, user.id)
+    const invoice = await InvoiceService.createInvoiceFromQuote(id, user.id)
 
-      // Send notification about invoice creation
-      const notificationSvc = NotificationService.getInstance()
-      await notificationSvc.notifyInvoiceCreated(invoice, user, invoice.institution)
+    // Send notification about invoice creation
+    const notificationSvc = NotificationService.getInstance()
+    await notificationSvc.notifyInvoiceCreated(invoice, user, invoice.institution)
 
-      ctx.status = 201
-      ctx.body = {
-        success: true,
-        data: invoice,
-        message: "Quote converted to invoice successfully",
-      }
-    } catch (error) {
-      if (error && typeof error === "object" && "code" in error) {
-        ctx.status = (error as any).status || 500
-        ctx.body = {
-          success: false,
-          error: {
-            code: (error as any).code,
-            message: (error as any).message,
-          },
-        }
-      } else {
-        ctx.status = 500
-        ctx.body = {
-          success: false,
-          error: {
-            code: "CONVERSION_ERROR",
-            message: "Failed to convert quote to invoice",
-            details: error instanceof Error ? error.message : "Unknown error",
-          },
-        }
-      }
+    ctx.status = 201
+    ctx.body = {
+      success: true,
+      data: invoice,
+      message: "Quote converted to invoice successfully",
     }
   }
 
   // GET /api/quotes/:id/lines - Get quote lines
   static async getQuoteLines(ctx: Context) {
-    try {
-      const { id } = ctx.params
+    const { id } = ctx.params
 
-      const lines = await QuoteLine.findByQuote(id)
+    const lines = await QuoteLine.findByQuote(id)
 
-      ctx.body = {
-        success: true,
-        data: lines,
-      }
-    } catch (error) {
-      ctx.status = 500
-      ctx.body = {
-        success: false,
-        error: {
-          code: "QUOTE_LINES_FETCH_ERROR",
-          message: "Failed to fetch quote lines",
-          details: error instanceof Error ? error.message : "Unknown error",
-        },
-      }
+    ctx.body = {
+      success: true,
+      data: lines,
     }
   }
 
   // POST /api/quotes/:id/lines - Add line to quote
   static async addQuoteLine(ctx: Context) {
-    try {
-      const user = ctx.state.user as User
-      const { id } = ctx.params
-      const lineData = ctx.request.body as QuoteLineCreateRequest
+    const user = ctx.state.user as User
+    const { id } = ctx.params
+    const lineData = ctx.request.body as QuoteLineCreateRequest
 
-      // Validate required fields
-      if (
-        !lineData.description ||
-        !lineData.quantity ||
-        lineData.unitPrice === undefined
-      ) {
-        ctx.status = 400
-        ctx.body = {
-          success: false,
-          error: {
-            code: "VALIDATION_ERROR",
-            message: "Description, quantity, and unit price are required",
-          },
-        }
-        return
-      }
+    // Validate required fields
+    if (
+      !lineData.description ||
+      !lineData.quantity ||
+      lineData.unitPrice === undefined
+    ) {
+      throw new BadRequestError("Description, quantity, and unit price are required", "VALIDATION_ERROR")
+    }
 
-      // Validate line data
-      QuoteService.validateQuoteLineData(lineData)
+    // Validate line data
+    QuoteService.validateQuoteLineData(lineData)
 
-      const line = await QuoteService.addQuoteLine(id, lineData, user.id)
+    const line = await QuoteService.addQuoteLine(id, lineData, user.id)
 
-      ctx.status = 201
-      ctx.body = {
-        success: true,
-        data: line,
-      }
-    } catch (error) {
-      if (error && typeof error === "object" && "code" in error) {
-        ctx.status = (error as any).status || 500
-        ctx.body = {
-          success: false,
-          error: {
-            code: (error as any).code,
-            message: (error as any).message,
-          },
-        }
-      } else {
-        ctx.status = 500
-        ctx.body = {
-          success: false,
-          error: {
-            code: "QUOTE_LINE_CREATE_ERROR",
-            message: "Failed to add quote line",
-            details: error instanceof Error ? error.message : "Unknown error",
-          },
-        }
-      }
+    ctx.status = 201
+    ctx.body = {
+      success: true,
+      data: line,
     }
   }
 
   // PUT /api/quotes/:id/lines/:lineId - Update quote line
   static async updateQuoteLine(ctx: Context) {
-    try {
-      const user = ctx.state.user as User
-      const { lineId } = ctx.params
-      const lineData = ctx.request.body as QuoteLineUpdateRequest
+    const user = ctx.state.user as User
+    const { lineId } = ctx.params
+    const lineData = ctx.request.body as QuoteLineUpdateRequest
 
-      // Validate line data
-      QuoteService.validateQuoteLineData(lineData)
+    // Validate line data
+    QuoteService.validateQuoteLineData(lineData)
 
-      const line = await QuoteService.updateQuoteLine(lineId, lineData, user.id)
+    const line = await QuoteService.updateQuoteLine(lineId, lineData, user.id)
 
-      ctx.body = {
-        success: true,
-        data: line,
-      }
-    } catch (error) {
-      if (error && typeof error === "object" && "code" in error) {
-        ctx.status = (error as any).status || 500
-        ctx.body = {
-          success: false,
-          error: {
-            code: (error as any).code,
-            message: (error as any).message,
-          },
-        }
-      } else {
-        ctx.status = 500
-        ctx.body = {
-          success: false,
-          error: {
-            code: "QUOTE_LINE_UPDATE_ERROR",
-            message: "Failed to update quote line",
-            details: error instanceof Error ? error.message : "Unknown error",
-          },
-        }
-      }
+    ctx.body = {
+      success: true,
+      data: line,
     }
   }
 
   // DELETE /api/quotes/:id/lines/:lineId - Delete quote line
   static async deleteQuoteLine(ctx: Context) {
-    try {
-      const user = ctx.state.user as User
-      const { lineId } = ctx.params
+    const user = ctx.state.user as User
+    const { lineId } = ctx.params
 
-      await QuoteService.deleteQuoteLine(lineId, user.id)
+    await QuoteService.deleteQuoteLine(lineId, user.id)
 
-      ctx.body = {
-        success: true,
-        message: "Quote line deleted successfully",
-      }
-    } catch (error) {
-      if (error && typeof error === "object" && "code" in error) {
-        ctx.status = (error as any).status || 500
-        ctx.body = {
-          success: false,
-          error: {
-            code: (error as any).code,
-            message: (error as any).message,
-          },
-        }
-      } else {
-        ctx.status = 500
-        ctx.body = {
-          success: false,
-          error: {
-            code: "QUOTE_LINE_DELETE_ERROR",
-            message: "Failed to delete quote line",
-            details: error instanceof Error ? error.message : "Unknown error",
-          },
-        }
-      }
+    ctx.body = {
+      success: true,
+      message: "Quote line deleted successfully",
     }
   }
 
   // PUT /api/quotes/:id/lines/reorder - Reorder quote lines
   static async reorderQuoteLines(ctx: Context) {
-    try {
-      const user = ctx.state.user as User
-      const { id } = ctx.params
-      const { lineIds } = ctx.request.body as { lineIds: string[] }
+    const user = ctx.state.user as User
+    const { id } = ctx.params
+    const { lineIds } = ctx.request.body as { lineIds: string[] }
 
-      if (!lineIds || !Array.isArray(lineIds)) {
-        ctx.status = 400
-        ctx.body = {
-          success: false,
-          error: {
-            code: "VALIDATION_ERROR",
-            message: "lineIds array is required",
-          },
-        }
-        return
-      }
+    if (!lineIds || !Array.isArray(lineIds)) {
+      throw new BadRequestError("lineIds array is required", "VALIDATION_ERROR")
+    }
 
-      const lines = await QuoteService.reorderQuoteLines(id, lineIds, user.id)
+    const lines = await QuoteService.reorderQuoteLines(id, lineIds, user.id)
 
-      ctx.body = {
-        success: true,
-        data: lines,
-        message: "Quote lines reordered successfully",
-      }
-    } catch (error) {
-      if (error && typeof error === "object" && "code" in error) {
-        ctx.status = (error as any).status || 500
-        ctx.body = {
-          success: false,
-          error: {
-            code: (error as any).code,
-            message: (error as any).message,
-          },
-        }
-      } else {
-        ctx.status = 500
-        ctx.body = {
-          success: false,
-          error: {
-            code: "QUOTE_LINES_REORDER_ERROR",
-            message: "Failed to reorder quote lines",
-            details: error instanceof Error ? error.message : "Unknown error",
-          },
-        }
-      }
+    ctx.body = {
+      success: true,
+      data: lines,
+      message: "Quote lines reordered successfully",
     }
   }
 

@@ -1,6 +1,7 @@
 import { Context, Next } from "../types/koa"
 import { logger } from "../utils/logger"
-import { createError, AppError } from "./errorHandler"
+import { createError } from "./errorHandler"
+import { AppError } from "../utils/AppError"
 import { ValidationError as JoiValidationError } from "joi"
 
 /**
