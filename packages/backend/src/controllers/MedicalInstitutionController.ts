@@ -2,15 +2,14 @@ import { ComplianceStatus, InstitutionType } from "@medical-crm/shared"
 import Joi from "joi"
 import { Op, literal } from "sequelize"
 import { sequelize } from "../config/database"
-import { Context } from "../types/koa"
-import { createError } from "../middleware/errorHandler"
 import { ContactPerson, InstitutionAddress, MedicalInstitution, MedicalProfile, User } from "../models"
 import { TaskStatus } from "../models/Task"
 import { CsvImportService } from "../services/CsvImportService"
-import { NotificationService } from "../services/NotificationService"
-import { MedicalInstitutionService } from "../services/MedicalInstitutionService"
-import { MedicalInstitutionAnalyticsService } from "../services/MedicalInstitutionAnalyticsService"
 import { InstitutionRevenueService } from "../services/InstitutionRevenueService"
+import { MedicalInstitutionAnalyticsService } from "../services/MedicalInstitutionAnalyticsService"
+import { MedicalInstitutionService } from "../services/MedicalInstitutionService"
+import { Context } from "../types/koa"
+import { BadRequestError, NotFoundError } from "../utils/AppError"
 import { logger } from "../utils/logger"
 
 // Temporary interface for file uploads
@@ -177,7 +176,7 @@ export class MedicalInstitutionController {
   static async getInstitutions(ctx: Context) {
     const { error, value } = searchSchema.validate(ctx.query)
     if (error) {
-      throw createError(error.details[0].message, 400, "VALIDATION_ERROR", error.details)
+      throw new BadRequestError(error.details[0].message, error.details)
     }
 
     const {
@@ -205,267 +204,258 @@ export class MedicalInstitutionController {
     // Build search filters
     const filters: any = {}
 
-    try {
-      if (name) {
-        filters.name = name
-      }
-      if (type) {
-        filters.type = type
-      }
-      if (city) {
-        filters.city = city
-      }
-      if (state) {
-        filters.state = state
-      }
-      if (accountingNumber) {
-        filters.accountingNumber = accountingNumber
-      }
-      if (digiformaId) {
-        filters.digiformaId = digiformaId
-      }
-      if (assignedUserId) {
-        filters.assignedUserId = assignedUserId
-      }
-      if (isActive !== undefined) {
-        filters.isActive = isActive
-      }
+    if (name) {
+      filters.name = name
+    }
+    if (type) {
+      filters.type = type
+    }
+    if (city) {
+      filters.city = city
+    }
+    if (state) {
+      filters.state = state
+    }
+    if (accountingNumber) {
+      filters.accountingNumber = accountingNumber
+    }
+    if (digiformaId) {
+      filters.digiformaId = digiformaId
+    }
+    if (assignedUserId) {
+      filters.assignedUserId = assignedUserId
+    }
+    if (isActive !== undefined) {
+      filters.isActive = isActive
+    }
 
-      // Apply team-based filtering if required
-      const institutionFilter = ctx.state.institutionFilter
-      if (institutionFilter?.filterByAssignment) {
-        const user = ctx.state.user as User
+    // Apply team-based filtering if required
+    const institutionFilter = ctx.state.institutionFilter
+    if (institutionFilter?.filterByAssignment) {
+      const user = ctx.state.user as User
 
-        if (user.role === "user") {
-          // Regular users can only see institutions assigned to them
-          filters.assignedUserId = user.id
-        } else if (user.role === "team_admin" && user.teamId) {
-          // Team admins can see institutions assigned to their team members
-          // We'll need to get team member IDs first
-          const teamMembers = await User.findAll({
-            where: { teamId: user.teamId },
-            attributes: ["id"],
-          })
-          const teamMemberIds = teamMembers.map((member) => member.id)
-
-          // Include institutions assigned to team members or unassigned
-          filters.teamMemberIds = teamMemberIds
-        }
-      }
-
-      // Handle array filters
-      if (specialties) {
-        filters.specialties = Array.isArray(specialties) ? specialties : [specialties]
-      }
-      if (tags) {
-        filters.tags = Array.isArray(tags) ? tags : [tags]
-      }
-
-      // Handle capacity filters
-      if (minBedCapacity !== undefined) {
-        filters.minBedCapacity = minBedCapacity
-      }
-      if (maxBedCapacity !== undefined) {
-        filters.maxBedCapacity = maxBedCapacity
-      }
-      if (minSurgicalRooms !== undefined) {
-        filters.minSurgicalRooms = minSurgicalRooms
-      }
-      if (maxSurgicalRooms !== undefined) {
-        filters.maxSurgicalRooms = maxSurgicalRooms
-      }
-      if (complianceStatus) {
-        filters.complianceStatus = complianceStatus
-      }
-
-      // Build Sequelize where clause and includes for efficient database-level pagination
-      const whereClause: any = { isActive: true }
-      const profileWhere: any = {}
-      const useRelational = process.env.USE_RELATIONAL_ADDRESSES === "true"
-      const include: any[] = []
-
-      // Basic filters
-      if (filters.name) {
-        whereClause.name = {
-          [Op.iLike]: `%${filters.name}%`,
-        }
-      }
-
-      if (filters.type) {
-        whereClause.type = filters.type
-      }
-
-      if (filters.accountingNumber) {
-        whereClause.accountingNumber = {
-          [Op.iLike]: `%${filters.accountingNumber}%`,
-        }
-      }
-
-      if (filters.digiformaId) {
-        whereClause.digiformaId = {
-          [Op.iLike]: `%${filters.digiformaId}%`,
-        }
-      }
-
-      // Address filters (city, state)
-      // Use relational address model if enabled, otherwise use JSON fields
-      if (useRelational && (filters.city || filters.state)) {
-        const addressWhere: any = {}
-        if (filters.city) {
-          addressWhere.city = { [Op.iLike]: `%${filters.city}%` }
-        }
-        if (filters.state) {
-          addressWhere.state = { [Op.iLike]: `%${filters.state}%` }
-        }
-        include.push({
-          model: InstitutionAddress,
-          as: "addressRel",
-          where: addressWhere,
-          required: true,
+      if (user.role === "user") {
+        // Regular users can only see institutions assigned to them
+        filters.assignedUserId = user.id
+      } else if (user.role === "team_admin" && user.teamId) {
+        // Team admins can see institutions assigned to their team members
+        // We'll need to get team member IDs first
+        const teamMembers = await User.findAll({
+          where: { teamId: user.teamId },
+          attributes: ["id"],
         })
-      } else {
-        // Use JSON path queries for embedded address
-        if (filters.city) {
-          whereClause[Op.and] = [
-            ...(whereClause[Op.and] || []),
-            sequelize.where(sequelize.json("address.city") as any, { [Op.iLike]: `%${filters.city}%` }),
-          ]
-        }
+        const teamMemberIds = teamMembers.map((member) => member.id)
 
-        if (filters.state) {
-          whereClause[Op.and] = [
-            ...(whereClause[Op.and] || []),
-            sequelize.where(sequelize.json("address.state") as any, { [Op.iLike]: `%${filters.state}%` }),
-          ]
-        }
+        // Include institutions assigned to team members or unassigned
+        filters.teamMemberIds = teamMemberIds
       }
+    }
 
-      if (filters.assignedUserId) {
-        whereClause.assignedUserId = filters.assignedUserId
+    // Handle array filters
+    if (specialties) {
+      filters.specialties = Array.isArray(specialties) ? specialties : [specialties]
+    }
+    if (tags) {
+      filters.tags = Array.isArray(tags) ? tags : [tags]
+    }
+
+    // Handle capacity filters
+    if (minBedCapacity !== undefined) {
+      filters.minBedCapacity = minBedCapacity
+    }
+    if (maxBedCapacity !== undefined) {
+      filters.maxBedCapacity = maxBedCapacity
+    }
+    if (minSurgicalRooms !== undefined) {
+      filters.minSurgicalRooms = minSurgicalRooms
+    }
+    if (maxSurgicalRooms !== undefined) {
+      filters.maxSurgicalRooms = maxSurgicalRooms
+    }
+    if (complianceStatus) {
+      filters.complianceStatus = complianceStatus
+    }
+
+    // Build Sequelize where clause and includes for efficient database-level pagination
+    const whereClause: any = { isActive: true }
+    const profileWhere: any = {}
+    const useRelational = process.env.USE_RELATIONAL_ADDRESSES === "true"
+    const include: any[] = []
+
+    // Basic filters
+    if (filters.name) {
+      whereClause.name = {
+        [Op.iLike]: `%${filters.name}%`,
       }
+    }
 
-      // Team-based filtering
-      if (filters.teamMemberIds && filters.teamMemberIds.length > 0) {
-        whereClause[Op.or] = [
-          {
-            assignedUserId: {
-              [Op.in]: filters.teamMemberIds,
-            },
-          },
-          {
-            assignedUserId: null,
-          },
+    if (filters.type) {
+      whereClause.type = filters.type
+    }
+
+    if (filters.accountingNumber) {
+      whereClause.accountingNumber = {
+        [Op.iLike]: `%${filters.accountingNumber}%`,
+      }
+    }
+
+    if (filters.digiformaId) {
+      whereClause.digiformaId = {
+        [Op.iLike]: `%${filters.digiformaId}%`,
+      }
+    }
+
+    // Address filters (city, state)
+    // Use relational address model if enabled, otherwise use JSON fields
+    if (useRelational && (filters.city || filters.state)) {
+      const addressWhere: any = {}
+      if (filters.city) {
+        addressWhere.city = { [Op.iLike]: `%${filters.city}%` }
+      }
+      if (filters.state) {
+        addressWhere.state = { [Op.iLike]: `%${filters.state}%` }
+      }
+      include.push({
+        model: InstitutionAddress,
+        as: "addressRel",
+        where: addressWhere,
+        required: true,
+      })
+    } else {
+      // Use JSON path queries for embedded address
+      if (filters.city) {
+        whereClause[Op.and] = [
+          ...(whereClause[Op.and] || []),
+          sequelize.where(sequelize.json("address.city") as any, { [Op.iLike]: `%${filters.city}%` }),
         ]
       }
 
-      if (filters.tags && filters.tags.length > 0) {
-        whereClause.tags = {
-          [Op.overlap]: filters.tags.map((tag: string) => tag.toLowerCase()),
-        }
+      if (filters.state) {
+        whereClause[Op.and] = [
+          ...(whereClause[Op.and] || []),
+          sequelize.where(sequelize.json("address.state") as any, { [Op.iLike]: `%${filters.state}%` }),
+        ]
       }
+    }
 
-      // Medical profile filters
-      if (filters.specialties && filters.specialties.length > 0) {
-        profileWhere.specialties = {
-          [Op.overlap]: filters.specialties.map((s: string) => s.toLowerCase()),
-        }
-      }
+    if (filters.assignedUserId) {
+      whereClause.assignedUserId = filters.assignedUserId
+    }
 
-      if (filters.minBedCapacity !== undefined) {
-        profileWhere.bedCapacity = { [Op.gte]: filters.minBedCapacity }
-      }
-      if (filters.maxBedCapacity !== undefined) {
-        profileWhere.bedCapacity = {
-          ...profileWhere.bedCapacity,
-          [Op.lte]: filters.maxBedCapacity,
-        }
-      }
-
-      if (filters.minSurgicalRooms !== undefined) {
-        profileWhere.surgicalRooms = {
-          [Op.gte]: filters.minSurgicalRooms,
-        }
-      }
-      if (filters.maxSurgicalRooms !== undefined) {
-        profileWhere.surgicalRooms = {
-          ...profileWhere.surgicalRooms,
-          [Op.lte]: filters.maxSurgicalRooms,
-        }
-      }
-
-      if (complianceStatus) {
-        profileWhere.complianceStatus = complianceStatus
-      }
-
-      // Build include for medical profile
-      const includeProfile =
-        Object.keys(profileWhere).length > 0
-          ? {
-              model: MedicalProfile,
-              as: "medicalProfile",
-              where: profileWhere,
-            }
-          : {
-              model: MedicalProfile,
-              as: "medicalProfile",
-            }
-
-      include.push(includeProfile)
-      include.push({
-        model: ContactPerson,
-        as: "contactPersons",
-        where: { isActive: true },
-        required: false,
-      })
-      include.push({
-        model: User,
-        as: "assignedUser",
-        attributes: ["id", "firstName", "lastName", "email"],
-        required: false,
-      })
-
-      // Execute query with pagination at database level
-      const queryOptions: any = {
-        where: whereClause,
-        include,
-        order: [[sortBy, sortOrder]],
-        distinct: true, // Important for correct count with joins
-      }
-
-      // Apply pagination (unless limit is -1, which means "all")
-      if (limit !== -1) {
-        queryOptions.limit = limit
-        queryOptions.offset = (page - 1) * limit
-      }
-
-      const { rows: institutions, count: total } = await MedicalInstitution.findAndCountAll(queryOptions)
-
-      ctx.body = {
-        success: true,
-        data: {
-          institutions,
-          pagination: {
-            page,
-            limit,
-            total,
-            totalPages: limit === -1 ? 1 : Math.ceil(total / limit),
+    // Team-based filtering
+    if (filters.teamMemberIds && filters.teamMemberIds.length > 0) {
+      whereClause[Op.or] = [
+        {
+          assignedUserId: {
+            [Op.in]: filters.teamMemberIds,
           },
         },
-      }
-
-      logger.info("Medical institutions retrieved", {
-        userId: ctx.state.user?.id,
-        filters,
-        count: total,
-      })
-    } catch (error) {
-      logger.error("Failed to retrieve medical institutions", {
-        userId: ctx.state.user?.id,
-        error: (error as Error).message,
-        filters,
-      })
-      throw error
+        {
+          assignedUserId: null,
+        },
+      ]
     }
+
+    if (filters.tags && filters.tags.length > 0) {
+      whereClause.tags = {
+        [Op.overlap]: filters.tags.map((tag: string) => tag.toLowerCase()),
+      }
+    }
+
+    // Medical profile filters
+    if (filters.specialties && filters.specialties.length > 0) {
+      profileWhere.specialties = {
+        [Op.overlap]: filters.specialties.map((s: string) => s.toLowerCase()),
+      }
+    }
+
+    if (filters.minBedCapacity !== undefined) {
+      profileWhere.bedCapacity = { [Op.gte]: filters.minBedCapacity }
+    }
+    if (filters.maxBedCapacity !== undefined) {
+      profileWhere.bedCapacity = {
+        ...profileWhere.bedCapacity,
+        [Op.lte]: filters.maxBedCapacity,
+      }
+    }
+
+    if (filters.minSurgicalRooms !== undefined) {
+      profileWhere.surgicalRooms = {
+        [Op.gte]: filters.minSurgicalRooms,
+      }
+    }
+    if (filters.maxSurgicalRooms !== undefined) {
+      profileWhere.surgicalRooms = {
+        ...profileWhere.surgicalRooms,
+        [Op.lte]: filters.maxSurgicalRooms,
+      }
+    }
+
+    if (complianceStatus) {
+      profileWhere.complianceStatus = complianceStatus
+    }
+
+    // Build include for medical profile
+    const includeProfile =
+      Object.keys(profileWhere).length > 0
+        ? {
+            model: MedicalProfile,
+            as: "medicalProfile",
+            where: profileWhere,
+          }
+        : {
+            model: MedicalProfile,
+            as: "medicalProfile",
+          }
+
+    include.push(includeProfile)
+    include.push({
+      model: ContactPerson,
+      as: "contactPersons",
+      where: { isActive: true },
+      required: false,
+    })
+    include.push({
+      model: User,
+      as: "assignedUser",
+      attributes: ["id", "firstName", "lastName", "email"],
+      required: false,
+    })
+
+    // Execute query with pagination at database level
+    const queryOptions: any = {
+      where: whereClause,
+      include,
+      order: [[sortBy, sortOrder]],
+      distinct: true, // Important for correct count with joins
+    }
+
+    // Apply pagination (unless limit is -1, which means "all")
+    if (limit !== -1) {
+      queryOptions.limit = limit
+      queryOptions.offset = (page - 1) * limit
+    }
+
+    const { rows: institutions, count: total } = await MedicalInstitution.findAndCountAll(queryOptions)
+
+    ctx.body = {
+      success: true,
+      data: {
+        institutions,
+        pagination: {
+          page,
+          limit,
+          total,
+          totalPages: limit === -1 ? 1 : Math.ceil(total / limit),
+        },
+      },
+    }
+
+    logger.info("Medical institutions retrieved", {
+      userId: ctx.state.user?.id,
+      filters,
+      count: total,
+    })
   }
 
   /**
@@ -476,33 +466,32 @@ export class MedicalInstitutionController {
     const { id } = ctx.params
 
     if (!id) {
-      throw createError("Institution ID is required", 400, "MISSING_ID")
+      throw new BadRequestError("Institution ID is required")
     }
 
-    try {
-      const institution = await MedicalInstitutionService.getInstitutionById(id)
+    const institution = await MedicalInstitutionService.getInstitutionById(id)
 
-      ctx.body = {
-        success: true,
-        data: {
-          institution,
-        },
-      }
-
-      logger.info("Medical institution retrieved", {
-        userId: ctx.state.user?.id,
-        institutionId: id,
-      })
-    } catch (error) {
-      logger.error("Failed to retrieve medical institution", {
-        userId: ctx.state.user?.id,
-        institutionId: id,
-        error: (error as Error).message,
-      })
-      throw error
+    if (!institution) {
+      throw new NotFoundError(`Institution with ID ${id} not found`)
     }
+
+    ctx.body = {
+      success: true,
+      data: {
+        institution,
+      },
+    }
+
+    logger.info("Medical institution retrieved", {
+      userId: ctx.state.user?.id,
+      institutionId: id,
+    })
   }
 
+  /**
+   * POST /api/institutions
+   * Create a new medical institution
+   */
   /**
    * POST /api/institutions
    * Create a new medical institution
@@ -510,30 +499,22 @@ export class MedicalInstitutionController {
   static async createInstitution(ctx: Context) {
     const { error, value } = createInstitutionSchema.validate(ctx.request.body)
     if (error) {
-      throw createError(error.details[0].message, 400, "VALIDATION_ERROR", error.details)
+      throw new BadRequestError(error.details[0].message, error.details)
     }
 
-    try {
-      const user = ctx.state.user as User
-      const institution = await MedicalInstitutionService.createInstitution(
-        value,
-        user.id
-      )
+    const user = ctx.state.user as User
+    const institution = await MedicalInstitutionService.createInstitution(
+      value,
+      user.id
+    )
 
-      ctx.status = 201
-      ctx.body = {
-        success: true,
-        message: "Medical institution created successfully",
-        data: {
-          institution,
-        },
-      }
-    } catch (error) {
-      logger.error("Failed to create medical institution", {
-        userId: ctx.state.user?.id,
-        error: (error as Error).message,
-      })
-      throw error
+    ctx.status = 201
+    ctx.body = {
+      success: true,
+      message: "Medical institution created successfully",
+      data: {
+        institution,
+      },
     }
   }
 
@@ -546,35 +527,26 @@ export class MedicalInstitutionController {
     const { error, value } = updateInstitutionSchema.validate(ctx.request.body)
 
     if (error) {
-      throw createError(error.details[0].message, 400, "VALIDATION_ERROR", error.details)
+      throw new BadRequestError(error.details[0].message, error.details)
     }
 
     if (!id) {
-      throw createError("Institution ID is required", 400, "MISSING_ID")
+      throw new BadRequestError("Institution ID is required")
     }
 
-    try {
-      const user = ctx.state.user as User
-      const institution = await MedicalInstitutionService.updateInstitution(
-        id,
-        value,
-        user.id
-      )
+    const user = ctx.state.user as User
+    const institution = await MedicalInstitutionService.updateInstitution(
+      id,
+      value,
+      user.id
+    )
 
-      ctx.body = {
-        success: true,
-        message: "Medical institution updated successfully",
-        data: {
-          institution,
-        },
-      }
-    } catch (error) {
-      logger.error("Failed to update medical institution", {
-        userId: ctx.state.user?.id,
-        institutionId: id,
-        error: (error as Error).message,
-      })
-      throw error
+    ctx.body = {
+      success: true,
+      message: "Medical institution updated successfully",
+      data: {
+        institution,
+      },
     }
   }
 
@@ -587,35 +559,26 @@ export class MedicalInstitutionController {
     const { error, value } = updateMedicalProfileSchema.validate(ctx.request.body)
 
     if (error) {
-      throw createError(error.details[0].message, 400, "VALIDATION_ERROR", error.details)
+      throw new BadRequestError(error.details[0].message, error.details)
     }
 
     if (!id) {
-      throw createError("Institution ID is required", 400, "MISSING_ID")
+      throw new BadRequestError("Institution ID is required")
     }
 
-    try {
-      const user = ctx.state.user as User
-      const medicalProfile = await MedicalInstitutionService.updateMedicalProfile(
-        id,
-        value,
-        user.id
-      )
+    const user = ctx.state.user as User
+    const medicalProfile = await MedicalInstitutionService.updateMedicalProfile(
+      id,
+      value,
+      user.id
+    )
 
-      ctx.body = {
-        success: true,
-        message: "Medical profile updated successfully",
-        data: {
-          medicalProfile,
-        },
-      }
-    } catch (error) {
-      logger.error("Failed to update medical profile", {
-        userId: ctx.state.user?.id,
-        institutionId: id,
-        error: (error as Error).message,
-      })
-      throw error
+    ctx.body = {
+      success: true,
+      message: "Medical profile updated successfully",
+      data: {
+        medicalProfile,
+      },
     }
   }
 
@@ -627,24 +590,15 @@ export class MedicalInstitutionController {
     const { id } = ctx.params
 
     if (!id) {
-      throw createError("Institution ID is required", 400, "MISSING_ID")
+      throw new BadRequestError("Institution ID is required")
     }
 
-    try {
-      const user = ctx.state.user as User
-      await MedicalInstitutionService.deleteInstitution(id, user.id)
+    const user = ctx.state.user as User
+    await MedicalInstitutionService.deleteInstitution(id, user.id)
 
-      ctx.body = {
-        success: true,
-        message: "Medical institution deleted successfully",
-      }
-    } catch (error) {
-      logger.error("Failed to delete medical institution", {
-        userId: ctx.state.user?.id,
-        institutionId: id,
-        error: (error as Error).message,
-      })
-      throw error
+    ctx.body = {
+      success: true,
+      message: "Medical institution deleted successfully",
     }
   }
 
@@ -657,36 +611,27 @@ export class MedicalInstitutionController {
     const { error, value } = contactPersonSchema.validate(ctx.request.body)
 
     if (error) {
-      throw createError(error.details[0].message, 400, "VALIDATION_ERROR", error.details)
+      throw new BadRequestError(error.details[0].message, error.details)
     }
 
     if (!id) {
-      throw createError("Institution ID is required", 400, "MISSING_ID")
+      throw new BadRequestError("Institution ID is required")
     }
 
-    try {
-      const user = ctx.state.user as User
-      const contactPerson = await MedicalInstitutionService.addContactPerson(
-        id,
-        value,
-        user.id
-      )
+    const user = ctx.state.user as User
+    const contactPerson = await MedicalInstitutionService.addContactPerson(
+      id,
+      value,
+      user.id
+    )
 
-      ctx.status = 201
-      ctx.body = {
-        success: true,
-        message: "Contact person added successfully",
-        data: {
-          contactPerson,
-        },
-      }
-    } catch (error) {
-      logger.error("Failed to add contact person", {
-        userId: ctx.state.user?.id,
-        institutionId: id,
-        error: (error as Error).message,
-      })
-      throw error
+    ctx.status = 201
+    ctx.body = {
+      success: true,
+      message: "Contact person added successfully",
+      data: {
+        contactPerson,
+      },
     }
   }
 
@@ -697,7 +642,7 @@ export class MedicalInstitutionController {
   static async searchInstitutions(ctx: Context) {
     const { error, value } = searchSchema.validate(ctx.query)
     if (error) {
-      throw createError(error.details[0].message, 400, "VALIDATION_ERROR", error.details)
+      throw new BadRequestError(error.details[0].message, error.details)
     }
 
     // Use the same logic as getInstitutions but with more advanced search capabilities
@@ -724,10 +669,8 @@ export class MedicalInstitutionController {
       ctx.query
     )
     if (optionsError) {
-      throw createError(
+      throw new BadRequestError(
         optionsError.details[0].message,
-        400,
-        "VALIDATION_ERROR",
         optionsError.details
       )
     }
@@ -741,58 +684,49 @@ export class MedicalInstitutionController {
         : ctx.request.files?.file)
 
     if (!file) {
-      throw createError("CSV file is required", 400, "FILE_REQUIRED")
+      throw new BadRequestError("CSV file is required")
     }
 
     const fileName = file.originalname || file.originalFilename
     const mime = file.mimetype
     if (!(fileName?.toLowerCase().endsWith(".csv") || mime === "text/csv" || mime === "application/vnd.ms-excel")) {
-      throw createError("File must be a CSV file", 400, "INVALID_FILE_TYPE")
+      throw new BadRequestError("File must be a CSV file")
     }
 
-    try {
-      // Read file content
-      let csvData = ""
-      if (hasMulterFile && file.buffer) {
-        csvData = file.buffer.toString("utf8")
-      } else if ((file as any).filepath) {
-        const fs = await import("fs")
-        csvData = await fs.promises.readFile((file as any).filepath, "utf8")
-      } else {
-        throw createError("Unable to read uploaded file", 400, "FILE_READ_ERROR")
-      }
-
-      // Import institutions
-      const result = await CsvImportService.importMedicalInstitutions(csvData, {
-        ...options,
-        assignedUserId: ctx.state.user?.id,
-      })
-
-      ctx.body = {
-        success: result.success,
-        message: result.success
-          ? "CSV import completed successfully"
-          : "CSV import completed with errors",
-        data: result,
-      }
-
-      logger.info("CSV import completed", {
-        userId: ctx.state.user?.id,
-        result: {
-          totalRows: result.totalRows,
-          successfulImports: result.successfulImports,
-          failedImports: result.failedImports,
-          duplicatesFound: result.duplicatesFound,
-        },
-      })
-    } catch (error) {
-      logger.error("CSV import failed", {
-        userId: ctx.state.user?.id,
-        error: (error as Error).message,
-        filename: fileName,
-      })
-      throw error
+    // Read file content
+    let csvData = ""
+    if (hasMulterFile && file.buffer) {
+      csvData = file.buffer.toString("utf8")
+    } else if ((file as any).filepath) {
+      const fs = await import("fs")
+      csvData = await fs.promises.readFile((file as any).filepath, "utf8")
+    } else {
+      throw new BadRequestError("Unable to read uploaded file")
     }
+
+    // Import institutions
+    const result = await CsvImportService.importMedicalInstitutions(csvData, {
+      ...options,
+      assignedUserId: ctx.state.user?.id,
+    })
+
+    ctx.body = {
+      success: result.success,
+      message: result.success
+        ? "CSV import completed successfully"
+        : "CSV import completed with errors",
+      data: result,
+    }
+
+    logger.info("CSV import completed", {
+      userId: ctx.state.user?.id,
+      result: {
+        totalRows: result.totalRows,
+        successfulImports: result.successfulImports,
+        failedImports: result.failedImports,
+        duplicatesFound: result.duplicatesFound,
+      },
+    })
   }
 
   /**
@@ -834,58 +768,49 @@ export class MedicalInstitutionController {
       : (Array.isArray(ctx.request.files?.file)
         ? ctx.request.files?.file?.[0]
         : ctx.request.files?.file)
-
+    
     if (!file) {
-      throw createError("CSV file is required", 400, "FILE_REQUIRED")
+      throw new BadRequestError("CSV file is required", "FILE_REQUIRED")
     }
 
     const fileName = file.originalname || file.originalFilename
     const mime = file.mimetype
     if (!(fileName?.toLowerCase().endsWith(".csv") || mime === "text/csv" || mime === "application/vnd.ms-excel")) {
-      throw createError("File must be a CSV file", 400, "INVALID_FILE_TYPE")
+      throw new BadRequestError("File must be a CSV file", "INVALID_FILE_TYPE")
     }
 
-    try {
-      // Read file content
-      let csvData = ""
-      if (hasMulterFile && file.buffer) {
-        csvData = file.buffer.toString("utf8")
-      } else if ((file as any).filepath) {
-        const fs = await import("fs")
-        csvData = await fs.promises.readFile((file as any).filepath, "utf8")
-      } else {
-        throw createError("Unable to read uploaded file", 400, "FILE_READ_ERROR")
-      }
+    // Read file content
+    let csvData = ""
+    if (hasMulterFile && file.buffer) {
+      csvData = file.buffer.toString("utf8")
+    } else if ((file as any).filepath) {
+      const fs = await import("fs")
+      csvData = await fs.promises.readFile((file as any).filepath, "utf8")
+    } else {
+      throw new BadRequestError("Unable to read uploaded file", "FILE_READ_ERROR")
+    }
 
-      // Validate CSV data
-      const result = await CsvImportService.validateCsvData(csvData)
+    // Validate CSV data
+    const result = await CsvImportService.validateCsvData(csvData)
 
-      ctx.body = {
-        success: true,
-        message: "CSV validation completed",
-        data: {
-          isValid: result.errors.length === 0,
-          totalRows: result.totalRows,
-          errors: result.errors,
-          duplicatesFound: result.duplicatesFound,
-        },
-      }
-
-      logger.info("CSV validation completed", {
-        userId: ctx.state.user?.id,
-        filename: file.originalFilename,
+    ctx.body = {
+      success: true,
+      message: "CSV validation completed",
+      data: {
         isValid: result.errors.length === 0,
         totalRows: result.totalRows,
-        errorCount: result.errors.length,
-      })
-    } catch (error) {
-      logger.error("CSV validation failed", {
-        userId: ctx.state.user?.id,
-        error: (error as Error).message,
-        filename: fileName,
-      })
-      throw error
+        errors: result.errors,
+        duplicatesFound: result.duplicatesFound,
+      },
     }
+
+    logger.info("CSV validation completed", {
+      userId: ctx.state.user?.id,
+      filename: file.originalFilename,
+      isValid: result.errors.length === 0,
+      totalRows: result.totalRows,
+      errorCount: result.errors.length,
+    })
   }
 
   /**
@@ -902,28 +827,27 @@ export class MedicalInstitutionController {
         : ctx.request.files?.file)
 
     if (!file) {
-      throw createError("CSV file is required", 400, "FILE_REQUIRED")
+      throw new BadRequestError("CSV file is required", "FILE_REQUIRED")
     }
 
     const fileName = file.originalname || file.originalFilename
     const mime = file.mimetype
     if (!(fileName?.toLowerCase().endsWith(".csv") || mime === "text/csv" || mime === "application/vnd.ms-excel")) {
-      throw createError("File must be a CSV file", 400, "INVALID_FILE_TYPE")
+      throw new BadRequestError("File must be a CSV file", "INVALID_FILE_TYPE")
     }
 
-    try {
-      // Read file content
-      let csvData = ""
-      if (hasMulterFile && file.buffer) {
-        csvData = file.buffer.toString("utf8")
-      } else if ((file as any).filepath) {
-        const fs = await import("fs")
-        csvData = await fs.promises.readFile((file as any).filepath, "utf8")
-      } else {
-        throw createError("Unable to read uploaded file", 400, "FILE_READ_ERROR")
-      }
+    // Read file content
+    let csvData = ""
+    if (hasMulterFile && file.buffer) {
+      csvData = file.buffer.toString("utf8")
+    } else if ((file as any).filepath) {
+      const fs = await import("fs")
+      csvData = await fs.promises.readFile((file as any).filepath, "utf8")
+    } else {
+      throw new BadRequestError("Unable to read uploaded file", "FILE_READ_ERROR")
+    }
 
-      // Generate preview with matching information
+    // Generate preview with matching information
       const result = await CsvImportService.previewCsvData(csvData)
 
       ctx.body = {
@@ -939,70 +863,8 @@ export class MedicalInstitutionController {
         validRows: result.validRows,
         invalidRows: result.invalidRows,
       })
-    } catch (error) {
-      logger.error("CSV preview failed", {
-        userId: ctx.state.user?.id,
-        error: (error as Error).message,
-        filename: fileName,
-      })
-      throw error
-    }
   }
 
-  /**
-   * GET /api/institutions/:id/collaboration
-   * Get collaboration data for a specific institution
-   */
-  static async getCollaborationData(ctx: Context) {
-    try {
-      const institutionId = ctx.params.id
-      const user = ctx.state.user as User
-
-      const data = await MedicalInstitutionAnalyticsService.getCollaborationData(
-        institutionId,
-        user.id
-      )
-
-      ctx.body = data
-    } catch (error) {
-      logger.error("Failed to get collaboration data", {
-        userId: ctx.state.user?.id,
-        institutionId: ctx.params.id,
-        error: (error as Error).message,
-      })
-      throw error
-    }
-  }
-
-  /**
-   * GET /api/institutions/:id/timeline
-   * Get timeline of all interactions for a specific institution
-   */
-  static async getTimeline(ctx: Context) {
-    try {
-      const institutionId = ctx.params.id
-      const user = ctx.state.user as User
-      const { limit = 50, offset = 0, startDate, endDate } = ctx.query
-
-      const data = await MedicalInstitutionAnalyticsService.getTimeline({
-        institutionId,
-        limit: Number(limit),
-        offset: Number(offset),
-        startDate: startDate ? new Date(startDate as string) : undefined,
-        endDate: endDate ? new Date(endDate as string) : undefined,
-        userId: user.id,
-      })
-
-      ctx.body = data
-    } catch (error) {
-      logger.error("Failed to get timeline", {
-        userId: ctx.state.user?.id,
-        institutionId: ctx.params.id,
-        error: (error as Error).message,
-      })
-      throw error
-    }
-  }
 
   /**
    * GET /api/institutions/search/unified
@@ -1023,7 +885,7 @@ export class MedicalInstitutionController {
       } = ctx.query
 
       if (!query) {
-        throw createError("Search query is required", 400, "QUERY_REQUIRED")
+        throw new BadRequestError("Search query is required", "QUERY_REQUIRED")
       }
 
       const searchTerm = String(query).trim()
@@ -1464,6 +1326,194 @@ export class MedicalInstitutionController {
   }
 
   /**
+   * GET /api/institutions/import/template
+   * Download CSV template for medical institutions
+   */
+  static async getImportTemplate(ctx: Context) {
+    const template = CsvImportService.getMedicalInstitutionTemplate()
+
+    ctx.set("Content-Type", "text/csv")
+    ctx.set("Content-Disposition", 'attachment; filename="institutions_import_template.csv"')
+    ctx.body = template
+  }
+
+
+  /**
+   * GET /api/institutions/:id/stats
+   * Get statistics for a medical institution
+   */
+  static async getInstitutionStats(ctx: Context) {
+    const { id } = ctx.params
+
+    if (!id) {
+      throw new BadRequestError("Institution ID is required")
+    }
+
+    const user = ctx.state.user as User
+    const collaborationData = await MedicalInstitutionAnalyticsService.getCollaborationData(id, user.id)
+
+    ctx.body = {
+      success: true,
+      data: collaborationData.stats,
+    }
+  }
+
+  /**
+   * GET /api/institutions/:id/revenue
+   * Get revenue analytics for a medical institution
+   */
+  static async getInstitutionRevenue(ctx: Context) {
+    const { id } = ctx.params
+    const { period, startDate, endDate } = ctx.query
+
+    if (!id) {
+      throw new BadRequestError("Institution ID is required")
+    }
+
+    const revenue = await InstitutionRevenueService.getRevenueAnalytics(id, {
+      period: period as any,
+      startDate: startDate ? new Date(startDate as string) : undefined,
+      endDate: endDate ? new Date(endDate as string) : undefined,
+    } as any)
+
+    ctx.body = {
+      success: true,
+      data: revenue,
+    }
+  }
+
+  /**
+   * GET /api/institutions/:id/activity
+   * Get activity timeline for a medical institution
+   */
+  static async getInstitutionActivity(ctx: Context) {
+    const { id } = ctx.params
+    const { page = 1, limit = 20, startDate, endDate } = ctx.query
+
+    if (!id) {
+      throw new BadRequestError("Institution ID is required")
+    }
+
+    const user = ctx.state.user as User
+    const activity = await MedicalInstitutionAnalyticsService.getTimeline({
+      institutionId: id,
+      limit: Number(limit),
+      offset: (Number(page) - 1) * Number(limit),
+      startDate: startDate ? new Date(startDate as string) : undefined,
+      endDate: endDate ? new Date(endDate as string) : undefined,
+      userId: user.id,
+    })
+
+    ctx.body = {
+      success: true,
+      data: activity,
+    }
+  }
+
+  /**
+   * GET /api/institutions/:id/contacts
+   * Get all contact persons for an institution
+   */
+  static async getInstitutionContacts(ctx: Context) {
+    const { id } = ctx.params
+
+    if (!id) {
+      throw new BadRequestError("Institution ID is required")
+    }
+
+    const contacts = await MedicalInstitutionService.getInstitutionContacts(id)
+
+    ctx.body = {
+      success: true,
+      data: contacts,
+    }
+  }
+
+  /**
+   * GET /api/institutions/:id/documents
+   * Get all documents for an institution
+   */
+  static async getInstitutionDocuments(ctx: Context) {
+    const { id } = ctx.params
+
+    if (!id) {
+      throw new BadRequestError("Institution ID is required")
+    }
+
+    const documents = await MedicalInstitutionService.getInstitutionDocuments(id)
+
+    ctx.body = {
+      success: true,
+      data: documents,
+    }
+  }
+
+  /**
+   * GET /api/institutions/:id/tasks
+   * Get all tasks for an institution
+   */
+  static async getInstitutionTasks(ctx: Context) {
+    const { id } = ctx.params
+    const { status } = ctx.query
+
+    if (!id) {
+      throw new BadRequestError("Institution ID is required")
+    }
+
+    const tasks = await MedicalInstitutionService.getInstitutionTasks(
+      id,
+      status as TaskStatus
+    )
+
+    ctx.body = {
+      success: true,
+      data: tasks,
+    }
+  }
+
+  /**
+   * GET /api/institutions/:id/notes
+   * Get all notes for an institution
+   */
+  static async getInstitutionNotes(ctx: Context) {
+    const { id } = ctx.params
+
+    if (!id) {
+      throw new BadRequestError("Institution ID is required")
+    }
+
+    const notes = await MedicalInstitutionService.getInstitutionNotes(id)
+
+    ctx.body = {
+      success: true,
+      data: notes,
+    }
+  }
+
+  /**
+   * GET /api/institutions/:id/audit-log
+   * Get audit log for an institution
+   */
+  static async getInstitutionAuditLog(ctx: Context) {
+    const { id } = ctx.params
+    const { page = 1, limit = 20 } = ctx.query
+
+    if (!id) {
+      throw new BadRequestError("Institution ID is required")
+    }
+
+    const auditLog = await MedicalInstitutionService.getInstitutionAuditLog(id, {
+      page: Number(page),
+      limit: Number(limit),
+    })
+
+    ctx.body = {
+      success: true,
+      data: auditLog,
+    }
+  }
+
+  /**
    * GET /api/institutions/:id/revenue
    * Get comprehensive revenue analytics for an institution
    */
@@ -1474,7 +1524,6 @@ export class MedicalInstitutionController {
 
       const analytics = await InstitutionRevenueService.getRevenueAnalytics(id, {
         months: months ? parseInt(months as string, 10) : 12,
-        includePaymentHistory: includePaymentHistory === "true",
       })
 
       ctx.body = {
@@ -1619,5 +1668,42 @@ export class MedicalInstitutionController {
       })
       throw error
     }
+  }
+
+  /**
+   * GET /api/institutions/:id/collaboration
+   * Get collaboration data for a specific institution
+   */
+  static async getCollaborationData(ctx: Context) {
+    const institutionId = ctx.params.id
+    const user = ctx.state.user as User
+
+    const data = await MedicalInstitutionAnalyticsService.getCollaborationData(
+      institutionId,
+      user.id
+    )
+
+    ctx.body = data
+  }
+
+  /**
+   * GET /api/institutions/:id/timeline
+   * Get timeline of all interactions for a specific institution
+   */
+  static async getTimeline(ctx: Context) {
+    const institutionId = ctx.params.id
+    const user = ctx.state.user as User
+    const { limit = 50, offset = 0, startDate, endDate } = ctx.query
+
+    const data = await MedicalInstitutionAnalyticsService.getTimeline({
+      institutionId,
+      limit: Number(limit),
+      offset: Number(offset),
+      startDate: startDate ? new Date(startDate as string) : undefined,
+      endDate: endDate ? new Date(endDate as string) : undefined,
+      userId: user.id,
+    })
+
+    ctx.body = data
   }
 }

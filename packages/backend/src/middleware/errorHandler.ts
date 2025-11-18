@@ -1,35 +1,47 @@
-import { Context, Next } from "../types/koa"
-import { logger } from "../utils/logger"
 import config from "../config/environment"
-
-export interface AppError extends Error {
-  status?: number
-  code?: string
-  details?: any
-}
+import { Context, Next } from "../types/koa"
+import { AppError } from "../utils/AppError"
+import { logger } from "../utils/logger"
 
 export const errorHandler = async (ctx: Context, next: Next) => {
   try {
     await next()
   } catch (err: any) {
-    const error = err as AppError
+    let error = err
 
-    // Set default error status and message
-    ctx.status = error.status || 500
+    // Convert unknown errors to AppError
+    if (!(error instanceof AppError)) {
+      error = new AppError(
+        err.message || "An unexpected error occurred",
+        err.status || 500,
+        err.code || "INTERNAL_SERVER_ERROR",
+        err.details || null
+      )
+      // Preserve original stack if available
+      if (err.stack) {
+        error.stack = err.stack
+      }
+    }
+
+    ctx.status = error.status
 
     const errorResponse = {
       error: {
-        code: error.code || "INTERNAL_SERVER_ERROR",
-        message: error.message || "An unexpected error occurred",
-        details: error.details || null,
+        code: error.code,
+        message: error.message,
+        details: error.details,
         timestamp: new Date().toISOString(),
         requestId: ctx.state.requestId || "unknown",
       },
     }
 
     // Log error details
-    logger.error("Request error", {
+    // Log 5xx errors as error, 4xx as warn/info
+    const logLevel = ctx.status >= 500 ? "error" : "warn"
+    
+    logger.log(logLevel, "Request error", {
       error: error.message,
+      code: error.code,
       stack: error.stack,
       status: ctx.status,
       method: ctx.method,
@@ -37,15 +49,16 @@ export const errorHandler = async (ctx: Context, next: Next) => {
       requestId: ctx.state.requestId,
       userAgent: ctx.get("User-Agent"),
       ip: ctx.ip,
+      userId: ctx.state.user?.id, // Log user ID if authenticated
     })
 
-    // Don't expose internal error details in production
-    if (ctx.status === 500 && process.env.NODE_ENV === "production") {
+    // Don't expose internal error details in production for 500 errors
+    if (ctx.status === 500 && config.env === "production") {
       errorResponse.error.message = "Internal server error"
       errorResponse.error.details = null
     }
 
-    // Ensure CORS headers on error responses (especially useful in development)
+    // Ensure CORS headers on error responses
     try {
       const allowOrigin = config.env === "development" ? "*" : config.cors.origin
       ctx.set("Access-Control-Allow-Origin", allowOrigin)
@@ -58,20 +71,19 @@ export const errorHandler = async (ctx: Context, next: Next) => {
 
     ctx.body = errorResponse
 
-    // Emit error event for monitoring
-    ctx.app.emit("error", error, ctx)
+    // Emit error event for monitoring if it's a 500
+    if (ctx.status >= 500) {
+      ctx.app.emit("error", error, ctx)
+    }
   }
 }
 
+// Deprecated: Use new AppError() or subclasses instead
 export const createError = (
   message: string,
   status: number = 500,
   code?: string,
   details?: any
 ): AppError => {
-  const error = new Error(message) as AppError
-  error.status = status
-  error.code = code
-  error.details = details
-  return error
+  return new AppError(message, status, code, details)
 }
