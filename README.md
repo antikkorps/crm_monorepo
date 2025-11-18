@@ -130,6 +130,12 @@ cd packages/frontend
 npx vue-i18n-extract report --vueFiles './src/**/*.{vue,ts,js}' --languageFiles './src/i18n/locales/fr.json'
 ```
 
+Pour les ajouter automatiquement :
+
+```bash
+cd packages/frontend && npx vue-i18n-extract --vueFiles './src/**/*.{vue,ts,js}' --languageFiles './src/i18n/locales/fr.json' --add
+```
+
 ## License
 
 Private - All rights reserved
