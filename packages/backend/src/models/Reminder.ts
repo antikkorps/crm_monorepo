@@ -19,7 +19,7 @@ export interface ReminderAttributes {
 }
 
 export interface ReminderCreationAttributes
-  extends Optional<ReminderAttributes, "id" | "createdAt" | "updatedAt"> {}
+  extends Optional<ReminderAttributes, "id" | "createdAt" | "updatedAt" | "isCompleted" | "priority"> {}
 
 export class Reminder
   extends Model<ReminderAttributes, ReminderCreationAttributes>

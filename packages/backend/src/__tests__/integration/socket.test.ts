@@ -1,9 +1,9 @@
 import { createServer } from "http"
 import Koa from "koa"
 import bodyParser from "koa-bodyparser"
-import Router from "koa-router"
+import Router from "@koa/router"
 import { AddressInfo } from "net"
-import { io as Client } from "socket.io-client"
+import { io as Client, Socket as ClientSocket } from "socket.io-client"
 import supertest from "supertest"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { SocketController } from "../../controllers/SocketController"
@@ -114,7 +114,7 @@ function createTestApp(): Koa {
 describe("Socket API Integration", () => {
   let app: Koa
   let httpServer: ReturnType<typeof createServer>
-  let request: supertest.SuperTest<supertest.Test>
+  let request: ReturnType<typeof supertest>
   let socketService: SocketService
   let serverAddress: string
   let clientSocket: ClientSocket
@@ -151,10 +151,10 @@ describe("Socket API Integration", () => {
     validToken = "valid-user-token"
     adminToken = "valid-admin-token"
 
-    // Setup AuthService mocks
+    // Setup AuthService mocks (cast to any to avoid type conflicts with mock User)
     vi.mocked(AuthService.getUserFromToken).mockImplementation((token) => {
-      if (token === validToken) return Promise.resolve(mockUser)
-      if (token === adminToken) return Promise.resolve(mockAdmin)
+      if (token === validToken) return Promise.resolve(mockUser as any)
+      if (token === adminToken) return Promise.resolve(mockAdmin as any)
       return Promise.reject(new Error("Invalid token"))
     })
 
@@ -246,9 +246,9 @@ describe("Socket API Integration", () => {
     })
 
     it("should handle user without team", async () => {
-      // Mock user without team
+      // Mock user without team (cast to any to avoid type conflicts)
       const userWithoutTeam = { ...mockUser, teamId: undefined }
-      vi.mocked(AuthService.getUserFromToken).mockResolvedValue(userWithoutTeam)
+      vi.mocked(AuthService.getUserFromToken).mockResolvedValue(userWithoutTeam as any)
 
       const response = await request
         .get("/api/socket/team/status")

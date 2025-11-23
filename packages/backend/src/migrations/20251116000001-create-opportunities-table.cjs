@@ -9,7 +9,7 @@ module.exports = {
         defaultValue: Sequelize.UUIDV4,
         primaryKey: true,
       },
-      institutionId: {
+      institution_id: {
         type: Sequelize.UUID,
         allowNull: false,
         references: {
@@ -19,7 +19,7 @@ module.exports = {
         onDelete: "CASCADE",
         onUpdate: "CASCADE",
       },
-      contactPersonId: {
+      contact_person_id: {
         type: Sequelize.UUID,
         allowNull: true,
         references: {
@@ -29,7 +29,7 @@ module.exports = {
         onDelete: "SET NULL",
         onUpdate: "CASCADE",
       },
-      assignedUserId: {
+      assigned_user_id: {
         type: Sequelize.UUID,
         allowNull: false,
         references: {
@@ -74,11 +74,11 @@ module.exports = {
         allowNull: false,
         defaultValue: 50,
       },
-      expectedCloseDate: {
+      expected_close_date: {
         type: Sequelize.DATE,
         allowNull: false,
       },
-      actualCloseDate: {
+      actual_close_date: {
         type: Sequelize.DATE,
         allowNull: true,
       },
@@ -92,11 +92,11 @@ module.exports = {
         allowNull: true,
         defaultValue: [],
       },
-      wonReason: {
+      won_reason: {
         type: Sequelize.TEXT,
         allowNull: true,
       },
-      lostReason: {
+      lost_reason: {
         type: Sequelize.TEXT,
         allowNull: true,
       },
@@ -113,32 +113,32 @@ module.exports = {
         type: Sequelize.STRING,
         allowNull: true,
       },
-      createdAt: {
+      created_at: {
         type: Sequelize.DATE,
         allowNull: false,
         defaultValue: Sequelize.literal("CURRENT_TIMESTAMP"),
       },
-      updatedAt: {
+      updated_at: {
         type: Sequelize.DATE,
         allowNull: false,
         defaultValue: Sequelize.literal("CURRENT_TIMESTAMP"),
       },
-      deletedAt: {
+      deleted_at: {
         type: Sequelize.DATE,
         allowNull: true,
       },
     })
 
     // Add indexes for common queries
-    await queryInterface.addIndex("opportunities", ["institutionId"], {
+    await queryInterface.addIndex("opportunities", ["institution_id"], {
       name: "opportunities_institution_id_idx",
     })
 
-    await queryInterface.addIndex("opportunities", ["contactPersonId"], {
+    await queryInterface.addIndex("opportunities", ["contact_person_id"], {
       name: "opportunities_contact_person_id_idx",
     })
 
-    await queryInterface.addIndex("opportunities", ["assignedUserId"], {
+    await queryInterface.addIndex("opportunities", ["assigned_user_id"], {
       name: "opportunities_assigned_user_id_idx",
     })
 
@@ -150,7 +150,7 @@ module.exports = {
       name: "opportunities_status_idx",
     })
 
-    await queryInterface.addIndex("opportunities", ["expectedCloseDate"], {
+    await queryInterface.addIndex("opportunities", ["expected_close_date"], {
       name: "opportunities_expected_close_date_idx",
     })
 
@@ -162,7 +162,7 @@ module.exports = {
       name: "opportunities_probability_idx",
     })
 
-    await queryInterface.addIndex("opportunities", ["createdAt"], {
+    await queryInterface.addIndex("opportunities", ["created_at"], {
       name: "opportunities_created_at_idx",
     })
   },

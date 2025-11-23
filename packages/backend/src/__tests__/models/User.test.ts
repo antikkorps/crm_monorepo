@@ -1,28 +1,14 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
-import { sequelize } from "../../config/database"
 import { Team } from "../../models/Team"
 import { User, UserRole } from "../../models/User"
 import { AvatarService } from "../../services/AvatarService"
 
 describe("User Model", () => {
   beforeEach(async () => {
-    try {
-      if (process.env.NODE_ENV === "test") {
-        // For pg-mem, just clean tables data without recreating schema
-        await User.destroy({ where: {}, force: true })
-        await Team.destroy({ where: {}, force: true })
-      } else {
-        await sequelize.sync({ force: true })
-      }
-    } catch (error) {
-      console.warn("Database cleanup warning:", error.message)
-      // Fallback: try sync without force
-      try {
-        await sequelize.sync()
-      } catch (syncError) {
-        console.warn("Database sync warning:", syncError.message)
-      }
-    }
+    // Database schema is handled by setup.ts
+    // Just clean up data between tests
+    await User.destroy({ where: {}, force: true })
+    await Team.destroy({ where: {}, force: true })
   })
 
   afterEach(async () => {
@@ -174,22 +160,23 @@ describe("User Model", () => {
     it("should generate avatar URL", () => {
       const avatarUrl = user.getAvatarUrl()
 
-      expect(avatarUrl).toContain("api.dicebear.com")
-      expect(avatarUrl).toContain(user.avatarSeed)
+      // Avatar URL uses local endpoint with user ID, not external DiceBear
+      expect(avatarUrl).toContain("/api/avatars/")
+      expect(avatarUrl).toContain(user.id)
     })
 
     it("should generate avatar URL with custom style", () => {
       const avatarUrl = user.getAvatarUrl("bottts")
 
       expect(avatarUrl).toContain("bottts")
-      expect(avatarUrl).toContain(user.avatarSeed)
+      expect(avatarUrl).toContain(user.id) // URL uses user ID, not avatarSeed
     })
 
     it("should get avatar metadata", () => {
       const metadata = user.getAvatarMetadata()
 
       expect(metadata.seed).toBe(user.avatarSeed)
-      expect(metadata.url).toContain(user.avatarSeed)
+      expect(metadata.url).toContain(user.id) // URL uses user ID
       expect(metadata.style).toBe("avataaars") // default style
     })
 
@@ -215,7 +202,7 @@ describe("User Model", () => {
       const userJson = user.toJSON()
 
       expect(userJson.avatarUrl).toBeDefined()
-      expect(userJson.avatarUrl).toContain(user.avatarSeed)
+      expect(userJson.avatarUrl).toContain(user.id) // URL uses user ID
       expect(userJson.passwordHash).toBeUndefined()
     })
   })

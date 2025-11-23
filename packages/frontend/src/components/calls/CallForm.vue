@@ -1,12 +1,8 @@
 <template>
-  <v-dialog
-    v-model="visible"
-    max-width="700px"
-    persistent
-  >
+  <v-dialog v-model="visible" max-width="700px" persistent>
     <v-card>
       <v-card-title>
-        {{ isEditing ? $t('calls.edit') : $t('calls.new') }}
+        {{ isEditing ? $t("calls.edit") : $t("calls.new") }}
       </v-card-title>
 
       <v-card-text class="call-form">
@@ -116,19 +112,11 @@
 
       <v-card-actions class="dialog-footer">
         <v-spacer />
-        <v-btn
-          color="secondary"
-          variant="outlined"
-          @click="handleCancel"
-        >
-          {{ $t('calls.cancel') }}
+        <v-btn color="secondary" variant="outlined" @click="handleCancel">
+          {{ $t("calls.cancel") }}
         </v-btn>
-        <v-btn
-          color="primary"
-          :loading="loading"
-          @click="handleSubmit"
-        >
-          {{ isEditing ? $t('calls.update') : $t('calls.create') }}
+        <v-btn color="primary" :loading="loading" @click="handleSubmit">
+          {{ isEditing ? $t("calls.update") : $t("calls.create") }}
         </v-btn>
       </v-card-actions>
     </v-card>
@@ -136,13 +124,13 @@
 </template>
 
 <script setup lang="ts">
-import { institutionsApi, contactsApi } from "@/services/api"
+import { institutionsApi } from "@/services/api"
 import { useInstitutionsStore } from "@/stores/institutions"
 import type {
   Call,
   CallCreateRequest,
-  CallUpdateRequest,
   CallType,
+  CallUpdateRequest,
 } from "@medical-crm/shared"
 import { computed, onMounted, ref, watch } from "vue"
 import { useI18n } from "vue-i18n"
@@ -167,7 +155,7 @@ const institutionsStore = useInstitutionsStore()
 
 const visible = computed({
   get: () => props.modelValue,
-  set: (value) => emit("update:modelValue", value)
+  set: (value) => emit("update:modelValue", value),
 })
 
 const formData = ref<CallCreateRequest & { duration?: number }>({
@@ -186,16 +174,18 @@ const loadingInstitutionsSearch = ref(false)
 const loadingContacts = ref(false)
 
 // Computed loading states
-const loadingInstitutions = computed(() => institutionsStore.loading || loadingInstitutionsSearch.value)
+const loadingInstitutions = computed(
+  () => institutionsStore.loading || loadingInstitutionsSearch.value
+)
 
 const isEditing = computed(() => !!props.call)
 
 const { t } = useI18n()
 
 const callTypeOptions = computed(() => [
-  { label: t('calls.direction.inbound'), value: "incoming" },
-  { label: t('calls.direction.outbound'), value: "outgoing" },
-  { label: t('calls.status.missed'), value: "missed" },
+  { label: t("calls.direction.inbound"), value: "incoming" },
+  { label: t("calls.direction.outbound"), value: "outgoing" },
+  { label: t("calls.status.missed"), value: "missed" },
 ])
 
 watch(
@@ -256,11 +246,11 @@ const validateForm = (): boolean => {
   errors.value = {}
 
   if (!formData.value.phoneNumber.trim()) {
-    errors.value.phoneNumber = t('calls.phoneNumberRequired')
+    errors.value.phoneNumber = t("calls.phoneNumberRequired")
   }
 
   if (!formData.value.callType) {
-    errors.value.callType = t('calls.callTypeRequired')
+    errors.value.callType = t("calls.callTypeRequired")
   }
 
   return Object.keys(errors.value).length === 0
@@ -281,7 +271,11 @@ const handleSubmit = () => {
   if (!submitData.contactPersonId) {
     delete submitData.contactPersonId
   }
-  if (submitData.duration === undefined || submitData.duration === null || submitData.duration === 0) {
+  if (
+    submitData.duration === undefined ||
+    submitData.duration === null ||
+    submitData.duration === 0
+  ) {
     delete submitData.duration
   }
 
@@ -303,7 +297,10 @@ const loadInstitutions = async () => {
         value: institution.id,
       }))
     } else {
-      console.warn("Institutions response is not an array:", institutionsStore.institutions)
+      console.warn(
+        "Institutions response is not an array:",
+        institutionsStore.institutions
+      )
       institutionOptions.value = []
     }
   } catch (error) {
@@ -315,15 +312,13 @@ const loadInstitutions = async () => {
 const loadContactsForInstitution = async (institutionId: string) => {
   try {
     loadingContacts.value = true
-    const response = await contactsApi.getByInstitution(institutionId)
-    const data = (response as any).data || response
+    // Get institution with its contacts
+    const response = await institutionsApi.getById(institutionId)
+    const institution =
+      (response as any).data?.institution || (response as any).data || response
 
-    let contactsArray: any[] = []
-    if (Array.isArray(data)) {
-      contactsArray = data
-    } else if (data && Array.isArray(data.contacts)) {
-      contactsArray = data.contacts
-    }
+    // Extract contacts from institution
+    const contactsArray = institution?.contactPersons || []
 
     contactOptions.value = contactsArray.map((contact: any) => ({
       label: `${contact.firstName} ${contact.lastName}`,

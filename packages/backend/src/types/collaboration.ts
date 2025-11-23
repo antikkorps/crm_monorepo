@@ -192,8 +192,9 @@ export class CollaborationValidation {
       throw new Error("Phone number is required")
     }
 
-    // Basic phone number validation - allows various formats
-    const phoneRegex = /^[\+]?[1-9][\d]{0,15}$/
+    // Basic phone number validation - allows various formats including French numbers (0X XX XX XX XX)
+    // Accepts: +33..., 0033..., 06..., 01..., etc.
+    const phoneRegex = /^[\+]?[\d]{1,15}$/
     const cleanPhone = phoneNumber.replace(/[\s\-\(\)\.]/g, "")
 
     if (!phoneRegex.test(cleanPhone)) {

@@ -16,24 +16,32 @@ process.env.JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || "test-refresh
 process.env.DB_HOST = process.env.DB_HOST || "localhost"
 process.env.DB_PORT = process.env.DB_PORT || "5432"
 
-// Initialize database connection and models once for all tests
-let isInitialized = false
-let sequelize: any
+// Use global to persist state across test files in the same process
+declare global {
+  // eslint-disable-next-line no-var
+  var __testDbInitialized: boolean | undefined
+  // eslint-disable-next-line no-var
+  var __testSequelize: any
+}
 
 beforeAll(async () => {
-  if (isInitialized) return
+  // Use global flag to ensure we only sync once across all test files
+  if (globalThis.__testDbInitialized) {
+    return
+  }
 
   try {
     const db = await import("../config/database")
-    sequelize = db.sequelize
+    globalThis.__testSequelize = db.sequelize
 
     // Import all models to ensure they're registered
     await import("../models")
 
-    // Sync database schema with force to ensure a clean state for each test run
-    await sequelize.sync({ force: true })
+    // Drop all tables first to ensure clean state, then recreate
+    await globalThis.__testSequelize.drop({ cascade: true })
+    await globalThis.__testSequelize.sync({ force: true })
 
-    isInitialized = true
+    globalThis.__testDbInitialized = true
     console.log("Test database initialized successfully")
   } catch (error) {
     console.error("Database initialization failed:", (error as Error).message)
@@ -41,8 +49,8 @@ beforeAll(async () => {
   }
 })
 
+// Don't close connection in afterAll - let it be reused across test files
+// The process will clean up when it exits
 afterAll(async () => {
-  if (sequelize) {
-    await sequelize.close()
-  }
+  // Connection cleanup is handled at process exit
 })
