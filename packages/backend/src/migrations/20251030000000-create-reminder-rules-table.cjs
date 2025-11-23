@@ -101,18 +101,24 @@ module.exports = {
         onUpdate: "CASCADE",
         onDelete: "SET NULL",
       },
-      createdAt: {
+      created_at: {
         type: Sequelize.DATE,
         allowNull: false,
+        defaultValue: Sequelize.literal("CURRENT_TIMESTAMP"),
       },
-      updatedAt: {
+      updated_at: {
         type: Sequelize.DATE,
         allowNull: false,
+        defaultValue: Sequelize.literal("CURRENT_TIMESTAMP"),
       },
     })
 
     // Create indexes for better performance
-    await queryInterface.addIndex("reminder_rules", ["entity_type", "trigger_type", "is_active"])
+    await queryInterface.addIndex("reminder_rules", [
+      "entity_type",
+      "trigger_type",
+      "is_active",
+    ])
     await queryInterface.addIndex("reminder_rules", ["team_id"])
     await queryInterface.addIndex("reminder_rules", ["created_by"])
   },

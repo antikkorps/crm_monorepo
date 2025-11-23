@@ -13,6 +13,8 @@ export default defineConfig({
         singleFork: true,
       },
     },
+    // Disable file parallelism to ensure sequential execution
+    fileParallelism: false,
     // Increase timeout for database operations
     testTimeout: 10000,
     // Coverage configuration

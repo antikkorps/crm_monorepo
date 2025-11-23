@@ -1,9 +1,9 @@
 import { ReminderPriority } from "@medical-crm/shared"
 import { Op } from "sequelize"
 import { sequelize } from "../../config/database"
-import { MedicalInstitution } from "../../models/MedicalInstitution"
-import { Reminder } from "../../models/Reminder"
-import { User, UserRole } from "../../models/User"
+// Import from models/index to ensure associations are already set up
+import { MedicalInstitution, Reminder, User } from "../../models"
+import { UserRole } from "../../models/User"
 
 describe("Reminder Model", () => {
   let testUser1: User
@@ -11,19 +11,10 @@ describe("Reminder Model", () => {
   let testInstitution: MedicalInstitution
 
   beforeAll(async () => {
-    // Only sync the models we need for this test
-    await User.sync({ force: true })
-    await Reminder.sync({ force: true })
-
-    // Define associations for testing
-    Reminder.belongsTo(User, {
-      foreignKey: "userId",
-      as: "user",
-    })
-    User.hasMany(Reminder, {
-      foreignKey: "userId",
-      as: "reminders",
-    })
+    // Database sync is handled by setup.ts
+    // Clean up any existing data before tests
+    await Reminder.destroy({ where: {}, force: true })
+    await User.destroy({ where: {}, force: true })
   })
 
   beforeEach(async () => {
@@ -35,6 +26,7 @@ describe("Reminder Model", () => {
       lastName: "Doe",
       role: UserRole.USER,
       avatarSeed: "test-seed-1",
+      avatarStyle: "avataaars",
       isActive: true,
     })
 
@@ -45,6 +37,7 @@ describe("Reminder Model", () => {
       lastName: "Smith",
       role: UserRole.USER,
       avatarSeed: "test-seed-2",
+      avatarStyle: "avataaars",
       isActive: true,
     })
 
@@ -81,7 +74,8 @@ describe("Reminder Model", () => {
       expect(reminder.reminderDate).toEqual(reminderDate)
       expect(reminder.isCompleted).toBe(false)
       expect(reminder.userId).toBe(testUser1.id)
-      expect(reminder.institutionId).toBe(testInstitution?.id)
+      // testInstitution is null in tests, so institutionId will be null (not undefined)
+      expect(reminder.institutionId).toBeNull()
       expect(reminder.priority).toBe(ReminderPriority.HIGH)
       expect(reminder.createdAt).toBeDefined()
       expect(reminder.updatedAt).toBeDefined()
@@ -100,8 +94,8 @@ describe("Reminder Model", () => {
       expect(reminder.userId).toBe(testUser1.id)
       expect(reminder.isCompleted).toBe(false) // Default value
       expect(reminder.priority).toBe(ReminderPriority.MEDIUM) // Default value
-      expect(reminder.description).toBeUndefined()
-      expect(reminder.institutionId).toBeUndefined()
+      expect(reminder.description).toBeNull() // Sequelize returns null for unset optional fields
+      expect(reminder.institutionId).toBeNull()
     })
 
     it("should fail to create reminder without required fields", async () => {
@@ -612,7 +606,7 @@ describe("Reminder Model", () => {
         title: "No Institution Reminder",
         reminderDate: new Date(Date.now() + 86400000),
         userId: testUser1.id,
-        institutionId: null,
+        // institutionId omitted - defaults to null in DB
       })
 
       expect(reminder.institutionId).toBeNull()

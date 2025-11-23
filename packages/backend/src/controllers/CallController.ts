@@ -4,7 +4,7 @@ import { ContactPerson } from "../models/ContactPerson"
 import { MedicalInstitution } from "../models/MedicalInstitution"
 import { User } from "../models/User"
 import { Context, Next } from "../types/koa"
-import { createError } from "../utils/logger"
+import { createError, logger } from "../utils/logger"
 
 export class CallController {
   /**
@@ -112,23 +112,18 @@ export class CallController {
    */
   public static async createCall(ctx: Context, _next: Next): Promise<void> {
     try {
-      const {
-        phoneNumber,
-        duration,
-        summary,
-        callType,
-        userId,
-        institutionId,
-        contactPersonId,
-      } = ctx.request.body as {
-        phoneNumber: string
-        duration?: number
-        summary?: string
-        callType: CallType
-        userId: string
-        institutionId?: string
-        contactPersonId?: string
-      }
+      const { phoneNumber, duration, summary, callType, institutionId, contactPersonId } =
+        ctx.request.body as {
+          phoneNumber: string
+          duration?: number
+          summary?: string
+          callType: CallType
+          institutionId?: string
+          contactPersonId?: string
+        }
+
+      // Get userId from authenticated user
+      const userId = ctx.state.user?.id
 
       // Validate required fields
       if (!phoneNumber || !callType || !userId) {
@@ -159,7 +154,15 @@ export class CallController {
       if (error.status === 400) {
         throw error
       }
-      throw createError("Failed to create call", 500, "CREATE_CALL_ERROR", { error })
+      logger.error("Failed to create call - detailed error:", {
+        error: error.message,
+        stack: error.stack,
+        details: error,
+      })
+      throw createError("Failed to create call", 500, "CREATE_CALL_ERROR", {
+        originalError: error.message,
+        details: error,
+      })
     }
   }
 

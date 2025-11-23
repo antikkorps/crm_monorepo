@@ -2,19 +2,18 @@
 
 module.exports = {
   up: async (queryInterface, Sequelize) => {
-    const { User } = require("../models/index")
-    const { ReminderRule } = require("../models/index")
-
     try {
-      // Find admin user
-      const adminUser = await User.findOne({
-        where: { email: "admin@medical-crm.com" },
-      })
+      // Find admin user using raw query
+      const [users] = await queryInterface.sequelize.query(
+        `SELECT id FROM users WHERE email = 'admin@medical-crm.com' LIMIT 1`
+      )
 
-      if (!adminUser) {
+      if (!users || users.length === 0) {
         console.warn("Admin user not found, skipping reminder rules creation")
         return
       }
+
+      const adminUser = users[0]
 
       const defaultRules = [
         // Task reminders
