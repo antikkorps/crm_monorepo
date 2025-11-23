@@ -52,5 +52,10 @@ beforeAll(async () => {
 // Don't close connection in afterAll - let it be reused across test files
 // The process will clean up when it exits
 afterAll(async () => {
-  // Connection cleanup is handled at process exit
+  // Explicitly close the Sequelize connection to avoid resource leaks in watch mode or reused processes
+  if (globalThis.__testSequelize) {
+    await globalThis.__testSequelize.close();
+    globalThis.__testDbInitialized = false;
+    globalThis.__testSequelize = undefined;
+  }
 })
