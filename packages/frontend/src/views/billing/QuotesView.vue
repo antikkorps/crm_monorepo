@@ -323,7 +323,7 @@ const deleteQuote = async (quote: Quote) => {
   }
 }
 
-const handleQuoteSaved = () => {
+const handleQuoteSaved = (quote: Quote) => {
   showBuilder.value = false
   selectedQuote.value = null
   loadQuotes()
