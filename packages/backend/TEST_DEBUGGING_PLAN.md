@@ -16,14 +16,14 @@ Résoudre les erreurs de tests identifiées dans la section 27 du plan d'implém
 
 ```typescript
 // ❌ Ligne 120-124 (incorrect)
-superAdminToken = AuthService.generateAccessToken(superAdminUser)
+superAdminToken = AuthService.generateAccessToken(superAdminUser.id)
 
 // ✅ Correction
-superAdminToken = AuthService.generateAccessToken(superAdminUser.id)
-teamAdminToken = AuthService.generateAccessToken(teamAdminUser.id)
-regularUserToken = AuthService.generateAccessToken(regularUser.id)
-teamMemberToken = AuthService.generateAccessToken(teamMember.id)
-otherUserToken = AuthService.generateAccessToken(otherUser.id)
+superAdminToken = AuthService.generateAccessToken(superAdminUser)
+teamAdminToken = AuthService.generateAccessToken(teamAdminUser)
+regularUserToken = AuthService.generateAccessToken(regularUser)
+teamMemberToken = AuthService.generateAccessToken(teamMember)
+otherUserToken = AuthService.generateAccessToken(otherUser)
 ```
 
 #### **Fichier : `src/__tests__/integration/institutions.test.ts`**
