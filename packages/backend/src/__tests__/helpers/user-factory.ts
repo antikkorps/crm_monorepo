@@ -20,7 +20,7 @@ export const createTestUser = async (options: UserFactoryOptions = {}) => {
     passwordHash: await User.hashPassword("password123"),
     firstName: "Test",
     lastName: "User",
-    role, // ✅ Garantit un rôle valide
+    role, // ✅ Ensures a valid role
     teamId,
     avatarSeed: `avatar-${Date.now()}`,
     avatarStyle: "initials",
