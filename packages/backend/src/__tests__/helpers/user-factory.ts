@@ -16,7 +16,7 @@ export const createTestUser = async (options: UserFactoryOptions = {}) => {
   } = options
 
   return await User.create({
-    email: `test-${Date.now()}-${Math.random().toString(36).substr(2, 9)}@example.com`,
+    email: `test-${Date.now()}-${Math.random().toString(36).substring(2, 11)}@example.com`,
     passwordHash: await User.hashPassword("password123"),
     firstName: "Test",
     lastName: "User",
