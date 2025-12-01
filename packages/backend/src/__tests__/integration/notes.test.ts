@@ -1,4 +1,4 @@
-import { SharePermission, InstitutionType } from "@medical-crm/shared"
+import { InstitutionType, SharePermission } from "@medical-crm/shared"
 import request from "supertest"
 import { createApp } from "../../app"
 import { sequelize } from "../../config/database"
@@ -683,7 +683,12 @@ describe("Note API Integration Tests", () => {
 
     it("should fail with invalid share recipient", async () => {
       const shareData = {
-        shares: [{ userId: "00000000-0000-0000-0000-000000000000", permission: SharePermission.READ }],
+        shares: [
+          {
+            userId: "00000000-0000-0000-0000-000000000000",
+            permission: SharePermission.READ,
+          },
+        ],
       }
 
       const response = await request(app.callback())
