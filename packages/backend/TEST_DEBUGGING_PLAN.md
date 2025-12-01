@@ -70,7 +70,7 @@ const token = jwt.sign(
 )
 
 // ✅ Correction - Utiliser AuthService pour cohérence
-const token = AuthService.generateAccessToken(user.id)
+const token = AuthService.generateAccessToken(user)
 ```
 
 ---
