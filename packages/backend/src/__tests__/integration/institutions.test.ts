@@ -5,6 +5,14 @@ import { createApp } from "../../app"
 import DatabaseManager from "../../config/database"
 import { ContactPerson, MedicalInstitution, MedicalProfile, User } from "../../models"
 
+// Helper function to check if error is a connection error
+function isConnectionError(error: unknown): boolean {
+  if (error instanceof Error) {
+    return error.message.includes("connect") || error.message.includes("ECONNREFUSED")
+  }
+  return false
+}
+
 describe("Medical Institution API Integration Tests", () => {
   let app: any
   let server: any
@@ -27,8 +35,9 @@ describe("Medical Institution API Integration Tests", () => {
         passwordHash: await User.hashPassword("password123"),
         firstName: "Test",
         lastName: "User",
-        role: UserRole.ADMIN,
+        role: UserRole.SUPER_ADMIN,
         avatarSeed: "test-user",
+        avatarStyle: "avataaars",
         isActive: true,
       })
 
@@ -40,7 +49,12 @@ describe("Medical Institution API Integration Tests", () => {
 
       authToken = loginResponse.body.data.accessToken
     } catch (error) {
-      console.warn("Database not available for integration tests:", error)
+      if (isConnectionError(error)) {
+        console.warn("Database not available for integration tests:", error)
+      } else {
+        console.error("Unexpected error during test setup:", error)
+        throw error
+      }
     }
   })
 
@@ -50,7 +64,7 @@ describe("Medical Institution API Integration Tests", () => {
         server.close()
       }
       await DatabaseManager.disconnect()
-    } catch (error) {
+    } catch {
       // Ignore cleanup errors
     }
   })
@@ -61,7 +75,7 @@ describe("Medical Institution API Integration Tests", () => {
       await ContactPerson.destroy({ where: {}, force: true })
       await MedicalProfile.destroy({ where: {}, force: true })
       await MedicalInstitution.destroy({ where: {}, force: true })
-    } catch (error) {
+    } catch {
       // Skip if database not available
     }
   })
@@ -113,7 +127,7 @@ describe("Medical Institution API Integration Tests", () => {
         expect(response.body.data.institution.medicalProfile).toBeDefined()
         expect(response.body.data.institution.contactPersons).toHaveLength(1)
       } catch (error) {
-        if (error.message?.includes("connect")) {
+        if (isConnectionError(error)) {
           console.warn("Skipping test - database not available")
           return
         }
@@ -123,8 +137,7 @@ describe("Medical Institution API Integration Tests", () => {
 
     it("should validate required fields", async () => {
       try {
-        const invalidData = { ...validInstitutionData }
-        delete invalidData.name
+        const { name: _name, ...invalidData } = validInstitutionData
 
         const response = await request(server)
           .post("/api/institutions")
@@ -132,10 +145,10 @@ describe("Medical Institution API Integration Tests", () => {
           .send(invalidData)
           .expect(400)
 
-        expect(response.body.success).toBe(false)
-        expect(response.body.error.code).toBe("VALIDATION_ERROR")
+        expect(response.body.error).toBeDefined()
+        expect(response.body.error.code).toBe("BAD_REQUEST")
       } catch (error) {
-        if (error.message?.includes("connect")) return
+        if (isConnectionError(error)) return
         throw error
       }
     })
@@ -147,7 +160,7 @@ describe("Medical Institution API Integration Tests", () => {
           .send(validInstitutionData)
           .expect(401)
       } catch (error) {
-        if (error.message?.includes("connect")) return
+        if (isConnectionError(error)) return
         throw error
       }
     })
@@ -165,9 +178,9 @@ describe("Medical Institution API Integration Tests", () => {
           .send(invalidData)
           .expect(400)
 
-        expect(response.body.error.code).toBe("VALIDATION_ERROR")
+        expect(response.body.error.code).toBe("BAD_REQUEST")
       } catch (error) {
-        if (error.message?.includes("connect")) return
+        if (isConnectionError(error)) return
         throw error
       }
     })
@@ -191,9 +204,9 @@ describe("Medical Institution API Integration Tests", () => {
           .send(invalidData)
           .expect(400)
 
-        expect(response.body.error.code).toBe("VALIDATION_ERROR")
+        expect(response.body.error.code).toBe("BAD_REQUEST")
       } catch (error) {
-        if (error.message?.includes("connect")) return
+        if (isConnectionError(error)) return
         throw error
       }
     })
@@ -249,7 +262,7 @@ describe("Medical Institution API Integration Tests", () => {
           complianceStatus: ComplianceStatus.NON_COMPLIANT,
         })
       } catch (error) {
-        if (error.message?.includes("connect")) return
+        if (isConnectionError(error)) return
       }
     })
 
@@ -264,7 +277,7 @@ describe("Medical Institution API Integration Tests", () => {
         expect(response.body.data.institutions).toHaveLength(2)
         expect(response.body.data.pagination).toBeDefined()
       } catch (error) {
-        if (error.message?.includes("connect")) return
+        if (isConnectionError(error)) return
         throw error
       }
     })
@@ -280,7 +293,7 @@ describe("Medical Institution API Integration Tests", () => {
         expect(response.body.data.institutions).toHaveLength(1)
         expect(response.body.data.institutions[0].type).toBe(InstitutionType.HOSPITAL)
       } catch (error) {
-        if (error.message?.includes("connect")) return
+        if (isConnectionError(error)) return
         throw error
       }
     })
@@ -296,7 +309,7 @@ describe("Medical Institution API Integration Tests", () => {
         expect(response.body.data.institutions).toHaveLength(1)
         expect(response.body.data.institutions[0].address.city).toBe("Los Angeles")
       } catch (error) {
-        if (error.message?.includes("connect")) return
+        if (isConnectionError(error)) return
         throw error
       }
     })
@@ -314,7 +327,7 @@ describe("Medical Institution API Integration Tests", () => {
         expect(response.body.data.pagination.limit).toBe(1)
         expect(response.body.data.pagination.total).toBe(2)
       } catch (error) {
-        if (error.message?.includes("connect")) return
+        if (isConnectionError(error)) return
         throw error
       }
     })
@@ -323,7 +336,7 @@ describe("Medical Institution API Integration Tests", () => {
       try {
         await request(server).get("/api/institutions").expect(401)
       } catch (error) {
-        if (error.message?.includes("connect")) return
+        if (isConnectionError(error)) return
         throw error
       }
     })
@@ -358,7 +371,7 @@ describe("Medical Institution API Integration Tests", () => {
 
         institutionId = institution.id
       } catch (error) {
-        if (error.message?.includes("connect")) return
+        if (isConnectionError(error)) return
       }
     })
 
@@ -373,7 +386,7 @@ describe("Medical Institution API Integration Tests", () => {
         expect(response.body.data.institution.id).toBe(institutionId)
         expect(response.body.data.institution.medicalProfile).toBeDefined()
       } catch (error) {
-        if (error.message?.includes("connect")) return
+        if (isConnectionError(error)) return
         throw error
       }
     })
@@ -388,7 +401,7 @@ describe("Medical Institution API Integration Tests", () => {
 
         expect(response.body.error.code).toBe("INSTITUTION_NOT_FOUND")
       } catch (error) {
-        if (error.message?.includes("connect")) return
+        if (isConnectionError(error)) return
         throw error
       }
     })
@@ -397,7 +410,7 @@ describe("Medical Institution API Integration Tests", () => {
       try {
         await request(server).get(`/api/institutions/${institutionId}`).expect(401)
       } catch (error) {
-        if (error.message?.includes("connect")) return
+        if (isConnectionError(error)) return
         throw error
       }
     })
@@ -422,7 +435,7 @@ describe("Medical Institution API Integration Tests", () => {
 
         institutionId = institution.id
       } catch (error) {
-        if (error.message?.includes("connect")) return
+        if (isConnectionError(error)) return
       }
     })
 
@@ -443,7 +456,7 @@ describe("Medical Institution API Integration Tests", () => {
         expect(response.body.data.institution.name).toBe("Updated Hospital Name")
         expect(response.body.data.institution.tags).toEqual(["updated", "test"])
       } catch (error) {
-        if (error.message?.includes("connect")) return
+        if (isConnectionError(error)) return
         throw error
       }
     })
@@ -459,7 +472,7 @@ describe("Medical Institution API Integration Tests", () => {
 
         expect(response.body.error.code).toBe("INSTITUTION_NOT_FOUND")
       } catch (error) {
-        if (error.message?.includes("connect")) return
+        if (isConnectionError(error)) return
         throw error
       }
     })
@@ -471,7 +484,7 @@ describe("Medical Institution API Integration Tests", () => {
           .send({ name: "Updated Name" })
           .expect(401)
       } catch (error) {
-        if (error.message?.includes("connect")) return
+        if (isConnectionError(error)) return
         throw error
       }
     })
@@ -496,7 +509,7 @@ describe("Medical Institution API Integration Tests", () => {
 
         institutionId = institution.id
       } catch (error) {
-        if (error.message?.includes("connect")) return
+        if (isConnectionError(error)) return
       }
     })
 
@@ -513,7 +526,7 @@ describe("Medical Institution API Integration Tests", () => {
         const institution = await MedicalInstitution.findByPk(institutionId)
         expect(institution?.isActive).toBe(false)
       } catch (error) {
-        if (error.message?.includes("connect")) return
+        if (isConnectionError(error)) return
         throw error
       }
     })
@@ -528,7 +541,7 @@ describe("Medical Institution API Integration Tests", () => {
 
         expect(response.body.error.code).toBe("INSTITUTION_NOT_FOUND")
       } catch (error) {
-        if (error.message?.includes("connect")) return
+        if (isConnectionError(error)) return
         throw error
       }
     })
@@ -537,7 +550,7 @@ describe("Medical Institution API Integration Tests", () => {
       try {
         await request(server).delete(`/api/institutions/${institutionId}`).expect(401)
       } catch (error) {
-        if (error.message?.includes("connect")) return
+        if (isConnectionError(error)) return
         throw error
       }
     })

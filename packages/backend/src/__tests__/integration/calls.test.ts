@@ -1,6 +1,6 @@
+import { CallType, InstitutionType } from "@medical-crm/shared"
 import request from "supertest"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
-import { CallType } from "@medical-crm/shared"
 import { createApp } from "../../app"
 import { sequelize } from "../../config/database"
 import { Call } from "../../models/Call"
@@ -41,19 +41,20 @@ describe("Calls API", () => {
     })
 
     // Generate tokens
-    adminToken = AuthService.generateAccessToken(adminUser.id, adminUser.role)
-    userToken = AuthService.generateAccessToken(regularUser.id, regularUser.role)
+    adminToken = AuthService.generateAccessToken(adminUser)
+    userToken = AuthService.generateAccessToken(regularUser)
 
     // Create test institution
     testInstitution = await MedicalInstitution.create({
       name: "Test Hospital",
-      type: "hospital",
-      address: "123 Test St",
-      city: "Test City",
-      state: "TS",
-      zipCode: "12345",
-      phone: "+1234567890",
-      email: "test@hospital.com",
+      type: InstitutionType.HOSPITAL,
+      address: {
+        street: "123 Test St",
+        city: "Test City",
+        state: "TS",
+        zipCode: "12345",
+        country: "US",
+      },
       isActive: true,
     })
 
@@ -64,6 +65,7 @@ describe("Calls API", () => {
       phone: "+1234567890",
       email: "john.doe@hospital.com",
       institutionId: testInstitution.id,
+      isPrimary: true,
       isActive: true,
     })
 
@@ -104,7 +106,9 @@ describe("Calls API", () => {
 
       expect(response.body.success).toBe(true)
       expect(response.body.data).toBeInstanceOf(Array)
-      expect(response.body.data.every((call: any) => call.userId === regularUser.id)).toBe(true)
+      expect(
+        response.body.data.every((call: any) => call.userId === regularUser.id)
+      ).toBe(true)
     })
 
     it("should filter calls by callType", async () => {
@@ -114,7 +118,9 @@ describe("Calls API", () => {
         .expect(200)
 
       expect(response.body.success).toBe(true)
-      expect(response.body.data.every((call: any) => call.callType === CallType.INCOMING)).toBe(true)
+      expect(
+        response.body.data.every((call: any) => call.callType === CallType.INCOMING)
+      ).toBe(true)
     })
 
     it("should filter calls by phoneNumber", async () => {
@@ -124,7 +130,9 @@ describe("Calls API", () => {
         .expect(200)
 
       expect(response.body.success).toBe(true)
-      expect(response.body.data.every((call: any) => call.phoneNumber.includes("1234567890"))).toBe(true)
+      expect(
+        response.body.data.every((call: any) => call.phoneNumber.includes("1234567890"))
+      ).toBe(true)
     })
 
     it("should filter calls by date range", async () => {
@@ -133,7 +141,9 @@ describe("Calls API", () => {
       yesterday.setDate(yesterday.getDate() - 1)
 
       const response = await request(app.callback())
-        .get(`/api/calls?dateFrom=${yesterday.toISOString()}&dateTo=${today.toISOString()}`)
+        .get(
+          `/api/calls?dateFrom=${yesterday.toISOString()}&dateTo=${today.toISOString()}`
+        )
         .set("Authorization", `Bearer ${adminToken}`)
         .expect(200)
 
@@ -153,9 +163,7 @@ describe("Calls API", () => {
     })
 
     it("should require authentication", async () => {
-      await request(app.callback())
-        .get("/api/calls")
-        .expect(401)
+      await request(app.callback()).get("/api/calls").expect(401)
     })
   })
 
@@ -180,9 +188,7 @@ describe("Calls API", () => {
     })
 
     it("should require authentication", async () => {
-      await request(app.callback())
-        .get(`/api/calls/${testCall.id}`)
-        .expect(401)
+      await request(app.callback()).get(`/api/calls/${testCall.id}`).expect(401)
     })
   })
 
@@ -263,10 +269,7 @@ describe("Calls API", () => {
         userId: regularUser.id,
       }
 
-      await request(app.callback())
-        .post("/api/calls")
-        .send(callData)
-        .expect(401)
+      await request(app.callback()).post("/api/calls").send(callData).expect(401)
     })
   })
 
@@ -307,7 +310,7 @@ describe("Calls API", () => {
         .put(`/api/calls/${testCall.id}`)
         .set("Authorization", `Bearer ${adminToken}`)
         .send(invalidUpdateData)
-        .expect(500) // Should catch validation error
+        .expect(400) // Validation returns 400 Bad Request
     })
 
     it("should require authentication", async () => {
@@ -340,9 +343,7 @@ describe("Calls API", () => {
     })
 
     it("should require authentication", async () => {
-      await request(app.callback())
-        .delete(`/api/calls/${testCall.id}`)
-        .expect(401)
+      await request(app.callback()).delete(`/api/calls/${testCall.id}`).expect(401)
     })
   })
 
@@ -355,13 +356,13 @@ describe("Calls API", () => {
 
       expect(response.body.success).toBe(true)
       expect(response.body.data).toBeInstanceOf(Array)
-      expect(response.body.data.every((call: any) => call.userId === regularUser.id)).toBe(true)
+      expect(
+        response.body.data.every((call: any) => call.userId === regularUser.id)
+      ).toBe(true)
     })
 
     it("should require authentication", async () => {
-      await request(app.callback())
-        .get(`/api/calls/user/${regularUser.id}`)
-        .expect(401)
+      await request(app.callback()).get(`/api/calls/user/${regularUser.id}`).expect(401)
     })
   })
 
@@ -374,7 +375,9 @@ describe("Calls API", () => {
 
       expect(response.body.success).toBe(true)
       expect(response.body.data).toBeInstanceOf(Array)
-      expect(response.body.data.every((call: any) => call.institutionId === testInstitution.id)).toBe(true)
+      expect(
+        response.body.data.every((call: any) => call.institutionId === testInstitution.id)
+      ).toBe(true)
     })
 
     it("should require authentication", async () => {
@@ -387,7 +390,7 @@ describe("Calls API", () => {
   describe("GET /api/calls/phone/:phoneNumber", () => {
     it("should get calls by phone number", async () => {
       const phoneNumber = encodeURIComponent("+1234567890")
-      
+
       const response = await request(app.callback())
         .get(`/api/calls/phone/${phoneNumber}`)
         .set("Authorization", `Bearer ${adminToken}`)
@@ -400,9 +403,7 @@ describe("Calls API", () => {
     it("should require authentication", async () => {
       const phoneNumber = encodeURIComponent("+1234567890")
 
-      await request(app.callback())
-        .get(`/api/calls/phone/${phoneNumber}`)
-        .expect(401)
+      await request(app.callback()).get(`/api/calls/phone/${phoneNumber}`).expect(401)
     })
   })
 
@@ -415,7 +416,9 @@ describe("Calls API", () => {
 
       expect(response.body.success).toBe(true)
       expect(response.body.data).toBeInstanceOf(Array)
-      expect(response.body.data.every((call: any) => call.callType === CallType.INCOMING)).toBe(true)
+      expect(
+        response.body.data.every((call: any) => call.callType === CallType.INCOMING)
+      ).toBe(true)
     })
 
     it("should validate call type", async () => {
@@ -439,7 +442,9 @@ describe("Calls API", () => {
       yesterday.setDate(yesterday.getDate() - 1)
 
       const response = await request(app.callback())
-        .get(`/api/calls/date-range?startDate=${yesterday.toISOString()}&endDate=${today.toISOString()}`)
+        .get(
+          `/api/calls/date-range?startDate=${yesterday.toISOString()}&endDate=${today.toISOString()}`
+        )
         .set("Authorization", `Bearer ${adminToken}`)
         .expect(200)
 
@@ -460,7 +465,9 @@ describe("Calls API", () => {
       tomorrow.setDate(tomorrow.getDate() + 1)
 
       await request(app.callback())
-        .get(`/api/calls/date-range?startDate=${tomorrow.toISOString()}&endDate=${today.toISOString()}`)
+        .get(
+          `/api/calls/date-range?startDate=${tomorrow.toISOString()}&endDate=${today.toISOString()}`
+        )
         .set("Authorization", `Bearer ${adminToken}`)
         .expect(400)
     })
@@ -478,7 +485,9 @@ describe("Calls API", () => {
       yesterday.setDate(yesterday.getDate() - 1)
 
       await request(app.callback())
-        .get(`/api/calls/date-range?startDate=${yesterday.toISOString()}&endDate=${today.toISOString()}`)
+        .get(
+          `/api/calls/date-range?startDate=${yesterday.toISOString()}&endDate=${today.toISOString()}`
+        )
         .expect(401)
     })
   })
@@ -548,9 +557,11 @@ describe("Calls API", () => {
         .expect(200)
 
       expect(response.body.success).toBe(true)
-      expect(response.body.data.some((call: any) => 
-        call.summary?.toLowerCase().includes("appointment")
-      )).toBe(true)
+      expect(
+        response.body.data.some((call: any) =>
+          call.summary?.toLowerCase().includes("appointment")
+        )
+      ).toBe(true)
     })
 
     it("should search calls by phone number partial match", async () => {
@@ -560,9 +571,9 @@ describe("Calls API", () => {
         .expect(200)
 
       expect(response.body.success).toBe(true)
-      expect(response.body.data.some((call: any) => 
-        call.phoneNumber.includes("987654")
-      )).toBe(true)
+      expect(
+        response.body.data.some((call: any) => call.phoneNumber.includes("987654"))
+      ).toBe(true)
     })
 
     it("should combine multiple filters", async () => {
@@ -572,9 +583,12 @@ describe("Calls API", () => {
         .expect(200)
 
       expect(response.body.success).toBe(true)
-      expect(response.body.data.every((call: any) => 
-        call.userId === regularUser.id && call.callType === CallType.MISSED
-      )).toBe(true)
+      expect(
+        response.body.data.every(
+          (call: any) =>
+            call.userId === regularUser.id && call.callType === CallType.MISSED
+        )
+      ).toBe(true)
     })
   })
 })

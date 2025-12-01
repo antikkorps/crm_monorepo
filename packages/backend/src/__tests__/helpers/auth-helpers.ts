@@ -1,7 +1,8 @@
 import jwt from "jsonwebtoken"
 import supertest from "supertest"
-import { createMockUser } from "./db-mock"
 import { UserRole } from "../../models/User"
+import { AuthService } from "../../services/AuthService"
+import { createMockUser } from "./db-mock"
 
 /**
  * Authentication helpers for testing
@@ -22,11 +23,7 @@ export const createAuthenticatedUser = async (
 ): Promise<TestUser> => {
   const user = await createMockUser({ role })
 
-  const token = jwt.sign(
-    { userId: user.id, email: user.email, role: user.role },
-    process.env.JWT_SECRET || "test-jwt-secret",
-    { expiresIn: "1h" }
-  )
+  const token = AuthService.generateAccessToken(user)
 
   return {
     id: user.id,
@@ -54,11 +51,16 @@ export const createTestUsers = async () => {
  */
 export const authenticatedRequest = (app: any, token: string) => {
   return {
-    get: (url: string) => supertest(app.callback()).get(url).set("Authorization", `Bearer ${token}`),
-    post: (url: string) => supertest(app.callback()).post(url).set("Authorization", `Bearer ${token}`),
-    put: (url: string) => supertest(app.callback()).put(url).set("Authorization", `Bearer ${token}`),
-    patch: (url: string) => supertest(app.callback()).patch(url).set("Authorization", `Bearer ${token}`),
-    delete: (url: string) => supertest(app.callback()).delete(url).set("Authorization", `Bearer ${token}`),
+    get: (url: string) =>
+      supertest(app.callback()).get(url).set("Authorization", `Bearer ${token}`),
+    post: (url: string) =>
+      supertest(app.callback()).post(url).set("Authorization", `Bearer ${token}`),
+    put: (url: string) =>
+      supertest(app.callback()).put(url).set("Authorization", `Bearer ${token}`),
+    patch: (url: string) =>
+      supertest(app.callback()).patch(url).set("Authorization", `Bearer ${token}`),
+    delete: (url: string) =>
+      supertest(app.callback()).delete(url).set("Authorization", `Bearer ${token}`),
   }
 }
 
