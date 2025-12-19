@@ -1,0 +1,83 @@
+import bcrypt from "bcryptjs"
+import { QueryTypes } from "sequelize"
+import { v4 as uuidv4 } from "uuid"
+import { sequelize } from "../config/database"
+import { logger } from "./logger"
+import config from "../config/environment"
+
+/**
+ * Result type for the COUNT query
+ * Database drivers may return count as either string or number depending on the value size
+ */
+interface CountQueryResult {
+  count: string | number
+}
+
+/**
+ * Initialize the first admin user if no users exist
+ * This runs automatically on application startup
+ */
+export async function initializeAdminUser(): Promise<void> {
+  try {
+    // Check if any users exist
+    // COUNT(*) queries always return exactly one row
+    const users = await sequelize.query<CountQueryResult>(
+      "SELECT COUNT(*) as count FROM users",
+      {
+        type: QueryTypes.SELECT,
+      }
+    )
+    const userCount = Number(users[0].count)
+
+    if (userCount > 0) {
+      logger.info(`Found ${userCount} existing users, skipping admin initialization`)
+      return
+    }
+
+    // Check if admin credentials are provided
+    if (!config.adminUser.email || !config.adminUser.password) {
+      logger.warn(
+        "⚠️  No users found in database and no ADMIN_EMAIL/ADMIN_PASSWORD configured."
+      )
+      logger.warn(
+        "   Set ADMIN_EMAIL and ADMIN_PASSWORD environment variables to auto-create the first admin user."
+      )
+      return
+    }
+
+    logger.info("No users found, creating initial admin user...")
+
+    // Hash the password
+    // 2024+ security standard: 12 rounds minimum for bcrypt
+    const passwordHash = await bcrypt.hash(config.adminUser.password, 12)
+
+    // Create the admin user via the ORM model so that validation and hooks run
+    const adminId = uuidv4()
+    const UserModel: any = (sequelize as any).models?.User
+
+    if (!UserModel || typeof UserModel.create !== "function") {
+      logger.error("User model is not available; unable to create initial admin user via ORM.")
+      return
+    }
+
+    await UserModel.create({
+      id: adminId,
+      email: config.adminUser.email,
+      // Assuming the User model maps this attribute to the password_hash column
+      passwordHash: passwordHash,
+      firstName: config.adminUser.firstName,
+      lastName: config.adminUser.lastName,
+      role: "super_admin",
+      // Assuming avatarSeed maps to avatar_seed column
+      avatarSeed: config.adminUser.email,
+      isActive: true,
+    })
+    logger.info("✅ Initial admin user created successfully")
+    logger.info(`   Email: ${config.adminUser.email}`)
+    logger.info("   Role: super_admin")
+    logger.info("   ⚠️  Please login and change your password immediately!")
+  } catch (error) {
+    logger.error("❌ Failed to initialize admin user", { error })
+    // Don't throw - let the app start even if admin creation fails
+  }
+}

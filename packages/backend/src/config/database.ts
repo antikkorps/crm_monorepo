@@ -32,48 +32,81 @@ if (config.env === "test") {
   })
 } else {
   // Production/development configuration
-  const dbConfig: Options = {
-    host: config.database.host,
-    port: config.database.port,
-    database: config.database.name,
-    username: config.database.user,
-    password: config.database.password,
-    dialect: "postgres",
+  if (config.database.url) {
+    // Use DATABASE_URL for cloud services (Neon, Supabase, Railway, etc.)
+    sequelize = new Sequelize(config.database.url, {
+      dialect: "postgres",
+      dialectOptions: {
+        ssl: config.database.ssl ? {
+          require: true,
+          rejectUnauthorized: false, // Required for Neon and most cloud providers
+        } : false,
+      },
+      pool: {
+        max: 10,
+        min: 0,
+        acquire: 30000,
+        idle: 10000,
+      },
+      logging:
+        config.env === "development"
+          ? (msg: string) => logger.debug(`Sequelize: ${msg}`)
+          : false,
+      define: {
+        timestamps: true,
+        underscored: true,
+        freezeTableName: true,
+      },
+      timezone: "+00:00",
+      retry: {
+        max: 3,
+      },
+    })
+  } else {
+    // Use individual variables for local Docker development
+    const dbConfig: Options = {
+      host: config.database.host,
+      port: config.database.port,
+      database: config.database.name,
+      username: config.database.user,
+      password: config.database.password,
+      dialect: "postgres",
 
-    // Connection pool configuration
-    pool: {
-      max: 10,
-      min: 0,
-      acquire: 30000,
-      idle: 10000,
-    },
+      // Connection pool configuration
+      pool: {
+        max: 10,
+        min: 0,
+        acquire: 30000,
+        idle: 10000,
+      },
 
-    // Logging configuration
-    // Note: Winston's console simple formatter ignores metadata args,
-    // so we must concatenate the SQL string into the message.
-    logging:
-      config.env === "development"
-        ? (msg: string) => logger.debug(`Sequelize: ${msg}`)
-        : false,
+      // Logging configuration
+      // Note: Winston's console simple formatter ignores metadata args,
+      // so we must concatenate the SQL string into the message.
+      logging:
+        config.env === "development"
+          ? (msg: string) => logger.debug(`Sequelize: ${msg}`)
+          : false,
 
-    // Additional options
-    define: {
-      timestamps: true,
-      underscored: true,
-      freezeTableName: true,
-    },
+      // Additional options
+      define: {
+        timestamps: true,
+        underscored: true,
+        freezeTableName: true,
+      },
 
-    // Timezone configuration
-    timezone: "+00:00",
+      // Timezone configuration
+      timezone: "+00:00",
 
-    // Retry configuration
-    retry: {
-      max: 3,
-    },
+      // Retry configuration
+      retry: {
+        max: 3,
+      },
+    }
+
+    // Create Sequelize instance
+    sequelize = new Sequelize(dbConfig)
   }
-
-  // Create Sequelize instance
-  sequelize = new Sequelize(dbConfig)
 }
 
 // Export the sequelize instance
@@ -98,11 +131,19 @@ export class DatabaseManager {
       await sequelize.authenticate()
       this.isConnected = true
       if (config.env !== "test") {
-        logger.info("Database connection established successfully", {
-          host: config.database.host,
-          port: config.database.port,
-          database: config.database.name,
-        })
+        if (config.database.url) {
+          logger.info("Database connection established successfully", {
+            mode: "DATABASE_URL",
+            ssl: config.database.ssl,
+          })
+        } else {
+          logger.info("Database connection established successfully", {
+            mode: "individual variables",
+            host: config.database.host,
+            port: config.database.port,
+            database: config.database.name,
+          })
+        }
       }
     } catch (error) {
       this.isConnected = false

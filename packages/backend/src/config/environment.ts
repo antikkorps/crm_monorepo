@@ -21,23 +21,48 @@ const envSchema = Joi.object({
   PORT: Joi.number().default(3001),
 
   // Database configuration
-  DB_HOST: Joi.string().default("localhost"),
-  DB_PORT: Joi.number().default(5432),
-  DB_NAME: Joi.string().when("NODE_ENV", {
-    is: "test",
-    then: Joi.string().default("test_db"),
-    otherwise: Joi.string().required(),
+  // Support both DATABASE_URL (for cloud services like Neon, Supabase, Railway)
+  // and individual variables (for local Docker development)
+  DATABASE_URL: Joi.string().uri().optional(),
+
+  DB_HOST: Joi.string().when("DATABASE_URL", {
+    is: Joi.exist(),
+    then: Joi.string().optional(),
+    otherwise: Joi.string().default("localhost"),
   }),
-  DB_USER: Joi.string().when("NODE_ENV", {
-    is: "test",
-    then: Joi.string().default("test_user"),
-    otherwise: Joi.string().required(),
+  DB_PORT: Joi.number().when("DATABASE_URL", {
+    is: Joi.exist(),
+    then: Joi.number().optional(),
+    otherwise: Joi.number().default(5432),
   }),
-  DB_PASSWORD: Joi.string().when("NODE_ENV", {
-    is: "test",
-    then: Joi.string().default("test_password"),
-    otherwise: Joi.string().required(),
+  DB_NAME: Joi.string().when("DATABASE_URL", {
+    is: Joi.exist(),
+    then: Joi.string().optional(),
+    otherwise: Joi.when("NODE_ENV", {
+      is: "test",
+      then: Joi.string().default("test_db"),
+      otherwise: Joi.string().required(),
+    }),
   }),
+  DB_USER: Joi.string().when("DATABASE_URL", {
+    is: Joi.exist(),
+    then: Joi.string().optional(),
+    otherwise: Joi.when("NODE_ENV", {
+      is: "test",
+      then: Joi.string().default("test_user"),
+      otherwise: Joi.string().required(),
+    }),
+  }),
+  DB_PASSWORD: Joi.string().when("DATABASE_URL", {
+    is: Joi.exist(),
+    then: Joi.string().optional(),
+    otherwise: Joi.when("NODE_ENV", {
+      is: "test",
+      then: Joi.string().default("test_password"),
+      otherwise: Joi.string().required(),
+    }),
+  }),
+  DB_SSL: Joi.boolean().truthy("true").truthy("1").falsy("false").falsy("0").default(false),
   DB_SYNC_ON_START: Joi.boolean().truthy("true").truthy("1").falsy("false").falsy("0").default(false),
 
   // JWT configuration
@@ -64,6 +89,12 @@ const envSchema = Joi.object({
   // Plugin configuration
   PLUGIN_DIRECTORY: Joi.string().optional(),
   PLUGIN_AUTO_ENABLE: Joi.boolean().default(true),
+
+  // Initial admin user (auto-created on first startup if no users exist)
+  ADMIN_EMAIL: Joi.string().email().optional(),
+  ADMIN_PASSWORD: Joi.string().min(8).optional(),
+  ADMIN_FIRST_NAME: Joi.string().default("Admin"),
+  ADMIN_LAST_NAME: Joi.string().default("User"),
 }).unknown()
 
 // Validate environment variables
@@ -73,18 +104,43 @@ if (error) {
   throw new Error(`Environment validation error: ${error.message}`)
 }
 
-export const config = {
-  env: envVars.NODE_ENV,
-  port: envVars.PORT,
+// Parse DATABASE_URL if provided (for cloud services like Neon)
+let databaseConfig: {
+  url?: string
+  host?: string
+  port?: number
+  name?: string
+  user?: string
+  password?: string
+  ssl?: boolean
+  syncOnStart: boolean
+}
 
-  database: {
+if (envVars.DATABASE_URL) {
+  // Use DATABASE_URL for cloud deployments
+  databaseConfig = {
+    url: envVars.DATABASE_URL,
+    ssl: envVars.DB_SSL,
+    syncOnStart: envVars.DB_SYNC_ON_START,
+  }
+} else {
+  // Use individual variables for local development
+  databaseConfig = {
     host: envVars.DB_HOST,
     port: envVars.DB_PORT,
     name: envVars.DB_NAME,
     user: envVars.DB_USER,
     password: envVars.DB_PASSWORD,
+    ssl: envVars.DB_SSL,
     syncOnStart: envVars.DB_SYNC_ON_START,
-  },
+  }
+}
+
+export const config = {
+  env: envVars.NODE_ENV,
+  port: envVars.PORT,
+
+  database: databaseConfig,
 
   jwt: {
     secret: envVars.JWT_SECRET,
@@ -104,6 +160,13 @@ export const config = {
   plugins: {
     directory: envVars.PLUGIN_DIRECTORY,
     autoEnable: envVars.PLUGIN_AUTO_ENABLE,
+  },
+
+  adminUser: {
+    email: envVars.ADMIN_EMAIL,
+    password: envVars.ADMIN_PASSWORD,
+    firstName: envVars.ADMIN_FIRST_NAME,
+    lastName: envVars.ADMIN_LAST_NAME,
   },
 }
 
