@@ -51,32 +51,27 @@ export async function initializeAdminUser(): Promise<void> {
     // 2024+ security standard: 12 rounds minimum for bcrypt
     const passwordHash = await bcrypt.hash(config.adminUser.password, 12)
 
-    // Create the admin user
+    // Create the admin user via the ORM model so that validation and hooks run
     const adminId = uuidv4()
-    await sequelize.query(
-      `
-      INSERT INTO users (
-        id, email, password_hash, first_name, last_name, role,
-        avatar_seed, is_active, created_at, updated_at
-      ) VALUES (
-        :id, :email, :password_hash, :first_name, :last_name, :role,
-        :avatar_seed, :is_active, NOW(), NOW()
-      )
-    `,
-      {
-        replacements: {
-          id: adminId,
-          email: config.adminUser.email,
-          password_hash: passwordHash,
-          first_name: config.adminUser.firstName,
-          last_name: config.adminUser.lastName,
-          role: "super_admin",
-          avatar_seed: config.adminUser.email,
-          is_active: true,
-        },
-      }
-    )
+    const UserModel: any = (sequelize as any).models?.User
 
+    if (!UserModel || typeof UserModel.create !== "function") {
+      logger.error("User model is not available; unable to create initial admin user via ORM.")
+      return
+    }
+
+    await UserModel.create({
+      id: adminId,
+      email: config.adminUser.email,
+      // Assuming the User model maps this attribute to the password_hash column
+      passwordHash: passwordHash,
+      firstName: config.adminUser.firstName,
+      lastName: config.adminUser.lastName,
+      role: "super_admin",
+      // Assuming avatarSeed maps to avatar_seed column
+      avatarSeed: config.adminUser.email,
+      isActive: true,
+    })
     logger.info("✅ Initial admin user created successfully")
     logger.info(`   Email: ${config.adminUser.email}`)
     logger.info("   Role: super_admin")
