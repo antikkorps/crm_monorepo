@@ -52,7 +52,9 @@ export class CommentController {
       // Notify meeting participants and organizer (except author)
       const participants = await MeetingParticipant.findByMeeting(meetingId)
       const recipientIds = new Set<string>()
-      for (const p of participants) recipientIds.add(p.userId)
+      for (const p of participants) {
+        if (p.userId) recipientIds.add(p.userId)
+      }
       const meeting = await Meeting.findByPk(meetingId)
       if (meeting) recipientIds.add(meeting.organizerId)
       recipientIds.delete(user.id)
@@ -66,7 +68,7 @@ export class CommentController {
           message: `${user.getFullName?.() || "Someone"} commented on "${meeting?.title || "meeting"}"`,
           data: { comment, meetingId },
           senderId: user.id,
-          senderName: user.getFullName?.(),
+          senderName: user.getFullName?.() ?? "Unknown User",
           actionUrl: `/meetings/${meetingId}`,
           actionText: "View Meeting",
         })
@@ -120,7 +122,9 @@ export class CommentController {
       const participants = await MeetingParticipant.findByMeeting(meetingId)
       const meeting = await Meeting.findByPk(meetingId)
       const recipientIds = new Set<string>()
-      for (const p of participants) recipientIds.add(p.userId)
+      for (const p of participants) {
+        if (p.userId) recipientIds.add(p.userId)
+      }
       if (meeting) recipientIds.add(meeting.organizerId)
       recipientIds.delete(user.id)
 
@@ -133,7 +137,7 @@ export class CommentController {
           message: `${user.getFullName?.() || "Someone"} updated a comment on "${meeting?.title || "meeting"}"`,
           data: { comment: updated, meetingId },
           senderId: user.id,
-          senderName: user.getFullName?.(),
+          senderName: user.getFullName?.() ?? "Unknown User",
           actionUrl: `/meetings/${meetingId}`,
           actionText: "View Meeting",
         })
@@ -176,7 +180,9 @@ export class CommentController {
       const participants = await MeetingParticipant.findByMeeting(meetingId)
       const meeting = await Meeting.findByPk(meetingId)
       const recipientIds = new Set<string>()
-      for (const p of participants) recipientIds.add(p.userId)
+      for (const p of participants) {
+        if (p.userId) recipientIds.add(p.userId)
+      }
       if (meeting) recipientIds.add(meeting.organizerId)
       recipientIds.delete(user.id)
 
@@ -189,7 +195,7 @@ export class CommentController {
           message: `${user.getFullName?.() || "Someone"} deleted a comment on "${meeting?.title || "meeting"}"`,
           data: { commentId, meetingId },
           senderId: user.id,
-          senderName: user.getFullName?.(),
+          senderName: user.getFullName?.() ?? "Unknown User",
           actionUrl: `/meetings/${meetingId}`,
           actionText: "View Meeting",
         })

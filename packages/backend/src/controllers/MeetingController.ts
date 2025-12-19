@@ -11,7 +11,7 @@ import { Meeting } from "../models/Meeting"
 import { MeetingParticipant } from "../models/MeetingParticipant"
 import { User } from "../models/User"
 import { ContactPerson } from "../models/ContactPerson"
-import { createEvents, EventAttributes } from "ics"
+import { createEvents, EventAttributes, Attendee } from "ics"
 import { EmailService } from "../services/EmailService"
 import logger from "../utils/logger"
 
@@ -614,7 +614,7 @@ export class MeetingController {
       }
 
       // Prepare attendees list
-      const attendees = meeting.participants?.map((p) => {
+      const attendees: Attendee[] = meeting.participants?.map((p) => {
         const isUser = !!p.user
         const firstName = isUser ? p.user?.firstName : p.contactPerson?.firstName
         const lastName = isUser ? p.user?.lastName : p.contactPerson?.lastName
@@ -625,7 +625,7 @@ export class MeetingController {
           email: email || "",
           rsvp: true,
           partstat: p.status.toUpperCase() as "ACCEPTED" | "DECLINED" | "TENTATIVE" | "NEEDS-ACTION",
-          role: "REQ-PARTICIPANT",
+          role: "REQ-PARTICIPANT" as const,
         }
       }) || []
 
@@ -634,8 +634,8 @@ export class MeetingController {
         name: `${meeting.organizer?.firstName || 'Unknown'} ${meeting.organizer?.lastName || 'Unknown'}`,
         email: meeting.organizer?.email || "",
         rsvp: true,
-        partstat: "ACCEPTED",
-        role: "CHAIR",
+        partstat: "ACCEPTED" as const,
+        role: "CHAIR" as const,
       })
 
       // Convert dates to ICS format [year, month, day, hour, minute]
@@ -767,7 +767,7 @@ export class MeetingController {
       }
 
       // Generate .ics file
-      const attendees = meeting.participants?.map((p) => {
+      const attendees: Attendee[] = meeting.participants?.map((p) => {
         const isUser = !!p.user
         const firstName = isUser ? p.user?.firstName : p.contactPerson?.firstName
         const lastName = isUser ? p.user?.lastName : p.contactPerson?.lastName
@@ -780,8 +780,8 @@ export class MeetingController {
           name: displayName,
           email: email || "",
           rsvp: true,
-          partstat: "NEEDS-ACTION",
-          role: "REQ-PARTICIPANT",
+          partstat: "NEEDS-ACTION" as const,
+          role: "REQ-PARTICIPANT" as const,
         }
       }) || []
 
@@ -791,8 +791,8 @@ export class MeetingController {
         name: organizerName,
         email: meeting.organizer?.email || "",
         rsvp: true,
-        partstat: "ACCEPTED",
-        role: "CHAIR",
+        partstat: "ACCEPTED" as const,
+        role: "CHAIR" as const,
       })
 
       const startDate = new Date(meeting.startDate)

@@ -38,7 +38,7 @@ export class MeetingNotificationService {
         return
       }
 
-      const participantIds = participantsToNotify.map(p => p.userId)
+      const participantIds = participantsToNotify.map(p => p.userId).filter((id): id is string => !!id)
 
       await this.notificationService.notifyUsers(participantIds, {
         type: NotificationType.MEETING_CREATED,
@@ -178,6 +178,7 @@ export class MeetingNotificationService {
         const otherParticipantIds = otherParticipants
           .filter(p => p.userId !== organizer.id)
           .map(p => p.userId)
+          .filter((id): id is string => !!id)
 
         if (otherParticipantIds.length > 0) {
           await this.notificationService.notifyUsers(otherParticipantIds, {
@@ -235,7 +236,7 @@ export class MeetingNotificationService {
         return
       }
 
-      const participantIds = participantsToNotify.map(p => p.userId)
+      const participantIds = participantsToNotify.map(p => p.userId).filter((id): id is string => !!id)
 
       await this.notificationService.notifyUsers(participantIds, {
         type: NotificationType.MEETING_UPDATED,
@@ -293,7 +294,7 @@ export class MeetingNotificationService {
         return
       }
 
-      const participantIds = participantsToNotify.map(p => p.userId)
+      const participantIds = participantsToNotify.map(p => p.userId).filter((id): id is string => !!id)
       const message = reason 
         ? `${cancelledBy.getFullName()} cancelled the meeting "${meeting.title}". Reason: ${reason}`
         : `${cancelledBy.getFullName()} cancelled the meeting "${meeting.title}"`
@@ -354,7 +355,7 @@ export class MeetingNotificationService {
         return
       }
 
-      const participantIds = participants.map(p => p.userId)
+      const participantIds = participants.map(p => p.userId).filter((id): id is string => !!id)
       const timeText = minutesUntilStart < 60 
         ? `${minutesUntilStart} minute${minutesUntilStart > 1 ? "s" : ""}`
         : `${Math.floor(minutesUntilStart / 60)} hour${Math.floor(minutesUntilStart / 60) > 1 ? "s" : ""}`
@@ -407,7 +408,7 @@ export class MeetingNotificationService {
         return
       }
 
-      const participantIds = participantsToNotify.map(p => p.userId)
+      const participantIds = participantsToNotify.map(p => p.userId).filter((id): id is string => !!id)
 
       await this.notificationService.notifyUsers(participantIds, {
         type: NotificationType.MEETING_COMMENT_ADDED,
@@ -466,7 +467,7 @@ export class MeetingNotificationService {
         return
       }
 
-      const participantIds = participantsToNotify.map(p => p.userId)
+      const participantIds = participantsToNotify.map(p => p.userId).filter((id): id is string => !!id)
 
       await this.notificationService.notifyUsers(participantIds, {
         type: NotificationType.MEETING_COMMENT_UPDATED,

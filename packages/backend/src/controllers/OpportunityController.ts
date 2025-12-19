@@ -715,7 +715,7 @@ export class OpportunityController {
       if (assignedUserId) filters.assignedUserId = assignedUserId as string
 
       // Apply team filtering for non-super admins
-      if (user.role !== "SUPER_ADMIN" && user.teamId) {
+      if (user.role !== UserRole.SUPER_ADMIN && user.teamId) {
         filters.teamId = user.teamId
       }
 
@@ -757,7 +757,7 @@ export class OpportunityController {
       if (assignedUserId) filters.assignedUserId = assignedUserId as string
 
       // Apply team filtering for non-super admins
-      if (user.role !== "SUPER_ADMIN" && user.teamId) {
+      if (user.role !== UserRole.SUPER_ADMIN && user.teamId) {
         filters.teamId = user.teamId
       }
 

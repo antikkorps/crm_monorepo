@@ -1,6 +1,6 @@
 import swaggerJsdoc from "swagger-jsdoc"
 import { koaSwagger } from "koa2-swagger-ui"
-import type { Application } from "koa"
+import type Koa from "koa"
 import Router from "@koa/router"
 
 /**
@@ -403,7 +403,7 @@ export const swaggerSpec = swaggerJsdoc(swaggerOptions)
 /**
  * Setup Swagger UI middleware
  */
-export function setupSwagger(app: Application) {
+export function setupSwagger(app: Koa) {
   const router = new Router()
 
   // Serve Swagger UI
@@ -412,7 +412,7 @@ export function setupSwagger(app: Application) {
     koaSwagger({
       routePrefix: false,
       swaggerOptions: {
-        spec: swaggerSpec,
+        spec: swaggerSpec as Record<string, unknown>,
       },
       title: "Medical CRM API Documentation",
       favicon: "/favicon.ico",
