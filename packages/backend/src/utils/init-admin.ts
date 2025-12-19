@@ -1,8 +1,16 @@
 import bcrypt from "bcryptjs"
+import { QueryTypes } from "sequelize"
 import { v4 as uuidv4 } from "uuid"
 import { sequelize } from "../config/database"
 import { logger } from "./logger"
 import config from "../config/environment"
+
+/**
+ * Result type for the COUNT query
+ */
+interface CountQueryResult {
+  count: string | number
+}
 
 /**
  * Initialize the first admin user if no users exist
@@ -11,8 +19,13 @@ import config from "../config/environment"
 export async function initializeAdminUser(): Promise<void> {
   try {
     // Check if any users exist
-    const [users] = await sequelize.query("SELECT COUNT(*) as count FROM users")
-    const userCount = Number.parseInt((users[0] as any).count)
+    const users = await sequelize.query<CountQueryResult>(
+      "SELECT COUNT(*) as count FROM users",
+      {
+        type: QueryTypes.SELECT,
+      }
+    )
+    const userCount = Number.parseInt(String(users[0].count))
 
     if (userCount > 0) {
       logger.info(`Found ${userCount} existing users, skipping admin initialization`)
