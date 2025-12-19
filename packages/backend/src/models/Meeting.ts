@@ -393,8 +393,8 @@ export class Meeting
             { [Op.or]: accessControlClause[Op.or] }
           ],
           // Include other keys from whereClause and accessControlClause except Op.or
-          ...Object.fromEntries(Object.entries(whereClause).filter(([k]) => k !== Op.or)),
-          ...Object.fromEntries(Object.entries(accessControlClause).filter(([k]) => k !== Op.or)),
+          ...Object.fromEntries(Object.entries(whereClause).filter(([k]) => k !== Op.or.toString())),
+          ...Object.fromEntries(Object.entries(accessControlClause).filter(([k]) => k !== Op.or.toString())),
         };
       } else {
         // Only one or neither has Op.or, merge as before

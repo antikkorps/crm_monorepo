@@ -83,14 +83,18 @@ export class InstitutionInsightsService {
       ])
 
       // Extract successful results or use empty arrays as defaults
-      const [quotes, invoices, meetings, calls, notes, opportunities] = results.map((result, index) => {
-        if (result.status === 'fulfilled') {
-          return result.value
-        } else {
-          // Log the specific error for debugging
+      const quotes = results[0].status === 'fulfilled' ? results[0].value : []
+      const invoices = results[1].status === 'fulfilled' ? results[1].value : []
+      const meetings = results[2].status === 'fulfilled' ? results[2].value : []
+      const calls = results[3].status === 'fulfilled' ? results[3].value : []
+      const notes = results[4].status === 'fulfilled' ? results[4].value : []
+      const opportunities = results[5].status === 'fulfilled' ? results[5].value : []
+
+      // Log any errors for debugging
+      results.forEach((result, index) => {
+        if (result.status === 'rejected') {
           const queryNames = ['Quote.findAll', 'Invoice.findAll', 'Meeting.findAll', 'Call.findAll', 'Note.findAll', 'Opportunity.findAll']
           logger.error(`Error in calculateLeadScore - ${queryNames[index]} for institution ${institutionId}:`, result.reason)
-          return []
         }
       })
 
@@ -323,14 +327,17 @@ export class InstitutionInsightsService {
       ])
 
       // Extract successful results or use empty arrays as defaults
-      const [quotes, invoices, opportunities, meetings, calls] = results.map((result, index) => {
-        if (result.status === 'fulfilled') {
-          return result.value
-        } else {
-          // Log the specific error for debugging
+      const quotes = results[0].status === 'fulfilled' ? results[0].value : []
+      const invoices = results[1].status === 'fulfilled' ? results[1].value : []
+      const opportunities = results[2].status === 'fulfilled' ? results[2].value : []
+      const meetings = results[3].status === 'fulfilled' ? results[3].value : []
+      const calls = results[4].status === 'fulfilled' ? results[4].value : []
+
+      // Log any errors for debugging
+      results.forEach((result, index) => {
+        if (result.status === 'rejected') {
           const queryNames = ['Quote.findAll', 'Invoice.findAll', 'Opportunity.findAll', 'Meeting.findAll', 'Call.findAll']
           logger.error(`Error in getNextBestActions - ${queryNames[index]} for institution ${institutionId}:`, result.reason)
-          return []
         }
       })
 
@@ -416,7 +423,7 @@ export class InstitutionInsightsService {
       // 4. NO RECENT CONTACT - Retention risk
       const lastContact = [
         ...meetings.map((m) => new Date(m.startDate)),
-        ...calls.map((c) => new Date(c.callDate)),
+        ...calls.map((c) => new Date(c.createdAt)),
       ].sort((a, b) => b.getTime() - a.getTime())[0]
 
       if (!lastContact || lastContact < thirtyDaysAgo) {

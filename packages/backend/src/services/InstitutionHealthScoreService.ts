@@ -2,7 +2,7 @@ import { MedicalInstitution } from "../models/MedicalInstitution"
 import { Meeting } from "../models/Meeting"
 import { Call } from "../models/Call"
 import { Note } from "../models/Note"
-import { Task } from "../models/Task"
+import { Task, TaskStatus } from "../models/Task"
 import { Reminder } from "../models/Reminder"
 import { Quote } from "../models/Quote"
 import { Invoice } from "../models/Invoice"
@@ -258,9 +258,9 @@ export class InstitutionHealthScoreService {
       // 4. ENGAGEMENT SCORE (20 points)
       // Based on task completion, reminders, and responsiveness
       const openTasks = tasks.filter(
-        (t) => t.status === "pending" || t.status === "in_progress" || t.status === "blocked"
+        (t) => t.status === TaskStatus.TODO || t.status === TaskStatus.IN_PROGRESS
       )
-      const completedTasks = tasks.filter((t) => t.status === "completed")
+      const completedTasks = tasks.filter((t) => t.status === TaskStatus.COMPLETED)
       const completionRate = tasks.length > 0 ? (completedTasks.length / tasks.length) * 100 : 0
 
       const pendingReminders = reminders.filter((r) => !r.isCompleted)
