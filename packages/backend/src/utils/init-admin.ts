@@ -25,7 +25,7 @@ export async function initializeAdminUser(): Promise<void> {
         type: QueryTypes.SELECT,
       }
     )
-    const userCount = Number.parseInt(String(users[0].count))
+    const userCount = Number(users[0].count)
 
     if (userCount > 0) {
       logger.info(`Found ${userCount} existing users, skipping admin initialization`)
@@ -46,7 +46,8 @@ export async function initializeAdminUser(): Promise<void> {
     logger.info("No users found, creating initial admin user...")
 
     // Hash the password
-    const passwordHash = await bcrypt.hash(config.adminUser.password, 10)
+    // 2024+ security standard: 12 rounds minimum for bcrypt
+    const passwordHash = await bcrypt.hash(config.adminUser.password, 12)
 
     // Create the admin user
     const adminId = uuidv4()
