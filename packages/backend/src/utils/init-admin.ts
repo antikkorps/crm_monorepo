@@ -33,7 +33,7 @@ export async function initializeAdminUser(): Promise<void> {
     logger.info("No users found, creating initial admin user...")
 
     // Hash the password
-    const passwordHash = await bcrypt.hash(config.adminUser.password, 10)
+    const passwordHash = await bcrypt.hash(config.adminUser.password, 12)
 
     // Create the admin user
     const adminId = uuidv4()
