@@ -29,8 +29,10 @@ export class EmailService {
   private transporter: nodemailer.Transporter
   private fromAddress: string
   private fromName: string
+  private enabled: boolean
 
   constructor() {
+    this.enabled = process.env.EMAIL_ENABLED === "true"
     this.fromAddress = process.env.EMAIL_FROM_ADDRESS || "noreply@medical-crm.com"
     this.fromName = process.env.EMAIL_FROM_NAME || "Medical CRM"
 
@@ -47,30 +49,47 @@ export class EmailService {
       },
     })
 
-    // Optional verification to help diagnose SMTP setup at runtime
-    this.transporter
-      .verify()
-      .then(() => {
-        logger.info("SMTP transporter verified", {
-          host: process.env.SMTP_HOST,
-          port: process.env.SMTP_PORT,
-          secure: process.env.SMTP_SECURE,
-          from: `${this.fromName} <${this.fromAddress}>`,
+    // Only verify SMTP connection if email is enabled
+    if (this.enabled) {
+      this.transporter
+        .verify()
+        .then(() => {
+          logger.info("SMTP transporter verified", {
+            host: process.env.SMTP_HOST,
+            port: process.env.SMTP_PORT,
+            secure: process.env.SMTP_SECURE,
+            from: `${this.fromName} <${this.fromAddress}>`,
+          })
         })
-      })
-      .catch((err) => {
-        logger.error("SMTP transporter verification failed", {
-          error: (err as Error).message,
-          host: process.env.SMTP_HOST,
-          port: process.env.SMTP_PORT,
-          secure: process.env.SMTP_SECURE,
+        .catch((err) => {
+          logger.error("SMTP transporter verification failed", {
+            error: (err as Error).message,
+            host: process.env.SMTP_HOST,
+            port: process.env.SMTP_PORT,
+            secure: process.env.SMTP_SECURE,
+          })
         })
-      })
+    } else {
+      logger.info("Email service disabled (EMAIL_ENABLED=false)")
+    }
   }
 
   public async sendEmail(options: EmailOptions): Promise<EmailDeliveryResult> {
     try {
       const recipients = Array.isArray(options.to) ? options.to : [options.to]
+
+      // Skip sending if email is disabled
+      if (!this.enabled) {
+        logger.debug("Email not sent (EMAIL_ENABLED=false)", {
+          recipients,
+          subject: options.subject,
+        })
+        return {
+          success: false,
+          error: "Email service is disabled",
+          recipients,
+        }
+      }
 
       const mailOptions = {
         from: `${this.fromName} <${this.fromAddress}>`,
