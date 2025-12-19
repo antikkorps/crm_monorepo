@@ -7,6 +7,7 @@ import config from "../config/environment"
 
 /**
  * Result type for the COUNT query
+ * Database drivers may return count as either string or number depending on the value size
  */
 interface CountQueryResult {
   count: string | number
@@ -19,6 +20,7 @@ interface CountQueryResult {
 export async function initializeAdminUser(): Promise<void> {
   try {
     // Check if any users exist
+    // COUNT(*) queries always return exactly one row
     const users = await sequelize.query<CountQueryResult>(
       "SELECT COUNT(*) as count FROM users",
       {
