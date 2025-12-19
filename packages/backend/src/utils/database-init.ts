@@ -2,6 +2,7 @@ import DatabaseManager from "../config/database"
 import { SystemSettings } from "../models/SystemSettings"
 import { logger } from "./logger"
 import { DatabaseSeeder } from "./seeder"
+import { initializeAdminUser } from "./init-admin"
 
 export async function initializeDatabase(
   options: {
@@ -31,6 +32,9 @@ export async function initializeDatabase(
     logger.info("Initializing system settings...")
     await SystemSettings.initializeDefaults()
     logger.info("System settings initialized")
+
+    // Auto-create first admin user if no users exist
+    await initializeAdminUser()
 
     // Seed database if requested
     if (seed) {

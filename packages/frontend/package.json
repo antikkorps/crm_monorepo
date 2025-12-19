@@ -44,6 +44,10 @@
     "vuetify": "^3.10.11",
     "winston": "^3.18.3"
   },
+  "engines": {
+    "node": ">=20.11.0",
+    "npm": ">=9.0.0"
+  },
   "devDependencies": {
     "@pinia/testing": "^1.0.3",
     "@types/koa": "^3.0.1",
