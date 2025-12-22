@@ -61,46 +61,18 @@ export default defineConfig({
         entryFileNames: 'assets/[name]-[hash].js',
         assetFileNames: 'assets/[name]-[hash].[ext]',
         manualChunks: (id) => {
-          // Core dependencies
+          // Simplified chunking to avoid circular dependencies
           if (id.includes('node_modules')) {
-            // Vue core
-            if (id.includes('vue') && !id.includes('vuetify')) {
-              if (id.includes('vue-router')) return 'vue-router'
-              if (id.includes('pinia')) return 'pinia'
-              if (id.includes('vue-i18n')) return 'vue-i18n'
-              if (id.includes('vue-chartjs')) return 'charts'
-              return 'vue'
-            }
-
-            // Vuetify in separate chunk
+            // Vuetify in separate chunk (large library)
             if (id.includes('vuetify')) {
               return 'vuetify'
             }
-
-            // Charts
-            if (id.includes('chart.js')) {
+            // Charts in separate chunk
+            if (id.includes('chart.js') || id.includes('vue-chartjs')) {
               return 'charts'
             }
-
-            // HTTP & Socket
-            if (id.includes('axios') || id.includes('socket.io-client')) {
-              return 'utils'
-            }
-
-            // Other vendor code
+            // All other vendor code together
             return 'vendor'
-          }
-
-          // Group views by feature
-          if (id.includes('/views/')) {
-            if (id.includes('/segmentation/')) return 'segmentation'
-            if (id.includes('/tasks/')) return 'tasks'
-            if (id.includes('/team/')) return 'team'
-            if (id.includes('/billing/')) return 'billing'
-            if (id.includes('/export/')) return 'export'
-            if (id.includes('/webhooks/')) return 'webhooks'
-            if (id.includes('/templates/')) return 'templates'
-            if (id.includes('/settings/')) return 'settings'
           }
         }
       }
