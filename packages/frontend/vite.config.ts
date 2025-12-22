@@ -37,6 +37,14 @@ export default defineConfig({
       },
     },
   },
+  preview: {
+    port: 3000,
+    host: '0.0.0.0',
+    allowedHosts: [
+      'mvo-crm.up.railway.app',
+      '.railway.app', // Allow all Railway subdomains
+    ],
+  },
   build: {
     // Target modern browsers for smaller bundle
     target: 'es2020',
