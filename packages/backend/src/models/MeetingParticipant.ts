@@ -1,10 +1,18 @@
 import { ParticipantStatus } from "@medical-crm/shared"
-import { DataTypes, Model, Optional } from "sequelize"
+import { DataTypes, Model, Optional, InstanceUpdateOptions } from "sequelize"
 import { sequelize } from "../config/database"
 import { CollaborationValidation } from "../types/collaboration"
 import { User } from "./User"
-import { ContactPerson } from "./ContactPerson"
+import { ContactPerson, type ContactPersonAttributes } from "./ContactPerson"
 import type { Meeting } from "./Meeting"
+import { logger } from "../utils/logger"
+
+/**
+ * Extended options for sync operations to prevent auto-lock
+ */
+interface SyncOptions {
+  context?: { isSync: boolean }
+}
 
 export interface MeetingParticipantAttributes {
   id: string
@@ -486,6 +494,42 @@ MeetingParticipant.init(
             previousStatus,
             participant.status
           )
+        }
+      },
+
+      /**
+       * Auto-lock contact person when added as meeting participant
+       */
+      afterCreate: async (participant: MeetingParticipant, options) => {
+        if (participant.contactPersonId) {
+          try {
+            const contact = await ContactPerson.findByPk(participant.contactPersonId)
+
+            if (contact && !contact.isLocked) {
+              const updateOptions: InstanceUpdateOptions<ContactPersonAttributes> & SyncOptions = {
+                transaction: options.transaction,
+                context: { isSync: true }
+              }
+
+              await contact.update({
+                isLocked: true,
+                lockedAt: new Date(),
+                lockedReason: 'meeting_participant_added'
+              }, updateOptions)
+
+              logger.info('Contact auto-locked after being added as meeting participant', {
+                contactId: contact.id,
+                contactEmail: contact.email,
+                meetingId: participant.meetingId
+              })
+            }
+          } catch (error) {
+            logger.error('Failed to auto-lock contact after meeting participant creation', {
+              contactPersonId: participant.contactPersonId,
+              meetingId: participant.meetingId,
+              error: (error as Error).message
+            })
+          }
         }
       },
     },

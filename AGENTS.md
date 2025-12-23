@@ -64,6 +64,11 @@ This is a **B2B CRM** for selling to medical institutions (clinics, hospitals, m
 - Strict mode: `noImplicitAny`, `strictNullChecks`, `strictFunctionTypes`
 - Explicit types for parameters/returns, prefer interfaces over types
 - Use `readonly` for immutable properties
+- **NEVER use `any`**: Create proper type extensions instead
+  - ❌ BAD: `context: { isSync: true } } as any)`
+  - ✅ GOOD: `interface SyncUpdateOptions<T> extends UpdateOptions<T> { context?: { isSync: boolean } }`
+  - For Sequelize options, extend `UpdateOptions<T>` or `CreateOptions<T>`
+  - For unknown external data, use `unknown` and type guards
 
 ### Imports & Naming
 - Group imports: external → internal packages → relative
@@ -84,6 +89,24 @@ This is a **B2B CRM** for selling to medical institutions (clinics, hospitals, m
 - JWT auth with access/refresh tokens
 - Winston logging, Joi validation
 - Error handling: custom middleware + try/catch
+
+#### Sequelize & Migrations
+- **CRITICAL**: When adding new fields to models (especially ENUMs), ALWAYS use migrations
+- **NEVER rely on sync mode** - Sequelize sync generates invalid SQL for ENUMs with syntax errors like:
+  ```sql
+  DO 'BEGIN CREATE TYPE "enum_..." AS ENUM(...); END';ALTER TABLE...';
+  ```
+  (note the incorrect quotes causing position errors)
+- Workflow for schema changes:
+  1. Create migration file (`src/migrations/YYYYMMDDHHMMSS-description.cjs`)
+  2. Test migration with `npm run db:migrate`
+  3. Update model TypeScript files
+  4. NEVER start server before running migrations
+- If Sequelize fails to start with "Database synchronization failed" and SQL syntax errors:
+  - Stop the server
+  - Run `npm run db:migrate` to apply migrations
+  - Then start server
+- Common error pattern: `SequelizeDatabaseError: syntax error at or near "END"` means sync tried to create ENUMs - use migrations instead
 
 ### Testing
 - Vitest framework, mock external deps

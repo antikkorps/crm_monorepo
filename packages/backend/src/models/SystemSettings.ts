@@ -129,15 +129,19 @@ export class SystemSettings
       },
     ]
 
-    // Execute all findOrCreate operations in parallel for better performance
-    await Promise.all(
-      defaults.map(setting =>
-        SystemSettings.findOrCreate({
+    // Execute all findOrCreate operations without transaction to avoid conflicts
+    for (const setting of defaults) {
+      try {
+        await SystemSettings.findOrCreate({
           where: { key: setting.key },
           defaults: setting,
+          transaction: null as any, // Force no transaction
         })
-      )
-    )
+      } catch (error) {
+        // If setting already exists, ignore the error
+        console.error(`Failed to initialize setting ${setting.key}:`, error)
+      }
+    }
   }
 }
 

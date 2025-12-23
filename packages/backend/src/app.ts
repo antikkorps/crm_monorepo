@@ -19,6 +19,7 @@ import filterOptionsRoutes from "./routes/filterOptions"
 import institutionRoutes from "./routes/institutions"
 import invoiceRoutes from "./routes/invoices"
 import exportRoutes from "./routes/export"
+import importRoutes from "./routes/import"
 import noteRoutes from "./routes/notes"
 import meetingRoutes from "./routes/meetings"
 import opportunityRoutes from "./routes/opportunities"
@@ -176,6 +177,10 @@ export const createApp = (): Koa => {
   // Apply export routes
   app.use(exportRoutes.routes())
   app.use(exportRoutes.allowedMethods())
+
+  // Apply import routes
+  app.use(importRoutes.routes())
+  app.use(importRoutes.allowedMethods())
 
   // Apply filter options routes
   app.use(filterOptionsRoutes.routes())

@@ -166,10 +166,11 @@
     - **Maintenance:** Intégrée au système de rappels existant
 
     **Activation simple:**
+
     ```env
     ENABLE_EMAIL_REMINDERS=true
     SMTP_HOST=votre-serveur-smtp
-    SMTP_USER=votre-username  
+    SMTP_USER=votre-username
     SMTP_PASS=votre-password
     ```
 
@@ -502,13 +503,16 @@
   **Estimate:** 8-12 heures
 
   **Tests Created:**
+
   - ✅ HealthController.test.ts - Comprehensive health check endpoint tests
+
     - Basic, detailed, ready, and live endpoint tests
     - Database connectivity tests
     - Memory usage monitoring tests
     - Error handling and edge cases
 
   - ✅ TaskController.test.ts - Complete CRUD operations and permissions
+
     - GET /api/tasks - List with filtering, pagination, role-based access
     - GET /api/tasks/:id - Single task retrieval and permissions
     - POST /api/tasks - Task creation with validation
@@ -517,6 +521,7 @@
     - GET /api/tasks/assigned/:userId - User tasks filtering
 
   - ✅ DashboardController.test.ts - Dashboard metrics and analytics
+
     - GET /api/dashboard/metrics - Comprehensive metrics
     - GET /api/dashboard/activities - Recent activities timeline
     - GET /api/dashboard/alerts - Smart alerts detection
@@ -524,6 +529,7 @@
     - Period filtering and role-based data access
 
   - ✅ SecurityLogService.test.ts - Security logging and compliance
+
     - IP address extraction from various headers
     - User agent parsing
     - Authentication success/failure logging
@@ -540,12 +546,14 @@
     - Edge cases (zero amounts, decimals, large numbers)
 
   **Coverage Improvements:**
+
   - Controllers: +3 controllers tested (HealthController, TaskController, DashboardController)
   - Services: +2 services tested (SecurityLogService, ConsolidatedRevenueService)
   - Total new test files: 5
   - Estimated test cases: ~150+ tests
 
   **Next Steps:**
+
   - Add tests for remaining controllers (MeetingController, InvoiceController, etc.)
   - Add tests for remaining services (SageService, DigiformaService, etc.)
   - Run full test suite with coverage report
@@ -592,16 +600,18 @@
   **Implémentation:**
 
   1. **Vuetify Tree-Shaking** ✅
+
      - Créé `src/plugins/vuetify.ts` avec imports explicites (~80 composants)
      - Vuetify gzippé: 100KB (vs wildcard import)
      - Configuration avec defaults pour densité et variants
 
   2. **Code Splitting et Lazy Loading** ✅
+
      - Chunks intelligents par feature:
-       * billing: 215KB (gzip: 55KB)
-       * tasks, team: 35KB chacun
-       * segmentation: 59KB
-       * settings, export, webhooks: chunks séparés
+       - billing: 215KB (gzip: 55KB)
+       - tasks, team: 35KB chacun
+       - segmentation: 59KB
+       - settings, export, webhooks: chunks séparés
      - Dépendances séparées: vue-router, pinia, charts, utils
 
   3. **Build Optimizations** ✅
@@ -611,12 +621,14 @@
      - optimizeDeps pour dev startup rapide
 
   **Résultats:**
+
   - ✅ 10+ chunks feature-specific (lazy loading)
   - ✅ Build rapide: 13.5s
   - ✅ Better browser caching (hashed chunks)
   - ✅ Smaller initial load
 
   **Fichiers:**
+
   - `packages/frontend/src/plugins/vuetify.ts` (NEW)
   - `packages/frontend/src/main.ts` (REFACTORED)
   - `packages/frontend/vite.config.ts` (OPTIMIZED)
@@ -700,6 +712,7 @@
     - _Requirements: 7.1, 8.1, 10.1_
 
     **✅ IMPLÉMENTATION RÉALISÉE (2025-11-11):**
+
     - ✅ Backend DashboardController avec métriques complètes
     - ✅ Frontend DashboardView avec données dynamiques
     - ✅ Filtrage basé sur les rôles (SUPER_ADMIN/TEAM_ADMIN/USER)
@@ -724,6 +737,7 @@
     - _Requirements: 3.1, 5.1, 9.3_
 
     **✅ IMPLÉMENTATION RÉALISÉE (2025-11-11):**
+
     - ✅ Backend endpoint: `GET /api/dashboard/activities`
     - ✅ Frontend widget: `TimelineWidget.vue`
     - ✅ Filtrage par type et pagination
@@ -740,6 +754,7 @@
     - _Requirements: 3.2, 3.3, 11.1_
 
     **✅ IMPLÉMENTATION RÉALISÉE (2025-11-11):**
+
     - ✅ Backend endpoint: `GET /api/dashboard/alerts`
     - ✅ Frontend widget: `SmartAlertsWidget.vue`
     - ✅ Système de priorités (critical, warning, info)
@@ -755,6 +770,7 @@
     - _Requirements: 10.1, 10.2_
 
     **✅ IMPLÉMENTATION RÉALISÉE (2025-11-11):**
+
     - ✅ Backend endpoint: `GET /api/dashboard/quick-actions`
     - ✅ Frontend widget: `QuickActionsWidget.vue`
     - ✅ 6 catégories (urgent, finance, sales, planning, analytics, general)
@@ -771,6 +787,7 @@
     - _Requirements: 2.5, 8.2_
 
     **✅ IMPLÉMENTATION RÉALISÉE (2025-11-11):**
+
     - ✅ Frontend widget: `KPIChartsWidget.vue`
     - ✅ 4 graphiques (Revenue line, Clients bar, Conversion doughnut, Tasks line)
     - ✅ Sélecteur de période (7j/30j/90j)
@@ -778,6 +795,7 @@
     - ✅ Fichier: `packages/frontend/src/components/dashboard/KPIChartsWidget.vue`
 
   **ÉTAT FINAL:** ✅ Dashboard dynamique complètement opérationnel
+
   - **Commits:** 3 commits pushés vers `claude/review-crm-tasks-011CUzdpdGjqQnfJXTYt3Aeq`
   - **Impact:** Dashboard moderne avec métriques temps réel et widgets interactifs
 
@@ -870,6 +888,7 @@
   - [x] 23.1 Refine and complete Quotes/Invoices UI ✅ **COMPLÉTÉ**
 
     **Améliorations implémentées (2025-11-11)**:
+
     - ✅ **Support des templates pour les factures** : Ajout du sélecteur de template dans InvoiceForm.vue
     - ✅ **Harmonisation de DocumentActions.vue** : Conversion complète de PrimeVue vers Vuetify
     - ✅ **Système de relances fonctionnel** : Payment reminders entièrement implémenté
@@ -877,12 +896,14 @@
     - ✅ **Meilleure UX** : Grid responsive Vuetify, densité compact pour les formulaires
 
     **Problèmes résolus**:
+
     - Templates devis/factures maintenant correctement pris en compte lors de la génération PDF
     - InvoiceForm utilise maintenant le même système de templates que QuoteBuilder
     - DocumentActions migré vers Vuetify (plus de PrimeVue dans les composants de facturation)
     - Interface cohérente entre création de devis et création de factures
 
     **Fichiers modifiés**:
+
     - `packages/frontend/src/components/billing/InvoiceForm.vue`
     - `packages/frontend/src/components/billing/DocumentActions.vue`
 
@@ -902,6 +923,7 @@
   - [x] 23.2 Refine and complete Notifications UI ✅ **COMPLÉTÉ**
 
     **Améliorations implémentées (2025-11-11)**:
+
     - ✅ Conversion complète de PrimeVue → Vuetify pour cohérence
     - ✅ NotificationsView: PrimeVue TabView → Vuetify v-tabs
     - ✅ NotificationHistory: Tous composants PrimeVue → Vuetify (Dialog, Button, Dropdown, Paginator)
@@ -911,6 +933,7 @@
     - ✅ Mobile responsive avec système de grille Vuetify
 
     **Fichiers modifiés**:
+
     - `packages/frontend/src/views/notifications/NotificationsView.vue`
     - `packages/frontend/src/components/common/NotificationHistory.vue`
     - `packages/frontend/src/components/common/NotificationSettings.vue`
@@ -918,6 +941,7 @@
   - [x] 23.3 Implement enhanced loading states ✅ **COMPLÉTÉ**
 
     **Améliorations implémentées (2025-11-11)**:
+
     - ✅ TasksView: v-progress-circular → v-skeleton-loader (list-item-avatar-three-line)
     - ✅ QuotesView: Spinner → v-skeleton-loader (table-row)
     - ✅ InstitutionDetailView: Spinner → v-skeleton-loader (article, table)
@@ -926,6 +950,7 @@
     - ✅ Conforme aux guidelines Material Design 3
 
     **Bénéfices**:
+
     - Feedback visuel montrant la structure du contenu pendant le chargement
     - Expérience utilisateur plus professionnelle
     - Meilleur support aria-busy pour screen readers
@@ -937,6 +962,7 @@
     **État actuel**: 8.5/10 (Très Bon)
 
     **Points forts identifiés**:
+
     - ✅ HTML sémantique avec hiérarchie de titres appropriée
     - ✅ Labels de formulaires présents sur tous les champs
     - ✅ Navigation clavier fonctionnelle (Vuetify)
@@ -945,6 +971,7 @@
     - ✅ Attributs ARIA fournis par Vuetify
 
     **Recommandations futures** (priorité moyenne):
+
     - Ajouter aria-label explicites sur boutons icon-only
     - Ajouter aria-live="polite" aux zones de contenu dynamique
     - Ajouter captions aux tableaux complexes
@@ -956,6 +983,7 @@
     **Implémentation complète (2025-11-11)** - Commits: 1d729f1, 94d5134
 
     **Fonctionnalités**:
+
     - ✅ Backend: SystemSettings model (JSONB) + controller + routes
     - ✅ Frontend: Settings store Pinia + API service + admin UI
     - ✅ Navigation dynamique selon feature flags
@@ -965,12 +993,14 @@
     - ✅ Interface admin intuitive `/settings/features`
 
     **Impact**:
+
     - Menu Billing masqué si quotes ET invoices désactivés
     - Liens individuels masqués selon leur état
     - Chargement des settings au démarrage de l'app (no auth required)
     - Validation de réponse sécurisée (pas de `|| {}` dangereux)
 
     **Fichiers créés**:
+
     - `packages/backend/src/models/SystemSettings.ts`
     - `packages/backend/src/controllers/SystemSettingsController.ts`
     - `packages/backend/src/routes/settings.ts`
@@ -982,6 +1012,7 @@
     **Audit complet réalisé (2025-11-11)** - Voir `TODOS/SEGMENTATION_AUDIT.md` - Commits: ed2cf6d, 80236ab
 
     **Problèmes critiques corrigés**:
+
     - 🔴 **Injection SQL éliminée** (6 occurrences): Sequelize.literal → Sequelize.where avec cast sécurisé
     - 🔴 **Désynchronisation Sequelize** : `public field!` → `declare` pour accès correct aux champs
     - 🟠 **Cache frontend non invalidé** : Ajout invalidation dans create/update/delete/duplicate
@@ -989,12 +1020,14 @@
     - ✅ **Workarounds supprimés** : Plus besoin de toJSON() grâce au fix Sequelize
 
     **Impact**:
+
     - ✅ Segmentation maintenant PRODUCTION-READY
     - ✅ Aucune vulnérabilité de sécurité
     - ✅ Modifications visibles immédiatement (cache OK)
     - ✅ Erreurs correctement exposées pour debugging
 
     **Fichiers modifiés**:
+
     - `packages/backend/src/models/Segment.ts`
     - `packages/backend/src/services/SegmentService.ts`
     - `packages/backend/src/controllers/SegmentController.ts`
@@ -1005,6 +1038,7 @@
     **8 améliorations implémentées (2025-11-11)** - Commit: 94d5134
 
     **Frontend**:
+
     - ✅ Cache TTL magic number → constante `CACHE_TTL` (useSegmentation.ts)
     - ✅ Validation réponse sécurisée au lieu de `|| {}` (settings.ts)
     - ✅ Logique redondante supprimée (FeaturesSettingsView.vue)
@@ -1012,6 +1046,7 @@
     - ✅ Option "Default Template" ajoutée (DocumentActions.vue)
 
     **Backend**:
+
     - ✅ Initialisation parallèle avec Promise.all (SystemSettings.ts)
     - ✅ Bulk updates optimisé avec Promise.all (SystemSettingsController.ts)
     - ✅ Suivi des settings échoués dans réponse
@@ -1023,12 +1058,14 @@
     **Implémentation finale (2025-11-11)**
 
     **Pagination getSegments**:
+
     - ✅ Ajout paramètres `limit` et `offset` dans query string
     - ✅ Calcul stats uniquement sur résultats paginés (performance++)
     - ✅ Métadonnées dans réponse: `total`, `limit`, `offset`, `hasMore`
     - ✅ Backward compatible (pas de limit = tous les résultats)
 
     **Renommage role → title**:
+
     - ✅ Suppression champ `role` dans ContactFilters (confusion)
     - ✅ Utilisation cohérente de `title` partout (mappe vers champ DB `title`)
     - ✅ Mise à jour types shared, backend models, services
@@ -1036,6 +1073,7 @@
     **Impact**: Meilleure performance pagination + clarté des filtres contacts
 
     **Fichiers modifiés**:
+
     - `packages/shared/src/types/segmentation.ts`
     - `packages/backend/src/models/Segment.ts`
     - `packages/backend/src/services/SegmentService.ts`
@@ -1428,11 +1466,13 @@
 ```typescript
 // Approche relationnelle (recommandée)
 const institutions = await MedicalInstitution.findAll({
-  include: [{
-    model: InstitutionAddress,
-    as: 'addressRel',
-    required: true // INNER JOIN pour performance
-  }]
+  include: [
+    {
+      model: InstitutionAddress,
+      as: "addressRel",
+      required: true, // INNER JOIN pour performance
+    },
+  ],
 })
 
 // Fallback JSONB (si pas de relationnel)
@@ -1446,11 +1486,13 @@ const institution = medicalInstitution.getFullAddress() // addrRel || address JS
 - ✅ Mode JSONB avec `USE_RELATIONAL_ADDRESSES=false` (fallback)
 
 **Migration recommandée pour production:**
+
 - Les nouvelles institutions utiliseront la structure relationnelle
 - Les institutions existantes conservent leur structure JSONB
 - Migration automatique progressive possible via script de conversion
 
 **Impact:**
+
 - ✅ Requêtes Sequelize avec includes fonctionnent sans erreur
 - ✅ Performance améliorée avec relations indexées
 - ✅ Structure de données plus robuste et normalisée
@@ -1621,6 +1663,7 @@ Implémentation d'un système de relance automatique pour les devis arrivant à 
 **Fichiers créés/modifiés:**
 
 **Backend:**
+
 ```
 packages/backend/src/migrations/20251115192722-add-last-reminder-sent-to-quotes.js
 packages/backend/src/migrations/20251115192723-create-quote-reminders.js
@@ -1638,6 +1681,7 @@ packages/backend/src/index.ts (updated)
 ```
 
 **Frontend:**
+
 ```
 packages/frontend/src/services/api/quoteReminders.ts
 packages/frontend/src/components/dashboard/QuoteExpiryWidget.vue
@@ -1647,11 +1691,13 @@ packages/frontend/src/views/billing/QuotesView.vue (updated)
 ```
 
 **Statistiques:**
+
 - Backend: 13 fichiers, **1563 lignes** ajoutées
 - Frontend: 5 fichiers, **924 lignes** ajoutées
 - **Total: 2487 lignes** de code production
 
 **Fonctionnalités clés:**
+
 - 🤖 Détection automatique quotidienne (8h00)
 - ✉️ Emails avec templates personnalisables
 - 🔔 Notifications in-app temps réel
@@ -1809,24 +1855,28 @@ module.exports = {
   up: async (queryInterface, Sequelize) => {
     const defaultRules = [
       {
-        id: '00000000-0000-0000-0000-000000000001',
-        entity_type: 'task',
-        trigger_type: 'due_soon',
+        id: "00000000-0000-0000-0000-000000000001",
+        entity_type: "task",
+        trigger_type: "due_soon",
         // ... autres champs
       },
       // ...
     ]
 
     for (const rule of defaultRules) {
-      const exists = await queryInterface.rawSelect('reminder_rules', {
-        where: { id: rule.id }
-      }, ['id'])
+      const exists = await queryInterface.rawSelect(
+        "reminder_rules",
+        {
+          where: { id: rule.id },
+        },
+        ["id"]
+      )
 
       if (!exists) {
-        await queryInterface.bulkInsert('reminder_rules', [rule])
+        await queryInterface.bulkInsert("reminder_rules", [rule])
       }
     }
-  }
+  },
 }
 ```
 
@@ -2154,19 +2204,22 @@ src/__tests__/integration/task.test.ts
 #### Backend - Intégration EmailService
 
 **Services modifiés:**
+
 - ✅ `ReminderService.ts` : Intégration EmailService avec templates HTML
 - ✅ EmailService existant utilisé avec nouvelles méthodes de rappel
 - ✅ Configuration SMTP complète avec variables d'environnement
 
 **Méthodes d'envoi ajoutées:**
+
 - ✅ `sendTaskReminderEmail()` : Emails pour tâches à échéance/en retard
-- ✅ `sendQuoteReminderEmail()` : Emails pour devis à expirer/expirés  
+- ✅ `sendQuoteReminderEmail()` : Emails pour devis à expirer/expirés
 - ✅ `sendInvoiceReminderEmail()` : Emails pour factures à échéance/impayées
 - ✅ `sendEmailReminder()` : Dispatcher basé sur type d'entité
 
 #### Frontend - Configuration
 
 **Configuration d'environnement:**
+
 - ✅ Variables SMTP dans `.env.example` :
   - `ENABLE_EMAIL_REMINDERS` : Activation globale
   - `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS` : Configuration serveur
@@ -2176,6 +2229,7 @@ src/__tests__/integration/task.test.ts
 #### Templates d'emails professionnels
 
 **Design responsive avec :**
+
 - ✅ **En-tête personnalisé** : Nom et email de l'expéditeur
 - ✅ **Mise en forme professionnelle** : Couleurs, icônes, mise en évidence
 - ✅ **Boutons d'action** : Liens directs vers l'entité dans le CRM
@@ -2184,17 +2238,20 @@ src/__tests__/integration/task.test.ts
 
 ### Fonctionnalités opérationnelles
 
-#### 1. Tâches (Tasks) 
+#### 1. Tâches (Tasks)
+
 - **7 jours avant échéance** : Email de rappel avec countdown
 - **En retard** : Email urgent avec mise en évidence rouge
 - **Contenu** : Titre, échéance, institution, statut, lien direct
 
 #### 2. Devis (Quotes)
+
 - **7 jours avant expiration** : Email de relance commercial
 - **Expiré** : Email d'alerte avec recommandations d'actions
 - **Contenu** : Numéro devis, montant, échéance, institution, lien
 
-#### 3. Factures (Invoices)  
+#### 3. Factures (Invoices)
+
 - **7 jours avant échéance** : Email de rappel paiement
 - **En retard** : Email urgent de relance paiement
 - **Contenu** : Numéro facture, montant, échéance, institution, lien
@@ -2202,11 +2259,13 @@ src/__tests__/integration/task.test.ts
 ### Système anti-spam et performance
 
 **Protection contre doublons:**
+
 - ✅ **Cache 23h** : Évite ré-envoi immédiat
 - ✅ **Validation destinataires** : Vérification email avant envoi
 - ✅ **Gestion d'erreurs** : Logging complet pour debugging
 
 **Performance optimisée:**
+
 - ✅ **Traitement asynchrone** : N'impacte pas la latence API
 - ✅ **Templates pré-compilés** : Rendu rapide
 - ✅ **Batch processing** : Traite les rappels par lot
@@ -2216,6 +2275,7 @@ src/__tests__/integration/task.test.ts
 **Activation simple en 3 étapes:**
 
 1. **Configurer SMTP** dans `.env` :
+
 ```env
 ENABLE_EMAIL_REMINDERS=true
 SMTP_HOST=votre-serveur-smtp.com
@@ -2233,37 +2293,42 @@ FRONTEND_URL=https://votre-crm.com
 ### Tests et validation
 
 **Tests réalisés:**
+
 - ✅ **Compilation TypeScript** : Aucune erreur
 - ✅ **Démarrage serveur** : SMTP verification OK
 - ✅ **Intégration** : EmailService correctement instancié
 - ✅ **Logs** : Traçage complet pour debugging
 
 **Commandes de test:**
+
 ```bash
 # Test compilation
 cd packages/backend && npx tsc --noEmit
 
-# Test démarrage (avec port spécifique)  
+# Test démarrage (avec port spécifique)
 PORT=3002 npm run dev
 ```
 
 ### Impact et ROI
 
 **Bénéfices utilisateur:**
+
 - ✅ **Réduction oubli** : Emails même quand non connecté au CRM
 - **Augmentation conversion** : Relances automatiques des devis
 - **Amélioration cash-flow** : Relances paiements factues
 - **Gain temps commercial** : Automatisation des suivis
 
 **ROI estimé:**
+
 - 🎯 **+20% conversion** devis → commande (relances automatiques)
-- 🎯 **-25% perte** devis par oubli d'échéance  
+- 🎯 **-25% perte** devis par oubli d'échéance
 - 🎯 **+30% temps** disponible pour prospection
 - 🎯 **Image professionnelle** : Suivi proactif clients
 
 ### Documentation fournie
 
 **Documentation complète créée:**
+
 - ✅ `packages/backend/docs/EMAIL_REMINDERS.md` : Guide d'utilisation complet
 - ✅ Exemples de configuration SMTP
 - ✅ Guide de troubleshooting
@@ -2282,13 +2347,13 @@ PORT=3002 npm run dev
 - **Compatibilité** : Fonctionne avec tous serveurs SMTP (Gmail, Outlook, SendGrid, etc.)
 
 **Prochaines étapes optionnelles:**
+
 - Tests avec vraies données (créer entités avec échéances proches)
 - Personnalisation templates selon charte graphique
 - Intégration analytics (taux ouverture, clics)
 - Templates multilingues (i18n)
 
 ---
-
 
 ## Task 29: Import CSV Amélioré avec Matching Comptable et Intégrations Digiforma/Sage 🆕
 
@@ -2298,6 +2363,7 @@ PORT=3002 npm run dev
 **Dependencies:** Task 24 (Digiforma), Task 15 (Sage prep)
 
 **⚠️ Infos Clés:**
+
 - Champ Digiforma: `accountingNumber` (PAS `accountingId`)
 - GraphiQL: https://app.digiforma.com/api/v1/graphiql
 - Guide GraphQL: `/TODOS/specs/modern-crm/digiforma-graphql-exploration.md`
@@ -2322,6 +2388,7 @@ Améliorer le système d'import CSV existant pour gérer l'identifiant comptable
   **Date:** 2025-11-13
 
   **Backend:**
+
   - ✅ Migration Sequelize `20251113000000-add-accounting-number-to-medical-institutions.cjs`
   - ✅ Colonne `accounting_number` VARCHAR(50) nullable
   - ✅ Index unique avec condition WHERE NOT NULL (permet plusieurs NULL)
@@ -2331,15 +2398,18 @@ Améliorer le système d'import CSV existant pour gérer l'identifiant comptable
   - ✅ Tests exhaustifs: validation, unicité, CRUD, queries (44 tests)
 
   **Frontend:**
+
   - ✅ Ajout champ accountingNumber dans MedicalInstitutionForm (onglet Basic)
   - ✅ Ajout champ digiformaId (readonly) pour affichage sync status
   - ✅ Affichage dans InstitutionDetailView avec icônes et badges
   - ✅ Support filter/search par accountingNumber dans API
 
   **Shared:**
+
   - ✅ Interfaces TypeScript déjà à jour dans @medical-crm/shared
 
   **Tests créés:**
+
   - `MedicalInstitution-accountingNumber.test.ts` (44 tests):
     - Validation champ (longueur, vide, null)
     - Contrainte d'unicité
@@ -2348,6 +2418,7 @@ Améliorer le système d'import CSV existant pour gérer l'identifiant comptable
     - Intégration avec digiformaId
 
   **Fichiers modifiés:**
+
   - `packages/backend/src/migrations/20251113000000-add-accounting-number-to-medical-institutions.cjs` (NEW)
   - `packages/backend/src/controllers/MedicalInstitutionController.ts`
   - `packages/frontend/src/components/institutions/MedicalInstitutionForm.vue`
@@ -2355,6 +2426,7 @@ Améliorer le système d'import CSV existant pour gérer l'identifiant comptable
   - `packages/backend/src/__tests__/models/MedicalInstitution-accountingNumber.test.ts` (NEW)
 
 - [ ] **29.2** - Améliorer logique de matching CSV multi-critères (4-5h)
+
   - Matching par `accountingNumber` (priorité 1, confidence 100%)
   - Matching nom exact + adresse (priorité 2, confidence 95%)
   - Matching fuzzy par nom + ville (priorité 3, confidence 60-85%)
@@ -2362,10 +2434,11 @@ Améliorer le système d'import CSV existant pour gérer l'identifiant comptable
   - Retourner `MatchResult` avec type, confidence, et suggestions
 
 - [ ] **29.3** - Intégration Digiforma : Créer institutions manquantes (4-5h)
+
   - Workflow: Parse CSV → Check CRM → Check Digiforma → Create in Digiforma (si manquant) → Sync to CRM
   - `DigiformaService.searchCompanyByName(name, city)` avec TODO pour GraphQL query
   - `DigiformaService.createCompany(data)` avec TODO pour GraphQL mutation
-  - `DigiformaService.syncCompanyToCRM(digiformaCompanyId)` 
+  - `DigiformaService.syncCompanyToCRM(digiformaCompanyId)`
   - Logging complet des actions Digiforma
 
 - [x] **29.4** - Préparation Sage : Structure de base avec TODOs (3-4h) ✅
@@ -2374,6 +2447,7 @@ Améliorer le système d'import CSV existant pour gérer l'identifiant comptable
   **Date:** 2025-11-14
 
   **Backend - Model & Migration:**
+
   - ✅ Modèle `SageSettings` avec encryption AES-256-GCM pour API key
   - ✅ Migration `20251114000000-create-sage-settings-table.cjs`
   - ✅ Champs: apiKey (encrypted), apiUrl, companyId, isEnabled
@@ -2384,6 +2458,7 @@ Améliorer le système d'import CSV existant pour gérer l'identifiant comptable
   - ✅ Méthodes: `getDecryptedApiKey()`, `setApiKey()`, `updateTestResults()`, `updateLastSync()`
 
   **Backend - Service:**
+
   - ✅ `SageService` avec méthodes skeleton et TODOs complets
   - ✅ `fromSettings()` - création d'instance depuis SageSettings
   - ✅ `testConnection()` - TODO: implémenter test API Sage
@@ -2395,6 +2470,7 @@ Améliorer le système d'import CSV existant pour gérer l'identifiant comptable
   - ✅ Data mapping avec TODOs: mapSageCustomer, mapSageInvoice, mapSageInvoiceItem
 
   **Backend - Types TypeScript:**
+
   - ✅ `SageCustomer` - maps to MedicalInstitution via accountingNumber
   - ✅ `SageInvoice`, `SageInvoiceLine`
   - ✅ `SagePayment`
@@ -2404,6 +2480,7 @@ Améliorer le système d'import CSV existant pour gérer l'identifiant comptable
   - ✅ `SageConnectionTestResult` - résultat du test de connexion
 
   **Backend - Controller & Routes:**
+
   - ✅ `SageController` avec tous les endpoints
   - ✅ GET/POST `/api/sage/settings` - CRUD settings
   - ✅ POST `/api/sage/test-connection` - test connexion API
@@ -2415,6 +2492,7 @@ Améliorer le système d'import CSV existant pour gérer l'identifiant comptable
   - ✅ Permissions: `canManageSystemSettings` pour tous les endpoints
 
   **Documentation & TODOs:**
+
   - ✅ TODOs complets pour implémentation future de l'API Sage
   - ✅ Stratégie d'intégration v1 documentée (unidirectionnel Sage → CRM)
   - ✅ Plan v2 documenté (bidirectionnel avec conflict resolution)
@@ -2422,6 +2500,7 @@ Améliorer le système d'import CSV existant pour gérer l'identifiant comptable
   - ✅ Notes sur authentification (OAuth2, API key, etc.)
 
   **Fichiers créés/modifiés:**
+
   - `packages/backend/src/models/SageSettings.ts` (259 lignes)
   - `packages/backend/src/migrations/20251114000000-create-sage-settings-table.cjs` (143 lignes)
   - `packages/backend/src/types/sage.ts` (211 lignes)
@@ -2442,6 +2521,7 @@ Améliorer le système d'import CSV existant pour gérer l'identifiant comptable
   **Date:** 2025-11-14
 
   **Backend:**
+
   - ✅ Méthode `previewCsvData()` dans CsvImportService
   - ✅ Interfaces TypeScript: `CsvPreviewRow`, `CsvPreviewResult`
   - ✅ Analyse du statut de matching (exact/fuzzy/none) via CsvMatchingService
@@ -2451,23 +2531,25 @@ Améliorer le système d'import CSV existant pour gérer l'identifiant comptable
   - ✅ Route POST `/import/preview` configurée
 
   **Frontend:**
+
   - ✅ Preview table avec toutes les lignes et détails de matching
   - ✅ Colonnes de statut:
-    * **Matching**: Exact (100%/95%), Fuzzy (60-85% avec score), ou Nouveau
-    * **Digiforma**: Existe, À créer, ou Inconnu (avec icônes)
-    * **Sage**: Lié (avec numéro comptable) ou Non lié
+    - **Matching**: Exact (100%/95%), Fuzzy (60-85% avec score), ou Nouveau
+    - **Digiforma**: Existe, À créer, ou Inconnu (avec icônes)
+    - **Sage**: Lié (avec numéro comptable) ou Non lié
   - ✅ Chips colorés avec tooltips pour visualisation des statuts
   - ✅ Table preview collapsible (masquer/afficher détails)
   - ✅ Switch "Créer dans Digiforma si manquant" pour auto-création
   - ✅ Rapport d'import amélioré avec:
-    * Imports réussis / Total
-    * Erreurs
-    * Doublons trouvés et fusionnés
-    * Créations Digiforma (prêt pour future implémentation)
+    - Imports réussis / Total
+    - Erreurs
+    - Doublons trouvés et fusionnés
+    - Créations Digiforma (prêt pour future implémentation)
   - ✅ Alert info pour institutions liées à Sage
   - ✅ Surlignage des lignes avec erreurs
 
   **Expérience utilisateur:**
+
   - Visibilité complète sur ce qui va se passer avant l'import
   - Scores de confiance pour matches fuzzy
   - Indication claire des institutions existantes vs nouvelles
@@ -2475,6 +2557,7 @@ Améliorer le système d'import CSV existant pour gérer l'identifiant comptable
   - Conscience de l'intégration comptable Sage
 
   **Fichiers modifiés:**
+
   - `packages/backend/src/services/CsvImportService.ts` (+118 lignes)
   - `packages/backend/src/controllers/MedicalInstitutionController.ts` (+60 lignes)
   - `packages/backend/src/routes/institutions.ts` (+6 lignes)
@@ -2491,6 +2574,7 @@ Améliorer le système d'import CSV existant pour gérer l'identifiant comptable
   **Problème:** L'URL affichait des caractères % (encodés) dans le champ texte quand on revenait sur les paramètres après avoir saisi le token.
 
   **Solution implémentée:**
+
   - Ajout de `decodeURIComponent()` lors du chargement des settings dans le formulaire
   - L'URL est maintenant affichée décodée (lisible) dans le champ texte
   - Code modifié: `packages/frontend/src/views/settings/DigiformaSettingsView.vue`
@@ -2501,6 +2585,7 @@ Améliorer le système d'import CSV existant pour gérer l'identifiant comptable
 ### Nouveaux Fichiers
 
 **Backend:**
+
 ```
 packages/backend/src/services/SageService.ts
 packages/backend/src/models/SageSettings.ts
@@ -2511,6 +2596,7 @@ packages/backend/migrations/*-create-sage-settings.ts
 ```
 
 **Frontend:**
+
 ```
 packages/frontend/src/views/settings/SageSettingsView.vue
 packages/frontend/src/components/settings/SageConfigPanel.vue
@@ -2531,16 +2617,19 @@ packages/frontend/src/views/settings/DigiformaSettingsView.vue
 ### Tests
 
 **Unit Tests:**
+
 - `accountingNumber` unique constraint
 - Matching logic (exact, fuzzy, accountingNumber)
 - SageService methods (mocked API)
 
 **Integration Tests:**
+
 - CSV import avec accountingNumber
 - Digiforma search et sync
 - Duplicate detection avec critères mixtes
 
 **Manual Tests:**
+
 - Import CSV avec numéros comptables
 - Vérifier création dans Digiforma (quand mutation ready)
 - Tester interface Sage (quand credentials disponibles)
@@ -2566,7 +2655,6 @@ packages/frontend/src/views/settings/DigiformaSettingsView.vue
 
 ---
 
-
 ## Task 30: Tests + Coverage + CI/CD + Optimisation Base de Données 🆕
 
 **Status:** ✅ COMPLÉTÉ
@@ -2581,6 +2669,7 @@ Mettre en place un système de tests complet avec couverture de code de 70-80%, 
 ### Sous-tâches Réalisées
 
 - [x] **30.1** - Configuration Coverage avec Vitest (1h)
+
   - ✅ Configuration Vitest avec coverage provider v8
   - ✅ Seuils de coverage: 70% minimum (lines, functions, branches, statements)
   - ✅ Exclusions: tests, migrations, seeders, scripts, config
@@ -2588,7 +2677,8 @@ Mettre en place un système de tests complet avec couverture de code de 70-80%, 
   - ✅ Scripts npm: `test:coverage`, `test:ui`, `test:watch`
 
 - [x] **30.2** - Système de Mocks et Helpers de Tests (3-4h)
-  - ✅ `src/__tests__/helpers/db-mock.ts`: 
+
+  - ✅ `src/__tests__/helpers/db-mock.ts`:
     - Utilitaires de mock de base de données
     - Helpers de création: `createMockUser`, `createMockTeam`, `createMockMedicalInstitution`, etc.
     - Fonction `cleanDatabase` pour isolation des tests
@@ -2600,6 +2690,7 @@ Mettre en place un système de tests complet avec couverture de code de 70-80%, 
     - Helpers de token JWT
 
 - [x] **30.3** - Tests de Services et Controllers (4-5h)
+
   - ✅ `AuthService.test.ts`: Tests complets du service d'authentification
     - generateAccessToken, generateRefreshToken
     - login (succès, erreurs, utilisateur inactif)
@@ -2614,6 +2705,7 @@ Mettre en place un système de tests complet avec couverture de code de 70-80%, 
   - 📝 Template prêt pour les autres services/controllers (23 controllers + 15 services identifiés)
 
 - [x] **30.4** - GitHub Actions CI/CD Pipeline (3-4h)
+
   - ✅ `.github/workflows/ci.yml`:
     - Job: Backend Tests & Coverage
       - PostgreSQL service (image postgres:15)
@@ -2633,9 +2725,10 @@ Mettre en place un système de tests complet avec couverture de code de 70-80%, 
       - Require staging success
       - Build, migrations, health checks
       - Notifications de succès
-  - ✅ Configuration pour branches: main, develop, claude/**
+  - ✅ Configuration pour branches: main, develop, claude/\*\*
 
 - [x] **30.5** - Audit et Optimisation Index DB (4-5h)
+
   - ✅ `src/scripts/audit-db-indexes.ts`:
     - Analyse des statistiques de tables (taille, index)
     - Détection des foreign keys sans index
@@ -2655,6 +2748,7 @@ Mettre en place un système de tests complet avec couverture de code de 70-80%, 
     - JSON indexes (JSONB)
 
 - [x] **30.6** - Health Checks et Monitoring (2-3h)
+
   - ✅ `src/scripts/health-check.ts`:
     - Check database (connectivity, latency)
     - Check API (disponibilité, temps de réponse)
@@ -2696,12 +2790,14 @@ Mettre en place un système de tests complet avec couverture de code de 70-80%, 
 ### Fichiers Créés
 
 **Configuration:**
+
 ```
 packages/backend/vitest.config.ts (modifié - ajout coverage)
 packages/backend/package.json (modifié - ajout scripts)
 ```
 
 **Tests et Helpers:**
+
 ```
 packages/backend/src/__tests__/helpers/db-mock.ts
 packages/backend/src/__tests__/helpers/auth-helpers.ts
@@ -2710,12 +2806,14 @@ packages/backend/src/__tests__/controllers/AuthController.test.ts
 ```
 
 **CI/CD:**
+
 ```
 .github/workflows/ci.yml
 .github/workflows/cd.yml
 ```
 
 **Scripts et Controllers:**
+
 ```
 packages/backend/src/scripts/audit-db-indexes.ts
 packages/backend/src/scripts/health-check.ts
@@ -2724,6 +2822,7 @@ packages/backend/src/routes/health.ts
 ```
 
 **Documentation:**
+
 ```
 packages/backend/docs/TESTING.md
 packages/backend/docs/CI-CD.md
@@ -2733,6 +2832,7 @@ packages/backend/docs/DATABASE-OPTIMIZATION.md
 ### Scripts Disponibles
 
 **Tests:**
+
 ```bash
 npm test                  # Run all tests
 npm run test:watch       # Watch mode
@@ -2741,17 +2841,20 @@ npm run test:ui          # Visual UI
 ```
 
 **Qualité de Code:**
+
 ```bash
 npm run lint:check       # Vérifier le linting
 npm run type-check       # Type checking TypeScript
 ```
 
 **Base de Données:**
+
 ```bash
 npm run db:audit-indexes # Audit des index DB
 ```
 
 **Monitoring:**
+
 ```bash
 npm run health-check     # Health check complet
 npm run health-check -- --skip-api  # Skip API check
@@ -2760,42 +2863,50 @@ npm run health-check -- --skip-api  # Skip API check
 ### Configuration Coverage
 
 **Seuils Configurés (Vitest):**
+
 - Lines: 70%
 - Functions: 70%
 - Branches: 70%
 - Statements: 70%
 
 **Exclusions:**
-- node_modules/**
-- dist/**
-- src/__tests__/**
-- src/migrations/**
-- src/seeders/**
-- src/scripts/**
-- **/*.config.ts
-- **/index.ts
+
+- node_modules/\*\*
+- dist/\*\*
+- src/**tests**/\*\*
+- src/migrations/\*\*
+- src/seeders/\*\*
+- src/scripts/\*\*
+- \*_/_.config.ts
+- \*\*/index.ts
 
 ### CI/CD Pipeline
 
 **Déclencheurs:**
+
 - Push sur: `main`, `develop`, `claude/**`
 - Pull requests vers: `main`, `develop`
 
 **Jobs CI:**
+
 1. **Backend Tests**
+
    - PostgreSQL 15 service
    - Type check + Lint + Tests + Coverage
    - Upload vers Codecov
    - Fail si coverage < 70%
 
 2. **Frontend Tests**
+
    - Type check + Lint + Build
 
 3. **Security Audit**
    - npm audit (moderate+)
 
 **Jobs CD:**
+
 1. **Staging**
+
    - Auto-deploy sur push main
    - Build + Migrations + Deploy
 
@@ -2809,16 +2920,19 @@ npm run health-check -- --skip-api  # Skip API check
 **Tables Prioritaires pour Indexation:**
 
 1. **Tasks** (haute fréquence d'accès)
+
    - Foreign keys: `assigned_to_id`, `medical_institution_id`
    - Composite: `(assigned_to_id, status)`, `(medical_institution_id, status)`
    - Partial: `assigned_to_id WHERE status = 'pending'`
 
 2. **Medical Institutions**
+
    - Text search: GIN index sur `name`
    - Géographie: `city`, `postal_code`
    - Unique: `siret` (partial, non-null)
 
 3. **Quotes / Invoices**
+
    - Foreign keys: `medical_institution_id`, `created_by_id`
    - Status: Partial indexes sur statuts actifs
    - Dates: `due_date`, `valid_until`
@@ -2829,6 +2943,7 @@ npm run health-check -- --skip-api  # Skip API check
    - Relations: `team_id`
 
 **Commandes d'Audit:**
+
 ```bash
 # Lancer l'audit complet
 npm run db:audit-indexes
@@ -2844,17 +2959,20 @@ npm run db:audit-indexes
 ### Health Checks
 
 **Endpoints Disponibles:**
+
 - `GET /api/health` - Basic (200 OK rapide)
 - `GET /api/health/detailed` - Complet (DB, memory, etc.)
 - `GET /api/health/ready` - Kubernetes readiness
 - `GET /api/health/live` - Kubernetes liveness
 
 **Status Codes:**
+
 - 200: Healthy
 - 200: Degraded (warning mais opérationnel)
 - 503: Unhealthy (service indisponible)
 
 **Vérifications:**
+
 - ✅ Database connectivity + latency
 - ✅ Memory usage (heap, RSS)
 - ✅ Disk space (si disponible)
@@ -2864,6 +2982,7 @@ npm run db:audit-indexes
 ### Tests Manquants (Work in Progress)
 
 **Controllers sans tests (23):**
+
 - BillingAnalyticsController
 - CallController
 - CatalogController
@@ -2888,6 +3007,7 @@ npm run db:audit-indexes
 - WebhookController
 
 **Services sans tests (15):**
+
 - BulkOperationService
 - ConsolidatedRevenueService
 - DigiformaService
@@ -2920,13 +3040,16 @@ npm run db:audit-indexes
 ### Prochaines Étapes
 
 **Court terme (priorité haute):**
+
 1. Ajouter tests pour controllers/services critiques:
+
    - MedicalInstitutionController + CsvImportService
    - TaskController + TaskNotificationService
    - QuoteController + InvoiceController
    - DigiformaService + DigiformaSyncService
 
 2. Lancer coverage report initial:
+
    ```bash
    npm run test:coverage
    ```
@@ -2938,12 +3061,14 @@ npm run db:audit-indexes
    ```
 
 **Moyen terme:**
+
 1. Atteindre 70% coverage global
 2. Configurer Codecov pour tracking
 3. Ajouter pre-commit hooks (husky + lint-staged)
 4. Monitoring production avec health checks
 
 **Long terme:**
+
 1. Target 80% coverage
 2. Load testing / performance testing
 3. E2E tests (Playwright / Cypress)
@@ -2952,24 +3077,28 @@ npm run db:audit-indexes
 ### Impact et Bénéfices
 
 **Qualité de Code:**
+
 - ✅ Coverage minimum garanti (70%)
 - ✅ Tests automatisés sur chaque PR
 - ✅ Détection précoce des régressions
 - ✅ Refactoring sécurisé
 
 **CI/CD:**
+
 - ✅ Déploiements automatisés et fiables
 - ✅ Rollback facile en cas d'erreur
 - ✅ Environnements staging/production séparés
 - ✅ Security audit automatique
 
 **Performance:**
+
 - ✅ Audit des index pour optimisation DB
 - ✅ Recommandations SQL automatiques
 - ✅ Détection des index inutilisés
 - ✅ Monitoring des requêtes lentes
 
 **Monitoring:**
+
 - ✅ Health checks pour load balancers
 - ✅ Kubernetes readiness/liveness probes
 - ✅ Alertes sur memory/disk
@@ -2978,11 +3107,13 @@ npm run db:audit-indexes
 ### Documentation et Ressources
 
 **Guides Créés:**
+
 - 📖 `docs/TESTING.md`: Guide complet des tests
 - 📖 `docs/CI-CD.md`: Documentation CI/CD pipeline
 - 📖 `docs/DATABASE-OPTIMIZATION.md`: Optimisation DB et index
 
 **Commandes Rapides:**
+
 ```bash
 # Tests
 npm test
@@ -3012,7 +3143,6 @@ npm run health-check
 
 ---
 
-
 ## Task 31: Skeleton Loading System - Amélioration Expérience Utilisateur 🆕
 
 **Status:** ✅ COMPLÉTÉ  
@@ -3039,6 +3169,7 @@ Création d'un système complet de skeleton loading components réutilisables qu
 ### Composants créés (6 skeletons)
 
 #### 1. **ListSkeleton.vue** - Pour les vues en liste
+
 ```typescript
 Props:
 - count: number (default: 3)
@@ -3051,10 +3182,12 @@ Props:
 ```
 
 **Utilisation:**
+
 - TasksView: Liste de tâches avec avatars et actions
 - MedicalInstitutionsView (mobile): Cartes d'institutions avec avatars
 
 #### 2. **TableSkeleton.vue** - Pour les tableaux de données
+
 ```typescript
 Props:
 - rows: number (default: 10)
@@ -3066,11 +3199,13 @@ Props:
 ```
 
 **Utilisation:**
+
 - MedicalInstitutionsView (desktop): Tableau d'institutions
 - InvoicesView: Tableau de factures
 - QuotesView: Tableau de devis
 
 #### 3. **DetailSkeleton.vue** - Pour les pages de détail
+
 ```typescript
 Props:
 - avatar: boolean (default: true)
@@ -3081,10 +3216,12 @@ Props:
 ```
 
 **Utilisation:**
+
 - InstitutionDetailView: Détail institution avec onglets
 - InvoiceDetailView: Détail facture
 
 #### 4. **CardSkeleton.vue** - Skeleton de carte générique
+
 ```typescript
 Props:
 - count: number (default: 1)
@@ -3095,9 +3232,11 @@ Props:
 ```
 
 **Utilisation:**
+
 - Composants génériques nécessitant un skeleton de carte
 
 #### 5. **FormSkeleton.vue** - Pour les formulaires
+
 ```typescript
 Props:
 - tabs: boolean (default: false)
@@ -3108,9 +3247,11 @@ Props:
 ```
 
 **Utilisation:**
+
 - Formulaires complexes avec onglets et sections
 
 #### 6. **DashboardSkeleton.vue** - Pour le tableau de bord
+
 ```typescript
 Props:
 - kpiCount: number (default: 4)
@@ -3119,11 +3260,13 @@ Props:
 ```
 
 **Utilisation:**
+
 - DashboardView: Chargement initial du tableau de bord
 
 ### Pattern d'implémentation
 
 **Règle appliquée partout:**
+
 ```typescript
 // Chargement initial (pas de données) → Skeleton complet
 v-if="loading && items.length === 0"
@@ -3135,6 +3278,7 @@ v-else
 ```
 
 **Exemple concret:**
+
 ```vue
 <template>
   <TableSkeleton
@@ -3144,34 +3288,36 @@ v-else
     toolbar
     pagination
   />
-  <v-data-table
-    v-else
-    :items="invoices"
-    :loading="loading && invoices.length > 0"
-  />
+  <v-data-table v-else :items="invoices" :loading="loading && invoices.length > 0" />
 </template>
 ```
 
 ### Vues mises à jour
 
 1. **MedicalInstitutionsView** (`packages/frontend/src/views/institutions/MedicalInstitutionsView.vue`)
+
    - Desktop: `TableSkeleton` avec 7 colonnes, toolbar et pagination
    - Mobile: `ListSkeleton` avec avatars et actions (5 items)
 
 2. **TasksView** (`packages/frontend/src/views/tasks/TasksView.vue`)
+
    - `ListSkeleton` pour les cartes de tâches (5 items)
    - Type: list-item-three-line avec avatars et actions
 
 3. **InvoicesView** (`packages/frontend/src/views/billing/InvoicesView.vue`)
+
    - `TableSkeleton` avec 7 colonnes, toolbar et pagination
 
 4. **QuotesView** (`packages/frontend/src/views/billing/QuotesView.vue`)
+
    - `TableSkeleton` avec 6 colonnes, toolbar et pagination
 
 5. **InstitutionDetailView** (`packages/frontend/src/views/institutions/InstitutionDetailView.vue`)
+
    - `DetailSkeleton` avec 5 onglets, avatar et actions
 
 6. **InvoiceDetailView** (`packages/frontend/src/views/billing/InvoiceDetailView.vue`)
+
    - `DetailSkeleton` standard
 
 7. **DashboardView** (`packages/frontend/src/views/DashboardView.vue`)
@@ -3180,6 +3326,7 @@ v-else
 ### Fichiers créés
 
 **Nouveaux composants:**
+
 ```
 packages/frontend/src/components/skeletons/
 ├── CardSkeleton.vue
@@ -3192,6 +3339,7 @@ packages/frontend/src/components/skeletons/
 ```
 
 **Fichiers modifiés:**
+
 - `packages/frontend/src/views/institutions/MedicalInstitutionsView.vue`
 - `packages/frontend/src/views/tasks/TasksView.vue`
 - `packages/frontend/src/views/billing/InvoicesView.vue`
@@ -3203,29 +3351,34 @@ packages/frontend/src/components/skeletons/
 ### Bénéfices
 
 **UX améliorée:**
+
 - ✅ **Feedback visuel structuré** : L'utilisateur voit la structure du contenu à venir
 - ✅ **Temps perçu réduit** : Les skeletons donnent l'impression que le chargement est plus rapide
 - ✅ **Cohérence visuelle** : Même expérience de chargement partout dans l'app
 - ✅ **Material Design 3** : Conforme aux guidelines de Vuetify
 
 **Performance perçue:**
+
 - ✅ **Réduction de 30-40%** du temps de chargement perçu (études UX)
 - ✅ **Moins de frustration** utilisateur pendant l'attente
 - ✅ **Meilleure compréhension** de ce qui se charge
 
 **Technique:**
+
 - ✅ **Composants réutilisables** : 6 skeletons couvrent tous les cas d'usage
 - ✅ **Props configurables** : Personnalisation facile selon le contexte
 - ✅ **Responsive** : Skeletons adaptés mobile et desktop
 - ✅ **TypeScript** : Props typées pour meilleure DX
 
 **Accessibilité:**
+
 - ✅ **aria-busy** : Support natif Vuetify pour screen readers
 - ✅ **Semantic HTML** : Structure claire pour assistive technologies
 
 ### Tests et validation
 
 **Build validé:**
+
 ```bash
 npm run build --workspace=packages/frontend
 ✓ 2408 modules transformed
@@ -3233,6 +3386,7 @@ npm run build --workspace=packages/frontend
 ```
 
 **Aucune erreur TypeScript:**
+
 - ✅ Compilation réussie
 - ✅ Props correctement typées
 - ✅ Imports valides
@@ -3243,10 +3397,11 @@ npm run build --workspace=packages/frontend
 **Branch:** `claude/tests-coverage-cicd-optimization-01QuKg5Hfij5gramGXKMBsBu`
 
 **Commit message:**
+
 ```
 feat(frontend): implement skeleton loading system for improved UX
 
-Replace spinners with skeleton loaders throughout the application 
+Replace spinners with skeleton loaders throughout the application
 to provide better visual feedback and reduce perceived loading times.
 
 Changes:
@@ -3264,11 +3419,13 @@ Benefits:
 ### Impact métier
 
 **Satisfaction utilisateur:**
+
 - 🎯 **+25%** satisfaction perçue (retours utilisateurs sur apps similaires)
-- 🎯 **-40%** plaintes sur "l'app qui rame" 
+- 🎯 **-40%** plaintes sur "l'app qui rame"
 - 🎯 **+15%** engagement (moins d'abandons pendant chargement)
 
 **Image professionnelle:**
+
 - ✅ UX moderne conforme aux standards 2024-2025
 - ✅ Application qui semble plus rapide et responsive
 - ✅ Cohérence avec les applications leaders du marché
@@ -3276,14 +3433,15 @@ Benefits:
 ### Documentation
 
 **Guide d'utilisation:**
+
 ```typescript
 // Importation centralisée
 import { TableSkeleton, ListSkeleton, DetailSkeleton } from '@/components/skeletons'
 
 // Utilisation dans une vue
-<TableSkeleton 
+<TableSkeleton
   v-if="loading && items.length === 0"
-  :rows="10" 
+  :rows="10"
   :columns="5"
   toolbar
   pagination
@@ -3291,6 +3449,7 @@ import { TableSkeleton, ListSkeleton, DetailSkeleton } from '@/components/skelet
 ```
 
 **Bonnes pratiques:**
+
 1. Toujours utiliser la condition `loading && items.length === 0` pour le skeleton
 2. Utiliser `loading && items.length > 0` pour le loading overlay
 3. Adapter le nombre de rows/items au contexte (pagination)
@@ -3299,6 +3458,7 @@ import { TableSkeleton, ListSkeleton, DetailSkeleton } from '@/components/skelet
 ### Prochaines améliorations possibles
 
 **Priorité basse (futures itérations):**
+
 - [ ] Animations shimmer pour effet plus dynamique
 - [ ] Skeletons pour modals et dialogs
 - [ ] Skeleton pour graphiques (ChartSkeleton)
@@ -3306,6 +3466,7 @@ import { TableSkeleton, ListSkeleton, DetailSkeleton } from '@/components/skelet
 - [ ] Skeleton pour infinite scroll
 
 **Non prioritaire:**
+
 - [ ] A/B testing du temps de chargement perçu
 - [ ] Analytics sur les taux d'abandon pendant loading
 - [ ] Personnalisation des couleurs de skeleton par thème
@@ -3324,4 +3485,3 @@ import { TableSkeleton, ListSkeleton, DetailSkeleton } from '@/components/skelet
 - **UX Research**: "Skeleton screens reduce perceived loading time by 30-40%" - Nielsen Norman Group
 
 ---
-

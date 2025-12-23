@@ -176,8 +176,8 @@ module.exports = {
           team_id: null, // System-wide rules
           created_by: systemUserId,
           updated_by: null,
-          createdAt: new Date(),
-          updatedAt: new Date(),
+          created_at: new Date(),
+          updated_at: new Date(),
         },
       ])
 

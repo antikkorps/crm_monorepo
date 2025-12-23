@@ -1,11 +1,19 @@
 import { MeetingStatus, ParticipantStatus } from "@medical-crm/shared"
-import { DataTypes, Model, Op, Optional } from "sequelize"
+import { DataTypes, Model, Op, Optional, InstanceUpdateOptions } from "sequelize"
 import { sequelize } from "../config/database"
 import type { MeetingParticipant } from "./MeetingParticipant"
 import type { Comment } from "./Comment"
 import { CollaborationValidation } from "../types/collaboration"
-import { MedicalInstitution } from "./MedicalInstitution"
+import { MedicalInstitution, type MedicalInstitutionAttributes } from "./MedicalInstitution"
 import { User } from "./User"
+import { logger } from "../utils/logger"
+
+/**
+ * Extended options for sync operations to prevent auto-lock
+ */
+interface SyncOptions {
+  context?: { isSync: boolean }
+}
 
 export interface MeetingAttributes {
   id: string
@@ -583,6 +591,44 @@ Meeting.init(
             previousStatus,
             meeting.status
           )
+        }
+      },
+
+      /**
+       * Auto-lock institution when meeting is created
+       * Note: Contacts are locked via MeetingParticipant.afterCreate hook
+       */
+      afterCreate: async (meeting: Meeting, options) => {
+        if (meeting.institutionId) {
+          try {
+            const institution = await MedicalInstitution.findByPk(meeting.institutionId)
+
+            if (institution && !institution.isLocked) {
+              const updateOptions: InstanceUpdateOptions<MedicalInstitutionAttributes> & SyncOptions = {
+                transaction: options.transaction,
+                context: { isSync: true }
+              }
+
+              await institution.update({
+                isLocked: true,
+                lockedAt: new Date(),
+                lockedReason: 'meeting_created'
+              }, updateOptions)
+
+              logger.info('Institution auto-locked after meeting creation', {
+                institutionId: institution.id,
+                institutionName: institution.name,
+                meetingId: meeting.id,
+                meetingTitle: meeting.title
+              })
+            }
+          } catch (error) {
+            logger.error('Failed to auto-lock institution after meeting creation', {
+              institutionId: meeting.institutionId,
+              meetingId: meeting.id,
+              error: (error as Error).message
+            })
+          }
         }
       },
     },

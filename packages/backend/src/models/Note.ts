@@ -1,10 +1,18 @@
 import { SharePermission } from "@medical-crm/shared"
-import { DataTypes, Model, Op, Optional } from "sequelize"
+import { DataTypes, Model, Op, Optional, InstanceUpdateOptions } from "sequelize"
 import { sequelize } from "../config/database"
 import { CollaborationValidation } from "../types/collaboration"
-import { MedicalInstitution } from "./MedicalInstitution"
+import { MedicalInstitution, type MedicalInstitutionAttributes } from "./MedicalInstitution"
 import { User } from "./User"
 import type { NoteShare } from "./NoteShare"
+import { logger } from "../utils/logger"
+
+/**
+ * Extended options for sync operations to prevent auto-lock
+ */
+interface SyncOptions {
+  context?: { isSync: boolean }
+}
 
 export interface NoteAttributes {
   id: string
@@ -499,6 +507,44 @@ Note.init(
       beforeValidate: (note: Note) => {
         // Validate note data
         Note.validateNoteData(note)
+      },
+
+      /**
+       * Auto-lock institution when note is created
+       * Prevents external syncs (Digiforma/Sage) from overwriting CRM data
+       */
+      afterCreate: async (note: Note, options) => {
+        if (note.institutionId) {
+          try {
+            const institution = await MedicalInstitution.findByPk(note.institutionId)
+
+            if (institution && !institution.isLocked) {
+              const updateOptions: InstanceUpdateOptions<MedicalInstitutionAttributes> & SyncOptions = {
+                transaction: options.transaction,
+                context: { isSync: true }
+              }
+
+              await institution.update({
+                isLocked: true,
+                lockedAt: new Date(),
+                lockedReason: 'note_created'
+              }, updateOptions)
+
+              logger.info('Institution auto-locked after note creation', {
+                institutionId: institution.id,
+                institutionName: institution.name,
+                noteId: note.id,
+                noteTitle: note.title
+              })
+            }
+          } catch (error) {
+            logger.error('Failed to auto-lock institution after note creation', {
+              institutionId: note.institutionId,
+              noteId: note.id,
+              error: (error as Error).message
+            })
+          }
+        }
       },
     },
   }

@@ -1,10 +1,20 @@
 import { InstitutionType } from "@medical-crm/shared"
-import { Association, DataTypes, Model, Op, Optional, Sequelize } from "sequelize"
+import { Association, DataTypes, Model, Op, Optional, Sequelize, InstanceUpdateOptions, CreateOptions } from "sequelize"
 import { sequelize } from "../config/database"
 import { InstitutionAddress } from "./InstitutionAddress"
 import { ContactPerson } from "./ContactPerson"
 import { MedicalProfile } from "./MedicalProfile"
 import { User } from "./User"
+import { logger } from "../utils/logger"
+
+/**
+ * Extended options for sync operations to prevent auto-lock
+ */
+interface SyncOptions {
+  context?: { isSync: boolean }
+}
+
+export type DataSource = 'crm' | 'digiforma' | 'sage' | 'import'
 
 export interface AddressAttributes {
   street: string
@@ -12,6 +22,37 @@ export interface AddressAttributes {
   state: string
   zipCode: string
   country: string
+}
+
+export interface ExternalData {
+  digiforma?: {
+    id: string
+    name?: string
+    siret?: string
+    accountingNumber?: string
+    ape?: string
+    code?: string
+    note?: string
+    lastSync: Date
+  }
+  sage?: {
+    id: string
+    accountingCode?: string
+    creditLimit?: number
+    lastSync: Date
+  }
+  import?: {
+    source_file: string
+    import_date: Date
+    import_user_id: string
+    original_data: Record<string, any>
+  }
+}
+
+export interface LastSyncAt {
+  digiforma?: Date
+  sage?: Date
+  import?: Date
 }
 
 export interface MedicalInstitutionAttributes {
@@ -24,6 +65,15 @@ export interface MedicalInstitutionAttributes {
   assignedUserId?: string
   tags: string[]
   isActive: boolean
+
+  // Multi-source tracking
+  dataSource: DataSource
+  isLocked: boolean
+  lockedAt?: Date
+  lockedReason?: string
+  externalData: ExternalData
+  lastSyncAt: LastSyncAt
+
   createdAt: Date
   updatedAt: Date
 }
@@ -31,7 +81,7 @@ export interface MedicalInstitutionAttributes {
 export interface MedicalInstitutionCreationAttributes
   extends Optional<
     MedicalInstitutionAttributes,
-    "id" | "createdAt" | "updatedAt" | "tags" | "isActive"
+    "id" | "createdAt" | "updatedAt" | "tags" | "isActive" | "dataSource" | "isLocked" | "externalData" | "lastSyncAt"
   > {}
 
 export class MedicalInstitution
@@ -49,6 +99,15 @@ export class MedicalInstitution
   declare assignedUserId?: string
   declare tags: string[]
   declare isActive: boolean
+
+  // Multi-source tracking
+  declare dataSource: DataSource
+  declare isLocked: boolean
+  declare lockedAt?: Date
+  declare lockedReason?: string
+  declare externalData: ExternalData
+  declare lastSyncAt: LastSyncAt
+
   declare readonly createdAt: Date
   declare readonly updatedAt: Date
 
@@ -560,6 +619,49 @@ MedicalInstitution.init(
       defaultValue: true,
       field: "is_active",
     },
+
+    // Multi-source tracking fields
+    dataSource: {
+      type: DataTypes.ENUM('crm', 'digiforma', 'sage', 'import'),
+      allowNull: false,
+      defaultValue: 'crm',
+      field: "data_source",
+      comment: 'Source de création - NE CHANGE JAMAIS (provenance historique)',
+    },
+    isLocked: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: false,
+      field: "is_locked",
+      comment: 'True = CRM-owned (ne peut plus être écrasé par sync externe)',
+    },
+    lockedAt: {
+      type: DataTypes.DATE,
+      allowNull: true,
+      field: "locked_at",
+      comment: 'Date de verrouillage',
+    },
+    lockedReason: {
+      type: DataTypes.STRING,
+      allowNull: true,
+      field: "locked_reason",
+      comment: 'Raison du lock (manual_edit, has_crm_activities, etc.)',
+    },
+    externalData: {
+      type: DataTypes.JSONB,
+      allowNull: false,
+      defaultValue: {},
+      field: "external_data",
+      comment: 'Données des systèmes externes (Digiforma, Sage) - Read-only',
+    },
+    lastSyncAt: {
+      type: DataTypes.JSONB,
+      allowNull: false,
+      defaultValue: {},
+      field: "last_sync_at",
+      comment: 'Dernière sync par source: { digiforma: Date, sage: Date, import: Date }',
+    },
+
     createdAt: {
       type: DataTypes.DATE,
       allowNull: false,
@@ -620,6 +722,60 @@ MedicalInstitution.init(
         fields: ["created_at"],
       },
     ],
+    hooks: {
+      // ============================================
+      // AUTO-LOCK HOOKS
+      // ============================================
+
+      /**
+       * After creating an institution, lock it if created manually (not via sync)
+       */
+      afterCreate: async (institution, options) => {
+        const syncOptions = options as unknown as SyncOptions
+        const context = syncOptions.context
+
+        // If creation is manual (not from sync), lock immediately
+        if (!context?.isSync) {
+          const updateOptions: InstanceUpdateOptions<MedicalInstitutionAttributes> & SyncOptions = {
+            transaction: options.transaction,
+            context: { isSync: true }
+          }
+
+          await institution.update({
+            isLocked: true,
+            lockedAt: new Date(),
+            lockedReason: 'manual_creation'
+          }, updateOptions)
+
+          logger.info('Institution auto-locked after manual creation', {
+            institutionId: institution.id,
+            name: institution.name,
+            dataSource: institution.dataSource
+          })
+        }
+      },
+
+      /**
+       * Before updating an institution, lock it if update is manual (not via sync)
+       */
+      beforeUpdate: async (institution, options) => {
+        const syncOptions = options as unknown as SyncOptions
+        const context = syncOptions.context
+
+        // If update is manual (not from sync) and not yet locked
+        if (!context?.isSync && !institution.isLocked) {
+          institution.isLocked = true
+          institution.lockedAt = new Date()
+          institution.lockedReason = 'manual_edit'
+
+          logger.info('Institution auto-locked after manual edit', {
+            institutionId: institution.id,
+            name: institution.name,
+            dataSource: institution.dataSource
+          })
+        }
+      },
+    },
   }
 )
 

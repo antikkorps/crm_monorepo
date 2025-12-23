@@ -1,13 +1,13 @@
 import { createServer } from "http"
 import { createApp } from "./app"
 import config from "./config/environment"
+import { quoteReminderProcessorJob } from "./jobs/quoteReminderProcessor"
+import { reminderProcessorJob } from "./jobs/reminderProcessor"
+import { SecurityLogCleanupJob } from "./jobs/securityLogCleanup"
 import { PluginService } from "./services/PluginService"
 import { SocketService } from "./services/SocketService"
 import { TaskNotificationService } from "./services/TaskNotificationService"
 import { WebhookJobProcessor } from "./services/WebhookJobProcessor"
-import { SecurityLogCleanupJob } from "./jobs/securityLogCleanup"
-import { reminderProcessorJob } from "./jobs/reminderProcessor"
-import { quoteReminderProcessorJob } from "./jobs/quoteReminderProcessor"
 import { initializeDatabase } from "./utils/database-init"
 import { logger } from "./utils/logger"
 
@@ -16,12 +16,15 @@ async function startServer() {
     console.log("Starting server initialization...")
 
     // Initialize database connection
-    const shouldSync = config.env === "development" || config.database.syncOnStart
+    // NEVER sync in development - use migrations instead
+    // Sequelize sync generates invalid SQL for ENUMs
+    const shouldSync = false // Disabled - use migrations with npm run db:migrate
 
     logger.info("Initializing database connection...", {
       environment: config.env,
       syncOnStart: config.database.syncOnStart,
       willSync: shouldSync,
+      note: "Sync disabled - use migrations (npm run db:migrate)",
     })
 
     await initializeDatabase({
