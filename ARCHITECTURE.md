@@ -42,13 +42,13 @@ crm_monorepo/
 
 ### Stack technologique
 
-| Couche | Technologies |
-|--------|-------------|
-| **Frontend** | Vue 3, Vuetify 3, Pinia, TypeScript, Vite |
-| **Backend** | Koa.js, Sequelize, PostgreSQL, Socket.io |
-| **Base de données** | PostgreSQL 15 |
-| **Build** | Lerna (monorepo), TypeScript, ESBuild |
-| **Conteneurisation** | Docker, Docker Compose |
+| Couche               | Technologies                              |
+| -------------------- | ----------------------------------------- |
+| **Frontend**         | Vue 3, Vuetify 3, Pinia, TypeScript, Vite |
+| **Backend**          | Koa.js, Sequelize, PostgreSQL, Socket.io  |
+| **Base de données**  | PostgreSQL 15                             |
+| **Build**            | Lerna (monorepo), TypeScript, ESBuild     |
+| **Conteneurisation** | Docker, Docker Compose                    |
 
 ---
 
@@ -95,7 +95,9 @@ packages/backend/src/
 ### Services clés
 
 #### ConsolidatedRevenueService
+
 Calcule le chiffre d'affaires consolidé en agrégeant :
+
 - **Audit** : Factures CRM (Invoice)
 - **Formation** : Factures Digiforma (DigiformaInvoice)
 - **Autre** : Sources additionnelles (placeholder)
@@ -118,14 +120,18 @@ const revenue = await ConsolidatedRevenueService.getInstitutionRevenue(
 ```
 
 #### DigiformaSyncService
+
 Orchestre la synchronisation avec l'API Digiforma :
+
 1. Récupération des données (companies, contacts, quotes, invoices)
 2. Création/mise à jour dans la base locale
 3. Merge intelligent avec les institutions CRM (par email)
 4. Tracking détaillé (compteurs, erreurs, durée)
 
 #### InvoiceService
+
 Gestion complète du cycle de vie des factures :
+
 - Génération depuis devis ou nouvelle création
 - Calculs automatiques (taxes, totaux)
 - Mise à jour des statuts selon paiements
@@ -134,6 +140,7 @@ Gestion complète du cycle de vie des factures :
 ### Authentification & Autorisations
 
 #### JWT Authentication
+
 - Token JWT stocké en cookie HTTP-only
 - Refresh token pour renouvellement automatique
 - Middleware `authenticate` pour protéger les routes
@@ -144,25 +151,26 @@ Permissions granulaires par rôle :
 
 ```typescript
 enum UserRole {
-  ADMIN = 'admin',
-  MANAGER = 'manager',
-  AUDITOR = 'auditor',
-  VIEWER = 'viewer'
+  ADMIN = "admin",
+  MANAGER = "manager",
+  AUDITOR = "auditor",
+  VIEWER = "viewer",
 }
 
 // Exemples de permissions
-canCreateInvoice           // Créer des factures
-canViewAllInstitutions     // Voir toutes les institutions
-canManageSystemSettings    // Gérer les paramètres système
+canCreateInvoice // Créer des factures
+canViewAllInstitutions // Voir toutes les institutions
+canManageSystemSettings // Gérer les paramètres système
 canViewInstitutionAnalytics // Voir les analytics
 ```
 
 Middleware `requirePermissions` pour contrôler l'accès :
 
 ```typescript
-router.get('/invoices',
+router.get(
+  "/invoices",
   authenticate,
-  requirePermissions('canViewInvoices'),
+  requirePermissions("canViewInvoices"),
   InvoiceController.list
 )
 ```
@@ -180,25 +188,26 @@ router.get('/invoices',
 
 #### Groupes de routes
 
-| Préfixe | Description |
-|---------|-------------|
-| `/api/auth` | Authentification (login, logout, refresh) |
-| `/api/users` | Gestion utilisateurs |
-| `/api/institutions` | Institutions médicales |
-| `/api/contacts` | Contacts |
-| `/api/tasks` | Tâches |
-| `/api/quotes` | Devis |
-| `/api/invoices` | Factures |
-| `/api/payments` | Paiements |
-| `/api/templates` | Templates de factures |
-| `/api/webhooks` | Webhooks |
-| `/api/segments` | Segmentation |
-| `/api/digiforma` | Intégration Digiforma |
-| `/api/revenue` | Revenus consolidés |
+| Préfixe             | Description                               |
+| ------------------- | ----------------------------------------- |
+| `/api/auth`         | Authentification (login, logout, refresh) |
+| `/api/users`        | Gestion utilisateurs                      |
+| `/api/institutions` | Institutions médicales                    |
+| `/api/contacts`     | Contacts                                  |
+| `/api/tasks`        | Tâches                                    |
+| `/api/quotes`       | Devis                                     |
+| `/api/invoices`     | Factures                                  |
+| `/api/payments`     | Paiements                                 |
+| `/api/templates`    | Templates de factures                     |
+| `/api/webhooks`     | Webhooks                                  |
+| `/api/segments`     | Segmentation                              |
+| `/api/digiforma`    | Intégration Digiforma                     |
+| `/api/revenue`      | Revenus consolidés                        |
 
 #### Réponses standardisées
 
 **Succès :**
+
 ```json
 {
   "success": true,
@@ -207,6 +216,7 @@ router.get('/invoices',
 ```
 
 **Erreur :**
+
 ```json
 {
   "success": false,
@@ -251,20 +261,24 @@ packages/frontend/src/
 #### Composants métier
 
 **Institutions**
+
 - `InstitutionDetailView.vue` : Vue détaillée avec onglets (Aperçu, Profil Médical, Contacts, Revenus, Digiforma)
 - `RevenueTab.vue` : Onglet revenus consolidés (Audit + Formation + Autre)
 - `DigiformaTab.vue` : Onglet données Digiforma (CA Formation, devis, factures)
 
 **Dashboard**
+
 - `DashboardView.vue` : Tableau de bord principal
 - `ConsolidatedRevenueWidget.vue` : Widget CA consolidé avec graphiques
 
 **Settings**
+
 - `DigiformaSettingsView.vue` : Configuration Digiforma (token, sync, historique)
 
 ### State Management (Pinia)
 
 Stores principaux :
+
 - **authStore** : Authentification, utilisateur courant, permissions
 - **institutionStore** : Cache des institutions
 - **notificationStore** : Notifications temps réel
@@ -276,9 +290,9 @@ Organisation par domaine fonctionnel :
 ```typescript
 // packages/frontend/src/services/api/
 export const institutionsApi = {
-  list: (params) => apiRequest('/institutions', { params }),
+  list: (params) => apiRequest("/institutions", { params }),
   get: (id) => apiRequest(`/institutions/${id}`),
-  create: (data) => apiRequest('/institutions', { method: 'POST', body: data }),
+  create: (data) => apiRequest("/institutions", { method: "POST", body: data }),
   // ...
 }
 
@@ -286,7 +300,7 @@ export const digiformaApi = {
   settings: { getSettings, updateSettings, testConnection },
   sync: { triggerSync, getStatus, getHistory },
   data: { getInstitutionQuotes, getInstitutionInvoices },
-  revenue: { getInstitutionRevenue, getGlobalRevenue, getRevenueEvolution }
+  revenue: { getInstitutionRevenue, getGlobalRevenue, getRevenueEvolution },
 }
 ```
 
@@ -301,9 +315,10 @@ packages/frontend/src/i18n/locales/
 ```
 
 Utilisation dans les composants :
+
 ```vue
 <template>
-  <h1>{{ $t('navigation.dashboard') }}</h1>
+  <h1>{{ $t("navigation.dashboard") }}</h1>
 </template>
 ```
 
@@ -313,23 +328,24 @@ Routes organisées par domaine :
 
 ```typescript
 routes = [
-  { path: '/', name: 'Landing' },
-  { path: '/login', name: 'Login' },
-  { path: '/dashboard', name: 'Dashboard', meta: { requiresAuth: true } },
-  { path: '/institutions', name: 'MedicalInstitutions' },
-  { path: '/institutions/:id', name: 'InstitutionDetail' },
-  { path: '/quotes', name: 'Quotes' },
-  { path: '/invoices', name: 'Invoices' },
-  { path: '/settings/digiforma', name: 'DigiformaSettings' },
+  { path: "/", name: "Landing" },
+  { path: "/login", name: "Login" },
+  { path: "/dashboard", name: "Dashboard", meta: { requiresAuth: true } },
+  { path: "/institutions", name: "MedicalInstitutions" },
+  { path: "/institutions/:id", name: "InstitutionDetail" },
+  { path: "/quotes", name: "Quotes" },
+  { path: "/invoices", name: "Invoices" },
+  { path: "/settings/digiforma", name: "DigiformaSettings" },
   // ...
 ]
 ```
 
 Navigation guard pour authentification :
+
 ```typescript
 router.beforeEach(async (to, from, next) => {
   if (to.meta.requiresAuth && !authStore.isAuthenticated) {
-    next({ name: 'Login', query: { redirect: to.fullPath } })
+    next({ name: "Login", query: { redirect: to.fullPath } })
   } else {
     next()
   }
@@ -384,6 +400,7 @@ router.beforeEach(async (to, from, next) => {
 ### Index
 
 Index critiques pour performance :
+
 - `medical_institutions(name)` - Recherche par nom
 - `contact_persons(email)` - Recherche par email
 - `invoices(institution_id, status)` - Liste factures par institution
@@ -430,12 +447,15 @@ npm run db:migrate:undo
 ### CORS
 
 Configuration stricte en production :
+
 ```typescript
-app.use(cors({
-  origin: process.env.FRONTEND_URL,
-  credentials: true,
-  allowedHeaders: ['Content-Type', 'Authorization']
-}))
+app.use(
+  cors({
+    origin: process.env.FRONTEND_URL,
+    credentials: true,
+    allowedHeaders: ["Content-Type", "Authorization"],
+  })
+)
 ```
 
 ### Rate Limiting
@@ -471,6 +491,7 @@ ConsolidatedRevenueService.getInstitutionRevenue(institutionId, startDate, endDa
 ```
 
 Agrège :
+
 - **Audit** : `invoices` (CRM) → total, paidRevenue, unpaidRevenue
 - **Formation** : `digiforma_invoices` → totalAmount, paidAmount
 - **Total** : Somme Audit + Formation + Autre
@@ -480,6 +501,7 @@ Agrège :
 Système de webhooks pour notifier systèmes externes :
 
 **Événements supportés :**
+
 - `invoice.created`
 - `invoice.updated`
 - `invoice.paid`
@@ -487,6 +509,7 @@ Système de webhooks pour notifier systèmes externes :
 - `institution.created`
 
 **Configuration :**
+
 - URL cible
 - Secret pour signature HMAC
 - Filtres d'événements
@@ -498,11 +521,11 @@ Système de webhooks pour notifier systèmes externes :
 
 ### Environnements
 
-| Environnement | Description |
-|---------------|-------------|
-| **Development** | Local, Docker Compose, hot reload |
-| **Staging** | Environnement de test pré-production |
-| **Production** | Environnement production |
+| Environnement   | Description                          |
+| --------------- | ------------------------------------ |
+| **Development** | Local, Docker Compose, hot reload    |
+| **Staging**     | Environnement de test pré-production |
+| **Production**  | Environnement production             |
 
 ### Variables d'environnement
 
@@ -618,16 +641,17 @@ refactor(auth): simplify JWT middleware
 ### Logger
 
 Winston configuré avec niveaux :
+
 - **error** : Erreurs critiques
 - **warn** : Avertissements
 - **info** : Informations générales
 - **debug** : Debug détaillé
 
 ```typescript
-logger.info('Sync completed', {
+logger.info("Sync completed", {
   syncId: sync.id,
   duration: sync.duration,
-  itemsSynced: sync.companiesSynced
+  itemsSynced: sync.companiesSynced,
 })
 ```
 
@@ -651,30 +675,35 @@ Format JSON pour parsing facile :
 ## Roadmap & Améliorations futures
 
 ### Tests
+
 - [ ] Tests unitaires backend (Jest)
 - [ ] Tests unitaires frontend (Vitest)
 - [ ] Tests e2e (Playwright/Cypress)
 - [ ] Tests d'intégration API
 
 ### Performance
+
 - [ ] Cache Redis pour sessions et queries fréquentes
 - [ ] Optimisation queries Sequelize (eager loading)
 - [ ] Pagination généralisée
 - [ ] Compression gzip/brotli
 
 ### Fonctionnalités
+
 - [ ] Notifications email automatiques
 - [ ] Export Excel avancé
 - [ ] Dashboard analytics temps réel
 - [ ] Mobile app (React Native/Flutter)
 
 ### Infrastructure
+
 - [ ] CI/CD pipeline (GitHub Actions)
 - [ ] Monitoring (Sentry, DataDog)
 - [ ] Backups automatiques DB
 - [ ] CDN pour assets frontend
 
 ### Documentation
+
 - [ ] Swagger/OpenAPI pour API
 - [ ] Storybook pour composants
 - [ ] Guides utilisateur

@@ -174,7 +174,10 @@ export const institutionsApi = {
   getById: (id: string) => apiClient.get(`/institutions/${id}`),
   create: (data: any) => apiClient.post("/institutions", data),
   update: (id: string, data: any) => apiClient.put(`/institutions/${id}`, data),
-  delete: (id: string) => apiClient.delete(`/institutions/${id}`),
+  delete: (id: string, force?: boolean) => {
+    const params = force ? '?force=true' : ''
+    return apiClient.delete(`/institutions/${id}${params}`)
+  },
   search: (query: string, filters?: { limit?: number; type?: string; city?: string }) => {
     const params = new URLSearchParams()
     params.append("name", query)
@@ -676,6 +679,9 @@ export { analyticsApi } from './analytics'
 export { healthScoreApi } from './healthScore'
 
 // Export Analytics API
+
+// Export Teams API
+export { teamsApi } from './teams'
 
 // System Settings API
 export const settingsApi = {

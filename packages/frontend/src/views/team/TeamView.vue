@@ -14,6 +14,15 @@
          </div>
          <div class="header-actions">
            <v-btn
+             color="secondary"
+             variant="outlined"
+             prepend-icon="mdi-account-multiple-plus"
+             @click="showCreateTeamDialog = true"
+             class="add-team-btn"
+           >
+             Create Team
+           </v-btn>
+           <v-btn
              color="primary"
              prepend-icon="mdi-account-plus"
              @click="showCreateUserDialog = true"
@@ -448,6 +457,20 @@
          @submit="resetUserPassword"
          @cancel="showPasswordResetDialog = false"
        />
+
+       <!-- Create Team Dialog -->
+       <CreateTeamDialog
+         v-model="showCreateTeamDialog"
+         @team-created="handleTeamCreated"
+       />
+
+       <!-- Edit Team Dialog -->
+       <EditTeamDialog
+         v-model="showEditTeamDialog"
+         :team="selectedTeamForEdit"
+         @team-updated="handleTeamUpdated"
+         @team-deleted="handleTeamDeleted"
+       />
     </div>
   </AppLayout>
 </template>
@@ -459,7 +482,9 @@ import TeamCard from "@/components/team/TeamCard.vue"
 import UserCard from "@/components/team/UserCard.vue"
 import UserProfileForm from "@/components/team/UserProfileForm.vue"
 import PasswordResetDialog from "@/components/team/PasswordResetDialog.vue"
-import { institutionsApi, teamApi, usersApi } from "@/services/api"
+import CreateTeamDialog from "@/components/team/CreateTeamDialog.vue"
+import EditTeamDialog from "@/components/team/EditTeamDialog.vue"
+import { institutionsApi, teamApi, teamsApi, usersApi } from "@/services/api"
 import { AvatarService } from "@/services/avatarService"
 import { useTeamStore } from "@/stores/team"
 import type {
@@ -483,7 +508,10 @@ const showCreateUserDialog = ref(false)
 const showEditUserDialog = ref(false)
 const showManageUserDialog = ref(false)
 const showPasswordResetDialog = ref(false)
+const showCreateTeamDialog = ref(false)
+const showEditTeamDialog = ref(false)
 const selectedUser = ref<User | null>(null)
+const selectedTeamForEdit = ref<any | null>(null)
 const formLoading = ref(false)
 const passwordResetLoading = ref(false)
 
@@ -805,7 +833,8 @@ const clearFilters = () => {
 }
 
 const editTeam = (team: any) => {
-  console.log("Edit team:", team)
+  selectedTeamForEdit.value = team
+  showEditTeamDialog.value = true
 }
 
 const manageTeam = (team: any) => {
@@ -819,6 +848,33 @@ const addMemberToTeam = (team: any) => {
 
 const viewTeamDetails = (team: any) => {
   console.log("View team details:", team)
+}
+
+const handleTeamCreated = async (team: any) => {
+  try {
+    await teamStore.fetchTeams()
+    showSnackbar("Team created successfully", "success")
+  } catch (error) {
+    console.error("Error refreshing teams:", error)
+  }
+}
+
+const handleTeamUpdated = async (team: any) => {
+  try {
+    await teamStore.fetchTeams()
+    showSnackbar("Team updated successfully", "success")
+  } catch (error) {
+    console.error("Error refreshing teams:", error)
+  }
+}
+
+const handleTeamDeleted = async (teamId: string) => {
+  try {
+    await teamStore.fetchTeams()
+    showSnackbar("Team deleted successfully", "success")
+  } catch (error) {
+    console.error("Error refreshing teams:", error)
+  }
 }
 
 onMounted(() => {

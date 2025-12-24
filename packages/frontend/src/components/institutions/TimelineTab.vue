@@ -273,24 +273,22 @@ const loadTimeline = async (reset = false) => {
       offset: offset.value,
     })
 
-    const data = response.data
-
-    // Check if data and required properties exist
-    if (!data || !data.items || !data.pagination) {
-      console.warn("Invalid timeline data structure returned from API:", data)
+    // Check if response and required properties exist
+    if (!response || !response.items || !response.pagination) {
+      console.warn("Invalid timeline data structure returned from API:", response)
       error.value = "Format de données invalide"
       loading.value = false
       return
     }
 
     if (reset) {
-      items.value = data.items
+      items.value = response.items
     } else {
-      items.value = [...items.value, ...data.items]
+      items.value = [...items.value, ...response.items]
     }
 
-    offset.value = data.pagination.offset + data.pagination.limit
-    total.value = data.pagination.total
+    offset.value = response.pagination.offset + response.pagination.limit
+    total.value = response.pagination.total
   } catch (err: any) {
     error.value = err.message || "Impossible de charger la timeline"
     console.error("Failed to load timeline:", err)

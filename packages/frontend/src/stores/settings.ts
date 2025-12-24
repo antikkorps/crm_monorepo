@@ -61,7 +61,7 @@ export const useSettingsStore = defineStore("settings", {
         const response = await settingsApi.getPublic()
 
         // Validate response structure
-        if (!response || typeof response !== 'object') {
+        if (!response || typeof response !== "object") {
           console.error("Invalid response structure from settings API")
           return
         }
@@ -69,24 +69,30 @@ export const useSettingsStore = defineStore("settings", {
         const typedResponse = response as SettingsApiResponse
         const data = typedResponse.data
 
-        // Check if data exists and is an array
-        if (!Array.isArray(data)) {
+        // Backend returns a flat object with dotted keys like "features.quotes_enabled"
+        if (!data || typeof data !== "object") {
           console.error("Settings API returned invalid or null data")
           return
         }
 
-        // Update feature flags from response
-        if (data.features && typeof data.features === 'object') {
-          this.featureFlags = {
-            quotes_enabled: data.features.quotes_enabled ?? true,
-            invoices_enabled: data.features.invoices_enabled ?? true,
-            tasks_enabled: data.features.tasks_enabled ?? true,
-            contacts_enabled: data.features.contacts_enabled ?? true,
-            segmentation_enabled: data.features.segmentation_enabled ?? true,
-            sage_enabled: data.features.sage_enabled ?? false,
-          }
+        const settingsMap: Record<string, any> = {}
+        if (Array.isArray(data)) {
+          data.forEach((setting) => {
+            settingsMap[setting.key] = setting.value
+          })
         } else {
-          console.warn("No features object in settings response, using defaults")
+          // Handle case where data is already a flat object
+          Object.assign(settingsMap, data)
+        }
+
+        // Parse dotted keys to extract feature flags
+        this.featureFlags = {
+          quotes_enabled: settingsMap["features.quotes_enabled"] ?? true,
+          invoices_enabled: settingsMap["features.invoices_enabled"] ?? true,
+          tasks_enabled: settingsMap["features.tasks_enabled"] ?? true,
+          contacts_enabled: settingsMap["features.contacts_enabled"] ?? true,
+          segmentation_enabled: settingsMap["features.segmentation_enabled"] ?? true,
+          sage_enabled: settingsMap["features.sage_enabled"] ?? false,
         }
 
         this.initialized = true

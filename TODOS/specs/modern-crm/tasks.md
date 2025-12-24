@@ -3485,3 +3485,370 @@ import { TableSkeleton, ListSkeleton, DetailSkeleton } from '@/components/skelet
 - **UX Research**: "Skeleton screens reduce perceived loading time by 30-40%" - Nielsen Norman Group
 
 ---
+
+## 31. Protection Multi-Sources et Sécurisation des Données CRM ✅
+
+**Date:** 2025-12-24
+**Objectif:** Protéger les données enrichies dans le CRM contre les écrasements par les synchronisations externes (Digiforma, Sage)
+
+### Contexte
+
+Le CRM devient la **source de vérité unique**. Les données peuvent provenir de sources externes (Digiforma, Sage, imports CSV) mais une fois enrichies manuellement dans le CRM (ajout de notes, meetings, éditions manuelles), elles ne doivent **plus jamais être écrasées** par les syncs externes.
+
+### Architecture implémentée ✅
+
+#### 1. Tracking multi-sources (Backend)
+
+**Champs ajoutés aux modèles:**
+- ✅ `MedicalInstitution`: `dataSource`, `isLocked`, `lockedAt`, `lockedReason`, `externalData`, `lastSyncAt`
+- ✅ `ContactPerson`: Mêmes champs de tracking
+
+**Migration créée:**
+- ✅ `20251223000000-add-multi-source-tracking.cjs`
+- ✅ `20251224000000-fix-tasks-status-enum.cjs` (correction enum tasks)
+- ✅ `20251224000001-add-digiforma-id-to-medical-institutions.cjs` (ajout colonne digiforma_id)
+
+#### 2. Système d'auto-lock (Hooks Sequelize) ✅
+
+**MedicalInstitution:**
+- ✅ Hook `afterCreate`: Lock automatique si création manuelle (pas via sync)
+- ✅ Hook `beforeUpdate`: Lock automatique si édition manuelle (pas via sync)
+
+**ContactPerson:**
+- ✅ Hook `afterCreate`: Lock automatique si création manuelle
+- ✅ Hook `beforeUpdate`: Lock automatique si édition manuelle
+
+**Note:**
+- ✅ Hook `afterCreate`: Lock l'institution parente quand une note est créée
+- ✅ Raison de lock: `'note_created'`
+
+**Meeting:**
+- ✅ Hook `afterCreate`: Lock l'institution parente quand un meeting est créé
+- ✅ Raison de lock: `'meeting_created'`
+
+#### 3. Protection dans les services de sync ✅
+
+**DigiformaSyncService:**
+- ✅ Vérifie `isLocked` avant toute mise à jour
+- ✅ Si locked → Met à jour UNIQUEMENT `externalData` (métadonnées read-only)
+- ✅ Si non-locked → Met à jour les champs CRM normalement
+- ✅ Utilise `context: { isSync: true }` pour éviter de déclencher l'auto-lock lors des syncs
+
+**Fichiers modifiés:**
+- ✅ `packages/backend/src/models/MedicalInstitution.ts`
+- ✅ `packages/backend/src/models/ContactPerson.ts`
+- ✅ `packages/backend/src/models/Note.ts`
+- ✅ `packages/backend/src/models/Meeting.ts`
+- ✅ `packages/backend/src/services/DigiformaSyncService.ts`
+
+### Ce qui reste à faire
+
+- [x] **31.1** - UI: Badge + Tooltip source de données ✅
+
+  **Objectif:** Afficher visuellement la source de données et l'état de lock
+
+  **Composants créés:**
+  - ✅ `DataSourceBadge.vue`: Badge avec couleur selon source (CRM, Digiforma, Sage, Import)
+  - ✅ Tooltip affichant:
+    - Source de données avec label descriptif
+    - Statut (Locked/Unlocked) avec code couleur
+    - Date de lock formatée si applicable
+    - Raison du lock traduite en français (manual_edit, note_created, meeting_created)
+    - Hints contextuels selon l'état
+
+  **Intégration:**
+  - ✅ InstitutionDetailView.vue (ligne 67-72)
+  - ⏳ ContactPersonCard (à faire)
+  - ⏳ Liste des institutions (à faire)
+  - ⏳ Liste des contacts (à faire)
+
+  **Badge Colors:**
+  - Locked: `primary` (bleu) + variant `flat`
+  - CRM unlocked: `success` (vert) + variant `outlined`
+  - Digiforma: `info` (bleu clair)
+  - Sage: `warning` (orange)
+  - Import: `secondary` (gris)
+
+  **Corrections apportées:**
+  - ✅ Logique tooltip corrigée (ligne 32-40) pour afficher les bons messages selon l'état
+  - ✅ Three distinct states: locked, CRM-unlocked, external-unlocked
+
+  **Date:** 2025-12-24
+
+- [x] **31.2** - UI: Création et édition d'équipes ✅
+
+  **Objectif:** Permettre la gestion complète des équipes depuis le frontend
+
+  **Backend déjà prêt:**
+  - ✅ `POST /api/teams` - createTeam
+  - ✅ `PUT /api/teams/:id` - updateTeam
+  - ✅ `DELETE /api/teams/:id` - deleteTeam
+  - ✅ Permissions: `canManageTeam`
+
+  **Composants créés:**
+  - ✅ `CreateTeamDialog.vue`: Dialog de création d'équipe (224 lignes)
+  - ✅ `EditTeamDialog.vue`: Dialog d'édition d'équipe avec suppression (311 lignes)
+  - ✅ `teams.ts` API service: CRUD complet pour les équipes (71 lignes)
+  - ✅ Intégration dans `TeamView.vue` (lignes 461-473, 485-486, 835-878)
+
+  **Fonctionnalités implémentées:**
+  - ✅ Bouton "Create Team" dans header de TeamView
+  - ✅ Validation des formulaires (nom obligatoire, min 3 caractères)
+  - ✅ Gestion des erreurs avec messages utilisateur
+  - ✅ Switch actif/inactif avec description contextuelle
+  - ✅ Dialog de confirmation pour suppression
+  - ✅ Refresh automatique de la liste après création/édition/suppression
+  - ✅ Snackbar notifications de succès/erreur
+
+  **Champs du formulaire:**
+  - ✅ Nom de l'équipe (obligatoire, min 3 chars)
+  - ✅ Description (optionnel, textarea)
+  - ✅ Statut actif/inactif (switch avec label descriptif)
+
+  **Handlers TeamView:**
+  - ✅ `editTeam()`: Ouvre dialog d'édition
+  - ✅ `handleTeamCreated()`: Refresh teams + snackbar
+  - ✅ `handleTeamUpdated()`: Refresh teams + snackbar
+  - ✅ `handleTeamDeleted()`: Refresh teams + snackbar
+
+  **Date:** 2025-12-24
+
+- [x] **31.4** - Corrections API Settings et Timeline ✅
+
+  **Problème:** Erreurs TypeScript et structure de données incorrecte
+
+  **Settings API (`settings.ts`):**
+  - ✅ Problème: Frontend attendait array, backend retournait objet plat avec clés pointées
+  - ✅ Solution: Gestion robuste des deux cas (array et objet)
+  - ✅ Mapping des clés pointées (`features.quotes_enabled`) vers featureFlags
+  - ✅ Fallback défensif si data est null/invalide
+
+  **Timeline API (`TimelineTab.vue`):**
+  - ✅ Problème: Accès à `response.data` alors que type retourne directement items/pagination
+  - ✅ Solution: Accès direct à `response.items` et `response.pagination`
+  - ✅ Correction ligne 276: suppression du wrapper `.data`
+
+  **Fichiers modifiés:**
+  - ✅ `packages/frontend/src/stores/settings.ts` (lignes 72-96)
+  - ✅ `packages/frontend/src/components/institutions/TimelineTab.vue` (lignes 276-291)
+
+  **Validation:**
+  - ✅ Aucune erreur TypeScript restante
+  - ✅ Diagnostics IDE propres
+
+  **Date:** 2025-12-24
+
+- [x] **31.5** - Gestion des institutions inactives ✅
+
+  **Objectif:** Permettre l'affichage, la réactivation et la gestion complète des institutions désactivées
+
+  **Problème initial:**
+  - Les institutions avec `isActive: false` étaient invisibles dans l'interface
+  - Pas de moyen de les réactiver
+  - Confusion pour l'utilisateur sur le nombre réel d'institutions
+
+  **Fonctionnalités implémentées:**
+
+  **Frontend (`MedicalInstitutionsView.vue`):**
+  - ✅ Toggle "Afficher les inactives" dans les filtres avancés (ligne 189-196)
+  - ✅ Filtre automatique : par défaut seules les actives sont affichées (ligne 610-611)
+  - ✅ Bouton "Réactiver" (icône restore) pour les institutions inactives (ligne 345-353)
+  - ✅ Indicateur visuel : lignes grisées avec opacité réduite pour les inactives (CSS ligne 1012-1020)
+  - ✅ Fonction `reactivateInstitution()` : met à jour `isActive: true` (ligne 821-829)
+
+  **Système de suppression à deux niveaux:**
+
+  1. **Première suppression (institution active)** → **Soft delete**
+     - Message : "Êtes-vous sûr de vouloir désactiver... ? L'institution sera archivée"
+     - Action : `isActive: false`
+     - Résultat : L'institution devient inactive et réactivable
+
+  2. **Deuxième suppression (institution inactive)** → **Hard delete**
+     - Message : "⚠️ ATTENTION : Êtes-vous sûr de vouloir SUPPRIMER DÉFINITIVEMENT... ?"
+     - Action : `destroy({ force: true })`
+     - Résultat : Suppression définitive de la base de données
+
+  **Protection des institutions locked:**
+  - ✅ Les institutions avec `isLocked: true` ne peuvent PAS être supprimées définitivement
+  - ✅ Bouton remplacé par icône cadenas grisée avec tooltip explicatif (ligne 362-382)
+  - ✅ Message tooltip : "Cette institution contient des données CRM enrichies (notes, réunions, modifications) et ne peut être que désactivée"
+  - ✅ Backend bloque avec erreur 403 si tentative via API (MedicalInstitutionService.ts ligne 189-195)
+
+  **Backend (`MedicalInstitutionController.ts` et `MedicalInstitutionService.ts`):**
+  - ✅ Paramètre `isActive` dans le filtre de recherche (ligne 285-289)
+  - ✅ Si `isActive` non fourni → affiche toutes les institutions (actives + inactives)
+  - ✅ Si `isActive: true` → affiche uniquement les actives
+  - ✅ Paramètre `force` pour la suppression définitive (ligne 593)
+  - ✅ Vérification `isLocked` avant hard delete avec message d'erreur explicite
+
+  **Matrice des actions disponibles:**
+
+  | État | isLocked | Actions disponibles | Bouton suppression |
+  |------|----------|---------------------|-------------------|
+  | Active | false/true | ✏️ Modifier + 🗑️ Supprimer | "Désactiver" (soft delete) |
+  | Inactive | false | ♻️ Réactiver + 🗑️ Supprimer | "Supprimer définitivement" (hard delete) |
+  | Inactive | **true** | ♻️ Réactiver seulement | 🔒 Grisé avec tooltip |
+
+  **Fichiers modifiés:**
+  - ✅ `packages/frontend/src/views/institutions/MedicalInstitutionsView.vue`
+  - ✅ `packages/frontend/src/services/api/index.ts` (ajout paramètre force)
+  - ✅ `packages/backend/src/controllers/MedicalInstitutionController.ts`
+  - ✅ `packages/backend/src/services/MedicalInstitutionService.ts`
+
+  **Bénéfices:**
+  - ✅ Visibilité complète sur toutes les institutions (actives + archivées)
+  - ✅ Possibilité de récupérer une institution désactivée par erreur
+  - ✅ Protection des données CRM enrichies contre la suppression accidentelle
+  - ✅ Double niveau de sécurité avant suppression définitive
+  - ✅ Messages clairs pour l'utilisateur
+
+  **Date:** 2025-12-24
+
+- [ ] **31.6** - Gestion des membres d'équipe
+
+  **Objectif:** Finaliser la gestion complète des équipes et de leurs membres
+
+  **Problèmes actuels:**
+  - ❌ Impossible de supprimer un membre d'une équipe
+  - ❌ Bouton "View Details" ne fait rien (sur les cartes d'équipe)
+  - ❌ Roue crantée "Configuration" ne fait rien (sur les cartes d'équipe)
+  - ❌ Pas de vue détaillée d'une équipe avec la liste de ses membres
+
+  **Fonctionnalités à implémenter:**
+
+  **1. Page de détail d'équipe (`TeamDetailView.vue`):**
+  - [ ] Vue complète d'une équipe avec toutes ses informations
+  - [ ] Liste des membres de l'équipe avec leurs rôles
+  - [ ] Statistiques de l'équipe (nombre de membres, institutions assignées, etc.)
+  - [ ] Actions : Modifier l'équipe, Ajouter des membres, Supprimer des membres
+
+  **2. Gestion des membres:**
+  - [ ] Dialog `AddTeamMemberDialog.vue` : Ajouter un ou plusieurs utilisateurs à l'équipe
+  - [ ] Bouton de suppression de membre avec confirmation
+  - [ ] Endpoint backend déjà existant :
+    - ✅ `POST /api/teams/:teamId/members` - Ajouter un membre
+    - ✅ `DELETE /api/teams/:teamId/members/:userId` - Retirer un membre
+    - ✅ `GET /api/teams/:teamId/members` - Liste des membres
+
+  **3. Intégration dans TeamView:**
+  - [ ] Connecter le bouton "View Details" → Navigation vers TeamDetailView
+  - [ ] Connecter la roue crantée "Configuration" → Ouvrir EditTeamDialog
+  - [ ] OU remplacer par des actions plus claires (Edit, View, Delete)
+
+  **4. Permissions et validations:**
+  - [ ] Vérifier qu'on ne peut pas retirer le dernier admin d'une équipe
+  - [ ] Vérifier les permissions `canManageTeam` avant les actions
+  - [ ] Message d'erreur si on essaye de retirer un membre qui a des institutions assignées
+
+  **Composants à créer:**
+  - `TeamDetailView.vue` : Page de détail d'équipe
+  - `AddTeamMemberDialog.vue` : Dialog pour ajouter des membres
+  - `TeamMemberCard.vue` : Carte affichant un membre avec bouton de suppression
+
+  **Composants à modifier:**
+  - `TeamView.vue` : Connecter les boutons View Details et Configuration
+  - `TeamCard.vue` : Clarifier les actions disponibles
+
+  **Routes à ajouter:**
+  - `/teams/:id` - Vue détaillée d'une équipe
+
+  **Estimation:** 3-4h
+
+  **Date:** À planifier
+
+- [ ] **31.3** - Tests: Protection auto-lock
+
+  **Objectif:** Garantir la fiabilité du système de protection
+
+  **Tests à créer:**
+
+  1. **Tests unitaires modèles:**
+     - `MedicalInstitution.test.ts`: Vérifier hooks auto-lock
+     - `ContactPerson.test.ts`: Vérifier hooks auto-lock
+     - `Note.test.ts`: Vérifier lock institution parente
+     - `Meeting.test.ts`: Vérifier lock institution parente
+
+  2. **Tests d'intégration sync:**
+     - `DigiformaSyncService.test.ts`:
+       - Vérifier que les entités locked ne sont pas écrasées
+       - Vérifier que `externalData` est mis à jour même si locked
+       - Vérifier que `context.isSync` prévient l'auto-lock
+
+  3. **Scénarios de test:**
+     - Créer institution manuellement → doit être locked
+     - Éditer institution manuellement → doit être locked
+     - Ajouter note à une institution → institution doit être locked
+     - Sync Digiforma sur institution locked → champs CRM inchangés
+     - Sync Digiforma sur institution non-locked → champs CRM mis à jour
+
+  **Estimation:** 4-5h
+
+### Règles métier implémentées
+
+**1. Source de données (dataSource):**
+- ✅ `'crm'`: Créé dans le CRM (défaut)
+- ✅ `'digiforma'`: Importé de Digiforma
+- ✅ `'sage'`: Importé de Sage
+- ✅ `'import'`: Importé via CSV
+- ✅ **NE CHANGE JAMAIS** (provenance historique)
+
+**2. État de lock (isLocked):**
+- ✅ `false`: Peut être écrasé par les syncs externes
+- ✅ `true`: CRM-owned, protégé contre les écrasements externes
+
+**3. Raisons de lock (lockedReason):**
+- ✅ `'manual_creation'`: Créé manuellement dans le CRM
+- ✅ `'manual_edit'`: Édité manuellement dans le CRM
+- ✅ `'note_created'`: Une note a été ajoutée (enrichissement CRM)
+- ✅ `'meeting_created'`: Un meeting a été créé (enrichissement CRM)
+
+**4. Métadonnées externes (externalData):**
+- ✅ Stocke les données brutes des systèmes externes
+- ✅ **Read-only**: Toujours mis à jour lors des syncs, même si locked
+- ✅ Permet de garder une trace de l'état externe sans écraser le CRM
+
+### Configuration Railway pour migrations ✅
+
+**Fichiers créés:**
+- ✅ `nixpacks.toml`: Configuration du build et déploiement Railway
+- ✅ Script `start:production` dans package.json: exécute migrations puis démarre le serveur
+
+**Workflow de déploiement:**
+1. Build du projet
+2. Exécution automatique des migrations (`npm run db:migrate`)
+3. Démarrage du serveur
+
+### Impact et bénéfices
+
+**Sécurité des données:**
+- ✅ Aucune perte de données enrichies dans le CRM
+- ✅ Traçabilité complète (qui a locké quand et pourquoi)
+- ✅ Métadonnées externes préservées pour référence
+
+**Workflow utilisateur:**
+- ✅ Les utilisateurs peuvent enrichir les données en toute confiance
+- ✅ Les syncs externes continuent de fonctionner sans conflit
+- ✅ Visibilité claire de l'état et de la provenance des données (quand UI sera faite)
+
+**Maintenance:**
+- ✅ Auto-lock transparent (pas d'action utilisateur requise)
+- ✅ Migrations gérées automatiquement en production (Railway)
+- ✅ Logs complets pour debugging et audit
+
+### Prochaines étapes
+
+1. **Court terme (1-2 jours):**
+   - [ ] Implémenter badge + tooltip source de données
+   - [ ] Créer dialogs de gestion des équipes
+
+2. **Moyen terme (1 semaine):**
+   - [ ] Tests complets du système auto-lock
+   - [ ] Documentation utilisateur sur la protection des données
+   - [ ] Monitoring et alertes si problèmes de sync
+
+3. **Long terme (optionnel):**
+   - [ ] Interface admin pour débloquer manuellement une entité
+   - [ ] Analytics sur les taux de lock par source
+   - [ ] Export des métadonnées externes pour audit
+
+---

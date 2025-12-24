@@ -5,9 +5,9 @@
       <v-col cols="12">
         <div class="d-flex justify-space-between align-center">
           <div>
-            <h1 class="text-h3 font-weight-bold mb-2">{{ t('dashboard.title') }}</h1>
+            <h1 class="text-h3 font-weight-bold mb-2">{{ t("dashboard.title") }}</h1>
             <p class="text-h6 text-medium-emphasis">
-              {{ t('dashboard.welcome') }}, <strong>{{ authStore.userName }}</strong>
+              {{ t("dashboard.welcome") }}, <strong>{{ authStore.userName }}</strong>
             </p>
           </div>
           <v-chip
@@ -24,16 +24,12 @@
     <!-- Redirect Loading (if needed) -->
     <v-row v-if="shouldRedirectToBilling" class="justify-center">
       <v-col cols="12" md="8">
-        <v-alert
-          type="info"
-          variant="tonal"
-          prominent
-        >
+        <v-alert type="info" variant="tonal" prominent>
           <template v-slot:prepend>
             <v-progress-circular indeterminate size="24" />
           </template>
-          <v-alert-title>{{ t('dashboard.redirecting') }}</v-alert-title>
-          {{ t('dashboard.redirectingToBilling') }}
+          <v-alert-title>{{ t("dashboard.redirecting") }}</v-alert-title>
+          {{ t("dashboard.redirectingToBilling") }}
         </v-alert>
       </v-col>
     </v-row>
@@ -45,38 +41,22 @@
     <div v-else>
       <!-- Stats Cards -->
       <v-row class="mb-6">
-        <v-col
-          v-for="stat in statsCards"
-          :key="stat.title"
-          cols="12"
-          sm="6"
-          md="3"
-        >
-          <v-card
-            class="stat-card"
-            elevation="2"
-            @click="$router.push(stat.route)"
-            hover
-          >
+        <v-col v-for="stat in statsCards" :key="stat.title" cols="12" sm="6" md="3">
+          <v-card class="stat-card" elevation="2" @click="$router.push(stat.route)" hover>
             <v-card-text>
               <div class="d-flex align-center mb-3">
-                <v-icon
-                  :icon="stat.icon"
-                  :color="stat.color"
-                  size="28"
-                  class="mr-3"
-                />
+                <v-icon :icon="stat.icon" :color="stat.color" size="28" class="mr-3" />
                 <span class="text-h6 font-weight-medium">{{ stat.title }}</span>
               </div>
-              
+
               <div class="text-h3 font-weight-bold mb-2" :style="{ color: stat.color }">
                 {{ stat.value }}
               </div>
-              
+
               <p class="text-body-2 text-medium-emphasis mb-3">
                 {{ stat.description }}
               </p>
-              
+
               <v-btn
                 :text="stat.actionLabel"
                 :prepend-icon="stat.actionIcon"
@@ -96,7 +76,7 @@
             <v-card-title class="d-flex align-center justify-space-between">
               <div class="d-flex align-center">
                 <v-icon icon="mdi-chart-timeline-variant" color="primary" class="mr-2" />
-                {{ t('dashboard.performanceIndicators') }}
+                {{ t("dashboard.performanceIndicators") }}
               </div>
               <v-btn-group variant="outlined" density="compact">
                 <v-btn
@@ -104,21 +84,21 @@
                   size="small"
                   @click="setPeriod('week')"
                 >
-                  {{ t('dashboard.period.week') }}
+                  {{ t("dashboard.period.week") }}
                 </v-btn>
                 <v-btn
                   :color="period === 'month' ? 'primary' : undefined"
                   size="small"
                   @click="setPeriod('month')"
                 >
-                  {{ t('dashboard.period.month') }}
+                  {{ t("dashboard.period.month") }}
                 </v-btn>
                 <v-btn
                   :color="period === 'quarter' ? 'primary' : undefined"
                   size="small"
                   @click="setPeriod('quarter')"
                 >
-                  {{ t('dashboard.period.quarter') }}
+                  {{ t("dashboard.period.quarter") }}
                 </v-btn>
               </v-btn-group>
             </v-card-title>
@@ -130,16 +110,31 @@
                   <v-card variant="outlined" class="performance-card">
                     <v-card-text>
                       <div class="d-flex align-center justify-space-between mb-2">
-                        <span class="text-subtitle-2 text-medium-emphasis">{{ t('dashboard.metrics.revenueGrowth') }}</span>
-                        <v-icon :icon="metrics.growth.revenueGrowth >= 0 ? 'mdi-trending-up' : 'mdi-trending-down'"
-                                :color="metrics.growth.revenueGrowth >= 0 ? 'success' : 'error'"
-                                size="24" />
+                        <span class="text-subtitle-2 text-medium-emphasis">{{
+                          t("dashboard.metrics.revenueGrowth")
+                        }}</span>
+                        <v-icon
+                          :icon="
+                            metrics.growth.revenueGrowth >= 0
+                              ? 'mdi-trending-up'
+                              : 'mdi-trending-down'
+                          "
+                          :color="metrics.growth.revenueGrowth >= 0 ? 'success' : 'error'"
+                          size="24"
+                        />
                       </div>
-                      <div :class="`text-h4 font-weight-bold ${metrics.growth.revenueGrowth >= 0 ? 'text-success' : 'text-error'}`">
-                        {{ metrics.growth.revenueGrowth > 0 ? '+' : '' }}{{ metrics.growth.revenueGrowth.toFixed(1) }}%
+                      <div
+                        :class="`text-h4 font-weight-bold ${
+                          metrics.growth.revenueGrowth >= 0
+                            ? 'text-success'
+                            : 'text-error'
+                        }`"
+                      >
+                        {{ metrics.growth.revenueGrowth > 0 ? "+" : ""
+                        }}{{ metrics.growth.revenueGrowth.toFixed(1) }}%
                       </div>
                       <div class="text-caption text-medium-emphasis mt-2">
-                        {{ t('dashboard.metrics.vsPreviousPeriod') }}
+                        {{ t("dashboard.metrics.vsPreviousPeriod") }}
                       </div>
                     </v-card-text>
                   </v-card>
@@ -150,16 +145,26 @@
                   <v-card variant="outlined" class="performance-card">
                     <v-card-text>
                       <div class="d-flex align-center justify-space-between mb-2">
-                        <span class="text-subtitle-2 text-medium-emphasis">{{ t('dashboard.metrics.newClients') }}</span>
+                        <span class="text-subtitle-2 text-medium-emphasis">{{
+                          t("dashboard.metrics.newClients")
+                        }}</span>
                         <v-icon icon="mdi-account-multiple-plus" color="blue" size="24" />
                       </div>
                       <div class="text-h4 font-weight-bold text-blue">
                         {{ metrics.newClients.count }}
                       </div>
                       <div class="text-caption text-medium-emphasis mt-2">
-                        <span :class="metrics.newClients.percentageChange >= 0 ? 'text-success' : 'text-error'">
-                          {{ metrics.newClients.percentageChange > 0 ? '+' : '' }}{{ metrics.newClients.percentageChange.toFixed(1) }}%
-                        </span> {{ t('dashboard.metrics.thisMonth') }}
+                        <span
+                          :class="
+                            metrics.newClients.percentageChange >= 0
+                              ? 'text-success'
+                              : 'text-error'
+                          "
+                        >
+                          {{ metrics.newClients.percentageChange > 0 ? "+" : ""
+                          }}{{ metrics.newClients.percentageChange.toFixed(1) }}%
+                        </span>
+                        {{ t("dashboard.metrics.thisMonth") }}
                       </div>
                     </v-card-text>
                   </v-card>
@@ -170,14 +175,18 @@
                   <v-card variant="outlined" class="performance-card">
                     <v-card-text>
                       <div class="d-flex align-center justify-space-between mb-2">
-                        <span class="text-subtitle-2 text-medium-emphasis">{{ t('dashboard.metrics.conversionRate') }}</span>
+                        <span class="text-subtitle-2 text-medium-emphasis">{{
+                          t("dashboard.metrics.conversionRate")
+                        }}</span>
                         <v-icon icon="mdi-percent" color="orange" size="24" />
                       </div>
                       <div class="text-h4 font-weight-bold text-orange">
                         {{ metrics.conversionRate.rate.toFixed(1) }}%
                       </div>
                       <div class="text-caption text-medium-emphasis mt-2">
-                        {{ metrics.conversionRate.quotesAccepted }} / {{ metrics.conversionRate.quotesTotal }} {{ t('dashboard.metrics.quotesAccepted') }}
+                        {{ metrics.conversionRate.quotesAccepted }} /
+                        {{ metrics.conversionRate.quotesTotal }}
+                        {{ t("dashboard.metrics.quotesAccepted") }}
                       </div>
                     </v-card-text>
                   </v-card>
@@ -194,10 +203,20 @@
                     class="mb-0"
                   >
                     <div class="d-flex align-center">
-                      <v-icon :icon="metrics.growth.tasksCompletedGrowth >= 0 ? 'mdi-check-circle' : 'mdi-information'" class="mr-2" />
+                      <v-icon
+                        :icon="
+                          metrics.growth.tasksCompletedGrowth >= 0
+                            ? 'mdi-check-circle'
+                            : 'mdi-information'
+                        "
+                        class="mr-2"
+                      />
                       <span class="text-body-2">
-                        <strong>{{ metrics.growth.tasksCompletedGrowth > 0 ? '+' : '' }}{{ metrics.growth.tasksCompletedGrowth.toFixed(1) }}%</strong>
-                        {{ t('dashboard.metrics.vsPreviousPeriod') }}
+                        <strong
+                          >{{ metrics.growth.tasksCompletedGrowth > 0 ? "+" : ""
+                          }}{{ metrics.growth.tasksCompletedGrowth.toFixed(1) }}%</strong
+                        >
+                        {{ t("dashboard.metrics.vsPreviousPeriod") }}
                       </span>
                     </div>
                   </v-alert>
@@ -246,7 +265,7 @@
             <v-card-title class="d-flex align-center justify-space-between">
               <div class="d-flex align-center">
                 <v-icon icon="mdi-check-circle" color="primary" class="mr-2" />
-                {{ t('tasks.recent') }}
+                {{ t("tasks.recent") }}
               </div>
               <v-btn
                 :text="t('dashboard.stats.viewAll')"
@@ -265,10 +284,12 @@
 
             <v-card-text v-else-if="recentTasks.length === 0">
               <div class="text-center py-8">
-                <v-icon size="48" color="grey-lighten-1" class="mb-4">mdi-check-all</v-icon>
-                <p class="text-h6 text-medium-emphasis mb-2">{{ t('tasks.noTasks') }}</p>
+                <v-icon size="48" color="grey-lighten-1" class="mb-4"
+                  >mdi-check-all</v-icon
+                >
+                <p class="text-h6 text-medium-emphasis mb-2">{{ t("tasks.noTasks") }}</p>
                 <p class="text-body-2 text-medium-emphasis">
-                  {{ t('tasks.noTasksDescription') }}
+                  {{ t("tasks.noTasksDescription") }}
                 </p>
                 <v-btn
                   :text="t('tasks.createTask')"
@@ -317,7 +338,7 @@
                             variant="outlined"
                           >
                             <v-icon start size="small">mdi-alert-circle</v-icon>
-                            {{ t('tasks.overdue') }}
+                            {{ t("tasks.overdue") }}
                           </v-chip>
                           <v-chip
                             v-else-if="isDueSoon(task)"
@@ -326,7 +347,7 @@
                             variant="outlined"
                           >
                             <v-icon start size="small">mdi-clock-outline</v-icon>
-                            {{ t('tasks.dueSoon') }}
+                            {{ t("tasks.dueSoon") }}
                           </v-chip>
                         </div>
                       </div>
@@ -337,7 +358,10 @@
                       </h4>
 
                       <!-- Task description (truncated) -->
-                      <p v-if="task.description" class="task-description text-body-2 text-medium-emphasis mb-3">
+                      <p
+                        v-if="task.description"
+                        class="task-description text-body-2 text-medium-emphasis mb-3"
+                      >
                         {{ truncateText(task.description, 80) }}
                       </p>
 
@@ -347,26 +371,40 @@
                         <div v-if="task.assignee" class="meta-item d-flex align-center">
                           <v-avatar
                             :image="getAvatarUrl(task.assignee.id)"
-                            :alt="getInitials(task.assignee.firstName, task.assignee.lastName)"
+                            :alt="
+                              getInitials(task.assignee.firstName, task.assignee.lastName)
+                            "
                             size="24"
                             class="mr-2"
                           >
-                            <span class="avatar-text">{{ getInitials(task.assignee.firstName, task.assignee.lastName) }}</span>
+                            <span class="avatar-text">{{
+                              getInitials(task.assignee.firstName, task.assignee.lastName)
+                            }}</span>
                           </v-avatar>
-                          <span class="text-caption">{{ task.assignee.firstName }} {{ task.assignee.lastName }}</span>
+                          <span class="text-caption"
+                            >{{ task.assignee.firstName }}
+                            {{ task.assignee.lastName }}</span
+                          >
                         </div>
 
                         <!-- Due date -->
                         <div v-if="task.dueDate" class="meta-item d-flex align-center">
-                          <v-icon size="16" :color="getDueDateColor(task)" class="mr-1">mdi-calendar</v-icon>
+                          <v-icon size="16" :color="getDueDateColor(task)" class="mr-1"
+                            >mdi-calendar</v-icon
+                          >
                           <span class="text-caption" :class="getDueDateClass(task)">
                             {{ formatDueDate(task.dueDate) }}
                           </span>
                         </div>
 
                         <!-- Institution -->
-                        <div v-if="task.institution" class="meta-item d-flex align-center">
-                          <v-icon size="16" color="primary" class="mr-1">mdi-office-building</v-icon>
+                        <div
+                          v-if="task.institution"
+                          class="meta-item d-flex align-center"
+                        >
+                          <v-icon size="16" color="primary" class="mr-1"
+                            >mdi-office-building</v-icon
+                          >
                           <span class="text-caption">{{ task.institution.name }}</span>
                         </div>
                       </div>
@@ -382,19 +420,13 @@
       <!-- Development Notice -->
       <v-row>
         <v-col cols="12">
-          <v-alert
-            type="info"
-            variant="tonal"
-            prominent
-            border="start"
-            closable
-          >
+          <v-alert type="info" variant="tonal" prominent border="start" closable>
             <v-alert-title class="text-h6 mb-2">
-              {{ t('dashboard.development.title') }}
+              {{ t("dashboard.development.title") }}
             </v-alert-title>
 
             <p class="mb-4">
-              {{ t('dashboard.development.description') }}
+              {{ t("dashboard.development.description") }}
             </p>
 
             <v-btn
@@ -412,20 +444,20 @@
 </template>
 
 <script setup lang="ts">
-import AppLayout from "@/components/layout/AppLayout.vue"
-import TimelineWidget from "@/components/dashboard/TimelineWidget.vue"
-import SmartAlertsWidget from "@/components/dashboard/SmartAlertsWidget.vue"
+import HotLeadsWidget from "@/components/dashboard/HotLeadsWidget.vue"
 import KPIChartsWidget from "@/components/dashboard/KPIChartsWidget.vue"
 import QuickActionsWidget from "@/components/dashboard/QuickActionsWidget.vue"
-import HotLeadsWidget from "@/components/dashboard/HotLeadsWidget.vue"
+import SmartAlertsWidget from "@/components/dashboard/SmartAlertsWidget.vue"
+import TimelineWidget from "@/components/dashboard/TimelineWidget.vue"
+import AppLayout from "@/components/layout/AppLayout.vue"
 import { DashboardSkeleton } from "@/components/skeletons"
+import { dashboardApi, type DashboardMetrics } from "@/services/api/dashboard"
 import { useAuthStore } from "@/stores/auth"
 import { useInstitutionsStore } from "@/stores/institutions"
 import { useTasksStore } from "@/stores/tasks"
 import { computed, onMounted, ref } from "vue"
-import { useRouter } from "vue-router"
-import { dashboardApi, type DashboardMetrics } from "@/services/api/dashboard"
 import { useI18n } from "vue-i18n"
+import { useRouter } from "vue-router"
 
 const authStore = useAuthStore()
 const institutionsStore = useInstitutionsStore()
@@ -437,7 +469,7 @@ const { t } = useI18n()
 const metrics = ref<DashboardMetrics | null>(null)
 const metricsLoading = ref(false)
 const metricsError = ref<string | null>(null)
-const period = ref<'week' | 'month' | 'quarter'>('month')
+const period = ref<"week" | "month" | "quarter">("month")
 
 // Check if user should be automatically redirected to billing analytics
 const shouldRedirectToBilling = computed(() => {
@@ -450,10 +482,11 @@ const recentTasks = computed(() => {
   const userId = authStore.user?.id
 
   // Filter tasks assigned to current user or unassigned, exclude completed
-  const userTasks = allTasks.filter(task =>
-    (task.assigneeId === userId || !task.assigneeId) &&
-    task.status !== 'completed' &&
-    task.status !== 'cancelled'
+  const userTasks = allTasks.filter(
+    (task) =>
+      (task.assigneeId === userId || !task.assigneeId) &&
+      task.status !== "completed" &&
+      task.status !== "cancelled"
   )
 
   // Sort by priority: overdue first, then due soon, then by due date, then by status
@@ -469,8 +502,10 @@ const recentTasks = computed(() => {
     if (!aOverdue && bOverdue) return 1
 
     // Due soon next (within 3 days)
-    const aDueSoon = aDue && !aOverdue && (aDue.getTime() - now.getTime()) / (1000 * 60 * 60 * 24) <= 3
-    const bDueSoon = bDue && !bOverdue && (bDue.getTime() - now.getTime()) / (1000 * 60 * 60 * 24) <= 3
+    const aDueSoon =
+      aDue && !aOverdue && (aDue.getTime() - now.getTime()) / (1000 * 60 * 60 * 24) <= 3
+    const bDueSoon =
+      bDue && !bOverdue && (bDue.getTime() - now.getTime()) / (1000 * 60 * 60 * 24) <= 3
     if (aDueSoon && !bDueSoon) return -1
     if (!aDueSoon && bDueSoon) return 1
 
@@ -491,21 +526,21 @@ const recentTasks = computed(() => {
 
 // Get current date formatted
 const getCurrentDate = () => {
-  return new Date().toLocaleDateString('fr-FR', {
-    weekday: 'long',
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric'
+  return new Date().toLocaleDateString("fr-FR", {
+    weekday: "long",
+    year: "numeric",
+    month: "long",
+    day: "numeric",
   })
 }
 
 // Task widget helper functions
 const getPriorityLabel = (priority: string) => {
   const labels = {
-    low: t('tasks.priority.low'),
-    medium: t('tasks.priority.medium'),
-    high: t('tasks.priority.high'),
-    urgent: t('tasks.priority.urgent'),
+    low: t("tasks.priority.low"),
+    medium: t("tasks.priority.medium"),
+    high: t("tasks.priority.high"),
+    urgent: t("tasks.priority.urgent"),
   }
   return labels[priority as keyof typeof labels] || priority
 }
@@ -561,15 +596,16 @@ const formatDueDate = (date: Date | string) => {
   const diffTime = dueDate.getTime() - now.getTime()
   const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
 
-  if (diffDays === 0) return t('tasks.today')
-  if (diffDays === 1) return t('tasks.tomorrow')
-  if (diffDays === -1) return t('tasks.yesterday')
-  if (diffDays < 0) return `${t('tasks.overdueBy')} ${Math.abs(diffDays)} ${t('tasks.days')}`
-  if (diffDays <= 7) return `${t('tasks.dueIn')} ${diffDays} ${t('tasks.days')}`
+  if (diffDays === 0) return t("tasks.today")
+  if (diffDays === 1) return t("tasks.tomorrow")
+  if (diffDays === -1) return t("tasks.yesterday")
+  if (diffDays < 0)
+    return `${t("tasks.overdueBy")} ${Math.abs(diffDays)} ${t("tasks.days")}`
+  if (diffDays <= 7) return `${t("tasks.dueIn")} ${diffDays} ${t("tasks.days")}`
 
-  return dueDate.toLocaleDateString('fr-FR', {
-    day: 'numeric',
-    month: 'short'
+  return dueDate.toLocaleDateString("fr-FR", {
+    day: "numeric",
+    month: "short",
   })
 }
 
@@ -592,45 +628,49 @@ const statsCards = computed(() => {
     // Fallback to store data while loading
     return [
       {
-        title: t('dashboard.stats.institutions'),
+        title: t("dashboard.stats.institutions"),
         value: institutionsStore.institutions.length.toString(),
-        description: `${institutionsStore.institutions.filter(inst => inst.isActive).length} ${t('dashboard.stats.active')}`,
-        icon: 'mdi-domain',
-        color: 'blue',
-        actionLabel: t('dashboard.stats.viewAll'),
-        actionIcon: 'mdi-arrow-right',
-        route: '/institutions'
+        description: `${
+          institutionsStore.institutions.filter((inst) => inst.isActive).length
+        } ${t("dashboard.stats.active")}`,
+        icon: "mdi-domain",
+        color: "blue",
+        actionLabel: t("dashboard.stats.viewAll"),
+        actionIcon: "mdi-arrow-right",
+        route: "/institutions",
       },
       {
-        title: t('dashboard.stats.tasks'),
+        title: t("dashboard.stats.tasks"),
         value: tasksStore.taskStats.total.toString(),
-        description: `${tasksStore.taskStats.inProgress} ${t('dashboard.stats.inProgress')}, ${tasksStore.taskStats.overdue} ${t('tasks.overdue')}`,
-        icon: 'mdi-check-circle',
-        color: tasksStore.taskStats.overdue > 0 ? 'error' : 'green',
-        actionLabel: t('dashboard.stats.manage'),
-        actionIcon: 'mdi-arrow-right',
-        route: '/tasks'
+        description: `${tasksStore.taskStats.inProgress} ${t(
+          "dashboard.stats.inProgress"
+        )}, ${tasksStore.taskStats.overdue} ${t("tasks.overdue")}`,
+        icon: "mdi-check-circle",
+        color: tasksStore.taskStats.overdue > 0 ? "error" : "green",
+        actionLabel: t("dashboard.stats.manage"),
+        actionIcon: "mdi-arrow-right",
+        route: "/tasks",
       },
       {
-        title: t('dashboard.stats.team'),
-        value: '...',
-        description: t('messages.loading'),
-        icon: 'mdi-account-group',
-        color: 'purple',
-        actionLabel: t('dashboard.stats.viewTeam'),
-        actionIcon: 'mdi-arrow-right',
-        route: '/team'
+        title: t("dashboard.stats.team"),
+        value: "...",
+        description: t("messages.loading"),
+        icon: "mdi-account-group",
+        color: "purple",
+        actionLabel: t("dashboard.stats.viewTeam"),
+        actionIcon: "mdi-arrow-right",
+        route: "/team",
       },
       {
-        title: t('dashboard.stats.monthlyRevenue'),
-        value: '...',
-        description: t('messages.loading'),
-        icon: 'mdi-chart-line',
-        color: 'orange',
-        actionLabel: t('dashboard.stats.analyze'),
-        actionIcon: 'mdi-arrow-right',
-        route: '/billing/analytics'
-      }
+        title: t("dashboard.stats.monthlyRevenue"),
+        value: "...",
+        description: t("messages.loading"),
+        icon: "mdi-chart-line",
+        color: "orange",
+        actionLabel: t("dashboard.stats.analyze"),
+        actionIcon: "mdi-arrow-right",
+        route: "/billing/analytics",
+      },
     ]
   }
 
@@ -638,53 +678,61 @@ const statsCards = computed(() => {
 
   return [
     {
-      title: t('dashboard.stats.institutions'),
+      title: t("dashboard.stats.institutions"),
       value: institutions.total.toString(),
-      description: `${institutions.active} ${t('dashboard.stats.active')}, ${institutions.inactive} ${t('dashboard.stats.inactive')}`,
-      icon: 'mdi-domain',
-      color: 'blue',
-      actionLabel: t('dashboard.stats.viewAll'),
-      actionIcon: 'mdi-arrow-right',
-      route: '/institutions'
+      description: `${institutions.active} ${t("dashboard.stats.active")}, ${
+        institutions.inactive
+      } ${t("dashboard.stats.inactive")}`,
+      icon: "mdi-domain",
+      color: "blue",
+      actionLabel: t("dashboard.stats.viewAll"),
+      actionIcon: "mdi-arrow-right",
+      route: "/institutions",
     },
     {
-      title: t('dashboard.stats.tasks'),
+      title: t("dashboard.stats.tasks"),
       value: tasks.total.toString(),
-      description: `${tasks.inProgress} ${t('dashboard.stats.inProgress')}, ${tasks.overdue} ${t('tasks.overdue')}`,
-      icon: 'mdi-check-circle',
-      color: tasks.overdue > 0 ? 'error' : 'green',
-      actionLabel: t('dashboard.stats.manage'),
-      actionIcon: 'mdi-arrow-right',
-      route: '/tasks'
+      description: `${tasks.inProgress} ${t("dashboard.stats.inProgress")}, ${
+        tasks.overdue
+      } ${t("tasks.overdue")}`,
+      icon: "mdi-check-circle",
+      color: tasks.overdue > 0 ? "error" : "green",
+      actionLabel: t("dashboard.stats.manage"),
+      actionIcon: "mdi-arrow-right",
+      route: "/tasks",
     },
     {
-      title: t('dashboard.stats.team'),
+      title: t("dashboard.stats.team"),
       value: team.activeMembers.toString(),
-      description: `${team.totalMembers} ${t('dashboard.stats.members')}, ${team.teams} ${t('dashboard.stats.teams')}`,
-      icon: 'mdi-account-group',
-      color: 'purple',
-      actionLabel: t('dashboard.stats.viewTeam'),
-      actionIcon: 'mdi-arrow-right',
-      route: '/team'
+      description: `${team.totalMembers} ${t("dashboard.stats.members")}, ${
+        team.teams
+      } ${t("dashboard.stats.teams")}`,
+      icon: "mdi-account-group",
+      color: "purple",
+      actionLabel: t("dashboard.stats.viewTeam"),
+      actionIcon: "mdi-arrow-right",
+      route: "/team",
     },
     {
-      title: t('dashboard.stats.monthlyRevenue'),
+      title: t("dashboard.stats.monthlyRevenue"),
       value: formatCurrency(billing.totalRevenue),
-      description: `${billing.invoicesCount} ${t('dashboard.stats.invoices')}, ${billing.quotesCount} ${t('dashboard.stats.quotes')}`,
-      icon: 'mdi-chart-line',
-      color: 'orange',
-      actionLabel: t('dashboard.stats.analyze'),
-      actionIcon: 'mdi-arrow-right',
-      route: '/billing/analytics'
-    }
+      description: `${billing.invoicesCount} ${t("dashboard.stats.invoices")}, ${
+        billing.quotesCount
+      } ${t("dashboard.stats.quotes")}`,
+      icon: "mdi-chart-line",
+      color: "orange",
+      actionLabel: t("dashboard.stats.analyze"),
+      actionIcon: "mdi-arrow-right",
+      route: "/billing/analytics",
+    },
   ]
 })
 
 // Format currency helper
 const formatCurrency = (amount: number): string => {
-  return new Intl.NumberFormat('fr-FR', {
-    style: 'currency',
-    currency: 'EUR',
+  return new Intl.NumberFormat("fr-FR", {
+    style: "currency",
+    currency: "EUR",
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
   }).format(amount)
@@ -698,15 +746,15 @@ const loadMetrics = async () => {
   try {
     metrics.value = await dashboardApi.getMetrics({ period: period.value })
   } catch (error) {
-    console.error('Error loading dashboard metrics:', error)
-    metricsError.value = error instanceof Error ? error.message : 'Failed to load metrics'
+    console.error("Error loading dashboard metrics:", error)
+    metricsError.value = error instanceof Error ? error.message : "Failed to load metrics"
   } finally {
     metricsLoading.value = false
   }
 }
 
 // Set period and reload metrics
-const setPeriod = (newPeriod: 'week' | 'month' | 'quarter') => {
+const setPeriod = (newPeriod: "week" | "month" | "quarter") => {
   period.value = newPeriod
   loadMetrics()
 }
@@ -717,7 +765,7 @@ onMounted(async () => {
   await Promise.all([
     loadMetrics(),
     tasksStore.fetchTasks(),
-    institutionsStore.fetchInstitutions()
+    institutionsStore.fetchInstitutions(),
   ])
 
   if (shouldRedirectToBilling.value) {
