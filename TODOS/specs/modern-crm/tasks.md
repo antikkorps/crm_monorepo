@@ -1236,99 +1236,161 @@
   - [ ] Sync automatique hebdomadaire (cron job)
   - [ ] Import/sync des quotes et invoices Digiforma (API à documenter)
 
-- [ ] 24.6 **Amélioration Merge - Gestion noms différents** 🔄 **NOUVEAU**
+- [-] 24.6 **Amélioration Merge - Gestion noms différents** 🔄 **EN COURS** (Backend ✅ | Tests ✅ | Frontend ⏳)
 
   **Problématique:** Actuellement, le merge Digiforma → CRM se base principalement sur l'**email** des contacts. Si une institution a un nom légèrement différent entre Digiforma et le CRM (ex: "CHU de Lyon" vs "CHU Lyon"), le système peut ne pas détecter le match.
 
-  **Stratégies de matching à implémenter:**
+  **✅ IMPLÉMENTATION BACKEND COMPLÈTE (2025-12-29)**
 
-  - [ ] **24.6.1 Backend - Algorithmes de matching avancés**
+  - [x] **24.6.1 Backend - Algorithmes de matching avancés** ✅ **100%**
 
     **Fuzzy matching sur noms d'institutions:**
 
-    - [ ] Intégrer une librairie de fuzzy string matching (ex: `fuzzball`, `string-similarity`)
-    - [ ] Calculer un score de similarité entre noms (Levenshtein, Jaro-Winkler)
-    - [ ] Définir un seuil de matching (ex: 85% de similarité)
-    - [ ] Combiner plusieurs critères : nom + ville + code postal
-    - [ ] Créer un service `DigiformaMatchingService` dédié
+    - ✅ Intégré **Fuse.js** pour fuzzy string matching multi-critères
+    - ✅ Calcul de scores de similarité (0-100%)
+    - ✅ Seuils de matching définis: ≥85% = auto, ≥70% = fuzzy, <70% = rejeté
+    - ✅ Matching multi-critères avec **5 priorités**
+    - ✅ Service `DigiformaMatchingService` créé et testé
 
-    **Normalisation des noms:**
+    **Normalisation des noms implémentée:**
 
-    - [ ] Supprimer les accents, ponctuation, majuscules
-    - [ ] Retirer les mots communs ("Clinique", "Centre", "Hôpital", etc.)
-    - [ ] Normaliser les abréviations (CHU, CH, Ste → Sainte)
+    - ✅ Suppression accents (NFD normalization)
+    - ✅ Suppression mots médicaux communs (clinique, centre, hopital, hospitalier, universitaire, CHU, CH, cabinet, maison, saint/sainte/st/ste)
+    - ✅ Suppression articles français (de, du, la, le, les, des, d)
+    - ✅ Gestion apostrophes (l'hopital → lhopital pour éviter faux positifs)
+    - ✅ Normalisation hyphens (Pitié-Salpêtrière → pitie salpetriere)
+    - ✅ Normalisation espaces
 
-    **Matching multi-critères:**
+    **Matching multi-critères avec priorités:**
 
-    - [ ] Email contact (priorité 1, score 100%)
-    - [ ] Nom + Ville (priorité 2, score fuzzy)
-    - [ ] Nom + Code postal (priorité 3, score fuzzy)
-    - [ ] SIRET si disponible (priorité 4, score 100%)
+    1. ✅ **AccountingNumber** (priorité 1, score 100%) - Numéro comptable partagé CRM/Digiforma/Sage
+    2. ✅ **SIRET** (priorité 2, score 100%) - Identifiant légal unique
+    3. ✅ **Email** (priorité 3, score 100%) - Email du contact principal
+    4. ✅ **Fuzzy name + city** (priorité 4, score 70-99%) - Nom normalisé + ville normalisée
+    5. ✅ **Fuzzy name + zipcode** (priorité 5, score 70-99%) - Nom normalisé + code postal
 
-    **Fichiers à créer/modifier:**
+    **Fichiers créés:**
 
-    - `packages/backend/src/services/DigiformaMatchingService.ts`
-    - Modifier `packages/backend/src/services/DigiformaSyncService.ts`
+    - ✅ `packages/backend/src/services/DigiformaMatchingService.ts` (355 lignes)
+    - ✅ Modifié `packages/backend/src/services/DigiformaSyncService.ts` (intégration matching intelligent)
+    - ✅ `packages/backend/src/__tests__/services/DigiformaMatching.logic.test.ts` (295 lignes, 28 tests)
 
-  - [ ] **24.6.2 Backend - Table de mapping manuel**
+    **Tests unitaires:** ✅ **28/28 tests passent**
 
-    **Nouveau modèle `DigiformaInstitutionMapping`:**
+    - ✅ Normalisation des noms (9 tests)
+    - ✅ Normalisation des villes (5 tests)
+    - ✅ Scénarios de matching réels (5 tests)
+    - ✅ Priorités et scores (2 tests)
+    - ✅ Seuils de matching (4 tests)
+    - ✅ Comportements attendus (3 tests)
+
+  - [x] **24.6.2 Backend - Table de mapping manuel** ✅ **100%**
+
+    **Modèle `DigiformaInstitutionMapping` créé:**
 
     ```typescript
     {
-      digiformaCompanyId: string // ID Digiforma
+      id: string (UUID)
+      digiformaCompanyId: string // ID Digiforma (unique)
       institutionId: string // ID CRM
-      matchType: "auto" | "manual" | "fuzzy"
+      matchType: "auto" | "fuzzy" | "manual"
       matchScore: number // Score de confiance (0-100)
-      confirmedBy: string // User ID qui a validé
-      confirmedAt: Date
-      notes: string // Notes de l'admin
+      matchCriteria: string // accountingNumber, siret, email, fuzzy_name_city, etc.
+      confirmedBy?: string // User ID qui a validé
+      confirmedAt?: Date
+      notes?: string // Notes de l'admin
+      createdAt: Date
+      updatedAt: Date
     }
     ```
 
-    **API endpoints:**
+    **Migration créée:**
 
-    - `GET /api/digiforma/unmatched-companies` : Liste des companies sans match
-    - `POST /api/digiforma/mappings` : Créer un mapping manuel
-    - `DELETE /api/digiforma/mappings/:id` : Supprimer un mapping
-    - `GET /api/digiforma/suggested-matches/:companyId` : Suggestions de match
+    - ✅ `20251229000000-create-digiforma-institution-mappings.cjs`
+    - ✅ Index unique sur `digiformaCompanyId`
+    - ✅ Foreign keys vers `digiforma_companies` et `medical_institutions`
+    - ✅ Associations Sequelize configurées dans `models/index.ts`
 
-    **Fichiers:**
+    **API endpoints créés (6 endpoints):**
 
-    - `packages/backend/src/models/DigiformaInstitutionMapping.ts`
-    - Modifier `packages/backend/src/controllers/DigiformaController.ts`
+    - ✅ `GET /api/digiforma/unmatched-companies` : Liste des companies sans match
+    - ✅ `GET /api/digiforma/suggested-matches/:companyId` : Suggestions avec scores
+    - ✅ `POST /api/digiforma/mappings` : Créer un mapping manuel
+    - ✅ `DELETE /api/digiforma/mappings/:id` : Supprimer un mapping
+    - ✅ `GET /api/digiforma/fuzzy-matches` : Fuzzy matches nécessitant validation
+    - ✅ `POST /api/digiforma/mappings/:id/confirm` : Confirmer un fuzzy match
 
-  - [ ] **24.6.3 Frontend - Interface de réconciliation manuelle**
+    **Fichiers créés/modifiés:**
+
+    - ✅ `packages/backend/src/models/DigiformaInstitutionMapping.ts`
+    - ✅ `packages/backend/src/migrations/20251228000000-create-digiforma-base-tables.cjs`
+    - ✅ `packages/backend/src/migrations/20251229000000-create-digiforma-institution-mappings.cjs`
+    - ✅ `packages/backend/src/controllers/DigiformaController.ts` (6 nouvelles méthodes)
+    - ✅ `packages/backend/src/routes/digiforma.ts` (6 nouvelles routes)
+    - ✅ `packages/backend/src/models/index.ts` (associations)
+
+  - [ ] **24.6.3 Frontend - Interface de réconciliation manuelle** ⏳ **À FAIRE**
 
     **Page dédiée `/settings/digiforma/mappings`:**
 
-    - ✅ Liste des companies Digiforma non fusionnées
-    - ✅ Pour chaque company : suggestions de matches CRM avec score
-    - ✅ Possibilité de valider un match suggéré
-    - ✅ Possibilité de rechercher manuellement une institution
-    - ✅ Bouton "Créer nouvelle institution" si aucun match
-    - ✅ Historique des mappings manuels avec audit trail
+    - [ ] Liste des companies Digiforma non fusionnées
+    - [ ] Pour chaque company : suggestions de matches CRM avec score
+    - [ ] Possibilité de valider un match suggéré
+    - [ ] Possibilité de rechercher manuellement une institution
+    - [ ] Bouton "Créer nouvelle institution" si aucun match
+    - [ ] Historique des mappings manuels avec audit trail
+    - [ ] Liste des fuzzy matches nécessitant validation manuelle
 
-    **Composants:**
+    **Composants à créer:**
 
     - `DigiformaMappingView.vue` : Page principale
     - `UnmatchedCompaniesList.vue` : Liste des non-fusionnés
     - `InstitutionMatchSuggestions.vue` : Suggestions avec scores
     - `ManualMappingDialog.vue` : Dialog de création mapping manuel
+    - `FuzzyMatchReviewCard.vue` : Card pour valider fuzzy matches
 
-  - [ ] **24.6.4 Processus de synchronisation amélioré**
+    **Fichiers à créer:**
 
-    **Workflow de sync avec matching intelligent:**
+    - `packages/frontend/src/views/settings/DigiformaMappingsView.vue`
+    - `packages/frontend/src/components/digiforma/*.vue` (composants)
+    - `packages/frontend/src/services/api/digiforma.ts` (ajout méthodes)
 
-    1. Récupérer les companies Digiforma
-    2. Pour chaque company :
-       - Vérifier mapping manuel existant → utiliser si trouvé
-       - Sinon : matching automatique par email → score 100%
-       - Sinon : fuzzy matching sur nom + ville → score calculé
-       - Si score > 85% : auto-match avec flag `matchType: 'fuzzy'`
-       - Si score < 85% : marquer comme `unmatchedCompany`
-    3. Notifier admin si nouvelles companies non matchées
-    4. Permettre validation manuelle des fuzzy matches
+  - [x] **24.6.4 Processus de synchronisation amélioré** ✅ **100%**
+
+    **Workflow de sync avec matching intelligent implémenté:**
+
+    1. ✅ Récupérer les companies Digiforma
+    2. ✅ Pour chaque company :
+       - ✅ Vérifier mapping manuel existant → utiliser si trouvé
+       - ✅ Sinon : matching automatique par **accountingNumber** → score 100%
+       - ✅ Sinon : matching automatique par **SIRET** → score 100%
+       - ✅ Sinon : matching automatique par **email** → score 100%
+       - ✅ Sinon : **fuzzy matching** sur nom + ville/zipcode → score calculé
+       - ✅ Si score ≥ 85% : auto-match avec `matchType: 'auto'`
+       - ✅ Si score ≥ 70% mais < 85% : créer mapping avec `matchType: 'fuzzy'` (nécessite validation)
+       - ✅ Si score < 70% : marquer comme non-matché (pas de mapping créé)
+    3. ✅ Stats de sync trackées : `autoMatched`, `fuzzyMatched`, `newCreated`
+    4. [ ] Notifier admin si nouvelles companies non matchées (TODO frontend)
+
+    **Fichier modifié:**
+
+    - ✅ `packages/backend/src/services/DigiformaSyncService.ts`
+
+  **📊 RÉSULTATS:**
+
+  - ✅ Algorithme intelligent de matching avec 5 priorités
+  - ✅ 28 tests unitaires passent à 100%
+  - ✅ Database schema complet avec migrations
+  - ✅ 6 endpoints API fonctionnels
+  - ✅ Normalisation robuste (gestion accents, articles, mots médicaux)
+  - ✅ Scores de confiance calculés (0-100%)
+  - ⏳ Interface frontend à implémenter
+
+  **🔜 PROCHAINE ÉTAPE:**
+
+  - [ ] Implémenter l'interface frontend `/settings/digiforma/mappings`
+  - [ ] Tester avec vraies données Digiforma
+  - [ ] Documenter le processus dans DIGIFORMA.md
 
   **Priorité:** 🟡 Moyenne (amélioration UX et qualité des données)
   **Dépendances:** Tâche 24 doit être complète ✅

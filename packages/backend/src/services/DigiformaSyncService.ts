@@ -1,10 +1,12 @@
 import { Op, InstanceUpdateOptions, CreateOptions } from 'sequelize'
 import { DigiformaService } from './DigiformaService'
+import { DigiformaMatchingService } from './DigiformaMatchingService'
 import { DigiformaSync, SyncStatus, SyncType } from '../models/DigiformaSync'
 import { DigiformaCompany } from '../models/DigiformaCompany'
 import { DigiformaContact } from '../models/DigiformaContact'
 import { DigiformaQuote, DigiformaQuoteStatus } from '../models/DigiformaQuote'
 import { DigiformaInvoice, DigiformaInvoiceStatus } from '../models/DigiformaInvoice'
+import { DigiformaInstitutionMapping, MatchType } from '../models/DigiformaInstitutionMapping'
 import { MedicalInstitution, MedicalInstitutionAttributes } from '../models/MedicalInstitution'
 import { ContactPerson, ContactPersonAttributes } from '../models/ContactPerson'
 import { logger } from '../utils/logger'
@@ -33,10 +35,12 @@ interface SyncCreateOptions<T> extends CreateOptions<T> {
  */
 export class DigiformaSyncService {
   private digiformaService: DigiformaService
+  private matchingService: DigiformaMatchingService
   private currentSync: DigiformaSync | null = null
 
   constructor(bearerToken: string) {
     this.digiformaService = new DigiformaService(bearerToken)
+    this.matchingService = new DigiformaMatchingService()
   }
 
   /**
@@ -559,7 +563,15 @@ export class DigiformaSyncService {
   }
 
   /**
-   * Merge Digiforma data with CRM (companies → institutions) with LOCK PROTECTION
+   * Merge Digiforma data with CRM (companies → institutions) with INTELLIGENT MATCHING
+   *
+   * Matching priority:
+   * 1. Check existing manual mapping
+   * 2. accountingNumber (100%)
+   * 3. SIRET (100%)
+   * 4. email (100%)
+   * 5. Fuzzy match name + city (70-99%)
+   * 6. Fuzzy match name + zipcode (70-99%)
    *
    * Rules:
    * - LOCKED institutions: Skip CRM field updates, only update externalData
@@ -575,26 +587,73 @@ export class DigiformaSyncService {
 
       let lockedSkipped = 0
       let externalDataUpdated = 0
+      let autoMatched = 0
+      let fuzzyMatched = 0
+      let newCreated = 0
 
       for (const digiformaCompany of unlinkedCompanies) {
         try {
-          // Try to find matching institution by email
           let matchingInstitution: MedicalInstitution | null = null
+          let matchResult: { score: number; matchCriteria: string; matchType: 'auto' | 'fuzzy' } | null = null
 
-          if (digiformaCompany.email) {
-            // Search by email in institutions (check if any contact has this email)
-            const contactsWithEmail = await ContactPerson.findAll({
-              where: { email: digiformaCompany.email },
-              include: [{ model: MedicalInstitution, as: 'institution' }],
+          // ============================================
+          // STEP 1: Check if manual mapping already exists
+          // ============================================
+          const existingMapping = await DigiformaInstitutionMapping.findByDigiformaCompanyId(
+            digiformaCompany.id
+          )
+
+          if (existingMapping) {
+            matchingInstitution = existingMapping.institution as MedicalInstitution
+            logger.info('Using existing manual mapping', {
+              digiformaCompanyId: digiformaCompany.id,
+              institutionId: matchingInstitution.id,
+              matchType: existingMapping.matchType
             })
+          } else {
+            // ============================================
+            // STEP 2: Use intelligent matching service
+            // ============================================
+            const match = await this.matchingService.findBestMatch(digiformaCompany)
 
-            if (contactsWithEmail.length > 0) {
-              matchingInstitution = contactsWithEmail[0].institution as MedicalInstitution
+            if (match) {
+              matchingInstitution = match.institution
+              matchResult = {
+                score: match.score,
+                matchCriteria: match.matchCriteria,
+                matchType: match.matchType
+              }
+
+              // Create mapping record
+              await DigiformaInstitutionMapping.create({
+                digiformaCompanyId: digiformaCompany.id,
+                institutionId: matchingInstitution.id,
+                matchType: match.matchType === 'auto' ? MatchType.AUTO : MatchType.FUZZY,
+                matchScore: match.score,
+                matchCriteria: match.matchCriteria
+              })
+
+              if (match.matchType === 'auto') {
+                autoMatched++
+              } else {
+                fuzzyMatched++
+              }
+
+              logger.info('Created new mapping from intelligent match', {
+                digiformaCompanyId: digiformaCompany.id,
+                institutionId: matchingInstitution.id,
+                score: match.score,
+                criteria: match.matchCriteria,
+                type: match.matchType
+              })
             }
           }
 
-          // If found, link them
+          // ============================================
+          // STEP 3: Process match or create new institution
+          // ============================================
           if (matchingInstitution) {
+            // Link company to institution
             await digiformaCompany.linkToInstitution(matchingInstitution.id)
 
             const metadata = digiformaCompany.metadata || {}
@@ -645,7 +704,8 @@ export class DigiformaSyncService {
                 context: { isSync: true }
               }
 
-              await matchingInstitution.update({
+              // Update accounting number if present in Digiforma and missing in CRM
+              const updates: Partial<MedicalInstitutionAttributes> = {
                 address: {
                   street: digiformaCompany.address.street,
                   city: digiformaCompany.address.city || matchingInstitution.address?.city || 'Non renseignée',
@@ -670,7 +730,14 @@ export class DigiformaSyncService {
                   ...matchingInstitution.lastSyncAt,
                   digiforma: new Date()
                 }
-              }, updateOptions)
+              }
+
+              // Add accounting number if missing
+              if (metadata.accountingNumber && !matchingInstitution.accountingNumber) {
+                updates.accountingNumber = metadata.accountingNumber as string
+              }
+
+              await matchingInstitution.update(updates, updateOptions)
 
               logger.info('Updated non-locked Digiforma institution', {
                 institutionId: matchingInstitution.id,
@@ -681,7 +748,8 @@ export class DigiformaSyncService {
             logger.info('Linked Digiforma company to institution', {
               digiformaCompanyId: digiformaCompany.id,
               institutionId: matchingInstitution.id,
-              matchType: 'email',
+              matchType: matchResult?.matchCriteria || 'existing_mapping',
+              matchScore: matchResult?.score || 100,
               locked: matchingInstitution.isLocked
             })
           } else {
@@ -704,6 +772,7 @@ export class DigiformaSyncService {
                 zipCode: (metadata.cityCode as string) || '00000',
                 country: digiformaCompany.address?.country || 'FR',
               },
+              accountingNumber: metadata.accountingNumber as string || undefined,
               tags: ['digiforma', 'formation'],
 
               // Multi-source tracking
@@ -728,6 +797,17 @@ export class DigiformaSyncService {
 
             await digiformaCompany.linkToInstitution(newInstitution.id)
 
+            // Create auto mapping for new institution
+            await DigiformaInstitutionMapping.create({
+              digiformaCompanyId: digiformaCompany.id,
+              institutionId: newInstitution.id,
+              matchType: MatchType.AUTO,
+              matchScore: 100,
+              matchCriteria: 'new_institution'
+            })
+
+            newCreated++
+
             logger.info('Created new institution from Digiforma company', {
               digiformaCompanyId: digiformaCompany.id,
               institutionId: newInstitution.id,
@@ -748,6 +828,9 @@ export class DigiformaSyncService {
 
       logger.info('Digiforma-CRM merge completed', {
         unlinkedCompanies: unlinkedCompanies.length,
+        autoMatched,
+        fuzzyMatched,
+        newCreated,
         lockedSkipped,
         externalDataUpdated
       })
