@@ -209,11 +209,11 @@ export const useMeetingsStore = defineStore("meetings", () => {
     }
   }
 
-  const sendInvitation = async (meetingId: string, emails?: string[]) => {
+  const sendInvitation = async (meetingId: string, emails?: string[], message?: string) => {
     try {
       loading.value = true
       error.value = null
-      await meetingsApi.sendInvitation(meetingId, emails)
+      await meetingsApi.sendInvitation(meetingId, emails, message)
     } catch (err) {
       error.value = err instanceof Error ? err.message : "Failed to send invitation"
       throw err

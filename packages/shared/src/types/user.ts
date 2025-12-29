@@ -51,6 +51,7 @@ export interface Team {
   isActive: boolean
   createdAt: Date
   updatedAt: Date
+  members?: User[]
 }
 
 export interface TeamCreationAttributes {

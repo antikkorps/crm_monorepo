@@ -6,10 +6,10 @@
         <div class="header-content">
           <h1 class="page-title">
             <v-icon class="me-2">mdi-calendar-multiple</v-icon>
-            {{ $t('meetings.title') }}
+            {{ $t("meetings.title") }}
           </h1>
           <p class="page-description">
-            {{ $t('meetings.description') }}
+            {{ $t("meetings.description") }}
           </p>
         </div>
         <div class="header-actions">
@@ -20,8 +20,8 @@
             @click="showCreateDialog = true"
             class="create-meeting-btn"
           >
-            <span class="btn-text-desktop">{{ $t('meetings.newMeeting') }}</span>
-            <span class="btn-text-mobile">{{ $t('common.create') }}</span>
+            <span class="btn-text-desktop">{{ $t("meetings.newMeeting") }}</span>
+            <span class="btn-text-mobile">{{ $t("common.create") }}</span>
           </v-btn>
         </div>
       </div>
@@ -39,7 +39,7 @@
       <div class="view-controls">
         <div class="view-info">
           <v-chip variant="outlined" size="small">
-            {{ meetingsStore.filteredMeetings.length }} {{ $t('meetings.unit') }}
+            {{ meetingsStore.filteredMeetings.length }} {{ $t("meetings.unit") }}
           </v-chip>
         </div>
 
@@ -59,13 +59,11 @@
       </div>
 
       <!-- Loading State -->
-      <div v-if="meetingsStore.loading && meetingsStore.filteredMeetings.length === 0" class="loading-container">
-        <ListSkeleton
-          :count="5"
-          avatar
-          actions
-          type="list-item-three-line"
-        />
+      <div
+        v-if="meetingsStore.loading && meetingsStore.filteredMeetings.length === 0"
+        class="loading-container"
+      >
+        <ListSkeleton :count="5" avatar actions type="list-item-three-line" />
       </div>
 
       <!-- Error State -->
@@ -78,12 +76,7 @@
       >
         {{ meetingsStore.error }}
         <template #append>
-          <v-btn
-            icon="mdi-refresh"
-            size="small"
-            variant="text"
-            @click="loadMeetings"
-          />
+          <v-btn icon="mdi-refresh" size="small" variant="text" @click="loadMeetings" />
         </template>
       </v-alert>
 
@@ -91,12 +84,12 @@
       <div v-else-if="meetingsStore.filteredMeetings.length === 0" class="empty-state">
         <div class="empty-content">
           <v-icon class="empty-icon">mdi-calendar-multiple</v-icon>
-          <h3>{{ $t('meetings.empty.title') }}</h3>
+          <h3>{{ $t("meetings.empty.title") }}</h3>
           <p v-if="hasActiveFilters">
-            {{ $t('meetings.empty.noFilter') }}
+            {{ $t("meetings.empty.noFilter") }}
           </p>
           <p v-else>
-            {{ $t('meetings.empty.noData') }}
+            {{ $t("meetings.empty.noData") }}
           </p>
           <div class="empty-actions">
             <v-btn
@@ -106,7 +99,7 @@
               prepend-icon="mdi-filter-off"
               @click="meetingsStore.clearFilters"
             >
-              {{ $t('common.clearFilters') }}
+              {{ $t("common.clearFilters") }}
             </v-btn>
             <v-btn
               color="primary"
@@ -115,8 +108,8 @@
               @click="showCreateDialog = true"
               class="create-meeting-btn"
             >
-              <span class="btn-text-desktop">{{ $t('meetings.createMeeting') }}</span>
-              <span class="btn-text-mobile">{{ $t('common.create') }}</span>
+              <span class="btn-text-desktop">{{ $t("meetings.createMeeting") }}</span>
+              <span class="btn-text-mobile">{{ $t("common.create") }}</span>
             </v-btn>
           </div>
         </div>
@@ -155,56 +148,37 @@
       />
 
       <!-- Delete Confirmation Dialog -->
-      <v-dialog
-        v-model="showConfirmDialog"
-        max-width="400px"
-        persistent
-      >
+      <v-dialog v-model="showConfirmDialog" max-width="400px" persistent>
         <v-card>
           <v-card-title class="text-h6">
-            {{ $t('common.confirmDelete') }}
+            {{ $t("common.confirmDelete") }}
           </v-card-title>
 
           <v-card-text>
-            {{ $t('meetings.deleteConfirm', { name: meetingToDelete?.title || '' }) }}
-            {{ $t('common.irreversible') }}
+            {{ $t("meetings.deleteConfirm", { name: meetingToDelete?.title || "" }) }}
+            {{ $t("common.irreversible") }}
           </v-card-text>
 
           <v-card-actions>
             <v-spacer />
-            <v-btn
-              color="secondary"
-              variant="outlined"
-              @click="cancelDelete"
-            >
-              {{ $t('common.cancel') }}
+            <v-btn color="secondary" variant="outlined" @click="cancelDelete">
+              {{ $t("common.cancel") }}
             </v-btn>
-            <v-btn
-              color="error"
-              variant="elevated"
-              @click="confirmDelete"
-            >
-              {{ $t('common.delete') }}
+            <v-btn color="error" variant="elevated" @click="confirmDelete">
+              {{ $t("common.delete") }}
             </v-btn>
           </v-card-actions>
         </v-card>
       </v-dialog>
 
       <!-- Send Invitation Dialog -->
-      <v-dialog
-        v-model="showInvitationDialog"
-        max-width="500px"
-        persistent
-      >
+      <v-dialog v-model="showInvitationDialog" max-width="500px" persistent>
         <v-card>
           <v-card-title class="text-h6">
-            {{ $t('meetings.invitation.title') }}
+            {{ $t("meetings.invitation.title") }}
           </v-card-title>
 
           <v-card-text>
-            <p class="mb-4">
-              {{ $t('meetings.invitation.message', { name: selectedMeeting?.title || '' }) }}
-            </p>
             <v-textarea
               v-model="invitationEmails"
               :label="$t('meetings.invitation.emailsLabel')"
@@ -213,17 +187,21 @@
               persistent-hint
               rows="3"
               variant="outlined"
+              class="mb-4"
+            />
+            <v-textarea
+              v-model="invitationMessage"
+              :label="$t('meetings.invitation.message')"
+              :placeholder="$t('quotes.sendDialog.messagePlaceholder')"
+              rows="4"
+              variant="outlined"
             />
           </v-card-text>
 
           <v-card-actions>
             <v-spacer />
-            <v-btn
-              color="secondary"
-              variant="outlined"
-              @click="cancelInvitation"
-            >
-              {{ $t('common.cancel') }}
+            <v-btn color="secondary" variant="outlined" @click="cancelInvitation">
+              {{ $t("common.cancel") }}
             </v-btn>
             <v-btn
               color="primary"
@@ -231,7 +209,7 @@
               :loading="invitationLoading"
               @click="confirmSendInvitation"
             >
-              {{ $t('meetings.invitation.send') }}
+              {{ $t("meetings.invitation.send") }}
             </v-btn>
           </v-card-actions>
         </v-card>
@@ -248,8 +226,8 @@ import MeetingForm from "@/components/meetings/MeetingForm.vue"
 import MeetingStats from "@/components/meetings/MeetingStats.vue"
 import { ListSkeleton } from "@/components/skeletons"
 import { useSnackbar } from "@/composables/useSnackbar"
+import { meetingsApi } from "@/services/api/meetings"
 import { useMeetingsStore } from "@/stores/meetings"
-import { useI18n } from "vue-i18n"
 import type {
   Meeting,
   MeetingCreateRequest,
@@ -257,6 +235,7 @@ import type {
   MeetingUpdateRequest,
 } from "@medical-crm/shared"
 import { computed, onMounted, ref } from "vue"
+import { useI18n } from "vue-i18n"
 
 const meetingsStore = useMeetingsStore()
 const { showSnackbar } = useSnackbar()
@@ -276,14 +255,15 @@ const meetingToDelete = ref<Meeting | null>(null)
 // Invitation dialog state
 const showInvitationDialog = ref(false)
 const invitationEmails = ref("")
+const invitationMessage = ref("")
 const invitationLoading = ref(false)
 
 const sortOptions = computed(() => [
-  { label: t('meetings.sort.byStartDate'), value: "startDate" },
-  { label: t('meetings.sort.byEndDate'), value: "endDate" },
-  { label: t('meetings.sort.byTitle'), value: "title" },
-  { label: t('meetings.sort.byStatus'), value: "status" },
-  { label: t('meetings.sort.byCreated'), value: "createdAt" },
+  { label: t("meetings.sort.byStartDate"), value: "startDate" },
+  { label: t("meetings.sort.byEndDate"), value: "endDate" },
+  { label: t("meetings.sort.byTitle"), value: "title" },
+  { label: t("meetings.sort.byStatus"), value: "status" },
+  { label: t("meetings.sort.byCreated"), value: "createdAt" },
 ])
 
 const hasActiveFilters = computed(() => {
@@ -326,26 +306,35 @@ const loadMeetings = async () => {
   try {
     await meetingsStore.fetchMeetings()
   } catch (error) {
-    showSnackbar(t('meetings.errors.load'), "error")
+    showSnackbar(t("meetings.errors.load"), "error")
   }
 }
 
-const createMeeting = async (meetingData: MeetingCreateRequest) => {
+const createMeeting = async (
+  meetingData: MeetingCreateRequest | MeetingUpdateRequest
+) => {
   try {
     formLoading.value = true
-    await meetingsStore.createMeeting(meetingData)
+    await meetingsStore.createMeeting(meetingData as MeetingCreateRequest)
     showCreateDialog.value = false
-    showSnackbar(t('meetings.success.created'), "success")
+    showSnackbar(t("meetings.success.created"), "success")
   } catch (error) {
-    showSnackbar(t('meetings.errors.create'), "error")
+    showSnackbar(t("meetings.errors.create"), "error")
   } finally {
     formLoading.value = false
   }
 }
 
-const editMeeting = (meeting: Meeting) => {
-  selectedMeeting.value = meeting
-  showEditDialog.value = true
+const editMeeting = async (meeting: Meeting) => {
+  try {
+    // Fetch full meeting with participants
+    const response = await meetingsApi.getById(meeting.id)
+    selectedMeeting.value = (response as any)?.data || (response as any)
+    showEditDialog.value = true
+  } catch (error) {
+    console.error("Error loading meeting details:", error)
+    showSnackbar(t("meetings.errors.load"), "error")
+  }
 }
 
 const updateMeeting = async (updates: MeetingUpdateRequest) => {
@@ -356,9 +345,9 @@ const updateMeeting = async (updates: MeetingUpdateRequest) => {
     await meetingsStore.updateMeeting(selectedMeeting.value.id, updates)
     showEditDialog.value = false
     selectedMeeting.value = null
-    showSnackbar(t('meetings.success.updated'), "success")
+    showSnackbar(t("meetings.success.updated"), "success")
   } catch (error) {
-    showSnackbar(t('meetings.errors.update'), "error")
+    showSnackbar(t("meetings.errors.update"), "error")
   } finally {
     formLoading.value = false
   }
@@ -367,9 +356,12 @@ const updateMeeting = async (updates: MeetingUpdateRequest) => {
 const updateMeetingStatus = async (meeting: Meeting, newStatus: MeetingStatus) => {
   try {
     await meetingsStore.updateMeetingStatus(meeting.id, newStatus)
-    showSnackbar(t('meetings.success.statusUpdated', { status: t(`meetings.status.${newStatus}`) }), "success")
+    showSnackbar(
+      t("meetings.success.statusUpdated", { status: t(`meetings.status.${newStatus}`) }),
+      "success"
+    )
   } catch (error) {
-    showSnackbar(t('meetings.errors.statusUpdate'), "error")
+    showSnackbar(t("meetings.errors.statusUpdate"), "error")
   }
 }
 
@@ -381,9 +373,9 @@ const confirmDeleteMeeting = (meeting: Meeting) => {
 const deleteMeeting = async (meeting: Meeting) => {
   try {
     await meetingsStore.deleteMeeting(meeting.id)
-    showSnackbar(t('meetings.success.deleted'), "success")
+    showSnackbar(t("meetings.success.deleted"), "success")
   } catch (error) {
-    showSnackbar(t('meetings.errors.delete'), "error")
+    showSnackbar(t("meetings.errors.delete"), "error")
   }
 }
 
@@ -403,15 +395,16 @@ const cancelDelete = () => {
 const exportMeeting = async (meeting: Meeting) => {
   try {
     await meetingsStore.exportToIcs(meeting.id)
-    showSnackbar(t('meetings.success.exported'), "success")
+    showSnackbar(t("meetings.success.exported"), "success")
   } catch (error) {
-    showSnackbar(t('meetings.errors.export'), "error")
+    showSnackbar(t("meetings.errors.export"), "error")
   }
 }
 
 const sendInvitation = (meeting: Meeting) => {
   selectedMeeting.value = meeting
   invitationEmails.value = ""
+  invitationMessage.value = ""
   showInvitationDialog.value = true
 }
 
@@ -430,13 +423,17 @@ const confirmSendInvitation = async () => {
         .filter((email) => email.length > 0)
     }
 
-    await meetingsStore.sendInvitation(selectedMeeting.value.id, emails)
-    showSnackbar(t('meetings.success.invitationSent'), "success")
+    // Get custom message if provided
+    const message = invitationMessage.value.trim() || undefined
+
+    await meetingsStore.sendInvitation(selectedMeeting.value.id, emails, message)
+    showSnackbar(t("meetings.success.invitationSent"), "success")
     showInvitationDialog.value = false
     selectedMeeting.value = null
     invitationEmails.value = ""
+    invitationMessage.value = ""
   } catch (error) {
-    showSnackbar(t('meetings.errors.invitationSend'), "error")
+    showSnackbar(t("meetings.errors.invitationSend"), "error")
   } finally {
     invitationLoading.value = false
   }
@@ -446,6 +443,7 @@ const cancelInvitation = () => {
   showInvitationDialog.value = false
   selectedMeeting.value = null
   invitationEmails.value = ""
+  invitationMessage.value = ""
 }
 
 const applySorting = () => {
@@ -480,7 +478,7 @@ onMounted(async () => {
 }
 
 .meetings-header::before {
-  content: '';
+  content: "";
   position: absolute;
   top: 0;
   left: 0;

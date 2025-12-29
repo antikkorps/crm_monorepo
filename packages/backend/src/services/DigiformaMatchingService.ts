@@ -230,7 +230,7 @@ export class DigiformaMatchingService {
     // Normalize Digiforma company data
     const normalizedDigiformaName = this.normalizeName(digiformaCompany.name)
     const digiformaCity = this.normalizeCity(digiformaCompany.address?.city || '')
-    const digiformaZipCode = digiformaCompany.address?.cityCode || ''
+    const digiformaZipCode = (digiformaCompany.metadata?.cityCode as string) || digiformaCompany.address?.zipCode || ''
 
     // Create searchable data for institutions
     const searchableInstitutions = institutions.map(inst => ({

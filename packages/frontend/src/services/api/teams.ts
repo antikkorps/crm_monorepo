@@ -34,6 +34,11 @@ export const teamsApi = {
   getById: (id: string) => apiClient.get<ApiResponse<Team>>(`/teams/${id}`),
 
   /**
+   * Get a single team by ID (alias for getById)
+   */
+  getTeam: (id: string) => apiClient.get<ApiResponse<Team>>(`/teams/${id}`),
+
+  /**
    * Create a new team
    */
   createTeam: (data: TeamCreateRequest) =>

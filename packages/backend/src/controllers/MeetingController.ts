@@ -5,6 +5,7 @@ import {
   MeetingUpdateRequest,
   ParticipantStatus,
 } from "@medical-crm/shared"
+import { Op } from "sequelize"
 import { Context } from "../types/koa"
 import { MedicalInstitution } from "../models/MedicalInstitution"
 import { Meeting } from "../models/Meeting"
@@ -91,6 +92,24 @@ export class MeetingController {
             model: MedicalInstitution,
             as: "institution",
             attributes: ["id", "name", "type"],
+          },
+          {
+            model: MeetingParticipant,
+            as: "participants",
+            include: [
+              {
+                model: User,
+                as: "user",
+                attributes: ["id", "firstName", "lastName", "email"],
+                required: false,
+              },
+              {
+                model: ContactPerson,
+                as: "contactPerson",
+                attributes: ["id", "firstName", "lastName", "email"],
+                required: false,
+              },
+            ],
           },
         ],
       })
@@ -198,11 +217,48 @@ export class MeetingController {
         await MeetingParticipant.bulkInviteContactPersons(meeting.id, data.contactPersonIds)
       }
 
-      const created = await Meeting.findByPk(meeting.id)
+      const created = await Meeting.findByPk(meeting.id, {
+        include: [
+          {
+            model: User,
+            as: "organizer",
+            attributes: ["id", "firstName", "lastName", "email"],
+          },
+          {
+            model: MedicalInstitution,
+            as: "institution",
+            attributes: ["id", "name", "type"],
+          },
+          {
+            model: MeetingParticipant,
+            as: "participants",
+            include: [
+              {
+                model: User,
+                as: "user",
+                attributes: ["id", "firstName", "lastName", "email"],
+                required: false,
+              },
+              {
+                model: ContactPerson,
+                as: "contactPerson",
+                attributes: ["id", "firstName", "lastName", "email"],
+                required: false,
+              },
+            ],
+          },
+        ],
+      })
 
       ctx.status = 201
       ctx.body = { success: true, data: created }
     } catch (error) {
+      logger.error("Error creating meeting", {
+        error: error instanceof Error ? error.message : "Unknown error",
+        stack: error instanceof Error ? error.stack : undefined,
+        requestBody: ctx.request.body,
+        userId: ctx.state.user?.id,
+      })
       ctx.status = 500
       ctx.body = {
         success: false,
@@ -263,7 +319,9 @@ export class MeetingController {
         }
         meeting.institutionId = updates.institutionId
       }
-      if (updates.status !== undefined) await meeting.updateStatus(updates.status)
+      if (updates.status !== undefined && updates.status !== meeting.status) {
+        await meeting.updateStatus(updates.status)
+      }
       if (updates.startDate || updates.endDate) {
         const start = updates.startDate ? new Date(updates.startDate) : meeting.startDate
         const end = updates.endDate ? new Date(updates.endDate) : meeting.endDate
@@ -272,9 +330,115 @@ export class MeetingController {
         await meeting.save()
       }
 
-      const updated = await Meeting.findByPk(meeting.id)
+      // Handle participants update if provided
+      const requestBody = ctx.request.body as any
+      if (requestBody.participantIds && Array.isArray(requestBody.participantIds)) {
+        // Get current participants
+        const currentParticipants = await MeetingParticipant.findAll({
+          where: {
+            meetingId: meeting.id,
+            userId: { [Op.ne]: null } as any
+          },
+          attributes: ["userId"],
+        })
+        const currentUserIds = currentParticipants.map((p) => p.userId!).filter((id): id is string => id !== null)
+
+        // Remove participants that are no longer in the list
+        const toRemove = currentUserIds.filter((id) => !requestBody.participantIds.includes(id))
+        if (toRemove.length > 0) {
+          await MeetingParticipant.destroy({
+            where: { meetingId: meeting.id, userId: toRemove },
+          })
+        }
+
+        // Add new participants
+        const toAdd = requestBody.participantIds.filter((id: string) => !currentUserIds.includes(id))
+        if (toAdd.length > 0) {
+          await MeetingParticipant.bulkInviteUsers(meeting.id, toAdd)
+        }
+      }
+
+      // Handle contact persons update if provided
+      if (requestBody.contactPersonIds && Array.isArray(requestBody.contactPersonIds)) {
+        // Validate institution requirement
+        if (requestBody.contactPersonIds.length > 0 && !meeting.institutionId) {
+          ctx.status = 400
+          ctx.body = {
+            success: false,
+            error: {
+              code: "INVALID_CONTACT",
+              message: "Cannot add contact persons without an institution",
+            },
+          }
+          return
+        }
+
+        // Get current contact person participants
+        const currentContactParticipants = await MeetingParticipant.findAll({
+          where: {
+            meetingId: meeting.id,
+            contactPersonId: { [Op.ne]: null } as any
+          },
+          attributes: ["contactPersonId"],
+        })
+        const currentContactIds = currentContactParticipants.map((p) => p.contactPersonId!).filter((id): id is string => id !== null)
+
+        // Remove contacts that are no longer in the list
+        const toRemove = currentContactIds.filter((id) => !requestBody.contactPersonIds.includes(id))
+        if (toRemove.length > 0) {
+          await MeetingParticipant.destroy({
+            where: { meetingId: meeting.id, contactPersonId: toRemove },
+          })
+        }
+
+        // Add new contact persons
+        const toAdd = requestBody.contactPersonIds.filter((id: string) => !currentContactIds.includes(id))
+        if (toAdd.length > 0) {
+          await MeetingParticipant.bulkInviteContactPersons(meeting.id, toAdd)
+        }
+      }
+
+      const updated = await Meeting.findByPk(meeting.id, {
+        include: [
+          {
+            model: User,
+            as: "organizer",
+            attributes: ["id", "firstName", "lastName", "email"],
+          },
+          {
+            model: MedicalInstitution,
+            as: "institution",
+            attributes: ["id", "name", "type"],
+          },
+          {
+            model: MeetingParticipant,
+            as: "participants",
+            include: [
+              {
+                model: User,
+                as: "user",
+                attributes: ["id", "firstName", "lastName", "email"],
+                required: false,
+              },
+              {
+                model: ContactPerson,
+                as: "contactPerson",
+                attributes: ["id", "firstName", "lastName", "email"],
+                required: false,
+              },
+            ],
+          },
+        ],
+      })
       ctx.body = { success: true, data: updated }
     } catch (error) {
+      logger.error("Error updating meeting", {
+        error: error instanceof Error ? error.message : "Unknown error",
+        stack: error instanceof Error ? error.stack : undefined,
+        requestBody: ctx.request.body,
+        meetingId: ctx.params.id,
+        userId: ctx.state.user?.id,
+      })
       ctx.status = 500
       ctx.body = {
         success: false,
@@ -709,7 +873,7 @@ export class MeetingController {
     try {
       const user = ctx.state.user as User
       const { id } = ctx.params
-      const { emails } = ctx.request.body as { emails?: string[] }
+      const { emails, message } = ctx.request.body as { emails?: string[]; message?: string }
 
       const meeting = await Meeting.findByPk(id, {
         include: [
@@ -903,6 +1067,10 @@ export class MeetingController {
           </tr>` : ""}
         </table>
         ${meeting.description ? `<p><strong>Description :</strong><br>${meeting.description}</p>` : ""}
+        ${message ? `<div style="margin: 20px 0; padding: 15px; background-color: #f8f9fa; border-left: 4px solid #007bff;">
+          <p style="margin: 0;"><strong>Message de l'organisateur :</strong></p>
+          <p style="margin: 10px 0 0 0;">${message}</p>
+        </div>` : ""}
         <p style="margin-top: 20px;">
           <small>Organisé par : ${meeting.organizer?.firstName} ${meeting.organizer?.lastName}</small>
         </p>

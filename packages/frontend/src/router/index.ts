@@ -15,6 +15,7 @@ const Quotes = () => import("@/views/billing/QuotesView.vue")
 const Invoices = () => import("@/views/billing/InvoicesView.vue")
 const InvoiceDetail = () => import("@/views/billing/InvoiceDetailView.vue")
 const Team = () => import("@/views/team/TeamView.vue")
+const TeamDetail = () => import("@/views/team/TeamDetailView.vue")
 const Profile = () => import("@/views/profile/ProfileView.vue")
 const Notifications = () => import("@/views/notifications/NotificationsView.vue")
 const Templates = () => import("@/views/templates/TemplatesView.vue")
@@ -134,6 +135,15 @@ const routes: RouteRecordRaw[] = [
     meta: {
       requiresAuth: true,
       title: "Team",
+    },
+  },
+  {
+    path: "/teams/:id",
+    name: "TeamDetail",
+    component: TeamDetail,
+    meta: {
+      requiresAuth: true,
+      title: "Team Detail",
     },
   },
   {

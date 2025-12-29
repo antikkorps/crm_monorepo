@@ -21,10 +21,11 @@ export interface MeetingParticipantAttributes {
   contactPersonId?: string
   status: ParticipantStatus
   createdAt: Date
+  updatedAt: Date
 }
 
 export interface MeetingParticipantCreationAttributes
-  extends Optional<MeetingParticipantAttributes, "id" | "status" | "createdAt"> {}
+  extends Optional<MeetingParticipantAttributes, "id" | "status" | "createdAt" | "updatedAt"> {}
 
 export class MeetingParticipant
   extends Model<MeetingParticipantAttributes, MeetingParticipantCreationAttributes>
@@ -36,6 +37,7 @@ export class MeetingParticipant
   declare contactPersonId?: string
   declare status: ParticipantStatus
   declare readonly createdAt: Date
+  declare readonly updatedAt: Date
 
   // Associations
   declare user?: User
@@ -331,7 +333,10 @@ export class MeetingParticipant
       status: ParticipantStatus.INVITED,
     }))
 
-    return this.bulkCreate(participantsData)
+    return this.bulkCreate(participantsData, {
+      individualHooks: true,
+      returning: true,
+    })
   }
 
   public static async bulkInviteContactPersons(
@@ -374,7 +379,10 @@ export class MeetingParticipant
       status: ParticipantStatus.INVITED,
     }))
 
-    return this.bulkCreate(participantsData)
+    return this.bulkCreate(participantsData, {
+      individualHooks: true,
+      returning: true,
+    })
   }
 
   public static async removeParticipants(
@@ -452,13 +460,18 @@ MeetingParticipant.init(
       defaultValue: DataTypes.NOW,
       field: "created_at",
     },
+    updatedAt: {
+      type: DataTypes.DATE,
+      allowNull: false,
+      defaultValue: DataTypes.NOW,
+      field: "updated_at",
+    },
   },
   {
     sequelize,
     modelName: "MeetingParticipant",
     tableName: "meeting_participants",
     timestamps: true,
-    updatedAt: false, // Only createdAt, no updatedAt
     underscored: true,
     indexes: [
       {

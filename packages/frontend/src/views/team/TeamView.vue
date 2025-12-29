@@ -487,6 +487,7 @@ import EditTeamDialog from "@/components/team/EditTeamDialog.vue"
 import { institutionsApi, teamApi, teamsApi, usersApi } from "@/services/api"
 import { AvatarService } from "@/services/avatarService"
 import { useTeamStore } from "@/stores/team"
+import { useRouter } from "vue-router"
 import type {
   User,
   UserCreationAttributes,
@@ -496,6 +497,7 @@ import { useSnackbar } from "@/composables/useSnackbar"
 import { computed, onMounted, ref } from "vue"
 
 const teamStore = useTeamStore()
+const router = useRouter()
 const { showSnackbar } = useSnackbar()
 
 // Component state
@@ -838,16 +840,19 @@ const editTeam = (team: any) => {
 }
 
 const manageTeam = (team: any) => {
-  console.log("Manage team:", team)
+  // Open edit team dialog
+  editTeam(team)
 }
 
 const addMemberToTeam = (team: any) => {
-  console.log("Add member to team:", team)
+  // For now, open create user dialog
+  // TODO: Could be improved with a specific "add to team" dialog
   showCreateUserDialog.value = true
 }
 
 const viewTeamDetails = (team: any) => {
-  console.log("View team details:", team)
+  // Navigate to team detail page
+  router.push(`/teams/${team.id}`)
 }
 
 const handleTeamCreated = async (team: any) => {

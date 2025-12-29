@@ -1236,11 +1236,17 @@
   - [ ] Sync automatique hebdomadaire (cron job)
   - [ ] Import/sync des quotes et invoices Digiforma (API à documenter)
 
-- [-] 24.6 **Amélioration Merge - Gestion noms différents** 🔄 **EN COURS** (Backend ✅ | Tests ✅ | Frontend ⏳)
+- [-] 24.6 **Amélioration Merge - Gestion noms différents** 🔄 **EN COURS** (Backend ✅ 100% | Tests ✅ | API ✅ | Frontend ⏳ 0%)
 
   **Problématique:** Actuellement, le merge Digiforma → CRM se base principalement sur l'**email** des contacts. Si une institution a un nom légèrement différent entre Digiforma et le CRM (ex: "CHU de Lyon" vs "CHU Lyon"), le système peut ne pas détecter le match.
 
   **✅ IMPLÉMENTATION BACKEND COMPLÈTE (2025-12-29)**
+
+  **🐛 Bug TypeScript corrigé (2025-12-29 14:35):**
+  - ✅ Fix `cityCode` n'existe pas sur type `address` → Utiliser `metadata?.cityCode || address?.zipCode`
+  - ✅ Fichier: `DigiformaMatchingService.ts:233`
+  - ✅ Tests: 28/28 passent avec `SKIP_DB_INIT=true`
+  - ✅ TypeScript: Aucune erreur de compilation
 
   - [x] **24.6.1 Backend - Algorithmes de matching avancés** ✅ **100%**
 
@@ -1376,19 +1382,34 @@
 
     - ✅ `packages/backend/src/services/DigiformaSyncService.ts`
 
-  **📊 RÉSULTATS:**
+  **📊 RÉSULTATS BACKEND (100% COMPLET):**
 
   - ✅ Algorithme intelligent de matching avec 5 priorités
-  - ✅ 28 tests unitaires passent à 100%
-  - ✅ Database schema complet avec migrations
-  - ✅ 6 endpoints API fonctionnels
+  - ✅ 28 tests unitaires passent à 100% (logique pure, sans DB)
+  - ✅ Database schema complet avec migrations (2 fichiers .cjs)
+  - ✅ **6 endpoints API fonctionnels et testés:**
+    - ✅ `GET /api/digiforma/unmatched-companies` - Liste des non-matchés
+    - ✅ `GET /api/digiforma/suggested-matches/:companyId` - Suggestions avec scores
+    - ✅ `POST /api/digiforma/mappings` - Créer mapping manuel
+    - ✅ `DELETE /api/digiforma/mappings/:id` - Supprimer mapping
+    - ✅ `GET /api/digiforma/fuzzy-matches` - Fuzzy matches à valider
+    - ✅ `POST /api/digiforma/mappings/:id/confirm` - Confirmer match
   - ✅ Normalisation robuste (gestion accents, articles, mots médicaux)
   - ✅ Scores de confiance calculés (0-100%)
-  - ⏳ Interface frontend à implémenter
+  - ✅ Intégration complète dans `DigiformaSyncService`
+  - ✅ Modèle `DigiformaInstitutionMapping` avec méthodes helper
+  - ✅ Pas d'erreur TypeScript, code 100% type-safe
+
+  **⏳ CE QUI RESTE (FRONTEND UNIQUEMENT):**
+
+  - [ ] Interface utilisateur `/settings/digiforma/mappings`
+  - [ ] Composants Vue pour afficher/gérer les mappings
+  - [ ] Intégration avec les 6 endpoints API déjà créés
 
   **🔜 PROCHAINE ÉTAPE:**
 
-  - [ ] Implémenter l'interface frontend `/settings/digiforma/mappings`
+  - [ ] **Option 1:** Implémenter l'interface frontend de réconciliation Digiforma (24.6.3)
+  - [ ] **Option 2:** Faire la gestion des membres d'équipe (31.6)
   - [ ] Tester avec vraies données Digiforma
   - [ ] Documenter le processus dans DIGIFORMA.md
 
@@ -3818,6 +3839,95 @@ Le CRM devient la **source de vérité unique**. Les données peuvent provenir d
 
   **Date:** À planifier
 
+- [x] **31.7** - Corrections et Amélioration des Meetings ✅
+
+  **Status:** ✅ COMPLÉTÉ
+  **Date:** 2025-12-29
+  **Estimation:** 3-4h réalisées
+
+  **Problèmes résolus:**
+
+  **1. Bug: Contact persons non transmis au backend** ✅
+  - ❌ Problème: Les `contactPersonIds` sélectionnés dans le formulaire n'atteignaient jamais le backend
+  - 🔍 Cause: Le middleware de validation Joi (`validateMeetingCreation` et `validateMeetingUpdate`) ne définissait pas le champ `contactPersonIds`, donc il était automatiquement supprimé par Joi
+  - ✅ Solution: Ajout de `contactPersonIds` aux schemas Joi de validation
+    - `packages/backend/src/middleware/collaborationValidation.ts` (lignes 166-168, 193-195)
+    - Schema: `Joi.array().items(uuidSchema).min(0).max(50).optional()`
+
+  **2. Bug: Constraint database user_id NOT NULL** ✅
+  - ❌ Problème: `null value in column "user_id" of relation "meeting_participants" violates not-null constraint`
+  - 🔍 Cause: La table `meeting_participants` avait `user_id` en NOT NULL alors qu'on voulait permettre des participants contact persons sans user_id
+  - ✅ Solution: Création migration `20251229000001-fix-meeting-participants-user-id-nullable.cjs`
+    - Migration SQL: `ALTER TABLE meeting_participants ALTER COLUMN user_id DROP NOT NULL`
+    - Permet maintenant d'avoir soit `user_id`, soit `contact_person_id` (validation CHECK existante)
+
+  **3. Bug: Contact persons non affichés lors de l'édition** ✅
+  - ❌ Problème: Quand on édite un meeting, les participants users s'affichent mais pas les contact persons
+  - 🔍 Cause: Le watcher sur `institutionId` nettoyait `contactPersonIds` avant qu'ils puissent être populés lors du chargement du formulaire
+  - ✅ Solution: Ajout flag `isPopulatingForm` dans `MeetingForm.vue`
+    - Empêche le nettoyage pendant la population initiale
+    - `populateForm` est maintenant async et charge les contact persons avant de set les IDs
+    - Watcher vérifie `!isPopulatingForm.value` avant de nettoyer
+
+  **4. UX: Auto-remplissage date de fin** ✅
+  - 🎯 Feature: Quand l'utilisateur saisit la date de début, la date de fin se remplit automatiquement avec +1 heure
+  - ✅ Implémentation: Watcher sur `formData.value.startDate` dans `MeetingForm.vue` (lignes 470-487)
+    - Calcule automatiquement `endDate = startDate + 1 heure`
+    - S'active uniquement si `endDate` est vide ou avant `startDate`
+    - N'interfère pas avec `isPopulatingForm` (édition de meetings existants)
+
+  **5. UX: Message personnalisé dans les invitations** ✅
+  - 🎯 Feature: Ajout d'un champ "Message personnalisé (optionnel)" lors de l'envoi d'invitations par email
+  - ✅ Frontend (`MeetingsView.vue`):
+    - Nouveau champ `invitationMessage` (ligne 280)
+    - Textarea dans le dialogue d'invitation (lignes 218-224)
+    - Passage du message au store et à l'API (ligne 452)
+  - ✅ Backend (`MeetingController.ts`):
+    - Réception paramètre `message` (ligne 876)
+    - Inclusion dans le corps HTML de l'email avec formatage stylé (lignes 1070-1073)
+    - Design: Bloc avec fond gris clair et bordure bleue gauche
+  - ✅ API & Store:
+    - `meetingsApi.sendInvitation(id, emails, message)` - signature étendue
+    - `meetingsStore.sendInvitation(meetingId, emails, message)` - signature étendue
+
+  **Fichiers modifiés:**
+
+  **Backend:**
+  - `packages/backend/src/middleware/collaborationValidation.ts`
+    - Ajout `contactPersonIds` à `validateMeetingCreation`
+    - Ajout `contactPersonIds` à `validateMeetingUpdate`
+  - `packages/backend/src/migrations/20251229000001-fix-meeting-participants-user-id-nullable.cjs` (nouveau)
+    - Migration pour rendre `user_id` nullable
+  - `packages/backend/src/controllers/MeetingController.ts`
+    - Ajout réception paramètre `message` dans `sendInvitation`
+    - Intégration du message dans l'email HTML d'invitation
+
+  **Frontend:**
+  - `packages/frontend/src/components/meetings/MeetingForm.vue`
+    - Ajout flag `isPopulatingForm` pour contrôle du watcher
+    - `populateForm` converti en async, charge contact persons avant de set les IDs
+    - Watcher `startDate` pour auto-remplir `endDate` (+1h)
+    - Conversion Vue Proxy arrays en plain arrays avant emission
+  - `packages/frontend/src/views/meetings/MeetingsView.vue`
+    - Ajout champ `invitationMessage` dans dialogue invitation
+    - Passage du message au store lors de l'envoi
+  - `packages/frontend/src/services/api/meetings.ts`
+    - Extension signature `sendInvitation(id, emails, message)`
+  - `packages/frontend/src/stores/meetings.ts`
+    - Extension signature `sendInvitation(meetingId, emails, message)`
+
+  **Impact:**
+  - ✅ Contact persons fonctionnent correctement dans les meetings (création + édition)
+  - ✅ Meilleure UX avec auto-remplissage des dates
+  - ✅ Invitations par email personnalisables
+  - ✅ Tous les bugs meeting participants résolus
+
+  **Tests manuels réussis:**
+  - ✅ Création meeting avec contact persons
+  - ✅ Édition meeting affiche correctement les contact persons
+  - ✅ Date fin se remplit automatiquement (+1h)
+  - ✅ Message personnalisé apparaît dans l'email d'invitation
+
 - [ ] **31.3** - Tests: Protection auto-lock
 
   **Objectif:** Garantir la fiabilité du système de protection
@@ -3897,20 +4007,54 @@ Le CRM devient la **source de vérité unique**. Les données peuvent provenir d
 - ✅ Migrations gérées automatiquement en production (Railway)
 - ✅ Logs complets pour debugging et audit
 
-### Prochaines étapes
+### Prochaines étapes - MISE À JOUR 2025-12-29 14:45
 
-1. **Court terme (1-2 jours):**
-   - [ ] Implémenter badge + tooltip source de données
-   - [ ] Créer dialogs de gestion des équipes
+**🎯 DEUX OPTIONS PRIORITAIRES:**
 
-2. **Moyen terme (1 semaine):**
-   - [ ] Tests complets du système auto-lock
-   - [ ] Documentation utilisateur sur la protection des données
-   - [ ] Monitoring et alertes si problèmes de sync
+**Option 1 - Interface de réconciliation Digiforma (24.6.3)** 🟡 Priorité Moyenne
+- ✅ Backend 100% prêt (6 endpoints API + service + modèle)
+- [ ] Frontend à créer: `/settings/digiforma/mappings`
+- **Composants à créer:**
+  - `DigiformaMappingsView.vue` - Page principale
+  - `UnmatchedCompaniesList.vue` - Liste non-matchés
+  - `InstitutionMatchSuggestions.vue` - Suggestions avec scores
+  - `ManualMappingDialog.vue` - Créer mapping manuel
+  - `FuzzyMatchReviewCard.vue` - Valider fuzzy matches
+- **Estimation:** 4-5h (frontend uniquement, API déjà faite)
+- **Avantage:** Améliore qualité des données Digiforma → CRM
+- **Quand:** Peut attendre si pas urgent
 
-3. **Long terme (optionnel):**
-   - [ ] Interface admin pour débloquer manuellement une entité
-   - [ ] Analytics sur les taux de lock par source
-   - [ ] Export des métadonnées externes pour audit
+**Option 2 - Gestion des membres d'équipe (31.6)** 🟢 Priorité Haute
+- ✅ Backend partiellement prêt (3 endpoints: POST/DELETE/GET members)
+- [ ] Frontend à créer: `TeamDetailView`, `AddTeamMemberDialog`, `TeamMemberCard`
+- [ ] Connecter boutons "View Details" et "Configuration" dans `TeamView.vue`
+- [ ] Route `/teams/:id`
+- **Estimation:** 3-4h (création composants + route)
+- **Avantage:** Fonctionnalité visible et attendue par les utilisateurs
+- **Quand:** Plus urgent car interface utilisateur incomplète
+
+**💡 RECOMMANDATION:** Commencer par **Option 2 (Gestion équipes)** car:
+1. Fonctionnalité plus visible pour les utilisateurs
+2. Améliore UX immédiatement (boutons actuellement non-fonctionnels)
+3. Plus court à implémenter (3-4h vs 4-5h)
+4. La réconciliation Digiforma peut attendre (amélioration qualité données)
+
+**📋 Après Option 2, faire:**
+1. Option 1 (Réconciliation Digiforma frontend)
+2. Tests auto-lock (31.3) - 4-5h
+3. Badge source de données UI
+
+**Autres tâches court terme (1-2 jours):**
+- [ ] Implémenter badge + tooltip source de données (UI uniquement)
+- [ ] Tests complets du système auto-lock (31.3)
+
+**Moyen terme (1 semaine):**
+- [ ] Documentation utilisateur sur la protection des données
+- [ ] Monitoring et alertes si problèmes de sync
+
+**Long terme (optionnel):**
+- [ ] Interface admin pour débloquer manuellement une entité
+- [ ] Analytics sur les taux de lock par source
+- [ ] Export des métadonnées externes pour audit
 
 ---
