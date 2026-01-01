@@ -1,0 +1,27 @@
+# Ignore node_modules
+node_modules/
+
+# Ignore dist directories
+dist/
+build/
+*.min.js
+*.min.css
+
+# Ignore built files
+*.log
+
+# Ignore testing files
+coverage/
+
+# Ignore IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Ignore OS files
+.DS_Store
+Thumbs.db
+
+# Ignore ESLint flat config migration issues
+eslint.config.js
