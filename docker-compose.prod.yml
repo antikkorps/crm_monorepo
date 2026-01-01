@@ -3,7 +3,7 @@ services:
   # Traefik - Reverse Proxy with SSL
   # ============================================
   traefik:
-    image: traefik:v3.0
+    image: traefik:v3.2
     container_name: medical-crm-traefik
     restart: unless-stopped
     ports:
@@ -18,6 +18,7 @@ services:
       - traefik-certs:/letsencrypt
     environment:
       - TZ=Europe/Paris
+      - DOCKER_API_VERSION=1.52
     labels:
       - "traefik.enable=true"
       # Dashboard

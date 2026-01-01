@@ -44,6 +44,7 @@ Backend → PostgreSQL 18 (réseau privé)
 - **Backup Service**: Backups quotidiens vers Cloudflare R2
 
 **Convention du système de fichiers :**
+
 - `/srv/medical-crm/` - Application Docker (selon FHS pour les services)
 - `/var/` - Données variables (logs, cache, temp)
 - `/opt/` - Logiciels tiers (non utilisé ici)
@@ -236,11 +237,12 @@ chown -R deploy:deploy /srv/medical-crm
 
 Créez les enregistrements DNS suivants :
 
-```
+```bash
 Type    Nom                     Valeur              TTL
-A       crm.example.com         <HETZNER_IP>        3600
-A       api.example.com         <HETZNER_IP>        3600
-A       traefik.example.com     <HETZNER_IP>        3600
+A       example.com             <HETZNER-IP>
+CNAME   crm                     <example.com>      3600
+CNAME   crmapi                  <example.com>      3600
+CNAME   traefik.example.com     <example.com>      3600
 ```
 
 Remplacez `example.com` par votre domaine réel.
