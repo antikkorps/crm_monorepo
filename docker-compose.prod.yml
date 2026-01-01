@@ -146,6 +146,8 @@ services:
       # Security headers
       - "traefik.http.middlewares.backend-headers.headers.customResponseHeaders.X-Robots-Tag=noindex,nofollow"
       - "traefik.http.middlewares.backend-headers.headers.customResponseHeaders.Server="
+      # WebSocket support
+      - "traefik.http.middlewares.backend-headers.headers.customRequestHeaders.X-Forwarded-Proto=https"
       # Rate limiting
       - "traefik.http.middlewares.backend-ratelimit.ratelimit.average=100"
       - "traefik.http.middlewares.backend-ratelimit.ratelimit.burst=50"
