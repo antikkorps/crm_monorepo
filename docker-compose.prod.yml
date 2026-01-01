@@ -189,7 +189,7 @@ services:
       - "traefik.http.routers.frontend.middlewares=frontend-headers,frontend-compress"
       # Security headers
       - "traefik.http.middlewares.frontend-headers.headers.customResponseHeaders.X-Robots-Tag=noindex,nofollow"
-      - "traefik.http.middlewares.frontend-headers.headers.contentSecurityPolicy=default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline';"
+      - "traefik.http.middlewares.frontend-headers.headers.contentSecurityPolicy=default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; connect-src 'self' https://${BACKEND_DOMAIN}; img-src 'self' data: https:; font-src 'self' data:;"
       # Compression
       - "traefik.http.middlewares.frontend-compress.compress=true"
 
