@@ -68,6 +68,12 @@ COPY --from=shared-builder --chown=nodejs:nodejs /app/packages/shared/package.js
 COPY --from=builder --chown=nodejs:nodejs /app/packages/backend/dist ./packages/backend/dist
 COPY --from=builder --chown=nodejs:nodejs /app/packages/backend/package.json ./packages/backend/
 
+# Copy migration files (needed for sequelize-cli)
+COPY --from=builder --chown=nodejs:nodejs /app/packages/backend/.sequelizerc ./packages/backend/
+COPY --from=builder --chown=nodejs:nodejs /app/packages/backend/src/migrations ./packages/backend/src/migrations
+COPY --from=builder --chown=nodejs:nodejs /app/packages/backend/src/seeders ./packages/backend/src/seeders
+COPY --from=builder --chown=nodejs:nodejs /app/packages/backend/src/config/sequelize.cjs ./packages/backend/src/config/sequelize.cjs
+
 # Copy root package.json for workspace resolution
 COPY --chown=nodejs:nodejs package.json ./
 
