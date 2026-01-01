@@ -22,7 +22,12 @@
 
     <!-- Empty State -->
     <v-card-text v-else-if="activities.length === 0" class="text-center py-12">
-      <v-icon icon="mdi-timeline-clock-outline" size="64" color="grey-lighten-1" class="mb-4" />
+      <v-icon
+        icon="mdi-timeline-clock-outline"
+        size="64"
+        color="grey-lighten-1"
+        class="mb-4"
+      />
       <p class="text-h6 text-medium-emphasis">Aucune activité récente</p>
     </v-card-text>
 
@@ -50,7 +55,7 @@
                   :color="activity.color"
                   size="x-small"
                   variant="flat"
-                  class="text-capitalize"
+                  class="text-capitalize mx-2"
                 >
                   {{ getActivityTypeLabel(activity.type) }}
                 </v-chip>
@@ -90,10 +95,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
-import { dashboardApi, type Activity } from '@/services/api/dashboard'
-import { formatDistanceToNow } from 'date-fns'
-import { fr } from 'date-fns/locale'
+import { dashboardApi, type Activity } from "@/services/api/dashboard"
+import { formatDistanceToNow } from "date-fns"
+import { fr } from "date-fns/locale"
+import { onMounted, ref } from "vue"
 
 // State
 const activities = ref<Activity[]>([])
@@ -113,7 +118,7 @@ async function loadActivities() {
     offset.value = limit
     hasMore.value = data.length === limit
   } catch (error) {
-    console.error('Error loading activities:', error)
+    console.error("Error loading activities:", error)
   } finally {
     loading.value = false
   }
@@ -129,7 +134,7 @@ async function loadMore() {
     offset.value += limit
     hasMore.value = data.length === limit
   } catch (error) {
-    console.error('Error loading more activities:', error)
+    console.error("Error loading more activities:", error)
   } finally {
     loadingMore.value = false
   }
@@ -146,11 +151,11 @@ function formatTime(timestamp: string): string {
 // Get activity type label
 function getActivityTypeLabel(type: string): string {
   const labels: Record<string, string> = {
-    institution: 'Institution',
-    task: 'Tâche',
-    quote: 'Devis',
-    invoice: 'Facture',
-    sync: 'Synchronisation',
+    institution: "Institution",
+    task: "Tâche",
+    quote: "Devis",
+    invoice: "Facture",
+    sync: "Synchronisation",
   }
   return labels[type] || type
 }

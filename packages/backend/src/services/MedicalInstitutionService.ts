@@ -176,7 +176,7 @@ export class MedicalInstitutionService {
   /**
    * Soft delete institution (set isActive to false)
    */
-  static async deleteInstitution(id: string, userId: string): Promise<void> {
+  static async deleteInstitution(id: string, userId: string, force: boolean = false): Promise<void> {
     try {
       const institution = await MedicalInstitution.findByPk(id)
 
@@ -184,18 +184,39 @@ export class MedicalInstitutionService {
         throw createError("Medical institution not found", 404, "INSTITUTION_NOT_FOUND")
       }
 
-      // Soft delete by setting isActive to false
-      await institution.update({ isActive: false })
+      if (force) {
+        // Vérifier si l'institution est verrouillée (contient des données CRM enrichies)
+        if (institution.isLocked) {
+          throw createError(
+            "Impossible de supprimer définitivement cette institution. Elle contient des données enrichies CRM (notes, réunions, modifications manuelles) et ne peut être que désactivée.",
+            403,
+            "LOCKED_INSTITUTION_DELETE_FORBIDDEN"
+          )
+        }
 
-      logger.info("Medical institution deleted", {
-        userId,
-        institutionId: id,
-        institutionName: institution.name,
-      })
+        // Hard delete: suppression définitive (uniquement pour les non-locked)
+        await institution.destroy({ force: true })
+        logger.warn("Medical institution permanently deleted", {
+          userId,
+          institutionId: id,
+          institutionName: institution.name,
+          isLocked: institution.isLocked,
+        })
+      } else {
+        // Soft delete by setting isActive to false
+        await institution.update({ isActive: false })
+        logger.info("Medical institution soft deleted", {
+          userId,
+          institutionId: id,
+          institutionName: institution.name,
+          isLocked: institution.isLocked,
+        })
+      }
     } catch (error) {
       logger.error("Failed to delete medical institution", {
         userId,
         institutionId: id,
+        force,
         error: (error as Error).message,
       })
       throw error

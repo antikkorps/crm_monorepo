@@ -258,10 +258,10 @@ export class DatabaseSeeder {
         await sequelize.query(
           `
           INSERT INTO contact_persons (
-            id, first_name, last_name, email, phone, position, 
+            id, first_name, last_name, email, phone, title,
             institution_id, is_active, created_at, updated_at
           ) VALUES (
-            :id, :firstName, :lastName, :email, :phone, :position,
+            :id, :firstName, :lastName, :email, :phone, :title,
             :institutionId, :is_active, NOW(), NOW()
           )
         `,

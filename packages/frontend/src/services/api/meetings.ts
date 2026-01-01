@@ -121,6 +121,6 @@ export const meetingsApi = {
   /**
    * Send meeting invitation by email with .ics attachment
    */
-  sendInvitation: (id: string, emails?: string[]) =>
-    apiClient.post<ApiResponse<void>>(`/meetings/${id}/send-invitation`, { emails }),
+  sendInvitation: (id: string, emails?: string[], message?: string) =>
+    apiClient.post<ApiResponse<void>>(`/meetings/${id}/send-invitation`, { emails, message }),
 }

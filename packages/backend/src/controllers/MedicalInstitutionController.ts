@@ -277,10 +277,16 @@ export class MedicalInstitutionController {
     }
 
     // Build Sequelize where clause and includes for efficient database-level pagination
-    const whereClause: any = { isActive: true }
+    const whereClause: any = {}
     const profileWhere: any = {}
     const useRelational = process.env.USE_RELATIONAL_ADDRESSES === "true"
     const include: any[] = []
+
+    // Apply isActive filter only if explicitly set
+    // Si non fourni, on montre toutes les institutions (actives + inactives)
+    if (filters.isActive !== undefined) {
+      whereClause.isActive = filters.isActive
+    }
 
     // Basic filters
     if (filters.name) {
@@ -584,17 +590,20 @@ export class MedicalInstitutionController {
    */
   static async deleteInstitution(ctx: Context) {
     const { id } = ctx.params
+    const force = ctx.query.force === 'true'
 
     if (!id) {
       throw new BadRequestError("Institution ID is required")
     }
 
     const user = ctx.state.user as User
-    await MedicalInstitutionService.deleteInstitution(id, user.id)
+    await MedicalInstitutionService.deleteInstitution(id, user.id, force)
 
     ctx.body = {
       success: true,
-      message: "Medical institution deleted successfully",
+      message: force
+        ? "Medical institution permanently deleted"
+        : "Medical institution deleted successfully",
     }
   }
 

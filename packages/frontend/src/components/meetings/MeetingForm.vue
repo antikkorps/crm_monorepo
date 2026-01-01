@@ -251,6 +251,7 @@ const contactPersonOptions = ref<Array<{ label: string; value: string }>>([])
 const institutionOptions = ref<Array<{ label: string; value: string }>>([])
 const loadingInstitutionsSearch = ref(false)
 const loadingContactPersons = ref(false)
+const isPopulatingForm = ref(false)
 
 // Computed loading states from stores
 const loadingUsers = computed(() => teamStore.loading)
@@ -295,7 +296,11 @@ const resetForm = () => {
   contactPersonOptions.value = []
 }
 
-const populateForm = (meeting: Meeting) => {
+const populateForm = async (meeting: Meeting) => {
+  isPopulatingForm.value = true
+
+  const contactPersonIds = meeting.participants?.filter((p) => p.contactPersonId).map((p) => p.contactPersonId!) || []
+
   formData.value = {
     title: meeting.title,
     description: meeting.description || "",
@@ -304,14 +309,17 @@ const populateForm = (meeting: Meeting) => {
     location: meeting.location || "",
     institutionId: meeting.institutionId || "",
     participantIds: meeting.participants?.filter((p) => p.userId).map((p) => p.userId!) || [],
-    contactPersonIds: meeting.participants?.filter((p) => p.contactPersonId).map((p) => p.contactPersonId!) || [],
+    contactPersonIds: [],
     status: meeting.status,
   }
 
-  // Load contact persons for the selected institution
+  // Load contact persons for the selected institution, then set the IDs
   if (meeting.institutionId) {
-    loadContactPersons(meeting.institutionId)
+    await loadContactPersons(meeting.institutionId)
+    formData.value.contactPersonIds = contactPersonIds
   }
+
+  isPopulatingForm.value = false
 }
 
 const validateForm = (): boolean => {
@@ -366,6 +374,14 @@ const handleSubmit = () => {
   // Convert string dates to Date objects for API
   (submitData as any).startDate = new Date(submitData.startDate)
   ;(submitData as any).endDate = new Date(submitData.endDate)
+
+  // Convert Vue Proxy arrays to plain arrays to ensure proper JSON serialization
+  if (submitData.participantIds) {
+    (submitData as any).participantIds = [...submitData.participantIds]
+  }
+  if (submitData.contactPersonIds) {
+    (submitData as any).contactPersonIds = [...submitData.contactPersonIds]
+  }
 
   emit("submit", submitData)
 }
@@ -451,12 +467,34 @@ const loadContactPersons = async (institutionId: string) => {
   }
 }
 
+// Watch for start date changes to auto-fill end date (+1 hour)
+watch(
+  () => formData.value.startDate,
+  (newStartDate) => {
+    if (newStartDate && !isPopulatingForm.value) {
+      // Only auto-fill if end date is empty or before start date
+      const startDate = new Date(newStartDate)
+      const currentEndDate = formData.value.endDate ? new Date(formData.value.endDate) : null
+
+      if (!currentEndDate || currentEndDate <= startDate) {
+        // Add 1 hour to start date
+        const endDate = new Date(startDate)
+        endDate.setHours(endDate.getHours() + 1)
+        formData.value.endDate = formatDateForInput(endDate)
+      }
+    }
+  }
+)
+
 // Watch for institution changes to reload contact persons
 watch(
   () => formData.value.institutionId,
   (newInstitutionId) => {
-    // Always clear selected contact persons when institution changes
-    formData.value.contactPersonIds = []
+    // Don't clear contactPersonIds if we're currently populating the form from meeting data
+    if (!isPopulatingForm.value) {
+      formData.value.contactPersonIds = []
+    }
+
     if (newInstitutionId) {
       loadContactPersons(newInstitutionId)
     } else {

@@ -25,6 +25,12 @@ declare global {
 }
 
 beforeAll(async () => {
+  // Skip database initialization for logic-only tests
+  if (process.env.SKIP_DB_INIT === 'true') {
+    console.log("Skipping database initialization (SKIP_DB_INIT=true)")
+    return
+  }
+
   // Use global flag to ensure we only sync once across all test files
   if (globalThis.__testDbInitialized) {
     return
@@ -52,6 +58,11 @@ beforeAll(async () => {
 // Don't close connection in afterAll - let it be reused across test files
 // The process will clean up when it exits
 afterAll(async () => {
+  // Skip cleanup if we skipped database initialization
+  if (process.env.SKIP_DB_INIT === 'true') {
+    return
+  }
+
   // Explicitly close the Sequelize connection to avoid resource leaks in watch mode or reused processes
   if (globalThis.__testSequelize) {
     await globalThis.__testSequelize.close();

@@ -3,10 +3,13 @@ import { createError } from '../middleware/errorHandler'
 import { DigiformaSettings } from '../models/DigiformaSettings'
 import { DigiformaSyncService } from '../services/DigiformaSyncService'
 import { DigiformaService } from '../services/DigiformaService'
+import { DigiformaMatchingService } from '../services/DigiformaMatchingService'
 import { ConsolidatedRevenueService } from '../services/ConsolidatedRevenueService'
 import { DigiformaQuote } from '../models/DigiformaQuote'
 import { DigiformaInvoice } from '../models/DigiformaInvoice'
 import { DigiformaCompany } from '../models/DigiformaCompany'
+import { DigiformaInstitutionMapping } from '../models/DigiformaInstitutionMapping'
+import { MedicalInstitution } from '../models/MedicalInstitution'
 import { logger } from '../utils/logger'
 import Joi from 'joi'
 
@@ -613,6 +616,314 @@ export class DigiformaController {
       logger.error('Failed to get revenue evolution', {
         userId: ctx.state.user?.id,
         error: (error as Error).message,
+      })
+      throw error
+    }
+  }
+
+  /**
+   * GET /api/digiforma/unmatched-companies
+   * Get list of Digiforma companies without CRM institution match
+   */
+  static async getUnmatchedCompanies(ctx: Context) {
+    try {
+      // Find unlinked companies (no institutionId)
+      const unlinkedCompanies = await DigiformaCompany.findUnlinked()
+
+      // Filter out companies that have a mapping but are just not linked yet
+      const companiesWithoutMapping = []
+      for (const company of unlinkedCompanies) {
+        const mapping = await DigiformaInstitutionMapping.findByDigiformaCompanyId(company.id)
+        if (!mapping) {
+          companiesWithoutMapping.push(company)
+        }
+      }
+
+      ctx.body = {
+        success: true,
+        data: {
+          companies: companiesWithoutMapping,
+          count: companiesWithoutMapping.length
+        }
+      }
+
+      logger.info('Unmatched companies retrieved', {
+        userId: ctx.state.user?.id,
+        count: companiesWithoutMapping.length
+      })
+    } catch (error) {
+      logger.error('Failed to get unmatched companies', {
+        userId: ctx.state.user?.id,
+        error: (error as Error).message
+      })
+      throw error
+    }
+  }
+
+  /**
+   * GET /api/digiforma/suggested-matches/:companyId
+   * Get suggested institution matches for a Digiforma company
+   */
+  static async getSuggestedMatches(ctx: Context) {
+    const { companyId } = ctx.params
+
+    try {
+      // Find the company
+      const company = await DigiformaCompany.findByPk(companyId)
+      if (!company) {
+        throw createError('Digiforma company not found', 404, 'COMPANY_NOT_FOUND')
+      }
+
+      // Get suggestions from matching service
+      const matchingService = new DigiformaMatchingService()
+      const suggestions = await matchingService.getSuggestedMatches(company, 10)
+
+      ctx.body = {
+        success: true,
+        data: {
+          company: {
+            id: company.id,
+            digiformaId: company.digiformaId,
+            name: company.name,
+            email: company.email,
+            address: company.address,
+            siret: company.siret,
+            accountingNumber: company.metadata?.accountingNumber
+          },
+          suggestions: suggestions.map(s => ({
+            institution: {
+              id: s.institution.id,
+              name: s.institution.name,
+              address: s.institution.address,
+              accountingNumber: s.institution.accountingNumber,
+              isLocked: s.institution.isLocked
+            },
+            score: s.score,
+            matchCriteria: s.matchCriteria,
+            matchType: s.matchType
+          }))
+        }
+      }
+
+      logger.info('Suggested matches retrieved', {
+        userId: ctx.state.user?.id,
+        companyId,
+        suggestionsCount: suggestions.length
+      })
+    } catch (error) {
+      logger.error('Failed to get suggested matches', {
+        userId: ctx.state.user?.id,
+        companyId,
+        error: (error as Error).message
+      })
+      throw error
+    }
+  }
+
+  /**
+   * POST /api/digiforma/mappings
+   * Create manual mapping between Digiforma company and CRM institution
+   */
+  static async createManualMapping(ctx: Context) {
+    const schema = Joi.object({
+      digiformaCompanyId: Joi.string().uuid().required(),
+      institutionId: Joi.string().uuid().required(),
+      notes: Joi.string().max(1000).optional()
+    })
+
+    const { error, value } = schema.validate(ctx.request.body)
+    if (error) {
+      throw createError(error.details[0].message, 400, 'VALIDATION_ERROR', error.details)
+    }
+
+    try {
+      // Check if company exists
+      const company = await DigiformaCompany.findByPk(value.digiformaCompanyId)
+      if (!company) {
+        throw createError('Digiforma company not found', 404, 'COMPANY_NOT_FOUND')
+      }
+
+      // Check if institution exists
+      const institution = await MedicalInstitution.findByPk(value.institutionId)
+      if (!institution) {
+        throw createError('Institution not found', 404, 'INSTITUTION_NOT_FOUND')
+      }
+
+      // Check if mapping already exists
+      const existingMapping = await DigiformaInstitutionMapping.findByDigiformaCompanyId(
+        value.digiformaCompanyId
+      )
+      if (existingMapping) {
+        throw createError(
+          'Mapping already exists for this company',
+          400,
+          'MAPPING_ALREADY_EXISTS'
+        )
+      }
+
+      // Create manual mapping
+      const mapping = await DigiformaInstitutionMapping.createManualMapping(
+        value.digiformaCompanyId,
+        value.institutionId,
+        ctx.state.user!.id,
+        value.notes
+      )
+
+      // Link the company to the institution
+      await company.linkToInstitution(value.institutionId)
+
+      ctx.body = {
+        success: true,
+        message: 'Manual mapping created successfully',
+        data: {
+          mapping: {
+            id: mapping.id,
+            matchType: mapping.matchType,
+            matchScore: mapping.matchScore,
+            confirmedBy: mapping.confirmedBy,
+            confirmedAt: mapping.confirmedAt,
+            notes: mapping.notes
+          }
+        }
+      }
+
+      logger.info('Manual mapping created', {
+        userId: ctx.state.user?.id,
+        mappingId: mapping.id,
+        companyId: value.digiformaCompanyId,
+        institutionId: value.institutionId
+      })
+    } catch (error) {
+      logger.error('Failed to create manual mapping', {
+        userId: ctx.state.user?.id,
+        error: (error as Error).message
+      })
+      throw error
+    }
+  }
+
+  /**
+   * DELETE /api/digiforma/mappings/:id
+   * Delete a mapping
+   */
+  static async deleteMapping(ctx: Context) {
+    const { id } = ctx.params
+
+    try {
+      const mapping = await DigiformaInstitutionMapping.findByPk(id, {
+        include: [
+          { model: DigiformaCompany, as: 'digiformaCompany' }
+        ]
+      })
+
+      if (!mapping) {
+        throw createError('Mapping not found', 404, 'MAPPING_NOT_FOUND')
+      }
+
+      // Unlink the company from institution
+      if (mapping.digiformaCompany) {
+        await mapping.digiformaCompany.update({ institutionId: undefined })
+      }
+
+      // Delete the mapping
+      await mapping.destroy()
+
+      ctx.body = {
+        success: true,
+        message: 'Mapping deleted successfully'
+      }
+
+      logger.info('Mapping deleted', {
+        userId: ctx.state.user?.id,
+        mappingId: id
+      })
+    } catch (error) {
+      logger.error('Failed to delete mapping', {
+        userId: ctx.state.user?.id,
+        mappingId: id,
+        error: (error as Error).message
+      })
+      throw error
+    }
+  }
+
+  /**
+   * GET /api/digiforma/fuzzy-matches
+   * Get all fuzzy matches that need review
+   */
+  static async getFuzzyMatches(ctx: Context) {
+    try {
+      const fuzzyMatches = await DigiformaInstitutionMapping.getFuzzyMatches()
+
+      ctx.body = {
+        success: true,
+        data: {
+          matches: fuzzyMatches.map(m => ({
+            id: m.id,
+            digiformaCompany: {
+              id: m.digiformaCompany?.id,
+              name: m.digiformaCompany?.name,
+              address: m.digiformaCompany?.address
+            },
+            institution: {
+              id: m.institution?.id,
+              name: m.institution?.name,
+              address: m.institution?.address
+            },
+            matchScore: m.matchScore,
+            matchCriteria: m.matchCriteria,
+            confirmedBy: m.confirmedBy,
+            confirmedAt: m.confirmedAt,
+            notes: m.notes
+          })),
+          count: fuzzyMatches.length
+        }
+      }
+
+      logger.info('Fuzzy matches retrieved', {
+        userId: ctx.state.user?.id,
+        count: fuzzyMatches.length
+      })
+    } catch (error) {
+      logger.error('Failed to get fuzzy matches', {
+        userId: ctx.state.user?.id,
+        error: (error as Error).message
+      })
+      throw error
+    }
+  }
+
+  /**
+   * POST /api/digiforma/mappings/:id/confirm
+   * Confirm a fuzzy match
+   */
+  static async confirmMapping(ctx: Context) {
+    const { id } = ctx.params
+
+    try {
+      const mapping = await DigiformaInstitutionMapping.findByPk(id)
+
+      if (!mapping) {
+        throw createError('Mapping not found', 404, 'MAPPING_NOT_FOUND')
+      }
+
+      await mapping.confirm(ctx.state.user!.id)
+
+      ctx.body = {
+        success: true,
+        message: 'Mapping confirmed successfully',
+        data: { mapping }
+      }
+
+      logger.info('Mapping confirmed', {
+        userId: ctx.state.user?.id,
+        mappingId: id
+      })
+    } catch (error) {
+      logger.error('Failed to confirm mapping', {
+        userId: ctx.state.user?.id,
+        mappingId: id,
+        error: (error as Error).message
       })
       throw error
     }

@@ -30,6 +30,14 @@
             </div>
           </div>
           <div class="mt-4 d-flex flex-wrap gap-2">
+            <!-- Data Source Badge -->
+            <DataSourceBadge
+              :data-source="institution.dataSource"
+              :is-locked="institution.isLocked"
+              :locked-at="institution.lockedAt"
+              :locked-reason="institution.lockedReason"
+            />
+
             <v-chip v-if="institution.medicalProfile" :color="getComplianceSeverity(institution.medicalProfile.complianceStatus)" variant="tonal" prepend-icon="mdi-shield-check-outline">
               {{ formatComplianceStatus(institution.medicalProfile.complianceStatus) }}
             </v-chip>
@@ -285,6 +293,7 @@ import TimelineTab from "@/components/institutions/TimelineTab.vue"
 import HealthScoreBadge from "@/components/institutions/HealthScoreBadge.vue"
 import LeadScoreBadge from "@/components/institutions/LeadScoreBadge.vue"
 import NextBestActionsCard from "@/components/institutions/NextBestActionsCard.vue"
+import DataSourceBadge from "@/components/DataSourceBadge.vue"
 import AppLayout from "@/components/layout/AppLayout.vue"
 import { DetailSkeleton } from "@/components/skeletons"
 import { institutionsApi } from "@/services/api"

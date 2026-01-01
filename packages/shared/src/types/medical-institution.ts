@@ -1,6 +1,6 @@
 // Medical Institution type definitions
 
-import { Address, BaseEntity, ContactPerson } from "./common"
+import { Address, BaseEntity, ContactPerson, DataSource, ExternalData, LastSyncAt } from "./common"
 
 export enum InstitutionType {
   HOSPITAL = "hospital",
@@ -41,6 +41,14 @@ export interface MedicalInstitution extends BaseEntity {
   assignedUserId?: string
   tags: string[]
   isActive: boolean
+
+  // Multi-source tracking
+  dataSource: DataSource
+  isLocked: boolean
+  lockedAt?: Date
+  lockedReason?: string
+  externalData: ExternalData
+  lastSyncAt: LastSyncAt
 }
 
 export interface MedicalInstitutionCreationAttributes {

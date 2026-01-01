@@ -71,4 +71,46 @@ router.get(
   DigiformaController.getInstitutionInvoices
 )
 
+// GET /api/digiforma/unmatched-companies - Get unmatched Digiforma companies
+router.get(
+  "/unmatched-companies",
+  requirePermission("canManageSystemSettings"),
+  DigiformaController.getUnmatchedCompanies
+)
+
+// GET /api/digiforma/suggested-matches/:companyId - Get suggested matches for a company
+router.get(
+  "/suggested-matches/:companyId",
+  requirePermission("canManageSystemSettings"),
+  DigiformaController.getSuggestedMatches
+)
+
+// POST /api/digiforma/mappings - Create manual mapping
+router.post(
+  "/mappings",
+  requirePermission("canManageSystemSettings"),
+  DigiformaController.createManualMapping
+)
+
+// DELETE /api/digiforma/mappings/:id - Delete a mapping
+router.delete(
+  "/mappings/:id",
+  requirePermission("canManageSystemSettings"),
+  DigiformaController.deleteMapping
+)
+
+// GET /api/digiforma/fuzzy-matches - Get fuzzy matches needing review
+router.get(
+  "/fuzzy-matches",
+  requirePermission("canManageSystemSettings"),
+  DigiformaController.getFuzzyMatches
+)
+
+// POST /api/digiforma/mappings/:id/confirm - Confirm a fuzzy match
+router.post(
+  "/mappings/:id/confirm",
+  requirePermission("canManageSystemSettings"),
+  DigiformaController.confirmMapping
+)
+
 export default router

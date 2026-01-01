@@ -1,14 +1,28 @@
-import { Op } from 'sequelize'
+import { Op, InstanceUpdateOptions, CreateOptions } from 'sequelize'
 import { DigiformaService } from './DigiformaService'
+import { DigiformaMatchingService } from './DigiformaMatchingService'
 import { DigiformaSync, SyncStatus, SyncType } from '../models/DigiformaSync'
 import { DigiformaCompany } from '../models/DigiformaCompany'
 import { DigiformaContact } from '../models/DigiformaContact'
 import { DigiformaQuote, DigiformaQuoteStatus } from '../models/DigiformaQuote'
 import { DigiformaInvoice, DigiformaInvoiceStatus } from '../models/DigiformaInvoice'
-import { MedicalInstitution } from '../models/MedicalInstitution'
-import { ContactPerson } from '../models/ContactPerson'
+import { DigiformaInstitutionMapping, MatchType } from '../models/DigiformaInstitutionMapping'
+import { MedicalInstitution, MedicalInstitutionAttributes } from '../models/MedicalInstitution'
+import { ContactPerson, ContactPersonAttributes } from '../models/ContactPerson'
 import { logger } from '../utils/logger'
 import { InstitutionType } from '@medical-crm/shared'
+
+/**
+ * Extended options for sync operations on instances
+ * Adds 'context' field to track whether operation is from sync or manual
+ */
+interface SyncInstanceUpdateOptions<T> extends InstanceUpdateOptions<T> {
+  context?: { isSync: boolean }
+}
+
+interface SyncCreateOptions<T> extends CreateOptions<T> {
+  context?: { isSync: boolean }
+}
 
 /**
  * DigiformaSyncService - Handles synchronization logic between Digiforma and CRM
@@ -21,10 +35,12 @@ import { InstitutionType } from '@medical-crm/shared'
  */
 export class DigiformaSyncService {
   private digiformaService: DigiformaService
+  private matchingService: DigiformaMatchingService
   private currentSync: DigiformaSync | null = null
 
   constructor(bearerToken: string) {
     this.digiformaService = new DigiformaService(bearerToken)
+    this.matchingService = new DigiformaMatchingService()
   }
 
   /**
@@ -187,8 +203,13 @@ export class DigiformaSyncService {
   }
 
   /**
-   * Sync contacts from Digiforma companies metadata
-   * Contacts are already fetched with companies and stored in metadata
+   * Sync contacts from Digiforma companies metadata with LOCK PROTECTION
+   *
+   * Rules:
+   * - LOCKED contacts: Skip CRM field updates, only update externalData
+   * - NON-LOCKED digiforma contacts: Allow updates (mode=initial)
+   * - NEW contacts: Create with dataSource='digiforma'
+   *
    * @param mode - 'initial' updates all contacts, 'normal' only creates new ones
    */
   private async syncContacts(mode: 'initial' | 'normal' = 'normal'): Promise<void> {
@@ -197,6 +218,9 @@ export class DigiformaSyncService {
       const companies = await DigiformaCompany.findAll({
         include: [{ model: MedicalInstitution, as: 'institution' }]
       })
+
+      let lockedSkipped = 0
+      let externalDataUpdated = 0
 
       for (const company of companies) {
         try {
@@ -211,52 +235,150 @@ export class DigiformaSyncService {
             continue
           }
 
-          // Create contacts for this institution
+          // Sync contacts for this institution
           for (let i = 0; i < contacts.length; i++) {
-            const contact = contacts[i]
+            const digiformaContact = contacts[i]
 
-            if (!contact.email) {
+            if (!digiformaContact.email) {
               continue // Skip contacts without email
             }
 
             try {
+              const email = digiformaContact.email.trim().toLowerCase()
+
               // Check if contact already exists
               const existing = await ContactPerson.findOne({
                 where: {
                   institutionId: company.institutionId,
-                  email: contact.email
+                  email
                 }
               })
 
               if (existing) {
-                // Only update in initial mode
-                if (mode === 'initial') {
+                // ============================================
+                // 🔒 RÈGLE 1 : Contact LOCKED = READ-ONLY
+                // ============================================
+                if (existing.isLocked) {
+                  logger.info('Contact locked, skipping CRM fields update', {
+                    contactId: existing.id,
+                    email: existing.email,
+                    lockedReason: existing.lockedReason,
+                    lockedAt: existing.lockedAt
+                  })
+
+                  // Update ONLY external_data (read-only metadata)
+                  const updateOptions: SyncInstanceUpdateOptions<ContactPersonAttributes> = {
+                    context: { isSync: true } // CRITICAL: Mark as sync to avoid triggering auto-lock
+                  }
+
                   await existing.update({
-                    firstName: contact.firstname || 'Contact',
-                    lastName: contact.lastname || company.name,
-                    phone: contact.phone || undefined,
-                    title: contact.position || contact.title || undefined,
+                    externalData: {
+                      ...existing.externalData,
+                      digiforma: {
+                        id: digiformaContact.id || '',
+                        firstname: digiformaContact.firstname,
+                        lastname: digiformaContact.lastname,
+                        phone: digiformaContact.phone,
+                        position: digiformaContact.position,
+                        title: digiformaContact.title,
+                        lastSync: new Date()
+                      }
+                    },
+                    lastSyncAt: {
+                      ...existing.lastSyncAt,
+                      digiforma: new Date()
+                    }
+                  }, updateOptions)
+
+                  lockedSkipped++
+                  externalDataUpdated++
+                  continue // ← SKIP CRM fields update
+                }
+
+                // ============================================
+                // ✅ RÈGLE 2 : Non-locked + source Digiforma = UPDATE OK
+                // ============================================
+                if (existing.dataSource === 'digiforma' && mode === 'initial') {
+                  const updateOptions: SyncInstanceUpdateOptions<ContactPersonAttributes> = {
+                    context: { isSync: true } // Prevent auto-lock
+                  }
+
+                  await existing.update({
+                    firstName: digiformaContact.firstname || existing.firstName,
+                    lastName: digiformaContact.lastname || existing.lastName,
+                    phone: digiformaContact.phone || existing.phone,
+                    title: digiformaContact.position || digiformaContact.title || existing.title,
                     isPrimary: i === 0 && !existing.isPrimary,
+                    externalData: {
+                      ...existing.externalData,
+                      digiforma: {
+                        id: digiformaContact.id || '',
+                        firstname: digiformaContact.firstname,
+                        lastname: digiformaContact.lastname,
+                        phone: digiformaContact.phone,
+                        position: digiformaContact.position,
+                        title: digiformaContact.title,
+                        lastSync: new Date()
+                      }
+                    },
+                    lastSyncAt: {
+                      ...existing.lastSyncAt,
+                      digiforma: new Date()
+                    }
+                  }, updateOptions)
+
+                  logger.info('Updated non-locked Digiforma contact', {
+                    contactId: existing.id,
+                    email: existing.email
                   })
                 }
                 // In normal mode, skip existing contacts
               } else {
-                // Create new contact (both modes)
+                // ============================================
+                // 🆕 RÈGLE 3 : Nouveau contact = Créer depuis Digiforma
+                // ============================================
+                const createOptions: SyncCreateOptions<ContactPersonAttributes> = {
+                  context: { isSync: true } // Prevent auto-lock on creation
+                }
+
                 await ContactPerson.create({
                   institutionId: company.institutionId,
-                  firstName: contact.firstname || 'Contact',
-                  lastName: contact.lastname || company.name,
-                  email: contact.email,
-                  phone: contact.phone || undefined,
-                  title: contact.position || contact.title || undefined,
+                  firstName: digiformaContact.firstname || 'Contact',
+                  lastName: digiformaContact.lastname || company.name,
+                  email: email,
+                  phone: digiformaContact.phone,
+                  title: digiformaContact.position || digiformaContact.title,
                   isPrimary: i === 0,
-                })
+
+                  // Multi-source tracking
+                  dataSource: 'digiforma', // ← Source initiale
+                  isLocked: false, // ← Pas encore locked
+                  externalData: {
+                    digiforma: {
+                      id: digiformaContact.id || '',
+                      firstname: digiformaContact.firstname,
+                      lastname: digiformaContact.lastname,
+                      phone: digiformaContact.phone,
+                      position: digiformaContact.position,
+                      title: digiformaContact.title,
+                      lastSync: new Date()
+                    }
+                  },
+                  lastSyncAt: {
+                    digiforma: new Date()
+                  }
+                }, createOptions)
+
                 this.currentSync!.contactsSynced++
+                logger.info('Created new contact from Digiforma', {
+                  email,
+                  institutionId: company.institutionId
+                })
               }
             } catch (error) {
               logger.error('Failed to sync contact', {
                 companyId: company.id,
-                contactEmail: contact.email,
+                contactEmail: digiformaContact.email,
                 error: (error as Error).message
               })
             }
@@ -269,7 +391,11 @@ export class DigiformaSyncService {
         }
       }
 
-      logger.info(`Synced ${this.currentSync!.contactsSynced} contacts`)
+      logger.info('Digiforma contacts sync completed', {
+        synced: this.currentSync!.contactsSynced,
+        lockedSkipped,
+        externalDataUpdated
+      })
     } catch (error) {
       logger.error('Failed to sync Digiforma contacts', { error: (error as Error).message })
       await this.currentSync?.addError('CONTACTS_SYNC_FAILED', (error as Error).message)
@@ -437,7 +563,21 @@ export class DigiformaSyncService {
   }
 
   /**
-   * Merge Digiforma data with CRM (companies → institutions, contacts → contact persons)
+   * Merge Digiforma data with CRM (companies → institutions) with INTELLIGENT MATCHING
+   *
+   * Matching priority:
+   * 1. Check existing manual mapping
+   * 2. accountingNumber (100%)
+   * 3. SIRET (100%)
+   * 4. email (100%)
+   * 5. Fuzzy match name + city (70-99%)
+   * 6. Fuzzy match name + zipcode (70-99%)
+   *
+   * Rules:
+   * - LOCKED institutions: Skip CRM field updates, only update externalData
+   * - NON-LOCKED digiforma institutions: Allow updates (mode=initial)
+   * - NEW institutions: Create with dataSource='digiforma'
+   *
    * @param mode - 'initial' updates existing institutions, 'normal' only creates new ones
    */
   private async mergeWithCRM(mode: 'initial' | 'normal' = 'normal'): Promise<void> {
@@ -445,65 +585,182 @@ export class DigiformaSyncService {
       // Find unlinked Digiforma companies
       const unlinkedCompanies = await DigiformaCompany.findUnlinked()
 
+      let lockedSkipped = 0
+      let externalDataUpdated = 0
+      let autoMatched = 0
+      let fuzzyMatched = 0
+      let newCreated = 0
+
       for (const digiformaCompany of unlinkedCompanies) {
         try {
-          // Try to find matching institution by email
           let matchingInstitution: MedicalInstitution | null = null
+          let matchResult: { score: number; matchCriteria: string; matchType: 'auto' | 'fuzzy' } | null = null
 
-          if (digiformaCompany.email) {
-            // Search by email in institutions (check if any contact has this email)
-            const contactsWithEmail = await ContactPerson.findAll({
-              where: { email: digiformaCompany.email },
-              include: [{ model: MedicalInstitution, as: 'institution' }],
+          // ============================================
+          // STEP 1: Check if manual mapping already exists
+          // ============================================
+          const existingMapping = await DigiformaInstitutionMapping.findByDigiformaCompanyId(
+            digiformaCompany.id
+          )
+
+          if (existingMapping) {
+            matchingInstitution = existingMapping.institution as MedicalInstitution
+            logger.info('Using existing manual mapping', {
+              digiformaCompanyId: digiformaCompany.id,
+              institutionId: matchingInstitution.id,
+              matchType: existingMapping.matchType
             })
+          } else {
+            // ============================================
+            // STEP 2: Use intelligent matching service
+            // ============================================
+            const match = await this.matchingService.findBestMatch(digiformaCompany)
 
-            if (contactsWithEmail.length > 0) {
-              matchingInstitution = contactsWithEmail[0].institution as MedicalInstitution
+            if (match) {
+              matchingInstitution = match.institution
+              matchResult = {
+                score: match.score,
+                matchCriteria: match.matchCriteria,
+                matchType: match.matchType
+              }
+
+              // Create mapping record
+              await DigiformaInstitutionMapping.create({
+                digiformaCompanyId: digiformaCompany.id,
+                institutionId: matchingInstitution.id,
+                matchType: match.matchType === 'auto' ? MatchType.AUTO : MatchType.FUZZY,
+                matchScore: match.score,
+                matchCriteria: match.matchCriteria
+              })
+
+              if (match.matchType === 'auto') {
+                autoMatched++
+              } else {
+                fuzzyMatched++
+              }
+
+              logger.info('Created new mapping from intelligent match', {
+                digiformaCompanyId: digiformaCompany.id,
+                institutionId: matchingInstitution.id,
+                score: match.score,
+                criteria: match.matchCriteria,
+                type: match.matchType
+              })
             }
           }
 
-          // If no match by email, try by name + city
-          // TEMPORARILY DISABLED: Name matching is too permissive and creates false positives
-          // TODO: Implement fuzzy matching with confidence score (task 24.6)
-          /*
-          if (!matchingInstitution && digiformaCompany.name && digiformaCompany.address?.city) {
-            matchingInstitution = await MedicalInstitution.findOne({
-              where: {
-                name: { [Op.iLike]: `%${digiformaCompany.name}%` },
-              },
-            })
-          }
-          */
-
-          // If found, link them
+          // ============================================
+          // STEP 3: Process match or create new institution
+          // ============================================
           if (matchingInstitution) {
+            // Link company to institution
             await digiformaCompany.linkToInstitution(matchingInstitution.id)
 
-            // Only update address in initial mode
-            if (mode === 'initial') {
-              const metadata = digiformaCompany.metadata || {}
-              if (digiformaCompany.address?.street && digiformaCompany.address.street !== 'Adresse non renseignée') {
-                await matchingInstitution.update({
-                  address: {
-                    street: digiformaCompany.address.street,
-                    city: digiformaCompany.address.city || matchingInstitution.address?.city,
-                    state: matchingInstitution.address?.state || 'Non renseigné',
-                    zipCode: (metadata.cityCode as string) || matchingInstitution.address?.zipCode || '00000',
-                    country: digiformaCompany.address.country || matchingInstitution.address?.country || 'FR',
-                  }
-                } as any)
+            const metadata = digiformaCompany.metadata || {}
+
+            // ============================================
+            // 🔒 RÈGLE 1 : Institution LOCKED = READ-ONLY
+            // ============================================
+            if (matchingInstitution.isLocked) {
+              logger.info('Institution locked, skipping CRM fields update', {
+                institutionId: matchingInstitution.id,
+                name: matchingInstitution.name,
+                lockedReason: matchingInstitution.lockedReason,
+                lockedAt: matchingInstitution.lockedAt
+              })
+
+              // Update ONLY externalData (read-only metadata)
+              const updateOptions: SyncInstanceUpdateOptions<MedicalInstitutionAttributes> = {
+                context: { isSync: true }
               }
+
+              await matchingInstitution.update({
+                externalData: {
+                  ...matchingInstitution.externalData,
+                  digiforma: {
+                    id: digiformaCompany.digiformaId || '',
+                    name: digiformaCompany.name,
+                    siret: digiformaCompany.siret,
+                    accountingNumber: metadata.accountingNumber as string,
+                    ape: metadata.ape as string,
+                    code: metadata.code as string,
+                    note: metadata.note as string,
+                    lastSync: new Date()
+                  }
+                },
+                lastSyncAt: {
+                  ...matchingInstitution.lastSyncAt,
+                  digiforma: new Date()
+                }
+              }, updateOptions)
+
+              lockedSkipped++
+              externalDataUpdated++
+            } else if (mode === 'initial' && digiformaCompany.address?.street && digiformaCompany.address.street !== 'Adresse non renseignée') {
+              // ============================================
+              // ✅ RÈGLE 2 : Non-locked + source Digiforma = UPDATE OK
+              // ============================================
+              const updateOptions: SyncInstanceUpdateOptions<MedicalInstitutionAttributes> = {
+                context: { isSync: true }
+              }
+
+              // Update accounting number if present in Digiforma and missing in CRM
+              const updates: Partial<MedicalInstitutionAttributes> = {
+                address: {
+                  street: digiformaCompany.address.street,
+                  city: digiformaCompany.address.city || matchingInstitution.address?.city || 'Non renseignée',
+                  state: matchingInstitution.address?.state || 'Non renseigné',
+                  zipCode: (metadata.cityCode as string) || matchingInstitution.address?.zipCode || '00000',
+                  country: digiformaCompany.address.country || matchingInstitution.address?.country || 'FR',
+                },
+                externalData: {
+                  ...matchingInstitution.externalData,
+                  digiforma: {
+                    id: digiformaCompany.digiformaId || '',
+                    name: digiformaCompany.name,
+                    siret: digiformaCompany.siret,
+                    accountingNumber: metadata.accountingNumber as string,
+                    ape: metadata.ape as string,
+                    code: metadata.code as string,
+                    note: metadata.note as string,
+                    lastSync: new Date()
+                  }
+                },
+                lastSyncAt: {
+                  ...matchingInstitution.lastSyncAt,
+                  digiforma: new Date()
+                }
+              }
+
+              // Add accounting number if missing
+              if (metadata.accountingNumber && !matchingInstitution.accountingNumber) {
+                updates.accountingNumber = metadata.accountingNumber as string
+              }
+
+              await matchingInstitution.update(updates, updateOptions)
+
+              logger.info('Updated non-locked Digiforma institution', {
+                institutionId: matchingInstitution.id,
+                name: matchingInstitution.name
+              })
             }
 
             logger.info('Linked Digiforma company to institution', {
               digiformaCompanyId: digiformaCompany.id,
               institutionId: matchingInstitution.id,
-              matchType: digiformaCompany.email ? 'email' : 'name',
-              addressUpdated: mode === 'initial' && !!digiformaCompany.address?.street
+              matchType: matchResult?.matchCriteria || 'existing_mapping',
+              matchScore: matchResult?.score || 100,
+              locked: matchingInstitution.isLocked
             })
           } else {
-            // Create new institution if no match (both modes)
+            // ============================================
+            // 🆕 RÈGLE 3 : Nouvelle institution = Créer depuis Digiforma
+            // ============================================
             const metadata = digiformaCompany.metadata || {}
+
+            const createOptions: SyncCreateOptions<MedicalInstitutionAttributes> = {
+              context: { isSync: true } // Prevent auto-lock on creation
+            }
 
             const newInstitution = await MedicalInstitution.create({
               name: digiformaCompany.name,
@@ -515,15 +772,41 @@ export class DigiformaSyncService {
                 zipCode: (metadata.cityCode as string) || '00000',
                 country: digiformaCompany.address?.country || 'FR',
               },
-              siret: digiformaCompany.siret || undefined,
+              accountingNumber: metadata.accountingNumber as string || undefined,
               tags: ['digiforma', 'formation'],
-              // Store Digiforma metadata in notes for now
-              notes: metadata.note || `Code: ${metadata.code || 'N/A'}, APE: ${metadata.ape || 'N/A'}, Comptabilité: ${metadata.accountingNumber || 'N/A'}`,
-            } as any)
+
+              // Multi-source tracking
+              dataSource: 'digiforma', // ← Source initiale
+              isLocked: false, // ← Pas encore locked
+              externalData: {
+                digiforma: {
+                  id: digiformaCompany.digiformaId || '',
+                  name: digiformaCompany.name,
+                  siret: digiformaCompany.siret,
+                  accountingNumber: metadata.accountingNumber as string,
+                  ape: metadata.ape as string,
+                  code: metadata.code as string,
+                  note: metadata.note as string,
+                  lastSync: new Date()
+                }
+              },
+              lastSyncAt: {
+                digiforma: new Date()
+              }
+            }, createOptions)
 
             await digiformaCompany.linkToInstitution(newInstitution.id)
 
-            // Contacts will be created in syncContacts() step after merge
+            // Create auto mapping for new institution
+            await DigiformaInstitutionMapping.create({
+              digiformaCompanyId: digiformaCompany.id,
+              institutionId: newInstitution.id,
+              matchType: MatchType.AUTO,
+              matchScore: 100,
+              matchCriteria: 'new_institution'
+            })
+
+            newCreated++
 
             logger.info('Created new institution from Digiforma company', {
               digiformaCompanyId: digiformaCompany.id,
@@ -545,6 +828,11 @@ export class DigiformaSyncService {
 
       logger.info('Digiforma-CRM merge completed', {
         unlinkedCompanies: unlinkedCompanies.length,
+        autoMatched,
+        fuzzyMatched,
+        newCreated,
+        lockedSkipped,
+        externalDataUpdated
       })
     } catch (error) {
       logger.error('Failed to merge Digiforma data with CRM', { error: (error as Error).message })

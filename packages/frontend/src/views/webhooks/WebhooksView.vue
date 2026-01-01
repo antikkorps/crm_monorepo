@@ -1,221 +1,224 @@
 <template>
-  <div class="webhooks-view">
-    <div class="page-header">
-      <div class="header-content">
-        <h1>Webhook Management</h1>
-        <p>Configure and monitor webhook endpoints for real-time integrations</p>
-      </div>
-      <div class="header-actions">
-        <v-btn
-          @click="retryFailedWebhooks"
-          :loading="retryingFailed"
-          :disabled="!hasFailedWebhooks"
-          color="secondary"
-          variant="outlined"
-        >
-          <v-icon start>mdi-refresh</v-icon>
-          Retry Failed
-        </v-btn>
-        <v-btn @click="showCreateDialog = true" color="primary">
-          <v-icon start>mdi-plus</v-icon>
-          Create Webhook
-        </v-btn>
-      </div>
-    </div>
-
-    <!-- Filters -->
-    <v-card class="filters-card">
-      <v-card-text>
-        <div class="filters-grid">
-          <div class="field">
-            <label for="search">Search</label>
-            <v-text-field
-              id="search"
-              v-model="filters.search"
-              placeholder="Search webhooks..."
-              @update:model-value="debouncedSearch"
-              density="comfortable"
-              variant="outlined"
-              hide-details
-            />
-          </div>
-          <div class="field">
-            <label for="status">Status</label>
-            <v-select
-              id="status"
-              v-model="filters.status"
-              :items="statusOptions"
-              item-title="label"
-              item-value="value"
-              placeholder="All Statuses"
-              clearable
-              @update:model-value="loadWebhooks"
-              density="comfortable"
-              variant="outlined"
-              hide-details
-            />
-          </div>
-          <div class="field">
-            <label for="event">Event</label>
-            <v-select
-              id="event"
-              v-model="filters.event"
-              :items="eventOptions"
-              item-title="label"
-              item-value="value"
-              placeholder="All Events"
-              clearable
-              @update:model-value="loadWebhooks"
-              density="comfortable"
-              variant="outlined"
-              hide-details
-            />
-          </div>
+  <AppLayout>
+    <div class="webhooks-view">
+      <div class="page-header">
+        <div class="header-content">
+          <h1>Webhook Management</h1>
+          <p>Configure and monitor webhook endpoints for real-time integrations</p>
         </div>
-      </v-card-text>
-    </v-card>
-
-    <!-- Webhooks Table -->
-    <v-card class="webhooks-table-card">
-      <v-data-table
-        :items="webhooks"
-        :loading="loading"
-        :items-per-page="filters.limit"
-        :items-length="totalRecords"
-        @update:options="onTableUpdate"
-        :headers="tableHeaders"
-        item-value="id"
-        :no-data-text="loading ? 'Loading...' : 'No webhooks found'"
-      >
-        <template #item.name="{ item }">
-          <div class="webhook-name">
-            <strong>{{ item.name }}</strong>
-            <div class="webhook-url">{{ item.url }}</div>
-          </div>
-        </template>
-
-        <template #item.events="{ item }">
-          <div class="webhook-events">
-            <v-chip
-              v-for="event in item.events.slice(0, 2)"
-              :key="event"
-              size="small"
-              color="info"
-              class="event-tag"
-            >
-              {{ formatEventName(event) }}
-            </v-chip>
-            <v-chip
-              v-if="item.events.length > 2"
-              size="small"
-              color="secondary"
-              class="event-tag"
-            >
-              +{{ item.events.length - 2 }} more
-            </v-chip>
-          </div>
-        </template>
-
-        <template #item.status="{ item }">
-          <v-chip :color="getStatusColor(item.status)" size="small">
-            {{ item.status }}
-          </v-chip>
-        </template>
-
-        <template #item.stats="{ item }">
-          <div class="webhook-stats" v-if="item.stats">
-            <div class="stat-item">
-              <span class="stat-label">Success Rate:</span>
-              <span class="stat-value">{{ item.stats.successRate }}%</span>
-            </div>
-            <div class="stat-item">
-              <span class="stat-label">Total:</span>
-              <span class="stat-value">{{ item.stats.totalDeliveries }}</span>
-            </div>
-          </div>
-        </template>
-
-        <template #item.lastTriggeredAt="{ item }">
-          <span v-if="item.lastTriggeredAt">
-            {{ formatDate(item.lastTriggeredAt) }}
-          </span>
-          <span v-else class="text-muted">Never</span>
-        </template>
-
-        <template #item.actions="{ item }">
-          <div class="action-buttons">
-            <v-btn
-              icon="mdi-eye"
-              size="small"
-              variant="text"
-              color="info"
-              @click="viewWebhook(item)"
-              title="View Details"
-            />
-            <v-btn
-              icon="mdi-play"
-              size="small"
-              variant="text"
-              color="success"
-              @click="testWebhook(item)"
-              :loading="testingWebhooks.has(item.id)"
-              title="Test Webhook"
-            />
-            <v-btn
-              icon="mdi-pencil"
-              size="small"
-              variant="text"
-              color="warning"
-              @click="editWebhook(item)"
-              title="Edit"
-            />
-            <v-btn
-              icon="mdi-delete"
-              size="small"
-              variant="text"
-              color="error"
-              @click="confirmDelete(item)"
-              title="Delete"
-            />
-          </div>
-        </template>
-      </v-data-table>
-    </v-card>
-
-    <!-- Create/Edit Dialog -->
-    <WebhookForm
-      v-model:visible="showCreateDialog"
-      :webhook="selectedWebhook"
-      @saved="onWebhookSaved"
-    />
-
-    <!-- Details Dialog -->
-    <WebhookDetails
-      v-model:visible="showDetailsDialog"
-      :webhook="selectedWebhook"
-      @edit="editWebhook"
-      @test="testWebhook"
-      @delete="confirmDelete"
-    />
-
-    <!-- Delete Confirmation -->
-    <v-dialog v-model="showConfirmDialog" max-width="420">
-      <v-card>
-        <v-card-title class="text-h5">{{ confirmHeader }}</v-card-title>
-        <v-card-text>{{ confirmMessage }}</v-card-text>
-        <v-card-actions>
-          <v-spacer></v-spacer>
-          <v-btn color="secondary" variant="text" @click="showConfirmDialog = false"
-            >Cancel</v-btn
+        <div class="header-actions">
+          <v-btn
+            @click="retryFailedWebhooks"
+            :loading="retryingFailed"
+            :disabled="!hasFailedWebhooks"
+            color="secondary"
+            variant="outlined"
           >
-          <v-btn color="error" variant="flat" @click="executeConfirm">Delete</v-btn>
-        </v-card-actions>
+            <v-icon start>mdi-refresh</v-icon>
+            Retry Failed
+          </v-btn>
+          <v-btn @click="showCreateDialog = true" color="primary">
+            <v-icon start>mdi-plus</v-icon>
+            Create Webhook
+          </v-btn>
+        </div>
+      </div>
+
+      <!-- Filters -->
+      <v-card class="filters-card">
+        <v-card-text>
+          <div class="filters-grid">
+            <div class="field">
+              <label for="search">Search</label>
+              <v-text-field
+                id="search"
+                v-model="filters.search"
+                placeholder="Search webhooks..."
+                @update:model-value="debouncedSearch"
+                density="comfortable"
+                variant="outlined"
+                hide-details
+              />
+            </div>
+            <div class="field">
+              <label for="status">Status</label>
+              <v-select
+                id="status"
+                v-model="filters.status"
+                :items="statusOptions"
+                item-title="label"
+                item-value="value"
+                placeholder="All Statuses"
+                clearable
+                @update:model-value="loadWebhooks"
+                density="comfortable"
+                variant="outlined"
+                hide-details
+              />
+            </div>
+            <div class="field">
+              <label for="event">Event</label>
+              <v-select
+                id="event"
+                v-model="filters.event"
+                :items="eventOptions"
+                item-title="label"
+                item-value="value"
+                placeholder="All Events"
+                clearable
+                @update:model-value="loadWebhooks"
+                density="comfortable"
+                variant="outlined"
+                hide-details
+              />
+            </div>
+          </div>
+        </v-card-text>
       </v-card>
-    </v-dialog>
-  </div>
+
+      <!-- Webhooks Table -->
+      <v-card class="webhooks-table-card">
+        <v-data-table
+          :items="webhooks"
+          :loading="loading"
+          :items-per-page="filters.limit"
+          :items-length="totalRecords"
+          @update:options="onTableUpdate"
+          :headers="tableHeaders"
+          item-value="id"
+          :no-data-text="loading ? 'Loading...' : 'No webhooks found'"
+        >
+          <template #item.name="{ item }">
+            <div class="webhook-name">
+              <strong>{{ item.name }}</strong>
+              <div class="webhook-url">{{ item.url }}</div>
+            </div>
+          </template>
+
+          <template #item.events="{ item }">
+            <div class="webhook-events">
+              <v-chip
+                v-for="event in item.events.slice(0, 2)"
+                :key="event"
+                size="small"
+                color="info"
+                class="event-tag"
+              >
+                {{ formatEventName(event) }}
+              </v-chip>
+              <v-chip
+                v-if="item.events.length > 2"
+                size="small"
+                color="secondary"
+                class="event-tag"
+              >
+                +{{ item.events.length - 2 }} more
+              </v-chip>
+            </div>
+          </template>
+
+          <template #item.status="{ item }">
+            <v-chip :color="getStatusColor(item.status)" size="small">
+              {{ item.status }}
+            </v-chip>
+          </template>
+
+          <template #item.stats="{ item }">
+            <div class="webhook-stats" v-if="item.stats">
+              <div class="stat-item">
+                <span class="stat-label">Success Rate:</span>
+                <span class="stat-value">{{ item.stats.successRate }}%</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-label">Total:</span>
+                <span class="stat-value">{{ item.stats.totalDeliveries }}</span>
+              </div>
+            </div>
+          </template>
+
+          <template #item.lastTriggeredAt="{ item }">
+            <span v-if="item.lastTriggeredAt">
+              {{ formatDate(item.lastTriggeredAt) }}
+            </span>
+            <span v-else class="text-muted">Never</span>
+          </template>
+
+          <template #item.actions="{ item }">
+            <div class="action-buttons">
+              <v-btn
+                icon="mdi-eye"
+                size="small"
+                variant="text"
+                color="info"
+                @click="viewWebhook(item)"
+                title="View Details"
+              />
+              <v-btn
+                icon="mdi-play"
+                size="small"
+                variant="text"
+                color="success"
+                @click="testWebhook(item)"
+                :loading="testingWebhooks.has(item.id)"
+                title="Test Webhook"
+              />
+              <v-btn
+                icon="mdi-pencil"
+                size="small"
+                variant="text"
+                color="warning"
+                @click="editWebhook(item)"
+                title="Edit"
+              />
+              <v-btn
+                icon="mdi-delete"
+                size="small"
+                variant="text"
+                color="error"
+                @click="confirmDelete(item)"
+                title="Delete"
+              />
+            </div>
+          </template>
+        </v-data-table>
+      </v-card>
+
+      <!-- Create/Edit Dialog -->
+      <WebhookForm
+        v-model:visible="showCreateDialog"
+        :webhook="selectedWebhook"
+        @saved="onWebhookSaved"
+      />
+
+      <!-- Details Dialog -->
+      <WebhookDetails
+        v-model:visible="showDetailsDialog"
+        :webhook="selectedWebhook"
+        @edit="editWebhook"
+        @test="testWebhook"
+        @delete="confirmDelete"
+      />
+
+      <!-- Delete Confirmation -->
+      <v-dialog v-model="showConfirmDialog" max-width="420">
+        <v-card>
+          <v-card-title class="text-h5">{{ confirmHeader }}</v-card-title>
+          <v-card-text>{{ confirmMessage }}</v-card-text>
+          <v-card-actions>
+            <v-spacer></v-spacer>
+            <v-btn color="secondary" variant="text" @click="showConfirmDialog = false"
+              >Cancel</v-btn
+            >
+            <v-btn color="error" variant="flat" @click="executeConfirm">Delete</v-btn>
+          </v-card-actions>
+        </v-card>
+      </v-dialog>
+    </div>
+  </AppLayout>
 </template>
 
 <script setup lang="ts">
+import AppLayout from "@/components/layout/AppLayout.vue"
 import WebhookDetails from "@/components/webhooks/WebhookDetails.vue"
 import WebhookForm from "@/components/webhooks/WebhookForm.vue"
 import { webhooksApi, type Webhook, type WebhookFilters } from "@/services/api/webhooks"

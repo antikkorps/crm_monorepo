@@ -1,10 +1,18 @@
 import { ParticipantStatus } from "@medical-crm/shared"
-import { DataTypes, Model, Optional } from "sequelize"
+import { DataTypes, Model, Optional, InstanceUpdateOptions } from "sequelize"
 import { sequelize } from "../config/database"
 import { CollaborationValidation } from "../types/collaboration"
 import { User } from "./User"
-import { ContactPerson } from "./ContactPerson"
+import { ContactPerson, type ContactPersonAttributes } from "./ContactPerson"
 import type { Meeting } from "./Meeting"
+import { logger } from "../utils/logger"
+
+/**
+ * Extended options for sync operations to prevent auto-lock
+ */
+interface SyncOptions {
+  context?: { isSync: boolean }
+}
 
 export interface MeetingParticipantAttributes {
   id: string
@@ -13,10 +21,11 @@ export interface MeetingParticipantAttributes {
   contactPersonId?: string
   status: ParticipantStatus
   createdAt: Date
+  updatedAt: Date
 }
 
 export interface MeetingParticipantCreationAttributes
-  extends Optional<MeetingParticipantAttributes, "id" | "status" | "createdAt"> {}
+  extends Optional<MeetingParticipantAttributes, "id" | "status" | "createdAt" | "updatedAt"> {}
 
 export class MeetingParticipant
   extends Model<MeetingParticipantAttributes, MeetingParticipantCreationAttributes>
@@ -28,6 +37,7 @@ export class MeetingParticipant
   declare contactPersonId?: string
   declare status: ParticipantStatus
   declare readonly createdAt: Date
+  declare readonly updatedAt: Date
 
   // Associations
   declare user?: User
@@ -323,7 +333,10 @@ export class MeetingParticipant
       status: ParticipantStatus.INVITED,
     }))
 
-    return this.bulkCreate(participantsData)
+    return this.bulkCreate(participantsData, {
+      individualHooks: true,
+      returning: true,
+    })
   }
 
   public static async bulkInviteContactPersons(
@@ -366,7 +379,10 @@ export class MeetingParticipant
       status: ParticipantStatus.INVITED,
     }))
 
-    return this.bulkCreate(participantsData)
+    return this.bulkCreate(participantsData, {
+      individualHooks: true,
+      returning: true,
+    })
   }
 
   public static async removeParticipants(
@@ -444,13 +460,18 @@ MeetingParticipant.init(
       defaultValue: DataTypes.NOW,
       field: "created_at",
     },
+    updatedAt: {
+      type: DataTypes.DATE,
+      allowNull: false,
+      defaultValue: DataTypes.NOW,
+      field: "updated_at",
+    },
   },
   {
     sequelize,
     modelName: "MeetingParticipant",
     tableName: "meeting_participants",
     timestamps: true,
-    updatedAt: false, // Only createdAt, no updatedAt
     underscored: true,
     indexes: [
       {
@@ -486,6 +507,42 @@ MeetingParticipant.init(
             previousStatus,
             participant.status
           )
+        }
+      },
+
+      /**
+       * Auto-lock contact person when added as meeting participant
+       */
+      afterCreate: async (participant: MeetingParticipant, options) => {
+        if (participant.contactPersonId) {
+          try {
+            const contact = await ContactPerson.findByPk(participant.contactPersonId)
+
+            if (contact && !contact.isLocked) {
+              const updateOptions: InstanceUpdateOptions<ContactPersonAttributes> & SyncOptions = {
+                transaction: options.transaction,
+                context: { isSync: true }
+              }
+
+              await contact.update({
+                isLocked: true,
+                lockedAt: new Date(),
+                lockedReason: 'meeting_participant_added'
+              }, updateOptions)
+
+              logger.info('Contact auto-locked after being added as meeting participant', {
+                contactId: contact.id,
+                contactEmail: contact.email,
+                meetingId: participant.meetingId
+              })
+            }
+          } catch (error) {
+            logger.error('Failed to auto-lock contact after meeting participant creation', {
+              contactPersonId: participant.contactPersonId,
+              meetingId: participant.meetingId,
+              error: (error as Error).message
+            })
+          }
         }
       },
     },

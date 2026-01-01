@@ -25,7 +25,7 @@
               class="today-badge"
             >
               <v-icon start>mdi-calendar-today</v-icon>
-              {{ t('time.today') }}
+              {{ t("time.today") }}
             </v-chip>
             <v-chip
               v-else-if="isUpcoming"
@@ -35,7 +35,7 @@
               class="upcoming-badge"
             >
               <v-icon start>mdi-clock-outline</v-icon>
-              {{ t('common.next') }}
+              {{ t("common.next") }}
             </v-chip>
           </div>
         </div>
@@ -79,7 +79,7 @@
           >
             <v-tooltip text="Send invitation">
               <template #activator="{ props }">
-                <v-icon v-bind="props">mdi-email-send</v-icon>
+                <v-icon v-bind="props">mdi-email</v-icon>
               </template>
             </v-tooltip>
           </v-btn>
@@ -118,8 +118,10 @@
             <v-icon size="20" color="primary">mdi-calendar-clock</v-icon>
           </div>
           <div class="meta-content">
-            <div class="meta-label">{{ t('meetings.startDateField') }}</div>
-            <div class="meta-value">{{ formatMeetingDate(meeting.startDate, meeting.endDate) }}</div>
+            <div class="meta-label">{{ t("meetings.startDateField") }}</div>
+            <div class="meta-value">
+              {{ formatMeetingDate(meeting.startDate, meeting.endDate) }}
+            </div>
           </div>
         </div>
 
@@ -129,7 +131,7 @@
             <v-icon size="20" color="secondary">mdi-map-marker</v-icon>
           </div>
           <div class="meta-content">
-            <div class="meta-label">{{ t('meetings.locationField') }}</div>
+            <div class="meta-label">{{ t("meetings.locationField") }}</div>
             <div class="meta-value">{{ meeting.location }}</div>
           </div>
         </div>
@@ -143,12 +145,16 @@
               size="28"
               class="organizer-avatar"
             >
-              <span class="avatar-text">{{ getInitials(meeting.organizer.firstName, meeting.organizer.lastName) }}</span>
+              <span class="avatar-text">{{
+                getInitials(meeting.organizer.firstName, meeting.organizer.lastName)
+              }}</span>
             </v-avatar>
           </div>
           <div class="meta-content">
-            <div class="meta-label">{{ t('meetings.status.scheduled') }}</div>
-            <div class="meta-value">{{ meeting.organizer.firstName }} {{ meeting.organizer.lastName }}</div>
+            <div class="meta-label">{{ t("meetings.status.scheduled") }}</div>
+            <div class="meta-value">
+              {{ meeting.organizer.firstName }} {{ meeting.organizer.lastName }}
+            </div>
           </div>
         </div>
 
@@ -158,18 +164,21 @@
             <v-icon size="20" color="primary">mdi-office-building</v-icon>
           </div>
           <div class="meta-content">
-            <div class="meta-label">{{ t('institution.name') }}</div>
+            <div class="meta-label">{{ t("institution.name") }}</div>
             <div class="meta-value">{{ meeting.institution.name }}</div>
           </div>
         </div>
 
         <!-- Participants -->
-        <div class="meta-item participants-item" v-if="meeting.participants && meeting.participants.length > 0">
+        <div
+          class="meta-item participants-item"
+          v-if="meeting.participants && meeting.participants.length > 0"
+        >
           <div class="meta-icon">
             <v-icon size="20" color="info">mdi-account-group</v-icon>
           </div>
           <div class="meta-content">
-            <div class="meta-label">{{ t('meetings.participantsField') }}</div>
+            <div class="meta-label">{{ t("meetings.participantsField") }}</div>
             <div class="meta-value">{{ meeting.participants.length }} participants</div>
           </div>
         </div>
@@ -225,18 +234,18 @@ watch(
 )
 
 const statusOptions = computed(() => [
-  { label: t('meetings.status.scheduled'), value: "scheduled" },
-  { label: t('meetings.status.in_progress'), value: "in_progress" },
-  { label: t('meetings.status.completed'), value: "completed" },
-  { label: t('meetings.status.cancelled'), value: "cancelled" },
+  { label: t("meetings.status.scheduled"), value: "scheduled" },
+  { label: t("meetings.status.in_progress"), value: "in_progress" },
+  { label: t("meetings.status.completed"), value: "completed" },
+  { label: t("meetings.status.cancelled"), value: "cancelled" },
 ])
 
 const statusLabel = computed(() => {
   const labels = {
-    scheduled: t('meetings.status.scheduled'),
-    in_progress: t('meetings.status.in_progress'),
-    completed: t('meetings.status.completed'),
-    cancelled: t('meetings.status.cancelled'),
+    scheduled: t("meetings.status.scheduled"),
+    in_progress: t("meetings.status.in_progress"),
+    completed: t("meetings.status.completed"),
+    cancelled: t("meetings.status.cancelled"),
   }
   return labels[props.meeting.status]
 })
@@ -554,20 +563,36 @@ const onStatusChange = () => {
 }
 
 .meeting-status-in_progress {
-  background: linear-gradient(135deg, rgba(139, 92, 246, 0.03) 0%, rgba(109, 40, 217, 0.03) 100%);
+  background: linear-gradient(
+    135deg,
+    rgba(139, 92, 246, 0.03) 0%,
+    rgba(109, 40, 217, 0.03) 100%
+  );
 }
 
 .meeting-status-completed {
-  background: linear-gradient(135deg, rgba(16, 185, 129, 0.03) 0%, rgba(5, 150, 105, 0.03) 100%);
+  background: linear-gradient(
+    135deg,
+    rgba(16, 185, 129, 0.03) 0%,
+    rgba(5, 150, 105, 0.03) 100%
+  );
 }
 
 .meeting-status-cancelled {
-  background: linear-gradient(135deg, rgba(239, 68, 68, 0.03) 0%, rgba(220, 38, 38, 0.03) 100%);
+  background: linear-gradient(
+    135deg,
+    rgba(239, 68, 68, 0.03) 0%,
+    rgba(220, 38, 38, 0.03) 100%
+  );
 }
 
 .meeting-today {
   border-color: rgba(59, 130, 246, 0.3);
-  background: linear-gradient(135deg, rgba(59, 130, 246, 0.05) 0%, rgba(37, 99, 235, 0.03) 100%);
+  background: linear-gradient(
+    135deg,
+    rgba(59, 130, 246, 0.05) 0%,
+    rgba(37, 99, 235, 0.03) 100%
+  );
 }
 
 .meeting-upcoming {

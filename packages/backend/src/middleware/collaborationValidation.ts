@@ -163,6 +163,9 @@ export const validateMeetingCreation = validate(
     participantIds: Joi.array().items(uuidSchema).min(0).max(50).optional().messages({
       "array.max": "Cannot invite more than 50 participants",
     }),
+    contactPersonIds: Joi.array().items(uuidSchema).min(0).max(50).optional().messages({
+      "array.max": "Cannot invite more than 50 contact persons",
+    }),
   }),
   "body"
 )
@@ -183,6 +186,12 @@ export const validateMeetingUpdate = validate(
     }),
     status: Joi.string().valid(...Object.values(MeetingStatus)).optional().messages({
       "any.only": `Meeting status must be one of: ${Object.values(MeetingStatus).join(", ")}`,
+    }),
+    participantIds: Joi.array().items(uuidSchema).min(0).max(50).optional().messages({
+      "array.max": "Cannot invite more than 50 participants",
+    }),
+    contactPersonIds: Joi.array().items(uuidSchema).min(0).max(50).optional().messages({
+      "array.max": "Cannot invite more than 50 contact persons",
     }),
   }).custom((obj, helpers) => {
     // Custom validation to ensure endDate is after startDate when both are provided

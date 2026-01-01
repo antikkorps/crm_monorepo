@@ -185,6 +185,16 @@
                     @update:model-value="applyFilters"
                   />
                 </v-col>
+                <v-col cols="12" sm="6" md="3">
+                  <v-switch
+                    v-model="showInactive"
+                    label="Afficher les inactives"
+                    color="primary"
+                    density="compact"
+                    hide-details
+                    @update:model-value="applyFilters"
+                  />
+                </v-col>
               </v-row>
             </div>
           </v-expand-transition>
@@ -210,6 +220,7 @@
           :items-length="totalRecords"
           item-key="id"
           class="elevation-0 enhanced-table"
+          :item-class="(item) => item.isActive ? '' : 'inactive-institution'"
           @update:page="onPageChange"
           @update:items-per-page="onItemsPerPageChange"
           @update:sort-by="onSortChange"
@@ -332,19 +343,51 @@
           <template #item.actions="{ item }">
             <div class="actions-container">
               <v-btn
+                v-if="!item.isActive"
+                icon="mdi-restore"
+                variant="text"
+                color="success"
+                size="small"
+                @click="reactivateInstitution(item)"
+                title="Réactiver"
+              />
+              <v-btn
+                v-if="item.isActive"
                 icon="mdi-pencil"
                 variant="text"
                 size="small"
                 @click="editInstitution(item)"
                 title="Modifier"
               />
+              <v-tooltip
+                v-if="!item.isActive && item.isLocked"
+                location="top"
+              >
+                <template #activator="{ props }">
+                  <v-btn
+                    v-bind="props"
+                    icon="mdi-lock"
+                    variant="text"
+                    color="grey"
+                    size="small"
+                    disabled
+                  />
+                </template>
+                <div class="text-caption">
+                  <strong>Suppression impossible</strong><br>
+                  Cette institution contient des données<br>
+                  CRM enrichies (notes, réunions, modifications)<br>
+                  et ne peut être que désactivée.
+                </div>
+              </v-tooltip>
               <v-btn
+                v-else
                 icon="mdi-delete"
                 variant="text"
                 color="error"
                 size="small"
                 @click="confirmDelete(item)"
-                title="Supprimer"
+                :title="item.isActive ? 'Désactiver' : 'Supprimer définitivement'"
               />
             </div>
           </template>
@@ -555,6 +598,7 @@ const searchQuery = ref("")
 const showAdvancedFilters = ref(false)
 const showCreateDialog = ref(false)
 const showImportDialog = ref(false)
+const showInactive = ref(false)
 
 const lazyParams = ref({ first: 0, rows: 10, sortField: "name", sortOrder: 1 })
 
@@ -594,6 +638,11 @@ const hasActiveFilters = computed(
 const activeFilters = computed(() => {
   const active: MedicalInstitutionSearchFilters = { ...filters.value }
   if (searchQuery.value) active.name = searchQuery.value
+  // Par défaut, on ne montre que les actives (isActive: true)
+  // Si showInactive est true, on ne filtre pas par isActive (on montre tout)
+  if (!showInactive.value) {
+    active.isActive = true
+  }
   return active
 })
 
@@ -756,24 +805,52 @@ const editInstitution = (institution: MedicalInstitution) => {
 }
 
 const confirmDelete = (institution: MedicalInstitution) => {
-  confirmMessage.value = t("institutions.deleteConfirmMessage", {
-    name: institution.name,
-  })
+  if (institution.isActive) {
+    // Soft delete
+    confirmMessage.value = `Êtes-vous sûr de vouloir désactiver "${institution.name}" ? L'institution sera archivée mais pourra être réactivée ultérieurement.`
+  } else {
+    // Hard delete
+    confirmMessage.value = `⚠️ ATTENTION : Êtes-vous sûr de vouloir SUPPRIMER DÉFINITIVEMENT "${institution.name}" ? Cette action est irréversible et supprimera toutes les données associées.`
+  }
   confirmTarget.value = institution
   confirmVisible.value = true
 }
 
 const deleteInstitution = async (institution: MedicalInstitution) => {
   try {
-    await institutionsApi.delete(institution.id)
-    showSnackbar(
-      t("institutions.institutionDeleted", { name: institution.name }),
-      "success"
-    )
+    if (institution.isActive) {
+      // Soft delete: désactiver l'institution
+      await institutionsApi.update(institution.id, { isActive: false })
+      showSnackbar(
+        `Institution "${institution.name}" désactivée avec succès`,
+        "success"
+      )
+    } else {
+      // Hard delete: suppression définitive
+      await institutionsApi.delete(institution.id, true) // force: true
+      showSnackbar(
+        `Institution "${institution.name}" supprimée définitivement`,
+        "success"
+      )
+    }
     loadInstitutions()
   } catch (error) {
     console.error("Error deleting institution:", error)
     showSnackbar(t("institutions.failedToDelete"), "error")
+  }
+}
+
+const reactivateInstitution = async (institution: MedicalInstitution) => {
+  try {
+    await institutionsApi.update(institution.id, { isActive: true })
+    showSnackbar(
+      `Institution "${institution.name}" réactivée avec succès`,
+      "success"
+    )
+    loadInstitutions()
+  } catch (error) {
+    console.error("Error reactivating institution:", error)
+    showSnackbar("Erreur lors de la réactivation de l'institution", "error")
   }
 }
 
@@ -966,6 +1043,16 @@ watch(
 .enhanced-table :deep(.v-data-table__td) {
   padding-top: 1rem;
   padding-bottom: 1rem;
+}
+
+.enhanced-table :deep(.inactive-institution) {
+  opacity: 0.6;
+  background-color: rgba(var(--v-theme-surface-variant), 0.3);
+}
+
+.enhanced-table :deep(.inactive-institution:hover) {
+  opacity: 0.8;
+  background-color: rgba(var(--v-theme-surface-variant), 0.5);
 }
 
 .institution-name {

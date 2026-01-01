@@ -35,6 +35,7 @@ import { DigiformaContact } from "./DigiformaContact"
 import { DigiformaQuote } from "./DigiformaQuote"
 import { DigiformaInvoice } from "./DigiformaInvoice"
 import { DigiformaSettings } from "./DigiformaSettings"
+import { DigiformaInstitutionMapping } from "./DigiformaInstitutionMapping"
 import { SageSettings } from "./SageSettings"
 import { SecurityLog } from "./SecurityLog"
 import { SystemSettings } from "./SystemSettings"
@@ -854,6 +855,38 @@ DigiformaQuote.hasMany(DigiformaInvoice, {
   onDelete: 'SET NULL',
 })
 
+// DigiformaInstitutionMapping associations
+DigiformaInstitutionMapping.belongsTo(DigiformaCompany, {
+  foreignKey: 'digiformaCompanyId',
+  as: 'digiformaCompany',
+  onDelete: 'CASCADE',
+})
+
+DigiformaInstitutionMapping.belongsTo(MedicalInstitution, {
+  foreignKey: 'institutionId',
+  as: 'institution',
+  onDelete: 'CASCADE',
+})
+
+DigiformaInstitutionMapping.belongsTo(User, {
+  foreignKey: 'confirmedBy',
+  as: 'confirmedByUser',
+  onDelete: 'SET NULL',
+})
+
+// Reverse associations
+DigiformaCompany.hasOne(DigiformaInstitutionMapping, {
+  foreignKey: 'digiformaCompanyId',
+  as: 'mapping',
+  onDelete: 'CASCADE',
+})
+
+MedicalInstitution.hasMany(DigiformaInstitutionMapping, {
+  foreignKey: 'institutionId',
+  as: 'digiformaMappings',
+  onDelete: 'CASCADE',
+})
+
 // Export all models
 export {
   Call,
@@ -892,6 +925,7 @@ export {
   DigiformaQuote,
   DigiformaInvoice,
   DigiformaSettings,
+  DigiformaInstitutionMapping,
   SageSettings,
   SecurityLog,
   SystemSettings,
@@ -935,6 +969,7 @@ export default {
   DigiformaQuote,
   DigiformaInvoice,
   DigiformaSettings,
+  DigiformaInstitutionMapping,
   SageSettings,
   SecurityLog,
   SystemSettings,
