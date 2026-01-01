@@ -237,6 +237,8 @@ export enum ReminderPriority {
   URGENT = "urgent",
 }
 
+export type ReminderStatus = "pending" | "completed" | "cancelled"
+
 export interface Reminder {
   id: string
   title: string
@@ -246,6 +248,8 @@ export interface Reminder {
   userId: string
   institutionId?: string
   priority: ReminderPriority
+  contactPersonId?: string
+  status: "pending" | "completed" | "cancelled"
   createdAt: Date
   updatedAt: Date
 
@@ -273,6 +277,7 @@ export interface ReminderCreateRequest {
   reminderDate: Date
   priority?: ReminderPriority
   institutionId?: string
+  contactPersonId?: string
 }
 
 export interface ReminderUpdateRequest {
@@ -282,6 +287,7 @@ export interface ReminderUpdateRequest {
   isCompleted?: boolean
   priority?: ReminderPriority
   institutionId?: string
+  status?: ReminderStatus
 }
 
 // Search and filter interfaces
