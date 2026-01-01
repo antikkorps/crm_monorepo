@@ -148,9 +148,10 @@ services:
       - "traefik.http.middlewares.backend-headers.headers.customResponseHeaders.Server="
       # WebSocket support
       - "traefik.http.middlewares.backend-headers.headers.customRequestHeaders.X-Forwarded-Proto=https"
-      # Rate limiting
-      - "traefik.http.middlewares.backend-ratelimit.ratelimit.average=100"
-      - "traefik.http.middlewares.backend-ratelimit.ratelimit.burst=50"
+      # Rate limiting (increased for SPA applications)
+      - "traefik.http.middlewares.backend-ratelimit.ratelimit.average=1000"
+      - "traefik.http.middlewares.backend-ratelimit.ratelimit.burst=500"
+      - "traefik.http.middlewares.backend-ratelimit.ratelimit.period=1m"
 
   # ============================================
   # Frontend (Vue.js SPA)
