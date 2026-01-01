@@ -12,30 +12,14 @@ COPY tsconfig.json ./
 # Copy shared package
 COPY packages/shared ./packages/shared
 
-# Install dependencies (only for shared)
-RUN npm install --workspace=@medical-crm/shared --include-workspace-root
+# Install all dependencies (including shared)
+RUN npm install --include-workspace-root
 
 # Build shared package
 RUN npm run build:shared
 
 # ============================================
-# Stage 2: Dependencies
-# ============================================
-FROM node:22-alpine AS deps
-
-WORKDIR /app
-
-# Copy root package files
-COPY package*.json ./
-
-# Copy backend package.json
-COPY packages/backend/package*.json ./packages/backend/
-
-# Install production dependencies only
-RUN npm install --workspace=@medical-crm/backend --omit=dev --include-workspace-root
-
-# ============================================
-# Stage 3: Builder
+# Stage 2: Builder (Backend)
 # ============================================
 FROM node:22-alpine AS builder
 
@@ -49,17 +33,17 @@ COPY tsconfig.json ./
 COPY packages/backend ./packages/backend
 
 # Copy shared from builder
-COPY --from=shared-builder /app/packages/shared ./packages/shared
+COPY --from=shared-builder --chown=root:root /app/node_modules ./node_modules
+COPY --from=shared-builder --chown=root:root /app/packages/shared ./packages/shared
 
-# Install all dependencies (including dev for build)
-RUN npm install --workspace=@medical-crm/backend --include-workspace-root
+# Install production dependencies
+RUN npm install --include-workspace-root
 
 # Build backend
-WORKDIR /app/packages/backend
 RUN npm run build
 
 # ============================================
-# Stage 4: Production runtime
+# Stage 3: Production runtime
 # ============================================
 FROM node:22-alpine AS production
 
@@ -72,9 +56,9 @@ RUN addgroup -g 1001 -S nodejs && \
 
 WORKDIR /app
 
-# Copy production dependencies from deps stage
-COPY --from=deps --chown=nodejs:nodejs /app/node_modules ./node_modules
-COPY --from=deps --chown=nodejs:nodejs /app/packages/backend/node_modules ./packages/backend/node_modules
+# Copy production dependencies from builder
+COPY --from=builder --chown=nodejs:nodejs /app/node_modules ./node_modules
+COPY --from=builder --chown=nodejs:nodejs /app/packages/backend/node_modules ./packages/backend/node_modules
 
 # Copy shared build
 COPY --from=shared-builder --chown=nodejs:nodejs /app/packages/shared/dist ./packages/shared/dist
