@@ -7,8 +7,8 @@ import vuetify from "./plugins/vuetify"
 // i18n
 import i18n from "./i18n"
 
-// Shepherd.js tours CSS
-import "shepherd.js/dist/css/shepherd.css"
+// Driver.js tours CSS
+import "driver.js/dist/driver.css"
 import "./assets/tour-theme.css"
 
 import App from "./App.vue"

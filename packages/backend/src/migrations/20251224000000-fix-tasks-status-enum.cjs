@@ -13,22 +13,42 @@ module.exports = {
   async up(queryInterface, Sequelize) {
     console.log('🔧 Fixing tasks_status enum...')
 
-    // First, update existing data
-    // Convert "done" to "completed"
-    await queryInterface.sequelize.query(`
-      UPDATE tasks
-      SET status = 'todo'
-      WHERE status = 'done';
+    // Check if the enum already has the correct values
+    const [enumValues] = await queryInterface.sequelize.query(`
+      SELECT enumlabel FROM pg_enum
+      WHERE enumtypid = 'enum_tasks_status'::regtype
+      ORDER BY enumsortorder;
     `)
-    console.log('✅ Migrated "done" status to "todo"')
 
-    // Convert "review" to "in_progress"
-    await queryInterface.sequelize.query(`
-      UPDATE tasks
-      SET status = 'in_progress'
-      WHERE status = 'review';
-    `)
-    console.log('✅ Migrated "review" status to "in_progress"')
+    const currentValues = enumValues.map(row => row.enumlabel)
+    const expectedValues = ['todo', 'in_progress', 'completed', 'cancelled']
+
+    // If the enum already has the correct values, skip the migration
+    if (JSON.stringify(currentValues) === JSON.stringify(expectedValues)) {
+      console.log('✅ Enum already has correct values, skipping migration')
+      return
+    }
+
+    // First, update existing data
+    // Convert "done" to "completed" (only if "done" exists in the enum)
+    if (currentValues.includes('done')) {
+      await queryInterface.sequelize.query(`
+        UPDATE tasks
+        SET status = 'todo'
+        WHERE status::text = 'done';
+      `)
+      console.log('✅ Migrated "done" status to "todo"')
+    }
+
+    // Convert "review" to "in_progress" (only if "review" exists in the enum)
+    if (currentValues.includes('review')) {
+      await queryInterface.sequelize.query(`
+        UPDATE tasks
+        SET status = 'in_progress'
+        WHERE status::text = 'review';
+      `)
+      console.log('✅ Migrated "review" status to "in_progress"')
+    }
 
     // Now update the enum type
     // First create a new enum type with correct values

@@ -216,7 +216,7 @@ export class DatabaseSeeder {
           lastName: "Smith",
           email: "john.smith@generalhospital.com",
           phone: "+1-555-0101",
-          position: "Chief Medical Officer",
+          title: "Chief Medical Officer",
           institutionId: (institutions[0] as any).id,
         },
         {
@@ -225,7 +225,7 @@ export class DatabaseSeeder {
           lastName: "Johnson",
           email: "sarah.johnson@generalhospital.com",
           phone: "+1-555-0102",
-          position: "Department Head",
+          title: "Department Head",
           institutionId: (institutions[0] as any).id,
         },
         {
@@ -234,7 +234,7 @@ export class DatabaseSeeder {
           lastName: "Brown",
           email: "michael.brown@citymedical.com",
           phone: "+1-555-0201",
-          position: "Senior Physician",
+          title: "Senior Physician",
           institutionId:
             institutions.length > 1
               ? (institutions[1] as any).id
@@ -246,7 +246,7 @@ export class DatabaseSeeder {
           lastName: "Davis",
           email: "lisa.davis@citymedical.com",
           phone: "+1-555-0202",
-          position: "Procurement Manager",
+          title: "Procurement Manager",
           institutionId:
             institutions.length > 1
               ? (institutions[1] as any).id
@@ -259,16 +259,17 @@ export class DatabaseSeeder {
           `
           INSERT INTO contact_persons (
             id, first_name, last_name, email, phone, title,
-            institution_id, is_active, created_at, updated_at
+            institution_id, is_active, data_source, created_at, updated_at
           ) VALUES (
             :id, :firstName, :lastName, :email, :phone, :title,
-            :institutionId, :is_active, NOW(), NOW()
+            :institutionId, :isActive, :dataSource, NOW(), NOW()
           )
         `,
           {
             replacements: {
               ...contact,
-              is_active: true,
+              isActive: true,
+              dataSource: "crm",
             },
           }
         )
@@ -276,7 +277,10 @@ export class DatabaseSeeder {
 
       logger.info("Demo contact persons seeded successfully")
     } catch (error) {
-      logger.error("Error seeding contact persons", { error })
+      logger.error("Error seeding contact persons", {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      })
       throw error
     }
   }
