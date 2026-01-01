@@ -83,8 +83,7 @@ export const useOpportunitiesStore = defineStore("opportunities", () => {
 
     try {
       const response = await opportunitiesApi.getPipeline(filters)
-      const data = response.data?.data || response.data || response
-      pipeline.value = data.pipeline || []
+      pipeline.value = response.data?.pipeline || []
     } catch (err) {
       console.error("Error fetching pipeline:", err)
       error.value = err instanceof Error ? err.message : "Failed to fetch pipeline"
@@ -100,8 +99,7 @@ export const useOpportunitiesStore = defineStore("opportunities", () => {
 
     try {
       const response = await opportunitiesApi.getForecast(filters)
-      const data = response.data?.data || response.data || response
-      forecast.value = data
+      forecast.value = (response.data as ForecastResponse) || response
     } catch (err) {
       console.error("Error fetching forecast:", err)
       error.value = err instanceof Error ? err.message : "Failed to fetch forecast"

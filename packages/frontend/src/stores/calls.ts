@@ -3,7 +3,6 @@ import type {
   Call,
   CallCreateRequest,
   CallUpdateRequest,
-  CallType,
 } from "@medical-crm/shared"
 import { defineStore } from "pinia"
 import { computed, ref } from "vue"

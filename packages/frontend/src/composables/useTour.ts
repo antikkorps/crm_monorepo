@@ -1,113 +1,48 @@
-import Shepherd from "shepherd.js"
-import "shepherd.js/dist/css/shepherd.css"
+import { driver } from "driver.js"
+import "driver.js/dist/driver.css"
 import { ref } from "vue"
 
 export type TourName = "dashboard" | "institutions" | "opportunities" | "analytics"
 
 /**
- * Composable for managing guided tours using Shepherd.js
+ * Composable for managing guided tours using Driver.js
  */
 export function useTour() {
-  const activeTour = ref<Shepherd.Tour | null>(null)
-
-  /**
-   * Create base tour configuration
-   */
-  const createTour = (): Shepherd.Tour => {
-    return new Shepherd.Tour({
-      useModalOverlay: true,
-      defaultStepOptions: {
-        cancelIcon: {
-          enabled: true,
-        },
-        classes: "shepherd-theme-custom",
-        scrollTo: { behavior: "smooth", block: "center" },
-      },
-    })
-  }
+  const activeTour = ref<ReturnType<typeof driver> | null>(null)
 
   /**
    * Dashboard tour
    */
-  const dashboardTour = (): Shepherd.Tour => {
-    const tour = createTour()
-
-    tour.addStep({
-      id: "welcome",
-      title: "🎉 Bienvenue dans Medical CRM !",
-      text: "Laissez-nous vous guider à travers les fonctionnalités principales de votre CRM.",
-      buttons: [
+  const dashboardTour = (): ReturnType<typeof driver> => {
+    const tour = driver({
+      showProgress: true,
+      steps: [
         {
-          text: "Passer",
-          classes: "shepherd-button-secondary",
-          action: tour.complete,
+          element: "#dashboard",
+          popover: {
+            title: "🎉 Bienvenue dans Medical CRM !",
+            description: "Laissez-nous vous guider à travers les fonctionnalités principales de votre CRM.",
+            side: "bottom",
+            align: "start",
+          },
         },
         {
-          text: "Suivant",
-          action: tour.next,
-        },
-      ],
-    })
-
-    tour.addStep({
-      id: "stats-cards",
-      title: "📊 Statistiques en un coup d'œil",
-      text: "Ces cartes affichent vos métriques clés : institutions, tâches, équipe et chiffre d'affaires du mois. Cliquez sur une carte pour accéder aux détails.",
-      attachTo: {
-        element: ".stat-card:first-child",
-        on: "bottom",
-      },
-      buttons: [
-        {
-          text: "Précédent",
-          classes: "shepherd-button-secondary",
-          action: tour.back,
+          element: "#quick-actions",
+          popover: {
+            title: "Actions rapides",
+            description: "Accédez rapidement aux actions courantes comme créer un nouveau contact ou devis.",
+            side: "bottom",
+            align: "start",
+          },
         },
         {
-          text: "Suivant",
-          action: tour.next,
-        },
-      ],
-    })
-
-    tour.addStep({
-      id: "hot-leads",
-      title: "🔥 Leads Chauds",
-      text: "Vos prospects à fort potentiel sont affichés ici avec leur score. Cliquez pour voir les détails ou créer une opportunité.",
-      attachTo: {
-        element: ".hot-leads-widget",
-        on: "top",
-      },
-      buttons: [
-        {
-          text: "Précédent",
-          classes: "shepherd-button-secondary",
-          action: tour.back,
-        },
-        {
-          text: "Suivant",
-          action: tour.next,
-        },
-      ],
-    })
-
-    tour.addStep({
-      id: "navigation",
-      title: "🧭 Navigation",
-      text: "Accédez à toutes les sections depuis la barre latérale : Institutions, Pipeline, Analytics, Collaboration, etc.",
-      attachTo: {
-        element: ".v-navigation-drawer",
-        on: "right",
-      },
-      buttons: [
-        {
-          text: "Précédent",
-          classes: "shepherd-button-secondary",
-          action: tour.back,
-        },
-        {
-          text: "Terminer",
-          action: tour.complete,
+          element: "#recent-activity",
+          popover: {
+            title: "Activité récente",
+            description: "Consultez les dernières activités de votre équipe.",
+            side: "bottom",
+            align: "start",
+          },
         },
       ],
     })
@@ -118,85 +53,45 @@ export function useTour() {
   /**
    * Institutions tour
    */
-  const institutionsTour = (): Shepherd.Tour => {
-    const tour = createTour()
-
-    tour.addStep({
-      id: "institutions-welcome",
-      title: "🏥 Gestion des Institutions",
-      text: "Gérez vos institutions médicales : hôpitaux, cliniques, laboratoires, etc.",
-      buttons: [
+  const institutionsTour = (): ReturnType<typeof driver> => {
+    const tour = driver({
+      showProgress: true,
+      steps: [
         {
-          text: "Passer",
-          classes: "shepherd-button-secondary",
-          action: tour.complete,
+          element: "#institutions-list",
+          popover: {
+            title: "Liste des établissements",
+            description: "Voyez tous les établissements médicaux que vous suivez.",
+            side: "bottom",
+            align: "start",
+          },
         },
         {
-          text: "Suivant",
-          action: tour.next,
-        },
-      ],
-    })
-
-    tour.addStep({
-      id: "create-institution",
-      title: "➕ Créer une Institution",
-      text: "Cliquez ici pour ajouter une nouvelle institution. Vous pourrez ensuite ajouter des contacts, des notes, et suivre l'historique.",
-      attachTo: {
-        element: "button[prepend-icon='mdi-plus']",
-        on: "bottom",
-      },
-      buttons: [
-        {
-          text: "Précédent",
-          classes: "shepherd-button-secondary",
-          action: tour.back,
+          element: "#add-institution",
+          popover: {
+            title: "Ajouter un établissement",
+            description: "Cliquez ici pour ajouter un nouvel établissement médical.",
+            side: "left",
+            align: "center",
+          },
         },
         {
-          text: "Suivant",
-          action: tour.next,
-        },
-      ],
-    })
-
-    tour.addStep({
-      id: "filters",
-      title: "🔍 Filtres",
-      text: "Utilisez les filtres pour trouver rapidement vos institutions par type, statut, ou tags.",
-      attachTo: {
-        element: ".filters",
-        on: "bottom",
-      },
-      buttons: [
-        {
-          text: "Précédent",
-          classes: "shepherd-button-secondary",
-          action: tour.back,
+          element: "#search-institutions",
+          popover: {
+            title: "Recherche",
+            description: "Recherchez rapidement des établissements par nom, ville, etc.",
+            side: "bottom",
+            align: "start",
+          },
         },
         {
-          text: "Suivant",
-          action: tour.next,
-        },
-      ],
-    })
-
-    tour.addStep({
-      id: "institution-card",
-      title: "📋 Carte Institution",
-      text: "Cliquez sur une carte pour voir les détails complets : contacts, profil médical, revenus, timeline, et insights.",
-      attachTo: {
-        element: ".institution-card:first-child",
-        on: "top",
-      },
-      buttons: [
-        {
-          text: "Précédent",
-          classes: "shepherd-button-secondary",
-          action: tour.back,
-        },
-        {
-          text: "Terminer",
-          action: tour.complete,
+          element: "#filters",
+          popover: {
+            title: "Filtres",
+            description: "Filtrez les établissements par type, statut, ou segment.",
+            side: "bottom",
+            align: "start",
+          },
         },
       ],
     })
@@ -207,64 +102,36 @@ export function useTour() {
   /**
    * Opportunities tour
    */
-  const opportunitiesTour = (): Shepherd.Tour => {
-    const tour = createTour()
-
-    tour.addStep({
-      id: "opportunities-welcome",
-      title: "💼 Pipeline de Ventes",
-      text: "Suivez vos opportunités commerciales de la prospection à la conclusion.",
-      buttons: [
+  const opportunitiesTour = (): ReturnType<typeof driver> => {
+    const tour = driver({
+      showProgress: true,
+      steps: [
         {
-          text: "Passer",
-          classes: "shepherd-button-secondary",
-          action: tour.complete,
+          element: "#opportunities-pipeline",
+          popover: {
+            title: "Pipeline d'opportunités",
+            description: "Visualisez vos opportunités à travers le pipeline de vente.",
+            side: "bottom",
+            align: "start",
+          },
         },
         {
-          text: "Suivant",
-          action: tour.next,
-        },
-      ],
-    })
-
-    tour.addStep({
-      id: "kanban-board",
-      title: "📊 Vue Kanban",
-      text: "Visualisez votre pipeline en colonnes par étape. Glissez-déposez les opportunités pour changer leur statut.",
-      attachTo: {
-        element: ".kanban-board",
-        on: "top",
-      },
-      buttons: [
-        {
-          text: "Précédent",
-          classes: "shepherd-button-secondary",
-          action: tour.back,
+          element: "#add-opportunity",
+          popover: {
+            title: "Nouvelle opportunité",
+            description: "Créez une nouvelle opportunité commerciale.",
+            side: "left",
+            align: "center",
+          },
         },
         {
-          text: "Suivant",
-          action: tour.next,
-        },
-      ],
-    })
-
-    tour.addStep({
-      id: "pipeline-stats",
-      title: "📈 Statistiques Pipeline",
-      text: "Suivez vos métriques clés : taux de conversion, valeur totale du pipeline, deals gagnés/perdus.",
-      attachTo: {
-        element: ".pipeline-stats",
-        on: "bottom",
-      },
-      buttons: [
-        {
-          text: "Précédent",
-          classes: "shepherd-button-secondary",
-          action: tour.back,
-        },
-        {
-          text: "Terminer",
-          action: tour.complete,
+          element: "#forecast",
+          popover: {
+            title: "Prévisions",
+            description: "Consultez les prévisions de revenus basées sur vos opportunités.",
+            side: "bottom",
+            align: "start",
+          },
         },
       ],
     })
@@ -275,64 +142,36 @@ export function useTour() {
   /**
    * Analytics tour
    */
-  const analyticsTour = (): Shepherd.Tour => {
-    const tour = createTour()
-
-    tour.addStep({
-      id: "analytics-welcome",
-      title: "📊 Analytics & Intelligence",
-      text: "Analysez vos performances commerciales et obtenez des insights pour optimiser vos ventes.",
-      buttons: [
+  const analyticsTour = (): ReturnType<typeof driver> => {
+    const tour = driver({
+      showProgress: true,
+      steps: [
         {
-          text: "Passer",
-          classes: "shepherd-button-secondary",
-          action: tour.complete,
+          element: "#analytics-overview",
+          popover: {
+            title: "Vue d'ensemble",
+            description: "Statistiques clés de votre CRM.",
+            side: "bottom",
+            align: "start",
+          },
         },
         {
-          text: "Suivant",
-          action: tour.next,
-        },
-      ],
-    })
-
-    tour.addStep({
-      id: "kpi-cards",
-      title: "🎯 KPIs Clés",
-      text: "Taux de réussite, revenu prévu, cycle de vente moyen, et pipeline actuel.",
-      attachTo: {
-        element: ".analytics-view .v-row:first-child",
-        on: "bottom",
-      },
-      buttons: [
-        {
-          text: "Précédent",
-          classes: "shepherd-button-secondary",
-          action: tour.back,
+          element: "#charts",
+          popover: {
+            title: "Graphiques",
+            description: "Visualisez vos données avec des graphiques interactifs.",
+            side: "bottom",
+            align: "start",
+          },
         },
         {
-          text: "Suivant",
-          action: tour.next,
-        },
-      ],
-    })
-
-    tour.addStep({
-      id: "win-loss-analysis",
-      title: "✅ Analyse Victoires/Pertes",
-      text: "Découvrez pourquoi vous gagnez ou perdez vos deals. Utilisez ces insights pour améliorer votre stratégie.",
-      attachTo: {
-        element: ".analytics-view .v-row:nth-child(3)",
-        on: "top",
-      },
-      buttons: [
-        {
-          text: "Précédent",
-          classes: "shepherd-button-secondary",
-          action: tour.back,
-        },
-        {
-          text: "Terminer",
-          action: tour.complete,
+          element: "#reports",
+          popover: {
+            title: "Rapports",
+            description: "Générez des rapports détaillés sur vos activités.",
+            side: "bottom",
+            align: "start",
+          },
         },
       ],
     })
@@ -341,16 +180,17 @@ export function useTour() {
   }
 
   /**
-   * Start a tour by name
+   * Start a specific tour
    */
   const startTour = (tourName: TourName) => {
-    // Complete any active tour first
+    // Stop any active tour first
     if (activeTour.value) {
-      activeTour.value.complete()
+      activeTour.value.destroy()
+      activeTour.value = null
     }
 
-    // Create and start the new tour
-    let tour: Shepherd.Tour
+    let tour: ReturnType<typeof driver>
+
     switch (tourName) {
       case "dashboard":
         tour = dashboardTour()
@@ -368,48 +208,23 @@ export function useTour() {
         return
     }
 
+    tour.drive()
     activeTour.value = tour
+  }
 
-    // Track tour completion
-    tour.on("complete", () => {
-      localStorage.setItem(`tour_${tourName}_completed`, "true")
+  /**
+   * Stop the current tour
+   */
+  const stopTour = () => {
+    if (activeTour.value) {
+      activeTour.value.destroy()
       activeTour.value = null
-    })
-
-    tour.on("cancel", () => {
-      activeTour.value = null
-    })
-
-    tour.start()
-  }
-
-  /**
-   * Check if a tour has been completed
-   */
-  const isTourCompleted = (tourName: TourName): boolean => {
-    return localStorage.getItem(`tour_${tourName}_completed`) === "true"
-  }
-
-  /**
-   * Reset a tour (mark as not completed)
-   */
-  const resetTour = (tourName: TourName) => {
-    localStorage.removeItem(`tour_${tourName}_completed`)
-  }
-
-  /**
-   * Reset all tours
-   */
-  const resetAllTours = () => {
-    const tourNames: TourName[] = ["dashboard", "institutions", "opportunities", "analytics"]
-    tourNames.forEach(resetTour)
+    }
   }
 
   return {
     startTour,
-    isTourCompleted,
-    resetTour,
-    resetAllTours,
+    stopTour,
     activeTour,
   }
 }

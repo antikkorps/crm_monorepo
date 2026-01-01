@@ -4,7 +4,6 @@ import type {
   ReminderCreateRequest,
   ReminderUpdateRequest,
   ReminderPriority,
-  ReminderStatus,
 } from "@medical-crm/shared"
 import { defineStore } from "pinia"
 import { computed, ref } from "vue"
