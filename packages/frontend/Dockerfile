@@ -23,6 +23,10 @@ RUN npm run build:shared
 # ============================================
 FROM node:22-alpine AS builder
 
+# Accept build arguments
+ARG VITE_API_URL
+ENV VITE_API_URL=${VITE_API_URL}
+
 WORKDIR /app
 
 # Copy root files
@@ -38,9 +42,9 @@ COPY --from=shared-builder /app/packages/shared ./packages/shared
 # Install dependencies
 RUN npm install --workspace=@medical-crm/frontend --include-workspace-root
 
-# Build frontend
+# Build frontend with environment variable
 WORKDIR /app/packages/frontend
-RUN npm run build
+RUN echo "Building frontend with VITE_API_URL=${VITE_API_URL}" && npm run build
 
 # ============================================
 # Stage 3: Production nginx
