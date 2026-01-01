@@ -158,7 +158,7 @@ services:
       context: .
       dockerfile: ./packages/frontend/Dockerfile
       args:
-        VITE_API_URL: https://${FRONTEND_DOMAIN}
+        VITE_API_URL: https://${BACKEND_DOMAIN}
     container_name: medical-crm-frontend
     restart: unless-stopped
     networks:
