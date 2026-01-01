@@ -1,0 +1,255 @@
+version: "3.8"
+
+services:
+  # ============================================
+  # Traefik - Reverse Proxy with SSL
+  # ============================================
+  traefik:
+    image: traefik:v3.0
+    container_name: medical-crm-traefik
+    restart: unless-stopped
+    ports:
+      - "80:80"       # HTTP
+      - "443:443"     # HTTPS
+    networks:
+      - web
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./traefik/traefik.yml:/etc/traefik/traefik.yml:ro
+      - ./traefik/dynamic:/etc/traefik/dynamic:ro
+      - traefik-certs:/letsencrypt
+    environment:
+      - TZ=Europe/Paris
+    labels:
+      - "traefik.enable=true"
+      # Dashboard
+      - "traefik.http.routers.dashboard.rule=Host(`${TRAEFIK_DOMAIN}`)"
+      - "traefik.http.routers.dashboard.service=api@internal"
+      - "traefik.http.routers.dashboard.entrypoints=websecure"
+      - "traefik.http.routers.dashboard.tls.certresolver=letsencrypt"
+      # Basic Auth (htpasswd format) - CHANGE THIS!
+      # Generate with: echo $(htpasswd -nb admin yourpassword) | sed -e s/\\$/\\$\\$/g
+      - "traefik.http.routers.dashboard.middlewares=auth"
+      - "traefik.http.middlewares.auth.basicauth.users=${TRAEFIK_BASIC_AUTH:-admin:$$apr1$$xxxxx$$xxxxx}"
+
+  # ============================================
+  # PostgreSQL Database
+  # ============================================
+  postgres:
+    image: postgres:18-alpine
+    container_name: medical-crm-postgres
+    restart: unless-stopped
+    networks:
+      - backend
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./postgres/init:/docker-entrypoint-initdb.d:ro
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-medical_crm}
+      POSTGRES_USER: ${POSTGRES_USER:-medical_crm_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_INITDB_ARGS: "-E UTF8 --locale=fr_FR.UTF-8"
+      TZ: Europe/Paris
+      PGTZ: Europe/Paris
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-medical_crm_user} -d ${POSTGRES_DB:-medical_crm}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+        reservations:
+          memory: 512M
+
+  # ============================================
+  # Backend API
+  # ============================================
+  backend:
+    build:
+      context: .
+      dockerfile: ./packages/backend/Dockerfile
+    image: medical-crm-backend:latest
+    container_name: medical-crm-backend
+    restart: unless-stopped
+    networks:
+      - web
+      - backend
+    volumes:
+      - backend-uploads:/app/packages/backend/uploads
+      - backend-logs:/app/packages/backend/logs
+      - backend-storage:/app/packages/backend/storage
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+
+      # Database
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: ${POSTGRES_DB:-medical_crm}
+      DB_USER: ${POSTGRES_USER:-medical_crm_user}
+      DB_PASSWORD: ${POSTGRES_PASSWORD}
+
+      # JWT
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-7d}
+
+      # CORS
+      CORS_ORIGIN: https://${FRONTEND_DOMAIN}
+
+      # Email (optional)
+      SMTP_HOST: ${SMTP_HOST}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USER: ${SMTP_USER}
+      SMTP_PASS: ${SMTP_PASS}
+      SMTP_FROM: ${SMTP_FROM}
+
+      # Other configs
+      TZ: Europe/Paris
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+        reservations:
+          memory: 256M
+    labels:
+      - "traefik.enable=true"
+      # HTTP Router
+      - "traefik.http.routers.backend.rule=Host(`${BACKEND_DOMAIN}`)"
+      - "traefik.http.routers.backend.entrypoints=websecure"
+      - "traefik.http.routers.backend.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.backend.service=backend"
+      - "traefik.http.services.backend.loadbalancer.server.port=3000"
+      # Middlewares
+      - "traefik.http.routers.backend.middlewares=backend-headers,backend-ratelimit"
+      # Security headers
+      - "traefik.http.middlewares.backend-headers.headers.customResponseHeaders.X-Robots-Tag=noindex,nofollow"
+      - "traefik.http.middlewares.backend-headers.headers.customResponseHeaders.Server="
+      # Rate limiting
+      - "traefik.http.middlewares.backend-ratelimit.ratelimit.average=100"
+      - "traefik.http.middlewares.backend-ratelimit.ratelimit.burst=50"
+
+  # ============================================
+  # Frontend (Vue.js SPA)
+  # ============================================
+  frontend:
+    build:
+      context: .
+      dockerfile: ./packages/frontend/Dockerfile
+      args:
+        VITE_API_URL: https://${BACKEND_DOMAIN}
+    image: medical-crm-frontend:latest
+    container_name: medical-crm-frontend
+    restart: unless-stopped
+    networks:
+      - web
+    environment:
+      TZ: Europe/Paris
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 5s
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+        reservations:
+          memory: 32M
+    labels:
+      - "traefik.enable=true"
+      # HTTP Router
+      - "traefik.http.routers.frontend.rule=Host(`${FRONTEND_DOMAIN}`)"
+      - "traefik.http.routers.frontend.entrypoints=websecure"
+      - "traefik.http.routers.frontend.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.frontend.service=frontend"
+      - "traefik.http.services.frontend.loadbalancer.server.port=8080"
+      # Middlewares
+      - "traefik.http.routers.frontend.middlewares=frontend-headers,frontend-compress"
+      # Security headers
+      - "traefik.http.middlewares.frontend-headers.headers.customResponseHeaders.X-Robots-Tag=noindex,nofollow"
+      - "traefik.http.middlewares.frontend-headers.headers.contentSecurityPolicy=default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline';"
+      # Compression
+      - "traefik.http.middlewares.frontend-compress.compress=true"
+
+  # ============================================
+  # PostgreSQL Backup to Cloudflare R2
+  # ============================================
+  postgres-backup:
+    build:
+      context: ./backup
+      dockerfile: Dockerfile
+    container_name: medical-crm-backup
+    restart: unless-stopped
+    networks:
+      - backend
+    volumes:
+      - ./backup/scripts:/scripts:ro
+      - backup-temp:/backup
+    environment:
+      # Database
+      POSTGRES_HOST: postgres
+      POSTGRES_DB: ${POSTGRES_DB:-medical_crm}
+      POSTGRES_USER: ${POSTGRES_USER:-medical_crm_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+
+      # Cloudflare R2 (S3-compatible)
+      AWS_ACCESS_KEY_ID: ${R2_ACCESS_KEY_ID}
+      AWS_SECRET_ACCESS_KEY: ${R2_SECRET_ACCESS_KEY}
+      AWS_ENDPOINT_URL: ${R2_ENDPOINT_URL}
+      S3_BUCKET: ${R2_BUCKET_NAME}
+
+      # Backup settings
+      BACKUP_SCHEDULE: "0 0 * * *"  # Daily at midnight
+      BACKUP_RETENTION_DAYS: 30
+      TZ: Europe/Paris
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+# ============================================
+# Networks
+# ============================================
+networks:
+  web:
+    name: medical-crm-web
+    driver: bridge
+  backend:
+    name: medical-crm-backend
+    driver: bridge
+    internal: true  # No external access
+
+# ============================================
+# Volumes
+# ============================================
+volumes:
+  postgres_data:
+    name: medical-crm-postgres-data
+    driver: local
+  traefik-certs:
+    name: medical-crm-traefik-certs
+    driver: local
+  backend-uploads:
+    name: medical-crm-backend-uploads
+    driver: local
+  backend-logs:
+    name: medical-crm-backend-logs
+    driver: local
+  backend-storage:
+    name: medical-crm-backend-storage
+    driver: local
+  backup-temp:
+    name: medical-crm-backup-temp
+    driver: local

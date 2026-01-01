@@ -1,0 +1,46 @@
+# ============================================
+# Docker Ignore - Backend
+# ============================================
+
+# Dependencies
+node_modules
+npm-debug.log*
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# Build
+dist
+coverage
+
+# Logs
+logs
+*.log
+
+# Testing
+__tests__
+*.test.ts
+*.spec.ts
+coverage
+.vitest
+vitest.config.ts
+TEST_DEBUGGING_PLAN.md
+
+# Uploads & Storage (should be in volumes)
+uploads
+storage
+
+# Database
+*.sql
+*.db
+
+# Documentation
+*.md
+!README.md
+docs
+
+# Temp
+tmp
+temp

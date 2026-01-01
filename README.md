@@ -56,6 +56,7 @@ This project is organized as a monorepo with the following packages:
    ```
 
 6. Start the development servers:
+
    ```bash
    npm run dev
    ```
@@ -68,6 +69,26 @@ This project is organized as a monorepo with the following packages:
 - `npm run lint` - Lint all packages
 - `npm run docker:up` - Start Docker services
 - `npm run docker:down` - Stop Docker services
+- `npm run validate:quick` - Quick validation before push (TypeScript, lint, tests, ~1-2 min)
+- `npm run validate:deploy` - Full validation before production deployment (includes Docker builds, ~5-10 min)
+
+### Pre-Deployment Validation
+
+**Always validate before deploying to production!**
+
+For daily development (before pushing):
+
+```bash
+npm run validate:quick
+```
+
+For production deployment (on Hetzner):
+
+```bash
+npm run validate:deploy
+```
+
+See `scripts/README.md` for details on validation scripts.
 
 ## Development
 

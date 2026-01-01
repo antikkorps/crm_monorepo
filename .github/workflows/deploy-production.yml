@@ -1,0 +1,120 @@
+name: Deploy to Production (Hetzner)
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:  # Allow manual trigger
+
+# Prevent concurrent deployments
+concurrency:
+  group: production-deployment
+  cancel-in-progress: false
+
+jobs:
+  # ============================================
+  # Deploy to Hetzner Server (Build Locally)
+  # ============================================
+  deploy:
+    name: Deploy to Hetzner
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.HETZNER_HOST }}
+          username: ${{ secrets.HETZNER_USERNAME }}
+          key: ${{ secrets.HETZNER_SSH_KEY }}
+          port: ${{ secrets.HETZNER_SSH_PORT || 22 }}
+          script_stop: true
+          script: |
+            set -e
+
+            echo "🚀 Starting deployment to Hetzner..."
+
+            # Navigate to application directory
+            cd /srv/medical-crm || exit 1
+
+            # Pull latest code
+            echo "📥 Pulling latest code..."
+            git fetch origin main
+            git reset --hard origin/main
+
+            # Load environment variables
+            echo "🔐 Loading environment variables..."
+            export $(grep -v '^#' .env.production | xargs)
+
+            # Stop old containers gracefully
+            echo "⏸️  Stopping old containers..."
+            docker compose -f docker-compose.prod.yml down --remove-orphans
+
+            # Build Docker images locally
+            echo "🔨 Building Docker images locally (this may take a few minutes)..."
+            docker compose -f docker-compose.prod.yml build --no-cache
+
+            # Start new containers
+            echo "▶️  Starting new containers..."
+            docker compose -f docker-compose.prod.yml up -d
+
+            # Wait for services to be healthy
+            echo "🏥 Waiting for services to be healthy..."
+            timeout 120 bash -c 'until docker compose -f docker-compose.prod.yml ps | grep -q "healthy"; do sleep 2; done' || true
+
+            # Run database migrations (if needed)
+            echo "🗄️  Running database migrations..."
+            docker compose -f docker-compose.prod.yml exec -T backend npm run db:migrate || echo "⚠️  Migration failed or no migrations to run"
+
+            # Clean up old images
+            echo "🧹 Cleaning up old images..."
+            docker image prune -af --filter "until=72h"
+
+            # Clean up build cache
+            echo "🧹 Cleaning up build cache..."
+            docker builder prune -af
+
+            # Show running containers
+            echo "✅ Deployment complete!"
+            docker compose -f docker-compose.prod.yml ps
+
+            echo "📊 Resource usage:"
+            docker stats --no-stream
+
+      - name: Health check
+        run: |
+          echo "🏥 Performing health check..."
+
+          # Wait a bit for services to fully start
+          sleep 10
+
+          # Check backend health
+          curl -f https://${{ secrets.BACKEND_DOMAIN }}/health || exit 1
+          echo "✅ Backend is healthy"
+
+          # Check frontend
+          curl -f https://${{ secrets.FRONTEND_DOMAIN }}/ || exit 1
+          echo "✅ Frontend is healthy"
+
+  # ============================================
+  # Notify on failure
+  # ============================================
+  notify-failure:
+    name: Notify on Failure
+    runs-on: ubuntu-latest
+    needs: deploy
+    if: failure()
+
+    steps:
+      - name: Send notification
+        run: |
+          echo "❌ Deployment failed!"
+          # Add your notification logic here (Slack, Discord, Email, etc.)
+          # Example with curl to a webhook:
+          # curl -X POST ${{ secrets.SLACK_WEBHOOK_URL }} \
+          #   -H 'Content-Type: application/json' \
+          #   -d '{"text":"🚨 Production deployment failed!"}'
+
