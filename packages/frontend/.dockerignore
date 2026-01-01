@@ -1,0 +1,36 @@
+# ============================================
+# Docker Ignore - Frontend
+# ============================================
+
+# Dependencies
+node_modules
+npm-debug.log*
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# Build (we need dist after build, so don't ignore it here)
+coverage
+
+# Logs
+*.log
+
+# Testing
+__tests__
+*.test.ts
+*.test.js
+*.spec.ts
+*.spec.js
+coverage
+
+# IDE
+.vscode
+.idea
+*.swp
+
+# Misc
+*.md
+!README.md
+docs
