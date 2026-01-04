@@ -1,10 +1,10 @@
 services:
   # ============================================
-  # Traefik - Reverse Proxy with SSL
+  # Caddy - Reverse Proxy with Auto-HTTPS
   # ============================================
-  traefik:
-    image: traefik:v2.11
-    container_name: medical-crm-traefik
+  caddy:
+    image: caddy:2-alpine
+    container_name: medical-crm-caddy
     restart: unless-stopped
     ports:
       - "80:80" # HTTP
@@ -12,24 +12,11 @@ services:
     networks:
       - web
     volumes:
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-      - ./traefik/traefik.yml:/etc/traefik/traefik.yml:ro
-      - ./traefik/dynamic:/etc/traefik/dynamic:ro
-      - traefik-certs:/letsencrypt
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
     environment:
       - TZ=Europe/Paris
-      - DOCKER_API_VERSION=1.52
-    labels:
-      - "traefik.enable=true"
-      # Dashboard
-      - "traefik.http.routers.dashboard.rule=Host(`${TRAEFIK_DOMAIN}`)"
-      - "traefik.http.routers.dashboard.service=api@internal"
-      - "traefik.http.routers.dashboard.entrypoints=websecure"
-      - "traefik.http.routers.dashboard.tls.certresolver=letsencrypt"
-      # Basic Auth (htpasswd format) - CHANGE THIS!
-      # Generate with: echo $(htpasswd -nb admin yourpassword) | sed -e s/\\$/\\$\\$/g
-      - "traefik.http.routers.dashboard.middlewares=auth"
-      - "traefik.http.middlewares.auth.basicauth.users=${TRAEFIK_BASIC_AUTH:-admin:$$apr1$$xxxxx$$xxxxx}"
 
   # ============================================
   # PostgreSQL Database
@@ -139,31 +126,6 @@ services:
           memory: 1G
         reservations:
           memory: 256M
-    labels:
-      - "traefik.enable=true"
-      # HTTP Router - Main API (exclude /socket.io/ for WebSocket)
-      - "traefik.http.routers.backend.rule=Host(`${BACKEND_DOMAIN}`) && !PathPrefix(`/socket.io/`)"
-      - "traefik.http.routers.backend.entrypoints=websecure"
-      - "traefik.http.routers.backend.tls.certresolver=letsencrypt"
-      - "traefik.http.routers.backend.service=backend"
-      - "traefik.http.services.backend.loadbalancer.server.port=3000"
-      # Middlewares
-      - "traefik.http.routers.backend.middlewares=backend-headers,backend-ratelimit"
-      - "traefik.http.routers.backend.priority=100"
-      # Security headers
-      - "traefik.http.middlewares.backend-headers.headers.customResponseHeaders.X-Robots-Tag=noindex,nofollow"
-      - "traefik.http.middlewares.backend-headers.headers.customResponseHeaders.Server="
-      # Rate limiting (increased for SPA applications)
-      - "traefik.http.middlewares.backend-ratelimit.ratelimit.average=1000"
-      - "traefik.http.middlewares.backend-ratelimit.ratelimit.burst=500"
-      - "traefik.http.middlewares.backend-ratelimit.ratelimit.period=1m"
-      # Socket.io Router - WebSocket support (no middlewares to allow upgrade)
-      - "traefik.http.routers.backend-socketio.rule=Host(`${BACKEND_DOMAIN}`) && PathPrefix(`/socket.io/`)"
-      - "traefik.http.routers.backend-socketio.entrypoints=websecure"
-      - "traefik.http.routers.backend-socketio.tls.certresolver=letsencrypt"
-      - "traefik.http.routers.backend-socketio.service=backend"
-      - "traefik.http.routers.backend-socketio.priority=1000"
-      - "traefik.http.routers.backend-socketio.middlewares="
 
   # ============================================
   # Frontend (Vue.js SPA)
@@ -192,27 +154,6 @@ services:
           memory: 128M
         reservations:
           memory: 32M
-    labels:
-      - "traefik.enable=true"
-      # HTTP Router
-      - "traefik.http.routers.frontend.rule=Host(`${FRONTEND_DOMAIN}`)"
-      - "traefik.http.routers.frontend.entrypoints=websecure"
-      - "traefik.http.routers.frontend.tls.certresolver=letsencrypt"
-      - "traefik.http.routers.frontend.service=frontend"
-      - "traefik.http.services.frontend.loadbalancer.server.port=8080"
-      # Middlewares
-      - "traefik.http.routers.frontend.middlewares=frontend-headers,frontend-compress"
-      # Security headers
-      - "traefik.http.middlewares.frontend-headers.headers.customResponseHeaders.X-Robots-Tag=noindex,nofollow"
-      - "traefik.http.middlewares.frontend-headers.headers.contentSecurityPolicy=default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; connect-src 'self' https://${BACKEND_DOMAIN}; img-src 'self' data: https:; font-src 'self' data:;"
-      # Compression
-      - "traefik.http.middlewares.frontend-compress.compress=true"
-      # Router for main domain (redirects to CRM)
-      - "traefik.http.routers.main.rule=Host(`${DOMAIN}`)"
-      - "traefik.http.routers.main.entrypoints=websecure"
-      - "traefik.http.routers.main.tls.certresolver=letsencrypt"
-      - "traefik.http.routers.main.service=frontend"
-      - "traefik.http.routers.main.middlewares=frontend-headers,frontend-compress"
 
   # ============================================
   # PostgreSQL Backup to Cloudflare R2
@@ -268,8 +209,11 @@ volumes:
   postgres_data:
     name: medical-crm-postgres-data
     driver: local
-  traefik-certs:
-    name: medical-crm-traefik-certs
+  caddy-data:
+    name: medical-crm-caddy-data
+    driver: local
+  caddy-config:
+    name: medical-crm-caddy-config
     driver: local
   backend-uploads:
     name: medical-crm-backend-uploads
