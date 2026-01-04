@@ -12,22 +12,20 @@
 ## Sections
 
 ### 1. DOMAINS
+
 - `DOMAIN` - Main domain
 - `FRONTEND_DOMAIN` - Frontend URL (CRM UI)
 - `BACKEND_DOMAIN` - Backend API URL
-- `TRAEFIK_DOMAIN` - Traefik dashboard URL
 
-### 2. TRAEFIK DASHBOARD AUTH
-- `TRAEFIK_BASIC_AUTH` - Basic auth hash for Traefik dashboard
-  - Generate: `htpasswd -nb admin yourpassword | sed -e s/\\$/\\$\\$/g`
+### 2. DATABASE
 
-### 3. DATABASE
 - `POSTGRES_DB` - Database name
 - `POSTGRES_USER` - Database user
 - `POSTGRES_PASSWORD` - Database password (strong, min 24 chars)
 - `DB_SYNC_ON_START` - **MUST be false in production** (security)
 
-### 4. BACKEND
+### 3. BACKEND
+
 - `JWT_SECRET` - JWT token secret (min 32 chars)
   - Generate: `openssl rand -base64 32`
 - `JWT_EXPIRES_IN` - Access token expiration (default: 15m)
@@ -37,14 +35,16 @@
 - `NODE_ENV` - Must be "production"
 - `LOG_LEVEL` - Logging level: error, warn, info, debug (warn recommended for prod)
 
-### 5. ADMIN USER (After Branch Merge)
+### 4. ADMIN USER (After Branch Merge)
+
 - **Currently commented out** - Uncomment after merging admin initialization branch
 - `ADMIN_EMAIL` - Admin email for first deployment
 - `ADMIN_FIRST_NAME` - Admin first name
 - `ADMIN_LAST_NAME` - Admin last name
 - `ADMIN_PASSWORD` - Admin password (strong)
 
-### 6. EMAIL & SMTP
+### 5. EMAIL & SMTP
+
 - `EMAIL_ENABLED` - Enable email functionality
 - `EMAIL_FROM_ADDRESS` - Default sender email
 - `EMAIL_FROM_NAME` - Default sender name
@@ -54,25 +54,29 @@
 - `SMTP_USER` - SMTP username
 - `SMTP_PASS` - SMTP password or app password
 
-### 7. FRONTEND
+### 6. FRONTEND
+
 - `FRONTEND_URL` - Frontend URL used in email links
 - `DICEBEAR_API_URL` - DiceBear API for avatar generation
 
-### 8. REMINDER SYSTEM
+### 7. REMINDER SYSTEM
+
 - `ENABLE_EMAIL_REMINDERS` - Enable automatic email reminders
 - `REMINDER_TIMEZONE` - Timezone for reminder scheduling
 - `REMINDER_BATCH_SIZE` - Number of reminders processed per run (default: 100)
-- `REMINDER_CRON_SCHEDULE` - Cron schedule for reminder processing (default: "0 9 * * *")
+- `REMINDER_CRON_SCHEDULE` - Cron schedule for reminder processing (default: "0 9 \* \* \*")
 - `REMINDER_CACHE_CLEANUP_DAYS` - Days to keep anti-spam cache (default: 7)
 
-### 9. CLOUDFLARE R2 BACKUP
+### 8. CLOUDFLARE R2 BACKUP
+
 - `R2_ACCESS_KEY_ID` - Cloudflare R2 access key
 - `R2_SECRET_ACCESS_KEY` - Cloudflare R2 secret key
 - `R2_ENDPOINT_URL` - R2 endpoint URL
 - `R2_BUCKET_NAME` - R2 bucket name
 - `TEST_DB_NAME` - Test database name for restore tests
 
-### 10. INTEGRATIONS
+### 9. INTEGRATIONS
+
 - `DIGIFORMA_ENCRYPTION_KEY` - Encryption key for Digiforma (min 32 chars)
   - Generate: `openssl rand -base64 32`
 - `DIGIFORMA_API_URL` - Digiforma GraphQL API URL
@@ -80,13 +84,16 @@
 - `SAGE_CLIENT_ID` - Sage client ID (optional)
 - `SAGE_CLIENT_SECRET` - Sage client secret (optional)
 
-### 11. HETZNER (for GitHub Actions)
+### 10. HETZNER (for GitHub Actions)
+
 - `HETZNER_HOST` - Hetzner server IP
 - `HETZNER_USERNAME` - SSH username
 - `HETZNER_SSH_PORT` - SSH port (default: 22)
 
-### 12. GENERATE SECRETS WITH
+### 11. GENERATE SECRETS WITH
+
 Quick reference for generating all secrets:
+
 ```bash
 # JWT Secret
 openssl rand -base64 32
@@ -100,8 +107,6 @@ openssl rand -base64 24
 # Digiforma Encryption Key
 openssl rand -base64 32
 
-# Traefik Dashboard Auth
-htpasswd -nb admin yourpassword | sed -e s/\\$/\\$\\$/g
 ```
 
 ## How to Use
@@ -145,6 +150,7 @@ docker compose -f docker-compose.prod.yml restart backend
 ## Validation
 
 Before deploying, ensure:
+
 - ✅ All secrets are generated with proper length
 - ✅ All URLs are correct (domains, APIs)
 - ✅ Email configuration is tested (send test email)
@@ -162,16 +168,19 @@ Before deploying, ensure:
 ## Troubleshooting
 
 ### Email not working
+
 - Verify SMTP credentials (check if app password required for Gmail)
 - Test SMTP connectivity: `telnet smtp.gmail.com 587`
 - Check logs: `docker compose -f docker-compose.prod.yml logs backend`
 
 ### JWT tokens invalid
+
 - Ensure secrets are min 32 characters
 - Verify same secrets used across all containers
 - Restart backend after changing JWT secrets
 
 ### Backup failing
+
 - Verify R2 credentials and endpoint URL
 - Check bucket exists in Cloudflare
 - Test manually: `docker compose -f docker-compose.prod.yml exec postgres-backup /scripts/backup.sh`

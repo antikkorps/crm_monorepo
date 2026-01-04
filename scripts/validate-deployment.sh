@@ -154,14 +154,12 @@ if [ ! -f ".env.production.build" ]; then
 DOMAIN=example.com
 FRONTEND_DOMAIN=crm.example.com
 BACKEND_DOMAIN=api.example.com
-TRAEFIK_DOMAIN=traefik.example.com
 POSTGRES_DB=medical_crm
 POSTGRES_USER=medical_crm_user
 POSTGRES_PASSWORD=temp_password
 JWT_SECRET=temp_jwt_secret_32_chars_min
 JWT_EXPIRES_IN=7d
 NODE_ENV=production
-TRAEFIK_BASIC_AUTH=admin:\$apr1\$temp\$temp
 EOF
     log "Created temporary .env.production.build"
 fi

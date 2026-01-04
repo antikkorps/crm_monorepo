@@ -121,7 +121,6 @@ VOLUMES=(
     "medical-crm-backend-uploads:/app/packages/backend/uploads"
     "medical-crm-backend-logs:/app/packages/backend/logs"
     "medical-crm-backend-storage:/app/packages/backend/storage"
-    "medical-crm-traefik-certs:/letsencrypt"
 )
 
 for VOLUME_MAPPING in "${VOLUMES[@]}"; do

@@ -1,6 +1,6 @@
 # Guide de Déploiement - Hetzner avec Docker
 
-Ce guide détaille le déploiement complet de l'application Medical CRM sur un serveur Hetzner avec Docker, Traefik, PostgreSQL et backups automatiques sur Cloudflare R2.
+Ce guide détaille le déploiement complet de l'application Medical CRM sur un serveur Hetzner avec Docker, Caddy, PostgreSQL et backups automatiques sur Cloudflare R2.
 
 ## Table des matières
 
@@ -23,10 +23,9 @@ Ce guide détaille le déploiement complet de l'application Medical CRM sur un s
 ```bash
 Internet
    ↓
-Traefik (reverse proxy + SSL)
+Caddy (reverse proxy + SSL)
    ├─→ Frontend (Nginx Alpine) - Port 8080
    ├─→ Backend (Node.js Koa) - Port 3000
-   └─→ Dashboard Traefik - Port 8080
 
 Backend → PostgreSQL 18 (réseau privé)
          ↓
@@ -37,7 +36,7 @@ Backend → PostgreSQL 18 (réseau privé)
 
 **Composants:**
 
-- **Traefik v3**: Reverse proxy avec SSL Let's Encrypt automatique
+- **Caddy**: Reverse proxy avec SSL Let's Encrypt automatique
 - **Frontend**: Vue 3 + Vite (build statique servi par Nginx)
 - **Backend**: Koa.js + TypeScript + Sequelize
 - **PostgreSQL 18**: Base de données
@@ -242,7 +241,6 @@ Type    Nom                     Valeur              TTL
 A       example.com             <HETZNER-IP>
 CNAME   crm                     <example.com>      3600
 CNAME   crmapi                  <example.com>      3600
-CNAME   traefik                 <example.com>      3600
 ```
 
 Remplacez `example.com` par votre domaine réel.
@@ -275,10 +273,6 @@ vim .env.production
 DOMAIN=example.com
 FRONTEND_DOMAIN=crm.example.com
 BACKEND_DOMAIN=api.example.com
-TRAEFIK_DOMAIN=traefik.example.com
-
-# TRAEFIK DASHBOARD AUTH (generate with: htpasswd -nb admin yourpassword | sed -e s/\\$/\\$\\$/g)
-TRAEFIK_BASIC_AUTH=admin:$apr1$xxxxx$xxxxx
 
 # DATABASE
 POSTGRES_DB=medical_crm
@@ -348,40 +342,14 @@ openssl rand -base64 24
 openssl rand -base64 32
 ```
 
-### 3. Mettre à jour Traefik config
-
-```bash
-vim traefik/traefik.yml
-```
-
 Modifiez :
 
 - `main: "example.com"` → votre domaine
 - `email: "your-email@example.com"` → votre email
 
-```bash
-vim traefik/dynamic/middlewares.yml
-```
-
 Modifiez :
 
 - `https://your-frontend-domain.com` → `https://crm.example.com`
-
-### 4. Générer le mot de passe du Dashboard Traefik
-
-```bash
-# Installer apache2-utils
-apt install -y apache2-utils
-
-# Générer le hash (remplacez 'yourpassword')
-echo $(htpasswd -nb admin yourpassword) | sed -e s/\\$/\\$\\$/g
-```
-
-Copiez le résultat et modifiez le `docker-compose.prod.yml` :
-
-```yaml
-- "traefik.http.middlewares.auth.basicauth.users=<COLLEZ_ICI>"
-```
 
 ---
 
@@ -562,13 +530,6 @@ df -h
 docker system df
 ```
 
-### Dashboard Traefik
-
-Accédez à `https://traefik.example.com`
-
-- **Username**: admin
-- **Password**: celui généré avec htpasswd
-
 ### Logs PostgreSQL
 
 ```bash
@@ -656,8 +617,6 @@ docker inspect <container-id>
 ### Certificat SSL non généré
 
 ```bash
-# Vérifier les logs Traefik
-docker compose -f docker-compose.prod.yml logs traefik
 
 # Vérifier que le port 80 est accessible depuis Internet
 curl http://<HETZNER_IP>
@@ -716,10 +675,6 @@ postgres:
     - ./postgres/postgresql.conf:/etc/postgresql/postgresql.conf:ro
 ```
 
-### Rate limiting Traefik
-
-Déjà configuré dans `traefik/dynamic/middlewares.yml`. Ajustez selon vos besoins.
-
 ### Cache Redis (optionnel)
 
 Ajoutez un service Redis pour le cache :
@@ -747,7 +702,7 @@ redis:
 - [ ] SSH par clé uniquement (désactiver mot de passe)
 - [ ] PostgreSQL sur réseau privé uniquement
 - [ ] Secrets forts (JWT, DB password)
-- [ ] HTTPS forcé (Traefik redirect)
+- [ ] HTTPS forcé (Caddy redirect)
 - [ ] Backups testés
 - [ ] Rate limiting activé
 - [ ] Headers de sécurité configurés
@@ -780,7 +735,7 @@ ufw delete allow ssh
 Pour toute question :
 
 - Issues GitHub : https://github.com/<USERNAME>/crm_monorepo/issues
-- Documentation Traefik : https://doc.traefik.io/traefik/
+- Documentation caddy : (https://caddyserver.com/docs/automatic-https)
 - Documentation Cloudflare R2 : https://developers.cloudflare.com/r2/
 
 ---

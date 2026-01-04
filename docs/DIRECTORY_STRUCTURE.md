@@ -10,12 +10,12 @@ The server follows the **Filesystem Hierarchy Standard (FHS)** for Linux systems
 
 ### Primary Directories
 
-| Directory | Purpose | Usage in Medical CRM |
-|-----------|---------|----------------------|
-| `/srv/` | Services and data served by this system | **Application root** (`/srv/medical-crm/`) |
-| `/var/` | Variable data (logs, cache, temporary) | Docker volumes, application logs |
-| `/tmp/` | Temporary files | Temporary build artifacts |
-| `/opt/` | Optional/additional software packages | Not used (for third-party binaries only) |
+| Directory | Purpose                                 | Usage in Medical CRM                       |
+| --------- | --------------------------------------- | ------------------------------------------ |
+| `/srv/`   | Services and data served by this system | **Application root** (`/srv/medical-crm/`) |
+| `/var/`   | Variable data (logs, cache, temporary)  | Docker volumes, application logs           |
+| `/tmp/`   | Temporary files                         | Temporary build artifacts                  |
+| `/opt/`   | Optional/additional software packages   | Not used (for third-party binaries only)   |
 
 ## Directory Structure
 
@@ -45,17 +45,12 @@ The server follows the **Filesystem Hierarchy Standard (FHS)** for Linux systems
 │       ├── backup.sh                 # Main backup script
 │       ├── test-restore.sh           # Restore test script
 │       └── entrypoint.sh            # Backup service entrypoint
-├── traefik/
-│   ├── traefik.yml                 # Static Traefik configuration
-│   └── dynamic/
-│       └── middlewares.yml          # Dynamic middlewares
 ├── postgres/
 │   └── init/                       # Database initialization scripts
 └── docs/                           # Additional documentation
 
 /var/lib/docker/volumes/              # Docker volumes
 ├── medical-crm-postgres-data/        # PostgreSQL data
-├── medical-crm-traefik-certs/       # SSL certificates
 ├── medical-crm-backend-uploads/      # User uploads
 ├── medical-crm-backend-logs/         # Application logs
 └── medical-crm-backend-storage/      # Stored documents
@@ -70,18 +65,21 @@ The server follows the **Filesystem Hierarchy Standard (FHS)** for Linux systems
 ## Why `/srv/` instead of `/opt/` or `/var/www/`?
 
 ### `/srv/` (Used) ✅
+
 - **Modern FHS convention** for site-specific data/services
 - Designed for "data for services provided by this system"
 - Standard for Docker-based services
 - Clear separation from system software
 
 ### `/opt/` (Not Used) ❌
+
 - **Legacy convention** for optional software packages
 - Intended for pre-compiled third-party binaries
 - Less clear purpose for Docker-based services
 - Still valid but outdated for modern deployments
 
 ### `/var/www/` (Not Used) ❌
+
 - **Traditional convention** for web applications (Apache/Nginx)
 - More old-school, less Docker-friendly
 - Confusing mix of static files and dynamic services
@@ -126,11 +124,13 @@ tail -f /var/log/docker.log
 ## Security Considerations
 
 1. **Application Directory (`/srv/`)**:
+
    - Owned by `deploy` user (non-root)
    - Permissions: `755` (owner: rwx, group: rx, other: rx)
    - `.env.production`: `600` (owner: rw only)
 
 2. **Docker Volumes**:
+
    - Managed by Docker (root)
    - Containers run as non-root users
    - Sensitive data in PostgreSQL volume is protected by database authentication
