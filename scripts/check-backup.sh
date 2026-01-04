@@ -38,11 +38,11 @@ fi
 echo ""
 echo "2. Checking R2 environment variables..."
 
-# Read from .env.production
-if [ -f .env.production ]; then
-    source .env.production
+# Read from .env
+if [ -f .env ]; then
+    source .env
 else
-    echo -e "${RED}✗${NC} .env.production file not found"
+    echo -e "${RED}✗${NC} .env file not found"
     exit 1
 fi
 
