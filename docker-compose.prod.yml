@@ -163,6 +163,7 @@ services:
       context: ./backup
       dockerfile: Dockerfile
     container_name: medical-crm-backup
+    user: root
     restart: unless-stopped
     dns:
       - 8.8.8.8
