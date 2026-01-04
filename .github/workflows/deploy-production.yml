@@ -57,7 +57,7 @@ jobs:
 
             # Build Docker images locally
             echo "🔨 Building Docker images locally (this may take a few minutes)..."
-            docker compose -f docker-compose.prod.yml build --no-cache
+            docker compose -f docker-compose.prod.yml build
 
             # Start new containers
             echo "▶️  Starting new containers..."
