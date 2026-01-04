@@ -14,6 +14,26 @@ crm.fvienot.link {
         X-Content-Type-Options "nosniff"
         Referrer-Policy "strict-origin-when-cross-origin"
     }
+}
+
+# Backend API with WebSocket support
+crmapi.fvienot.link {
+    # Reverse proxy to backend container
+    reverse_proxy backend:3000
+
+    # Security headers
+    header {
+        X-Robots-Tag "noindex,nofollow"
+        X-Frame-Options "SAMEORIGIN"
+        X-Content-Type-Options "nosniff"
+        X-XSS-Protection "1; mode=block"
+    }
+}
+
+# Main domain redirects to CRM
+fvienot.link {
+    redir https://crm.fvienot.link{uri} permanent
+}
 
     # CORS headers
     header Access-Control-Allow-Origin "https://crmapi.fvienot.link"
