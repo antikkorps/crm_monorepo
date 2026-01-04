@@ -39,6 +39,11 @@ export class SocketService {
         credentials: true,
       },
       transports: ["websocket", "polling"],
+      allowUpgrades: true,
+      pingTimeout: 20000,
+      pingInterval: 25000,
+      maxHttpBufferSize: 1e6,
+      path: "/socket.io/",
     })
 
     this.setupMiddleware()
