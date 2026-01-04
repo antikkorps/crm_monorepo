@@ -45,9 +45,11 @@ jobs:
             git fetch origin main
             git reset --hard origin/main
 
-            # Load environment variables
-            echo "🔐 Loading environment variables..."
-            export $(grep -v '^#' .env | xargs)
+            # check if .env is présent
+            if [ ! -f .env ]; then
+              echo "❌ Error: .env file not found!"
+              exit 1
+            fi
 
             # Stop old containers gracefully
             echo "⏸️  Stopping old containers..."
