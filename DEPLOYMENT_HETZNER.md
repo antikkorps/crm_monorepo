@@ -242,7 +242,7 @@ Type    Nom                     Valeur              TTL
 A       example.com             <HETZNER-IP>
 CNAME   crm                     <example.com>      3600
 CNAME   crmapi                  <example.com>      3600
-CNAME   traefik.example.com     <example.com>      3600
+CNAME   traefik                 <example.com>      3600
 ```
 
 Remplacez `example.com` par votre domaine réel.

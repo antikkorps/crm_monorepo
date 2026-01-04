@@ -5,7 +5,7 @@
 # API and Dashboard
 api:
   dashboard: true
-  insecure: false  # Dashboard accessible via HTTPS only
+  insecure: false # Dashboard accessible via HTTPS only
 
 # Entry Points
 entryPoints:
@@ -33,7 +33,7 @@ entryPoints:
 certificatesResolvers:
   letsencrypt:
     acme:
-      email: "admin@fvienot.link"  # CHANGE THIS to your real email
+      email: "franckvienot7@gmail.com"
       storage: /letsencrypt/acme.json
       # Use Let's Encrypt staging server for testing
       # caServer: "https://acme-staging-v02.api.letsencrypt.org/directory"
@@ -73,7 +73,6 @@ metrics:
     addEntryPointsLabels: true
     addServicesLabels: true
     entryPoint: metrics
-
 # Additional entry point for metrics (optional)
 # Uncomment if you want to expose Prometheus metrics
 # entryPoints:
