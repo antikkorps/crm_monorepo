@@ -71,8 +71,7 @@ log "Local backup file removed"
 log "Cleaning up old backups (retention: ${BACKUP_RETENTION_DAYS} days)..."
 
 # Calculate cutoff date
-CUTOFF_DATE=$(date -d "${BACKUP_RETENTION_DAYS} days ago" +%Y%m%d 2>/dev/null || date -v-${BACKUP_RETENTION_DAYS}d +%Y%m%d)
-
+CUTOFF_DATE=$(date -d "@$(($(date +%s) - (BACKUP_RETENTION_DAYS * 86400)))" +%Y%m%d)
 # List and delete old backups
 aws s3 ls "s3://${S3_BUCKET}/postgres/" \
     --endpoint-url "$AWS_ENDPOINT_URL" \
@@ -116,51 +115,37 @@ log "All done!"
 
 log "Starting Docker volumes backup..."
 
-# Volumes to backup
+log "Starting Docker volumes backup..."
+
+# Chemins tels que montés dans le docker-compose ci-dessus
 VOLUMES=(
-    "medical-crm-backend-uploads:/app/packages/backend/uploads"
-    "medical-crm-backend-logs:/app/packages/backend/logs"
-    "medical-crm-backend-storage:/app/packages/backend/storage"
+    "uploads:/app/backups/uploads"
+    "logs:/app/backups/logs"
+    "storage:/app/backups/storage"
 )
 
 for VOLUME_MAPPING in "${VOLUMES[@]}"; do
     VOLUME_NAME=$(echo "$VOLUME_MAPPING" | cut -d: -f1)
-    VOLUME_PATH=$(echo "$VOLUME_MAPPING" | cut -d: -f2)
+    SOURCE_PATH=$(echo "$VOLUME_MAPPING" | cut -d: -f2)
     VOLUME_ARCHIVE="volume_${VOLUME_NAME}_${TIMESTAMP}.tar.gz"
 
     log "Backing up volume: $VOLUME_NAME"
 
-    # Create temporary backup directory
-    TEMP_BACKUP_DIR="/backup/volumes/${VOLUME_NAME}"
-    mkdir -p "$TEMP_BACKUP_DIR"
+    if [ -d "$SOURCE_PATH" ]; then
+        # On compresse directement sans 'docker run'
+        tar czf "/backup/${VOLUME_ARCHIVE}" -C "$SOURCE_PATH" . || log "Warning: Failed to compress $VOLUME_NAME"
 
-    # Run a temporary container to backup the volume
-    docker run --rm \
-        -v "$VOLUME_NAME:/volume_data:ro" \
-        -v "$TEMP_BACKUP_DIR:/backup" \
-        alpine:latest \
-        tar czf "/backup/${VOLUME_ARCHIVE}" -C /volume_data . || log "Warning: Failed to backup volume $VOLUME_NAME"
-
-    # Check if backup was created
-    if [ -f "$TEMP_BACKUP_DIR/${VOLUME_ARCHIVE}" ]; then
-        # Upload to R2
-        aws s3 cp "${TEMP_BACKUP_DIR}/${VOLUME_ARCHIVE}" \
+        # Upload vers R2
+        aws s3 cp "/backup/${VOLUME_ARCHIVE}" \
             "s3://${S3_BUCKET}/volumes/${VOLUME_ARCHIVE}" \
             --endpoint-url "$AWS_ENDPOINT_URL" \
-            --region auto || log "Warning: Failed to upload volume backup $VOLUME_NAME"
+            --region auto || log "Warning: Failed to upload $VOLUME_NAME"
 
-        # Get backup size
-        VOLUME_SIZE=$(du -h "${TEMP_BACKUP_DIR}/${VOLUME_ARCHIVE}" | cut -f1)
-        log "Volume backup uploaded: $VOLUME_NAME (${VOLUME_SIZE})"
-
-        # Clean up local backup
-        rm -f "${TEMP_BACKUP_DIR}/${VOLUME_ARCHIVE}"
+        log "Volume backup uploaded: $VOLUME_NAME"
+        rm -f "/backup/${VOLUME_ARCHIVE}"
     else
-        log "Warning: Volume backup file not found for $VOLUME_NAME (volume may be empty)"
+        log "Warning: Source path $SOURCE_PATH not found"
     fi
-
-    # Clean up temp directory
-    rm -rf "$TEMP_BACKUP_DIR"
 done
 
 log "Docker volumes backup completed successfully"

@@ -173,6 +173,9 @@ services:
     volumes:
       - ./backup/scripts:/scripts:ro
       - backup-temp:/backup
+      - backend-uploads:/app/backups/uploads:ro # Ici on met le 's'
+      - backend-logs:/app/backups/logs:ro # Ici aussi
+      - backend-storage:/app/backups/storage:ro
     environment:
       # Database
       POSTGRES_HOST: postgres
