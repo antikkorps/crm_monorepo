@@ -1,0 +1,51 @@
+# ============================================
+# Caddyfile - Medical CRM
+# ============================================
+
+# Frontend (Vue.js SPA)
+crm.fvienot.link {
+    # Reverse proxy to frontend container
+    reverse_proxy frontend:8080
+
+    # Security headers
+    header {
+        X-Robots-Tag "noindex,nofollow"
+        X-Frame-Options "SAMEORIGIN"
+        X-Content-Type-Options "nosniff"
+        Referrer-Policy "strict-origin-when-cross-origin"
+    }
+
+    # CORS headers
+    header Access-Control-Allow-Origin "https://crmapi.fvienot.link"
+    header Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS"
+    header Access-Control-Allow-Headers "Origin, X-Requested-With, Content-Type, Accept, Authorization"
+}
+
+# Backend API with WebSocket support
+crmapi.fvienot.link {
+    # Reverse proxy to backend container
+    reverse_proxy backend:3000 {
+        # WebSocket support - automatic with Caddy
+    }
+
+    # Security headers
+    header {
+        X-Robots-Tag "noindex,nofollow"
+        X-Frame-Options "SAMEORIGIN"
+        X-Content-Type-Options "nosniff"
+        X-XSS-Protection "1; mode=block"
+    }
+
+    # CORS headers
+    header Access-Control-Allow-Origin "https://crm.fvienot.link"
+    header Access-Control-Allow-Credentials "true"
+    header Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS, PATCH"
+    header Access-Control-Allow-Headers "Origin, X-Requested-With, Content-Type, Accept, Authorization, X-Request-ID"
+    header Access-Control-Expose-Headers "X-Request-ID"
+    header Vary "Origin"
+}
+
+# Main domain redirects to CRM
+fvienot.link {
+    redir https://crm.fvienot.link{uri} permanent
+}
