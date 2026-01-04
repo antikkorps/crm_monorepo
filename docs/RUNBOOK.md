@@ -20,16 +20,15 @@ This runbook documents emergency procedures for the Medical CRM production deplo
 
 - Provider: Hetzner
 - Location: Nuremberg, Germany
-- Architecture: Docker + Traefik + PostgreSQL + Cloudflare R2
+- Architecture: Docker + Caddy + PostgreSQL + Cloudflare R2
 - Monitoring: Docker health checks + UptimeRobot (recommended)
 
 **Critical Services:**
 
 1. **Frontend**: `https://crm.fvienot.link` - User interface
 2. **Backend API**: `https://crmapi.fvienot.link` - API endpoints
-3. **Traefik Dashboard**: `https://traefik.fvienot.link` - Reverse proxy monitoring
-4. **PostgreSQL**: Internal database (port 5432, private network)
-5. **Backup Service**: Daily backups to Cloudflare R2
+3. **PostgreSQL**: Internal database (port 5432, private network)
+4. **Backup Service**: Daily backups to Cloudflare R2
 
 ---
 
@@ -71,8 +70,6 @@ curl -f https://crmapi.fvienot.link/health || echo "❌ Backend DOWN"
 # Frontend health
 curl -f https://crm.fvienot.link/health || echo "❌ Frontend DOWN"
 
-# Traefik Dashboard (basic auth required)
-curl -f -u admin:password https://traefik.fvienot.link/ || echo "❌ Traefik DOWN"
 ```
 
 ---
@@ -197,56 +194,6 @@ curl -f -u admin:password https://traefik.fvienot.link/ || echo "❌ Traefik DOW
 
 ---
 
-### 🟡 MEDIUM: Frontend Down
-
-**Symptoms:**
-
-- Cannot access `https://crm.fvienot.link`
-- Traefik returns 503
-- Backend API works
-
-**Actions:**
-
-1. **Check Frontend Container**
-
-   ```bash
-   docker compose -f docker-compose.prod.yml ps frontend
-   ```
-
-2. **Check Frontend Logs**
-
-   ```bash
-   docker compose -f docker-compose.prod.yml logs frontend
-   ```
-
-3. **Common Issues:**
-
-   **A. Nginx Configuration Error**
-
-   ```bash
-   # Check nginx config
-   docker compose -f docker-compose.prod.yml exec frontend nginx -t
-
-   # If error, check nginx.conf
-   vim packages/frontend/nginx.conf
-   ```
-
-   **B. Health Check Failing**
-
-   ```bash
-   # Test manually
-   docker compose -f docker-compose.prod.yml exec frontend curl -f http://localhost:8080/health
-
-   # If works manually, adjust health check in docker-compose.prod.yml
-   ```
-
-4. **Restart Frontend**
-   ```bash
-   docker compose -f docker-compose.prod.yml restart frontend
-   ```
-
----
-
 ### 🟡 MEDIUM: PostgreSQL Issues
 
 **Symptoms:**
@@ -367,60 +314,55 @@ curl -f -u admin:password https://traefik.fvienot.link/ || echo "❌ Traefik DOW
 
 - Browser warnings for expired certificates
 - HTTPS not working
-- Traefik shows certificate errors
 
 **Actions:**
 
-1. **Check Traefik Logs**
+1. **Check Caddy Logs**
 
    ```bash
-   docker compose -f docker-compose.prod.yml logs traefik
+   docker compose -f docker-compose.prod.yml logs caddy
    ```
 
 2. **Check Certificate Status**
 
    ```bash
-   # Check acme.json file
-   docker compose -f docker-compose.prod.yml exec traefik cat /letsencrypt/acme.json | jq '.Certificates'
+   # Check Caddy certificates
+   docker compose -f docker-compose.prod.yml exec caddy caddy list-certificates
+   ```
+
+   Ou pour voir les fichiers de certificats:
+
+   ```bash
+   # List certificate files
+   docker compose -f docker-compose.prod.yml exec caddy ls -la /data/caddy/certificates/
    ```
 
 3. **Common Issues:**
 
-   **A. Rate Limiting by Let's Encrypt**
+**A. Rate Limiting by Let's Encrypt**
 
-   - Let's Encrypt has rate limits (5 certificates per domain per week)
-   - Wait until rate limit expires (check expiration date)
-   - Use staging server for testing (traefik/traefik.yml)
+- Let's Encrypt has rate limits (5 certificates per domain per week)
+- Wait until rate limit expires (check expiration date)
 
-   **B. DNS Not Propagated**
+**B. DNS Not Propagated**
 
-   ```bash
-   # Check DNS records
-   dig crm.fvienot.link
-   dig api.fvienot.link
+```bash
+# Check DNS records
+dig crm.fvienot.link
+dig api.fvienot.link
 
-   # Ensure DNS points to Hetzner IP
-   ```
+# Ensure DNS points to Hetzner IP
+```
 
-   **C. Port 80 Blocked**
+**C. Port 80 Blocked**
 
-   ```bash
-   # Check firewall
-   sudo ufw status
+```bash
+# Check firewall
+sudo ufw status
 
-   # Ensure HTTP port 80 is allowed
-   sudo ufw allow 80/tcp
-   ```
-
-4. **Force Certificate Renewal**
-
-   ```bash
-   # Restart Traefik (will attempt renewal)
-   docker compose -f docker-compose.prod.yml restart traefik
-
-   # Watch logs for renewal process
-   docker compose -f docker-compose.prod.yml logs -f traefik
-   ```
+# Ensure HTTP port 80 is allowed
+sudo ufw allow 80/tcp
+```
 
 ---
 

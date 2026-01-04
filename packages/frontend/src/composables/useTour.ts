@@ -208,6 +208,12 @@ export function useTour() {
         return
     }
 
+    // Mark tour as completed when it's finished
+    tour.onDestroyStarted(() => {
+      markTourCompleted(tourName)
+      activeTour.value = null
+    })
+
     tour.drive()
     activeTour.value = tour
   }
@@ -222,9 +228,54 @@ export function useTour() {
     }
   }
 
+  /**
+   * Check if a tour has been completed
+   */
+  const isTourCompleted = (tourName: TourName): boolean => {
+    const completedTours = localStorage.getItem("completed_tours")
+    if (!completedTours) return false
+
+    try {
+      const tours = JSON.parse(completedTours) as string[]
+      return tours.includes(tourName)
+    } catch {
+      return false
+    }
+  }
+
+  /**
+   * Mark a tour as completed
+   */
+  const markTourCompleted = (tourName: TourName) => {
+    const completedTours = localStorage.getItem("completed_tours")
+    let tours: string[] = []
+
+    if (completedTours) {
+      try {
+        tours = JSON.parse(completedTours) as string[]
+      } catch {
+        tours = []
+      }
+    }
+
+    if (!tours.includes(tourName)) {
+      tours.push(tourName)
+      localStorage.setItem("completed_tours", JSON.stringify(tours))
+    }
+  }
+
+  /**
+   * Reset all tours (clear completion status)
+   */
+  const resetAllTours = () => {
+    localStorage.removeItem("completed_tours")
+  }
+
   return {
     startTour,
     stopTour,
     activeTour,
+    isTourCompleted,
+    resetAllTours,
   }
 }

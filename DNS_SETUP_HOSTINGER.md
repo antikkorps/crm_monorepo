@@ -8,18 +8,17 @@ Vous avez besoin de **1 enregistrement A** et **3 enregistrements CNAME**.
 
 ### Configuration DNS
 
-| Type  | Nom/Host          | Pointe vers              | TTL  |
-|-------|-------------------|--------------------------|------|
-| A     | @                 | `<HETZNER_IP>`           | 3600 |
-| CNAME | crm               | fvienot.link             | 3600 |
-| CNAME | crmapi            | fvienot.link             | 3600 |
-| CNAME | traefik           | fvienot.link             | 3600 |
+| Type  | Nom/Host | Pointe vers    | TTL  |
+| ----- | -------- | -------------- | ---- |
+| A     | @        | `<HETZNER_IP>` | 3600 |
+| CNAME | crm      | fvienot.link   | 3600 |
+| CNAME | crmapi   | fvienot.link   | 3600 |
 
 **Résultat final:**
+
 - `fvienot.link` → IP Hetzner (enregistrement A)
 - `crm.fvienot.link` → Frontend Vue.js (CNAME → fvienot.link)
 - `crmapi.fvienot.link` → Backend API (CNAME → fvienot.link)
-- `traefik.fvienot.link` → Dashboard Traefik (CNAME → fvienot.link)
 
 ---
 
@@ -35,9 +34,11 @@ Vous avez besoin de **1 enregistrement A** et **3 enregistrements CNAME**.
 ### 2. Créer l'enregistrement A (domaine racine)
 
 **Si vous avez déjà un enregistrement A pour `@` ou `fvienot.link`:**
+
 - Modifiez-le pour pointer vers l'IP de votre serveur Hetzner
 
 **Sinon, créez-en un nouveau:**
+
 1. Cliquez sur **Ajouter un enregistrement**
 2. **Type**: A
 3. **Nom**: @ (ou laissez vide)
@@ -65,15 +66,6 @@ Vous avez besoin de **1 enregistrement A** et **3 enregistrements CNAME**.
 5. **TTL**: 3600
 6. **Enregistrer**
 
-#### CNAME pour Traefik Dashboard (traefik)
-
-1. Cliquez sur **Ajouter un enregistrement**
-2. **Type**: CNAME
-3. **Nom**: `traefik`
-4. **Pointe vers**: `fvienot.link`
-5. **TTL**: 3600
-6. **Enregistrer**
-
 ---
 
 ## Vérification DNS
@@ -95,13 +87,13 @@ dig fvienot.link
 # Tester les CNAME
 dig crm.fvienot.link
 dig crmapi.fvienot.link
-dig traefik.fvienot.link
 
 # Chaque commande devrait montrer le CNAME vers fvienot.link
 # puis l'IP finale dans la section ANSWER
 ```
 
 **Exemple de résultat attendu:**
+
 ```
 crm.fvienot.link.       3600    IN      CNAME   fvienot.link.
 fvienot.link.           3600    IN      A       95.217.x.x
@@ -110,6 +102,7 @@ fvienot.link.           3600    IN      A       95.217.x.x
 ### Vérification en ligne
 
 Vous pouvez aussi utiliser :
+
 - https://dnschecker.org
 - https://www.whatsmydns.net
 
@@ -121,11 +114,10 @@ Entrez `crm.fvienot.link` et vérifiez que ça pointe vers votre IP Hetzner.
 
 Une fois tout configuré :
 
-| URL                       | Service              | Port interne | Certificat SSL |
-|---------------------------|----------------------|--------------|----------------|
-| https://crm.fvienot.link  | Frontend (Vue.js)    | 8080         | ✅ Auto (Let's Encrypt) |
-| https://crmapi.fvienot.link | Backend API (Koa)  | 3000         | ✅ Auto (Let's Encrypt) |
-| https://traefik.fvienot.link | Traefik Dashboard | 8080         | ✅ Auto (Let's Encrypt) |
+| URL                         | Service           | Port interne | Certificat SSL          |
+| --------------------------- | ----------------- | ------------ | ----------------------- |
+| https://crm.fvienot.link    | Frontend (Vue.js) | 8080         | ✅ Auto (Let's Encrypt) |
+| https://crmapi.fvienot.link | Backend API (Koa) | 3000         | ✅ Auto (Let's Encrypt) |
 
 ---
 
@@ -136,6 +128,7 @@ Une fois tout configuré :
 - Le domaine n'est pas encore propagé, attendez 10-30 minutes
 - Vérifiez que vous avez bien créé les enregistrements
 - Videz le cache DNS de votre navigateur :
+
   ```bash
   # macOS
   sudo dscacheutil -flushcache; sudo killall -HUP mDNSResponder
@@ -165,30 +158,20 @@ Une fois tout configuré :
   docker compose -f docker-compose.prod.yml ps
   ```
 
-### Certificat SSL non généré
-
-- Traefik a besoin que les domaines soient accessibles via HTTP (port 80) pour valider Let's Encrypt
-- Vérifiez les logs Traefik :
-  ```bash
-  docker compose -f docker-compose.prod.yml logs traefik
-  ```
-- Vérifiez que vous avez mis le bon email dans `traefik/traefik.yml`
-
 ---
 
 ## Secrets GitHub Actions à configurer
 
 N'oubliez pas d'ajouter ces secrets dans votre repository GitHub :
 
-| Secret Name              | Valeur                          |
-|--------------------------|---------------------------------|
-| `DOMAIN`                 | `fvienot.link`                  |
-| `FRONTEND_DOMAIN`        | `crm.fvienot.link`              |
-| `BACKEND_DOMAIN`         | `crmapi.fvienot.link`           |
-| `TRAEFIK_DOMAIN`         | `traefik.fvienot.link`          |
-| `HETZNER_HOST`           | Votre IP Hetzner                |
-| `HETZNER_USERNAME`       | `deploy` (ou `root`)            |
-| `HETZNER_SSH_KEY`        | Votre clé privée SSH complète   |
+| Secret Name        | Valeur                        |
+| ------------------ | ----------------------------- |
+| `DOMAIN`           | `fvienot.link`                |
+| `FRONTEND_DOMAIN`  | `crm.fvienot.link`            |
+| `BACKEND_DOMAIN`   | `crmapi.fvienot.link`         |
+| `HETZNER_HOST`     | Votre IP Hetzner              |
+| `HETZNER_USERNAME` | `deploy` (ou `root`)          |
+| `HETZNER_SSH_KEY`  | Votre clé privée SSH complète |
 
 ---
 

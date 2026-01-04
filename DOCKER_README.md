@@ -6,35 +6,31 @@
 
 ```bash
 crm_monorepo/
-├── docker-compose.yml              # Dev local (existant)
-├── docker-compose.prod.yml         # Production (nouveau)
-├── .dockerignore                   # Optimisation build (nouveau)
-├── .env.production.example         # Template env prod (nouveau)
-├── DEPLOYMENT_HETZNER.md          # Guide complet (nouveau)
-│
-├── packages/
-│   ├── backend/
-│   │   ├── Dockerfile              # Multi-stage build backend (nouveau)
-│   │   └── .dockerignore           # Exclusions backend (nouveau)
-│   │
-│   └── frontend/
-│       ├── Dockerfile              # Multi-stage build frontend (nouveau)
-│       ├── nginx.conf              # Config nginx pour SPA (nouveau)
-│       └── .dockerignore           # Exclusions frontend (nouveau)
-│
-├── traefik/
-│   ├── traefik.yml                 # Config principale Traefik (nouveau)
-│   └── dynamic/
-│       └── middlewares.yml         # Middlewares Traefik (nouveau)
-│
-├── backup/
-│   ├── Dockerfile                  # Container backup (nouveau)
-│   └── scripts/
-│       ├── backup.sh               # Script backup PostgreSQL (nouveau)
-│       └── entrypoint.sh           # Entrypoint cron (nouveau)
-│
-└── .github/workflows/
-    └── deploy-production.yml       # CI/CD GitHub Actions (nouveau)
+ ├── docker-compose.yml              # Dev local (existant)
+ ├── docker-compose.prod.yml         # Production (Caddy)
+ ├── .dockerignore                   # Optimisation build (nouveau)
+ ├── .env.production.example         # Template env prod (nouveau)
+ ├── Caddyfile                       # Reverse proxy Caddy (nouveau)
+ ├── DEPLOYMENT_HETZNER.md          # Guide complet (nouveau)
+ │
+ ├── packages/
+ │   ├── backend/
+ │   │   ├── Dockerfile              # Multi-stage build backend (nouveau)
+ │   │   └── .dockerignore           # Exclusions backend (nouveau)
+ │   │
+ │   └── frontend/
+ │       ├── Dockerfile              # Multi-stage build frontend (nouveau)
+ │       ├── nginx.conf              # Config nginx pour SPA (nouveau)
+ │       └── .dockerignore           # Exclusions frontend (nouveau)
+ │
+ ├── backup/
+ │   ├── Dockerfile                  # Container backup (nouveau)
+ │   └── scripts/
+ │       ├── backup.sh               # Script backup PostgreSQL (nouveau)
+ │       └── entrypoint.sh           # Entrypoint cron (nouveau)
+ │
+ └── .github/workflows/
+     └── deploy-production.yml       # CI/CD GitHub Actions (nouveau)
 ```
 
 ## Commandes rapides
@@ -67,19 +63,19 @@ docker compose -f docker-compose.prod.yml down
 
 ## Services exposés
 
-| Service           | URL                         | Port interne |
-| ----------------- | --------------------------- | ------------ |
-| Frontend          | https://crm.example.com     | 8080         |
-| Backend API       | https://crmapi.example.com  | 3000         |
-| Traefik Dashboard | https://traefik.example.com | 8080         |
-| PostgreSQL        | Internal only               | 5432         |
+| Service     | URL                         | Port interne |
+| ----------- | --------------------------- | ------------ |
+| Frontend    | https://crm.fvienot.link    | 8080         |
+| Backend API | https://crmapi.fvienot.link | 3000         |
+| PostgreSQL  | Internal only               | 5432         |
 
 ## Volumes Docker
 
 | Volume          | Contenu             | Backup       |
 | --------------- | ------------------- | ------------ |
 | postgres_data   | Base de données     | ✅ R2        |
-| traefik-certs   | Certificats SSL     | ⚠️ Local     |
+| caddy-data      | Certificats SSL     | ⚠️ Local     |
+| caddy-config    | Config Caddy        | Non          |
 | backend-uploads | Fichiers uploadés   | À configurer |
 | backend-logs    | Logs applicatifs    | Non          |
 | backend-storage | Stockage temporaire | Non          |
@@ -91,7 +87,7 @@ docker compose -f docker-compose.prod.yml down
 - **Backend**: ~150MB (multi-stage build)
 - **Frontend**: ~25MB (nginx alpine)
 - **PostgreSQL**: ~250MB (alpine)
-- **Traefik**: ~100MB
+- **Caddy**: ~50MB
 
 ### Multi-stage builds
 
@@ -119,10 +115,16 @@ Le `.dockerignore` exclut :
 - ✅ Réseau backend isolé (internal: true)
 - ✅ Health checks sur tous les services
 - ✅ Resource limits (memory)
-- ✅ SSL automatique avec Let's Encrypt
-- ✅ Headers de sécurité (via Traefik)
-- ✅ Rate limiting
+- ✅ SSL automatique avec Caddy (Let's Encrypt)
+- ✅ Headers de sécurité (via Caddy)
+- ✅ Rate limiting (via backend)
 - ✅ Secrets via variables d'environnement
+
+### WebSockets
+
+**Caddy gère les WebSockets nativement!** Pas de configuration spéciale nécessaire.
+
+Socket.io fonctionne immédiatement à travers Caddy avec HTTPS.
 
 ## Monitoring
 
@@ -133,10 +135,10 @@ Le `.dockerignore` exclut :
 docker compose -f docker-compose.prod.yml ps
 
 # Backend
-curl https://api.example.com/health
+curl https://crmapi.fvienot.link/health
 
 # Frontend
-curl https://crm.example.com/health
+curl https://crm.fvienot.link/health
 
 # PostgreSQL
 docker compose -f docker-compose.prod.yml exec postgres pg_isready
@@ -148,11 +150,27 @@ docker compose -f docker-compose.prod.yml exec postgres pg_isready
 # Tous les services
 docker compose -f docker-compose.prod.yml logs -f
 
-# Service spécifique
-docker compose -f docker-compose.prod.yml logs -f backend
+# Caddy (reverse proxy)
+docker logs medical-crm-caddy -f
 
-# Dernières 100 lignes
-docker compose -f docker-compose.prod.yml logs --tail=100 backend
+# Backend
+docker logs medical-crm-backend -f
+
+# Frontend
+docker logs medical-crm-frontend -f
+```
+
+### Logs Caddy spécifiques
+
+```bash
+# Dernières erreurs
+docker logs medical-crm-caddy --tail 50 | grep error
+
+# Certificats
+docker logs medical-crm-caddy | grep "certificate obtained"
+
+# Requêtes
+docker logs medical-crm-caddy --tail 100
 ```
 
 ## Backups
@@ -195,6 +213,7 @@ Le workflow GitHub Actions :
    - Migrations DB si nécessaire
 
 3. **Health Check**
+
    - Vérification des endpoints
    - Notification si échec
 
@@ -216,8 +235,8 @@ docker compose -f docker-compose.prod.yml build --no-cache
 # Vérifier les logs
 docker compose -f docker-compose.prod.yml logs <service>
 
-# Vérifier la config
-docker compose -f docker-compose.prod.yml config
+# Vérifier la config Caddy
+docker exec medical-crm-caddy caddy validate --config /etc/caddy/Caddyfile
 
 # Redémarrer
 docker compose -f docker-compose.prod.yml restart <service>
@@ -227,8 +246,28 @@ docker compose -f docker-compose.prod.yml restart <service>
 
 1. Vérifier que les DNS pointent vers le serveur
 2. Vérifier les ports 80/443 ouverts
-3. Consulter les logs Traefik
-4. Tester avec Let's Encrypt staging d'abord
+3. Consulter les logs Caddy: `docker logs medical-crm-caddy | grep certificate`
+4. Vérifier que Caddy a les permissions sur le volume: `ls -la /var/lib/docker/volumes/`
+
+### WebSockets ne fonctionnent pas
+
+Avec Caddy, les WebSockets **fonctionnent immédiatement**. Si problème:
+
+```bash
+# Vérifier que Socket.io est initialisé dans le backend
+docker logs medical-crm-backend | grep "Socket.io server initialized"
+
+# Tester le polling
+curl -s "https://crmapi.fvienot.link/socket.io/?EIO=4&transport=polling"
+
+# Tester WebSocket upgrade
+curl -i -N \
+  -H "Connection: Upgrade" \
+  -H "Upgrade: websocket" \
+  -H "Sec-WebSocket-Version: 13" \
+  -H "Sec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==" \
+  "https://crmapi.fvienot.link/socket.io/?EIO=4&transport=websocket"
+```
 
 ### Espace disque plein
 
@@ -243,6 +282,16 @@ docker image prune -a
 docker system prune -a --volumes
 ```
 
+### Caddy ne recharge pas la config
+
+```bash
+# Forcer le reload
+docker exec medical-crm-caddy caddy reload --config /etc/caddy/Caddyfile
+
+# Ou redémarrer le conteneur
+docker restart medical-crm-caddy
+```
+
 ## Variables d'environnement requises
 
 Voir `.env.production.example` pour la liste complète.
@@ -252,12 +301,20 @@ Voir `.env.production.example` pour la liste complète.
 - `POSTGRES_PASSWORD`
 - `JWT_SECRET`
 - `R2_ACCESS_KEY_ID` / `R2_SECRET_ACCESS_KEY`
-- `DOMAIN` / `FRONTEND_DOMAIN`
+- `DOMAIN` / `FRONTEND_DOMAIN` / `BACKEND_DOMAIN`
 
 **Optionnelles:**
 
 - SMTP (pour les emails)
 - Monitoring (si ajouté)
+
+**Pourquoi Caddy?**
+
+- ✅ Configuration ultra-simple
+- ✅ Auto-HTTPS automatique (Let's Encrypt)
+- ✅ WebSockets natifs (pas de config spéciale)
+- ✅ Plus léger et rapide
+- ✅ Meilleur support HTTP/3
 
 ## Ressources recommandées (Hetzner)
 
@@ -273,6 +330,13 @@ Voir `.env.production.example` pour la liste complète.
 2. Configurer les secrets GitHub (pour CI/CD)
 3. Configurer Cloudflare R2
 4. Déployer !
+
+## Documentation Caddy
+
+- Documentation officielle: https://caddyserver.com/docs/
+- Syntaxe Caddyfile: https://caddyserver.com/docs/caddyfile/
+- Auto-HTTPS: https://caddyserver.com/docs/automatic-https/
+- Reverse Proxy: https://caddyserver.com/docs/caddyfile/directives/reverse_proxy
 
 ## Support
 

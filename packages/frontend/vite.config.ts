@@ -92,6 +92,10 @@ export default defineConfig({
       'vue-i18n',
       'chart.js',
       'vue-chartjs',
+      'bcryptjs',
+      'date-fns',
+      'dotenv',
+      'driver.js',
     ],
   },
 })
