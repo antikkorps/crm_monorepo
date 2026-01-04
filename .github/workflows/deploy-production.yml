@@ -4,7 +4,7 @@ on:
   push:
     branches:
       - main
-  workflow_dispatch:  # Allow manual trigger
+  workflow_dispatch: # Allow manual trigger
 
 # Prevent concurrent deployments
 concurrency:
@@ -38,7 +38,7 @@ jobs:
             echo "🚀 Starting deployment to Hetzner..."
 
             # Navigate to application directory
-            cd /srv/medical-crm || exit 1
+            cd /srv/crm_monorepo || exit 1
 
             # Pull latest code
             echo "📥 Pulling latest code..."
@@ -47,7 +47,7 @@ jobs:
 
             # Load environment variables
             echo "🔐 Loading environment variables..."
-            export $(grep -v '^#' .env.production | xargs)
+            export $(grep -v '^#' .env | xargs)
 
             # Stop old containers gracefully
             echo "⏸️  Stopping old containers..."
@@ -117,4 +117,3 @@ jobs:
           # curl -X POST ${{ secrets.SLACK_WEBHOOK_URL }} \
           #   -H 'Content-Type: application/json' \
           #   -d '{"text":"🚨 Production deployment failed!"}'
-
