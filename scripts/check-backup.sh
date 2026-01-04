@@ -28,7 +28,7 @@ warn() {
 
 # 1. Check if docker compose is running
 echo "1. Checking Docker services..."
-if docker compose -f docker-compose.prod.yml ps | grep -q "postgres-backup.*Up"; then
+if docker compose -f /srv/crm_monorepo/docker-compose.prod.yml ps | grep -q "medical-crm-backup.*Up"; then
     check "postgres-backup container is running"
 else
     warn "postgres-backup container is not running"
@@ -40,7 +40,7 @@ echo "2. Checking R2 environment variables..."
 
 # Read from .env
 if [ -f .env ]; then
-    source .env
+    source /srv/crm_monorepo/.env
 else
     echo -e "${RED}✗${NC} .env file not found"
     exit 1
@@ -74,7 +74,7 @@ fi
 echo ""
 echo "3. Testing Cloudflare R2 connection..."
 
-if docker compose -f docker-compose.prod.yml exec -T postgres-backup \
+if docker compose -f /srv/crm_monorepo/docker-compose.prod.yml exec -T postgres-backup \
     aws s3 ls \
     --endpoint-url "$R2_ENDPOINT_URL" \
     --region auto > /dev/null 2>&1; then
@@ -89,7 +89,7 @@ fi
 echo ""
 echo "4. Checking bucket: $R2_BUCKET_NAME"
 
-if docker compose -f docker-compose.prod.yml exec -T postgres-backup \
+if docker compose -f /srv/crm_monorepo/docker-compose.prod.yml exec -T postgres-backup \
     aws s3 ls "s3://$R2_BUCKET_NAME" \
     --endpoint-url "$R2_ENDPOINT_URL" \
     --region auto > /dev/null 2>&1; then
@@ -107,7 +107,7 @@ fi
 echo ""
 echo "5. Listing existing backups..."
 
-BACKUPS=$(docker compose -f docker-compose.prod.yml exec -T postgres-backup \
+BACKUPS=$(docker compose -f /srv/crm_monorepo/docker-compose.prod.yml exec -T postgres-backup \
     aws s3 ls "s3://$R2_BUCKET_NAME/postgres/" \
     --endpoint-url "$R2_ENDPOINT_URL" \
     --region auto 2>/dev/null || true)
@@ -126,7 +126,7 @@ fi
 echo ""
 echo "6. Checking for 'latest.sql.gz' marker..."
 
-LATEST=$(docker compose -f docker-compose.prod.yml exec -T postgres-backup \
+LATEST=$(docker compose -f /srv/crm_monorepo/docker-compose.prod.yml exec -T postgres-backup \
     aws s3 ls "s3://$R2_BUCKET_NAME/postgres/latest.sql.gz" \
     --endpoint-url "$R2_ENDPOINT_URL" \
     --region auto 2>/dev/null || true)
@@ -140,14 +140,14 @@ fi
 # 7. Check backup schedule
 echo ""
 echo "7. Checking backup schedule..."
-BACKUP_SCHEDULE=$(docker compose -f docker-compose.prod.yml config | grep -A 20 "postgres-backup:" | grep "BACKUP_SCHEDULE" | cut -d: -f2 | xargs)
+BACKUP_SCHEDULE=$(docker compose -f /srv/crm_monorepo/docker-compose.prod.yml config | grep -A 20 "postgres-backup:" | grep "BACKUP_SCHEDULE" | cut -d: -f2 | xargs)
 check "Backup schedule: $BACKUP_SCHEDULE"
 
 # 8. Check backup logs
 echo ""
 echo "8. Checking recent backup logs..."
 
-LOGS=$(docker compose -f docker-compose.prod.yml logs --tail=20 postgres-backup 2>&1 || true)
+LOGS=$(docker compose -f /srv/crm_monorepo/docker-compose.prod.yml logs --tail=20 postgres-backup 2>&1 || true)
 if [ -n "$LOGS" ]; then
     echo "Recent log entries:"
     echo "$LOGS"
@@ -162,7 +162,7 @@ read -p "Do you want to trigger a manual backup now? (y/N) " -n 1 -r
 echo
 if [[ $REPLY =~ ^[Yy]$ ]]; then
     echo "Starting manual backup..."
-    docker compose -f docker-compose.prod.yml exec postgres-backup /scripts/backup.sh
+    docker compose -f /srv/crm_monorepo/docker-compose.prod.yml exec postgres-backup /scripts/backup.sh
     check "Manual backup completed successfully"
 else
     echo "Skipping manual backup test"
@@ -180,6 +180,6 @@ echo "  - Backup service: Configured"
 echo ""
 echo "Next steps:"
 echo "  1. Verify backups appear in your Cloudflare R2 dashboard"
-echo "  2. Test restoration: docker compose -f docker-compose.prod.yml exec postgres-backup /scripts/test-restore.sh"
+echo "  2. Test restoration: docker compose -f /srv/crm_monorepo/docker-compose.prod.yml exec postgres-backup /scripts/test-restore.sh"
 echo "  3. Set up monitoring for backup failures"
 echo ""
