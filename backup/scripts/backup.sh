@@ -84,8 +84,8 @@ aws s3 ls "s3://${S3_BUCKET}/postgres/" \
     [ -z "$FILE" ] && continue
 
     # Extract date from filename (format: backup_dbname_YYYYMMDD_HHMMSS.sql.gz)
-    FILE_DATE=$(echo "$FILE" | grep -oP '\d{8}' | head -1)
-
+    FILE_DATE=$(echo "$FILE" | grep -oE '[0-9]{8}' | head -1)
+    
     # Skip if date not found
     [ -z "$FILE_DATE" ] && continue
 
@@ -160,7 +160,7 @@ aws s3 ls "s3://${S3_BUCKET}/volumes/" \
     FILE=$(echo "$line" | awk '{print $4}')
     [ -z "$FILE" ] && continue
 
-    FILE_DATE=$(echo "$FILE" | grep -oP '\d{8}' | head -1)
+    FILE_DATE=$(echo "$FILE" | grep -oE '[0-9]{8}' | head -1)
     [ -z "$FILE_DATE" ] && continue
 
     if [ "$FILE_DATE" -lt "$CUTOFF_DATE" ]; then
