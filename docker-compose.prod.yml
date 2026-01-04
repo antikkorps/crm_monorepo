@@ -141,7 +141,7 @@ services:
           memory: 256M
     labels:
       - "traefik.enable=true"
-      # HTTP Router
+      # HTTP Router - Main API
       - "traefik.http.routers.backend.rule=Host(`${BACKEND_DOMAIN}`)"
       - "traefik.http.routers.backend.entrypoints=websecure"
       - "traefik.http.routers.backend.tls.certresolver=letsencrypt"
@@ -152,12 +152,16 @@ services:
       # Security headers
       - "traefik.http.middlewares.backend-headers.headers.customResponseHeaders.X-Robots-Tag=noindex,nofollow"
       - "traefik.http.middlewares.backend-headers.headers.customResponseHeaders.Server="
-      # WebSocket support
-      - "traefik.http.middlewares.backend-headers.headers.customRequestHeaders.X-Forwarded-Proto=https"
       # Rate limiting (increased for SPA applications)
       - "traefik.http.middlewares.backend-ratelimit.ratelimit.average=1000"
       - "traefik.http.middlewares.backend-ratelimit.ratelimit.burst=500"
       - "traefik.http.middlewares.backend-ratelimit.ratelimit.period=1m"
+      # Socket.io Router - WebSocket support (no compression middleware)
+      - "traefik.http.routers.backend-socketio.rule=Host(`${BACKEND_DOMAIN}`) && PathPrefix(`/socket.io/`)"
+      - "traefik.http.routers.backend-socketio.entrypoints=websecure"
+      - "traefik.http.routers.backend-socketio.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.backend-socketio.service=backend"
+      - "traefik.http.routers.backend-socketio.middlewares=backend-ratelimit"
 
   # ============================================
   # Frontend (Vue.js SPA)
@@ -201,6 +205,12 @@ services:
       - "traefik.http.middlewares.frontend-headers.headers.contentSecurityPolicy=default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; connect-src 'self' https://${BACKEND_DOMAIN}; img-src 'self' data: https:; font-src 'self' data:;"
       # Compression
       - "traefik.http.middlewares.frontend-compress.compress=true"
+      # Router for main domain (redirects to CRM)
+      - "traefik.http.routers.main.rule=Host(`${DOMAIN}`)"
+      - "traefik.http.routers.main.entrypoints=websecure"
+      - "traefik.http.routers.main.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.main.service=frontend"
+      - "traefik.http.routers.main.middlewares=frontend-headers,frontend-compress"
 
   # ============================================
   # PostgreSQL Backup to Cloudflare R2
