@@ -141,14 +141,15 @@ services:
           memory: 256M
     labels:
       - "traefik.enable=true"
-      # HTTP Router - Main API
-      - "traefik.http.routers.backend.rule=Host(`${BACKEND_DOMAIN}`)"
+      # HTTP Router - Main API (exclude /socket.io/ for WebSocket)
+      - "traefik.http.routers.backend.rule=Host(`${BACKEND_DOMAIN}`) && !PathPrefix(`/socket.io/`)"
       - "traefik.http.routers.backend.entrypoints=websecure"
       - "traefik.http.routers.backend.tls.certresolver=letsencrypt"
       - "traefik.http.routers.backend.service=backend"
       - "traefik.http.services.backend.loadbalancer.server.port=3000"
       # Middlewares
       - "traefik.http.routers.backend.middlewares=backend-headers,backend-ratelimit"
+      - "traefik.http.routers.backend.priority=100"
       # Security headers
       - "traefik.http.middlewares.backend-headers.headers.customResponseHeaders.X-Robots-Tag=noindex,nofollow"
       - "traefik.http.middlewares.backend-headers.headers.customResponseHeaders.Server="
@@ -156,12 +157,13 @@ services:
       - "traefik.http.middlewares.backend-ratelimit.ratelimit.average=1000"
       - "traefik.http.middlewares.backend-ratelimit.ratelimit.burst=500"
       - "traefik.http.middlewares.backend-ratelimit.ratelimit.period=1m"
-      # Socket.io Router - WebSocket support (no compression middleware)
+      # Socket.io Router - WebSocket support (no middlewares to allow upgrade)
       - "traefik.http.routers.backend-socketio.rule=Host(`${BACKEND_DOMAIN}`) && PathPrefix(`/socket.io/`)"
       - "traefik.http.routers.backend-socketio.entrypoints=websecure"
       - "traefik.http.routers.backend-socketio.tls.certresolver=letsencrypt"
       - "traefik.http.routers.backend-socketio.service=backend"
-      - "traefik.http.routers.backend-socketio.middlewares=backend-ratelimit"
+      - "traefik.http.routers.backend-socketio.priority=1000"
+      - "traefik.http.routers.backend-socketio.middlewares="
 
   # ============================================
   # Frontend (Vue.js SPA)
