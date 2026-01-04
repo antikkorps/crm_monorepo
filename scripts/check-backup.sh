@@ -28,7 +28,7 @@ warn() {
 
 # 1. Check if docker compose is running
 echo "1. Checking Docker services..."
-if docker compose -f /srv/crm_monorepo/docker-compose.prod.yml ps | grep -q "postgres-backup.*Up"; then
+if docker compose -f /srv/crm_monorepo/docker-compose.prod.yml ps | grep -q "medical-crm-backup.*Up"; then
     check "postgres-backup container is running"
 else
     warn "postgres-backup container is not running"
