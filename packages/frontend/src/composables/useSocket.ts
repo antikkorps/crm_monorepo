@@ -65,7 +65,8 @@ export function useSocket(): UseSocketReturn {
       auth: {
         token: token,
       },
-      transports: ["websocket", "polling"],
+      transports: ["polling", "websocket"],
+      upgrade: true,
       timeout: 20000,
       reconnection: true,
       reconnectionDelay: 1000,
