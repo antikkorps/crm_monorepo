@@ -164,6 +164,9 @@ services:
       dockerfile: Dockerfile
     container_name: medical-crm-backup
     restart: unless-stopped
+    dns:
+      - 8.8.8.8
+      - 1.1.1.1
     networks:
       - backend
     volumes:
