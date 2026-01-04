@@ -203,7 +203,6 @@ networks:
   backend:
     name: medical-crm-backend
     driver: bridge
-    internal: true # No external access
 
 # ============================================
 # Volumes
