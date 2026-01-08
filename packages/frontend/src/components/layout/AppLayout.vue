@@ -298,13 +298,33 @@
           </v-btn>
         </template>
 
-        <v-list>
+        <v-list class="user-menu-list">
           <v-list-item
             prepend-icon="mdi-account"
             :title="$t('navigation.profile')"
             @click="$router.push('/profile')"
           ></v-list-item>
+
           <v-divider></v-divider>
+
+          <!-- All Tours Menu -->
+          <v-menu location="start" :close-on-content-click="false">
+            <template v-slot:activator="{ props }">
+              <v-list-item
+                v-bind="props"
+                prepend-icon="mdi-help-circle-outline"
+                title="Visites guidées"
+              >
+                <template v-slot:append>
+                  <v-icon>mdi-chevron-right</v-icon>
+                </template>
+              </v-list-item>
+            </template>
+            <AllToursMenu />
+          </v-menu>
+
+          <v-divider></v-divider>
+
           <v-list-item
             prepend-icon="mdi-logout"
             :title="$t('navigation.logout')"
@@ -354,6 +374,7 @@
 <script setup lang="ts">
 import NotificationCenterVuetify from "@/components/common/NotificationCenterVuetify.vue"
 import TourButton from "@/components/common/TourButton.vue"
+import AllToursMenu from "@/components/common/AllToursMenu.vue"
 import UserAvatar from "@/components/common/UserAvatar.vue"
 import { useAuthStore } from "@/stores/auth"
 import { useSettingsStore } from "@/stores/settings"
@@ -644,6 +665,22 @@ const onNavigationClick = () => {
 .user-card:hover .mdi-chevron-right {
   transform: translateX(2px);
   transition: transform 0.2s ease;
+}
+
+/* User menu dropdown - prevent horizontal scroll */
+.user-menu-list {
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+}
+
+.user-menu-list .v-list-item {
+  min-width: 0 !important;
+}
+
+.user-menu-list .v-list-item-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* Mobile specific styles */

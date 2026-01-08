@@ -161,6 +161,7 @@
       "codeLabel": "Code de vérification",
       "resetTitle": "Réinitialiser le mot de passe",
       "resetSubtitle": "Entrez votre nouveau mot de passe",
+      "resetError": "Une erreur s'est produite",
       "newPasswordLabel": "Nouveau mot de passe",
       "confirmPasswordLabel": "Confirmer le mot de passe",
       "confirmPasswordPlaceholder": "Confirmer le mot de passe",

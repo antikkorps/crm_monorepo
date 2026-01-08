@@ -10,6 +10,7 @@
           </div>
           <div class="page-actions mt-4 mt-md-0">
             <v-btn
+              id="tour-opportunities-forecast"
               prepend-icon="mdi-chart-line"
               variant="outlined"
               class="mr-2"
@@ -17,7 +18,7 @@
             >
               {{ $t('opportunities.forecast.title') }}
             </v-btn>
-            <v-btn prepend-icon="mdi-plus" color="primary" @click="openCreateDialog">
+            <v-btn id="tour-opportunities-add" prepend-icon="mdi-plus" color="primary" @click="openCreateDialog">
               {{ $t('opportunities.newOpportunity') }}
             </v-btn>
           </div>
@@ -25,7 +26,7 @@
       </div>
 
       <!-- Stats Cards -->
-      <v-row class="mb-6">
+      <v-row id="tour-opportunities-stats" class="mb-6">
         <v-col cols="12" sm="6" md="3">
           <v-card color="primary" variant="tonal">
             <v-card-text class="text-center">
@@ -111,7 +112,7 @@
       </v-expand-transition>
 
       <!-- Kanban Pipeline -->
-      <div v-if="loading && pipeline.length === 0" class="text-center py-12">
+      <div id="tour-opportunities-pipeline" v-if="loading && pipeline.length === 0" class="text-center py-12">
         <v-progress-circular indeterminate color="primary" size="64"></v-progress-circular>
         <p class="mt-4 text-body-1">{{ $t('opportunities.loading.pipeline') }}</p>
       </div>
@@ -122,7 +123,7 @@
         <v-btn prepend-icon="mdi-refresh" @click="loadPipeline" class="mt-4">{{ $t('common.retry') }}</v-btn>
       </div>
 
-      <div v-else class="pipeline-kanban">
+      <div v-else id="tour-opportunities-pipeline" class="pipeline-kanban">
         <v-row class="pipeline-columns">
           <v-col
             v-for="stage in pipeline"

@@ -1,97 +1,74 @@
 <template>
-  <v-menu>
+  <!-- Show button only if there's a tour available for current page -->
+  <v-tooltip v-if="currentTour" location="bottom">
     <template v-slot:activator="{ props }">
       <v-btn
-        icon="mdi-help-circle-outline"
         v-bind="props"
+        icon="mdi-help-circle-outline"
         variant="text"
         size="small"
         :color="pulse ? 'primary' : undefined"
         :class="{ 'tour-button-pulse': pulse }"
-      />
+        @click="startCurrentTour"
+      >
+        <v-icon>mdi-help-circle-outline</v-icon>
+        <v-badge
+          v-if="!isTourCompleted(currentTour.name)"
+          color="primary"
+          dot
+          floating
+        />
+      </v-btn>
     </template>
-
-    <v-list>
-      <v-list-subheader>Visites Guidées</v-list-subheader>
-
-      <v-list-item @click="startTour('dashboard')">
-        <template v-slot:prepend>
-          <v-icon>mdi-view-dashboard</v-icon>
-        </template>
-        <v-list-item-title>Dashboard</v-list-item-title>
-        <template v-slot:append>
-          <v-icon v-if="isTourCompleted('dashboard')" color="success" size="small">
-            mdi-check-circle
-          </v-icon>
-        </template>
-      </v-list-item>
-
-      <v-list-item @click="startTour('institutions')">
-        <template v-slot:prepend>
-          <v-icon>mdi-domain</v-icon>
-        </template>
-        <v-list-item-title>Institutions</v-list-item-title>
-        <template v-slot:append>
-          <v-icon v-if="isTourCompleted('institutions')" color="success" size="small">
-            mdi-check-circle
-          </v-icon>
-        </template>
-      </v-list-item>
-
-      <v-list-item @click="startTour('opportunities')">
-        <template v-slot:prepend>
-          <v-icon>mdi-chart-timeline-variant</v-icon>
-        </template>
-        <v-list-item-title>Pipeline</v-list-item-title>
-        <template v-slot:append>
-          <v-icon v-if="isTourCompleted('opportunities')" color="success" size="small">
-            mdi-check-circle
-          </v-icon>
-        </template>
-      </v-list-item>
-
-      <v-list-item @click="startTour('analytics')">
-        <template v-slot:prepend>
-          <v-icon>mdi-chart-box-outline</v-icon>
-        </template>
-        <v-list-item-title>Analytics</v-list-item-title>
-        <template v-slot:append>
-          <v-icon v-if="isTourCompleted('analytics')" color="success" size="small">
-            mdi-check-circle
-          </v-icon>
-        </template>
-      </v-list-item>
-
-      <v-divider class="my-2" />
-
-      <v-list-item @click="resetAllTours">
-        <template v-slot:prepend>
-          <v-icon>mdi-refresh</v-icon>
-        </template>
-        <v-list-item-title class="text-caption">Réinitialiser les visites</v-list-item-title>
-      </v-list-item>
-    </v-list>
-  </v-menu>
+    <span>{{ currentTour.tooltip }}</span>
+  </v-tooltip>
 </template>
 
 <script setup lang="ts">
 import { useTour, type TourName } from "@/composables/useTour"
-import { ref, onMounted } from "vue"
+import { ref, computed, onMounted } from "vue"
+import { useRoute } from "vue-router"
 
-const { startTour, isTourCompleted, resetAllTours } = useTour()
+const route = useRoute()
+const { startTour, isTourCompleted } = useTour()
 const pulse = ref(false)
 
-// Pulse animation on first visit
-onMounted(() => {
-  const hasSeenTourButton = localStorage.getItem("tour_button_seen")
-  if (!hasSeenTourButton) {
-    pulse.value = true
-    localStorage.setItem("tour_button_seen", "true")
+// Define available tours for each route
+const tourConfig: Record<string, { name: TourName; tooltip: string }> = {
+  "/dashboard": { name: "dashboard", tooltip: "Visite guidée du tableau de bord" },
+  "/institutions": { name: "institutions", tooltip: "Visite guidée des établissements" },
+  "/opportunities": { name: "opportunities", tooltip: "Visite guidée du pipeline" },
+  "/analytics": { name: "analytics", tooltip: "Visite guidée des analytics" },
+}
 
-    // Stop pulse after 10 seconds
-    setTimeout(() => {
-      pulse.value = false
-    }, 10000)
+// Get current tour based on route
+const currentTour = computed(() => {
+  const path = route.path
+  return tourConfig[path] || null
+})
+
+// Start the current page's tour
+const startCurrentTour = () => {
+  if (currentTour.value) {
+    startTour(currentTour.value.name)
+  }
+}
+
+// Pulse animation on first visit to a page with a tour
+onMounted(() => {
+  if (currentTour.value) {
+    const tourName = currentTour.value.name
+    const hasSeenTour = localStorage.getItem(`tour_seen_${tourName}`)
+
+    if (!hasSeenTour && !isTourCompleted(tourName)) {
+      pulse.value = true
+      localStorage.setItem(`tour_seen_${tourName}`, "true")
+
+      // Stop pulse after 10 seconds
+      setTimeout(() => {
+        pulse.value = false
+      }, 10000)
+    }
   }
 })
 </script>

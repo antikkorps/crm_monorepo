@@ -19,8 +19,9 @@
               </div>
             </div>
 
-            <div class="header-actions">
+            <div id="tour-institutions-actions" class="header-actions">
               <v-btn
+                id="tour-institutions-import"
                 variant="outlined"
                 prepend-icon="mdi-upload"
                 class="action-btn"
@@ -28,6 +29,7 @@
                 >{{ t("institutions.importCSV") }}</v-btn
               >
               <v-btn
+                id="tour-institutions-add"
                 color="primary"
                 prepend-icon="mdi-plus"
                 variant="elevated"
@@ -40,7 +42,7 @@
         </div>
 
         <!-- Stats Cards -->
-        <div class="stats-cards">
+        <div id="tour-institutions-stats" class="stats-cards">
           <v-card class="stats-card" variant="tonal">
             <v-card-text class="pa-4">
               <div class="d-flex align-center justify-space-between">
@@ -94,10 +96,11 @@
       </div>
 
       <!-- Search and Filter Section -->
-      <v-card class="filters-card mb-6" variant="outlined">
+      <v-card id="tour-institutions-filters" class="filters-card mb-6" variant="outlined">
         <v-card-text class="pa-4">
           <div class="d-flex flex-wrap align-center gap-4">
             <v-text-field
+              id="tour-institutions-search"
               v-model="searchQuery"
               :label="t('institutions.searchInstitutions')"
               prepend-inner-icon="mdi-magnify"
@@ -109,6 +112,7 @@
               @input="onSearchInput"
             />
             <v-btn
+              id="tour-institutions-advanced-filters"
               variant="text"
               color="primary"
               @click="showAdvancedFilters = !showAdvancedFilters"
@@ -202,7 +206,7 @@
       </v-card>
 
       <!-- Desktop Data Table -->
-      <v-card class="data-table-card d-none d-md-block" variant="flat">
+      <v-card id="tour-institutions-table" class="data-table-card d-none d-md-block" variant="flat">
         <TableSkeleton
           v-if="loading && institutions.length === 0"
           :rows="lazyParams.rows"

@@ -16,33 +16,111 @@ export function useTour() {
   const dashboardTour = (onComplete?: () => void): ReturnType<typeof driver> => {
     const tour = driver({
       showProgress: true,
+      showButtons: ["next", "previous", "close"],
       onDestroyed: onComplete,
       steps: [
         {
-          element: "#dashboard",
           popover: {
-            title: "🎉 Bienvenue dans Medical CRM !",
-            description: "Laissez-nous vous guider à travers les fonctionnalités principales de votre CRM.",
+            title: "🎉 Bienvenue sur votre Tableau de Bord !",
+            description:
+              "Découvrez en quelques étapes comment utiliser efficacement votre tableau de bord Medical CRM. Cette visite guidée vous prendra environ 2 minutes.",
+          },
+        },
+        {
+          element: "#tour-stats-cards",
+          popover: {
+            title: "📊 Vos Indicateurs Clés",
+            description:
+              "Ces 4 cartes affichent vos statistiques essentielles : établissements, tâches, équipes et revenus. Cliquez sur une carte pour accéder aux détails.",
             side: "bottom",
             align: "start",
           },
         },
         {
-          element: "#quick-actions",
+          element: "#tour-performance-metrics",
           popover: {
-            title: "Actions rapides",
-            description: "Accédez rapidement aux actions courantes comme créer un nouveau contact ou devis.",
+            title: "📈 Métriques de Performance",
+            description:
+              "Suivez l'évolution de vos performances : croissance du chiffre d'affaires, nouveaux clients et taux de conversion. Ces données vous aident à mesurer votre succès.",
             side: "bottom",
             align: "start",
           },
         },
         {
-          element: "#recent-activity",
+          element: "#tour-period-selector",
           popover: {
-            title: "Activité récente",
-            description: "Consultez les dernières activités de votre équipe.",
-            side: "bottom",
+            title: "🗓️ Sélecteur de Période",
+            description:
+              "Choisissez la période d'analyse : semaine, mois ou trimestre. Les graphiques et métriques s'ajustent automatiquement.",
+            side: "left",
             align: "start",
+          },
+        },
+        {
+          element: "#tour-kpi-charts",
+          popover: {
+            title: "📉 Graphiques KPI",
+            description:
+              "Visualisez l'évolution de vos indicateurs clés sous forme de graphiques interactifs. Idéal pour identifier les tendances et opportunités.",
+            side: "top",
+            align: "start",
+          },
+        },
+        {
+          element: "#tour-smart-alerts",
+          popover: {
+            title: "🔔 Alertes Intelligentes",
+            description:
+              "Recevez des alertes automatiques sur les actions importantes : devis à relancer, factures impayées, tâches en retard. Cliquez sur une alerte pour agir directement.",
+            side: "right",
+            align: "start",
+          },
+        },
+        {
+          element: "#tour-timeline",
+          popover: {
+            title: "⏱️ Timeline d'Activité",
+            description:
+              "Suivez en temps réel toutes les actions de votre équipe : créations, modifications, rendez-vous. Restez informé de tout ce qui se passe.",
+            side: "left",
+            align: "start",
+          },
+        },
+        {
+          element: "#tour-quick-actions",
+          popover: {
+            title: "⚡ Actions Rapides",
+            description:
+              "Accédez instantanément aux actions les plus courantes : créer un établissement, consulter les analytics ou planifier une tâche. Gain de temps assuré !",
+            side: "top",
+            align: "start",
+          },
+        },
+        {
+          element: "#tour-hot-leads",
+          popover: {
+            title: "🔥 Leads Chauds",
+            description:
+              "Identifiez vos opportunités les plus prometteuses grâce à notre système de scoring. Concentrez vos efforts sur les prospects à fort potentiel.",
+            side: "top",
+            align: "start",
+          },
+        },
+        {
+          element: "#tour-recent-tasks",
+          popover: {
+            title: "✅ Tâches Récentes",
+            description:
+              "Visualisez vos dernières tâches et leur statut. Restez organisé et ne manquez jamais une échéance importante.",
+            side: "top",
+            align: "start",
+          },
+        },
+        {
+          popover: {
+            title: "🎓 Vous êtes prêt !",
+            description:
+              "Vous maîtrisez maintenant les bases du tableau de bord. Explorez les autres sections pour découvrir toutes les fonctionnalités de Medical CRM. Bon travail ! 🚀",
           },
         },
       ],
@@ -57,42 +135,81 @@ export function useTour() {
   const institutionsTour = (onComplete?: () => void): ReturnType<typeof driver> => {
     const tour = driver({
       showProgress: true,
+      showButtons: ["next", "previous", "close"],
       onDestroyed: onComplete,
       steps: [
         {
-          element: "#institutions-list",
           popover: {
-            title: "Liste des établissements",
-            description: "Voyez tous les établissements médicaux que vous suivez.",
+            title: "🏥 Bienvenue dans la Gestion des Établissements !",
+            description:
+              "Découvrez comment gérer efficacement votre portefeuille d'établissements médicaux : création, recherche, filtrage et suivi.",
+          },
+        },
+        {
+          element: "#tour-institutions-stats",
+          popover: {
+            title: "📊 Statistiques en un Coup d'Œil",
+            description:
+              "Visualisez instantanément vos métriques clés : nombre total d'établissements, institutions actives, dossiers en attente de révision et établissements non conformes.",
             side: "bottom",
             align: "start",
           },
         },
         {
-          element: "#add-institution",
+          element: "#tour-institutions-add",
           popover: {
-            title: "Ajouter un établissement",
-            description: "Cliquez ici pour ajouter un nouvel établissement médical.",
-            side: "left",
-            align: "center",
-          },
-        },
-        {
-          element: "#search-institutions",
-          popover: {
-            title: "Recherche",
-            description: "Recherchez rapidement des établissements par nom, ville, etc.",
+            title: "➕ Créer un Établissement",
+            description:
+              "Ajoutez un nouvel établissement médical à votre portefeuille. Le formulaire vous guide à travers toutes les informations nécessaires : coordonnées, profil médical, contacts.",
             side: "bottom",
             align: "start",
           },
         },
         {
-          element: "#filters",
+          element: "#tour-institutions-import",
           popover: {
-            title: "Filtres",
-            description: "Filtrez les établissements par type, statut, ou segment.",
+            title: "📤 Import CSV",
+            description:
+              "Importez plusieurs établissements simultanément via un fichier CSV. Idéal pour migrer vos données existantes ou ajouter des établissements en masse.",
             side: "bottom",
             align: "start",
+          },
+        },
+        {
+          element: "#tour-institutions-search",
+          popover: {
+            title: "🔍 Recherche Rapide",
+            description:
+              "Recherchez instantanément un établissement par nom, ville, code postal ou tout autre critère. La recherche est en temps réel et très rapide.",
+            side: "bottom",
+            align: "start",
+          },
+        },
+        {
+          element: "#tour-institutions-advanced-filters",
+          popover: {
+            title: "🎯 Filtres Avancés",
+            description:
+              "Affinez votre recherche avec les filtres avancés : type d'établissement, ville, responsable assigné, statut de conformité. Combinez plusieurs filtres pour des résultats précis.",
+            side: "bottom",
+            align: "start",
+          },
+        },
+        {
+          element: "#tour-institutions-table",
+          popover: {
+            title: "📋 Tableau de Gestion",
+            description:
+              "Gérez vos établissements depuis ce tableau : consultez les détails, modifiez les informations, désactivez ou supprimez des institutions. Les établissements inactifs sont grisés.",
+            side: "top",
+            align: "start",
+          },
+        },
+        {
+          popover: {
+            title: "✨ Vous maîtrisez la gestion des établissements !",
+            description:
+              "Vous savez maintenant créer, rechercher, filtrer et gérer vos établissements médicaux. N'oubliez pas : les institutions enrichies (avec notes ou réunions) sont protégées et ne peuvent être que désactivées. 🔒",
           },
         },
       ],
@@ -107,33 +224,61 @@ export function useTour() {
   const opportunitiesTour = (onComplete?: () => void): ReturnType<typeof driver> => {
     const tour = driver({
       showProgress: true,
+      showButtons: ["next", "previous", "close"],
       onDestroyed: onComplete,
       steps: [
         {
-          element: "#opportunities-pipeline",
           popover: {
-            title: "Pipeline d'opportunités",
-            description: "Visualisez vos opportunités à travers le pipeline de vente.",
+            title: "💼 Bienvenue dans le Pipeline de Ventes !",
+            description:
+              "Gérez visuellement vos opportunités commerciales du premier contact jusqu'à la signature. Suivez, organisez et maximisez vos chances de succès.",
+          },
+        },
+        {
+          element: "#tour-opportunities-stats",
+          popover: {
+            title: "📈 Indicateurs du Pipeline",
+            description:
+              "Consultez vos métriques essentielles : nombre d'opportunités actives, valeur totale du pipeline, valeur pondérée (ajustée selon la probabilité) et opportunités en retard.",
             side: "bottom",
             align: "start",
           },
         },
         {
-          element: "#add-opportunity",
+          element: "#tour-opportunities-add",
           popover: {
-            title: "Nouvelle opportunité",
-            description: "Créez une nouvelle opportunité commerciale.",
+            title: "✨ Créer une Opportunité",
+            description:
+              "Ajoutez une nouvelle opportunité commerciale : choisissez l'établissement, définissez la valeur, le stade, la probabilité et la date de clôture prévue.",
             side: "left",
-            align: "center",
+            align: "start",
           },
         },
         {
-          element: "#forecast",
+          element: "#tour-opportunities-forecast",
           popover: {
-            title: "Prévisions",
-            description: "Consultez les prévisions de revenus basées sur vos opportunités.",
-            side: "bottom",
+            title: "🔮 Prévisions de Revenus",
+            description:
+              "Activez les prévisions pour visualiser vos revenus attendus mois par mois. Les calculs sont basés sur la valeur pondérée de vos opportunités (valeur × probabilité).",
+            side: "left",
             align: "start",
+          },
+        },
+        {
+          element: "#tour-opportunities-pipeline",
+          popover: {
+            title: "🎯 Pipeline Kanban Interactif",
+            description:
+              "Glissez-déposez vos opportunités d'un stade à l'autre pour mettre à jour leur progression. Chaque colonne affiche le nombre d'opportunités et la valeur totale. Cliquez sur une carte pour voir les détails.",
+            side: "top",
+            align: "start",
+          },
+        },
+        {
+          popover: {
+            title: "🚀 Le pipeline n'a plus de secrets pour vous !",
+            description:
+              "Vous savez maintenant gérer vos opportunités en mode visuel. Utilisez le drag & drop pour faire avancer vos deals et consultez les prévisions pour anticiper vos revenus. Bon closing ! 💪",
           },
         },
       ],
@@ -148,33 +293,61 @@ export function useTour() {
   const analyticsTour = (onComplete?: () => void): ReturnType<typeof driver> => {
     const tour = driver({
       showProgress: true,
+      showButtons: ["next", "previous", "close"],
       onDestroyed: onComplete,
       steps: [
         {
-          element: "#analytics-overview",
           popover: {
-            title: "Vue d'ensemble",
-            description: "Statistiques clés de votre CRM.",
+            title: "📊 Bienvenue dans Analytics & Intelligence !",
+            description:
+              "Analysez vos performances commerciales en profondeur : taux de réussite, revenus, cycle de vente et bien plus. Prenez des décisions basées sur les données.",
+          },
+        },
+        {
+          element: "#tour-analytics-kpis",
+          popover: {
+            title: "🎯 KPIs Stratégiques",
+            description:
+              "Suivez vos indicateurs de performance clés : taux de réussite (win rate), revenu prévu, durée moyenne du cycle de vente et valeur du pipeline actuel. Ces métriques vous donnent une vue globale instantanée.",
             side: "bottom",
             align: "start",
           },
         },
         {
-          element: "#charts",
+          element: "#tour-analytics-revenue",
           popover: {
-            title: "Graphiques",
-            description: "Visualisez vos données avec des graphiques interactifs.",
-            side: "bottom",
+            title: "💰 Répartition des Revenus",
+            description:
+              "Visualisez la distribution de vos revenus : deals gagnés (vert), pipeline actuel (bleu) et opportunités perdues (rouge). Comprenez où se trouve votre valeur.",
+            side: "top",
             align: "start",
           },
         },
         {
-          element: "#reports",
+          element: "#tour-analytics-winloss",
           popover: {
-            title: "Rapports",
-            description: "Générez des rapports détaillés sur vos activités.",
-            side: "bottom",
+            title: "🔍 Analyse Gains & Pertes",
+            description:
+              "Identifiez les raisons principales de vos victoires et de vos défaites. Capitalisez sur ce qui fonctionne et corrigez ce qui ne marche pas. L'amélioration continue commence ici !",
+            side: "top",
             align: "start",
+          },
+        },
+        {
+          element: "#tour-analytics-competitors",
+          popover: {
+            title: "⚔️ Intelligence Concurrentielle",
+            description:
+              "Analysez face à quels concurrents vous perdez le plus souvent et quelle valeur cela représente. Adaptez votre stratégie en conséquence pour mieux vous positionner.",
+            side: "top",
+            align: "start",
+          },
+        },
+        {
+          popover: {
+            title: "📈 Vous êtes maintenant un analyste expert !",
+            description:
+              "Vous maîtrisez les analytics de Medical CRM. Consultez régulièrement ces données pour optimiser vos performances et prendre des décisions éclairées. Data-driven success ! 🎓",
           },
         },
       ],
