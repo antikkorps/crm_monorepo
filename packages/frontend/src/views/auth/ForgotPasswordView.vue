@@ -172,66 +172,103 @@
                   {{ t('auth.forgotPassword.resetSubtitle') }}
                 </p>
 
-                <v-form @submit.prevent="handleResetPassword">
-                  <v-text-field
-                    v-model="newPassword"
-                    :label="t('auth.forgotPassword.newPasswordLabel')"
-                    :type="showPassword ? 'text' : 'password'"
-                    :placeholder="t('auth.forgotPassword.newPasswordPlaceholder')"
-                    prepend-inner-icon="mdi-lock-outline"
-                    :append-inner-icon="
-                      showPassword ? 'mdi-eye-outline' : 'mdi-eye-off-outline'
-                    "
-                    variant="outlined"
-                    :error-messages="errors.newPassword"
-                    :error="!!errors.newPassword"
-                    autocomplete="new-password"
-                    required
-                    autofocus
-                    class="mb-4"
-                    @click:append-inner="showPassword = !showPassword"
-                  />
+                 <v-form @submit.prevent="handleResetPassword">
+                   <v-text-field
+                     v-model="newPassword"
+                     :label="t('auth.forgotPassword.newPasswordLabel')"
+                     :type="showPassword ? 'text' : 'password'"
+                     :placeholder="t('auth.forgotPassword.newPasswordPlaceholder')"
+                     prepend-inner-icon="mdi-lock-outline"
+                     :append-inner-icon="
+                       showPassword ? 'mdi-eye-outline' : 'mdi-eye-off-outline'
+                     "
+                     variant="outlined"
+                     :error-messages="errors.newPassword"
+                     :error="!!errors.newPassword"
+                     autocomplete="new-password"
+                     required
+                     autofocus
+                     class="mb-4"
+                     @click:append-inner="showPassword = !showPassword"
+                     @input="validatePasswords"
+                   />
 
-                  <v-text-field
-                    v-model="confirmPassword"
-                    :label="t('auth.forgotPassword.confirmPasswordLabel')"
-                    :type="showPassword ? 'text' : 'password'"
-                    :placeholder="t('auth.forgotPassword.confirmPasswordPlaceholder')"
-                    prepend-inner-icon="mdi-lock-check-outline"
-                    :append-inner-icon="
-                      showPassword ? 'mdi-eye-outline' : 'mdi-eye-off-outline'
-                    "
-                    variant="outlined"
-                    :error-messages="errors.confirmPassword"
-                    :error="!!errors.confirmPassword"
-                    autocomplete="new-password"
-                    required
-                    class="mb-4"
-                    @click:append-inner="showPassword = !showPassword"
-                  />
+                   <v-text-field
+                     v-model="confirmPassword"
+                     :label="t('auth.forgotPassword.confirmPasswordLabel')"
+                     :type="showPassword ? 'text' : 'password'"
+                     :placeholder="t('auth.forgotPassword.confirmPasswordPlaceholder')"
+                     prepend-inner-icon="mdi-lock-check-outline"
+                     :append-inner-icon="
+                       showPassword ? 'mdi-eye-outline' : 'mdi-eye-off-outline'
+                     "
+                     variant="outlined"
+                     :error-messages="errors.confirmPassword"
+                     :error="!!errors.confirmPassword"
+                     autocomplete="new-password"
+                     required
+                     class="mb-4"
+                     @click:append-inner="showPassword = !showPassword"
+                     @input="validatePasswords"
+                   />
 
-                  <v-alert
-                    type="info"
-                    variant="tonal"
-                    density="compact"
-                    class="mb-4"
-                  >
-                    {{ t('auth.forgotPassword.passwordRequirements') }}
-                  </v-alert>
+                   <div class="mb-4 pa-3 bg-grey-lighten-4 rounded">
+                     <div class="text-caption text-medium-emphasis mb-2">
+                       {{ t('auth.forgotPassword.passwordRequirements') }}
+                     </div>
+                     <div class="text-caption">
+                       <div :class="hasMinLength ? 'text-success' : 'text-error'">
+                         <v-icon size="small">
+                           {{ hasMinLength ? 'mdi-check-circle' : 'mdi-circle-outline' }}
+                         </v-icon>
+                         {{ t('auth.forgotPassword.minLength') }}
+                       </div>
+                       <div :class="hasUppercase ? 'text-success' : 'text-error'">
+                         <v-icon size="small">
+                           {{ hasUppercase ? 'mdi-check-circle' : 'mdi-circle-outline' }}
+                         </v-icon>
+                         {{ t('auth.forgotPassword.uppercaseRequired') }}
+                       </div>
+                       <div :class="hasLowercase ? 'text-success' : 'text-error'">
+                         <v-icon size="small">
+                           {{ hasLowercase ? 'mdi-check-circle' : 'mdi-circle-outline' }}
+                         </v-icon>
+                         {{ t('auth.forgotPassword.lowercaseRequired') }}
+                       </div>
+                       <div :class="hasNumber ? 'text-success' : 'text-error'">
+                         <v-icon size="small">
+                           {{ hasNumber ? 'mdi-check-circle' : 'mdi-circle-outline' }}
+                         </v-icon>
+                         {{ t('auth.forgotPassword.numberRequired') }}
+                       </div>
+                       <div :class="hasSpecialChar ? 'text-success' : 'text-error'">
+                         <v-icon size="small">
+                           {{ hasSpecialChar ? 'mdi-check-circle' : 'mdi-circle-outline' }}
+                         </v-icon>
+                         {{ t('auth.forgotPassword.specialCharRequired') }}
+                       </div>
+                       <div v-if="confirmPassword" :class="passwordsMatch ? 'text-success' : 'text-error'">
+                         <v-icon size="small">
+                           {{ passwordsMatch ? 'mdi-check-circle' : 'mdi-circle-outline' }}
+                         </v-icon>
+                         {{ t('auth.forgotPassword.passwordsMatch') }}
+                       </div>
+                     </div>
+                   </div>
 
-                  <v-btn
-                    type="submit"
-                    color="primary"
-                    size="large"
-                    :loading="isLoading"
-                    :disabled="!newPassword || !confirmPassword"
-                    prepend-icon="mdi-lock-reset"
-                    variant="elevated"
-                    block
-                    class="mb-4"
-                  >
-                    {{ t('auth.forgotPassword.resetPasswordButton') }}
-                  </v-btn>
+                   <v-btn
+                     type="submit"
+                     color="primary"
+                     size="large"
+                     :loading="isLoading"
+                     :disabled="!isPasswordValid || !passwordsMatch"
+                     prepend-icon="mdi-lock-reset"
+                     variant="elevated"
+                     block
+                     class="mb-4"
+                   >
+                     {{ t('auth.forgotPassword.resetPasswordButton') }}
+                   </v-btn>
 
                   <v-alert
                     v-if="errorMessage"
@@ -263,7 +300,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive } from "vue"
+import { ref, reactive, computed } from "vue"
 import { useRouter } from "vue-router"
 import { useI18n } from "vue-i18n"
 import { apiClient } from "@/services/api"
@@ -286,6 +323,20 @@ const errors = reactive({
   code: "",
   newPassword: "",
   confirmPassword: "",
+})
+
+// Computed properties for live password validation
+const hasMinLength = computed(() => newPassword.value.length >= 8)
+const hasUppercase = computed(() => /[A-Z]/.test(newPassword.value))
+const hasLowercase = computed(() => /[a-z]/.test(newPassword.value))
+const hasNumber = computed(() => /\d/.test(newPassword.value))
+const hasSpecialChar = computed(() => /[@$!%*?&]/.test(newPassword.value))
+const passwordsMatch = computed(() => {
+  if (!confirmPassword.value) return false
+  return newPassword.value === confirmPassword.value
+})
+const isPasswordValid = computed(() => {
+  return hasMinLength.value && hasUppercase.value && hasLowercase.value && hasNumber.value && hasSpecialChar.value
 })
 
 const goToLogin = () => {
@@ -344,19 +395,23 @@ const handleVerifyCode = async () => {
   }
 }
 
-const handleResetPassword = async () => {
+const validatePasswords = () => {
   errors.newPassword = ""
   errors.confirmPassword = ""
 
-  // Validate password requirements
-  const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/
-  if (!passwordRegex.test(newPassword.value)) {
+  if (newPassword.value && !isPasswordValid.value) {
     errors.newPassword = t('auth.forgotPassword.passwordWeak')
-    return
   }
 
-  if (newPassword.value !== confirmPassword.value) {
+  if (confirmPassword.value && !passwordsMatch.value) {
     errors.confirmPassword = t('auth.forgotPassword.passwordMismatch')
+  }
+}
+
+const handleResetPassword = async () => {
+  validatePasswords()
+
+  if (errors.newPassword || errors.confirmPassword) {
     return
   }
 

@@ -308,7 +308,7 @@
           <v-divider></v-divider>
 
           <!-- All Tours Menu -->
-          <v-menu location="start" :close-on-content-click="false">
+          <v-menu location="start" :close-on-content-click="false" content-class="tours-submenu">
             <template v-slot:activator="{ props }">
               <v-list-item
                 v-bind="props"
@@ -681,6 +681,16 @@ const onNavigationClick = () => {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+/* Tours submenu - prevent horizontal scroll */
+:deep(.tours-submenu) {
+  overflow-x: hidden !important;
+}
+
+/* Prevent translateX transform on tour menu items (causes horizontal scroll) */
+:deep(.tours-submenu .v-list-item:hover) {
+  transform: none !important;
 }
 
 /* Mobile specific styles */

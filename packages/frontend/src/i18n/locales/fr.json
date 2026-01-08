@@ -167,7 +167,16 @@
       "confirmPasswordPlaceholder": "Confirmer le mot de passe",
       "resetPasswordButton": "Réinitialiser",
       "newPasswordPlaceholder": "Nouveau mot de passe",
-      "passwordRequirements": "Le mot de passe doit contenir au moins 8 caractères, une lettre majuscule, une lettre minuscule, un chiffre et un caractère spécial"
+      "passwordRequirements": "Le mot de passe doit contenir au moins 8 caractères, une lettre majuscule, une lettre minuscule, un chiffre et un caractère spécial",
+      "minLength": "Au moins 8 caractères",
+      "uppercaseRequired": "Une lettre majuscule",
+      "lowercaseRequired": "Une lettre minuscule",
+      "numberRequired": "Un chiffre",
+      "specialCharRequired": "Un caractère spécial (@$!%*?&)",
+      "passwordsMatch": "Les mots de passe correspondent",
+      "passwordWeak": "Le mot de passe ne respecte pas tous les critères sécurité",
+      "passwordMismatch": "Les mots de passe ne correspondent pas",
+      "resetSuccess": "Mot de passe réinitialisé avec succès"
     },
     "loginTitle": "Connectez-vous à votre compte",
     "loginError": "Erreur de connexion. Vérifiez vos identifiants.",

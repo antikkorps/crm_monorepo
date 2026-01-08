@@ -1,10 +1,11 @@
 <template>
-  <v-list>
+  <v-list class="allTours">
     <v-list-subheader>Visites Guidées</v-list-subheader>
 
     <v-list-item
       v-for="tour in availableTours"
       :key="tour.name"
+      class="tour-item"
       @click="handleTourClick(tour)"
     >
       <template v-slot:prepend>
@@ -22,11 +23,11 @@
 
     <v-divider class="my-2" />
 
-    <v-list-item @click="resetAllTours">
+    <v-list-item class="tour-item" @click="resetAllTours">
       <template v-slot:prepend>
         <v-icon>mdi-refresh</v-icon>
       </template>
-      <v-list-item-title class="text-caption">
+      <v-list-item-title class="reinit text-caption">
         Réinitialiser toutes les visites
       </v-list-item-title>
     </v-list-item>
@@ -88,3 +89,17 @@ const handleTourClick = (tour: TourConfig) => {
   }
 }
 </script>
+
+<style scoped>
+.allTours {
+  overflow-x: hidden;
+}
+
+.tour-item {
+  overflow-x: hidden;
+}
+
+.reinit {
+  overflow-x: hidden;
+}
+</style>
