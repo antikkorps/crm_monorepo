@@ -13,9 +13,10 @@ export function useTour() {
   /**
    * Dashboard tour
    */
-  const dashboardTour = (): ReturnType<typeof driver> => {
+  const dashboardTour = (onComplete?: () => void): ReturnType<typeof driver> => {
     const tour = driver({
       showProgress: true,
+      onDestroyed: onComplete,
       steps: [
         {
           element: "#dashboard",
@@ -53,9 +54,10 @@ export function useTour() {
   /**
    * Institutions tour
    */
-  const institutionsTour = (): ReturnType<typeof driver> => {
+  const institutionsTour = (onComplete?: () => void): ReturnType<typeof driver> => {
     const tour = driver({
       showProgress: true,
+      onDestroyed: onComplete,
       steps: [
         {
           element: "#institutions-list",
@@ -102,9 +104,10 @@ export function useTour() {
   /**
    * Opportunities tour
    */
-  const opportunitiesTour = (): ReturnType<typeof driver> => {
+  const opportunitiesTour = (onComplete?: () => void): ReturnType<typeof driver> => {
     const tour = driver({
       showProgress: true,
+      onDestroyed: onComplete,
       steps: [
         {
           element: "#opportunities-pipeline",
@@ -142,9 +145,10 @@ export function useTour() {
   /**
    * Analytics tour
    */
-  const analyticsTour = (): ReturnType<typeof driver> => {
+  const analyticsTour = (onComplete?: () => void): ReturnType<typeof driver> => {
     const tour = driver({
       showProgress: true,
+      onDestroyed: onComplete,
       steps: [
         {
           element: "#analytics-overview",
@@ -189,30 +193,30 @@ export function useTour() {
       activeTour.value = null
     }
 
+    // Callback to mark tour as completed
+    const onComplete = () => {
+      markTourCompleted(tourName)
+      activeTour.value = null
+    }
+
     let tour: ReturnType<typeof driver>
 
     switch (tourName) {
       case "dashboard":
-        tour = dashboardTour()
+        tour = dashboardTour(onComplete)
         break
       case "institutions":
-        tour = institutionsTour()
+        tour = institutionsTour(onComplete)
         break
       case "opportunities":
-        tour = opportunitiesTour()
+        tour = opportunitiesTour(onComplete)
         break
       case "analytics":
-        tour = analyticsTour()
+        tour = analyticsTour(onComplete)
         break
       default:
         return
     }
-
-    // Mark tour as completed when it's finished
-    tour.onDestroyStarted(() => {
-      markTourCompleted(tourName)
-      activeTour.value = null
-    })
 
     tour.drive()
     activeTour.value = tour

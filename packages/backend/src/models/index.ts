@@ -16,6 +16,7 @@ import { Note } from "./Note"
 import { NoteShare } from "./NoteShare"
 import { Opportunity } from "./Opportunity"
 import { Payment } from "./Payment"
+import { PasswordResetToken } from "./PasswordResetToken"
 import { Quote } from "./Quote"
 import { QuoteLine } from "./QuoteLine"
 import { QuoteReminder } from "./QuoteReminder"
@@ -691,6 +692,20 @@ User.hasMany(SecurityLog, {
   onDelete: "SET NULL",
 })
 
+// PasswordResetToken associations
+PasswordResetToken.belongsTo(User, {
+  foreignKey: "userId",
+  as: "user",
+  onDelete: "CASCADE",
+})
+
+// User password reset token associations
+User.hasMany(PasswordResetToken, {
+  foreignKey: "userId",
+  as: "passwordResetTokens",
+  onDelete: "CASCADE",
+})
+
 // User reminder rule associations
 User.hasMany(ReminderRule, {
   foreignKey: "createdBy",
@@ -905,6 +920,7 @@ export {
   Note,
   NoteShare,
   Opportunity,
+  PasswordResetToken,
   Payment,
   Quote,
   QuoteLine,
@@ -946,6 +962,7 @@ export default {
   Invoice,
   InvoiceLine,
   Payment,
+  PasswordResetToken,
   DocumentTemplate,
   DocumentVersion,
   Meeting,

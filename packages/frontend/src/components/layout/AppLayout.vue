@@ -261,7 +261,9 @@
     <!-- App Bar -->
     <v-app-bar color="primary" density="compact" elevation="2">
       <template v-slot:prepend>
-        <v-app-bar-nav-icon @click="mobile ? (drawer = !drawer) : (rail = !rail)"></v-app-bar-nav-icon>
+        <v-app-bar-nav-icon
+          @click="mobile ? (drawer = !drawer) : (rail = !rail)"
+        ></v-app-bar-nav-icon>
       </template>
 
       <v-spacer></v-spacer>
@@ -270,9 +272,6 @@
       <v-btn icon @click="showSearch = true">
         <v-icon>mdi-magnify</v-icon>
       </v-btn>
-
-      <!-- Language Selector -->
-      <LanguageSelector />
 
       <!-- Tour Button -->
       <TourButton />
@@ -353,10 +352,9 @@
 </template>
 
 <script setup lang="ts">
-import LanguageSelector from "@/components/common/LanguageSelector.vue"
 import NotificationCenterVuetify from "@/components/common/NotificationCenterVuetify.vue"
-import UserAvatar from "@/components/common/UserAvatar.vue"
 import TourButton from "@/components/common/TourButton.vue"
+import UserAvatar from "@/components/common/UserAvatar.vue"
 import { useAuthStore } from "@/stores/auth"
 import { useSettingsStore } from "@/stores/settings"
 import { UserRole } from "@medical-crm/shared"
@@ -655,29 +653,29 @@ const onNavigationClick = () => {
     height: 100vh !important;
     z-index: 1006 !important;
   }
-  
+
   /* Add overlay backdrop when drawer is open on mobile */
   :deep(.v-overlay__scrim) {
     background-color: rgba(0, 0, 0, 0.5) !important;
   }
-  
+
   /* Ensure main content is not affected by drawer on mobile */
   :deep(.v-main) {
     padding-left: 0 !important;
   }
-  
+
   /* Make sure app bar nav icon is visible on mobile */
   .v-app-bar .v-app-bar-nav-icon {
     display: flex !important;
   }
-  
+
   /* Style for mobile close button in drawer */
   .v-list-item .v-btn[icon="mdi-close"] {
     color: rgba(var(--v-theme-error)) !important;
     background: rgba(var(--v-theme-error), 0.1) !important;
     border-radius: 8px !important;
   }
-  
+
   .v-list-item .v-btn[icon="mdi-close"]:hover {
     background: rgba(var(--v-theme-error), 0.2) !important;
     transform: scale(1.05);

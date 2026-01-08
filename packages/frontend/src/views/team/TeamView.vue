@@ -6,10 +6,10 @@
          <div class="header-content">
            <h1 class="page-title">
              <v-icon>mdi-account-group</v-icon>
-             Team Management
+             {{ t('teams.title') }}
            </h1>
            <p class="page-description">
-             Manage team members, roles, and territory assignments
+             {{ t('teams.subtitle') }}
            </p>
          </div>
          <div class="header-actions">
@@ -20,7 +20,7 @@
              @click="showCreateTeamDialog = true"
              class="add-team-btn"
            >
-             Create Team
+             {{ t('teams.createNew') }}
            </v-btn>
            <v-btn
              color="primary"
@@ -28,7 +28,7 @@
              @click="showCreateUserDialog = true"
              class="add-member-btn"
            >
-             Add Member
+             {{ t('teams.addMember') }}
            </v-btn>
          </div>
        </div>
@@ -44,7 +44,7 @@
                  </div>
                  <div class="stat-info">
                    <div class="stat-value">{{ teamStore.teamStats.totalMembers }}</div>
-                   <div class="stat-label">Total Members</div>
+                   <div class="stat-label">{{ t('teams.totalMembers') }}</div>
                  </div>
                </div>
              </v-card-text>
@@ -58,7 +58,7 @@
                  </div>
                  <div class="stat-info">
                    <div class="stat-value">{{ teamStore.teamStats.activeMembers }}</div>
-                   <div class="stat-label">Active Members</div>
+                   <div class="stat-label">{{ t('teams.activeMembers') }}</div>
                  </div>
                </div>
              </v-card-text>
@@ -72,7 +72,7 @@
                  </div>
                  <div class="stat-info">
                    <div class="stat-value">{{ teamStore.teamStats.totalTeams }}</div>
-                   <div class="stat-label">Teams</div>
+                   <div class="stat-label">{{ t('teams.teamsCount') }}</div>
                  </div>
                </div>
              </v-card-text>
@@ -86,7 +86,7 @@
                  </div>
                  <div class="stat-info">
                    <div class="stat-value">{{ adminCount }}</div>
-                   <div class="stat-label">Administrators</div>
+                   <div class="stat-label">{{ t('teams.administrators') }}</div>
                  </div>
                </div>
              </v-card-text>
@@ -99,7 +99,7 @@
          <div class="search-section">
            <v-text-field
              v-model="searchQuery"
-             placeholder="Search team members..."
+             :placeholder="t('teams.searchPlaceholder')"
              prepend-inner-icon="mdi-magnify"
              class="search-input"
              density="comfortable"
@@ -112,7 +112,7 @@
              :items="roleFilterOptions"
              item-title="label"
              item-value="value"
-             placeholder="Filter by role"
+             :placeholder="t('teams.filterByRole')"
              clearable
              class="role-filter"
              density="comfortable"
@@ -123,7 +123,7 @@
              :items="teamFilterOptions"
              item-title="label"
              item-value="value"
-             placeholder="Filter by team"
+             :placeholder="t('teams.filterByTeam')"
              clearable
              class="team-filter"
              :loading="teamStore.loading"
@@ -135,7 +135,7 @@
              :items="statusFilterOptions"
              item-title="label"
              item-value="value"
-             placeholder="Filter by status"
+             :placeholder="t('teams.filterByStatus')"
              clearable
              class="status-filter"
              density="comfortable"
@@ -150,7 +150,7 @@
              @click="viewMode = 'grid'"
              size="small"
            >
-             Grid View
+             {{ t('teams.gridView') }}
            </v-btn>
            <v-btn
              :color="viewMode === 'list' ? 'primary' : 'secondary'"
@@ -159,7 +159,7 @@
              @click="viewMode = 'list'"
              size="small"
            >
-             List View
+             {{ t('teams.listView') }}
            </v-btn>
          </div>
        </div>
@@ -167,7 +167,7 @@
        <!-- Loading State -->
        <div v-if="teamStore.loading" class="loading-container">
          <v-progress-circular indeterminate color="primary" />
-         <p>Loading team members...</p>
+         <p>{{ t('teams.loadingMembers') }}</p>
        </div>
 
        <!-- Error State -->
@@ -192,13 +192,12 @@
        <div v-else-if="filteredMembers.length === 0" class="empty-state">
          <div class="empty-content">
            <v-icon class="empty-icon">mdi-account-group</v-icon>
-           <h3>No team members found</h3>
+           <h3>{{ t('teams.noMembersFound') }}</h3>
            <p v-if="hasActiveFilters">
-             No team members match your current filters. Try adjusting your search
-             criteria.
+             {{ t('teams.noMembersMatchFilters') }}
            </p>
            <p v-else>
-             Get started by adding your first team member to begin collaboration.
+             {{ t('teams.getStarted') }}
            </p>
            <div class="empty-actions">
              <v-btn
@@ -208,14 +207,14 @@
                prepend-icon="mdi-filter-off"
                @click="clearFilters"
              >
-               Clear Filters
+               {{ t('teams.clearFilters') }}
              </v-btn>
              <v-btn
                color="primary"
                prepend-icon="mdi-account-plus"
                @click="showCreateUserDialog = true"
              >
-               Add Member
+               {{ t('teams.addMember') }}
              </v-btn>
            </div>
          </div>
@@ -228,7 +227,7 @@
             <!-- Teams Section -->
             <div class="teams-section">
               <div class="section-header">
-                <h3>Teams ({{ teamStore.teams.length }})</h3>
+                <h3>{{ t('teams.teamsCount') }} ({{ teamStore.teams.length }})</h3>
               </div>
               <div class="teams-grid">
                 <TeamCard
@@ -247,7 +246,7 @@
             <!-- Members Section -->
             <div class="members-section">
               <div class="section-header">
-                <h3>Team Members ({{ filteredMembers.length }})</h3>
+                <h3>{{ t('teams.teamMembers') }} ({{ filteredMembers.length }})</h3>
               </div>
 
             <!-- Grid View -->
@@ -471,6 +470,13 @@
          @team-updated="handleTeamUpdated"
          @team-deleted="handleTeamDeleted"
        />
+
+       <!-- Add Team Member Dialog -->
+       <AddTeamMemberDialog
+         v-model="showAddMemberDialog"
+         :team="selectedTeamForMember"
+         @member-added="handleMemberAdded"
+       />
     </div>
   </AppLayout>
 </template>
@@ -484,7 +490,8 @@ import UserProfileForm from "@/components/team/UserProfileForm.vue"
 import PasswordResetDialog from "@/components/team/PasswordResetDialog.vue"
 import CreateTeamDialog from "@/components/team/CreateTeamDialog.vue"
 import EditTeamDialog from "@/components/team/EditTeamDialog.vue"
-import { institutionsApi, teamApi, teamsApi, usersApi } from "@/services/api"
+import AddTeamMemberDialog from "@/components/team/AddTeamMemberDialog.vue"
+import { institutionsApi, teamApi, usersApi } from "@/services/api"
 import { AvatarService } from "@/services/avatarService"
 import { useTeamStore } from "@/stores/team"
 import { useRouter } from "vue-router"
@@ -492,13 +499,16 @@ import type {
   User,
   UserCreationAttributes,
   UserUpdateAttributes,
+  ApiResponse,
 } from "@medical-crm/shared"
 import { useSnackbar } from "@/composables/useSnackbar"
+import { useI18n } from "vue-i18n"
 import { computed, onMounted, ref } from "vue"
 
 const teamStore = useTeamStore()
 const router = useRouter()
 const { showSnackbar } = useSnackbar()
+const { t } = useI18n()
 
 // Component state
 const viewMode = ref<"grid" | "list">("grid")
@@ -512,8 +522,10 @@ const showManageUserDialog = ref(false)
 const showPasswordResetDialog = ref(false)
 const showCreateTeamDialog = ref(false)
 const showEditTeamDialog = ref(false)
+const showAddMemberDialog = ref(false)
 const selectedUser = ref<User | null>(null)
 const selectedTeamForEdit = ref<any | null>(null)
+const selectedTeamForMember = ref<any | null>(null)
 const formLoading = ref(false)
 const passwordResetLoading = ref(false)
 
@@ -528,27 +540,27 @@ const managementData = ref({
 const teamOptions = ref<Array<{ label: string; value: string }>>([])
 const institutionOptions = ref<Array<{ label: string; value: string }>>([])
 
-const roleFilterOptions = [
-  { label: "Super Admin", value: "super_admin" },
-  { label: "Team Admin", value: "team_admin" },
-  { label: "User", value: "user" },
-]
+const roleFilterOptions = computed(() => [
+  { label: t('profile.roles.super_admin'), value: "super_admin" },
+  { label: t('profile.roles.team_admin'), value: "team_admin" },
+  { label: t('profile.roles.user'), value: "user" },
+])
 
 const teamFilterOptions = computed(() => teamOptions.value)
 
-const statusFilterOptions = [
-  { label: "Active", value: "active" },
-  { label: "Inactive", value: "inactive" },
-]
+const statusFilterOptions = computed(() => [
+  { label: t('teams.statusActive'), value: "active" },
+  { label: t('teams.statusInactive'), value: "inactive" },
+])
 
-const tableHeaders = [
-  { title: "Name", key: "firstName", sortable: true },
-  { title: "Role", key: "role", sortable: true },
-  { title: "Team", key: "teamId", sortable: true },
-  { title: "Status", key: "isActive", sortable: true },
-  { title: "Last Login", key: "lastLoginAt", sortable: true },
-  { title: "Actions", key: "actions", sortable: false },
-]
+const tableHeaders = computed(() => [
+  { title: t('common.labels.name'), key: "firstName", sortable: true },
+  { title: t('teams.role'), key: "role", sortable: true },
+  { title: t('teams.team'), key: "teamId", sortable: true },
+  { title: t('common.labels.status'), key: "isActive", sortable: true },
+  { title: t('teams.lastLogin'), key: "lastLoginAt", sortable: true },
+  { title: t('common.actions.view'), key: "actions", sortable: false },
+])
 
 const adminCount = computed(() => {
   return (
@@ -633,9 +645,9 @@ const getUserAvatarColor = (user: User) => {
 
 const getRoleLabel = (role: string) => {
   const labels = {
-    super_admin: "Super Admin",
-    team_admin: "Team Admin",
-    user: "User",
+    super_admin: t('profile.roles.super_admin'),
+    team_admin: t('profile.roles.team_admin'),
+    user: t('profile.roles.user'),
   }
   return labels[role as keyof typeof labels] || role
 }
@@ -652,7 +664,7 @@ const getRoleSeverity = (role: string) => {
 const getTeamName = (teamId?: string) => {
   if (!teamId) return ""
   const team = teamStore.getTeamById(teamId)
-  return team?.name || "Unknown Team"
+  return team?.name || t('teams.unknownTeam')
 }
 
 const getUserInstitutions = (userId: string) => {
@@ -674,9 +686,9 @@ const formatLastLogin = (date: Date | string) => {
   const diffTime = now.getTime() - loginDate.getTime()
   const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24))
 
-  if (diffDays === 0) return "Today"
-  if (diffDays === 1) return "Yesterday"
-  if (diffDays < 7) return `${diffDays} days ago`
+  if (diffDays === 0) return t('common.time.today')
+  if (diffDays === 1) return t('common.time.yesterday')
+  if (diffDays < 7) return t('teams.daysAgo', { days: diffDays })
 
   return loginDate.toLocaleDateString()
 }
@@ -696,7 +708,7 @@ const loadTeamData = async () => {
 const loadOptions = async () => {
   try {
     // Load teams
-    const teamsResponse = await teamApi.getAll()
+    const teamsResponse = await teamApi.getAll() as ApiResponse<any[]>
     const teams = teamsResponse.data || teamsResponse
     if (Array.isArray(teams)) {
       teamOptions.value = teams.map((team: any) => ({
@@ -709,7 +721,7 @@ const loadOptions = async () => {
     }
 
     // Load institutions
-    const institutionsResponse = await institutionsApi.getAll()
+    const institutionsResponse = await institutionsApi.getAll() as ApiResponse<any>
     const institutionsData = institutionsResponse.data || institutionsResponse
 
     // Handle paginated response: {institutions: [...], pagination: {...}}
@@ -735,15 +747,20 @@ const loadOptions = async () => {
   }
 }
 
-const createUser = async (userData: UserCreationAttributes) => {
+const createUser = async (userData: UserCreationAttributes | UserUpdateAttributes) => {
   try {
     formLoading.value = true
-    const response = await usersApi.create(userData)
+    // Type guard to ensure we have a password for creation
+    if (!('password' in userData) || !userData.password) {
+      showSnackbar(t('teams.passwordRequired'), "error")
+      return
+    }
+    await usersApi.create(userData as UserCreationAttributes)
     showCreateUserDialog.value = false
-    showSnackbar("User created successfully", "success")
+    showSnackbar(t('teams.userCreatedSuccess'), "success")
     await loadTeamData()
   } catch (error: any) {
-    const message = error?.message || "Failed to create user"
+    const message = error?.message || t('teams.errorCreatingUser')
     showSnackbar(message, "error")
   } finally {
     formLoading.value = false
@@ -845,9 +862,8 @@ const manageTeam = (team: any) => {
 }
 
 const addMemberToTeam = (team: any) => {
-  // For now, open create user dialog
-  // TODO: Could be improved with a specific "add to team" dialog
-  showCreateUserDialog.value = true
+  selectedTeamForMember.value = team
+  showAddMemberDialog.value = true
 }
 
 const viewTeamDetails = (team: any) => {
@@ -855,30 +871,42 @@ const viewTeamDetails = (team: any) => {
   router.push(`/teams/${team.id}`)
 }
 
-const handleTeamCreated = async (team: any) => {
+const handleTeamCreated = async () => {
   try {
     await teamStore.fetchTeams()
-    showSnackbar("Team created successfully", "success")
+    showSnackbar(t('teams.teamCreatedSuccess'), "success")
   } catch (error) {
     console.error("Error refreshing teams:", error)
   }
 }
 
-const handleTeamUpdated = async (team: any) => {
+const handleTeamUpdated = async () => {
   try {
     await teamStore.fetchTeams()
-    showSnackbar("Team updated successfully", "success")
+    showSnackbar(t('teams.teamUpdatedSuccess'), "success")
   } catch (error) {
     console.error("Error refreshing teams:", error)
   }
 }
 
-const handleTeamDeleted = async (teamId: string) => {
+const handleTeamDeleted = async () => {
   try {
     await teamStore.fetchTeams()
-    showSnackbar("Team deleted successfully", "success")
+    showSnackbar(t('teams.teamDeletedSuccess'), "success")
   } catch (error) {
     console.error("Error refreshing teams:", error)
+  }
+}
+
+const handleMemberAdded = async () => {
+  try {
+    await Promise.all([
+      teamStore.fetchTeams(),
+      teamStore.fetchTeamMembers()
+    ])
+    showSnackbar(t('teams.memberAddedSuccess'), "success")
+  } catch (error) {
+    console.error("Error refreshing team data:", error)
   }
 }
 

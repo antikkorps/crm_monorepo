@@ -6,6 +6,7 @@ import { createRouter, createWebHistory } from "vue-router"
 // Lazy load components for better performance
 const Landing = () => import("@/views/LandingView.vue")
 const Login = () => import("@/views/auth/LoginView.vue")
+const ForgotPassword = () => import("@/views/auth/ForgotPasswordView.vue")
 const Dashboard = () => import("@/views/DashboardView.vue")
 const MedicalInstitutions = () =>
   import("@/views/institutions/MedicalInstitutionsView.vue")
@@ -50,6 +51,15 @@ const routes: RouteRecordRaw[] = [
     path: "/login",
     name: "Login",
     component: Login,
+    meta: {
+      requiresAuth: false,
+      layout: "auth",
+    },
+  },
+  {
+    path: "/forgot-password",
+    name: "ForgotPassword",
+    component: ForgotPassword,
     meta: {
       requiresAuth: false,
       layout: "auth",
@@ -355,8 +365,8 @@ router.beforeEach(async (to, _from, next) => {
     }
   }
 
-  // Redirect to dashboard if already authenticated and trying to access login or landing
-  if ((to.name === "Login" || to.name === "Landing") && authStore.isAuthenticated) {
+  // Redirect to dashboard if already authenticated and trying to access login, forgot password or landing
+  if ((to.name === "Login" || to.name === "ForgotPassword" || to.name === "Landing") && authStore.isAuthenticated) {
     next({ name: "Dashboard" })
     return
   }
