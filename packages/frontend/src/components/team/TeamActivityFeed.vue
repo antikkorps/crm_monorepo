@@ -4,7 +4,7 @@
       <div class="feed-header">
         <h3 class="feed-title">
           <v-icon icon="mdi-history" class="me-2" />
-          Team Activity
+          {{ t("teams.teamActivity") }}
         </h3>
         <div class="feed-controls">
           <v-btn
@@ -44,11 +44,7 @@
 
         <!-- Activity Timeline -->
         <div v-else class="activity-timeline">
-          <v-timeline
-            :items="timelineItems"
-            class="activity-timeline"
-            size="small"
-          >
+          <v-timeline :items="timelineItems" class="activity-timeline" size="small">
             <template #item="{ item }">
               <div class="activity-item">
                 <div class="activity-header">
@@ -115,6 +111,9 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ref } from "vue"
+import { useI18n } from "vue-i18n"
+
+const { t } = useI18n()
 
 interface ActivityItem {
   id: string
@@ -187,8 +186,8 @@ const filteredActivities = computed(() => {
 const timelineItems = computed(() =>
   filteredActivities.value.map((activity) => ({
     ...activity,
-    dotColor: getMarkerClass(activity.type).replace('marker-', ''),
-    icon: getActivityIcon(activity.type).replace('pi pi-', 'mdi-'),
+    dotColor: getMarkerClass(activity.type).replace("marker-", ""),
+    icon: getActivityIcon(activity.type).replace("pi pi-", "mdi-"),
   }))
 )
 

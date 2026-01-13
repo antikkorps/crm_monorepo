@@ -11,16 +11,11 @@
         </div>
         <div class="team-actions">
           <v-btn
-            icon="mdi-pencil"
-            size="small"
-            variant="text"
-            @click="$emit('edit', team)"
-          />
-          <v-btn
             icon="mdi-cog"
             size="small"
             variant="text"
             @click="$emit('manage', team)"
+            :title="t('common.settings')"
           />
         </div>
       </div>
@@ -98,7 +93,7 @@
 <script setup lang="ts">
 import type { Team, User } from "@medical-crm/shared"
 import { AvatarService } from "@/services/avatarService"
-import { computed, ref } from "vue"
+import { computed } from "vue"
 import { useI18n } from "vue-i18n"
 
 const { t } = useI18n()

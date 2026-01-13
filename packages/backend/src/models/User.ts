@@ -18,7 +18,7 @@ export interface UserAttributes {
   firstName: string
   lastName: string
   role: UserRole
-  teamId?: string
+  teamId?: string | null
   avatarSeed: string
   avatarStyle: string
   isActive: boolean
@@ -40,7 +40,7 @@ export class User
   declare firstName: string
   declare lastName: string
   declare role: UserRole
-  declare teamId?: string
+  declare teamId?: string | null
   declare avatarSeed: string
   declare avatarStyle: string
   declare isActive: boolean
@@ -96,7 +96,7 @@ export class User
   }
 
   public async removeFromTeam(): Promise<void> {
-    this.teamId = undefined
+    this.set('teamId', null)
     await this.save()
   }
 

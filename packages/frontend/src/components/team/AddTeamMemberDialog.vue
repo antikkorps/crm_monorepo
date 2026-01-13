@@ -17,15 +17,16 @@
             :items="availableUsers"
             :loading="loadingUsers"
             :label="t('teams.selectUser')"
-            :placeholder="t('teams.selectUserPlaceholder')"
+            :placeholder="t('teams.searchUserPlaceholder')"
             :rules="[rules.required]"
             :error-messages="errorMessage"
             :item-title="userDisplayText"
             item-value="id"
             return-object
-            prepend-icon="mdi-account"
+            prepend-icon="mdi-account-search"
             variant="outlined"
             clearable
+            auto-select-first
             @update:model-value="errorMessage = ''"
           >
             <template #item="{ props: itemProps, item }">
@@ -242,7 +243,7 @@ watch(
 )
 </script>
 
-<style scoped lang="scss">
+<style scoped>
 .v-card-title {
   display: flex;
   align-items: center;

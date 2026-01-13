@@ -12,10 +12,10 @@
           <p class="member-email">{{ member.email }}</p>
           <div class="member-status">
             <v-chip :color="member.isActive ? 'success' : 'grey'" size="small">
-              {{ member.isActive ? t('common.active') : t('common.inactive') }}
+              {{ member.isActive ? t("common.active") : t("common.inactive") }}
             </v-chip>
             <v-chip v-if="isAdmin" color="primary" size="small" class="ml-1">
-              {{ t('teams.admin') }}
+              {{ t("teams.admin") }}
             </v-chip>
           </div>
         </div>
@@ -31,7 +31,7 @@
         size="small"
         :disabled="removing"
       >
-        {{ t('teams.removeMember') }}
+        {{ t("teams.removeMember") }}
       </v-btn>
     </v-card-actions>
 
@@ -39,12 +39,12 @@
     <v-dialog v-model="showConfirmDialog" max-width="500">
       <v-card>
         <v-card-title class="text-h5">
-          {{ t('teams.confirmRemoveTitle') }}
+          {{ t("teams.confirmRemoveTitle") }}
         </v-card-title>
         <v-card-text>
           {{
-            t('teams.confirmRemoveMessage', {
-              name: memberName
+            t("teams.confirmRemoveMessage", {
+              name: memberName,
             })
           }}
         </v-card-text>
@@ -56,7 +56,7 @@
             @click="showConfirmDialog = false"
             :disabled="removing"
           >
-            {{ t('common.cancel') }}
+            {{ t("common.cancel") }}
           </v-btn>
           <v-btn
             color="error"
@@ -64,7 +64,7 @@
             @click="removeMember"
             :loading="removing"
           >
-            {{ t('common.remove') }}
+            {{ t("teams.removeMember") }}
           </v-btn>
         </v-card-actions>
       </v-card>
@@ -73,12 +73,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
-import { useI18n } from 'vue-i18n'
-import { useSnackbar } from '@/composables/useSnackbar'
-import { teamsApi } from '@/services/api'
-import { AvatarService } from '@/services/avatarService'
-import type { User } from '@medical-crm/shared'
+import { useSnackbar } from "@/composables/useSnackbar"
+import { teamsApi } from "@/services/api"
+import { AvatarService } from "@/services/avatarService"
+import type { User } from "@medical-crm/shared"
+import { computed, ref } from "vue"
+import { useI18n } from "vue-i18n"
 
 interface Props {
   member: User
@@ -86,7 +86,7 @@ interface Props {
 }
 
 interface Emits {
-  (e: 'remove', userId: string): void
+  (e: "remove", userId: string): void
 }
 
 const props = defineProps<Props>()
@@ -105,15 +105,19 @@ const memberName = computed(() => {
 })
 
 const memberInitials = computed(() => {
-  const firstName = props.member.firstName || ''
-  const lastName = props.member.lastName || ''
-  return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase() || 'U'
+  const firstName = props.member.firstName || ""
+  const lastName = props.member.lastName || ""
+  return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase() || "U"
 })
 
 const avatarUrl = computed(() => {
   // Generate avatar URL from user's name
   if (props.member.firstName && props.member.lastName) {
-    return AvatarService.generateUserAvatar(props.member.firstName, props.member.lastName, { size: 56 })
+    return AvatarService.generateUserAvatar(
+      props.member.firstName,
+      props.member.lastName,
+      { size: 56 }
+    )
   }
   return null
 })
@@ -121,21 +125,21 @@ const avatarUrl = computed(() => {
 const getAvatarColor = computed(() => {
   // Generate color based on user email
   const colors = [
-    'blue',
-    'green',
-    'orange',
-    'purple',
-    'pink',
-    'teal',
-    'indigo',
-    'deep-orange'
+    "blue",
+    "green",
+    "orange",
+    "purple",
+    "pink",
+    "teal",
+    "indigo",
+    "deep-orange",
   ]
   const index = props.member.email.charCodeAt(0) % colors.length
   return colors[index]
 })
 
 const isAdmin = computed(() => {
-  return props.member.role === 'admin'
+  return props.member.role === "admin"
 })
 
 // Methods
@@ -150,20 +154,23 @@ const removeMember = async () => {
     const response = await teamsApi.removeTeamMember(props.teamId, props.member.id)
 
     if (response.success) {
-      showSnackbar(t('teams.memberRemovedSuccess'), 'success')
+      showSnackbar(t("teams.memberRemovedSuccess"), "success")
       showConfirmDialog.value = false
-      emit('remove', props.member.id)
+      emit("remove", props.member.id)
     } else {
-      throw new Error('Failed to remove member')
+      throw new Error("Failed to remove member")
     }
   } catch (err: any) {
-    console.error('Error removing team member:', err)
+    console.error("Error removing team member:", err)
 
     // Handle specific error cases
-    if (err.response?.data?.code === 'USER_NOT_MEMBER') {
-      showSnackbar(t('teams.errorUserNotMember'), 'error')
+    if (err.response?.data?.code === "USER_NOT_MEMBER") {
+      showSnackbar(t("teams.errorUserNotMember"), "error")
     } else {
-      showSnackbar(err.response?.data?.error?.message || t('teams.errorRemovingMember'), 'error')
+      showSnackbar(
+        err.response?.data?.error?.message || t("teams.errorRemovingMember"),
+        "error"
+      )
     }
   } finally {
     removing.value = false
@@ -171,18 +178,18 @@ const removeMember = async () => {
 }
 </script>
 
-<style scoped lang="scss">
+<style scoped>
 .team-member-card {
   transition: all 0.3s ease;
+}
 
-  &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  }
+.team-member-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
 
-  &.inactive-member {
-    opacity: 0.6;
-  }
+.team-member-card.inactive-member {
+  opacity: 0.6;
 }
 
 .member-header {
@@ -190,33 +197,33 @@ const removeMember = async () => {
   align-items: flex-start;
   gap: 1rem;
   width: 100%;
+}
 
-  .member-info {
-    flex: 1;
-    min-width: 0;
+.member-header .member-info {
+  flex: 1;
+  min-width: 0;
+}
 
-    .member-name {
-      font-size: 1rem;
-      font-weight: 600;
-      color: rgb(var(--v-theme-on-surface));
-      margin: 0 0 0.25rem;
-    }
+.member-header .member-info .member-name {
+  font-size: 1rem;
+  font-weight: 600;
+  color: rgb(var(--v-theme-on-surface));
+  margin: 0 0 0.25rem;
+}
 
-    .member-email {
-      font-size: 0.875rem;
-      color: rgb(var(--v-theme-on-surface-variant));
-      margin: 0 0 0.5rem;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
+.member-header .member-info .member-email {
+  font-size: 0.875rem;
+  color: rgb(var(--v-theme-on-surface-variant));
+  margin: 0 0 0.5rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 
-    .member-status {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.5rem;
-    }
-  }
+.member-header .member-info .member-status {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
 }
 
 .avatar-initials {

@@ -1,224 +1,220 @@
 <template>
   <AppLayout>
     <div class="team-view">
-       <!-- Header -->
-       <div class="team-header">
-         <div class="header-content">
-           <h1 class="page-title">
-             <v-icon>mdi-account-group</v-icon>
-             {{ t('teams.title') }}
-           </h1>
-           <p class="page-description">
-             {{ t('teams.subtitle') }}
-           </p>
-         </div>
-         <div class="header-actions">
-           <v-btn
-             color="secondary"
-             variant="outlined"
-             prepend-icon="mdi-account-multiple-plus"
-             @click="showCreateTeamDialog = true"
-             class="add-team-btn"
-           >
-             {{ t('teams.createNew') }}
-           </v-btn>
-           <v-btn
-             color="primary"
-             prepend-icon="mdi-account-plus"
-             @click="showCreateUserDialog = true"
-             class="add-member-btn"
-           >
-             {{ t('teams.addMember') }}
-           </v-btn>
-         </div>
-       </div>
+      <!-- Header -->
+      <div class="team-header">
+        <div class="header-content">
+          <h1 class="page-title">
+            <v-icon>mdi-account-group</v-icon>
+            {{ t("teams.title") }}
+          </h1>
+          <p class="page-description">
+            {{ t("teams.subtitle") }}
+          </p>
+        </div>
+        <div class="header-actions">
+          <v-btn
+            color="secondary"
+            variant="outlined"
+            prepend-icon="mdi-account-multiple-plus"
+            @click="showCreateTeamDialog = true"
+            class="add-team-btn"
+          >
+            {{ t("teams.createNew") }}
+          </v-btn>
+          <v-btn
+            color="primary"
+            prepend-icon="mdi-account-plus"
+            @click="showCreateUserDialog = true"
+            class="add-member-btn"
+          >
+            {{ t("teams.addMember") }}
+          </v-btn>
+        </div>
+      </div>
 
-       <!-- Team Statistics -->
-       <div class="team-stats">
-         <div class="stats-grid">
-           <v-card class="stat-card">
-             <v-card-text>
-               <div class="stat-content">
-                 <div class="stat-icon total-members">
-                   <v-icon>mdi-account-group</v-icon>
-                 </div>
-                 <div class="stat-info">
-                   <div class="stat-value">{{ teamStore.teamStats.totalMembers }}</div>
-                   <div class="stat-label">{{ t('teams.totalMembers') }}</div>
-                 </div>
-               </div>
-             </v-card-text>
-           </v-card>
+      <!-- Team Statistics -->
+      <div class="team-stats">
+        <div class="stats-grid">
+          <v-card class="stat-card">
+            <v-card-text>
+              <div class="stat-content">
+                <div class="stat-icon total-members">
+                  <v-icon>mdi-account-group</v-icon>
+                </div>
+                <div class="stat-info">
+                  <div class="stat-value">{{ teamStore.teamStats.totalMembers }}</div>
+                  <div class="stat-label">{{ t("teams.totalMembers") }}</div>
+                </div>
+              </div>
+            </v-card-text>
+          </v-card>
 
-           <v-card class="stat-card">
-             <v-card-text>
-               <div class="stat-content">
-                 <div class="stat-icon active-members">
-                   <v-icon>mdi-check-circle</v-icon>
-                 </div>
-                 <div class="stat-info">
-                   <div class="stat-value">{{ teamStore.teamStats.activeMembers }}</div>
-                   <div class="stat-label">{{ t('teams.activeMembers') }}</div>
-                 </div>
-               </div>
-             </v-card-text>
-           </v-card>
+          <v-card class="stat-card">
+            <v-card-text>
+              <div class="stat-content">
+                <div class="stat-icon active-members">
+                  <v-icon>mdi-check-circle</v-icon>
+                </div>
+                <div class="stat-info">
+                  <div class="stat-value">{{ teamStore.teamStats.activeMembers }}</div>
+                  <div class="stat-label">{{ t("teams.activeMembers") }}</div>
+                </div>
+              </div>
+            </v-card-text>
+          </v-card>
 
-           <v-card class="stat-card">
-             <v-card-text>
-               <div class="stat-content">
-                 <div class="stat-icon total-teams">
-                   <v-icon>mdi-sitemap</v-icon>
-                 </div>
-                 <div class="stat-info">
-                   <div class="stat-value">{{ teamStore.teamStats.totalTeams }}</div>
-                   <div class="stat-label">{{ t('teams.teamsCount') }}</div>
-                 </div>
-               </div>
-             </v-card-text>
-           </v-card>
+          <v-card class="stat-card">
+            <v-card-text>
+              <div class="stat-content">
+                <div class="stat-icon total-teams">
+                  <v-icon>mdi-sitemap</v-icon>
+                </div>
+                <div class="stat-info">
+                  <div class="stat-value">{{ teamStore.teamStats.totalTeams }}</div>
+                  <div class="stat-label">
+                    {{
+                      teamStore.teamStats.totalTeams === 1
+                        ? t("teams.singleTeam")
+                        : t("teams.multipleTeams")
+                    }}
+                  </div>
+                </div>
+              </div>
+            </v-card-text>
+          </v-card>
 
-           <v-card class="stat-card">
-             <v-card-text>
-               <div class="stat-content">
-                 <div class="stat-icon admins">
-                   <v-icon>mdi-shield-account</v-icon>
-                 </div>
-                 <div class="stat-info">
-                   <div class="stat-value">{{ adminCount }}</div>
-                   <div class="stat-label">{{ t('teams.administrators') }}</div>
-                 </div>
-               </div>
-             </v-card-text>
-           </v-card>
-         </div>
-       </div>
+          <v-card class="stat-card">
+            <v-card-text>
+              <div class="stat-content">
+                <div class="stat-icon admins">
+                  <v-icon>mdi-shield-account</v-icon>
+                </div>
+                <div class="stat-info">
+                  <div class="stat-value">{{ adminCount }}</div>
+                  <div class="stat-label">{{ t("teams.administrators") }}</div>
+                </div>
+              </div>
+            </v-card-text>
+          </v-card>
+        </div>
+      </div>
 
-       <!-- Filters and Controls -->
-       <div class="team-controls">
-         <div class="search-section">
-           <v-text-field
-             v-model="searchQuery"
-             :placeholder="t('teams.searchPlaceholder')"
-             prepend-inner-icon="mdi-magnify"
-             class="search-input"
-             density="comfortable"
-           />
-         </div>
+      <!-- Filters and Controls -->
+      <div class="team-controls">
+        <div class="search-section">
+          <v-text-field
+            v-model="searchQuery"
+            :placeholder="t('teams.searchPlaceholder')"
+            prepend-inner-icon="mdi-magnify"
+            class="search-input"
+            density="comfortable"
+          />
+        </div>
 
-         <div class="filter-section">
-           <v-select
-             v-model="selectedRole"
-             :items="roleFilterOptions"
-             item-title="label"
-             item-value="value"
-             :placeholder="t('teams.filterByRole')"
-             clearable
-             class="role-filter"
-             density="comfortable"
-           />
+        <div class="filter-section">
+          <v-select
+            v-model="selectedRole"
+            :items="roleFilterOptions"
+            item-title="label"
+            item-value="value"
+            :placeholder="t('teams.filterByRole')"
+            clearable
+            class="role-filter"
+            density="comfortable"
+          />
 
-           <v-select
-             v-model="selectedTeam"
-             :items="teamFilterOptions"
-             item-title="label"
-             item-value="value"
-             :placeholder="t('teams.filterByTeam')"
-             clearable
-             class="team-filter"
-             :loading="teamStore.loading"
-             density="comfortable"
-           />
+          <v-select
+            v-model="selectedTeam"
+            :items="teamFilterOptions"
+            item-title="label"
+            item-value="value"
+            :placeholder="t('teams.filterByTeam')"
+            clearable
+            class="team-filter"
+            :loading="teamStore.loading"
+            density="comfortable"
+          />
 
-           <v-select
-             v-model="selectedStatus"
-             :items="statusFilterOptions"
-             item-title="label"
-             item-value="value"
-             :placeholder="t('teams.filterByStatus')"
-             clearable
-             class="status-filter"
-             density="comfortable"
-           />
-         </div>
+          <v-select
+            v-model="selectedStatus"
+            :items="statusFilterOptions"
+            item-title="label"
+            item-value="value"
+            :placeholder="t('teams.filterByStatus')"
+            clearable
+            class="status-filter"
+            density="comfortable"
+          />
+        </div>
 
-         <div class="view-controls">
-           <v-btn
-             :color="viewMode === 'grid' ? 'primary' : 'secondary'"
-             :variant="viewMode === 'grid' ? 'flat' : 'outlined'"
-             prepend-icon="mdi-view-grid"
-             @click="viewMode = 'grid'"
-             size="small"
-           >
-             {{ t('teams.gridView') }}
-           </v-btn>
-           <v-btn
-             :color="viewMode === 'list' ? 'primary' : 'secondary'"
-             :variant="viewMode === 'list' ? 'flat' : 'outlined'"
-             prepend-icon="mdi-view-list"
-             @click="viewMode = 'list'"
-             size="small"
-           >
-             {{ t('teams.listView') }}
-           </v-btn>
-         </div>
-       </div>
+        <div class="view-controls">
+          <v-btn
+            :color="viewMode === 'grid' ? 'primary' : 'secondary'"
+            :variant="viewMode === 'grid' ? 'flat' : 'outlined'"
+            prepend-icon="mdi-view-grid"
+            @click="viewMode = 'grid'"
+            size="small"
+          >
+            {{ t("teams.gridView") }}
+          </v-btn>
+          <v-btn
+            :color="viewMode === 'list' ? 'primary' : 'secondary'"
+            :variant="viewMode === 'list' ? 'flat' : 'outlined'"
+            prepend-icon="mdi-view-list"
+            @click="viewMode = 'list'"
+            size="small"
+          >
+            {{ t("teams.listView") }}
+          </v-btn>
+        </div>
+      </div>
 
-       <!-- Loading State -->
-       <div v-if="teamStore.loading" class="loading-container">
-         <v-progress-circular indeterminate color="primary" />
-         <p>{{ t('teams.loadingMembers') }}</p>
-       </div>
+      <!-- Loading State -->
+      <div v-if="teamStore.loading" class="loading-container">
+        <v-progress-circular indeterminate color="primary" />
+        <p>{{ t("teams.loadingMembers") }}</p>
+      </div>
 
-       <!-- Error State -->
-       <v-alert
-         v-else-if="teamStore.error"
-         type="error"
-         class="error-message"
-         closable
-       >
-         {{ teamStore.error }}
-         <template #append>
-           <v-btn
-             icon="mdi-refresh"
-             size="small"
-             variant="text"
-             @click="loadTeamData"
-           />
-         </template>
-       </v-alert>
+      <!-- Error State -->
+      <v-alert v-else-if="teamStore.error" type="error" class="error-message" closable>
+        {{ teamStore.error }}
+        <template #append>
+          <v-btn icon="mdi-refresh" size="small" variant="text" @click="loadTeamData" />
+        </template>
+      </v-alert>
 
-       <!-- Empty State -->
-       <div v-else-if="filteredMembers.length === 0" class="empty-state">
-         <div class="empty-content">
-           <v-icon class="empty-icon">mdi-account-group</v-icon>
-           <h3>{{ t('teams.noMembersFound') }}</h3>
-           <p v-if="hasActiveFilters">
-             {{ t('teams.noMembersMatchFilters') }}
-           </p>
-           <p v-else>
-             {{ t('teams.getStarted') }}
-           </p>
-           <div class="empty-actions">
-             <v-btn
-               v-if="hasActiveFilters"
-               color="secondary"
-               variant="outlined"
-               prepend-icon="mdi-filter-off"
-               @click="clearFilters"
-             >
-               {{ t('teams.clearFilters') }}
-             </v-btn>
-             <v-btn
-               color="primary"
-               prepend-icon="mdi-account-plus"
-               @click="showCreateUserDialog = true"
-             >
-               {{ t('teams.addMember') }}
-             </v-btn>
-           </div>
-         </div>
-       </div>
+      <!-- Empty State -->
+      <div v-else-if="filteredMembers.length === 0" class="empty-state">
+        <div class="empty-content">
+          <v-icon class="empty-icon">mdi-account-group</v-icon>
+          <h3>{{ t("teams.noMembersFound") }}</h3>
+          <p v-if="hasActiveFilters">
+            {{ t("teams.noMembersMatchFilters") }}
+          </p>
+          <p v-else>
+            {{ t("teams.getStarted") }}
+          </p>
+          <div class="empty-actions">
+            <v-btn
+              v-if="hasActiveFilters"
+              color="secondary"
+              variant="outlined"
+              prepend-icon="mdi-filter-off"
+              @click="clearFilters"
+            >
+              {{ t("teams.clearFilters") }}
+            </v-btn>
+            <v-btn
+              color="primary"
+              prepend-icon="mdi-account-plus"
+              @click="showCreateUserDialog = true"
+            >
+              {{ t("teams.addMember") }}
+            </v-btn>
+          </div>
+        </div>
+      </div>
 
       <!-- Team Members Content -->
       <div v-else class="team-content">
@@ -227,7 +223,14 @@
             <!-- Teams Section -->
             <div class="teams-section">
               <div class="section-header">
-                <h3>{{ t('teams.teamsCount') }} ({{ teamStore.teams.length }})</h3>
+                <h3>
+                  {{
+                    teamStore.teams.length === 1
+                      ? t("teams.singleTeam")
+                      : t("teams.multipleTeams")
+                  }}
+                  ({{ teamStore.teams.length }})
+                </h3>
               </div>
               <div class="teams-grid">
                 <TeamCard
@@ -246,39 +249,35 @@
             <!-- Members Section -->
             <div class="members-section">
               <div class="section-header">
-                <h3>{{ t('teams.teamMembers') }} ({{ filteredMembers.length }})</h3>
+                <h3>{{ t("teams.teamMembers") }} ({{ filteredMembers.length }})</h3>
               </div>
 
-            <!-- Grid View -->
-            <div v-if="viewMode === 'grid'" class="members-grid">
-              <UserCard
-                v-for="member in filteredMembers"
-                :key="member.id"
-                :user="member"
-                :team-name="getTeamName(member.teamId)"
-                :assigned-institutions="getUserInstitutions(member.id)"
-                :user-stats="getUserStats(member.id)"
-                @edit="editUser"
-                @manage="manageUser"
-              />
-            </div>
+              <!-- Grid View -->
+              <div v-if="viewMode === 'grid'" class="members-grid">
+                <UserCard
+                  v-for="member in filteredMembers"
+                  :key="member.id"
+                  :user="member"
+                  :team-name="getTeamName(member.teamId)"
+                  :assigned-institutions="getUserInstitutions(member.id)"
+                  :user-stats="getUserStats(member.id)"
+                  @edit="editUser"
+                  @manage="manageUser"
+                />
+              </div>
 
-             <!-- List View -->
-             <div v-else class="members-list">
-               <v-data-table
-                 :items="filteredMembers"
-                 :headers="tableHeaders"
-                 :items-per-page="10"
-                 :items-per-page-options="[5, 10, 20, 50]"
-                 class="members-table"
-               >
+              <!-- List View -->
+              <div v-else class="members-list">
+                <v-data-table
+                  :items="filteredMembers"
+                  :headers="tableHeaders"
+                  :items-per-page="10"
+                  :items-per-page-options="[5, 10, 20, 50]"
+                  class="members-table"
+                >
                   <template #item.firstName="{ item }">
                     <div class="user-name-cell">
-                      <v-avatar
-                        size="40"
-                        class="me-3"
-                        :color="getUserAvatarColor(item)"
-                      >
+                      <v-avatar size="40" class="me-3" :color="getUserAvatarColor(item)">
                         <img :src="getUserAvatar(item)" :alt="getUserInitials(item)" />
                       </v-avatar>
                       <div>
@@ -288,54 +287,48 @@
                     </div>
                   </template>
 
-                 <template #item.role="{ item }">
-                   <v-chip
-                     :color="getRoleSeverity(item.role)"
-                     size="small"
-                   >
-                     {{ getRoleLabel(item.role) }}
-                   </v-chip>
-                 </template>
+                  <template #item.role="{ item }">
+                    <v-chip :color="getRoleSeverity(item.role)" size="small">
+                      {{ getRoleLabel(item.role) }}
+                    </v-chip>
+                  </template>
 
-                 <template #item.teamId="{ item }">
-                   <span v-if="item.teamId">{{ getTeamName(item.teamId) }}</span>
-                   <span v-else class="no-team">No team assigned</span>
-                 </template>
+                  <template #item.teamId="{ item }">
+                    <span v-if="item.teamId">{{ getTeamName(item.teamId) }}</span>
+                    <span v-else class="no-team">No team assigned</span>
+                  </template>
 
-                 <template #item.isActive="{ item }">
-                   <v-chip
-                     :color="item.isActive ? 'success' : 'error'"
-                     size="small"
-                   >
-                     {{ item.isActive ? 'Active' : 'Inactive' }}
-                   </v-chip>
-                 </template>
+                  <template #item.isActive="{ item }">
+                    <v-chip :color="item.isActive ? 'success' : 'error'" size="small">
+                      {{ item.isActive ? "Active" : "Inactive" }}
+                    </v-chip>
+                  </template>
 
-                 <template #item.lastLoginAt="{ item }">
-                   <span v-if="item.lastLoginAt">{{
-                     formatLastLogin(item.lastLoginAt)
-                   }}</span>
-                   <span v-else class="no-login">Never</span>
-                 </template>
+                  <template #item.lastLoginAt="{ item }">
+                    <span v-if="item.lastLoginAt">{{
+                      formatLastLogin(item.lastLoginAt)
+                    }}</span>
+                    <span v-else class="no-login">Never</span>
+                  </template>
 
-                 <template #item.actions="{ item }">
-                   <div class="table-actions">
-                     <v-btn
-                       icon="mdi-pencil"
-                       size="small"
-                       variant="text"
-                       @click="editUser(item)"
-                     />
-                     <v-btn
-                       icon="mdi-cog"
-                       size="small"
-                       variant="text"
-                       @click="manageUser(item)"
-                     />
-                   </div>
-                 </template>
-               </v-data-table>
-             </div>
+                  <template #item.actions="{ item }">
+                    <div class="table-actions">
+                      <v-btn
+                        icon="mdi-pencil"
+                        size="small"
+                        variant="text"
+                        @click="editUser(item)"
+                      />
+                      <v-btn
+                        icon="mdi-cog"
+                        size="small"
+                        variant="text"
+                        @click="manageUser(item)"
+                      />
+                    </div>
+                  </template>
+                </v-data-table>
+              </div>
             </div>
           </div>
 
@@ -346,164 +339,156 @@
         </div>
       </div>
 
-       <!-- User Profile Form Dialog -->
-       <UserProfileForm
-         v-model="showCreateUserDialog"
-         :loading="formLoading"
-         @submit="createUser"
-         @cancel="showCreateUserDialog = false"
-       />
+      <!-- User Profile Form Dialog -->
+      <UserProfileForm
+        v-model="showCreateUserDialog"
+        :loading="formLoading"
+        @submit="createUser"
+        @cancel="showCreateUserDialog = false"
+      />
 
-       <UserProfileForm
-         v-model="showEditUserDialog"
-         :user="selectedUser"
-         :loading="formLoading"
-         @submit="updateUser"
-         @cancel="showEditUserDialog = false"
-       />
+      <UserProfileForm
+        v-model="showEditUserDialog"
+        :user="selectedUser"
+        :loading="formLoading"
+        @submit="updateUser"
+        @cancel="showEditUserDialog = false"
+      />
 
-       <!-- User Management Dialog -->
-       <v-dialog
-         v-model="showManageUserDialog"
-         max-width="500px"
-         persistent
-       >
-         <v-card>
-           <v-card-title>
-             Manage User: {{ selectedUser?.firstName }} {{ selectedUser?.lastName }}
-           </v-card-title>
+      <!-- User Management Dialog -->
+      <v-dialog v-model="showManageUserDialog" max-width="500px" persistent>
+        <v-card>
+          <v-card-title>
+            Manage User: {{ selectedUser?.firstName }} {{ selectedUser?.lastName }}
+          </v-card-title>
 
-           <v-card-text class="manage-user-content">
-             <div class="management-section">
-               <h4>Team Assignment</h4>
-               <v-select
-                 v-model="managementData.teamId"
-                 :items="teamOptions"
-                 item-title="label"
-                 item-value="value"
-                 placeholder="Select team"
-                 clearable
-                 density="comfortable"
-               />
-             </div>
+          <v-card-text class="manage-user-content">
+            <div class="management-section">
+              <h4>Team Assignment</h4>
+              <v-select
+                v-model="managementData.teamId"
+                :items="teamOptions"
+                item-title="label"
+                item-value="value"
+                placeholder="Select team"
+                clearable
+                density="comfortable"
+              />
+            </div>
 
-             <div class="management-section">
-               <h4>Territory Assignment</h4>
-               <v-select
-                 v-model="managementData.assignedInstitutions"
-                 :items="institutionOptions"
-                 item-title="label"
-                 item-value="value"
-                 placeholder="Select institutions"
-                 multiple
-                 density="comfortable"
-                 :menu-props="{ maxHeight: 200 }"
-               />
-             </div>
+            <div class="management-section">
+              <h4>Territory Assignment</h4>
+              <v-select
+                v-model="managementData.assignedInstitutions"
+                :items="institutionOptions"
+                item-title="label"
+                item-value="value"
+                placeholder="Select institutions"
+                multiple
+                density="comfortable"
+                :menu-props="{ maxHeight: 200 }"
+              />
+            </div>
 
-             <div class="management-section">
-               <h4>User Status</h4>
-               <div class="status-controls">
-                 <v-checkbox
-                   v-model="managementData.isActive"
-                   label="Active User"
-                   density="comfortable"
-                 />
-               </div>
-             </div>
+            <div class="management-section">
+              <h4>User Status</h4>
+              <div class="status-controls">
+                <v-checkbox
+                  v-model="managementData.isActive"
+                  label="Active User"
+                  density="comfortable"
+                />
+              </div>
+            </div>
 
-             <div class="management-section">
-               <h4>Account Actions</h4>
-               <v-btn
-                 color="warning"
-                 variant="outlined"
-                 prepend-icon="mdi-lock-reset"
-                 @click="openPasswordResetDialog(selectedUser!)"
-                 :disabled="!selectedUser"
-                 block
-               >
-                 Reset Password
-               </v-btn>
-             </div>
-           </v-card-text>
+            <div class="management-section">
+              <h4>Account Actions</h4>
+              <v-btn
+                color="warning"
+                variant="outlined"
+                prepend-icon="mdi-lock-reset"
+                @click="openPasswordResetDialog(selectedUser!)"
+                :disabled="!selectedUser"
+                block
+              >
+                Reset Password
+              </v-btn>
+            </div>
+          </v-card-text>
 
-           <v-card-actions class="dialog-footer">
-             <v-spacer />
-             <v-btn
-               color="secondary"
-               variant="outlined"
-               @click="showManageUserDialog = false"
-             >
-               Cancel
-             </v-btn>
-             <v-btn
-               color="primary"
-               :loading="formLoading"
-               @click="saveUserManagement"
-             >
-               Save Changes
-             </v-btn>
-           </v-card-actions>
-         </v-card>
-       </v-dialog>
+          <v-card-actions class="dialog-footer">
+            <v-spacer />
+            <v-btn
+              color="secondary"
+              variant="outlined"
+              @click="showManageUserDialog = false"
+            >
+              Cancel
+            </v-btn>
+            <v-btn color="primary" :loading="formLoading" @click="saveUserManagement">
+              Save Changes
+            </v-btn>
+          </v-card-actions>
+        </v-card>
+      </v-dialog>
 
-       <!-- Password Reset Dialog -->
-       <PasswordResetDialog
-         v-model="showPasswordResetDialog"
-         :user-id="selectedUser?.id || ''"
-         :user-name="`${selectedUser?.firstName || ''} ${selectedUser?.lastName || ''}`"
-         :loading="passwordResetLoading"
-         @submit="resetUserPassword"
-         @cancel="showPasswordResetDialog = false"
-       />
+      <!-- Password Reset Dialog -->
+      <PasswordResetDialog
+        v-model="showPasswordResetDialog"
+        :user-id="selectedUser?.id || ''"
+        :user-name="`${selectedUser?.firstName || ''} ${selectedUser?.lastName || ''}`"
+        :loading="passwordResetLoading"
+        @submit="resetUserPassword"
+        @cancel="showPasswordResetDialog = false"
+      />
 
-       <!-- Create Team Dialog -->
-       <CreateTeamDialog
-         v-model="showCreateTeamDialog"
-         @team-created="handleTeamCreated"
-       />
+      <!-- Create Team Dialog -->
+      <CreateTeamDialog
+        v-model="showCreateTeamDialog"
+        @team-created="handleTeamCreated"
+      />
 
-       <!-- Edit Team Dialog -->
-       <EditTeamDialog
-         v-model="showEditTeamDialog"
-         :team="selectedTeamForEdit"
-         @team-updated="handleTeamUpdated"
-         @team-deleted="handleTeamDeleted"
-       />
+      <!-- Edit Team Dialog -->
+      <EditTeamDialog
+        v-model="showEditTeamDialog"
+        :team="selectedTeamForEdit"
+        @team-updated="handleTeamUpdated"
+        @team-deleted="handleTeamDeleted"
+      />
 
-       <!-- Add Team Member Dialog -->
-       <AddTeamMemberDialog
-         v-model="showAddMemberDialog"
-         :team="selectedTeamForMember"
-         @member-added="handleMemberAdded"
-       />
+      <!-- Add Team Member Dialog -->
+      <AddTeamMemberDialog
+        v-model="showAddMemberDialog"
+        :team="selectedTeamForMember"
+        @member-added="handleMemberAdded"
+      />
     </div>
   </AppLayout>
 </template>
 
 <script setup lang="ts">
 import AppLayout from "@/components/layout/AppLayout.vue"
+import AddTeamMemberDialog from "@/components/team/AddTeamMemberDialog.vue"
+import CreateTeamDialog from "@/components/team/CreateTeamDialog.vue"
+import EditTeamDialog from "@/components/team/EditTeamDialog.vue"
+import PasswordResetDialog from "@/components/team/PasswordResetDialog.vue"
 import TeamActivityFeed from "@/components/team/TeamActivityFeed.vue"
 import TeamCard from "@/components/team/TeamCard.vue"
 import UserCard from "@/components/team/UserCard.vue"
 import UserProfileForm from "@/components/team/UserProfileForm.vue"
-import PasswordResetDialog from "@/components/team/PasswordResetDialog.vue"
-import CreateTeamDialog from "@/components/team/CreateTeamDialog.vue"
-import EditTeamDialog from "@/components/team/EditTeamDialog.vue"
-import AddTeamMemberDialog from "@/components/team/AddTeamMemberDialog.vue"
+import { useSnackbar } from "@/composables/useSnackbar"
 import { institutionsApi, teamApi, usersApi } from "@/services/api"
 import { AvatarService } from "@/services/avatarService"
 import { useTeamStore } from "@/stores/team"
-import { useRouter } from "vue-router"
 import type {
+  ApiResponse,
   User,
   UserCreationAttributes,
   UserUpdateAttributes,
-  ApiResponse,
 } from "@medical-crm/shared"
-import { useSnackbar } from "@/composables/useSnackbar"
-import { useI18n } from "vue-i18n"
 import { computed, onMounted, ref } from "vue"
+import { useI18n } from "vue-i18n"
+import { useRouter } from "vue-router"
 
 const teamStore = useTeamStore()
 const router = useRouter()
@@ -541,25 +526,25 @@ const teamOptions = ref<Array<{ label: string; value: string }>>([])
 const institutionOptions = ref<Array<{ label: string; value: string }>>([])
 
 const roleFilterOptions = computed(() => [
-  { label: t('profile.roles.super_admin'), value: "super_admin" },
-  { label: t('profile.roles.team_admin'), value: "team_admin" },
-  { label: t('profile.roles.user'), value: "user" },
+  { label: t("profile.roles.super_admin"), value: "super_admin" },
+  { label: t("profile.roles.team_admin"), value: "team_admin" },
+  { label: t("profile.roles.user"), value: "user" },
 ])
 
 const teamFilterOptions = computed(() => teamOptions.value)
 
 const statusFilterOptions = computed(() => [
-  { label: t('teams.statusActive'), value: "active" },
-  { label: t('teams.statusInactive'), value: "inactive" },
+  { label: t("teams.statusActive"), value: "active" },
+  { label: t("teams.statusInactive"), value: "inactive" },
 ])
 
 const tableHeaders = computed(() => [
-  { title: t('common.labels.name'), key: "firstName", sortable: true },
-  { title: t('teams.role'), key: "role", sortable: true },
-  { title: t('teams.team'), key: "teamId", sortable: true },
-  { title: t('common.labels.status'), key: "isActive", sortable: true },
-  { title: t('teams.lastLogin'), key: "lastLoginAt", sortable: true },
-  { title: t('common.actions.view'), key: "actions", sortable: false },
+  { title: t("common.labels.name"), key: "firstName", sortable: true },
+  { title: t("teams.role"), key: "role", sortable: true },
+  { title: t("teams.team"), key: "teamId", sortable: true },
+  { title: t("common.labels.status"), key: "isActive", sortable: true },
+  { title: t("teams.lastLogin"), key: "lastLoginAt", sortable: true },
+  { title: t("common.actions.view"), key: "actions", sortable: false },
 ])
 
 const adminCount = computed(() => {
@@ -608,24 +593,24 @@ const filteredMembers = computed(() => {
 })
 
 const getUserAvatar = (user: User) => {
-  console.log('TeamView - User data:', user)
-  console.log('TeamView - avatarSeed:', user.avatarSeed)
-  console.log('TeamView - avatarStyle:', user.avatarStyle)
+  console.log("TeamView - User data:", user)
+  console.log("TeamView - avatarSeed:", user.avatarSeed)
+  console.log("TeamView - avatarStyle:", user.avatarStyle)
 
   // Si l'utilisateur n'a pas de avatarSeed ou avatarStyle, générer à partir du nom
   if (!user.avatarSeed || !user.avatarStyle) {
     const fallbackUrl = AvatarService.generateUserAvatar(user.firstName, user.lastName, {
-      size: 40
+      size: 40,
     })
-    console.log('TeamView - Using fallback avatar:', fallbackUrl)
+    console.log("TeamView - Using fallback avatar:", fallbackUrl)
     return fallbackUrl
   }
 
   const avatarUrl = AvatarService.generateAvatarFromSeed(user.avatarSeed, {
     style: user.avatarStyle,
-    size: 40
+    size: 40,
   })
-  console.log('TeamView - Using seed avatar:', avatarUrl)
+  console.log("TeamView - Using seed avatar:", avatarUrl)
   return avatarUrl
 }
 
@@ -635,8 +620,18 @@ const getUserInitials = (user: User) => {
 
 const getUserAvatarColor = (user: User) => {
   const colors = [
-    'primary', 'secondary', 'success', 'info', 'warning', 'error',
-    'purple', 'pink', 'indigo', 'teal', 'cyan', 'orange'
+    "primary",
+    "secondary",
+    "success",
+    "info",
+    "warning",
+    "error",
+    "purple",
+    "pink",
+    "indigo",
+    "teal",
+    "cyan",
+    "orange",
   ]
   const name = `${user.firstName}${user.lastName}`
   const index = name.length % colors.length
@@ -645,9 +640,9 @@ const getUserAvatarColor = (user: User) => {
 
 const getRoleLabel = (role: string) => {
   const labels = {
-    super_admin: t('profile.roles.super_admin'),
-    team_admin: t('profile.roles.team_admin'),
-    user: t('profile.roles.user'),
+    super_admin: t("profile.roles.super_admin"),
+    team_admin: t("profile.roles.team_admin"),
+    user: t("profile.roles.user"),
   }
   return labels[role as keyof typeof labels] || role
 }
@@ -664,7 +659,7 @@ const getRoleSeverity = (role: string) => {
 const getTeamName = (teamId?: string) => {
   if (!teamId) return ""
   const team = teamStore.getTeamById(teamId)
-  return team?.name || t('teams.unknownTeam')
+  return team?.name || t("teams.unknownTeam")
 }
 
 const getUserInstitutions = (userId: string) => {
@@ -686,9 +681,9 @@ const formatLastLogin = (date: Date | string) => {
   const diffTime = now.getTime() - loginDate.getTime()
   const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24))
 
-  if (diffDays === 0) return t('common.time.today')
-  if (diffDays === 1) return t('common.time.yesterday')
-  if (diffDays < 7) return t('teams.daysAgo', { days: diffDays })
+  if (diffDays === 0) return t("common.time.today")
+  if (diffDays === 1) return t("common.time.yesterday")
+  if (diffDays < 7) return t("teams.daysAgo", { days: diffDays })
 
   return loginDate.toLocaleDateString()
 }
@@ -700,15 +695,15 @@ const loadTeamData = async () => {
       teamStore.fetchTeamMembers(),
       loadOptions(),
     ])
-   } catch (error) {
-     showSnackbar("Failed to load team data", "error")
-   }
+  } catch (error) {
+    showSnackbar("Failed to load team data", "error")
+  }
 }
 
 const loadOptions = async () => {
   try {
     // Load teams
-    const teamsResponse = await teamApi.getAll() as ApiResponse<any[]>
+    const teamsResponse = (await teamApi.getAll()) as ApiResponse<any[]>
     const teams = teamsResponse.data || teamsResponse
     if (Array.isArray(teams)) {
       teamOptions.value = teams.map((team: any) => ({
@@ -721,7 +716,7 @@ const loadOptions = async () => {
     }
 
     // Load institutions
-    const institutionsResponse = await institutionsApi.getAll() as ApiResponse<any>
+    const institutionsResponse = (await institutionsApi.getAll()) as ApiResponse<any>
     const institutionsData = institutionsResponse.data || institutionsResponse
 
     // Handle paginated response: {institutions: [...], pagination: {...}}
@@ -751,16 +746,16 @@ const createUser = async (userData: UserCreationAttributes | UserUpdateAttribute
   try {
     formLoading.value = true
     // Type guard to ensure we have a password for creation
-    if (!('password' in userData) || !userData.password) {
-      showSnackbar(t('teams.passwordRequired'), "error")
+    if (!("password" in userData) || !userData.password) {
+      showSnackbar(t("teams.passwordRequired"), "error")
       return
     }
     await usersApi.create(userData as UserCreationAttributes)
     showCreateUserDialog.value = false
-    showSnackbar(t('teams.userCreatedSuccess'), "success")
+    showSnackbar(t("teams.userCreatedSuccess"), "success")
     await loadTeamData()
   } catch (error: any) {
-    const message = error?.message || t('teams.errorCreatingUser')
+    const message = error?.message || t("teams.errorCreatingUser")
     showSnackbar(message, "error")
   } finally {
     formLoading.value = false
@@ -778,11 +773,11 @@ const updateUser = async (updates: UserUpdateAttributes) => {
   try {
     formLoading.value = true
     await teamStore.updateUserProfile(selectedUser.value.id, updates)
-     showEditUserDialog.value = false
-     selectedUser.value = null
-     showSnackbar("User updated successfully", "success")
-   } catch (error) {
-     showSnackbar("Failed to update user", "error")
+    showEditUserDialog.value = false
+    selectedUser.value = null
+    showSnackbar("User updated successfully", "success")
+  } catch (error) {
+    showSnackbar("Failed to update user", "error")
   } finally {
     formLoading.value = false
   }
@@ -813,12 +808,12 @@ const saveUserManagement = async () => {
     // Handle territory assignment (would be separate API call)
     console.log("Assigning institutions:", managementData.value.assignedInstitutions)
 
-     showManageUserDialog.value = false
-     selectedUser.value = null
+    showManageUserDialog.value = false
+    selectedUser.value = null
 
-     showSnackbar("User management updated successfully", "success")
-   } catch (error) {
-     showSnackbar("Failed to update user management", "error")
+    showSnackbar("User management updated successfully", "success")
+  } catch (error) {
+    showSnackbar("Failed to update user management", "error")
   } finally {
     formLoading.value = false
   }
@@ -874,7 +869,7 @@ const viewTeamDetails = (team: any) => {
 const handleTeamCreated = async () => {
   try {
     await teamStore.fetchTeams()
-    showSnackbar(t('teams.teamCreatedSuccess'), "success")
+    showSnackbar(t("teams.teamCreatedSuccess"), "success")
   } catch (error) {
     console.error("Error refreshing teams:", error)
   }
@@ -883,7 +878,7 @@ const handleTeamCreated = async () => {
 const handleTeamUpdated = async () => {
   try {
     await teamStore.fetchTeams()
-    showSnackbar(t('teams.teamUpdatedSuccess'), "success")
+    showSnackbar(t("teams.teamUpdatedSuccess"), "success")
   } catch (error) {
     console.error("Error refreshing teams:", error)
   }
@@ -892,7 +887,7 @@ const handleTeamUpdated = async () => {
 const handleTeamDeleted = async () => {
   try {
     await teamStore.fetchTeams()
-    showSnackbar(t('teams.teamDeletedSuccess'), "success")
+    showSnackbar(t("teams.teamDeletedSuccess"), "success")
   } catch (error) {
     console.error("Error refreshing teams:", error)
   }
@@ -900,11 +895,8 @@ const handleTeamDeleted = async () => {
 
 const handleMemberAdded = async () => {
   try {
-    await Promise.all([
-      teamStore.fetchTeams(),
-      teamStore.fetchTeamMembers()
-    ])
-    showSnackbar(t('teams.memberAddedSuccess'), "success")
+    await Promise.all([teamStore.fetchTeams(), teamStore.fetchTeamMembers()])
+    showSnackbar(t("teams.memberAddedSuccess"), "success")
   } catch (error) {
     console.error("Error refreshing team data:", error)
   }

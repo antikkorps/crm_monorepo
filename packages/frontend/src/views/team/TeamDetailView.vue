@@ -124,6 +124,13 @@
       :team="team"
       @member-added="loadTeamMembers"
     />
+
+    <!-- Edit Team Dialog -->
+    <EditTeamDialog
+      v-model="showEditTeamDialog"
+      :team="team"
+      @team-updated="loadTeamData"
+    />
   </AppLayout>
 </template>
 
@@ -137,6 +144,7 @@ import type { Team, User } from '@medical-crm/shared'
 import AppLayout from '@/components/layout/AppLayout.vue'
 import TeamMemberCard from '@/components/team/TeamMemberCard.vue'
 import AddTeamMemberDialog from '@/components/team/AddTeamMemberDialog.vue'
+import EditTeamDialog from '@/components/team/EditTeamDialog.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -149,6 +157,7 @@ const members = ref<User[]>([])
 const loading = ref(true)
 const error = ref<string | null>(null)
 const showAddMemberDialog = ref(false)
+const showEditTeamDialog = ref(false)
 
 // Computed
 const activeMembers = computed(() => {
@@ -201,8 +210,7 @@ const handleRemoveMember = async () => {
 }
 
 const editTeam = () => {
-  // TODO: Open edit team dialog
-  showSnackbar('Edit team functionality not implemented yet', 'warning')
+  showEditTeamDialog.value = true
 }
 
 const goBack = () => {
@@ -215,7 +223,7 @@ onMounted(() => {
 })
 </script>
 
-<style scoped lang="scss">
+<style scoped>
 .team-detail-view {
   height: 100%;
   overflow-y: auto;
@@ -241,39 +249,39 @@ onMounted(() => {
   align-items: flex-start;
   gap: 1rem;
   margin-bottom: 2rem;
+}
 
-  .back-btn {
-    margin-top: 0.5rem;
-  }
+.team-detail-header .back-btn {
+  margin-top: 0.5rem;
+}
 
-  .header-content {
-    flex: 1;
+.team-detail-header .header-content {
+  flex: 1;
+}
 
-    .page-title {
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
-      font-size: 2rem;
-      font-weight: 600;
-      color: rgb(var(--v-theme-on-surface));
-      margin: 0;
+.team-detail-header .header-content .page-title {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 2rem;
+  font-weight: 600;
+  color: rgb(var(--v-theme-on-surface));
+  margin: 0;
+}
 
-      .v-icon {
-        color: rgb(var(--v-theme-primary));
-      }
-    }
+.team-detail-header .header-content .page-title .v-icon {
+  color: rgb(var(--v-theme-primary));
+}
 
-    .page-description {
-      margin-top: 0.5rem;
-      color: rgb(var(--v-theme-on-surface-variant));
-      font-size: 1rem;
-    }
-  }
+.team-detail-header .header-content .page-description {
+  margin-top: 0.5rem;
+  color: rgb(var(--v-theme-on-surface-variant));
+  font-size: 1rem;
+}
 
-  .header-actions {
-    display: flex;
-    gap: 0.75rem;
-  }
+.team-detail-header .header-actions {
+  display: flex;
+  gap: 0.75rem;
 }
 
 .team-stats-grid {
@@ -281,94 +289,88 @@ onMounted(() => {
   grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
   gap: 1rem;
   margin-bottom: 2rem;
-
-  .stat-card {
-    .stat-content {
-      display: flex;
-      align-items: center;
-      gap: 1rem;
-
-      .stat-icon {
-        width: 48px;
-        height: 48px;
-        border-radius: 12px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-
-        .v-icon {
-          font-size: 24px;
-          color: white;
-        }
-
-        &.total-members {
-          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        }
-
-        &.active-members {
-          background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-        }
-      }
-
-      .stat-info {
-        .stat-value {
-          font-size: 1.75rem;
-          font-weight: 700;
-          color: rgb(var(--v-theme-on-surface));
-        }
-
-        .stat-label {
-          font-size: 0.875rem;
-          color: rgb(var(--v-theme-on-surface-variant));
-          margin-top: 0.25rem;
-        }
-      }
-    }
-  }
 }
 
-.members-section {
-  .members-header {
-    display: flex;
-    align-items: center;
-    padding: 1.25rem 1.5rem;
-    border-bottom: 1px solid rgba(var(--v-theme-on-surface), 0.12);
-  }
+.team-stats-grid .stat-card .stat-content {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
 
-  .no-members-message {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 3rem 1.5rem;
-    gap: 1rem;
+.team-stats-grid .stat-card .stat-content .stat-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
 
-    p {
-      color: rgb(var(--v-theme-on-surface-variant));
-      font-size: 1rem;
-      margin: 0;
-    }
-  }
+.team-stats-grid .stat-card .stat-content .stat-icon .v-icon {
+  font-size: 24px;
+  color: white;
+}
 
-  .members-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-    gap: 1rem;
-    padding: 1.5rem;
-  }
+.team-stats-grid .stat-card .stat-content .stat-icon.total-members {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.team-stats-grid .stat-card .stat-content .stat-icon.active-members {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+}
+
+.team-stats-grid .stat-card .stat-content .stat-info .stat-value {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: rgb(var(--v-theme-on-surface));
+}
+
+.team-stats-grid .stat-card .stat-content .stat-info .stat-label {
+  font-size: 0.875rem;
+  color: rgb(var(--v-theme-on-surface-variant));
+  margin-top: 0.25rem;
+}
+
+.members-section .members-header {
+  display: flex;
+  align-items: center;
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid rgba(var(--v-theme-on-surface), 0.12);
+}
+
+.members-section .no-members-message {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem 1.5rem;
+  gap: 1rem;
+}
+
+.members-section .no-members-message p {
+  color: rgb(var(--v-theme-on-surface-variant));
+  font-size: 1rem;
+  margin: 0;
+}
+
+.members-section .members-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1rem;
+  padding: 1.5rem;
 }
 
 @media (max-width: 768px) {
   .team-detail-header {
     flex-direction: column;
+  }
 
-    .header-actions {
-      width: 100%;
+  .team-detail-header .header-actions {
+    width: 100%;
+  }
 
-      button {
-        flex: 1;
-      }
-    }
+  .team-detail-header .header-actions button {
+    flex: 1;
   }
 
   .team-stats-grid {

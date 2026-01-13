@@ -647,13 +647,16 @@
 
     **🔄 En attente :** Dépend de la correction du bug TypeScript (institutions.ts:30,7)
 
-- [ ] 19.2 Prepare production deployment configuration
+- [x] 19.2 Prepare production deployment configuration ✅
 
-  - Create production Docker configurations and environment setup
-  - Implement database migration and seeding for production
-  - Configure monitoring and logging for production environment
-  - Create deployment documentation and operational procedures
+  - ✅ Create production Docker configurations and environment setup
+  - ✅ Implement database migration and seeding for production
+  - ⚠️ Configure monitoring and logging for production environment (À VÉRIFIER)
+  - ✅ Create deployment documentation and operational procedures
   - _Requirements: 7.4, 11.2, 11.3_
+
+  **Status:** Complété (déployé sur Hetzner avec Docker)
+  **Date:** 2026-01-08
 
 - [x] 20. Collaboration features integration (Notes, Meetings, Calls, Reminders)
 
@@ -3787,15 +3790,18 @@ Le CRM devient la **source de vérité unique**. Les données peuvent provenir d
 
   **Date:** 2025-12-24
 
-- [ ] **31.6** - Gestion des membres d'équipe
+- [x] **31.6** - Gestion des membres d'équipe ✅
+
+  **Status:** ✅ COMPLÉTÉ
+  **Date:** 2026-01-13
 
   **Objectif:** Finaliser la gestion complète des équipes et de leurs membres
 
-  **Problèmes actuels:**
-  - ❌ Impossible de supprimer un membre d'une équipe
-  - ❌ Bouton "View Details" ne fait rien (sur les cartes d'équipe)
-  - ❌ Roue crantée "Configuration" ne fait rien (sur les cartes d'équipe)
-  - ❌ Pas de vue détaillée d'une équipe avec la liste de ses membres
+  **Problèmes résolus:**
+  - ✅ Impossible de supprimer un membre d'une équipe
+  - ✅ Bouton "View Details" ne fait rien (sur les cartes d'équipe)
+  - ✅ Roue crantée "Configuration" ne fait rien (sur les cartes d'équipe)
+  - ✅ Pas de vue détaillée d'une équipe avec la liste de ses membres
 
   **Fonctionnalités à implémenter:**
 

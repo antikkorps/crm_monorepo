@@ -63,6 +63,7 @@
                 variant="text"
                 color="primary"
                 size="small"
+                style="pointer-events: none;"
               />
             </v-card-text>
           </v-card>
