@@ -32,5 +32,6 @@ we are almost done to v1 but still have some elements to prepare
 - [ ] Tests: Protection auto-lock (task 31.3 from tasks.md) - Ensure data protection system reliability
 - [x] Fix: Dashboard team card click not working (SCSS build error in AddTeamMemberDialog.vue and TeamMemberCard.vue - converted to CSS)
 - [ ] Verify production monitoring and logging configuration (from task 19.2)
+- [ ] action type verification failed due to missing share folder
 
 ### Decision

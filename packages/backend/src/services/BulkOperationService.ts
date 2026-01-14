@@ -74,7 +74,7 @@ export class BulkOperationService {
       throw new Error("User not found")
     }
 
-    if (!segment.isVisibleTo(userId, user.teamId)) {
+    if (!segment.isVisibleTo(userId, user.teamId ?? undefined)) {
       throw new Error("Access denied to segment")
     }
 
@@ -328,7 +328,7 @@ export class BulkOperationService {
       throw new Error("User not found")
     }
 
-    if (!segment.isVisibleTo(userId, user.teamId)) {
+    if (!segment.isVisibleTo(userId, user.teamId ?? undefined)) {
       throw new Error("Access denied to segment")
     }
 

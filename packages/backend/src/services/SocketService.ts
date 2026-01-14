@@ -123,7 +123,7 @@ export class SocketService {
     const rooms = new Set<string>()
     this.connectedUsers.set(socket.id, {
       userId: user.id,
-      teamId: user.teamId,
+      teamId: user.teamId ?? undefined,
       rooms,
     })
 

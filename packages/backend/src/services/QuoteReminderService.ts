@@ -118,7 +118,7 @@ export class QuoteReminderService {
       const template = await ReminderTemplate.getTemplateForQuote(reminderType, {
         institutionType: quote.institution?.type,
         amount: quote.total,
-        teamId: quote.assignedUser?.teamId,
+        teamId: quote.assignedUser?.teamId ?? undefined,
       })
 
       if (!template) {
