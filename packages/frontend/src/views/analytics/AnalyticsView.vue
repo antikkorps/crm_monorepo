@@ -15,7 +15,7 @@
       <!-- Content -->
       <div v-else-if="analytics && forecast">
         <!-- Top KPIs -->
-        <v-row class="mb-6">
+        <v-row id="tour-analytics-kpis" class="mb-6">
           <v-col cols="12" md="3">
             <v-card color="success" variant="tonal">
               <v-card-text class="text-center">
@@ -68,7 +68,7 @@
         <!-- Revenue Breakdown -->
         <v-row class="mb-6">
           <v-col cols="12" md="8">
-            <v-card>
+            <v-card id="tour-analytics-revenue">
               <v-card-title class="d-flex align-center">
                 <v-icon class="mr-2">mdi-currency-eur</v-icon>
                 Répartition des revenus
@@ -137,7 +137,7 @@
         </v-row>
 
         <!-- Win/Loss Analysis -->
-        <v-row class="mb-6">
+        <v-row id="tour-analytics-winloss" class="mb-6">
           <v-col cols="12" md="6">
             <v-card>
               <v-card-title class="d-flex align-center">
@@ -188,7 +188,7 @@
         </v-row>
 
         <!-- Competitor Analysis -->
-        <v-row v-if="analytics.winLossAnalysis.competitorAnalysis.length > 0">
+        <v-row id="tour-analytics-competitors" v-if="analytics.winLossAnalysis.competitorAnalysis.length > 0">
           <v-col cols="12">
             <v-card>
               <v-card-title class="d-flex align-center">

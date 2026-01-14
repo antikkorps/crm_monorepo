@@ -953,13 +953,13 @@ export class BillingAnalyticsService {
     const query = `
       SELECT
         COUNT(DISTINCT i.id) as invoices_with_partial_payments,
-        AVG(i.total_paid / NULLIF(i.total, 0)) as avg_partial_payment_ratio,
-        SUM(i.total_paid) as total_partially_paid_amount,
+        AVG(i.paid_amount / NULLIF(i.total, 0)) as avg_partial_payment_ratio,
+        SUM(i.paid_amount) as total_partially_paid_amount,
         AVG(EXTRACT(DAY FROM (i.paid_at - i.sent_at))) as avg_time_to_full_payment
       FROM invoices i
       WHERE i.status IN ('partially_paid', 'paid')
-      AND i.total_paid > 0
-      AND i.total_paid < i.total
+      AND i.paid_amount > 0
+      AND i.paid_amount < i.total
       ${userFilter}
     `
 
@@ -1101,7 +1101,7 @@ export class BillingAnalyticsService {
           WHEN COUNT(DISTINCT i.id) = 0 THEN 0
           ELSE COUNT(DISTINCT CASE WHEN i.status = 'paid' THEN i.id END)::float / COUNT(DISTINCT i.id) * 100
         END as collection_rate,
-        AVG(i.total_paid / NULLIF(i.total, 0)) * 100 as customer_payment_score
+        AVG(i.paid_amount / NULLIF(i.total, 0)) * 100 as customer_payment_score
       FROM invoices i
       LEFT JOIN payments p ON p.invoice_id = i.id AND p.status = 'confirmed'
       WHERE i.status != 'cancelled'

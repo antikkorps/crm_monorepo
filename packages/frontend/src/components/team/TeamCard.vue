@@ -11,16 +11,11 @@
         </div>
         <div class="team-actions">
           <v-btn
-            icon="mdi-pencil"
-            size="small"
-            variant="text"
-            @click="$emit('edit', team)"
-          />
-          <v-btn
             icon="mdi-cog"
             size="small"
             variant="text"
             @click="$emit('manage', team)"
+            :title="t('common.settings')"
           />
         </div>
       </div>
@@ -31,17 +26,17 @@
         <div class="team-stats">
           <div class="stat-item">
             <span class="stat-value">{{ teamMembers.length }}</span>
-            <span class="stat-label">Members</span>
+            <span class="stat-label">{{ t('teams.members') }}</span>
           </div>
           <div class="stat-item">
             <span class="stat-value">{{ activeMembers }}</span>
-            <span class="stat-label">Active</span>
+            <span class="stat-label">{{ t('teams.active') }}</span>
           </div>
         </div>
 
         <div class="team-members-section">
           <div class="members-header">
-            <span class="members-title">Team Members</span>
+            <span class="members-title">{{ t('teams.teamMembers') }}</span>
           </div>
           <div class="members-avatars" v-if="teamMembers.length > 0">
             <v-avatar
@@ -66,7 +61,7 @@
           </div>
           <div class="no-members" v-else>
             <v-icon icon="mdi-account-plus" size="small" />
-            <span>No members assigned</span>
+            <span>{{ t('teams.noMembers') }}</span>
           </div>
         </div>
       </div>
@@ -80,7 +75,7 @@
         @click="$emit('addMember', team)"
         size="small"
       >
-        Add Member
+        {{ t('teams.addMember') }}
       </v-btn>
       <v-spacer />
       <v-btn
@@ -89,7 +84,7 @@
         @click="$emit('viewDetails', team)"
         size="small"
       >
-        View Details
+        {{ t('teams.viewDetails') }}
       </v-btn>
     </v-card-actions>
   </v-card>
@@ -98,7 +93,10 @@
 <script setup lang="ts">
 import type { Team, User } from "@medical-crm/shared"
 import { AvatarService } from "@/services/avatarService"
-import { computed, ref } from "vue"
+import { computed } from "vue"
+import { useI18n } from "vue-i18n"
+
+const { t } = useI18n()
 
 interface Props {
   team: Team
@@ -169,6 +167,8 @@ const getMemberAvatarColor = (user: User) => {
   transition: all 0.2s ease;
   height: 100%;
   border: 1px solid #e5e7eb;
+  display: flex;
+  flex-direction: column;
 }
 
 .team-card:hover {
@@ -218,10 +218,17 @@ const getMemberAvatarColor = (user: User) => {
   gap: 0.25rem;
 }
 
+.team-card > .v-card-text {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
 .team-content {
   display: flex;
   flex-direction: column;
   gap: 1rem;
+  flex: 1;
 }
 
 .team-stats {

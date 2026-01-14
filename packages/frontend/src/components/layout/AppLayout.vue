@@ -261,7 +261,9 @@
     <!-- App Bar -->
     <v-app-bar color="primary" density="compact" elevation="2">
       <template v-slot:prepend>
-        <v-app-bar-nav-icon @click="mobile ? (drawer = !drawer) : (rail = !rail)"></v-app-bar-nav-icon>
+        <v-app-bar-nav-icon
+          @click="mobile ? (drawer = !drawer) : (rail = !rail)"
+        ></v-app-bar-nav-icon>
       </template>
 
       <v-spacer></v-spacer>
@@ -270,9 +272,6 @@
       <v-btn icon @click="showSearch = true">
         <v-icon>mdi-magnify</v-icon>
       </v-btn>
-
-      <!-- Language Selector -->
-      <LanguageSelector />
 
       <!-- Tour Button -->
       <TourButton />
@@ -299,13 +298,33 @@
           </v-btn>
         </template>
 
-        <v-list>
+        <v-list class="user-menu-list">
           <v-list-item
             prepend-icon="mdi-account"
             :title="$t('navigation.profile')"
             @click="$router.push('/profile')"
           ></v-list-item>
+
           <v-divider></v-divider>
+
+          <!-- All Tours Menu -->
+          <v-menu location="start" :close-on-content-click="false" content-class="tours-submenu">
+            <template v-slot:activator="{ props }">
+              <v-list-item
+                v-bind="props"
+                prepend-icon="mdi-help-circle-outline"
+                title="Visites guidées"
+              >
+                <template v-slot:append>
+                  <v-icon>mdi-chevron-right</v-icon>
+                </template>
+              </v-list-item>
+            </template>
+            <AllToursMenu />
+          </v-menu>
+
+          <v-divider></v-divider>
+
           <v-list-item
             prepend-icon="mdi-logout"
             :title="$t('navigation.logout')"
@@ -353,10 +372,10 @@
 </template>
 
 <script setup lang="ts">
-import LanguageSelector from "@/components/common/LanguageSelector.vue"
 import NotificationCenterVuetify from "@/components/common/NotificationCenterVuetify.vue"
-import UserAvatar from "@/components/common/UserAvatar.vue"
 import TourButton from "@/components/common/TourButton.vue"
+import AllToursMenu from "@/components/common/AllToursMenu.vue"
+import UserAvatar from "@/components/common/UserAvatar.vue"
 import { useAuthStore } from "@/stores/auth"
 import { useSettingsStore } from "@/stores/settings"
 import { UserRole } from "@medical-crm/shared"
@@ -648,6 +667,32 @@ const onNavigationClick = () => {
   transition: transform 0.2s ease;
 }
 
+/* User menu dropdown - prevent horizontal scroll */
+.user-menu-list {
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+}
+
+.user-menu-list .v-list-item {
+  min-width: 0 !important;
+}
+
+.user-menu-list .v-list-item-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Tours submenu - prevent horizontal scroll */
+:deep(.tours-submenu) {
+  overflow-x: hidden !important;
+}
+
+/* Prevent translateX transform on tour menu items (causes horizontal scroll) */
+:deep(.tours-submenu .v-list-item:hover) {
+  transform: none !important;
+}
+
 /* Mobile specific styles */
 @media (max-width: 960px) {
   /* Ensure drawer takes full height on mobile */
@@ -655,29 +700,29 @@ const onNavigationClick = () => {
     height: 100vh !important;
     z-index: 1006 !important;
   }
-  
+
   /* Add overlay backdrop when drawer is open on mobile */
   :deep(.v-overlay__scrim) {
     background-color: rgba(0, 0, 0, 0.5) !important;
   }
-  
+
   /* Ensure main content is not affected by drawer on mobile */
   :deep(.v-main) {
     padding-left: 0 !important;
   }
-  
+
   /* Make sure app bar nav icon is visible on mobile */
   .v-app-bar .v-app-bar-nav-icon {
     display: flex !important;
   }
-  
+
   /* Style for mobile close button in drawer */
   .v-list-item .v-btn[icon="mdi-close"] {
     color: rgba(var(--v-theme-error)) !important;
     background: rgba(var(--v-theme-error), 0.1) !important;
     border-radius: 8px !important;
   }
-  
+
   .v-list-item .v-btn[icon="mdi-close"]:hover {
     background: rgba(var(--v-theme-error), 0.2) !important;
     transform: scale(1.05);

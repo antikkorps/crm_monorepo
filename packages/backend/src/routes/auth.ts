@@ -249,4 +249,110 @@ router.put("/me", authenticate, AuthController.updateProfile)
  */
 router.post("/change-password", authenticate, sensitiveRateLimiter, AuthController.changePassword)
 
+/**
+ * @openapi
+ * /api/auth/forgot-password:
+ *   post:
+ *     tags:
+ *       - Authentication
+ *     summary: Request password reset
+ *     description: Send a 6-digit code to user's email for password reset
+ *     security: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *                 example: user@example.com
+ *     responses:
+ *       200:
+ *         description: Reset code sent successfully
+ *       404:
+ *         description: User not found
+ *       429:
+ *         description: Too many reset attempts
+ */
+router.post("/forgot-password", authRateLimiter, AuthController.forgotPassword)
+
+/**
+ * @openapi
+ * /api/auth/verify-reset-code:
+ *   post:
+ *     tags:
+ *       - Authentication
+ *     summary: Verify password reset code
+ *     description: Verify the 6-digit code sent to user's email
+ *     security: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *               - code
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *               code:
+ *                 type: string
+ *                 example: "123456"
+ *     responses:
+ *       200:
+ *         description: Code verified successfully
+ *       400:
+ *         description: Invalid or expired code
+ *       429:
+ *         description: Too many verification attempts
+ */
+router.post("/verify-reset-code", authRateLimiter, AuthController.verifyResetCode)
+
+/**
+ * @openapi
+ * /api/auth/reset-password:
+ *   post:
+ *     tags:
+ *       - Authentication
+ *     summary: Reset password with code
+ *     description: Reset user password using verified code
+ *     security: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *               - code
+ *               - newPassword
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *               code:
+ *                 type: string
+ *                 example: "123456"
+ *               newPassword:
+ *                 type: string
+ *                 format: password
+ *     responses:
+ *       200:
+ *         description: Password reset successfully
+ *       400:
+ *         description: Invalid code or password validation error
+ *       429:
+ *         description: Too many reset attempts
+ */
+router.post("/reset-password", sensitiveRateLimiter, AuthController.resetPassword)
+
 export default router

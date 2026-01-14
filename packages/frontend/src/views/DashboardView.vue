@@ -40,7 +40,7 @@
     <!-- Dashboard Content -->
     <div v-else>
       <!-- Stats Cards -->
-      <v-row class="mb-6">
+      <v-row id="tour-stats-cards" class="mb-6">
         <v-col v-for="stat in statsCards" :key="stat.title" cols="12" sm="6" md="3">
           <v-card class="stat-card" elevation="2" @click="$router.push(stat.route)" hover>
             <v-card-text>
@@ -63,6 +63,7 @@
                 variant="text"
                 color="primary"
                 size="small"
+                style="pointer-events: none;"
               />
             </v-card-text>
           </v-card>
@@ -72,13 +73,13 @@
       <!-- Performance Metrics Widget -->
       <v-row v-if="metrics" class="mb-6">
         <v-col cols="12">
-          <v-card elevation="2">
+          <v-card id="tour-performance-metrics" elevation="2">
             <v-card-title class="d-flex align-center justify-space-between">
               <div class="d-flex align-center">
                 <v-icon icon="mdi-chart-timeline-variant" color="primary" class="mr-2" />
                 {{ t("dashboard.performanceIndicators") }}
               </div>
-              <v-btn-group variant="outlined" density="compact">
+              <v-btn-group id="tour-period-selector" variant="outlined" density="compact">
                 <v-btn
                   :color="period === 'week' ? 'primary' : undefined"
                   size="small"
@@ -230,38 +231,48 @@
       <!-- KPI Charts Widget -->
       <v-row v-if="metrics" class="mb-6">
         <v-col cols="12">
-          <KPIChartsWidget :period="period" />
+          <div id="tour-kpi-charts">
+            <KPIChartsWidget :period="period" />
+          </div>
         </v-col>
       </v-row>
 
       <!-- Smart Alerts & Timeline -->
       <v-row class="mb-6">
         <v-col cols="12" md="5">
-          <SmartAlertsWidget />
+          <div id="tour-smart-alerts">
+            <SmartAlertsWidget />
+          </div>
         </v-col>
         <v-col cols="12" md="7">
-          <TimelineWidget />
+          <div id="tour-timeline">
+            <TimelineWidget />
+          </div>
         </v-col>
       </v-row>
 
       <!-- Quick Actions (Personalized) -->
       <v-row class="mb-6">
         <v-col cols="12">
-          <QuickActionsWidget />
+          <div id="tour-quick-actions">
+            <QuickActionsWidget />
+          </div>
         </v-col>
       </v-row>
 
       <!-- Hot Leads Widget -->
       <v-row class="mb-6">
         <v-col cols="12">
-          <HotLeadsWidget />
+          <div id="tour-hot-leads">
+            <HotLeadsWidget />
+          </div>
         </v-col>
       </v-row>
 
       <!-- Recent Tasks Widget -->
       <v-row class="mb-6">
         <v-col cols="12">
-          <v-card elevation="2">
+          <v-card id="tour-recent-tasks" elevation="2">
             <v-card-title class="d-flex align-center justify-space-between">
               <div class="d-flex align-center">
                 <v-icon icon="mdi-check-circle" color="primary" class="mr-2" />

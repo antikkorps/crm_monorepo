@@ -11,4 +11,5 @@ export * from "./task"
 export * from "./user"
 
 // Re-export commonly used collaboration types for convenience
-export { ReminderStatus, ReminderPriority, CallType } from "./collaboration"
+export type { ReminderStatus } from "./collaboration"
+export { ReminderPriority, CallType } from "./collaboration"

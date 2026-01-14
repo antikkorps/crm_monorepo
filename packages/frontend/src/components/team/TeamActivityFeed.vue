@@ -4,7 +4,7 @@
       <div class="feed-header">
         <h3 class="feed-title">
           <v-icon icon="mdi-history" class="me-2" />
-          Team Activity
+          {{ t("teams.teamActivity") }}
         </h3>
         <div class="feed-controls">
           <v-btn
@@ -33,65 +33,74 @@
         <!-- Loading State -->
         <div v-if="loading" class="loading-state">
           <v-progress-circular indeterminate size="small" />
-          <span>Loading activities...</span>
+          <span>{{ t("teams.loadingActivities") }}</span>
         </div>
 
         <!-- Empty State -->
-        <div v-else-if="filteredActivities.length === 0" class="empty-state">
+        <div v-else-if="activities.length === 0" class="empty-state">
           <v-icon icon="mdi-history" class="empty-icon" />
-          <p>No recent activities found</p>
+          <p>{{ t("teams.noActivitiesFound") }}</p>
         </div>
 
         <!-- Activity Timeline -->
         <div v-else class="activity-timeline">
-          <v-timeline
-            :items="timelineItems"
-            class="activity-timeline"
-            size="small"
-          >
-            <template #item="{ item }">
-              <div class="activity-item">
-                <div class="activity-header">
-                  <div class="activity-user">
-                    <v-avatar
-                      :image="getUserAvatar(item.userId)"
-                      :alt="getUserInitials(item.user)"
-                      size="32"
-                      class="user-avatar"
-                    >
-                      {{ getUserInitials(item.user) }}
-                    </v-avatar>
-                    <span class="user-name">
-                      {{ item.user?.firstName }} {{ item.user?.lastName }}
-                    </span>
-                  </div>
-                  <div class="activity-time">
-                    <small>{{ formatTime(item.timestamp) }}</small>
-                  </div>
-                </div>
+          <v-timeline side="end" truncate-line="both">
+            <v-timeline-item
+              v-for="item in activities"
+              :key="item.id"
+              :dot-color="getMarkerClass(item.type)"
+              size="default"
+            >
+              <template v-slot:icon>
+                <v-icon color="white">{{ getActivityIcon(item.type) }}</v-icon>
+              </template>
 
-                <div class="activity-content">
-                  <p class="activity-description">{{ item.description }}</p>
-
-                  <div v-if="item.metadata" class="activity-metadata">
-                    <div v-if="item.metadata.taskTitle" class="metadata-item">
-                      <v-icon icon="mdi-check-square" size="small" class="me-1" />
-                      <span>{{ item.metadata.taskTitle }}</span>
+              <v-card elevation="2">
+                <v-card-text>
+                  <div class="activity-item">
+                    <div class="activity-header">
+                      <div class="activity-user">
+                        <v-avatar
+                          :image="getUserAvatar(item.userId)"
+                          :alt="getUserInitials(item.user)"
+                          size="32"
+                          class="user-avatar"
+                        >
+                          {{ getUserInitials(item.user) }}
+                        </v-avatar>
+                        <span class="user-name">
+                          {{ item.user?.firstName }} {{ item.user?.lastName }}
+                        </span>
+                      </div>
+                      <div class="activity-time">
+                        <small>{{ formatTime(item.timestamp) }}</small>
+                      </div>
                     </div>
 
-                    <div v-if="item.metadata.institutionName" class="metadata-item">
-                      <v-icon icon="mdi-office-building" size="small" class="me-1" />
-                      <span>{{ item.metadata.institutionName }}</span>
-                    </div>
+                    <div class="activity-content">
+                      <p class="activity-description">{{ item.description }}</p>
 
-                    <div v-if="item.metadata.amount" class="metadata-item">
-                      <v-icon icon="mdi-currency-usd" size="small" class="me-1" />
-                      <span>${{ formatAmount(item.metadata.amount) }}</span>
+                      <div v-if="item.metadata" class="activity-metadata">
+                        <div v-if="item.metadata.taskTitle" class="metadata-item">
+                          <v-icon icon="mdi-check-square" size="small" class="me-1" />
+                          <span>{{ item.metadata.taskTitle }}</span>
+                        </div>
+
+                        <div v-if="item.metadata.institutionName" class="metadata-item">
+                          <v-icon icon="mdi-office-building" size="small" class="me-1" />
+                          <span>{{ item.metadata.institutionName }}</span>
+                        </div>
+
+                        <div v-if="item.metadata.amount" class="metadata-item">
+                          <v-icon icon="mdi-currency-usd" size="small" class="me-1" />
+                          <span>${{ formatAmount(item.metadata.amount) }}</span>
+                        </div>
+                      </div>
                     </div>
                   </div>
-                </div>
-              </div>
-            </template>
+                </v-card-text>
+              </v-card>
+            </v-timeline-item>
           </v-timeline>
         </div>
 
@@ -105,7 +114,7 @@
             block
             class="load-more-btn"
           >
-            Load More
+            {{ t("teams.loadMore") }}
           </v-btn>
         </div>
       </div>
@@ -115,37 +124,15 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ref } from "vue"
+import { useI18n } from "vue-i18n"
+import { teamsApi, type TeamActivity } from "@/services/api/teams"
 
-interface ActivityItem {
-  id: string
-  type:
-    | "task_created"
-    | "task_completed"
-    | "task_assigned"
-    | "institution_created"
-    | "institution_updated"
-    | "quote_created"
-    | "invoice_paid"
-    | "user_login"
-  userId: string
-  description: string
-  timestamp: Date
-  user?: {
-    id: string
-    firstName: string
-    lastName: string
-    avatarSeed: string
-  }
-  metadata?: {
-    taskTitle?: string
-    institutionName?: string
-    amount?: number
-    [key: string]: any
-  }
-}
+const { t } = useI18n()
+
+type ActivityItem = TeamActivity
 
 interface Props {
-  teamId?: string
+  teamId: string
   limit?: number
 }
 
@@ -160,64 +147,43 @@ const hasMore = ref(true)
 const selectedFilter = ref("all")
 const page = ref(1)
 
-const filterOptions = [
-  { label: "All Activities", value: "all" },
-  { label: "Tasks", value: "task" },
-  { label: "Institutions", value: "institution" },
-  { label: "Billing", value: "billing" },
-  { label: "User Actions", value: "user" },
-]
-
-const filteredActivities = computed(() => {
-  if (selectedFilter.value === "all") {
-    return activities.value
-  }
-
-  const typeMap = {
-    task: ["task_created", "task_completed", "task_assigned"],
-    institution: ["institution_created", "institution_updated"],
-    billing: ["quote_created", "invoice_paid"],
-    user: ["user_login"],
-  }
-
-  const allowedTypes = typeMap[selectedFilter.value as keyof typeof typeMap] || []
-  return activities.value.filter((activity) => allowedTypes.includes(activity.type))
-})
-
-const timelineItems = computed(() =>
-  filteredActivities.value.map((activity) => ({
-    ...activity,
-    dotColor: getMarkerClass(activity.type).replace('marker-', ''),
-    icon: getActivityIcon(activity.type).replace('pi pi-', 'mdi-'),
-  }))
-)
+const filterOptions = computed(() => [
+  { label: t("teams.filters.allActivities"), value: "all" },
+  { label: t("teams.filters.tasks"), value: "task" },
+  { label: t("teams.filters.institutions"), value: "institution" },
+  { label: t("teams.filters.interactions"), value: "user" },
+])
 
 const getMarkerClass = (type: string) => {
-  const classMap = {
-    task_created: "marker-task",
-    task_completed: "marker-success",
-    task_assigned: "marker-task",
-    institution_created: "marker-institution",
-    institution_updated: "marker-institution",
-    quote_created: "marker-billing",
-    invoice_paid: "marker-success",
-    user_login: "marker-user",
+  const colorMap = {
+    task_created: "blue",
+    task_completed: "success",
+    task_assigned: "blue",
+    institution_created: "purple",
+    institution_updated: "purple",
+    quote_created: "orange",
+    invoice_paid: "success",
+    note_created: "indigo",
+    meeting_created: "teal",
+    call_created: "cyan",
   }
-  return classMap[type as keyof typeof classMap] || "marker-default"
+  return colorMap[type as keyof typeof colorMap] || "grey"
 }
 
 const getActivityIcon = (type: string) => {
   const iconMap = {
-    task_created: "mdi-plus",
-    task_completed: "mdi-check",
-    task_assigned: "mdi-account-plus",
-    institution_created: "mdi-office-building",
-    institution_updated: "mdi-pencil",
-    quote_created: "mdi-file-edit",
-    invoice_paid: "mdi-currency-usd",
-    user_login: "mdi-login",
+    task_created: "mdi-clipboard-plus-outline",
+    task_completed: "mdi-clipboard-check-outline",
+    task_assigned: "mdi-clipboard-account-outline",
+    institution_created: "mdi-domain-plus",
+    institution_updated: "mdi-account-arrow-right",
+    quote_created: "mdi-file-document-plus-outline",
+    invoice_paid: "mdi-cash-check",
+    note_created: "mdi-text-box-outline",
+    meeting_created: "mdi-calendar-account",
+    call_created: "mdi-phone-outline",
   }
-  return iconMap[type as keyof typeof iconMap] || "mdi-circle"
+  return iconMap[type as keyof typeof iconMap] || "mdi-circle-outline"
 }
 
 const getUserAvatar = (userId: string) => {
@@ -237,10 +203,10 @@ const formatTime = (timestamp: Date | string) => {
   const diffHours = Math.floor(diffTime / (1000 * 60 * 60))
   const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24))
 
-  if (diffMinutes < 1) return "Just now"
-  if (diffMinutes < 60) return `${diffMinutes}m ago`
-  if (diffHours < 24) return `${diffHours}h ago`
-  if (diffDays < 7) return `${diffDays}d ago`
+  if (diffMinutes < 1) return t("time.justNow")
+  if (diffMinutes < 60) return t("time.minutesAgo", { count: diffMinutes })
+  if (diffHours < 24) return t("time.hoursAgo", { count: diffHours })
+  if (diffDays < 7) return t("time.daysAgo", { count: diffDays })
 
   return date.toLocaleDateString()
 }
@@ -261,71 +227,36 @@ const loadActivities = async (reset = false) => {
       loadingMore.value = true
     }
 
-    // Mock data for demonstration
-    const mockActivities: ActivityItem[] = [
-      {
-        id: "1",
-        type: "task_completed",
-        userId: "user1",
-        description: 'Completed task "Follow up with City Hospital"',
-        timestamp: new Date(Date.now() - 1000 * 60 * 30), // 30 minutes ago
-        user: { id: "user1", firstName: "John", lastName: "Doe", avatarSeed: "user1" },
-        metadata: {
-          taskTitle: "Follow up with City Hospital",
-          institutionName: "City Hospital",
-        },
-      },
-      {
-        id: "2",
-        type: "institution_created",
-        userId: "user2",
-        description: "Added new medical institution",
-        timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2), // 2 hours ago
-        user: { id: "user2", firstName: "Jane", lastName: "Smith", avatarSeed: "user2" },
-        metadata: { institutionName: "Regional Medical Center" },
-      },
-      {
-        id: "3",
-        type: "quote_created",
-        userId: "user1",
-        description: "Created new quote for medical equipment",
-        timestamp: new Date(Date.now() - 1000 * 60 * 60 * 4), // 4 hours ago
-        user: { id: "user1", firstName: "John", lastName: "Doe", avatarSeed: "user1" },
-        metadata: { institutionName: "City Hospital", amount: 15000 },
-      },
-      {
-        id: "4",
-        type: "task_assigned",
-        userId: "user3",
-        description: "Assigned task to team member",
-        timestamp: new Date(Date.now() - 1000 * 60 * 60 * 6), // 6 hours ago
-        user: {
-          id: "user3",
-          firstName: "Mike",
-          lastName: "Johnson",
-          avatarSeed: "user3",
-        },
-        metadata: { taskTitle: "Prepare presentation for board meeting" },
-      },
-      {
-        id: "5",
-        type: "invoice_paid",
-        userId: "user2",
-        description: "Received payment for invoice",
-        timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24), // 1 day ago
-        user: { id: "user2", firstName: "Jane", lastName: "Smith", avatarSeed: "user2" },
-        metadata: { institutionName: "Metro Clinic", amount: 8500 },
-      },
-    ]
+    // Map filter value to API parameter
+    const typeFilter = selectedFilter.value === "all" ? undefined : selectedFilter.value
 
-    if (reset) {
-      activities.value = mockActivities
-    } else {
-      activities.value.push(...mockActivities)
+    // Fetch activities from API
+    const response = await teamsApi.getTeamActivities(props.teamId, {
+      page: page.value,
+      limit: props.limit,
+      type: typeFilter,
+    })
+
+    if (!response || !response.data) {
+      console.error("No data received from API", response)
+      return
     }
 
-    // Simulate pagination
-    hasMore.value = page.value < 3
+    // Backend returns: { success: true, data: [...activities], meta: {...} }
+    const newActivities = Array.isArray(response.data) ? response.data : []
+
+    if (reset) {
+      activities.value = newActivities
+    } else {
+      activities.value.push(...newActivities)
+    }
+
+    // Update pagination state
+    if (response.meta?.pagination) {
+      hasMore.value = response.meta.pagination.hasMore
+    } else {
+      hasMore.value = false
+    }
     page.value++
   } catch (error) {
     console.error("Error loading activities:", error)
@@ -344,7 +275,8 @@ const loadMore = () => {
 }
 
 const applyFilter = () => {
-  // Filter is applied via computed property
+  // Reload activities with new filter
+  loadActivities(true)
 }
 
 onMounted(() => {
@@ -412,44 +344,8 @@ onMounted(() => {
   margin-top: 1rem;
 }
 
-.activity-marker {
-  width: 2rem;
-  height: 2rem;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  font-size: 0.75rem;
-}
-
-.marker-task {
-  background-color: #3b82f6;
-}
-
-.marker-success {
-  background-color: #10b981;
-}
-
-.marker-institution {
-  background-color: #8b5cf6;
-}
-
-.marker-billing {
-  background-color: #f59e0b;
-}
-
-.marker-user {
-  background-color: #6b7280;
-}
-
-.marker-default {
-  background-color: #d1d5db;
-  color: #6b7280;
-}
-
 .activity-item {
-  padding-left: 1rem;
+  padding: 0;
 }
 
 .activity-header {
@@ -515,10 +411,24 @@ onMounted(() => {
     flex-direction: column;
     gap: 0.75rem;
     align-items: stretch;
+    padding: 0.75rem 0.75rem 0;
+  }
+
+  .feed-title {
+    font-size: 1rem;
   }
 
   .feed-controls {
     justify-content: space-between;
+  }
+
+  .filter-dropdown {
+    min-width: 120px;
+    font-size: 0.875rem;
+  }
+
+  .activity-content {
+    padding: 0.75rem;
   }
 
   .activity-header {
@@ -530,6 +440,33 @@ onMounted(() => {
   .activity-metadata {
     flex-direction: column;
     align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  .user-name {
+    font-size: 0.8125rem;
+  }
+
+  .activity-description {
+    font-size: 0.8125rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .feed-header {
+    padding: 0.5rem 0.5rem 0;
+  }
+
+  .activity-content {
+    padding: 0.5rem;
+  }
+
+  .feed-title {
+    font-size: 0.9375rem;
+  }
+
+  .filter-dropdown {
+    min-width: 100px;
   }
 }
 </style>

@@ -1,8 +1,10 @@
 import Joi from "joi"
 import { createError } from "../middleware/errorHandler"
 import { User } from "../models/User"
+import { PasswordResetToken } from "../models/PasswordResetToken"
 import { AuthService } from "../services/AuthService"
 import { SecurityLogService } from "../services/SecurityLogService"
+import { EmailService } from "../services/EmailService"
 import { Context, Next } from "../types/koa"
 import { logger } from "../utils/logger"
 
@@ -290,6 +292,207 @@ export class AuthController {
     } catch (error) {
       logger.warn("Password change failed", {
         userId: user.id,
+        error: (error as Error).message,
+      })
+      throw error
+    }
+  }
+
+  /**
+   * Request password reset - send code to email
+   */
+  static async forgotPassword(ctx: Context, next: Next) {
+    try {
+      const { email } = ctx.request.body as { email: string }
+
+      if (!email) {
+        throw createError("Email est requis", 400, "MISSING_EMAIL")
+      }
+
+      // Find user by email
+      const user = await User.findOne({ where: { email: email.toLowerCase() } })
+
+      if (!user) {
+        // Don't reveal if user exists or not for security
+        ctx.body = {
+          success: true,
+          message: "Si un compte existe avec cet email, un code de réinitialisation a été envoyé.",
+        }
+        return
+      }
+
+      // Generate 6-digit code
+      const code = Math.floor(100000 + Math.random() * 900000).toString()
+
+      // Expire in 15 minutes
+      const expiresAt = new Date(Date.now() + 15 * 60 * 1000)
+
+      // Invalidate any existing tokens for this user
+      await PasswordResetToken.update(
+        { used: true },
+        { where: { userId: user.id, used: false } }
+      )
+
+      // Create new token
+      await PasswordResetToken.create({
+        userId: user.id,
+        code,
+        expiresAt,
+        used: false,
+      })
+
+      // Send email with code
+      const emailService = new EmailService()
+      await emailService.sendPasswordResetCode(user.email, code, user.firstName)
+
+      ctx.body = {
+        success: true,
+        message: "Si un compte existe avec cet email, un code de réinitialisation a été envoyé.",
+      }
+
+      logger.info("Password reset code sent", {
+        userId: user.id,
+        email: user.email,
+      })
+    } catch (error) {
+      logger.error("Forgot password error", {
+        error: (error as Error).message,
+      })
+      throw error
+    }
+  }
+
+  /**
+   * Verify password reset code
+   */
+  static async verifyResetCode(ctx: Context, next: Next) {
+    try {
+      const { email, code } = ctx.request.body as { email: string; code: string }
+
+      if (!email || !code) {
+        throw createError("Email et code sont requis", 400, "MISSING_FIELDS")
+      }
+
+      // Find user
+      const user = await User.findOne({ where: { email: email.toLowerCase() } })
+
+      if (!user) {
+        throw createError("Code invalide ou expiré", 400, "INVALID_CODE")
+      }
+
+      // Find valid token
+      const token = await PasswordResetToken.findOne({
+        where: {
+          userId: user.id,
+          code,
+          used: false,
+        },
+      })
+
+      if (!token) {
+        throw createError("Code invalide ou expiré", 400, "INVALID_CODE")
+      }
+
+      // Check if expired
+      if (new Date() > token.expiresAt) {
+        throw createError("Le code a expiré. Veuillez demander un nouveau code.", 400, "CODE_EXPIRED")
+      }
+
+      ctx.body = {
+        success: true,
+        message: "Code vérifié avec succès",
+      }
+
+      logger.info("Password reset code verified", {
+        userId: user.id,
+        email: user.email,
+      })
+    } catch (error) {
+      logger.warn("Verify reset code failed", {
+        error: (error as Error).message,
+      })
+      throw error
+    }
+  }
+
+  /**
+   * Reset password using verified code
+   */
+  static async resetPassword(ctx: Context, next: Next) {
+    try {
+      const { email, code, newPassword } = ctx.request.body as {
+        email: string
+        code: string
+        newPassword: string
+      }
+
+      if (!email || !code || !newPassword) {
+        throw createError("Tous les champs sont requis", 400, "MISSING_FIELDS")
+      }
+
+      // Validate password strength
+      const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/
+      if (!passwordRegex.test(newPassword)) {
+        throw createError(
+          "Le mot de passe doit contenir au moins 8 caractères, une majuscule, une minuscule, un chiffre et un caractère spécial",
+          400,
+          "WEAK_PASSWORD"
+        )
+      }
+
+      // Find user
+      const user = await User.findOne({ where: { email: email.toLowerCase() } })
+
+      if (!user) {
+        throw createError("Code invalide ou expiré", 400, "INVALID_CODE")
+      }
+
+      // Find valid token
+      const token = await PasswordResetToken.findOne({
+        where: {
+          userId: user.id,
+          code,
+          used: false,
+        },
+      })
+
+      if (!token) {
+        throw createError("Code invalide ou expiré", 400, "INVALID_CODE")
+      }
+
+      // Check if expired
+      if (new Date() > token.expiresAt) {
+        throw createError("Le code a expiré. Veuillez demander un nouveau code.", 400, "CODE_EXPIRED")
+      }
+
+      // Hash new password and update user
+      const newPasswordHash = await User.hashPassword(newPassword)
+      await user.update({ passwordHash: newPasswordHash })
+
+      // Mark token as used
+      await token.update({ used: true })
+
+      // Log security event
+      await SecurityLogService.logFromContext(
+        ctx,
+        "PASSWORD_RESET" as any,
+        "USER" as any,
+        user.id,
+        "SUCCESS" as any,
+        "Password reset via email code"
+      )
+
+      ctx.body = {
+        success: true,
+        message: "Mot de passe réinitialisé avec succès",
+      }
+
+      logger.info("Password reset successfully", {
+        userId: user.id,
+        email: user.email,
+      })
+    } catch (error) {
+      logger.warn("Password reset failed", {
         error: (error as Error).message,
       })
       throw error

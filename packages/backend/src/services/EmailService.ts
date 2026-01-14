@@ -291,6 +291,41 @@ export class EmailService {
     })
   }
 
+  public async sendPasswordResetCode(
+    recipientEmail: string,
+    code: string,
+    firstName: string
+  ): Promise<EmailDeliveryResult> {
+    const subject = "Code de réinitialisation de mot de passe"
+
+    const html = `
+      <p>Bonjour ${firstName},</p>
+
+      <p>Vous avez demandé la réinitialisation de votre mot de passe.</p>
+
+      <p>Voici votre code de vérification :</p>
+
+      <div style="font-size: 32px; font-weight: bold; letter-spacing: 8px; color: #1976d2; padding: 20px; background: #f5f5f5; border-radius: 8px; text-align: center; margin: 20px 0;">
+        ${code}
+      </div>
+
+      <p><strong>Ce code expirera dans 15 minutes.</strong></p>
+
+      <p>Si vous n'avez pas demandé cette réinitialisation, veuillez ignorer cet email et votre mot de passe restera inchangé.</p>
+
+      <p>Pour des raisons de sécurité, ne partagez jamais ce code avec qui que ce soit.</p>
+
+      <p>Cordialement,<br>
+      ${this.fromName}</p>
+    `
+
+    return this.sendEmail({
+      to: recipientEmail,
+      subject,
+      html,
+    })
+  }
+
   public async sendCustomEmail(
     recipientEmail: string | string[],
     subject: string,

@@ -50,6 +50,7 @@
                   variant="outlined"
                   :error-messages="errors.email"
                   :error="!!errors.email"
+                  autocomplete="email"
                   required
                   autofocus
                   class="mb-4"
@@ -67,6 +68,7 @@
                   variant="outlined"
                   :error-messages="errors.password"
                   :error="!!errors.password"
+                  autocomplete="current-password"
                   required
                   class="mb-4"
                   @click:append-inner="showPassword = !showPassword"
@@ -85,6 +87,7 @@
                     color="primary"
                     size="small"
                     class="text-capitalize"
+                    @click="goToForgotPassword"
                   >
                     Mot de passe oublié ?
                   </v-btn>
@@ -172,6 +175,10 @@ watch(credentials, () => {
   validateEmail()
   validatePassword()
 })
+
+const goToForgotPassword = () => {
+  router.push("/forgot-password")
+}
 
 const handleLogin = async () => {
   validateEmail()

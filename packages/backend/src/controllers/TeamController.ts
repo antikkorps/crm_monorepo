@@ -1,7 +1,13 @@
 import { Context, Next } from "../types/koa"
 import { Team } from "../models/Team"
 import { User } from "../models/User"
+import { Task } from "../models/Task"
+import { Note } from "../models/Note"
+import { Call } from "../models/Call"
+import { Meeting } from "../models/Meeting"
+import { MedicalInstitution } from "../models/MedicalInstitution"
 import { createError } from "../utils/logger"
+import { Op } from "sequelize"
 
 export class TeamController {
   /**
@@ -298,6 +304,276 @@ export class TeamController {
     } catch (error) {
       if (error && typeof error === "object" && "statusCode" in error) throw error
       throw createError("Failed to remove team member", 500, "REMOVE_MEMBER_ERROR", {
+        error,
+      })
+    }
+  }
+
+  /**
+   * Get team activities
+   * Aggregates tasks, notes, calls, and meetings from team members
+   */
+  public static async getTeamActivities(ctx: Context, next: Next): Promise<void> {
+    try {
+      const { id } = ctx.params
+      const { limit = 20, page = 1, type } = ctx.query as {
+        limit?: string
+        page?: string
+        type?: string
+      }
+
+      const team = await Team.findByPk(id)
+      if (!team) {
+        throw createError("Team not found", 404, "TEAM_NOT_FOUND", { teamId: id })
+      }
+
+      // Get all team members
+      const members = await team.getMembers()
+      const memberIds = members.map((m) => m.id)
+
+      if (memberIds.length === 0) {
+        ctx.body = {
+          success: true,
+          data: [],
+          meta: {
+            pagination: {
+              page: 1,
+              limit: parseInt(limit as string, 10),
+              total: 0,
+              totalPages: 0,
+            },
+          },
+        }
+        return
+      }
+
+      // Build activity array
+      const activities: any[] = []
+      const limitNum = parseInt(limit as string, 10)
+      const pageNum = parseInt(page as string, 10)
+      const offset = (pageNum - 1) * limitNum
+
+      // Helper function to format activity
+      const formatActivity = (
+        item: any,
+        type: string,
+        description: string,
+        userId: string
+      ) => ({
+        id: `${type}_${item.id}`,
+        type,
+        userId,
+        description,
+        timestamp: item.createdAt,
+        user: item.user || item.creator || item.organizer,
+        metadata: {
+          ...(item.institution && { institutionName: item.institution.name }),
+          ...(item.title && { taskTitle: item.title }),
+        },
+      })
+
+      // Fetch activities based on type filter or all if no filter
+      if (!type || type === "all" || type === "task") {
+        const tasks = await Task.findAll({
+          where: {
+            [Op.or]: [{ assigneeId: { [Op.in]: memberIds } }, { creatorId: { [Op.in]: memberIds } }],
+          },
+          include: [
+            {
+              model: User,
+              as: "creator",
+              attributes: ["id", "firstName", "lastName", "avatarSeed"],
+            },
+            {
+              model: MedicalInstitution,
+              as: "institution",
+              attributes: ["id", "name"],
+            },
+          ],
+          order: [["createdAt", "DESC"]],
+          limit: limitNum * 2, // Get more to have enough after filtering
+        })
+
+        tasks.forEach((task) => {
+          let activityType = "task_created"
+          let description = `Created task "${task.title}"`
+
+          if (task.status === "completed") {
+            activityType = "task_completed"
+            description = `Completed task "${task.title}"`
+          } else if (task.assigneeId !== task.creatorId && task.assigneeId) {
+            activityType = "task_assigned"
+            description = `Assigned task "${task.title}"`
+          }
+
+          activities.push(
+            formatActivity(task, activityType, description, task.creatorId)
+          )
+        })
+      }
+
+      // Track institution assignments
+      if (!type || type === "all" || type === "institution") {
+        const institutions = await MedicalInstitution.findAll({
+          where: {
+            assignedUserId: { [Op.in]: memberIds },
+          },
+          attributes: ["id", "name", "assignedUserId", "createdAt", "updatedAt"],
+          order: [["updatedAt", "DESC"]],
+          limit: limitNum,
+        })
+
+        for (const institution of institutions) {
+          const assignedUser = members.find((m) => m.id === institution.assignedUserId)
+          if (assignedUser) {
+            activities.push({
+              id: `institution_assigned_${institution.id}`,
+              type: "institution_updated",
+              userId: institution.assignedUserId || "",
+              description: `Assigned to institution`,
+              timestamp: institution.updatedAt,
+              user: {
+                id: assignedUser.id,
+                firstName: assignedUser.firstName,
+                lastName: assignedUser.lastName,
+                avatarSeed: assignedUser.avatarSeed,
+              },
+              metadata: {
+                institutionName: institution.name,
+              },
+            })
+          }
+        }
+      }
+
+      // Track meetings
+      if (!type || type === "all" || type === "user") {
+        const meetings = await Meeting.findAll({
+          where: {
+            organizerId: { [Op.in]: memberIds },
+          },
+          include: [
+            {
+              model: User,
+              as: "organizer",
+              attributes: ["id", "firstName", "lastName", "avatarSeed"],
+            },
+            {
+              model: MedicalInstitution,
+              as: "institution",
+              attributes: ["id", "name"],
+            },
+          ],
+          order: [["createdAt", "DESC"]],
+          limit: limitNum,
+        })
+
+        meetings.forEach((meeting) => {
+          activities.push(
+            formatActivity(
+              meeting,
+              "meeting_created",
+              `Created meeting "${meeting.title}"`,
+              meeting.organizerId
+            )
+          )
+        })
+      }
+
+      // Track calls
+      if (!type || type === "all" || type === "user") {
+        const calls = await Call.findAll({
+          where: {
+            userId: { [Op.in]: memberIds },
+          },
+          include: [
+            {
+              model: User,
+              as: "user",
+              attributes: ["id", "firstName", "lastName", "avatarSeed"],
+            },
+            {
+              model: MedicalInstitution,
+              as: "institution",
+              attributes: ["id", "name"],
+            },
+          ],
+          order: [["createdAt", "DESC"]],
+          limit: limitNum,
+        })
+
+        calls.forEach((call) => {
+          activities.push(
+            formatActivity(
+              call,
+              "call_created",
+              `Made a call`,
+              call.userId
+            )
+          )
+        })
+      }
+
+      if (!type || type === "all" || type === "user") {
+        const notes = await Note.findAll({
+          where: {
+            creatorId: { [Op.in]: memberIds },
+          },
+          include: [
+            {
+              model: User,
+              as: "creator",
+              attributes: ["id", "firstName", "lastName", "avatarSeed"],
+            },
+            {
+              model: MedicalInstitution,
+              as: "institution",
+              attributes: ["id", "name"],
+            },
+          ],
+          order: [["createdAt", "DESC"]],
+          limit: limitNum,
+        })
+
+        notes.forEach((note) => {
+          activities.push(
+            formatActivity(
+              note,
+              "note_created",
+              `Created note "${note.title}"`,
+              note.creatorId
+            )
+          )
+        })
+      }
+
+      // Sort all activities by timestamp
+      activities.sort((a, b) => {
+        const dateA = new Date(a.timestamp).getTime()
+        const dateB = new Date(b.timestamp).getTime()
+        return dateB - dateA
+      })
+
+      // Paginate
+      const paginatedActivities = activities.slice(offset, offset + limitNum)
+      const totalActivities = activities.length
+
+      ctx.body = {
+        success: true,
+        data: paginatedActivities,
+        meta: {
+          pagination: {
+            page: pageNum,
+            limit: limitNum,
+            total: totalActivities,
+            totalPages: Math.ceil(totalActivities / limitNum),
+            hasMore: offset + limitNum < totalActivities,
+          },
+        },
+      }
+    } catch (error) {
+      if (error && typeof error === "object" && "statusCode" in error) throw error
+      throw createError("Failed to fetch team activities", 500, "FETCH_ACTIVITIES_ERROR", {
         error,
       })
     }

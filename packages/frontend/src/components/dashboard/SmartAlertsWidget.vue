@@ -32,47 +32,47 @@
     <!-- Alerts List -->
     <v-card-text v-else>
       <v-list density="compact" lines="two">
-        <v-list-item
-          v-for="(alert, index) in alerts"
-          :key="alert.id"
-          class="alert-item mb-2"
-          :class="`alert-${alert.type}`"
-          @click="handleAlertClick(alert)"
-        >
-          <template v-slot:prepend>
-            <v-avatar :color="alert.color" size="40">
-              <v-icon :icon="alert.icon" size="20" color="white" />
-            </v-avatar>
-          </template>
+        <template v-for="(alert, index) in alerts" :key="alert.id">
+          <v-list-item
+            class="alert-item mb-2"
+            :class="`alert-${alert.type}`"
+            @click="handleAlertClick(alert)"
+          >
+            <template v-slot:prepend>
+              <v-avatar :color="alert.color" size="40">
+                <v-icon :icon="alert.icon" size="20" color="white" />
+              </v-avatar>
+            </template>
 
-          <v-list-item-title class="font-weight-bold">
-            {{ alert.title }}
-            <v-chip
-              :color="alert.color"
-              size="x-small"
-              variant="flat"
-              class="ml-2"
-            >
-              {{ alert.count }}
-            </v-chip>
-          </v-list-item-title>
+            <v-list-item-title class="font-weight-bold">
+              {{ alert.title }}
+              <v-chip
+                :color="alert.color"
+                size="x-small"
+                variant="flat"
+                class="ml-2"
+              >
+                {{ alert.count }}
+              </v-chip>
+            </v-list-item-title>
 
-          <v-list-item-subtitle class="text-wrap">
-            {{ alert.message }}
-          </v-list-item-subtitle>
+            <v-list-item-subtitle class="text-wrap">
+              {{ alert.message }}
+            </v-list-item-subtitle>
 
-          <template v-slot:append>
-            <v-btn
-              :color="alert.color"
-              variant="text"
-              size="small"
-              icon="mdi-chevron-right"
-            />
-          </template>
-        </v-list-item>
+            <template v-slot:append>
+              <v-btn
+                :color="alert.color"
+                variant="text"
+                size="small"
+                icon="mdi-chevron-right"
+              />
+            </template>
+          </v-list-item>
 
-        <!-- Divider between alerts -->
-        <v-divider v-if="index < alerts.length - 1" :key="`divider-${alert.id}`" class="my-2" />
+          <!-- Divider between alerts -->
+          <v-divider v-if="index < alerts.length - 1" :key="`divider-${index}`" class="my-2" />
+        </template>
       </v-list>
 
       <!-- Summary Card -->

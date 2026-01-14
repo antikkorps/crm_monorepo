@@ -50,10 +50,14 @@ function createRateLimiter(options: {
     ctx.set("X-RateLimit-Reset", String(resetTime))
 
     if (store[key].count > options.max) {
+      const waitTime = Math.ceil((store[key].resetTime - now) / 1000 / 60)
       ctx.status = 429
       ctx.body = {
-        error: "Too Many Requests",
-        message: options.message || "Too many requests, please try again later.",
+        success: false,
+        error: {
+          code: "RATE_LIMIT_EXCEEDED",
+          message: options.message || `Trop de tentatives. Veuillez réessayer dans ${waitTime} minute${waitTime > 1 ? 's' : ''}.`,
+        },
         retryAfter: resetTime,
       }
       return
@@ -74,20 +78,20 @@ export const generalRateLimiter = createRateLimiter({
 
 /**
  * Strict rate limiter for authentication endpoints
- * 5 login attempts per 15 minutes per IP
+ * 10 login attempts per 5 minutes per IP
  */
 export const authRateLimiter = createRateLimiter({
-  max: 5,
-  windowMs: 15 * 60 * 1000,
-  message: "Too many login attempts, please try again later.",
+  max: 10,
+  windowMs: 5 * 60 * 1000,
+  message: "Trop de tentatives de connexion. Veuillez réessayer dans quelques minutes.",
 })
 
 /**
  * Very strict rate limiter for sensitive operations
- * 3 requests per 15 minutes per IP
+ * 5 requests per 10 minutes per IP
  */
 export const sensitiveRateLimiter = createRateLimiter({
-  max: 3,
-  windowMs: 15 * 60 * 1000,
-  message: "Too many requests for this sensitive operation.",
+  max: 5,
+  windowMs: 10 * 60 * 1000,
+  message: "Trop de requêtes pour cette opération sensible. Veuillez patienter quelques minutes.",
 })
