@@ -2346,7 +2346,11 @@
   },
   "time": {
     "today": "Aujourd'hui",
-    "thisMonth": ""
+    "thisMonth": "",
+    "justNow": "À l'instant",
+    "minutesAgo": "{count} min",
+    "hoursAgo": "{count} h",
+    "daysAgo": "{count} j"
   },
   "contacts": {
     "edit": "Modifier le contact",
@@ -2407,8 +2411,10 @@
     "title": "Équipes",
     "subtitle": "Gérez vos équipes et membres",
     "teamActivity": "Activité de l'Équipe",
+    "getStarted": "Commencer avec les Équipes",
     "gridView": "Grille",
     "listView": "Liste",
+    "createNew": "Créer une équipe",
     "members": "Membres des Équipes",
     "loadingMembers": "Chargement des membres...",
     "singleTeam": "Équipe",
@@ -2421,6 +2427,9 @@
     "addMemberTo": "Ajouter un membre à",
     "addFirstMember": "Ajouter le premier membre",
     "noMembers": "Aucun membre dans cette équipe",
+    "noMembersFound": "Aucun membre trouvé",
+    "noMembersMatchFilters": "Aucun membre ne correspond aux filtres",
+    "clearFilters": "Effacer les filtres",
     "searchPlaceholder": "Rechercher des membres...",
     "selectUser": "Sélectionner un utilisateur",
     "selectUserPlaceholder": "Sélectionnez un utilisateur à ajouter",
@@ -2450,7 +2459,16 @@
     "statusActive": "Actif",
     "statusInactive": "Inactif",
     "filterByTeam": "Filtrer par équipe",
-    "filterByRole": "Filtrer par rôle"
+    "filterByRole": "Filtrer par rôle",
+    "loadingActivities": "Chargement des activités...",
+    "noActivitiesFound": "Aucune activité récente trouvée",
+    "loadMore": "Charger plus",
+    "filters": {
+      "allActivities": "Toutes les activités",
+      "tasks": "Tâches",
+      "institutions": "Institutions",
+      "interactions": "Notes & Réunions"
+    }
   },
   "success": {
     "saved": "Enregistré avec succès",

@@ -32,4 +32,11 @@ router.delete(
   TeamController.removeTeamMember
 )
 
+// Team activities
+router.get(
+  "/:id/activities",
+  requirePermission("canViewAllTasks"),
+  TeamController.getTeamActivities
+)
+
 export default router

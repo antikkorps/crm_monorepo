@@ -333,8 +333,8 @@
           </div>
 
           <!-- Activity Feed Sidebar -->
-          <div class="activity-section">
-            <TeamActivityFeed :team-id="teamStore.selectedTeam?.id" />
+          <div v-if="teamStore.selectedTeam" class="activity-section">
+            <TeamActivityFeed :team-id="teamStore.selectedTeam.id" />
           </div>
         </div>
       </div>
@@ -486,7 +486,7 @@ import type {
   UserCreationAttributes,
   UserUpdateAttributes,
 } from "@medical-crm/shared"
-import { computed, onMounted, ref } from "vue"
+import { computed, onMounted, ref, watch } from "vue"
 import { useI18n } from "vue-i18n"
 import { useRouter } from "vue-router"
 
@@ -501,6 +501,16 @@ const searchQuery = ref("")
 const selectedRole = ref("")
 const selectedTeam = ref("")
 const selectedStatus = ref("")
+
+// Synchronize selectedTeam with teamStore.selectedTeam
+watch(selectedTeam, (newTeamId) => {
+  if (newTeamId) {
+    const team = teamStore.getTeamById(newTeamId)
+    teamStore.setSelectedTeam(team || null)
+  } else {
+    teamStore.setSelectedTeam(null)
+  }
+})
 const showCreateUserDialog = ref(false)
 const showEditUserDialog = ref(false)
 const showManageUserDialog = ref(false)
@@ -1272,22 +1282,42 @@ onMounted(() => {
 
 @media (max-width: 768px) {
   .team-view {
-    padding: 1rem;
+    padding: 0.75rem;
   }
 
   .team-header {
     flex-direction: column;
     gap: 1rem;
     align-items: stretch;
+    padding: 1rem;
+  }
+
+  .page-title {
+    font-size: 1.5rem;
+  }
+
+  .page-description {
+    font-size: 0.9rem;
+  }
+
+  .header-actions {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .header-actions .v-btn {
+    width: 100%;
   }
 
   .team-controls {
     flex-direction: column;
     align-items: stretch;
+    gap: 0.75rem;
   }
 
   .filter-section {
     flex-direction: column;
+    gap: 0.5rem;
   }
 
   .view-controls {
@@ -1296,20 +1326,68 @@ onMounted(() => {
 
   .stats-grid {
     grid-template-columns: repeat(2, 1fr);
+    gap: 0.75rem;
+  }
+
+  .teams-section {
+    padding: 1rem;
+  }
+
+  .teams-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .members-section {
+    padding: 1rem;
   }
 
   .members-grid {
     grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .content-layout {
+    gap: 0;
+  }
+
+  .main-content {
+    gap: 0;
   }
 }
 
 @media (max-width: 480px) {
+  .team-view {
+    padding: 0.5rem;
+  }
+
+  .team-header {
+    padding: 0.75rem;
+  }
+
+  .page-title {
+    font-size: 1.25rem;
+  }
+
   .stats-grid {
     grid-template-columns: 1fr;
   }
 
+  .stat-content {
+    padding: 0.25rem;
+  }
+
+  .teams-section,
+  .members-section {
+    padding: 0.75rem;
+  }
+
   .empty-actions {
     flex-direction: column;
+  }
+
+  .section-header h3 {
+    font-size: 1rem;
   }
 }
 </style>

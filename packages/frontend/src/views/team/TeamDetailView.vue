@@ -74,47 +74,55 @@
           </v-card>
         </div>
 
-        <!-- Team Members Section -->
-        <v-card class="members-section">
-          <v-card-title class="members-header">
-            <span>{{ t('teams.teamMembers') }}</span>
-            <v-spacer />
-            <v-btn
-              color="primary"
-              prepend-icon="mdi-account-plus"
-              @click="showAddMemberDialog = true"
-            >
-              {{ t('teams.addMember') }}
-            </v-btn>
-          </v-card-title>
-
-          <v-card-text>
-            <!-- No members -->
-            <div v-if="members.length === 0" class="no-members-message">
-              <v-icon icon="mdi-account-plus" size="large" color="grey" />
-              <p>{{ t('teams.noMembers') }}</p>
+        <!-- Content Layout: Members + Activity -->
+        <div class="content-layout">
+          <!-- Team Members Section -->
+          <v-card class="members-section">
+            <v-card-title class="members-header">
+              <span>{{ t('teams.teamMembers') }}</span>
+              <v-spacer />
               <v-btn
                 color="primary"
-                variant="outlined"
                 prepend-icon="mdi-account-plus"
                 @click="showAddMemberDialog = true"
               >
-                {{ t('teams.addFirstMember') }}
+                {{ t('teams.addMember') }}
               </v-btn>
-            </div>
+            </v-card-title>
 
-            <!-- Members list -->
-            <div v-else class="members-grid">
-              <TeamMemberCard
-                v-for="member in members"
-                :key="member.id"
-                :member="member"
-                :team-id="team.id"
-                @remove="handleRemoveMember"
-              />
-            </div>
-          </v-card-text>
-        </v-card>
+            <v-card-text>
+              <!-- No members -->
+              <div v-if="members.length === 0" class="no-members-message">
+                <v-icon icon="mdi-account-plus" size="large" color="grey" />
+                <p>{{ t('teams.noMembers') }}</p>
+                <v-btn
+                  color="primary"
+                  variant="outlined"
+                  prepend-icon="mdi-account-plus"
+                  @click="showAddMemberDialog = true"
+                >
+                  {{ t('teams.addFirstMember') }}
+                </v-btn>
+              </div>
+
+              <!-- Members list -->
+              <div v-else class="members-grid">
+                <TeamMemberCard
+                  v-for="member in members"
+                  :key="member.id"
+                  :member="member"
+                  :team-id="team.id"
+                  @remove="handleRemoveMember"
+                />
+              </div>
+            </v-card-text>
+          </v-card>
+
+          <!-- Activity Feed Sidebar -->
+          <div class="activity-section">
+            <TeamActivityFeed :team-id="team.id" />
+          </div>
+        </div>
       </div>
     </div>
 
@@ -145,6 +153,7 @@ import AppLayout from '@/components/layout/AppLayout.vue'
 import TeamMemberCard from '@/components/team/TeamMemberCard.vue'
 import AddTeamMemberDialog from '@/components/team/AddTeamMemberDialog.vue'
 import EditTeamDialog from '@/components/team/EditTeamDialog.vue'
+import TeamActivityFeed from '@/components/team/TeamActivityFeed.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -358,6 +367,29 @@ onMounted(() => {
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   gap: 1rem;
   padding: 1.5rem;
+}
+
+.content-layout {
+  display: grid;
+  grid-template-columns: 1fr 400px;
+  gap: 1.5rem;
+  margin-top: 2rem;
+}
+
+.activity-section {
+  height: fit-content;
+  position: sticky;
+  top: 1rem;
+}
+
+@media (max-width: 1200px) {
+  .content-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .activity-section {
+    position: static;
+  }
 }
 
 @media (max-width: 768px) {

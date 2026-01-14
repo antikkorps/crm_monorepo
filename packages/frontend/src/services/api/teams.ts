@@ -22,6 +22,52 @@ export interface TeamUpdateRequest {
   isActive?: boolean
 }
 
+export interface TeamActivity {
+  id: string
+  type:
+    | "task_created"
+    | "task_completed"
+    | "task_assigned"
+    | "institution_created"
+    | "institution_updated"
+    | "quote_created"
+    | "invoice_paid"
+    | "note_created"
+    | "meeting_created"
+    | "call_created"
+  userId: string
+  description: string
+  timestamp: Date
+  user?: {
+    id: string
+    firstName: string
+    lastName: string
+    avatarSeed: string
+  }
+  metadata?: {
+    taskTitle?: string
+    institutionName?: string
+    amount?: number
+    [key: string]: any
+  }
+}
+
+export interface TeamActivitiesPagination {
+  page: number
+  limit: number
+  total: number
+  totalPages: number
+  hasMore: boolean
+}
+
+export interface TeamActivitiesResponse {
+  success: boolean
+  data: TeamActivity[]
+  meta: {
+    pagination: TeamActivitiesPagination
+  }
+}
+
 export const teamsApi = {
   /**
    * Get all teams
@@ -72,4 +118,30 @@ export const teamsApi = {
    */
   removeTeamMember: (teamId: string, userId: string) =>
     apiClient.delete<ApiResponse<void>>(`/teams/${teamId}/members/${userId}`),
+
+  /**
+   * Get team activities
+   */
+  getTeamActivities: (
+    teamId: string,
+    params?: {
+      page?: number
+      limit?: number
+      type?: string
+    }
+  ) => {
+    const searchParams = new URLSearchParams()
+    if (params) {
+      Object.entries(params).forEach(([key, value]) => {
+        if (value !== undefined && value !== null) {
+          searchParams.append(key, value.toString())
+        }
+      })
+    }
+    const queryString = searchParams.toString()
+    const url = queryString
+      ? `/teams/${teamId}/activities?${queryString}`
+      : `/teams/${teamId}/activities`
+    return apiClient.get<TeamActivitiesResponse>(url)
+  },
 }

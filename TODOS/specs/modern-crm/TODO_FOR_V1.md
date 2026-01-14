@@ -23,7 +23,7 @@ we are almost done to v1 but still have some elements to prepare
 - [ ] correct the tests which are not passing (mock database connexions in order to not have to set up a test database)
 - [ ] Search functionnality to set up (meilisearch dockerize? which is best option ?)
 - [ ] component back to dashboard to implement on all pages
-- [ ] missing translation in fr.json for TeamActivityFeed.vue
+- [x] missing translation in fr.json for TeamActivityFeed.vue
 - [x] It seems that there is an issue with socket.io for the notifications (debug => one task with an issue tomorrow not appearing in notification center)
 - [ ] While adding a team member to a team, before typing it loads a list with every user... a bit confusing before typing
 - [ ] Polish some style in creating invoice and quotes => specifically the catalogue background color which is not very beautiful
