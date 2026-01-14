@@ -25,7 +25,7 @@ we are almost done to v1 but still have some elements to prepare
 - [ ] component back to dashboard to implement on all pages
 - [x] missing translation in fr.json for TeamActivityFeed.vue
 - [x] It seems that there is an issue with socket.io for the notifications (debug => one task with an issue tomorrow not appearing in notification center)
-- [ ] While adding a team member to a team, before typing it loads a list with every user... a bit confusing before typing
+- [x] While adding a team member to a team, before typing it loads a list with every user... a bit confusing before typing
 - [ ] Polish some style in creating invoice and quotes => specifically the catalogue background color which is not very beautiful
 - [x] A validation message for the resetting password is perhaps not the best option. We should validate live during the user typing and live comparing the two inputs...
 - [x] SQL Error on /billing/analytics (fixed with migration + SQL query correction)
@@ -33,6 +33,7 @@ we are almost done to v1 but still have some elements to prepare
 - [x] Fix: Dashboard team card click not working (SCSS build error in AddTeamMemberDialog.vue and TeamMemberCard.vue - converted to CSS)
 - [ ] Verify production monitoring and logging configuration (from task 19.2)
 - [ ] action type verification failed due to missing share folder
-- [x] erreur lors de la récupération du catalogue d'articles
+- [x] erreur lors de la récupération du catalogue d'articles (fixed with migration + SQL query correction)
+- [ ] UserProfileForm => integrate i18n and traduction. Ensure that it checks the user's rights to create or update a user + ts_errors.
 
 ### Decision

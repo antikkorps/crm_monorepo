@@ -1,20 +1,25 @@
 <template>
-  <v-dialog :model-value="modelValue" @update:model-value="$emit('update:modelValue', $event)" max-width="600">
+  <v-dialog
+    :model-value="modelValue"
+    @update:model-value="$emit('update:modelValue', $event)"
+    max-width="600"
+  >
     <v-card>
       <v-card-title class="text-h5">
         <v-icon>mdi-account-plus</v-icon>
-        {{ t('teams.addMember') }}
+        {{ t("teams.addMember") }}
       </v-card-title>
 
       <v-card-subtitle v-if="team">
-        {{ t('teams.addMemberTo') }} "{{ team.name }}"
+        {{ t("teams.addMemberTo") }} "{{ team.name }}"
       </v-card-subtitle>
 
       <v-card-text>
         <v-form ref="formRef" @submit.prevent="addMember">
           <v-autocomplete
             v-model="selectedUser"
-            :items="availableUsers"
+            v-model:search="searchQuery"
+            :items="filteredUsers"
             :loading="loadingUsers"
             :label="t('teams.selectUser')"
             :placeholder="t('teams.searchUserPlaceholder')"
@@ -27,13 +32,18 @@
             variant="outlined"
             clearable
             auto-select-first
+            :menu-props="{ closeOnContentClick: false }"
             @update:model-value="errorMessage = ''"
+            @update:search="onSearch"
           >
             <template #item="{ props: itemProps, item }">
               <v-list-item v-bind="itemProps" :title="userDisplayText(item.raw)">
                 <template #prepend>
                   <v-avatar size="32">
-                    <img :src="getUserAvatar(item.raw)" :alt="getUserInitials(item.raw)" />
+                    <img
+                      :src="getUserAvatar(item.raw)"
+                      :alt="getUserInitials(item.raw)"
+                    />
                   </v-avatar>
                 </template>
                 <template #subtitle>
@@ -45,10 +55,13 @@
             <template #no-data>
               <v-list-item>
                 <v-list-item-title v-if="loadingUsers">
-                  {{ t('common.messages.loading') }}
+                  {{ t("common.loading") }}
+                </v-list-item-title>
+                <v-list-item-title v-else-if="searchQuery && searchQuery.length < 3">
+                  {{ t("teams.typeToSearch") }}
                 </v-list-item-title>
                 <v-list-item-title v-else>
-                  {{ t('teams.noAvailableUsers') }}
+                  {{ t("teams.noAvailableUsers") }}
                 </v-list-item-title>
               </v-list-item>
             </template>
@@ -60,7 +73,7 @@
 
           <v-alert type="info" class="mt-4">
             <div class="text-caption">
-              {{ t('teams.selectUserHint') }}
+              {{ t("teams.selectUserHint") }}
             </div>
           </v-alert>
         </v-form>
@@ -68,13 +81,8 @@
 
       <v-card-actions>
         <v-spacer />
-        <v-btn
-          color="grey"
-          variant="text"
-          @click="close"
-          :disabled="loading"
-        >
-          {{ t('common.cancel') }}
+        <v-btn color="grey" variant="text" @click="close" :disabled="loading">
+          {{ t("common.cancel") }}
         </v-btn>
         <v-btn
           color="primary"
@@ -83,7 +91,7 @@
           :loading="loading"
           :disabled="!selectedUser"
         >
-          {{ t('teams.add') }}
+          {{ t("teams.add") }}
         </v-btn>
       </v-card-actions>
     </v-card>
@@ -91,11 +99,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, computed } from 'vue'
-import { useI18n } from 'vue-i18n'
-import { teamsApi, usersApi } from '@/services/api'
-import { AvatarService } from '@/services/avatarService'
-import type { Team, User, ApiResponse } from '@medical-crm/shared'
+import { teamsApi, usersApi } from "@/services/api"
+import { AvatarService } from "@/services/avatarService"
+import type { ApiResponse, Team, User } from "@medical-crm/shared"
+import { computed, ref, watch } from "vue"
+import { useI18n } from "vue-i18n"
 
 interface Props {
   modelValue: boolean
@@ -103,8 +111,8 @@ interface Props {
 }
 
 interface Emits {
-  (e: 'update:modelValue', value: boolean): void
-  (e: 'member-added'): void
+  (e: "update:modelValue", value: boolean): void
+  (e: "member-added"): void
 }
 
 const props = defineProps<Props>()
@@ -115,9 +123,10 @@ const { t } = useI18n()
 // State
 const selectedUser = ref<User | null>(null)
 const allUsers = ref<User[]>([])
+const searchQuery = ref("")
 const loadingUsers = ref(false)
 const loading = ref(false)
-const errorMessage = ref('')
+const errorMessage = ref("")
 const formRef = ref<any>(null)
 
 // Computed
@@ -126,10 +135,28 @@ const teamMemberIds = computed(() => {
   return props.team.members.map((m: any) => m.id)
 })
 
-const availableUsers = computed(() => {
-  return allUsers.value.filter(user =>
-    user.isActive && !teamMemberIds.value.includes(user.id)
-  )
+const filteredUsers = computed(() => {
+  // Only show users if search query has at least 2 characters
+  if (!searchQuery.value || searchQuery.value.length < 2) {
+    return []
+  }
+
+  const searchLower = searchQuery.value.toLowerCase()
+  return allUsers.value.filter((user) => {
+    // Filter out inactive users and already team members
+    if (!user.isActive || teamMemberIds.value.includes(user.id)) {
+      return false
+    }
+
+    // Filter based on search query
+    const fullName = `${user.firstName} ${user.lastName}`.toLowerCase()
+    return (
+      user.firstName.toLowerCase().includes(searchLower) ||
+      user.lastName.toLowerCase().includes(searchLower) ||
+      user.email.toLowerCase().includes(searchLower) ||
+      fullName.includes(searchLower)
+    )
+  })
 })
 
 const userDisplayText = (user: User) => {
@@ -140,13 +167,13 @@ const getUserAvatar = (user: User) => {
   // Use DiceBear avatar if available, otherwise generate from name
   if (!user.avatarSeed || !user.avatarStyle) {
     return AvatarService.generateUserAvatar(user.firstName, user.lastName, {
-      size: 32
+      size: 32,
     })
   }
 
   return AvatarService.generateAvatarFromSeed(user.avatarSeed, {
     style: user.avatarStyle,
-    size: 32
+    size: 32,
   })
 }
 
@@ -154,20 +181,33 @@ const getUserInitials = (user: User) => {
   return `${user.firstName.charAt(0)}${user.lastName.charAt(0)}`.toUpperCase()
 }
 
+// Search handler - load users when user starts typing
+const onSearch = async (query: string) => {
+  searchQuery.value = query
+  if (query && query.length >= 2 && allUsers.value.length === 0) {
+    await loadUsers()
+  }
+}
+
 // Validation rules
 const rules = {
-  required: (v: any) => !!v || t('validation.required')
+  required: (v: any) => !!v || t("validation.required"),
 }
 
 // Methods
 const loadUsers = async () => {
+  // Don't load if already loaded
+  if (allUsers.value.length > 0) {
+    return
+  }
+
   try {
     loadingUsers.value = true
-    const response = await usersApi.getAll() as ApiResponse<User[]>
+    const response = (await usersApi.getAll()) as ApiResponse<User[]>
     const data = response.data || response
     allUsers.value = Array.isArray(data) ? data : []
   } catch (err) {
-    console.error('Error loading users:', err)
+    console.error("Error loading users:", err)
     allUsers.value = []
   } finally {
     loadingUsers.value = false
@@ -178,7 +218,7 @@ const addMember = async () => {
   if (!props.team || !selectedUser.value) return
 
   // Clear previous messages
-  errorMessage.value = ''
+  errorMessage.value = ""
 
   // Validate form
   const { valid } = await formRef.value?.validate()
@@ -187,30 +227,33 @@ const addMember = async () => {
   try {
     loading.value = true
 
-    const response = await teamsApi.addTeamMember(props.team.id, selectedUser.value.id) as ApiResponse
+    const response = (await teamsApi.addTeamMember(
+      props.team.id,
+      selectedUser.value.id
+    )) as ApiResponse
 
     if (response.success) {
       // Emit event to refresh team members
-      emit('member-added')
+      emit("member-added")
 
       // Close dialog immediately
       close()
     } else {
-      throw new Error('Failed to add member')
+      throw new Error("Failed to add member")
     }
   } catch (err: any) {
-    console.error('Error adding team member:', err)
+    console.error("Error adding team member:", err)
 
     // Handle specific error cases
     const errorCode = err.response?.data?.code
     const errorMsg = err.response?.data?.error?.message
 
-    if (errorCode === 'USER_NOT_FOUND') {
-      errorMessage.value = t('teams.errorUserNotFound')
-    } else if (errorCode === 'USER_ALREADY_MEMBER') {
-      errorMessage.value = t('teams.errorUserAlreadyMember')
+    if (errorCode === "USER_NOT_FOUND") {
+      errorMessage.value = t("teams.errorUserNotFound")
+    } else if (errorCode === "USER_ALREADY_MEMBER") {
+      errorMessage.value = t("teams.errorUserAlreadyMember")
     } else {
-      errorMessage.value = errorMsg || t('teams.errorAddingMember')
+      errorMessage.value = errorMsg || t("teams.errorAddingMember")
     }
   } finally {
     loading.value = false
@@ -218,11 +261,11 @@ const addMember = async () => {
 }
 
 const close = () => {
-  emit('update:modelValue', false)
+  emit("update:modelValue", false)
   // Reset form
   setTimeout(() => {
     selectedUser.value = null
-    errorMessage.value = ''
+    errorMessage.value = ""
     formRef.value?.reset()
   }, 300)
 }
@@ -232,12 +275,13 @@ watch(
   () => props.modelValue,
   (newVal) => {
     if (newVal) {
-      // Load users when dialog opens
-      loadUsers()
+      // Reset search when dialog opens
+      searchQuery.value = ""
     } else {
       // Reset form when dialog closes
       selectedUser.value = null
-      errorMessage.value = ''
+      errorMessage.value = ""
+      searchQuery.value = ""
     }
   }
 )

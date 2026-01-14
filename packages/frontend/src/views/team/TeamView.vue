@@ -28,7 +28,7 @@
             @click="showCreateUserDialog = true"
             class="add-member-btn"
           >
-            {{ t("teams.addMember") }}
+            {{ t("teams.addUser") }}
           </v-btn>
         </div>
       </div>
