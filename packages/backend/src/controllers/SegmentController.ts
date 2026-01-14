@@ -26,7 +26,7 @@ export class SegmentController {
         whereClause.visibility = visibility
       }
 
-      const segments = await Segment.findVisibleToUser(user.id, user.teamId)
+      const segments = await Segment.findVisibleToUser(user.id, user.teamId ?? undefined)
 
       // Apply additional filters
       let filteredSegments = segments
@@ -409,7 +409,7 @@ export class SegmentController {
         return
       }
 
-      if (!originalSegment.isVisibleTo(user.id, user.teamId)) {
+      if (!originalSegment.isVisibleTo(user.id, user.teamId ?? undefined)) {
         ctx.status = 403
         ctx.body = {
           success: false,
@@ -544,7 +544,7 @@ export class SegmentController {
 
       // Super admins have access to all segments
       const isSuperAdmin = user.role === 'super_admin'
-      const hasAccess = isSuperAdmin || segment.isVisibleTo(user.id, user.teamId)
+      const hasAccess = isSuperAdmin || segment.isVisibleTo(user.id, user.teamId ?? undefined)
 
       if (!hasAccess) {
         logger.warn('Analytics access denied', {
@@ -787,7 +787,7 @@ export class SegmentController {
       })
 
       // Filter segments user can access
-      const accessibleSegments = segments.filter(s => s.isVisibleTo(user.id, user.teamId))
+      const accessibleSegments = segments.filter(s => s.isVisibleTo(user.id, user.teamId ?? undefined))
 
       if (accessibleSegments.length === 0) {
         ctx.status = 404
