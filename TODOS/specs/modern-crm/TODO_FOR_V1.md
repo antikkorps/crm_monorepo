@@ -10,7 +10,7 @@ TODOS/specs/modern-crm/tasks.md
 
 - [x] 2026-01-08: v1 is deployed
 
-## date: 2026-01-08
+## date: 2026-01-14
 
 ### Context
 
@@ -19,7 +19,7 @@ we are almost done to v1 but still have some elements to prepare
 ### TODO
 
 - [ ] In institution timeline add lazy-loading of timeline
-- [ ] "Se souvenir de moi" on login page (make it useful)
+- [x] "Se souvenir de moi" on login page (make it useful)
 - [ ] correct the tests which are not passing (mock database connexions in order to not have to set up a test database)
 - [ ] Search functionnality to set up (meilisearch dockerize? which is best option ?)
 - [ ] component back to dashboard to implement on all pages
@@ -33,5 +33,6 @@ we are almost done to v1 but still have some elements to prepare
 - [x] Fix: Dashboard team card click not working (SCSS build error in AddTeamMemberDialog.vue and TeamMemberCard.vue - converted to CSS)
 - [ ] Verify production monitoring and logging configuration (from task 19.2)
 - [ ] action type verification failed due to missing share folder
+- [x] erreur lors de la récupération du catalogue d'articles
 
 ### Decision

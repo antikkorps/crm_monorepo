@@ -18,6 +18,7 @@ const loginSchema = Joi.object({
     "string.min": "Password must be at least 6 characters long",
     "any.required": "Password is required",
   }),
+  rememberMe: Joi.boolean().optional().default(false),
 })
 
 const refreshTokenSchema = Joi.object({
@@ -39,7 +40,7 @@ export class AuthController {
       throw createError(error.details[0].message, 400, "VALIDATION_ERROR", error.details)
     }
 
-    const { email, password } = value
+    const { email, password, rememberMe } = value
 
     try {
       // Authenticate user
@@ -51,11 +52,12 @@ export class AuthController {
       })
 
       // Set secure HTTP-only cookie for refresh token
+      // If rememberMe is true, set maxAge to 7 days, otherwise set to undefined (session cookie)
       ctx.cookies.set("refreshToken", tokens.refreshToken, {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
         sameSite: "strict",
-        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+        maxAge: rememberMe ? 7 * 24 * 60 * 60 * 1000 : undefined, // 7 days if rememberMe, session cookie otherwise
       })
 
       ctx.status = 200
@@ -72,6 +74,7 @@ export class AuthController {
       logger.info("User login successful", {
         userId: user.id,
         email: user.email,
+        rememberMe,
         ip: ctx.ip,
         userAgent: ctx.get("User-Agent"),
       })

@@ -189,7 +189,7 @@ const handleLogin = async () => {
   loginError.value = ""
 
   try {
-    await authStore.login(credentials)
+    await authStore.login({ ...credentials, rememberMe: rememberMe.value })
     const redirectPath = (route.query.redirect as string) || "/dashboard"
     router.push(redirectPath)
   } catch (error: any) {
