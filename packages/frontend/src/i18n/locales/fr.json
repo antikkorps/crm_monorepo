@@ -132,7 +132,7 @@
     "logout": "Se déconnecter"
   },
   "sidebar": {
-    "appName": "Medical CRM",
+    "appName": "OPEx_CRM",
     "billing": "Facturation",
     "collaboration": "Collaboration",
     "contactsSegmentation": "Contacts & Segmentation",
@@ -2492,6 +2492,72 @@
       "incoming": "Entrant",
       "outgoing": "Sortant",
       "missed": "Manqué"
+    }
+  },
+  "timeline": {
+    "searchPlaceholder": "Rechercher dans la timeline...",
+    "retry": "Réessayer",
+    "loading": "Chargement...",
+    "loadingMore": "Chargement en cours...",
+    "loadMore": "Charger plus",
+    "itemsLoaded": "{loaded} éléments chargés sur {total}",
+    "scrollForMore": "Défiler pour voir {remaining} éléments de plus",
+    "showingItems": "{count} sur {total} éléments affichés",
+    "empty": {
+      "title": "Aucune activité",
+      "description": "Aucune activité trouvée pour les filtres sélectionnés"
+    },
+    "filters": {
+      "all": "Tout",
+      "meetings": "Réunions",
+      "calls": "Appels",
+      "notes": "Notes",
+      "reminders": "Rappels",
+      "tasks": "Tâches"
+    },
+    "labels": {
+      "note": "Note",
+      "meeting": "Réunion",
+      "call": "Appel",
+      "reminder": "Rappel",
+      "task": "Tâche"
+    },
+    "callTypes": {
+      "incoming": "Entrant",
+      "outgoing": "Sortant",
+      "missed": "Manqué"
+    },
+    "callTo": "Appel vers {phone}",
+    "callFrom": "Appel de {phone}",
+    "callMissed": "Appel manqué de {phone}",
+    "assignedTo": "Assigné",
+    "completed": "Complété",
+    "private": "Privé",
+    "dueDate": "Échéance",
+    "relativeTime": {
+      "now": "À l'instant",
+      "minutes": "Il y a {n} min",
+      "hours": "Il y a {n} h",
+      "days": "Il y a {n} j"
+    },
+    "meetingStatus": {
+      "scheduled": "Planifié",
+      "in_progress": "En cours",
+      "completed": "Terminé",
+      "cancelled": "Annulé"
+    },
+    "taskStatus": {
+      "pending": "En attente",
+      "in_progress": "En cours",
+      "blocked": "Bloqué",
+      "completed": "Terminé",
+      "cancelled": "Annulé"
+    },
+    "priorities": {
+      "low": "Basse",
+      "medium": "Moyenne",
+      "high": "Haute",
+      "urgent": "Urgente"
     }
   },
   "team": {

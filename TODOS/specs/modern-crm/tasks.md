@@ -1,7 +1,6 @@
 # Implementation Plan
 
 - [x] 1. Set up monorepo structure and development environment
-
   - Create monorepo structure with packages for frontend, backend, shared, and plugins
   - Configure Lerna or Nx for workspace management and shared dependencies
   - Set up TypeScript configuration for all packages
@@ -9,16 +8,13 @@
   - _Requirements: 7.1, 7.4_
 
 - [x] 2. Initialize backend foundation with Koa.js and database
-
   - [x] 2.1 Set up Koa.js server with TypeScript and basic middleware
-
     - Create Koa.js application with TypeScript configuration
     - Implement CORS, body parser, and error handling middleware
     - Set up environment configuration and validation
     - _Requirements: 7.1, 7.4_
 
   - [x] 2.2 Configure PostgreSQL database with Sequelize ORM
-
     - Set up Sequelize with PostgreSQL connection
     - Create database configuration and connection management
     - Implement migration system for schema management
@@ -26,7 +22,6 @@
     - _Requirements: 7.3, 11.1_
 
   - [x] 2.3 Implement user authentication system with JWT
-
     - Create User model with Sequelize including role-based fields
     - Implement JWT token generation and validation middleware
     - Create authentication endpoints (login, refresh, logout)
@@ -34,7 +29,6 @@
     - _Requirements: 4.1, 4.2, 4.3, 10.1_
 
   - [x] 2.4 Implement advanced role-based access control (RBAC)
-
     - Update User model with new role structure (SUPER_ADMIN, TEAM_ADMIN, USER)
     - Create comprehensive permission matrix for all system features
     - Implement granular permission middleware for API endpoints
@@ -43,9 +37,7 @@
     - _Requirements: 4.1, 4.2, 10.1, 11.1_
 
 - [x] 3. Create medical institution data models and basic CRUD operations
-
   - [x] 3.1 Design and implement medical institution Sequelize models
-
     - Create MedicalInstitution model with medical-specific fields
     - Implement ContactPerson and MedicalProfile associated models
     - Add validation for medical data (bed capacity, surgical rooms, specialties)
@@ -53,7 +45,6 @@
     - _Requirements: 1.2, 8.1, 8.3_
 
   - [x] 3.2 Build medical institution CRUD API endpoints
-
     - Implement REST endpoints for medical institution management
     - Add search and filtering capabilities for medical criteria
     - Create data validation middleware for medical institution data
@@ -61,7 +52,6 @@
     - _Requirements: 1.1, 1.3, 1.4, 8.1_
 
   - [x] 3.3 Implement CSV import functionality for medical institutions
-
     - Create CSV parsing service with medical data validation
     - Implement duplicate detection and merge logic for institutions
     - Add error handling and validation reporting for imports
@@ -69,9 +59,7 @@
     - _Requirements: 1.1, 1.5_
 
 - [x] 4. Develop team management and user profile system
-
   - [x] 4.1 Create team and user management models
-
     - Implement Team model with Sequelize associations
     - Add user profile fields and team assignment relationships
     - Create DiceBear avatar generation service integration
@@ -79,7 +67,6 @@
     - _Requirements: 9.4, 10.1, 10.2_
 
   - [x] 4.2 Build user profile and team management API
-
     - Create endpoints for user profile management with DiceBear avatars
     - Implement team creation and member assignment endpoints
     - Add territory assignment functionality for medical institutions
@@ -87,9 +74,7 @@
     - _Requirements: 10.2, 10.4, 10.5_
 
 - [-] 5. Implement task management system for team collaboration
-
   - [x] 5.1 Create task model and database schema
-
     - Design Task model with assignment and medical institution relationships
 
     - Implement task status, priority, and due date management
@@ -98,7 +83,6 @@
     - _Requirements: 9.1, 9.2, 9.5_
 
   - [x] 5.2 Build task management API endpoints
-
     - Create CRUD endpoints for task management
     - Implement task assignment and status update functionality
     - Add filtering and search capabilities for team tasks
@@ -106,7 +90,6 @@
     - _Requirements: 9.1, 9.2, 9.3_
 
   - [x] 5.3 Implement email notifications for deadlines and reminders ✅ **COMPLÉTÉ**
-
     - ✅ Integrate EmailService (nodemailer) with ReminderService
     - ✅ Send email for overdue tasks to assignees (7j avant + en retard)
     - ✅ Send email for quotes expiring soon (7 days before) to assigned users
@@ -120,7 +103,6 @@
     **✅ IMPLÉMENTATION RÉALISÉE (2025-11-02):**
 
     **Architecture email terminée:**
-
     - ✅ **EmailService intégré** dans ReminderService avec configuration SMTP complète
     - ✅ **Templates HTML professionnels** pour tasks/quotes/invoices avec design responsive
     - ✅ **Calcul automatique des jours restants** et sujets dynamiques
@@ -129,13 +111,11 @@
     - ✅ **Anti-spam intégré** avec cache 23h pour éviter doublons
 
     **Configuration fournie:**
-
     - ✅ Variables SMTP dans `.env.example` (ENABLE_EMAIL_REMINDERS, SMTP_HOST, etc.)
     - ✅ Variables de contrôle d'activation (EMAIL_ENABLED, FRONTEND_URL)
     - ✅ Documentation complète dans `docs/EMAIL_REMINDERS.md`
 
     **Fonctionnalités opérationnelles:**
-
     - 🗓️ **Tâches** : Email 7j avant échéance + email urgent si en retard
     - 📋 **Devis** : Email 7j avant expiration + email d'alerte si expiré
     - 💰 **Factures** : Email 7j avant échéance + email de relance si impayées
@@ -143,7 +123,6 @@
     - 🛡️ **Robustesse** : Validation destinataires, gestion timeouts SMTP
 
     **Validation technique:**
-
     - ✅ Compilation TypeScript sans erreur
     - ✅ Démarrage serveur testé avec port 3002
     - ✅ SMTP transporter verification automatique
@@ -158,7 +137,6 @@
     ```
 
     **ÉTAT FINAL:** ✅ SYSTÈME EMAIL ENTIÈREMENT FONCTIONNEL ET PRÊT POUR PRODUCTION
-
     - **Temps de développement:** ~2 heures
     - **Impact utilisateur:** Immédiat (réduction perte devis par oubli)
     - **ROI estimé:** +20% conversion devis → commande par relances automatiques
@@ -175,9 +153,7 @@
     ```
 
 - [x] 6. Set up real-time communication with Socket.io
-
   - [x] 6.1 Configure Socket.io server and connection management
-
     - Set up Socket.io server with Koa.js integration
     - Implement user authentication for Socket.io connections
     - Create room management for team-based notifications
@@ -185,7 +161,6 @@
     - _Requirements: 3.1, 3.4, 9.3_
 
   - [x] 6.2 Implement real-time notification system
-
     - Create notification service for broadcasting team activities
     - Implement task assignment and status change notifications
     - Add medical institution update notifications for team members
@@ -193,9 +168,7 @@
     - _Requirements: 3.1, 3.2, 3.3, 9.3_
 
 - [-] 7. Develop advanced billing system with quotes, invoices, and partial payments
-
   - [x] 7.1 Create quote management data models and business logic
-
     - Design Quote and QuoteLine models with Sequelize for granular line management
     - Implement line-by-line discount system (percentage and fixed amount)
     - Add quote status management (draft, sent, accepted, rejected, expired)
@@ -204,7 +177,6 @@
     - _Requirements: 2.1, 2.2, 2.4_
 
   - [x] 7.2 Build quote management API with line-level operations
-
     - Create quote CRUD endpoints with medical institution linking
     - Implement quote line management (add, update, delete, reorder)
     - Add quote status workflow (send, accept, reject, expire)
@@ -213,7 +185,6 @@
     - _Requirements: 2.1, 2.3, 2.5_
 
   - [x] 7.3 Create invoice and partial payment data models
-
     - Design Invoice, InvoiceLine, and Payment models with Sequelize
     - Implement partial payment tracking with multiple payment records
     - Add invoice status management (draft, sent, partially paid, paid, overdue)
@@ -222,7 +193,6 @@
     - _Requirements: 2.1, 2.2, 2.4_
 
   - [x] 7.4 Build invoice management API with payment tracking
-
     - Create invoice CRUD endpoints with line-level discount management
     - Implement partial payment recording and status updates
     - Add automatic invoice status calculation based on payments
@@ -231,7 +201,6 @@
     - _Requirements: 2.1, 2.3, 2.5_
 
   - [x] 7.5 Implement PDF generation and document management
-
     - Create PDF generation service for quotes and invoices
     - Implement customizable document templates with line details
     - Add email service integration for document delivery
@@ -240,9 +209,7 @@
     - _Requirements: 2.3, 2.5_
 
 - [x] 8. Initialize Vue.js frontend with Vuetify components and internationalization
-
   - [x] 8.1 Set up Vue.js application with Vuetify and routing
-
     - Create Vue.js 3 application with Composition API setup
     - Configure Vuetify 3 component library with Material Design 3 theming
     - Set up Vue I18n for internationalization with French, English, Spanish, and German support
@@ -251,7 +218,6 @@
     - _Requirements: 7.1, 7.4_
 
   - [x] 8.2 Create authentication and layout components
-
     - Build login form component with validation
     - Create main application layout with navigation
     - Implement user profile display with DiceBear avatars
@@ -259,7 +225,6 @@
     - _Requirements: 4.1, 4.2, 10.1, 10.2_
 
   - [x] 8.2 Implement internationalization system
-
     - Create translation files for French, English, Spanish, and German
     - Set up locale detection and user preference storage
     - Implement date, number, and currency formatting per locale
@@ -268,9 +233,7 @@
     - _Requirements: 7.1, 7.2, 7.3, 7.4, 7.5_
 
 - [x] 9. Build medical institution management frontend
-
   - [x] 9.1 Create medical institution list and search interface
-
     - Build medical institution listing component with Vuetify DataTable
     - Implement advanced search and filtering for medical criteria
     - Add segmentation interface for surgical rooms, bed capacity, specialties
@@ -278,7 +241,6 @@
     - _Requirements: 1.3, 8.1, 8.2_
 
   - [x] 9.2 Develop medical institution detail and form components
-
     - Create comprehensive medical institution profile view
     - Build medical institution creation and editing forms
     - Implement medical-specific form fields and validation
@@ -293,9 +255,7 @@
     - _Requirements: 1.1, 1.5_
 
 - [x] 10. Develop team collaboration and task management frontend
-
   - [x] 10.1 Create task management dashboard and components
-
     - Build task dashboard with filtering and assignment views
     - Create task creation and editing forms
     - Implement task status tracking and priority management
@@ -310,9 +270,7 @@
     - _Requirements: 10.2, 10.3, 10.4, 10.5_
 
 - [x] 11. Implement real-time notifications in frontend
-
   - [x] 11.1 Set up Socket.io client and notification system
-
     - Configure Socket.io client with authentication
     - Create notification center component for displaying alerts
     - Implement real-time task assignment notifications
@@ -327,9 +285,7 @@
     - _Requirements: 3.3, 3.5_
 
 - [-] 12. Develop advanced billing and payment management frontend
-
   - [x] 12.1 Create quote builder with line-level discount management
-
     - Build quote creation interface with dynamic line addition/removal
     - Implement line-by-line discount controls (percentage and fixed amount)
     - Create real-time total calculation with tax and discount preview
@@ -338,7 +294,6 @@
     - _Requirements: 2.1, 2.2, 2.4_
 
   - [x] 12.2 Build invoice management with partial payment tracking
-
     - Create invoice listing with payment status indicators
     - Build invoice creation and editing forms with line management
     - Implement partial payment recording interface
@@ -347,7 +302,6 @@
     - _Requirements: 2.1, 2.2, 2.4, 2.5_
 
   - [x] 12.3 Implement document generation and delivery interface
-
     - Build PDF preview and download functionality for quotes and invoices
     - Create customizable document template management
     - Implement email delivery interface with tracking
@@ -356,9 +310,7 @@
     - _Requirements: 2.3, 2.5_
 
   - [x] 12.4 Create document template management system
-
     - [x] 12.4.1 Build document template backend models and services
-
       - Create DocumentTemplate model with company information and branding fields
       - Implement template CRUD operations with validation
       - Add logo upload service with file processing and storage
@@ -367,7 +319,6 @@
       - _Requirements: 2.1.1, 2.1.2, 2.1.4_
 
     - [x] 12.4.2 Implement template management frontend interface
-
       - Create template listing and management dashboard
       - Build template creation and editing forms with company information
       - Implement logo upload component with drag-and-drop functionality
@@ -376,7 +327,6 @@
       - _Requirements: 2.1.1, 2.1.3, 2.1.4, 2.1.5_
 
     - [x] 12.4.3 Integrate templates with PDF generation
-
       - Update PDF generation service to use document templates
       - Implement template-based quote and invoice rendering
       - Add logo positioning and company branding in PDF output
@@ -385,7 +335,6 @@
       - _Requirements: 2.1.2, 2.1.5_
 
   - [x] 12.5 Build billing analytics and financial reporting dashboard
-
     - Create revenue analytics dashboard with payment tracking charts
     - Implement outstanding invoice and partial payment monitoring
     - Add payment method analysis and reconciliation reports
@@ -394,9 +343,7 @@
     - _Requirements: 2.5, 8.2_
 
   - [ ] 12.6 Implement product/service catalog system for quote and invoice lines
-
     - [x] 12.6.1 Create catalog backend models and services
-
       - Create Item/Product model with description, unit price, tax rate, category
       - Implement item CRUD operations with validation and search
       - Add simple category management (flat structure)
@@ -404,7 +351,6 @@
       - _Requirements: 2.1, 2.2_
 
     - [x] 12.6.2 Develop catalog management frontend interface
-
       - Create item catalog dashboard with search and filtering
       - Build item creation and editing forms with category selection
       - Implement item listing with pagination and sorting
@@ -421,9 +367,7 @@
       - _Requirements: 2.1, 2.2, 2.4_
 
 - [x] 13. Implement webhook management system
-
   - [x] 13.1 Create webhook registration and management backend
-
     - Build webhook model and database schema
     - Implement webhook CRUD operations and validation
     - Create webhook delivery service with retry logic
@@ -438,9 +382,7 @@
     - _Requirements: 5.1, 5.4, 5.5_
 
 - [x] 14. Develop plugin architecture foundation
-
   - [x] 14.1 Create plugin system backend infrastructure
-
     - Design plugin registration and lifecycle management system
     - Implement plugin loading and dependency resolution
     - Create plugin API and hook system for integrations
@@ -455,9 +397,7 @@
     - _Requirements: 6.1, 6.3, 6.5_
 
 - [ ] 15. Create SAGE accounting integration plugin
-
   - [ ] 15.1 Develop SAGE plugin backend integration
-
     - Create SAGE API client and authentication handling
     - Implement customer and invoice data synchronization
     - Add bidirectional data mapping and transformation
@@ -472,9 +412,7 @@
     - _Requirements: 6.3, 6.4_
 
 - [ ] 16. Implement comprehensive testing and quality assurance
-
   - [~] 16.1 Write comprehensive backend test suite (In Progress)
-
     - Create unit tests for all service classes and models
     - Implement integration tests for API endpoints
     - Add database operation and migration tests
@@ -482,14 +420,12 @@
     - _Requirements: All backend requirements_
 
 - [x] 16.1.1 **Corriger l'erreur TypeScript dans institutions.ts (ligne 30,7)** ✅
-
   - Problème : Expected 2 arguments, but got 1 dans le callback multer fileFilter
   - Solution : Ajout du deuxième argument `false` au callback d'erreur
   - Impact : Compilation backend restaurée
   - Priorité : Haute (bloqueur) - RÉSOLU
 
 - [x] 16.1.2 **Refactoriser ExportController pour réduire la duplication de code** ✅
-
   - Problème : Duplication massive de code dans les méthodes d'export
   - Solution : Création de méthodes utilitaires communes (validateUserAndPermissions, parseExportOptions, handleExportResult, handleExport)
   - Impact : Réduction de ~400 lignes à ~150 lignes pour les exports principaux
@@ -503,16 +439,13 @@
   **Estimate:** 8-12 heures
 
   **Tests Created:**
-
   - ✅ HealthController.test.ts - Comprehensive health check endpoint tests
-
     - Basic, detailed, ready, and live endpoint tests
     - Database connectivity tests
     - Memory usage monitoring tests
     - Error handling and edge cases
 
   - ✅ TaskController.test.ts - Complete CRUD operations and permissions
-
     - GET /api/tasks - List with filtering, pagination, role-based access
     - GET /api/tasks/:id - Single task retrieval and permissions
     - POST /api/tasks - Task creation with validation
@@ -521,7 +454,6 @@
     - GET /api/tasks/assigned/:userId - User tasks filtering
 
   - ✅ DashboardController.test.ts - Dashboard metrics and analytics
-
     - GET /api/dashboard/metrics - Comprehensive metrics
     - GET /api/dashboard/activities - Recent activities timeline
     - GET /api/dashboard/alerts - Smart alerts detection
@@ -529,7 +461,6 @@
     - Period filtering and role-based data access
 
   - ✅ SecurityLogService.test.ts - Security logging and compliance
-
     - IP address extraction from various headers
     - User agent parsing
     - Authentication success/failure logging
@@ -546,23 +477,19 @@
     - Edge cases (zero amounts, decimals, large numbers)
 
   **Coverage Improvements:**
-
   - Controllers: +3 controllers tested (HealthController, TaskController, DashboardController)
   - Services: +2 services tested (SecurityLogService, ConsolidatedRevenueService)
   - Total new test files: 5
   - Estimated test cases: ~150+ tests
 
   **Next Steps:**
-
   - Add tests for remaining controllers (MeetingController, InvoiceController, etc.)
   - Add tests for remaining services (SageService, DigiformaService, etc.)
   - Run full test suite with coverage report
   - Verify 70% coverage threshold is met
 
 - [x] 17. Security implementation and compliance features ✅
-
   - [x] 17.1 Implement security middleware and data protection ✅
-
     - ✅ Add input validation and sanitization middleware (koa-xss-sanitizer + InputValidator)
     - ✅ Implement rate limiting and abuse protection (5 different rate limiters)
     - ✅ Create audit logging for healthcare compliance (Integrated with SecurityLog)
@@ -580,9 +507,7 @@
   - _Requirements: 11.3, 11.4, 11.5_
 
 - [ ] 18. Performance optimization and production readiness
-
   - [ ] 18.1 Optimize database performance and caching
-
     - Add database indexing for medical institution queries
     - Implement Redis caching for frequently accessed data
     - Optimize Sequelize queries and eager loading
@@ -598,15 +523,12 @@
   **Durée:** 4-5 heures
 
   **Implémentation:**
-
   1. **Vuetify Tree-Shaking** ✅
-
      - Créé `src/plugins/vuetify.ts` avec imports explicites (~80 composants)
      - Vuetify gzippé: 100KB (vs wildcard import)
      - Configuration avec defaults pour densité et variants
 
   2. **Code Splitting et Lazy Loading** ✅
-
      - Chunks intelligents par feature:
        - billing: 215KB (gzip: 55KB)
        - tasks, team: 35KB chacun
@@ -621,14 +543,12 @@
      - optimizeDeps pour dev startup rapide
 
   **Résultats:**
-
   - ✅ 10+ chunks feature-specific (lazy loading)
   - ✅ Build rapide: 13.5s
   - ✅ Better browser caching (hashed chunks)
   - ✅ Smaller initial load
 
   **Fichiers:**
-
   - `packages/frontend/src/plugins/vuetify.ts` (NEW)
   - `packages/frontend/src/main.ts` (REFACTORED)
   - `packages/frontend/vite.config.ts` (OPTIMIZED)
@@ -636,9 +556,7 @@
   _Requirements: 7.1, 8.1, 10.1_ ✅
 
 - [ ] 19. Final integration testing and deployment preparation
-
   - [ ] 19.1 Conduct comprehensive system integration testing
-
     - Test complete user workflows from authentication to billing
     - Validate real-time notifications across team collaboration scenarios
     - Test plugin system with SAGE integration end-to-end
@@ -648,7 +566,6 @@
     **🔄 En attente :** Dépend de la correction du bug TypeScript (institutions.ts:30,7)
 
 - [x] 19.2 Prepare production deployment configuration ✅
-
   - ✅ Create production Docker configurations and environment setup
   - ✅ Implement database migration and seeding for production
   - ⚠️ Configure monitoring and logging for production environment (À VÉRIFIER)
@@ -659,9 +576,7 @@
   **Date:** 2026-01-08
 
 - [x] 20. Collaboration features integration (Notes, Meetings, Calls, Reminders)
-
   - [x] 20.1 Backend models, APIs, and security
-
     - Implement Note, Meeting, Call, Reminder models with validation
     - Add sharing (notes), participants (meetings), ownership rules
     - Enforce RBAC + team-based access middleware for collaboration features
@@ -669,13 +584,11 @@
     - _Requirements: 1.1–4.6, 5.2, 5.4, 11.1_
 
   - [x] 20.2 Institution integration: collaboration and timeline endpoints
-
     - `GET /api/institutions/:id/collaboration`: consolidated stats + recent items
     - `GET /api/institutions/:id/timeline`: chronological interactions with pagination
     - _Requirements: 5.1, 5.3, 1.5, 2.5, 3.2, 4.4_
 
   - [x] 20.3 Unified search across CRM entities
-
     - `GET /api/institutions/search/unified` across institutions, tasks, notes, meetings, calls, reminders
     - Add `scope=own|team|all` with RBAC-constrained behavior
     - Apply team filtering for tasks/notes/meetings/calls/reminders
@@ -683,20 +596,17 @@
     - _Requirements: 5.1, 5.3_
 
   - [x] 20.4 Notifications for collaboration features
-
     - Meeting invitations/updates/comments notifications
     - Reminder created/due soon/overdue/completed notifications
     - Team activity notifications
     - _Requirements: 2.2, 2.4, 4.2_
 
   - [x] 20.5 Backend API documentation for frontend development
-
     - Add `packages/backend/BACKEND_API.md` documenting endpoints and scope rules
     - Provide request/response examples and parameter descriptions
     - _Requirements: 7.1, 7.4, 11.1_
 
 - [x] 20.6 Frontend integration on Institution detail
-
   - Add collaboration summary panel (stats + recent items)
   - Add timeline tab with pagination
   - Add unified search tab with `scope=own|team|all` selector
@@ -704,9 +614,7 @@
   - _Requirements: 5.1, 5.3_
 
 - [x] 25. Enhance main dashboard with dynamic metrics and Digiforma integration insights ✅ **COMPLÉTÉ**
-
   - [x] 25.1 Implement dynamic CRM metrics (Phase 1 - Independent of Digiforma) ✅
-
     - ✅ Replace hardcoded stats with real-time API data (institutions count, active tasks, team members, reports)
     - ✅ Add performance indicators (revenue growth, new clients this month, conversion rates)
     - ✅ Implement role-based metric filtering (SUPER_ADMIN sees all, USER sees team data)
@@ -715,7 +623,6 @@
     - _Requirements: 7.1, 8.1, 10.1_
 
     **✅ IMPLÉMENTATION RÉALISÉE (2025-11-11):**
-
     - ✅ Backend DashboardController avec métriques complètes
     - ✅ Frontend DashboardView avec données dynamiques
     - ✅ Filtrage basé sur les rôles (SUPER_ADMIN/TEAM_ADMIN/USER)
@@ -723,7 +630,6 @@
     - ✅ Fichiers: `packages/backend/src/controllers/DashboardController.ts`, `packages/frontend/src/views/DashboardView.vue`
 
   - [ ] 25.2 Add Digiforma synchronization status widget (Phase 2 - After Digiforma integration)
-
     - Display last sync timestamp and status for each data type (clients, quotes, invoices)
     - Show sync statistics (new records, updated records, errors)
     - Add quick sync trigger button with progress indicator
@@ -731,7 +637,6 @@
     - _Requirements: 6.4, 6.5_
 
   - [x] 25.3 Create recent activities timeline ✅
-
     - ✅ Build unified activity feed (new clients, created quotes/invoices, task assignments, Digiforma syncs)
     - ✅ Add activity filtering by type, date range, and user/team
     - ✅ Implement real-time updates via WebSocket for new activities
@@ -740,7 +645,6 @@
     - _Requirements: 3.1, 5.1, 9.3_
 
     **✅ IMPLÉMENTATION RÉALISÉE (2025-11-11):**
-
     - ✅ Backend endpoint: `GET /api/dashboard/activities`
     - ✅ Frontend widget: `TimelineWidget.vue`
     - ✅ Filtrage par type et pagination
@@ -748,7 +652,6 @@
     - ✅ Fichier: `packages/frontend/src/components/dashboard/TimelineWidget.vue`
 
   - [x] 25.4 Implement smart alerts and notifications panel ✅
-
     - ✅ Add critical alerts (overdue tasks, unpaid invoices, sync failures)
     - ✅ Create priority-based alert system with dismissible notifications
     - ✅ Implement alert history and management
@@ -757,7 +660,6 @@
     - _Requirements: 3.2, 3.3, 11.1_
 
     **✅ IMPLÉMENTATION RÉALISÉE (2025-11-11):**
-
     - ✅ Backend endpoint: `GET /api/dashboard/alerts`
     - ✅ Frontend widget: `SmartAlertsWidget.vue`
     - ✅ Système de priorités (critical, warning, info)
@@ -765,7 +667,6 @@
     - ✅ Fichier: `packages/frontend/src/components/dashboard/SmartAlertsWidget.vue`
 
   - [x] 25.5 Build personalized quick actions based on user behavior ✅
-
     - ✅ Track user actions and suggest relevant shortcuts
     - ✅ Add frequently used features to quick actions dynamically
     - ✅ Implement contextual actions based on current metrics (e.g., "Create invoice" if revenue is low)
@@ -773,7 +674,6 @@
     - _Requirements: 10.1, 10.2_
 
     **✅ IMPLÉMENTATION RÉALISÉE (2025-11-11):**
-
     - ✅ Backend endpoint: `GET /api/dashboard/quick-actions`
     - ✅ Frontend widget: `QuickActionsWidget.vue`
     - ✅ 6 catégories (urgent, finance, sales, planning, analytics, general)
@@ -781,7 +681,6 @@
     - ✅ Fichier: `packages/frontend/src/components/dashboard/QuickActionsWidget.vue`
 
   - [x] 25.6 Add performance charts and KPIs overview ✅
-
     - ✅ Create mini-charts for key metrics (revenue trend, client growth, task completion rate)
     - ✅ Implement chart drill-down to detailed analytics views
     - ✅ Add period comparison (this month vs last month)
@@ -790,7 +689,6 @@
     - _Requirements: 2.5, 8.2_
 
     **✅ IMPLÉMENTATION RÉALISÉE (2025-11-11):**
-
     - ✅ Frontend widget: `KPIChartsWidget.vue`
     - ✅ 4 graphiques (Revenue line, Clients bar, Conversion doughnut, Tasks line)
     - ✅ Sélecteur de période (7j/30j/90j)
@@ -798,14 +696,11 @@
     - ✅ Fichier: `packages/frontend/src/components/dashboard/KPIChartsWidget.vue`
 
   **ÉTAT FINAL:** ✅ Dashboard dynamique complètement opérationnel
-
   - **Commits:** 3 commits pushés vers `claude/review-crm-tasks-011CUzdpdGjqQnfJXTYt3Aeq`
   - **Impact:** Dashboard moderne avec métriques temps réel et widgets interactifs
 
 - [x] 21. Implement comprehensive data export and segmentation system
-
   - [x] 21.1 Create data export backend functionality ✅
-
     - Implement CSV/Excel export service for medical institutions ✅
     - Create contact export functionality with filtering options ✅
     - Add quote and invoice export capabilities with date ranges ✅
@@ -816,14 +711,12 @@
     - _Requirements: 1.1, 1.5, 2.1, 9.1, 10.1_
 
     **✅ Améliorations supplémentaires implémentées :**
-
     - Support XLSX avec ExcelJS (formatage professionnel, auto-fit des colonnes)
     - Pagination avec limit/offset pour les gros exports
     - Système de logging avancé avec Winston (JSON, rotation des fichiers)
     - Architecture de queue pour exports asynchrones (endpoints API + estimation de taille)
 
   - [x] 21.2 Build contact and institution segmentation backend
-
     - Create segmentation model and database schema
     - Implement dynamic filtering system for institutions (specialties, bed capacity, regions)
     - Add contact segmentation by role, activity, engagement level
@@ -834,7 +727,6 @@
     - _Requirements: 1.2, 1.3, 8.1, 10.2, 10.4_
 
   - [x] 21.3 Develop export management frontend interface
-
     - Create export center dashboard with history and status tracking
     - Build export configuration forms with field selection
     - Implement export preview with sample data display
@@ -845,7 +737,6 @@
     - _Requirements: 1.5, 2.3, 10.1, 11.1_
 
   - [x] 21.4 Build advanced segmentation and filtering frontend ✅
-
     - ✅ Create segment builder with drag-and-drop criteria interface (SegmentBuilder.vue)
     - ✅ Implement real-time segment preview with count updates (SegmentPreview.vue)
     - ✅ Build saved segment management and sharing interface (SavedSegmentsManager.vue, SegmentSharingDialog.vue)
@@ -856,9 +747,7 @@
     - _Requirements: 1.3, 8.1, 8.2, 10.2, 10.4_
 
 - [x] 22. Implement Contact Management CRUD API ✅ **COMPLÉTÉ**
-
   - [x] 22.1 Create ContactController with comprehensive CRUD operations ✅
-
     - ✅ Implement ContactController with all CRUD operations (GET, POST, PUT, DELETE)
     - ✅ Add contact listing with pagination, filtering by institution, role, active status
     - ✅ Create contact detail endpoint with institution information
@@ -870,7 +759,6 @@
     - _Requirements: 1.2, 4.1, 4.2, 10.1, 11.1_
 
   - [x] 22.2 Create contact routes and integrate with existing endpoints ✅
-
     - ✅ Add contact routes to main router (/api/contacts)
     - ✅ **Frontend ContactsView avec interface complète de gestion**
     - ✅ **ContactForm pour création/édition avec validation**
@@ -887,11 +775,9 @@
   **PRIORITÉ:** ✅ TERMINÉ - Système de gestion des contacts entièrement fonctionnel.
 
 - [-] 23. Frontend Harmonization and Polish ✨ **EN COURS**
-
   - [x] 23.1 Refine and complete Quotes/Invoices UI ✅ **COMPLÉTÉ**
 
     **Améliorations implémentées (2025-11-11)**:
-
     - ✅ **Support des templates pour les factures** : Ajout du sélecteur de template dans InvoiceForm.vue
     - ✅ **Harmonisation de DocumentActions.vue** : Conversion complète de PrimeVue vers Vuetify
     - ✅ **Système de relances fonctionnel** : Payment reminders entièrement implémenté
@@ -899,14 +785,12 @@
     - ✅ **Meilleure UX** : Grid responsive Vuetify, densité compact pour les formulaires
 
     **Problèmes résolus**:
-
     - Templates devis/factures maintenant correctement pris en compte lors de la génération PDF
     - InvoiceForm utilise maintenant le même système de templates que QuoteBuilder
     - DocumentActions migré vers Vuetify (plus de PrimeVue dans les composants de facturation)
     - Interface cohérente entre création de devis et création de factures
 
     **Fichiers modifiés**:
-
     - `packages/frontend/src/components/billing/InvoiceForm.vue`
     - `packages/frontend/src/components/billing/DocumentActions.vue`
 
@@ -915,7 +799,6 @@
     **Problème initial**: Le mode d'édition des factures ne fonctionnait pas et provoquait des erreurs serveur (500) ou des sauvegardes silencieuses.
 
     **Solution implémentée**:
-
     - Correction de la logique de permission pour autoriser la modification des factures en brouillon uniquement.
     - Ajout d'infobulles sur l'interface pour clarifier la règle métier à l'utilisateur.
     - Correction de multiples bugs dans le backend liés à la gestion des transactions Sequelize, au calcul des totaux (`NaN`), et à la sauvegarde des données (`shadowing`).
@@ -926,7 +809,6 @@
   - [x] 23.2 Refine and complete Notifications UI ✅ **COMPLÉTÉ**
 
     **Améliorations implémentées (2025-11-11)**:
-
     - ✅ Conversion complète de PrimeVue → Vuetify pour cohérence
     - ✅ NotificationsView: PrimeVue TabView → Vuetify v-tabs
     - ✅ NotificationHistory: Tous composants PrimeVue → Vuetify (Dialog, Button, Dropdown, Paginator)
@@ -936,7 +818,6 @@
     - ✅ Mobile responsive avec système de grille Vuetify
 
     **Fichiers modifiés**:
-
     - `packages/frontend/src/views/notifications/NotificationsView.vue`
     - `packages/frontend/src/components/common/NotificationHistory.vue`
     - `packages/frontend/src/components/common/NotificationSettings.vue`
@@ -944,7 +825,6 @@
   - [x] 23.3 Implement enhanced loading states ✅ **COMPLÉTÉ**
 
     **Améliorations implémentées (2025-11-11)**:
-
     - ✅ TasksView: v-progress-circular → v-skeleton-loader (list-item-avatar-three-line)
     - ✅ QuotesView: Spinner → v-skeleton-loader (table-row)
     - ✅ InstitutionDetailView: Spinner → v-skeleton-loader (article, table)
@@ -953,7 +833,6 @@
     - ✅ Conforme aux guidelines Material Design 3
 
     **Bénéfices**:
-
     - Feedback visuel montrant la structure du contenu pendant le chargement
     - Expérience utilisateur plus professionnelle
     - Meilleur support aria-busy pour screen readers
@@ -965,7 +844,6 @@
     **État actuel**: 8.5/10 (Très Bon)
 
     **Points forts identifiés**:
-
     - ✅ HTML sémantique avec hiérarchie de titres appropriée
     - ✅ Labels de formulaires présents sur tous les champs
     - ✅ Navigation clavier fonctionnelle (Vuetify)
@@ -974,7 +852,6 @@
     - ✅ Attributs ARIA fournis par Vuetify
 
     **Recommandations futures** (priorité moyenne):
-
     - Ajouter aria-label explicites sur boutons icon-only
     - Ajouter aria-live="polite" aux zones de contenu dynamique
     - Ajouter captions aux tableaux complexes
@@ -986,7 +863,6 @@
     **Implémentation complète (2025-11-11)** - Commits: 1d729f1, 94d5134
 
     **Fonctionnalités**:
-
     - ✅ Backend: SystemSettings model (JSONB) + controller + routes
     - ✅ Frontend: Settings store Pinia + API service + admin UI
     - ✅ Navigation dynamique selon feature flags
@@ -996,14 +872,12 @@
     - ✅ Interface admin intuitive `/settings/features`
 
     **Impact**:
-
     - Menu Billing masqué si quotes ET invoices désactivés
     - Liens individuels masqués selon leur état
     - Chargement des settings au démarrage de l'app (no auth required)
     - Validation de réponse sécurisée (pas de `|| {}` dangereux)
 
     **Fichiers créés**:
-
     - `packages/backend/src/models/SystemSettings.ts`
     - `packages/backend/src/controllers/SystemSettingsController.ts`
     - `packages/backend/src/routes/settings.ts`
@@ -1015,7 +889,6 @@
     **Audit complet réalisé (2025-11-11)** - Voir `TODOS/SEGMENTATION_AUDIT.md` - Commits: ed2cf6d, 80236ab
 
     **Problèmes critiques corrigés**:
-
     - 🔴 **Injection SQL éliminée** (6 occurrences): Sequelize.literal → Sequelize.where avec cast sécurisé
     - 🔴 **Désynchronisation Sequelize** : `public field!` → `declare` pour accès correct aux champs
     - 🟠 **Cache frontend non invalidé** : Ajout invalidation dans create/update/delete/duplicate
@@ -1023,14 +896,12 @@
     - ✅ **Workarounds supprimés** : Plus besoin de toJSON() grâce au fix Sequelize
 
     **Impact**:
-
     - ✅ Segmentation maintenant PRODUCTION-READY
     - ✅ Aucune vulnérabilité de sécurité
     - ✅ Modifications visibles immédiatement (cache OK)
     - ✅ Erreurs correctement exposées pour debugging
 
     **Fichiers modifiés**:
-
     - `packages/backend/src/models/Segment.ts`
     - `packages/backend/src/services/SegmentService.ts`
     - `packages/backend/src/controllers/SegmentController.ts`
@@ -1041,7 +912,6 @@
     **8 améliorations implémentées (2025-11-11)** - Commit: 94d5134
 
     **Frontend**:
-
     - ✅ Cache TTL magic number → constante `CACHE_TTL` (useSegmentation.ts)
     - ✅ Validation réponse sécurisée au lieu de `|| {}` (settings.ts)
     - ✅ Logique redondante supprimée (FeaturesSettingsView.vue)
@@ -1049,7 +919,6 @@
     - ✅ Option "Default Template" ajoutée (DocumentActions.vue)
 
     **Backend**:
-
     - ✅ Initialisation parallèle avec Promise.all (SystemSettings.ts)
     - ✅ Bulk updates optimisé avec Promise.all (SystemSettingsController.ts)
     - ✅ Suivi des settings échoués dans réponse
@@ -1061,14 +930,12 @@
     **Implémentation finale (2025-11-11)**
 
     **Pagination getSegments**:
-
     - ✅ Ajout paramètres `limit` et `offset` dans query string
     - ✅ Calcul stats uniquement sur résultats paginés (performance++)
     - ✅ Métadonnées dans réponse: `total`, `limit`, `offset`, `hasMore`
     - ✅ Backward compatible (pas de limit = tous les résultats)
 
     **Renommage role → title**:
-
     - ✅ Suppression champ `role` dans ContactFilters (confusion)
     - ✅ Utilisation cohérente de `title` partout (mappe vers champ DB `title`)
     - ✅ Mise à jour types shared, backend models, services
@@ -1076,7 +943,6 @@
     **Impact**: Meilleure performance pagination + clarté des filtres contacts
 
     **Fichiers modifiés**:
-
     - `packages/shared/src/types/segmentation.ts`
     - `packages/backend/src/models/Segment.ts`
     - `packages/backend/src/services/SegmentService.ts`
@@ -1087,7 +953,6 @@
   **Objectif:** Synchroniser les données Digiforma (clients, contacts, devis, CA) avec le CRM pour un CA consolidé Audit + Formation
 
   **Architecture:**
-
   - ✅ Read-only depuis Digiforma (GraphQL API)
   - ✅ Synchronisation hebdomadaire ou manuelle
   - ✅ Fusion intelligente avec institutions/contacts existants (par email)
@@ -1096,7 +961,6 @@
   - [x] 24.1 Backend - Modèles et Services Digiforma ✅ **100%**
 
     **Modèles créés:**
-
     - ✅ `DigiformaSync` : Tracking des synchronisations (lastSync, status, errors)
     - ✅ `DigiformaSettings` : Configuration API (bearer token, apiUrl, autoSync)
     - ✅ `DigiformaCompany` : Companies Digiforma → MedicalInstitution (mapping)
@@ -1105,14 +969,12 @@
     - ✅ `DigiformaInvoice` : Factures Digiforma (CA, paiements)
 
     **Services implémentés:**
-
     - ✅ `DigiformaService` : Client GraphQL + auth Bearer token
     - ✅ `DigiformaSyncService` : Logique de synchronisation complète
     - ✅ Fusion intelligente par email (companies → institutions)
     - ✅ Controller et routes API complets
 
     **Fichiers:**
-
     - `packages/backend/src/models/Digiforma*.ts` (tous les modèles)
     - `packages/backend/src/services/DigiformaService.ts`
     - `packages/backend/src/services/DigiformaSyncService.ts`
@@ -1125,14 +987,12 @@
   - [x] 24.2 Backend - Consolidation financière ✅ **100%**
 
     **Calculs CA consolidé implémentés:**
-
     - ✅ CA Audit : Depuis invoices CRM existantes
     - ✅ CA Formation : Depuis factures Digiforma synchronisées
     - ✅ CA Autre : Placeholder pour autres sources
     - ✅ Total consolidé par institution et période
 
     **Endpoints API créés:**
-
     - ✅ `GET /api/institutions/:id/revenue/consolidated` : CA consolidé par institution
     - ✅ `GET /api/dashboard/revenue/consolidated` : Vue globale CA par source
     - ✅ `GET /api/dashboard/revenue/evolution` : Évolution mensuelle du CA
@@ -1140,7 +1000,6 @@
     - ✅ `GET /api/digiforma/institutions/:id/invoices` : Factures Digiforma liées
 
     **Fichiers:**
-
     - `packages/backend/src/services/ConsolidatedRevenueService.ts`
     - `packages/backend/src/routes/revenue.ts`
 
@@ -1149,7 +1008,6 @@
   - [x] 24.3 Frontend - Configuration et Synchronisation Digiforma ✅ **100%**
 
     **Interface de configuration implémentée:**
-
     - ✅ Page settings complète pour configurer le token Bearer Digiforma
     - ✅ Test de connexion API avec validation et feedback
     - ✅ Déclenchement manuel de la synchronisation
@@ -1158,7 +1016,6 @@
     - ✅ Affichage des erreurs de synchronisation
 
     **Fichiers:**
-
     - `packages/frontend/src/views/settings/DigiformaSettingsView.vue`
     - `packages/frontend/src/services/api/digiforma.ts`
 
@@ -1167,7 +1024,6 @@
   - [x] 24.4 Frontend - Dashboard CA Consolidé ✅ **100%**
 
     **Dashboard principal implémenté:**
-
     - ✅ Widget "Revenu Consolidé" sur le dashboard principal
     - ✅ CA Audit (depuis CRM) avec graphique
     - ✅ CA Formation (depuis Digiforma) avec graphique
@@ -1178,7 +1034,6 @@
     - ✅ Indicateurs payé/impayé par source
 
     **Fichiers:**
-
     - `packages/frontend/src/components/dashboard/ConsolidatedRevenueWidget.vue`
 
     _Requirements: 2.5, 8.2, 10.1_
@@ -1186,7 +1041,6 @@
   - [x] 24.5 Frontend - Onglet Digiforma dans InstitutionDetailView ✅ **100%**
 
     **Détail par institution implémenté:**
-
     - ✅ Onglet "Digiforma" dans InstitutionDetailView
     - ✅ CA Formation total pour l'institution avec breakdown payé/impayé
     - ✅ Liste des devis Digiforma avec status et montants
@@ -1196,13 +1050,11 @@
     - ✅ Bouton de navigation vers configuration Digiforma
 
     **Fichiers:**
-
     - `packages/frontend/src/components/institutions/DigiformaTab.vue`
 
     _Requirements: 6.4, 8.2, 10.1_
 
   **ÉTAT FINAL:** ✅ Intégration Digiforma complète et fonctionnelle
-
   - ✅ Backend : Modèles, services, API endpoints, documentation
   - ✅ Frontend : Settings, dashboard widget, onglet institution
   - ✅ Fonctionnalités : Sync manuelle, CA consolidé, merge par email
@@ -1211,7 +1063,6 @@
   - ✅ Tests : Test de connexion fonctionnel, sync sans erreur
 
   **🔧 CORRECTIONS APPLIQUÉES LORS DE L'IMPLÉMENTATION :**
-
   - ✅ Validation address (street, state, city, zipCode) avec valeurs par défaut
   - ✅ Validation firstName pour contacts avec valeur par défaut "Contact"
   - ✅ Fix limite de 50 dans `findUnlinked()` → retourne toutes les companies
@@ -1221,14 +1072,12 @@
   - ⚠️ Matching par nom désactivé temporairement (trop permissif, créait faux positifs)
 
   **📊 RÉSULTATS DE SYNCHRONISATION (dernier test) :**
-
   - 502 companies Digiforma synchronisées avec succès
   - Matching par email uniquement (fiable et précis)
   - 0 erreur de synchronisation
   - Prêt pour production avec vraies données
 
   **🔄 AMÉLIORATIONS FUTURES (Phase 2 - optionnel) :**
-
   - [ ] **Matching par nom avec fuzzy matching** (tâche 24.6 - si nécessaire)
   - [ ] **Mutation bidirectionnelle des contacts vers Digiforma** (tâche 24.7)
   - [ ] Synchronisation incrémentale (delta sync)
@@ -1254,7 +1103,6 @@
   - [x] **24.6.1 Backend - Algorithmes de matching avancés** ✅ **100%**
 
     **Fuzzy matching sur noms d'institutions:**
-
     - ✅ Intégré **Fuse.js** pour fuzzy string matching multi-critères
     - ✅ Calcul de scores de similarité (0-100%)
     - ✅ Seuils de matching définis: ≥85% = auto, ≥70% = fuzzy, <70% = rejeté
@@ -1262,7 +1110,6 @@
     - ✅ Service `DigiformaMatchingService` créé et testé
 
     **Normalisation des noms implémentée:**
-
     - ✅ Suppression accents (NFD normalization)
     - ✅ Suppression mots médicaux communs (clinique, centre, hopital, hospitalier, universitaire, CHU, CH, cabinet, maison, saint/sainte/st/ste)
     - ✅ Suppression articles français (de, du, la, le, les, des, d)
@@ -1271,7 +1118,6 @@
     - ✅ Normalisation espaces
 
     **Matching multi-critères avec priorités:**
-
     1. ✅ **AccountingNumber** (priorité 1, score 100%) - Numéro comptable partagé CRM/Digiforma/Sage
     2. ✅ **SIRET** (priorité 2, score 100%) - Identifiant légal unique
     3. ✅ **Email** (priorité 3, score 100%) - Email du contact principal
@@ -1279,13 +1125,11 @@
     5. ✅ **Fuzzy name + zipcode** (priorité 5, score 70-99%) - Nom normalisé + code postal
 
     **Fichiers créés:**
-
     - ✅ `packages/backend/src/services/DigiformaMatchingService.ts` (355 lignes)
     - ✅ Modifié `packages/backend/src/services/DigiformaSyncService.ts` (intégration matching intelligent)
     - ✅ `packages/backend/src/__tests__/services/DigiformaMatching.logic.test.ts` (295 lignes, 28 tests)
 
     **Tests unitaires:** ✅ **28/28 tests passent**
-
     - ✅ Normalisation des noms (9 tests)
     - ✅ Normalisation des villes (5 tests)
     - ✅ Scénarios de matching réels (5 tests)
@@ -1314,14 +1158,12 @@
     ```
 
     **Migration créée:**
-
     - ✅ `20251229000000-create-digiforma-institution-mappings.cjs`
     - ✅ Index unique sur `digiformaCompanyId`
     - ✅ Foreign keys vers `digiforma_companies` et `medical_institutions`
     - ✅ Associations Sequelize configurées dans `models/index.ts`
 
     **API endpoints créés (6 endpoints):**
-
     - ✅ `GET /api/digiforma/unmatched-companies` : Liste des companies sans match
     - ✅ `GET /api/digiforma/suggested-matches/:companyId` : Suggestions avec scores
     - ✅ `POST /api/digiforma/mappings` : Créer un mapping manuel
@@ -1330,7 +1172,6 @@
     - ✅ `POST /api/digiforma/mappings/:id/confirm` : Confirmer un fuzzy match
 
     **Fichiers créés/modifiés:**
-
     - ✅ `packages/backend/src/models/DigiformaInstitutionMapping.ts`
     - ✅ `packages/backend/src/migrations/20251228000000-create-digiforma-base-tables.cjs`
     - ✅ `packages/backend/src/migrations/20251229000000-create-digiforma-institution-mappings.cjs`
@@ -1341,7 +1182,6 @@
   - [ ] **24.6.3 Frontend - Interface de réconciliation manuelle** ⏳ **À FAIRE**
 
     **Page dédiée `/settings/digiforma/mappings`:**
-
     - [ ] Liste des companies Digiforma non fusionnées
     - [ ] Pour chaque company : suggestions de matches CRM avec score
     - [ ] Possibilité de valider un match suggéré
@@ -1351,7 +1191,6 @@
     - [ ] Liste des fuzzy matches nécessitant validation manuelle
 
     **Composants à créer:**
-
     - `DigiformaMappingView.vue` : Page principale
     - `UnmatchedCompaniesList.vue` : Liste des non-fusionnés
     - `InstitutionMatchSuggestions.vue` : Suggestions avec scores
@@ -1359,7 +1198,6 @@
     - `FuzzyMatchReviewCard.vue` : Card pour valider fuzzy matches
 
     **Fichiers à créer:**
-
     - `packages/frontend/src/views/settings/DigiformaMappingsView.vue`
     - `packages/frontend/src/components/digiforma/*.vue` (composants)
     - `packages/frontend/src/services/api/digiforma.ts` (ajout méthodes)
@@ -1367,7 +1205,6 @@
   - [x] **24.6.4 Processus de synchronisation amélioré** ✅ **100%**
 
     **Workflow de sync avec matching intelligent implémenté:**
-
     1. ✅ Récupérer les companies Digiforma
     2. ✅ Pour chaque company :
        - ✅ Vérifier mapping manuel existant → utiliser si trouvé
@@ -1382,11 +1219,9 @@
     4. [ ] Notifier admin si nouvelles companies non matchées (TODO frontend)
 
     **Fichier modifié:**
-
     - ✅ `packages/backend/src/services/DigiformaSyncService.ts`
 
   **📊 RÉSULTATS BACKEND (100% COMPLET):**
-
   - ✅ Algorithme intelligent de matching avec 5 priorités
   - ✅ 28 tests unitaires passent à 100% (logique pure, sans DB)
   - ✅ Database schema complet avec migrations (2 fichiers .cjs)
@@ -1404,13 +1239,11 @@
   - ✅ Pas d'erreur TypeScript, code 100% type-safe
 
   **⏳ CE QUI RESTE (FRONTEND UNIQUEMENT):**
-
   - [ ] Interface utilisateur `/settings/digiforma/mappings`
   - [ ] Composants Vue pour afficher/gérer les mappings
   - [ ] Intégration avec les 6 endpoints API déjà créés
 
   **🔜 PROCHAINE ÉTAPE:**
-
   - [ ] **Option 1:** Implémenter l'interface frontend de réconciliation Digiforma (24.6.3)
   - [ ] **Option 2:** Faire la gestion des membres d'équipe (31.6)
   - [ ] Tester avec vraies données Digiforma
@@ -1418,7 +1251,6 @@
 
   **Priorité:** 🟡 Moyenne (amélioration UX et qualité des données)
   **Dépendances:** Tâche 24 doit être complète ✅
-
   - _Requirements: 1.2, 2.5, 5.1, 6.3_
 
 - [ ] 24.7 **Mutation bidirectionnelle des contacts vers Digiforma** 🆕 **NOUVEAU**
@@ -1426,36 +1258,30 @@
   **Objectif:** Synchroniser les contacts créés/modifiés dans le CRM vers Digiforma pour maintenir la cohérence des données.
 
   **Contexte:**
-
   - Actuellement : Sync unidirectionnelle Digiforma → CRM (read-only)
   - Besoin : Quand on crée/modifie un contact dans le CRM sur une institution liée à Digiforma, envoyer les changements à Digiforma
 
   **Architecture proposée:**
-
   - [ ] **24.7.1 Backend - GraphQL Mutations Digiforma**
 
     **Mutations à implémenter:**
-
     - `createContact(companyId, contactData)` : Créer un contact dans Digiforma
     - `updateContact(contactId, contactData)` : Mettre à jour un contact existant
     - `deleteContact(contactId)` : Supprimer un contact (optionnel, selon besoin métier)
 
     **Service de mutation:**
-
     - Créer `DigiformaMutationService` avec méthodes GraphQL mutation
     - Gérer les erreurs et validations Digiforma
     - Logger toutes les mutations pour audit trail
     - Implémenter retry logic en cas d'échec réseau
 
     **Hook sur ContactPerson model:**
-
     - Hook `afterCreate` : Si institution liée à Digiforma → mutation create
     - Hook `afterUpdate` : Si institution liée à Digiforma → mutation update
     - Hook `afterDestroy` : Si institution liée à Digiforma → mutation delete (optionnel)
     - Vérifier que le contact ne vient pas déjà de Digiforma (éviter boucle)
 
     **Fichiers:**
-
     - `packages/backend/src/services/DigiformaMutationService.ts`
     - Modifier `packages/backend/src/models/ContactPerson.ts` (hooks)
     - Modifier `packages/backend/DIGIFORMA.md` (documenter mutations)
@@ -1465,19 +1291,16 @@
   - [ ] **24.7.2 Gestion des conflits et synchronisation bidirectionnelle**
 
     **Stratégie de résolution de conflits:**
-
     - **Timestamp-based:** Dernière modification gagne (field `updatedAt`)
     - **Source priority:** CRM ou Digiforma prioritaire selon configuration
     - **Manual resolution:** Interface pour résoudre conflits manuellement si détectés
 
     **Détection de boucles:**
-
     - Flag `syncSource: 'crm' | 'digiforma'` sur ContactPerson
     - Ne pas re-synchroniser vers la source d'origine
     - Timestamp de dernière sync pour éviter doublons
 
     **Queue de synchronisation:**
-
     - Implémenter queue (Bull/BullMQ) pour mutations asynchrones
     - Retry automatique en cas d'échec
     - Dashboard de monitoring des mutations en attente/échec
@@ -1487,27 +1310,23 @@
   - [ ] **24.7.3 Frontend - Indicateurs de synchronisation**
 
     **Indicateurs visuels:**
-
     - Badge "Synchronisé avec Digiforma" sur les contacts liés
     - Statut de dernière sync (date, succès/échec)
     - Bouton "Forcer la synchronisation" pour sync manuelle
     - Historique des mutations Digiforma par contact
 
     **Gestion des erreurs:**
-
     - Notification si échec de mutation vers Digiforma
     - Affichage des conflits détectés avec actions possibles
     - Logs de synchronisation accessibles depuis l'UI
 
     **Fichiers:**
-
     - Modifier `packages/frontend/src/components/institutions/ContactsTab.vue`
     - Créer `packages/frontend/src/components/digiforma/SyncStatusBadge.vue`
 
     _Requirements: 6.3, 10.1_
 
   **Considérations techniques:**
-
   - **Performance:** Mutations asynchrones pour ne pas bloquer l'UI
   - **Fiabilité:** Queue avec retry pour garantir la cohérence
   - **Audit:** Logger toutes les mutations pour traçabilité
@@ -1515,7 +1334,6 @@
   - **Conformité:** Respecter les contraintes Qualiopi (si applicables aux mutations)
 
   **Phases d'implémentation:**
-
   1. **Phase 1** : Mutations create/update uniquement (2-3 jours)
   2. **Phase 2** : Gestion conflits et queue asynchrone (2-3 jours)
   3. **Phase 3** : Interface monitoring et résolution manuelle (1-2 jours)
@@ -1527,7 +1345,6 @@
   _Requirements: 1.2, 6.4, 6.5, 10.1, 11.1_
 
   **Notes techniques:**
-
   - GraphQL API Digiforma : https://api.digiforma.com/graphql
   - Authentication : Bearer token (stocké chiffré en base)
   - Synchronisation : Job hebdomadaire (cron) + manuel
@@ -1955,7 +1772,7 @@ module.exports = {
         {
           where: { id: rule.id },
         },
-        ["id"]
+        ["id"],
       )
 
       if (!exists) {
@@ -2108,9 +1925,7 @@ module.exports = {
 ### Solution attendue
 
 - [x] **26.1 Autocomplete avec recherche dynamique pour la sélection d'institutions** ✅ 2025-10-12
-
   - [x] **26.1.1 Backend - Endpoint de recherche optimisé**
-
     - ✅ Endpoint `GET /api/institutions/search` avec paramètre `name` existant
     - ✅ Recherche ILIKE insensible à la casse sur nom d'institution
     - ✅ Support pagination et limite de résultats (50 par défaut)
@@ -2118,7 +1933,6 @@ module.exports = {
     - _Requirements: 1.3, 8.1_
 
   - [x] **26.1.2 Frontend - Remplacement des v-select par v-autocomplete**
-
     - ✅ Amélioré `institutionsApi.search()` avec support filtres (name, limit, type, city)
     - ✅ Remplacé `v-select` par `v-autocomplete` dans :
       - ✅ `TaskForm.vue` (création/édition de tâches)
@@ -2131,7 +1945,6 @@ module.exports = {
     - _Requirements: 9.1, 12.1, 12.2_
 
   - [ ] **26.1.3 UX optimisée** (Améliorations futures)
-
     - Pré-charger les 10 institutions les plus récentes/utilisées au focus
     - Mettre en cache les résultats de recherche (LRU cache)
     - Afficher avatar/logo de l'institution si disponible
@@ -2320,7 +2133,7 @@ src/__tests__/integration/task.test.ts
 - ✅ **Mise en forme professionnelle** : Couleurs, icônes, mise en évidence
 - ✅ **Boutons d'action** : Liens directs vers l'entité dans le CRM
 - ✅ **Calculs dynamiques** : Jours restants, montants formatés
-- ✅ **Branding cohérent** : Signature automatique Medical CRM
+- ✅ **Branding cohérent** : Signature automatique OPEx_CRM
 
 ### Fonctionnalités opérationnelles
 
@@ -2474,7 +2287,6 @@ Améliorer le système d'import CSV existant pour gérer l'identifiant comptable
   **Date:** 2025-11-13
 
   **Backend:**
-
   - ✅ Migration Sequelize `20251113000000-add-accounting-number-to-medical-institutions.cjs`
   - ✅ Colonne `accounting_number` VARCHAR(50) nullable
   - ✅ Index unique avec condition WHERE NOT NULL (permet plusieurs NULL)
@@ -2484,18 +2296,15 @@ Améliorer le système d'import CSV existant pour gérer l'identifiant comptable
   - ✅ Tests exhaustifs: validation, unicité, CRUD, queries (44 tests)
 
   **Frontend:**
-
   - ✅ Ajout champ accountingNumber dans MedicalInstitutionForm (onglet Basic)
   - ✅ Ajout champ digiformaId (readonly) pour affichage sync status
   - ✅ Affichage dans InstitutionDetailView avec icônes et badges
   - ✅ Support filter/search par accountingNumber dans API
 
   **Shared:**
-
   - ✅ Interfaces TypeScript déjà à jour dans @medical-crm/shared
 
   **Tests créés:**
-
   - `MedicalInstitution-accountingNumber.test.ts` (44 tests):
     - Validation champ (longueur, vide, null)
     - Contrainte d'unicité
@@ -2504,7 +2313,6 @@ Améliorer le système d'import CSV existant pour gérer l'identifiant comptable
     - Intégration avec digiformaId
 
   **Fichiers modifiés:**
-
   - `packages/backend/src/migrations/20251113000000-add-accounting-number-to-medical-institutions.cjs` (NEW)
   - `packages/backend/src/controllers/MedicalInstitutionController.ts`
   - `packages/frontend/src/components/institutions/MedicalInstitutionForm.vue`
@@ -2512,7 +2320,6 @@ Améliorer le système d'import CSV existant pour gérer l'identifiant comptable
   - `packages/backend/src/__tests__/models/MedicalInstitution-accountingNumber.test.ts` (NEW)
 
 - [ ] **29.2** - Améliorer logique de matching CSV multi-critères (4-5h)
-
   - Matching par `accountingNumber` (priorité 1, confidence 100%)
   - Matching nom exact + adresse (priorité 2, confidence 95%)
   - Matching fuzzy par nom + ville (priorité 3, confidence 60-85%)
@@ -2520,7 +2327,6 @@ Améliorer le système d'import CSV existant pour gérer l'identifiant comptable
   - Retourner `MatchResult` avec type, confidence, et suggestions
 
 - [ ] **29.3** - Intégration Digiforma : Créer institutions manquantes (4-5h)
-
   - Workflow: Parse CSV → Check CRM → Check Digiforma → Create in Digiforma (si manquant) → Sync to CRM
   - `DigiformaService.searchCompanyByName(name, city)` avec TODO pour GraphQL query
   - `DigiformaService.createCompany(data)` avec TODO pour GraphQL mutation
@@ -2533,7 +2339,6 @@ Améliorer le système d'import CSV existant pour gérer l'identifiant comptable
   **Date:** 2025-11-14
 
   **Backend - Model & Migration:**
-
   - ✅ Modèle `SageSettings` avec encryption AES-256-GCM pour API key
   - ✅ Migration `20251114000000-create-sage-settings-table.cjs`
   - ✅ Champs: apiKey (encrypted), apiUrl, companyId, isEnabled
@@ -2544,7 +2349,6 @@ Améliorer le système d'import CSV existant pour gérer l'identifiant comptable
   - ✅ Méthodes: `getDecryptedApiKey()`, `setApiKey()`, `updateTestResults()`, `updateLastSync()`
 
   **Backend - Service:**
-
   - ✅ `SageService` avec méthodes skeleton et TODOs complets
   - ✅ `fromSettings()` - création d'instance depuis SageSettings
   - ✅ `testConnection()` - TODO: implémenter test API Sage
@@ -2556,7 +2360,6 @@ Améliorer le système d'import CSV existant pour gérer l'identifiant comptable
   - ✅ Data mapping avec TODOs: mapSageCustomer, mapSageInvoice, mapSageInvoiceItem
 
   **Backend - Types TypeScript:**
-
   - ✅ `SageCustomer` - maps to MedicalInstitution via accountingNumber
   - ✅ `SageInvoice`, `SageInvoiceLine`
   - ✅ `SagePayment`
@@ -2566,7 +2369,6 @@ Améliorer le système d'import CSV existant pour gérer l'identifiant comptable
   - ✅ `SageConnectionTestResult` - résultat du test de connexion
 
   **Backend - Controller & Routes:**
-
   - ✅ `SageController` avec tous les endpoints
   - ✅ GET/POST `/api/sage/settings` - CRUD settings
   - ✅ POST `/api/sage/test-connection` - test connexion API
@@ -2578,7 +2380,6 @@ Améliorer le système d'import CSV existant pour gérer l'identifiant comptable
   - ✅ Permissions: `canManageSystemSettings` pour tous les endpoints
 
   **Documentation & TODOs:**
-
   - ✅ TODOs complets pour implémentation future de l'API Sage
   - ✅ Stratégie d'intégration v1 documentée (unidirectionnel Sage → CRM)
   - ✅ Plan v2 documenté (bidirectionnel avec conflict resolution)
@@ -2586,7 +2387,6 @@ Améliorer le système d'import CSV existant pour gérer l'identifiant comptable
   - ✅ Notes sur authentification (OAuth2, API key, etc.)
 
   **Fichiers créés/modifiés:**
-
   - `packages/backend/src/models/SageSettings.ts` (259 lignes)
   - `packages/backend/src/migrations/20251114000000-create-sage-settings-table.cjs` (143 lignes)
   - `packages/backend/src/types/sage.ts` (211 lignes)
@@ -2607,7 +2407,6 @@ Améliorer le système d'import CSV existant pour gérer l'identifiant comptable
   **Date:** 2025-11-14
 
   **Backend:**
-
   - ✅ Méthode `previewCsvData()` dans CsvImportService
   - ✅ Interfaces TypeScript: `CsvPreviewRow`, `CsvPreviewResult`
   - ✅ Analyse du statut de matching (exact/fuzzy/none) via CsvMatchingService
@@ -2617,7 +2416,6 @@ Améliorer le système d'import CSV existant pour gérer l'identifiant comptable
   - ✅ Route POST `/import/preview` configurée
 
   **Frontend:**
-
   - ✅ Preview table avec toutes les lignes et détails de matching
   - ✅ Colonnes de statut:
     - **Matching**: Exact (100%/95%), Fuzzy (60-85% avec score), ou Nouveau
@@ -2635,7 +2433,6 @@ Améliorer le système d'import CSV existant pour gérer l'identifiant comptable
   - ✅ Surlignage des lignes avec erreurs
 
   **Expérience utilisateur:**
-
   - Visibilité complète sur ce qui va se passer avant l'import
   - Scores de confiance pour matches fuzzy
   - Indication claire des institutions existantes vs nouvelles
@@ -2643,7 +2440,6 @@ Améliorer le système d'import CSV existant pour gérer l'identifiant comptable
   - Conscience de l'intégration comptable Sage
 
   **Fichiers modifiés:**
-
   - `packages/backend/src/services/CsvImportService.ts` (+118 lignes)
   - `packages/backend/src/controllers/MedicalInstitutionController.ts` (+60 lignes)
   - `packages/backend/src/routes/institutions.ts` (+6 lignes)
@@ -2660,7 +2456,6 @@ Améliorer le système d'import CSV existant pour gérer l'identifiant comptable
   **Problème:** L'URL affichait des caractères % (encodés) dans le champ texte quand on revenait sur les paramètres après avoir saisi le token.
 
   **Solution implémentée:**
-
   - Ajout de `decodeURIComponent()` lors du chargement des settings dans le formulaire
   - L'URL est maintenant affichée décodée (lisible) dans le champ texte
   - Code modifié: `packages/frontend/src/views/settings/DigiformaSettingsView.vue`
@@ -2755,7 +2550,6 @@ Mettre en place un système de tests complet avec couverture de code de 70-80%, 
 ### Sous-tâches Réalisées
 
 - [x] **30.1** - Configuration Coverage avec Vitest (1h)
-
   - ✅ Configuration Vitest avec coverage provider v8
   - ✅ Seuils de coverage: 70% minimum (lines, functions, branches, statements)
   - ✅ Exclusions: tests, migrations, seeders, scripts, config
@@ -2763,7 +2557,6 @@ Mettre en place un système de tests complet avec couverture de code de 70-80%, 
   - ✅ Scripts npm: `test:coverage`, `test:ui`, `test:watch`
 
 - [x] **30.2** - Système de Mocks et Helpers de Tests (3-4h)
-
   - ✅ `src/__tests__/helpers/db-mock.ts`:
     - Utilitaires de mock de base de données
     - Helpers de création: `createMockUser`, `createMockTeam`, `createMockMedicalInstitution`, etc.
@@ -2776,7 +2569,6 @@ Mettre en place un système de tests complet avec couverture de code de 70-80%, 
     - Helpers de token JWT
 
 - [x] **30.3** - Tests de Services et Controllers (4-5h)
-
   - ✅ `AuthService.test.ts`: Tests complets du service d'authentification
     - generateAccessToken, generateRefreshToken
     - login (succès, erreurs, utilisateur inactif)
@@ -2791,7 +2583,6 @@ Mettre en place un système de tests complet avec couverture de code de 70-80%, 
   - 📝 Template prêt pour les autres services/controllers (23 controllers + 15 services identifiés)
 
 - [x] **30.4** - GitHub Actions CI/CD Pipeline (3-4h)
-
   - ✅ `.github/workflows/ci.yml`:
     - Job: Backend Tests & Coverage
       - PostgreSQL service (image postgres:15)
@@ -2814,7 +2605,6 @@ Mettre en place un système de tests complet avec couverture de code de 70-80%, 
   - ✅ Configuration pour branches: main, develop, claude/\*\*
 
 - [x] **30.5** - Audit et Optimisation Index DB (4-5h)
-
   - ✅ `src/scripts/audit-db-indexes.ts`:
     - Analyse des statistiques de tables (taille, index)
     - Détection des foreign keys sans index
@@ -2834,7 +2624,6 @@ Mettre en place un système de tests complet avec couverture de code de 70-80%, 
     - JSON indexes (JSONB)
 
 - [x] **30.6** - Health Checks et Monitoring (2-3h)
-
   - ✅ `src/scripts/health-check.ts`:
     - Check database (connectivity, latency)
     - Check API (disponibilité, temps de réponse)
@@ -2976,14 +2765,12 @@ npm run health-check -- --skip-api  # Skip API check
 **Jobs CI:**
 
 1. **Backend Tests**
-
    - PostgreSQL 15 service
    - Type check + Lint + Tests + Coverage
    - Upload vers Codecov
    - Fail si coverage < 70%
 
 2. **Frontend Tests**
-
    - Type check + Lint + Build
 
 3. **Security Audit**
@@ -2992,7 +2779,6 @@ npm run health-check -- --skip-api  # Skip API check
 **Jobs CD:**
 
 1. **Staging**
-
    - Auto-deploy sur push main
    - Build + Migrations + Deploy
 
@@ -3006,19 +2792,16 @@ npm run health-check -- --skip-api  # Skip API check
 **Tables Prioritaires pour Indexation:**
 
 1. **Tasks** (haute fréquence d'accès)
-
    - Foreign keys: `assigned_to_id`, `medical_institution_id`
    - Composite: `(assigned_to_id, status)`, `(medical_institution_id, status)`
    - Partial: `assigned_to_id WHERE status = 'pending'`
 
 2. **Medical Institutions**
-
    - Text search: GIN index sur `name`
    - Géographie: `city`, `postal_code`
    - Unique: `siret` (partial, non-null)
 
 3. **Quotes / Invoices**
-
    - Foreign keys: `medical_institution_id`, `created_by_id`
    - Status: Partial indexes sur statuts actifs
    - Dates: `due_date`, `valid_until`
@@ -3128,7 +2911,6 @@ npm run db:audit-indexes
 **Court terme (priorité haute):**
 
 1. Ajouter tests pour controllers/services critiques:
-
    - MedicalInstitutionController + CsvImportService
    - TaskController + TaskNotificationService
    - QuoteController + InvoiceController
@@ -3381,29 +3163,23 @@ v-else
 ### Vues mises à jour
 
 1. **MedicalInstitutionsView** (`packages/frontend/src/views/institutions/MedicalInstitutionsView.vue`)
-
    - Desktop: `TableSkeleton` avec 7 colonnes, toolbar et pagination
    - Mobile: `ListSkeleton` avec avatars et actions (5 items)
 
 2. **TasksView** (`packages/frontend/src/views/tasks/TasksView.vue`)
-
    - `ListSkeleton` pour les cartes de tâches (5 items)
    - Type: list-item-three-line avec avatars et actions
 
 3. **InvoicesView** (`packages/frontend/src/views/billing/InvoicesView.vue`)
-
    - `TableSkeleton` avec 7 colonnes, toolbar et pagination
 
 4. **QuotesView** (`packages/frontend/src/views/billing/QuotesView.vue`)
-
    - `TableSkeleton` avec 6 colonnes, toolbar et pagination
 
 5. **InstitutionDetailView** (`packages/frontend/src/views/institutions/InstitutionDetailView.vue`)
-
    - `DetailSkeleton` avec 5 onglets, avatar et actions
 
 6. **InvoiceDetailView** (`packages/frontend/src/views/billing/InvoiceDetailView.vue`)
-
    - `DetailSkeleton` standard
 
 7. **DashboardView** (`packages/frontend/src/views/DashboardView.vue`)
@@ -3586,10 +3362,12 @@ Le CRM devient la **source de vérité unique**. Les données peuvent provenir d
 #### 1. Tracking multi-sources (Backend)
 
 **Champs ajoutés aux modèles:**
+
 - ✅ `MedicalInstitution`: `dataSource`, `isLocked`, `lockedAt`, `lockedReason`, `externalData`, `lastSyncAt`
 - ✅ `ContactPerson`: Mêmes champs de tracking
 
 **Migration créée:**
+
 - ✅ `20251223000000-add-multi-source-tracking.cjs`
 - ✅ `20251224000000-fix-tasks-status-enum.cjs` (correction enum tasks)
 - ✅ `20251224000001-add-digiforma-id-to-medical-institutions.cjs` (ajout colonne digiforma_id)
@@ -3597,30 +3375,36 @@ Le CRM devient la **source de vérité unique**. Les données peuvent provenir d
 #### 2. Système d'auto-lock (Hooks Sequelize) ✅
 
 **MedicalInstitution:**
+
 - ✅ Hook `afterCreate`: Lock automatique si création manuelle (pas via sync)
 - ✅ Hook `beforeUpdate`: Lock automatique si édition manuelle (pas via sync)
 
 **ContactPerson:**
+
 - ✅ Hook `afterCreate`: Lock automatique si création manuelle
 - ✅ Hook `beforeUpdate`: Lock automatique si édition manuelle
 
 **Note:**
+
 - ✅ Hook `afterCreate`: Lock l'institution parente quand une note est créée
 - ✅ Raison de lock: `'note_created'`
 
 **Meeting:**
+
 - ✅ Hook `afterCreate`: Lock l'institution parente quand un meeting est créé
 - ✅ Raison de lock: `'meeting_created'`
 
 #### 3. Protection dans les services de sync ✅
 
 **DigiformaSyncService:**
+
 - ✅ Vérifie `isLocked` avant toute mise à jour
 - ✅ Si locked → Met à jour UNIQUEMENT `externalData` (métadonnées read-only)
 - ✅ Si non-locked → Met à jour les champs CRM normalement
 - ✅ Utilise `context: { isSync: true }` pour éviter de déclencher l'auto-lock lors des syncs
 
 **Fichiers modifiés:**
+
 - ✅ `packages/backend/src/models/MedicalInstitution.ts`
 - ✅ `packages/backend/src/models/ContactPerson.ts`
 - ✅ `packages/backend/src/models/Note.ts`
@@ -3743,7 +3527,6 @@ Le CRM devient la **source de vérité unique**. Les données peuvent provenir d
   - ✅ Fonction `reactivateInstitution()` : met à jour `isActive: true` (ligne 821-829)
 
   **Système de suppression à deux niveaux:**
-
   1. **Première suppression (institution active)** → **Soft delete**
      - Message : "Êtes-vous sûr de vouloir désactiver... ? L'institution sera archivée"
      - Action : `isActive: false`
@@ -3769,11 +3552,11 @@ Le CRM devient la **source de vérité unique**. Les données peuvent provenir d
 
   **Matrice des actions disponibles:**
 
-  | État | isLocked | Actions disponibles | Bouton suppression |
-  |------|----------|---------------------|-------------------|
-  | Active | false/true | ✏️ Modifier + 🗑️ Supprimer | "Désactiver" (soft delete) |
-  | Inactive | false | ♻️ Réactiver + 🗑️ Supprimer | "Supprimer définitivement" (hard delete) |
-  | Inactive | **true** | ♻️ Réactiver seulement | 🔒 Grisé avec tooltip |
+  | État     | isLocked   | Actions disponibles         | Bouton suppression                       |
+  | -------- | ---------- | --------------------------- | ---------------------------------------- |
+  | Active   | false/true | ✏️ Modifier + 🗑️ Supprimer  | "Désactiver" (soft delete)               |
+  | Inactive | false      | ♻️ Réactiver + 🗑️ Supprimer | "Supprimer définitivement" (hard delete) |
+  | Inactive | **true**   | ♻️ Réactiver seulement      | 🔒 Grisé avec tooltip                    |
 
   **Fichiers modifiés:**
   - ✅ `packages/frontend/src/views/institutions/MedicalInstitutionsView.vue`
@@ -3939,7 +3722,6 @@ Le CRM devient la **source de vérité unique**. Les données peuvent provenir d
   **Objectif:** Garantir la fiabilité du système de protection
 
   **Tests à créer:**
-
   1. **Tests unitaires modèles:**
      - `MedicalInstitution.test.ts`: Vérifier hooks auto-lock
      - `ContactPerson.test.ts`: Vérifier hooks auto-lock
@@ -3964,6 +3746,7 @@ Le CRM devient la **source de vérité unique**. Les données peuvent provenir d
 ### Règles métier implémentées
 
 **1. Source de données (dataSource):**
+
 - ✅ `'crm'`: Créé dans le CRM (défaut)
 - ✅ `'digiforma'`: Importé de Digiforma
 - ✅ `'sage'`: Importé de Sage
@@ -3971,16 +3754,19 @@ Le CRM devient la **source de vérité unique**. Les données peuvent provenir d
 - ✅ **NE CHANGE JAMAIS** (provenance historique)
 
 **2. État de lock (isLocked):**
+
 - ✅ `false`: Peut être écrasé par les syncs externes
 - ✅ `true`: CRM-owned, protégé contre les écrasements externes
 
 **3. Raisons de lock (lockedReason):**
+
 - ✅ `'manual_creation'`: Créé manuellement dans le CRM
 - ✅ `'manual_edit'`: Édité manuellement dans le CRM
 - ✅ `'note_created'`: Une note a été ajoutée (enrichissement CRM)
 - ✅ `'meeting_created'`: Un meeting a été créé (enrichissement CRM)
 
 **4. Métadonnées externes (externalData):**
+
 - ✅ Stocke les données brutes des systèmes externes
 - ✅ **Read-only**: Toujours mis à jour lors des syncs, même si locked
 - ✅ Permet de garder une trace de l'état externe sans écraser le CRM
@@ -3988,10 +3774,12 @@ Le CRM devient la **source de vérité unique**. Les données peuvent provenir d
 ### Configuration Railway pour migrations ✅
 
 **Fichiers créés:**
+
 - ✅ `nixpacks.toml`: Configuration du build et déploiement Railway
 - ✅ Script `start:production` dans package.json: exécute migrations puis démarre le serveur
 
 **Workflow de déploiement:**
+
 1. Build du projet
 2. Exécution automatique des migrations (`npm run db:migrate`)
 3. Démarrage du serveur
@@ -3999,16 +3787,19 @@ Le CRM devient la **source de vérité unique**. Les données peuvent provenir d
 ### Impact et bénéfices
 
 **Sécurité des données:**
+
 - ✅ Aucune perte de données enrichies dans le CRM
 - ✅ Traçabilité complète (qui a locké quand et pourquoi)
 - ✅ Métadonnées externes préservées pour référence
 
 **Workflow utilisateur:**
+
 - ✅ Les utilisateurs peuvent enrichir les données en toute confiance
 - ✅ Les syncs externes continuent de fonctionner sans conflit
 - ✅ Visibilité claire de l'état et de la provenance des données (quand UI sera faite)
 
 **Maintenance:**
+
 - ✅ Auto-lock transparent (pas d'action utilisateur requise)
 - ✅ Migrations gérées automatiquement en production (Railway)
 - ✅ Logs complets pour debugging et audit
@@ -4018,6 +3809,7 @@ Le CRM devient la **source de vérité unique**. Les données peuvent provenir d
 **🎯 DEUX OPTIONS PRIORITAIRES:**
 
 **Option 1 - Interface de réconciliation Digiforma (24.6.3)** 🟡 Priorité Moyenne
+
 - ✅ Backend 100% prêt (6 endpoints API + service + modèle)
 - [ ] Frontend à créer: `/settings/digiforma/mappings`
 - **Composants à créer:**
@@ -4031,6 +3823,7 @@ Le CRM devient la **source de vérité unique**. Les données peuvent provenir d
 - **Quand:** Peut attendre si pas urgent
 
 **Option 2 - Gestion des membres d'équipe (31.6)** 🟢 Priorité Haute
+
 - ✅ Backend partiellement prêt (3 endpoints: POST/DELETE/GET members)
 - [ ] Frontend à créer: `TeamDetailView`, `AddTeamMemberDialog`, `TeamMemberCard`
 - [ ] Connecter boutons "View Details" et "Configuration" dans `TeamView.vue`
@@ -4040,25 +3833,30 @@ Le CRM devient la **source de vérité unique**. Les données peuvent provenir d
 - **Quand:** Plus urgent car interface utilisateur incomplète
 
 **💡 RECOMMANDATION:** Commencer par **Option 2 (Gestion équipes)** car:
+
 1. Fonctionnalité plus visible pour les utilisateurs
 2. Améliore UX immédiatement (boutons actuellement non-fonctionnels)
 3. Plus court à implémenter (3-4h vs 4-5h)
 4. La réconciliation Digiforma peut attendre (amélioration qualité données)
 
 **📋 Après Option 2, faire:**
+
 1. Option 1 (Réconciliation Digiforma frontend)
 2. Tests auto-lock (31.3) - 4-5h
 3. Badge source de données UI
 
 **Autres tâches court terme (1-2 jours):**
+
 - [ ] Implémenter badge + tooltip source de données (UI uniquement)
 - [ ] Tests complets du système auto-lock (31.3)
 
 **Moyen terme (1 semaine):**
+
 - [ ] Documentation utilisateur sur la protection des données
 - [ ] Monitoring et alertes si problèmes de sync
 
 **Long terme (optionnel):**
+
 - [ ] Interface admin pour débloquer manuellement une entité
 - [ ] Analytics sur les taux de lock par source
 - [ ] Export des métadonnées externes pour audit

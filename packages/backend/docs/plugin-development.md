@@ -1,10 +1,10 @@
 # Plugin Development Guide
 
-This guide explains how to develop plugins for the Medical CRM system.
+This guide explains how to develop plugins for the OPEx_CRM system.
 
 ## Overview
 
-The Medical CRM plugin system allows developers to extend the functionality of the CRM by creating custom plugins that can:
+The OPEx_CRM plugin system allows developers to extend the functionality of the CRM by creating custom plugins that can:
 
 - React to system events through hooks
 - Integrate with external services
@@ -33,7 +33,7 @@ The `package.json` file serves as the plugin manifest and must include specific 
 {
   "name": "my-crm-plugin",
   "version": "1.0.0",
-  "description": "A sample plugin for Medical CRM",
+  "description": "A sample plugin for OPEx_CRM",
   "author": "Your Name <your.email@example.com>",
   "license": "MIT",
   "main": "index.js",
@@ -619,7 +619,7 @@ class EmailNotificationPlugin {
     const mailOptions = {
       from: this.context.config.fromEmail,
       to: user.email,
-      subject: "Welcome to Medical CRM",
+      subject: "Welcome to OPEx_CRM",
       template: "welcome",
       context: { user },
     }
@@ -683,13 +683,11 @@ PLUGIN_AUTO_ENABLE=true
 ### Common Issues
 
 1. **Plugin Not Loading**
-
    - Check package.json format
    - Verify main file exists
    - Check for syntax errors
 
 2. **Hook Not Triggering**
-
    - Ensure hook name is correct
    - Verify plugin is enabled
    - Check hook registration
@@ -734,4 +732,4 @@ For plugin development support:
 
 ---
 
-This guide provides the foundation for developing plugins for the Medical CRM system. For more advanced topics and API references, consult the full documentation.
+This guide provides the foundation for developing plugins for the OPEx_CRM system. For more advanced topics and API references, consult the full documentation.

@@ -5,15 +5,15 @@ import {
   MeetingUpdateRequest,
   ParticipantStatus,
 } from "@medical-crm/shared"
+import { Attendee, createEvents, EventAttributes } from "ics"
 import { Op } from "sequelize"
-import { Context } from "../types/koa"
+import { ContactPerson } from "../models/ContactPerson"
 import { MedicalInstitution } from "../models/MedicalInstitution"
 import { Meeting } from "../models/Meeting"
 import { MeetingParticipant } from "../models/MeetingParticipant"
 import { User } from "../models/User"
-import { ContactPerson } from "../models/ContactPerson"
-import { createEvents, EventAttributes, Attendee } from "ics"
 import { EmailService } from "../services/EmailService"
+import { Context } from "../types/koa"
 import logger from "../utils/logger"
 
 export class MeetingController {
@@ -33,7 +33,8 @@ export class MeetingController {
         limit = 50,
       } = ctx.query
 
-      const filters: MeetingSearchFilters & { userId?: string; status?: MeetingStatus } = {}
+      const filters: MeetingSearchFilters & { userId?: string; status?: MeetingStatus } =
+        {}
 
       if (organizerId) filters.organizerId = organizerId as string
       if (participantId) filters.participantId = participantId as string
@@ -197,24 +198,28 @@ export class MeetingController {
       if (data.contactPersonIds && data.contactPersonIds.length > 0) {
         if (data.institutionId) {
           const contactPersons = await ContactPerson.findAll({
-            where: { id: data.contactPersonIds }
-          });
+            where: { id: data.contactPersonIds },
+          })
           const invalidContacts = contactPersons.filter(
-            contact => contact.institutionId !== data.institutionId
-          );
+            (contact) => contact.institutionId !== data.institutionId,
+          )
           if (invalidContacts.length > 0) {
-            ctx.status = 400;
+            ctx.status = 400
             ctx.body = {
               success: false,
               error: {
                 code: "INVALID_CONTACT_PERSON",
-                message: "One or more contact persons do not belong to the meeting's institution"
-              }
-            };
-            return;
+                message:
+                  "One or more contact persons do not belong to the meeting's institution",
+              },
+            }
+            return
           }
         }
-        await MeetingParticipant.bulkInviteContactPersons(meeting.id, data.contactPersonIds)
+        await MeetingParticipant.bulkInviteContactPersons(
+          meeting.id,
+          data.contactPersonIds,
+        )
       }
 
       const created = await Meeting.findByPk(meeting.id, {
@@ -337,14 +342,18 @@ export class MeetingController {
         const currentParticipants = await MeetingParticipant.findAll({
           where: {
             meetingId: meeting.id,
-            userId: { [Op.ne]: null } as any
+            userId: { [Op.ne]: null } as any,
           },
           attributes: ["userId"],
         })
-        const currentUserIds = currentParticipants.map((p) => p.userId!).filter((id): id is string => id !== null)
+        const currentUserIds = currentParticipants
+          .map((p) => p.userId!)
+          .filter((id): id is string => id !== null)
 
         // Remove participants that are no longer in the list
-        const toRemove = currentUserIds.filter((id) => !requestBody.participantIds.includes(id))
+        const toRemove = currentUserIds.filter(
+          (id) => !requestBody.participantIds.includes(id),
+        )
         if (toRemove.length > 0) {
           await MeetingParticipant.destroy({
             where: { meetingId: meeting.id, userId: toRemove },
@@ -352,7 +361,9 @@ export class MeetingController {
         }
 
         // Add new participants
-        const toAdd = requestBody.participantIds.filter((id: string) => !currentUserIds.includes(id))
+        const toAdd = requestBody.participantIds.filter(
+          (id: string) => !currentUserIds.includes(id),
+        )
         if (toAdd.length > 0) {
           await MeetingParticipant.bulkInviteUsers(meeting.id, toAdd)
         }
@@ -377,14 +388,18 @@ export class MeetingController {
         const currentContactParticipants = await MeetingParticipant.findAll({
           where: {
             meetingId: meeting.id,
-            contactPersonId: { [Op.ne]: null } as any
+            contactPersonId: { [Op.ne]: null } as any,
           },
           attributes: ["contactPersonId"],
         })
-        const currentContactIds = currentContactParticipants.map((p) => p.contactPersonId!).filter((id): id is string => id !== null)
+        const currentContactIds = currentContactParticipants
+          .map((p) => p.contactPersonId!)
+          .filter((id): id is string => id !== null)
 
         // Remove contacts that are no longer in the list
-        const toRemove = currentContactIds.filter((id) => !requestBody.contactPersonIds.includes(id))
+        const toRemove = currentContactIds.filter(
+          (id) => !requestBody.contactPersonIds.includes(id),
+        )
         if (toRemove.length > 0) {
           await MeetingParticipant.destroy({
             where: { meetingId: meeting.id, contactPersonId: toRemove },
@@ -392,7 +407,9 @@ export class MeetingController {
         }
 
         // Add new contact persons
-        const toAdd = requestBody.contactPersonIds.filter((id: string) => !currentContactIds.includes(id))
+        const toAdd = requestBody.contactPersonIds.filter(
+          (id: string) => !currentContactIds.includes(id),
+        )
         if (toAdd.length > 0) {
           await MeetingParticipant.bulkInviteContactPersons(meeting.id, toAdd)
         }
@@ -503,13 +520,19 @@ export class MeetingController {
       const meeting = await Meeting.findByPk(id)
       if (!meeting) {
         ctx.status = 404
-        ctx.body = { success: false, error: { code: "MEETING_NOT_FOUND", message: "Meeting not found" } }
+        ctx.body = {
+          success: false,
+          error: { code: "MEETING_NOT_FOUND", message: "Meeting not found" },
+        }
         return
       }
       const canAccess = await meeting.canUserAccess(user.id)
       if (!canAccess) {
         ctx.status = 403
-        ctx.body = { success: false, error: { code: "INSUFFICIENT_PERMISSIONS", message: "No access" } }
+        ctx.body = {
+          success: false,
+          error: { code: "INSUFFICIENT_PERMISSIONS", message: "No access" },
+        }
         return
       }
       const participants = await meeting.getParticipants()
@@ -518,7 +541,10 @@ export class MeetingController {
       ctx.status = 500
       ctx.body = {
         success: false,
-        error: { code: "PARTICIPANT_FETCH_ERROR", message: "Failed to fetch participants" },
+        error: {
+          code: "PARTICIPANT_FETCH_ERROR",
+          message: "Failed to fetch participants",
+        },
       }
     }
   }
@@ -538,14 +564,20 @@ export class MeetingController {
       const meeting = await Meeting.findByPk(id)
       if (!meeting) {
         ctx.status = 404
-        ctx.body = { success: false, error: { code: "MEETING_NOT_FOUND", message: "Meeting not found" } }
+        ctx.body = {
+          success: false,
+          error: { code: "MEETING_NOT_FOUND", message: "Meeting not found" },
+        }
         return
       }
 
       const canEdit = await meeting.canUserEdit(user.id)
       if (!canEdit) {
         ctx.status = 403
-        ctx.body = { success: false, error: { code: "INSUFFICIENT_PERMISSIONS", message: "No access" } }
+        ctx.body = {
+          success: false,
+          error: { code: "INSUFFICIENT_PERMISSIONS", message: "No access" },
+        }
         return
       }
 
@@ -568,25 +600,29 @@ export class MeetingController {
             where: { id: contactPersonIds },
             attributes: ["id", "institutionId"],
           })
-          
+
           const invalidContacts = contacts.filter(
-            contact => contact.institutionId !== meeting.institutionId
+            (contact) => contact.institutionId !== meeting.institutionId,
           )
-          
+
           if (invalidContacts.length > 0) {
             ctx.status = 400
             ctx.body = {
               success: false,
               error: {
                 code: "INVALID_CONTACT",
-                message: "One or more contact persons do not belong to this meeting's institution",
+                message:
+                  "One or more contact persons do not belong to this meeting's institution",
               },
             }
             return
           }
         }
-        
-        const contactsInvited = await MeetingParticipant.bulkInviteContactPersons(meeting.id, contactPersonIds)
+
+        const contactsInvited = await MeetingParticipant.bulkInviteContactPersons(
+          meeting.id,
+          contactPersonIds,
+        )
         invited = [...invited, ...contactsInvited]
       } else if (contactPersonId) {
         // Validate that contact person belongs to the meeting's institution (if one is set)
@@ -600,7 +636,7 @@ export class MeetingController {
             }
             return
           }
-          
+
           if (contact.institutionId !== meeting.institutionId) {
             ctx.status = 400
             ctx.body = {
@@ -613,7 +649,7 @@ export class MeetingController {
             return
           }
         }
-        
+
         const contactInvited = await MeetingParticipant.create({
           meetingId: meeting.id,
           contactPersonId,
@@ -624,7 +660,13 @@ export class MeetingController {
 
       if (invited.length === 0) {
         ctx.status = 400
-        ctx.body = { success: false, error: { code: "VALIDATION_ERROR", message: "userId(s) or contactPersonId(s) required" } }
+        ctx.body = {
+          success: false,
+          error: {
+            code: "VALIDATION_ERROR",
+            message: "userId(s) or contactPersonId(s) required",
+          },
+        }
         return
       }
 
@@ -653,14 +695,20 @@ export class MeetingController {
       const meeting = await Meeting.findByPk(id)
       if (!meeting) {
         ctx.status = 404
-        ctx.body = { success: false, error: { code: "MEETING_NOT_FOUND", message: "Meeting not found" } }
+        ctx.body = {
+          success: false,
+          error: { code: "MEETING_NOT_FOUND", message: "Meeting not found" },
+        }
         return
       }
 
       const participant = await MeetingParticipant.findByMeetingAndUser(id, userId)
       if (!participant) {
         ctx.status = 404
-        ctx.body = { success: false, error: { code: "PARTICIPANT_NOT_FOUND", message: "Participant not found" } }
+        ctx.body = {
+          success: false,
+          error: { code: "PARTICIPANT_NOT_FOUND", message: "Participant not found" },
+        }
         return
       }
 
@@ -669,7 +717,10 @@ export class MeetingController {
       const isSelf = actingUser.id === userId
       if (!isOrganizer && !isSelf) {
         ctx.status = 403
-        ctx.body = { success: false, error: { code: "INSUFFICIENT_PERMISSIONS", message: "No access" } }
+        ctx.body = {
+          success: false,
+          error: { code: "INSUFFICIENT_PERMISSIONS", message: "No access" },
+        }
         return
       }
 
@@ -679,7 +730,10 @@ export class MeetingController {
       ctx.status = 500
       ctx.body = {
         success: false,
-        error: { code: "PARTICIPANT_UPDATE_ERROR", message: "Failed to update participant" },
+        error: {
+          code: "PARTICIPANT_UPDATE_ERROR",
+          message: "Failed to update participant",
+        },
       }
     }
   }
@@ -693,7 +747,10 @@ export class MeetingController {
       const meeting = await Meeting.findByPk(id)
       if (!meeting) {
         ctx.status = 404
-        ctx.body = { success: false, error: { code: "MEETING_NOT_FOUND", message: "Meeting not found" } }
+        ctx.body = {
+          success: false,
+          error: { code: "MEETING_NOT_FOUND", message: "Meeting not found" },
+        }
         return
       }
 
@@ -701,7 +758,10 @@ export class MeetingController {
       const isSelf = actingUser.id === userId
       if (!isOrganizer && !isSelf) {
         ctx.status = 403
-        ctx.body = { success: false, error: { code: "INSUFFICIENT_PERMISSIONS", message: "No access" } }
+        ctx.body = {
+          success: false,
+          error: { code: "INSUFFICIENT_PERMISSIONS", message: "No access" },
+        }
         return
       }
 
@@ -711,7 +771,10 @@ export class MeetingController {
       ctx.status = 500
       ctx.body = {
         success: false,
-        error: { code: "PARTICIPANT_REMOVE_ERROR", message: "Failed to remove participant" },
+        error: {
+          code: "PARTICIPANT_REMOVE_ERROR",
+          message: "Failed to remove participant",
+        },
       }
     }
   }
@@ -778,24 +841,29 @@ export class MeetingController {
       }
 
       // Prepare attendees list
-      const attendees: Attendee[] = meeting.participants?.map((p) => {
-        const isUser = !!p.user
-        const firstName = isUser ? p.user?.firstName : p.contactPerson?.firstName
-        const lastName = isUser ? p.user?.lastName : p.contactPerson?.lastName
-        const email = isUser ? p.user?.email : p.contactPerson?.email
+      const attendees: Attendee[] =
+        meeting.participants?.map((p) => {
+          const isUser = !!p.user
+          const firstName = isUser ? p.user?.firstName : p.contactPerson?.firstName
+          const lastName = isUser ? p.user?.lastName : p.contactPerson?.lastName
+          const email = isUser ? p.user?.email : p.contactPerson?.email
 
-        return {
-          name: `${firstName || 'Unknown'} ${lastName || 'Unknown'}`,
-          email: email || "",
-          rsvp: true,
-          partstat: p.status.toUpperCase() as "ACCEPTED" | "DECLINED" | "TENTATIVE" | "NEEDS-ACTION",
-          role: "REQ-PARTICIPANT" as const,
-        }
-      }) || []
+          return {
+            name: `${firstName || "Unknown"} ${lastName || "Unknown"}`,
+            email: email || "",
+            rsvp: true,
+            partstat: p.status.toUpperCase() as
+              | "ACCEPTED"
+              | "DECLINED"
+              | "TENTATIVE"
+              | "NEEDS-ACTION",
+            role: "REQ-PARTICIPANT" as const,
+          }
+        }) || []
 
       // Add organizer
       attendees.push({
-        name: `${meeting.organizer?.firstName || 'Unknown'} ${meeting.organizer?.lastName || 'Unknown'}`,
+        name: `${meeting.organizer?.firstName || "Unknown"} ${meeting.organizer?.lastName || "Unknown"}`,
         email: meeting.organizer?.email || "",
         rsvp: true,
         partstat: "ACCEPTED" as const,
@@ -831,7 +899,7 @@ export class MeetingController {
         },
         attendees,
         uid: `${meeting.id}@medical-crm.com`,
-        productId: "//Medical CRM//Meeting//EN",
+        productId: "//OPEx_CRM//Meeting//EN",
       }
 
       const { error, value } = createEvents([event])
@@ -873,7 +941,10 @@ export class MeetingController {
     try {
       const user = ctx.state.user as User
       const { id } = ctx.params
-      const { emails, message } = ctx.request.body as { emails?: string[]; message?: string }
+      const { emails, message } = ctx.request.body as {
+        emails?: string[]
+        message?: string
+      }
 
       const meeting = await Meeting.findByPk(id, {
         include: [
@@ -931,26 +1002,27 @@ export class MeetingController {
       }
 
       // Generate .ics file
-      const attendees: Attendee[] = meeting.participants?.map((p) => {
-        const isUser = !!p.user
-        const firstName = isUser ? p.user?.firstName : p.contactPerson?.firstName
-        const lastName = isUser ? p.user?.lastName : p.contactPerson?.lastName
-        const email = isUser ? p.user?.email : p.contactPerson?.email
+      const attendees: Attendee[] =
+        meeting.participants?.map((p) => {
+          const isUser = !!p.user
+          const firstName = isUser ? p.user?.firstName : p.contactPerson?.firstName
+          const lastName = isUser ? p.user?.lastName : p.contactPerson?.lastName
+          const email = isUser ? p.user?.email : p.contactPerson?.email
 
-        // Fallback to 'Unknown' if firstName or lastName is undefined
-        const displayName = `${firstName || 'Unknown'} ${lastName || 'Unknown'}`
+          // Fallback to 'Unknown' if firstName or lastName is undefined
+          const displayName = `${firstName || "Unknown"} ${lastName || "Unknown"}`
 
-        return {
-          name: displayName,
-          email: email || "",
-          rsvp: true,
-          partstat: "NEEDS-ACTION" as const,
-          role: "REQ-PARTICIPANT" as const,
-        }
-      }) || []
+          return {
+            name: displayName,
+            email: email || "",
+            rsvp: true,
+            partstat: "NEEDS-ACTION" as const,
+            role: "REQ-PARTICIPANT" as const,
+          }
+        }) || []
 
       // Add organizer with fallback for undefined values
-      const organizerName = `${meeting.organizer?.firstName || 'Unknown'} ${meeting.organizer?.lastName || 'Unknown'}`
+      const organizerName = `${meeting.organizer?.firstName || "Unknown"} ${meeting.organizer?.lastName || "Unknown"}`
       attendees.push({
         name: organizerName,
         email: meeting.organizer?.email || "",
@@ -987,7 +1059,7 @@ export class MeetingController {
         },
         attendees,
         uid: `${meeting.id}@medical-crm.com`,
-        productId: "//Medical CRM//Meeting//EN",
+        productId: "//OPEx_CRM//Meeting//EN",
       }
 
       const { error, value } = createEvents([event])
@@ -1011,9 +1083,10 @@ export class MeetingController {
         recipients = emails
       } else {
         // Send to all participants (both users and contact persons)
-        recipients = meeting.participants
-          ?.map((p) => p.user?.email || p.contactPerson?.email)
-          .filter((email): email is string => !!email) || []
+        recipients =
+          meeting.participants
+            ?.map((p) => p.user?.email || p.contactPerson?.email)
+            .filter((email): email is string => !!email) || []
       }
 
       if (recipients.length === 0) {
@@ -1057,20 +1130,32 @@ export class MeetingController {
             <td style="padding: 8px; font-weight: bold;">Heure :</td>
             <td style="padding: 8px;">${startTime} - ${endTime}</td>
           </tr>
-          ${meeting.location ? `<tr>
+          ${
+            meeting.location
+              ? `<tr>
             <td style="padding: 8px; font-weight: bold;">Lieu :</td>
             <td style="padding: 8px;">${meeting.location}</td>
-          </tr>` : ""}
-          ${meeting.institution ? `<tr>
+          </tr>`
+              : ""
+          }
+          ${
+            meeting.institution
+              ? `<tr>
             <td style="padding: 8px; font-weight: bold;">Institution :</td>
             <td style="padding: 8px;">${meeting.institution.name}</td>
-          </tr>` : ""}
+          </tr>`
+              : ""
+          }
         </table>
         ${meeting.description ? `<p><strong>Description :</strong><br>${meeting.description}</p>` : ""}
-        ${message ? `<div style="margin: 20px 0; padding: 15px; background-color: #f8f9fa; border-left: 4px solid #007bff;">
+        ${
+          message
+            ? `<div style="margin: 20px 0; padding: 15px; background-color: #f8f9fa; border-left: 4px solid #007bff;">
           <p style="margin: 0;"><strong>Message de l'organisateur :</strong></p>
           <p style="margin: 10px 0 0 0;">${message}</p>
-        </div>` : ""}
+        </div>`
+            : ""
+        }
         <p style="margin-top: 20px;">
           <small>Organisé par : ${meeting.organizer?.firstName} ${meeting.organizer?.lastName}</small>
         </p>
@@ -1121,4 +1206,3 @@ export class MeetingController {
 }
 
 export default MeetingController
-

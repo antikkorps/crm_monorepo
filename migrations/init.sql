@@ -1,4 +1,4 @@
--- Initial database setup for Medical CRM
+-- Initial database setup for OPEx_CRM
 -- This file is executed when the PostgreSQL container starts
 
 -- Create extensions

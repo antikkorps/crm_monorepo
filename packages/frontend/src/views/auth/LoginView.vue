@@ -11,9 +11,9 @@
           >
             <div class="text-center pa-8">
               <v-icon size="80" color="white" class="mb-4"> mdi-heart-pulse </v-icon>
-              <h1 class="text-h2 font-weight-bold text-white">Medical CRM</h1>
+              <h1 class="text-h2 font-weight-bold text-white">OPEx_CRM</h1>
               <p class="text-h5 text-white mt-4 opacity-80">
-                La plateforme pour les professionnels de santé.
+                La plateforme pour vos relations avec les blocs
               </p>
             </div>
           </v-col>
@@ -33,7 +33,7 @@
               color="transparent"
             >
               <div class="text-center mb-8 d-md-none">
-                <h1 class="text-h4 font-weight-bold text-primary mb-2">Medical CRM</h1>
+                <h1 class="text-h4 font-weight-bold text-primary mb-2">OPEx_CRM</h1>
               </div>
               <h2 class="text-h5 font-weight-bold text-center mb-2">Se connecter</h2>
               <p class="text-subtitle-1 text-medium-emphasis text-center mb-8">

@@ -102,7 +102,7 @@
     "passwordMinLength": "Password must be at least 6 characters long"
   },
   "sidebar": {
-    "appName": "Medical CRM",
+    "appName": "OPEx_CRM",
     "billing": "Billing",
     "collaboration": "Collaboration",
     "contactsSegmentation": "Contacts & Segmentation",
@@ -293,10 +293,19 @@
       "role": { "label": "Role" },
       "department": { "label": "Department" },
       "title": { "label": "Title" },
-      "primary": { "label": "Primary Contact", "primaryOnly": "Primary only", "nonPrimaryOnly": "Non-primary only" },
+      "primary": {
+        "label": "Primary Contact",
+        "primaryOnly": "Primary only",
+        "nonPrimaryOnly": "Non-primary only"
+      },
       "contactMethod": { "label": "Contact Method" },
       "activityLevel": { "label": "Activity Level" },
-      "dateRange": { "label": "Date Range", "startDate": "Start Date", "endDate": "End Date", "field": "Date Field" },
+      "dateRange": {
+        "label": "Date Range",
+        "startDate": "Start Date",
+        "endDate": "End Date",
+        "field": "Date Field"
+      },
       "teamAssignment": { "label": "Team Assignment" },
       "medicalProfile": { "label": "Medical Profile" },
       "activeContacts": { "label": "Active Contacts" }
@@ -328,95 +337,95 @@
       "team": "Team",
       "public": "Public"
     },
-     "records": "Records"
-   },
-   "task": {
-     "title": "Task Management",
-     "subtitle": "Manage and track team tasks, assignments, and deadlines",
-     "createNew": "Create New Task",
-     "edit": "Edit Task",
-     "update": "Update Task",
-     "create": "Create Task",
-     "delete": "Delete Task",
-     "cancel": "Cancel",
-     "save": "Save",
-     "loading": "Loading tasks...",
-     "noTasksFound": "No tasks found",
-     "noTasksMatchFilters": "No tasks match your current filters. Try adjusting your search criteria.",
-     "getStarted": "Get started by creating your first task to track team activities and deadlines.",
-     "clearFilters": "Clear Filters",
-     "createTask": "Create Task",
-     "listView": "List View",
-     "boardView": "Board View",
-     "sortBy": "Sort by",
-     "sortOptions": {
-       "dueDate": "Due Date",
-       "priority": "Priority",
-       "status": "Status",
-       "createdAt": "Created Date",
-       "title": "Title"
-     },
-     "status": {
-       "todo": "To Do",
-       "in_progress": "In Progress",
-       "completed": "Completed",
-       "cancelled": "Cancelled"
-     },
-     "priority": {
-       "low": "Low",
-       "medium": "Medium",
-       "high": "High",
-       "urgent": "Urgent"
-     },
-     "form": {
-       "title": "Title",
-       "titlePlaceholder": "Enter task title",
-       "titleRequired": "Title is required",
-       "description": "Description",
-       "descriptionPlaceholder": "Enter task description (optional)",
-       "priority": "Priority",
-       "priorityPlaceholder": "Select priority",
-       "status": "Status",
-       "statusPlaceholder": "Select status",
-       "assignee": "Assignee",
-       "assigneePlaceholder": "Select assignee",
-       "assigneeRequired": "Assignee is required",
-       "institution": "Institution",
-       "institutionPlaceholder": "Select institution (optional)",
-       "dueDate": "Due Date",
-       "dueDatePlaceholder": "Select due date (optional)"
-     },
-     "messages": {
-       "created": "Task created successfully",
-       "updated": "Task updated successfully",
-       "deleted": "Task deleted successfully",
-       "statusUpdated": "Task status updated to {status}",
-       "createFailed": "Failed to create task",
-       "updateFailed": "Failed to update task",
-       "deleteFailed": "Failed to delete task",
-       "statusUpdateFailed": "Failed to update task status",
-       "loadFailed": "Failed to load tasks"
-     },
-     "confirm": {
-       "deleteTitle": "Delete Task",
-       "deleteMessage": "Are you sure you want to delete the task \"{title}\"?"
-     }
-   },
-   "institution": {
-     "name": "Name",
-     "type": "Type",
-     "address": "Address",
-     "phone": "Phone",
-     "email": "Email",
-     "specialties": "Specialties",
-     "bedCapacity": "Bed Capacity",
-     "types": {
-       "hospital": "Hospital",
-       "clinic": "Clinic",
-       "medical_center": "Medical Center",
-       "medicalCenter": "Medical Center",
-       "specialty_clinic": "Specialty Clinic",
-       "specialtyClinic": "Specialty Clinic"
-     }
-   }
+    "records": "Records"
+  },
+  "task": {
+    "title": "Task Management",
+    "subtitle": "Manage and track team tasks, assignments, and deadlines",
+    "createNew": "Create New Task",
+    "edit": "Edit Task",
+    "update": "Update Task",
+    "create": "Create Task",
+    "delete": "Delete Task",
+    "cancel": "Cancel",
+    "save": "Save",
+    "loading": "Loading tasks...",
+    "noTasksFound": "No tasks found",
+    "noTasksMatchFilters": "No tasks match your current filters. Try adjusting your search criteria.",
+    "getStarted": "Get started by creating your first task to track team activities and deadlines.",
+    "clearFilters": "Clear Filters",
+    "createTask": "Create Task",
+    "listView": "List View",
+    "boardView": "Board View",
+    "sortBy": "Sort by",
+    "sortOptions": {
+      "dueDate": "Due Date",
+      "priority": "Priority",
+      "status": "Status",
+      "createdAt": "Created Date",
+      "title": "Title"
+    },
+    "status": {
+      "todo": "To Do",
+      "in_progress": "In Progress",
+      "completed": "Completed",
+      "cancelled": "Cancelled"
+    },
+    "priority": {
+      "low": "Low",
+      "medium": "Medium",
+      "high": "High",
+      "urgent": "Urgent"
+    },
+    "form": {
+      "title": "Title",
+      "titlePlaceholder": "Enter task title",
+      "titleRequired": "Title is required",
+      "description": "Description",
+      "descriptionPlaceholder": "Enter task description (optional)",
+      "priority": "Priority",
+      "priorityPlaceholder": "Select priority",
+      "status": "Status",
+      "statusPlaceholder": "Select status",
+      "assignee": "Assignee",
+      "assigneePlaceholder": "Select assignee",
+      "assigneeRequired": "Assignee is required",
+      "institution": "Institution",
+      "institutionPlaceholder": "Select institution (optional)",
+      "dueDate": "Due Date",
+      "dueDatePlaceholder": "Select due date (optional)"
+    },
+    "messages": {
+      "created": "Task created successfully",
+      "updated": "Task updated successfully",
+      "deleted": "Task deleted successfully",
+      "statusUpdated": "Task status updated to {status}",
+      "createFailed": "Failed to create task",
+      "updateFailed": "Failed to update task",
+      "deleteFailed": "Failed to delete task",
+      "statusUpdateFailed": "Failed to update task status",
+      "loadFailed": "Failed to load tasks"
+    },
+    "confirm": {
+      "deleteTitle": "Delete Task",
+      "deleteMessage": "Are you sure you want to delete the task \"{title}\"?"
+    }
+  },
+  "institution": {
+    "name": "Name",
+    "type": "Type",
+    "address": "Address",
+    "phone": "Phone",
+    "email": "Email",
+    "specialties": "Specialties",
+    "bedCapacity": "Bed Capacity",
+    "types": {
+      "hospital": "Hospital",
+      "clinic": "Clinic",
+      "medical_center": "Medical Center",
+      "medicalCenter": "Medical Center",
+      "specialty_clinic": "Specialty Clinic",
+      "specialtyClinic": "Specialty Clinic"
+    }
+  }
 }

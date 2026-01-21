@@ -1,6 +1,6 @@
 # Guide de Déploiement - Hetzner avec Docker
 
-Ce guide détaille le déploiement complet de l'application Medical CRM sur un serveur Hetzner avec Docker, Caddy, PostgreSQL et backups automatiques sur Cloudflare R2.
+Ce guide détaille le déploiement complet de l'application OPEx_CRM sur un serveur Hetzner avec Docker, Caddy, PostgreSQL et backups automatiques sur Cloudflare R2.
 
 ## Table des matières
 
@@ -291,7 +291,7 @@ LOG_LEVEL=warn
 # EMAIL & SMTP
 EMAIL_ENABLED=true
 EMAIL_FROM_ADDRESS=noreply@example.com
-EMAIL_FROM_NAME=Medical CRM
+EMAIL_FROM_NAME=OPEx_CRM
 SMTP_HOST=smtp.gmail.com
 SMTP_PORT=587
 SMTP_SECURE=false
@@ -416,7 +416,7 @@ curl -I https://api.example.com
 
 1. Dans R2, cliquez sur **Manage R2 API Tokens**
 2. Créez un nouveau token :
-   - **Nom**: Medical CRM Backup
+   - **Nom**: OPEx_CRM Backup
    - **Permissions**: Object Read & Write
    - **Bucket**: medical-crm-backups
 3. Copiez :

@@ -297,7 +297,7 @@ export class MedicalInstitutionAnalyticsService {
         timelineItems.push({
           id: call.id,
           type: 'call',
-          title: `Call to ${call.phoneNumber}`,
+          title: call.phoneNumber, // Title is just the phone number, frontend formats based on callType
           description: call.summary || '',
           user: call.user,
           createdAt: call.createdAt,

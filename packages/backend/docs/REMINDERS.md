@@ -24,6 +24,7 @@ The Automated Reminder System sends timely notifications to users about:
 - **Invoices**: Unpaid invoices (30 days after due date)
 
 Notifications are delivered via:
+
 - **In-app notifications**: Visible in the notification center
 - **Email**: Professional HTML emails with direct links to entities
 
@@ -60,16 +61,19 @@ Notifications are delivered via:
 ### Database Models
 
 **ReminderRule**
+
 - Defines when and how reminders are triggered
 - Supports task, quote, and invoice entities
 - Configurable trigger types (due_soon, overdue, unpaid, expiring)
 
 **Notification**
+
 - Stores in-app notifications
 - Links to user, entity type, and entity ID
 - Tracks read/unread status
 
 **Task, Quote, Invoice**
+
 - Business entities monitored by the reminder system
 - Include due dates, statuses, and assignment information
 
@@ -120,18 +124,18 @@ SMTP_USER=your-email@gmail.com
 SMTP_PASS=your-app-password
 
 EMAIL_FROM_ADDRESS=noreply@yourcompany.com
-EMAIL_FROM_NAME=Medical CRM
+EMAIL_FROM_NAME=OPEx_CRM
 ```
 
 **SMTP Providers:**
 
-| Provider | Host | Port | Secure |
-|----------|------|------|--------|
-| Gmail | smtp.gmail.com | 587 | false |
-| Outlook | smtp-mail.outlook.com | 587 | false |
-| SendGrid | smtp.sendgrid.net | 587 | false |
-| Mailgun | smtp.mailgun.org | 587 | false |
-| Mailtrap (dev) | smtp.mailtrap.io | 2525 | false |
+| Provider       | Host                  | Port | Secure |
+| -------------- | --------------------- | ---- | ------ |
+| Gmail          | smtp.gmail.com        | 587  | false  |
+| Outlook        | smtp-mail.outlook.com | 587  | false  |
+| SendGrid       | smtp.sendgrid.net     | 587  | false  |
+| Mailgun        | smtp.mailgun.org      | 587  | false  |
+| Mailtrap (dev) | smtp.mailtrap.io      | 2525 | false  |
 
 ---
 
@@ -141,12 +145,12 @@ EMAIL_FROM_NAME=Medical CRM
 
 The system creates these default reminder rules on first run:
 
-| Entity | Trigger Type | Days Before/After | Description |
-|--------|--------------|-------------------|-------------|
-| Task | `due_soon` | 7 days before | Alert before task deadline |
-| Task | `overdue` | 0 days after | Alert for overdue tasks |
-| Quote | `expiring` | 7 days before | Alert before quote expires |
-| Invoice | `unpaid` | 30 days after | Alert for unpaid invoices |
+| Entity  | Trigger Type | Days Before/After | Description                |
+| ------- | ------------ | ----------------- | -------------------------- |
+| Task    | `due_soon`   | 7 days before     | Alert before task deadline |
+| Task    | `overdue`    | 0 days after      | Alert for overdue tasks    |
+| Quote   | `expiring`   | 7 days before     | Alert before quote expires |
+| Invoice | `unpaid`     | 30 days after     | Alert for unpaid invoices  |
 
 ### Creating Custom Rules
 
@@ -181,40 +185,44 @@ await ReminderRule.create({
   daysAfter: 15,
   sendEmail: true,
   sendNotification: true,
-  isActive: true
+  isActive: true,
 })
 ```
 
 ### Rule Properties
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `name` | string | Human-readable rule name |
-| `description` | string | Optional description |
-| `entityType` | enum | `task`, `quote`, or `invoice` |
-| `triggerType` | enum | `due_soon`, `overdue`, `expiring`, `unpaid` |
-| `daysBefore` | number | Days before event (for `due_soon`, `expiring`) |
-| `daysAfter` | number | Days after event (for `overdue`, `unpaid`) |
-| `targetRole` | string | Optional: limit to specific user role |
-| `isActive` | boolean | Enable/disable rule |
-| `sendEmail` | boolean | Send email notification |
-| `sendNotification` | boolean | Send in-app notification |
+| Field              | Type    | Description                                    |
+| ------------------ | ------- | ---------------------------------------------- |
+| `name`             | string  | Human-readable rule name                       |
+| `description`      | string  | Optional description                           |
+| `entityType`       | enum    | `task`, `quote`, or `invoice`                  |
+| `triggerType`      | enum    | `due_soon`, `overdue`, `expiring`, `unpaid`    |
+| `daysBefore`       | number  | Days before event (for `due_soon`, `expiring`) |
+| `daysAfter`        | number  | Days after event (for `overdue`, `unpaid`)     |
+| `targetRole`       | string  | Optional: limit to specific user role          |
+| `isActive`         | boolean | Enable/disable rule                            |
+| `sendEmail`        | boolean | Send email notification                        |
+| `sendNotification` | boolean | Send in-app notification                       |
 
 ### Trigger Types
 
 **`due_soon`** (Tasks, Quotes)
+
 - Fires when entity due date is within `daysBefore` days
 - Example: Alert 7 days before task deadline
 
 **`overdue`** (Tasks)
+
 - Fires when task is past due date
 - Triggers immediately on first cron run after due date
 
 **`expiring`** (Quotes)
+
 - Fires when quote `validUntil` is within `daysBefore` days
 - Only for quotes with status `draft` or `sent`
 
 **`unpaid`** (Invoices)
+
 - Fires `daysAfter` days after invoice due date
 - Only for invoices with status `sent` (not paid)
 
@@ -229,43 +237,41 @@ Email templates are dynamically generated with:
 ```html
 <!DOCTYPE html>
 <html>
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <style>
-    /* Responsive styles */
-  </style>
-</head>
-<body>
-  <div class="email-container">
-    <!-- Header -->
-    <div class="header">
-      <h2>{Entity Type} Reminder</h2>
-    </div>
-
-    <!-- Content -->
-    <div class="content">
-      <p>Hello {User Name},</p>
-      <p>{Context-specific message}</p>
-
-      <div class="details-box">
-        <h3>{Entity Title}</h3>
-        <p><strong>Due Date:</strong> {Formatted Date}</p>
-        <p><strong>Institution:</strong> {Institution Name}</p>
-        <p><strong>Amount:</strong> {Formatted Amount}</p>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <style>
+      /* Responsive styles */
+    </style>
+  </head>
+  <body>
+    <div class="email-container">
+      <!-- Header -->
+      <div class="header">
+        <h2>{Entity Type} Reminder</h2>
       </div>
 
-      <a href="{CRM Link}" class="cta-button">
-        View in CRM
-      </a>
-    </div>
+      <!-- Content -->
+      <div class="content">
+        <p>Hello {User Name},</p>
+        <p>{Context-specific message}</p>
 
-    <!-- Footer -->
-    <div class="footer">
-      <p>Sent by Medical CRM</p>
+        <div class="details-box">
+          <h3>{Entity Title}</h3>
+          <p><strong>Due Date:</strong> {Formatted Date}</p>
+          <p><strong>Institution:</strong> {Institution Name}</p>
+          <p><strong>Amount:</strong> {Formatted Amount}</p>
+        </div>
+
+        <a href="{CRM Link}" class="cta-button"> View in CRM </a>
+      </div>
+
+      <!-- Footer -->
+      <div class="footer">
+        <p>Sent by OPEx_CRM</p>
+      </div>
     </div>
-  </div>
-</body>
+  </body>
 </html>
 ```
 
@@ -274,6 +280,7 @@ Email templates are dynamically generated with:
 **Subject:** Task Due Soon: "{Task Title}"
 
 **Body:**
+
 ```
 Hello John Doe,
 
@@ -288,7 +295,7 @@ Task Details:
 [View in CRM]
 
 ---
-Sent by Medical CRM
+Sent by OPEx_CRM
 ```
 
 ### Quote Reminder Example
@@ -296,6 +303,7 @@ Sent by Medical CRM
 **Subject:** Quote Expiring Soon: #{Quote Number}
 
 **Body:**
+
 ```
 Hello Jane Smith,
 
@@ -310,7 +318,7 @@ Quote Details:
 [View in CRM]
 
 ---
-Sent by Medical CRM
+Sent by OPEx_CRM
 ```
 
 ### Invoice Reminder Example
@@ -318,6 +326,7 @@ Sent by Medical CRM
 **Subject:** Unpaid Invoice Reminder: #{Invoice Number}
 
 **Body:**
+
 ```
 Hello Finance Team,
 
@@ -332,7 +341,7 @@ Invoice Details:
 [View in CRM]
 
 ---
-Sent by Medical CRM
+Sent by OPEx_CRM
 ```
 
 ---
@@ -353,13 +362,13 @@ Sent by Medical CRM
 
 ### Common Schedules
 
-| Description | Cron Expression | When it runs |
-|-------------|-----------------|--------------|
-| Daily at 9am | `0 9 * * *` | Every day 09:00 |
-| Every 6 hours | `0 */6 * * *` | 00:00, 06:00, 12:00, 18:00 |
-| Twice daily | `0 9,18 * * *` | 09:00 and 18:00 |
-| Weekdays at 9am | `0 9 * * 1-5` | Mon-Fri at 09:00 |
-| Every hour | `0 * * * *` | Top of every hour |
+| Description     | Cron Expression | When it runs               |
+| --------------- | --------------- | -------------------------- |
+| Daily at 9am    | `0 9 * * *`     | Every day 09:00            |
+| Every 6 hours   | `0 */6 * * *`   | 00:00, 06:00, 12:00, 18:00 |
+| Twice daily     | `0 9,18 * * *`  | 09:00 and 18:00            |
+| Weekdays at 9am | `0 9 * * 1-5`   | Mon-Fri at 09:00           |
+| Every hour      | `0 * * * *`     | Top of every hour          |
 
 ### Job Execution
 
@@ -394,16 +403,19 @@ When the cron job triggers:
 The reminder system uses an in-memory cache to prevent duplicate notifications:
 
 **Cache Key Format:**
+
 ```
 {ruleId}:{entityType}:{entityId}
 ```
 
 **Example:**
+
 ```
 uuid-task-rule:task:uuid-task-123
 ```
 
 **Cache Entry:**
+
 ```javascript
 {
   lastSent: Date,
@@ -436,11 +448,13 @@ uuid-task-rule:task:uuid-task-123
 **Check 1: Cron Job Running**
 
 Look for cron logs in server output:
+
 ```
 [2025-11-11 09:00:00] Starting reminder processing...
 ```
 
 If missing:
+
 - Verify `REMINDER_CRON_SCHEDULE` is valid
 - Check server is running continuously
 - Review server logs for cron initialization errors
@@ -448,17 +462,20 @@ If missing:
 **Check 2: Active Reminder Rules**
 
 Query database:
+
 ```sql
 SELECT * FROM reminder_rules WHERE is_active = true;
 ```
 
 If no results:
+
 - Run database seeder: `npm run seed`
 - Create rules manually via API
 
 **Check 3: Matching Entities**
 
 For tasks due soon (7 days):
+
 ```sql
 SELECT * FROM tasks
 WHERE due_date BETWEEN NOW() AND NOW() + INTERVAL '7 days'
@@ -470,6 +487,7 @@ If no results, reminders won't send (working as designed).
 **Check 4: Anti-Spam Cache**
 
 Check if notification was sent recently:
+
 - Cache expires after 23 hours
 - Restart server to clear cache (temporary workaround)
 - Implement persistent cache (see Task 28.1)
@@ -479,6 +497,7 @@ Check if notification was sent recently:
 **Check 1: SMTP Configuration**
 
 Verify in `.env`:
+
 ```bash
 ENABLE_EMAIL_REMINDERS=true
 SMTP_HOST=smtp.gmail.com
@@ -489,11 +508,13 @@ SMTP_PASS=your-app-password
 **Check 2: SMTP Connection**
 
 Server logs show SMTP verification on startup:
+
 ```
 [2025-11-11 08:59:55] SMTP connection verified successfully
 ```
 
 If error:
+
 - Verify credentials
 - Check firewall/network access to SMTP server
 - Try Mailtrap for testing
@@ -501,11 +522,13 @@ If error:
 **Check 3: Email Logs**
 
 Look for email delivery logs:
+
 ```
 [2025-11-11 09:00:05] Email sent successfully to user@example.com
 ```
 
 If errors:
+
 ```
 [2025-11-11 09:00:05] Failed to send email: SMTP timeout
 ```
@@ -517,6 +540,7 @@ If errors:
 **Check 4: Spam Filters**
 
 Emails might be filtered:
+
 - Check recipient spam folder
 - Add sender to whitelist
 - Configure SPF/DKIM records (production)
@@ -526,12 +550,14 @@ Emails might be filtered:
 **Too Many Entities**
 
 If processing >100 entities per type:
+
 - Increase `REMINDER_BATCH_SIZE` in `.env`
 - Implement batch processing (see Task 28.2)
 
 **Slow Query Performance**
 
 Optimize with database indexes:
+
 ```sql
 CREATE INDEX idx_tasks_due_date ON tasks(due_date) WHERE status != 'completed';
 CREATE INDEX idx_quotes_valid_until ON quotes(valid_until) WHERE status IN ('draft', 'sent');
@@ -550,6 +576,7 @@ Authorization: Bearer <token>
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -578,6 +605,7 @@ Content-Type: application/json
 ```
 
 **Request Body:**
+
 ```json
 {
   "name": "Urgent Task Reminder",
@@ -611,6 +639,7 @@ Authorization: Bearer <token>
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -668,7 +697,7 @@ await ReminderRule.create({
   targetRole: "TEAM_ADMIN", // Only notify team admins
   isActive: true,
   sendEmail: true,
-  sendNotification: true
+  sendNotification: true,
 })
 ```
 
@@ -699,6 +728,7 @@ REMINDER_CRON_SCHEDULE=0 9,17 * * 1-5
 ```
 
 This runs:
+
 - Monday-Friday only (1-5)
 - At 9:00 AM and 5:00 PM (9,17)
 
@@ -711,6 +741,7 @@ See Task 28 in `tasks.md` for planned improvements:
 ### 28.1 - Persistent Cache Table ✅ **Recommended**
 
 Add `reminder_notification_logs` table to persist cache:
+
 - Survives server restarts
 - Provides audit trail
 - Enables analytics (notification volume, failure rates)
@@ -718,6 +749,7 @@ Add `reminder_notification_logs` table to persist cache:
 ### 28.2 - Configurable Batch Processing
 
 Process >100 entities per type with pagination:
+
 - Prevent timeout on large datasets
 - Configurable batch size
 - Progress logging
@@ -725,6 +757,7 @@ Process >100 entities per type with pagination:
 ### 28.3 - Default Templates via Migration
 
 Idempotent migration to ensure default rules exist:
+
 - Runs on every deployment
 - Restores deleted defaults
 - Marks as "system" rules (undeletable)
@@ -732,6 +765,7 @@ Idempotent migration to ensure default rules exist:
 ### 28.4 - Monitoring Dashboard
 
 Frontend widget to visualize reminder activity:
+
 - Notifications sent (today/week/month)
 - Top rules by volume
 - Failure rates
@@ -754,10 +788,12 @@ For issues or questions:
 5. Consult `docs/EMAIL_REMINDERS.md` for email-specific issues
 
 **Logs Location:**
+
 - Development: Console output
 - Production: `logs/` directory (if configured)
 
 **Useful Commands:**
+
 ```bash
 # View recent reminder logs
 grep "reminder" logs/app.log | tail -50
@@ -773,4 +809,4 @@ psql -d medical_crm_dev -c "SELECT * FROM reminder_rules WHERE is_active = true;
 
 **Last Updated**: 2025-11-11
 **Version**: 1.0.0
-**Maintainer**: Medical CRM Development Team
+**Maintainer**: OPEx_CRM Development Team

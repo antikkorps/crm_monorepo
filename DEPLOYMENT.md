@@ -1,4 +1,4 @@
-# Guide de Déploiement - Medical CRM Monorepo
+# Guide de Déploiement - OPEx_CRM Monorepo
 
 ## Table des matières
 
@@ -51,6 +51,7 @@ medical-crm/
 ### Stack Technique
 
 **Backend:**
+
 - Koa.js (Framework web)
 - Sequelize (ORM PostgreSQL)
 - Socket.io (Communication temps réel)
@@ -59,6 +60,7 @@ medical-crm/
 - Winston (Logging)
 
 **Frontend:**
+
 - Vue 3 (Composition API)
 - Vuetify 3 (Material Design)
 - Vite (Build tool)
@@ -210,6 +212,7 @@ npm run dev
 ```
 
 Cela démarre:
+
 - Frontend sur `http://localhost:3000`
 - Backend sur `http://localhost:3001`
 - Shared en mode watch
@@ -358,19 +361,19 @@ Créer `ecosystem.config.js` à la racine:
 module.exports = {
   apps: [
     {
-      name: 'medical-crm-backend',
-      cwd: './packages/backend',
-      script: 'dist/index.js',
+      name: "medical-crm-backend",
+      cwd: "./packages/backend",
+      script: "dist/index.js",
       instances: 2,
-      exec_mode: 'cluster',
+      exec_mode: "cluster",
       env: {
-        NODE_ENV: 'production',
+        NODE_ENV: "production",
       },
-      error_file: '../../logs/backend-error.log',
-      out_file: '../../logs/backend-out.log',
-      log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
+      error_file: "../../logs/backend-error.log",
+      out_file: "../../logs/backend-out.log",
+      log_date_format: "YYYY-MM-DD HH:mm:ss Z",
       merge_logs: true,
-      max_memory_restart: '500M',
+      max_memory_restart: "500M",
       autorestart: true,
       watch: false,
     },
@@ -661,6 +664,7 @@ Le backend exécute automatiquement les tâches suivantes via node-cron:
 - **Notifications de tâches**: Vérification des tâches à échéance
 
 Ces tâches sont configurées dans:
+
 - `packages/backend/src/jobs/quoteReminderProcessor.ts`
 
 Pour vérifier les logs des jobs:
@@ -674,6 +678,7 @@ pm2 logs medical-crm-backend | grep -i cron
 Socket.IO est utilisé pour les notifications en temps réel. La configuration Nginx doit inclure le proxy WebSocket (voir ci-dessus).
 
 Vérifier la connexion WebSocket:
+
 - Frontend: Vérifier la console du navigateur
 - Backend: Vérifier les logs `pm2 logs medical-crm-backend`
 
@@ -1020,4 +1025,4 @@ sudo tail -f /var/log/nginx/medical-crm-error.log
 
 **Version du Guide**: 1.0
 **Dernière Mise à Jour**: 2025-11-15
-**Mainteneur**: Équipe Medical CRM
+**Mainteneur**: Équipe OPEx_CRM

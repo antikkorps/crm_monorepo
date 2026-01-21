@@ -42,7 +42,7 @@ describe("EmailService", () => {
       expect(result.messageId).toBe("test-message-id")
       expect(result.recipients).toEqual(["test@example.com"])
       expect(mockSendMail).toHaveBeenCalledWith({
-        from: "Medical CRM <noreply@medical-crm.com>",
+        from: "OPEx_CRM <noreply@medical-crm.com>",
         to: "test@example.com",
         cc: undefined,
         bcc: undefined,
@@ -104,7 +104,7 @@ describe("EmailService", () => {
       expect(mockSendMail).toHaveBeenCalledWith(
         expect.objectContaining({
           attachments,
-        })
+        }),
       )
     })
   })
@@ -120,7 +120,7 @@ describe("EmailService", () => {
         "Q202501001",
         "Test Company",
         pdfBuffer,
-        "Custom message"
+        "Custom message",
       )
 
       expect(result.success).toBe(true)
@@ -136,7 +136,7 @@ describe("EmailService", () => {
               contentType: "application/pdf",
             },
           ],
-        })
+        }),
       )
     })
 
@@ -149,14 +149,14 @@ describe("EmailService", () => {
         "Test Client",
         "Q202501001",
         "Test Company",
-        pdfBuffer
+        pdfBuffer,
       )
 
       expect(result.success).toBe(true)
       expect(mockSendMail).toHaveBeenCalledWith(
         expect.objectContaining({
           html: expect.stringContaining("Dear Test Client"),
-        })
+        }),
       )
     })
   })
@@ -175,7 +175,7 @@ describe("EmailService", () => {
         dueDate,
         1000,
         pdfBuffer,
-        "Custom invoice message"
+        "Custom invoice message",
       )
 
       expect(result.success).toBe(true)
@@ -191,7 +191,7 @@ describe("EmailService", () => {
               contentType: "application/pdf",
             },
           ],
-        })
+        }),
       )
     })
 
@@ -207,14 +207,14 @@ describe("EmailService", () => {
         "Test Company",
         dueDate,
         1000,
-        pdfBuffer
+        pdfBuffer,
       )
 
       expect(result.success).toBe(true)
       expect(mockSendMail).toHaveBeenCalledWith(
         expect.objectContaining({
           html: expect.stringContaining("$1,000.00"),
-        })
+        }),
       )
     })
   })
@@ -232,7 +232,7 @@ describe("EmailService", () => {
         dueDate,
         500,
         10,
-        "Custom reminder message"
+        "Custom reminder message",
       )
 
       expect(result.success).toBe(true)
@@ -241,7 +241,7 @@ describe("EmailService", () => {
           to: "client@example.com",
           subject: "Payment Reminder: Invoice INV202501001 - 10 days overdue",
           html: "Custom reminder message",
-        })
+        }),
       )
     })
 
@@ -256,14 +256,14 @@ describe("EmailService", () => {
         "Test Company",
         dueDate,
         500,
-        10
+        10,
       )
 
       expect(result.success).toBe(true)
       expect(mockSendMail).toHaveBeenCalledWith(
         expect.objectContaining({
           html: expect.stringContaining("10 days overdue"),
-        })
+        }),
       )
     })
   })
@@ -275,7 +275,7 @@ describe("EmailService", () => {
       const result = await emailService.sendCustomEmail(
         "recipient@example.com",
         "Custom Subject",
-        "Custom message content"
+        "Custom message content",
       )
 
       expect(result.success).toBe(true)
@@ -284,7 +284,7 @@ describe("EmailService", () => {
           to: "recipient@example.com",
           subject: "Custom Subject",
           html: "Custom message content",
-        })
+        }),
       )
     })
 
@@ -303,14 +303,14 @@ describe("EmailService", () => {
         "recipient@example.com",
         "Custom Subject",
         "Custom message content",
-        attachments
+        attachments,
       )
 
       expect(result.success).toBe(true)
       expect(mockSendMail).toHaveBeenCalledWith(
         expect.objectContaining({
           attachments,
-        })
+        }),
       )
     })
   })

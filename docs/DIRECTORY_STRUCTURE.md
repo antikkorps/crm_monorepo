@@ -2,7 +2,7 @@
 
 ## Overview
 
-This document describes the directory structure used on the Hetzner server for Medical CRM.
+This document describes the directory structure used on the Hetzner server for OPEx_CRM.
 
 ## Conventions
 
@@ -10,7 +10,7 @@ The server follows the **Filesystem Hierarchy Standard (FHS)** for Linux systems
 
 ### Primary Directories
 
-| Directory | Purpose                                 | Usage in Medical CRM                       |
+| Directory | Purpose                                 | Usage in OPEx_CRM                          |
 | --------- | --------------------------------------- | ------------------------------------------ |
 | `/srv/`   | Services and data served by this system | **Application root** (`/srv/medical-crm/`) |
 | `/var/`   | Variable data (logs, cache, temporary)  | Docker volumes, application logs           |
@@ -124,13 +124,11 @@ tail -f /var/log/docker.log
 ## Security Considerations
 
 1. **Application Directory (`/srv/`)**:
-
    - Owned by `deploy` user (non-root)
    - Permissions: `755` (owner: rwx, group: rx, other: rx)
    - `.env.production`: `600` (owner: rw only)
 
 2. **Docker Volumes**:
-
    - Managed by Docker (root)
    - Containers run as non-root users
    - Sensitive data in PostgreSQL volume is protected by database authentication

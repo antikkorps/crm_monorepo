@@ -1,8 +1,8 @@
-# Medical CRM - API Documentation
+# OPEx_CRM - API Documentation
 
 ## 📚 Accessing API Documentation
 
-The Medical CRM API is fully documented using **OpenAPI 3.0 / Swagger**.
+The OPEx_CRM API is fully documented using **OpenAPI 3.0 / Swagger**.
 
 ### Swagger UI (Interactive Documentation)
 
@@ -13,6 +13,7 @@ http://localhost:4000/api-docs
 ```
 
 **Features:**
+
 - 📖 Complete endpoint reference
 - 🧪 Try-it-out functionality
 - 🔐 JWT authentication support
@@ -28,6 +29,7 @@ http://localhost:4000/api-docs.json
 ```
 
 Use this for:
+
 - Generating client SDKs (TypeScript, Python, etc.)
 - Importing into Postman/Insomnia
 - API testing automation
@@ -51,6 +53,7 @@ Content-Type: application/json
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -87,6 +90,7 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 ## 📍 Core Endpoints
 
 ### Authentication
+
 - `POST /api/auth/login` - User login
 - `POST /api/auth/refresh` - Refresh access token
 - `POST /api/auth/logout` - Logout
@@ -95,6 +99,7 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 - `POST /api/auth/change-password` - Change password
 
 ### Medical Institutions
+
 - `GET /api/institutions` - List institutions
 - `POST /api/institutions` - Create institution
 - `GET /api/institutions/:id` - Get institution
@@ -105,6 +110,7 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 - `GET /api/institutions/hot-leads` - Get hot leads
 
 ### Opportunities (Sales Pipeline)
+
 - `GET /api/opportunities` - List opportunities
 - `POST /api/opportunities` - Create opportunity
 - `GET /api/opportunities/:id` - Get opportunity
@@ -115,6 +121,7 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 - `GET /api/opportunities/forecast/advanced` - Revenue forecast
 
 ### Quotes
+
 - `GET /api/quotes` - List quotes
 - `POST /api/quotes` - Create quote
 - `GET /api/quotes/:id` - Get quote
@@ -124,6 +131,7 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 - `GET /api/quotes/:id/pdf` - Download quote PDF
 
 ### Invoices
+
 - `GET /api/invoices` - List invoices
 - `POST /api/invoices` - Create invoice
 - `GET /api/invoices/:id` - Get invoice
@@ -133,6 +141,7 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 - `GET /api/invoices/:id/pdf` - Download invoice PDF
 
 ### Tasks
+
 - `GET /api/tasks` - List tasks
 - `POST /api/tasks` - Create task
 - `GET /api/tasks/:id` - Get task
@@ -140,6 +149,7 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 - `DELETE /api/tasks/:id` - Delete task
 
 ### Meetings
+
 - `GET /api/meetings` - List meetings
 - `POST /api/meetings` - Create meeting
 - `GET /api/meetings/:id` - Get meeting
@@ -149,6 +159,7 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 - `POST /api/meetings/:id/send-invitation` - Send invitation
 
 ### Calls
+
 - `GET /api/calls` - List calls
 - `POST /api/calls` - Log call
 - `GET /api/calls/:id` - Get call
@@ -156,6 +167,7 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 - `DELETE /api/calls/:id` - Delete call
 
 ### Notes
+
 - `GET /api/notes` - List notes
 - `POST /api/notes` - Create note
 - `GET /api/notes/:id` - Get note
@@ -163,6 +175,7 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 - `DELETE /api/notes/:id` - Delete note
 
 ### Reminders
+
 - `GET /api/reminders` - List reminders
 - `POST /api/reminders` - Create reminder
 - `GET /api/reminders/:id` - Get reminder
@@ -281,6 +294,7 @@ openapi-generator-cli generate \
 - **Sensitive operations**: 3 requests / 15 minutes
 
 Rate limit headers:
+
 ```
 X-RateLimit-Limit: 100
 X-RateLimit-Remaining: 95
@@ -308,6 +322,7 @@ Webhook payloads are signed with HMAC-SHA256.
 ## 📮 Webhooks
 
 Subscribe to events:
+
 - `institution.created`
 - `opportunity.stage_changed`
 - `invoice.paid`

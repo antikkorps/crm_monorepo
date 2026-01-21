@@ -46,6 +46,7 @@ import {
   VCombobox,
   VSwitch,
   VCheckbox,
+  VCheckboxBtn,
   VRadio,
   VRadioGroup,
   VSlider,
@@ -60,6 +61,7 @@ import {
   VTab,
   VWindow,
   VWindowItem,
+  VFooter,
 
   // Data Display
   VList,
@@ -182,6 +184,7 @@ export default createVuetify({
     VCombobox,
     VSwitch,
     VCheckbox,
+    VCheckboxBtn,
     VRadio,
     VRadioGroup,
     VSlider,
@@ -196,6 +199,7 @@ export default createVuetify({
     VTab,
     VWindow,
     VWindowItem,
+    VFooter,
 
     // Data Display
     VList,

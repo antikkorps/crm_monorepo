@@ -149,7 +149,7 @@ export class SocketService {
 
     // Send welcome message
     socket.emit("connected", {
-      message: "Successfully connected to Medical CRM",
+      message: "Successfully connected to OPEx_CRM",
       userId: user.id,
       timestamp: new Date().toISOString(),
     })

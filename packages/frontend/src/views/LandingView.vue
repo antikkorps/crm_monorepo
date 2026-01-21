@@ -3,16 +3,22 @@
     <v-main>
       <!-- Hero Section -->
       <v-container fluid class="hero-section">
-        <v-row align="center" justify="center" class="fill-height text-center text-md-left">
+        <v-row
+          align="center"
+          justify="center"
+          class="fill-height text-center text-md-left"
+        >
           <v-col cols="12" md="6">
             <div class="hero-content">
               <h1 class="hero-title">
-                Medical CRM
-                <span class="hero-highlight">Nouvelle Génération</span>
+                OPEx_CRM
+                <span class="hero-highlight"
+                  >L'excellence opérationnelle pour vos blocs opératoires</span
+                >
               </h1>
               <p class="hero-description">
-                Gérez efficacement vos relations avec les institutions médicales, suivez vos
-                tâches et optimisez votre workflow commercial dans le secteur médical.
+                Gérez efficacement vos relations avec les institutions médicales, suivez
+                vos tâches et optimisez votre workflow commercial dans le secteur médical.
               </p>
               <div class="hero-actions">
                 <v-btn
@@ -48,13 +54,15 @@
                     <span>Performance</span>
                   </v-card-title>
                 </v-card-item>
-                <v-card-text class="pa-0">
-                  <v-sparkline
-                    :model-value="[10, 40, 20, 80, 50, 70]"
-                    height="80"
-                    color="light-blue-accent-3"
-                    line-width="2"
-                  />
+                <v-card-text class="pa-0 px-4 pb-4">
+                  <div class="mini-chart">
+                    <div class="mini-chart-bar" style="height: 12%"></div>
+                    <div class="mini-chart-bar" style="height: 50%"></div>
+                    <div class="mini-chart-bar" style="height: 25%"></div>
+                    <div class="mini-chart-bar" style="height: 100%"></div>
+                    <div class="mini-chart-bar" style="height: 62%"></div>
+                    <div class="mini-chart-bar" style="height: 87%"></div>
+                  </div>
                 </v-card-text>
               </v-card>
               <v-card class="mockup-card-2" elevation="16">
@@ -78,7 +86,7 @@
                   </div>
                 </v-card-text>
               </v-card>
-               <v-card class="mockup-card-3" elevation="12">
+              <v-card class="mockup-card-3" elevation="12">
                 <v-card-item>
                   <v-card-title class="d-flex align-center text-body-2">
                     <v-icon color="amber-accent-3" start icon="mdi-check-all" />
@@ -87,10 +95,17 @@
                 </v-card-item>
                 <v-card-text>
                   <div class="d-flex align-center mb-2">
-                    <v-checkbox-btn :model-value="true" readonly color="amber-accent-3" class="mr-2" />
-                    <span class="text-decoration-line-through">Rendez-vous Dr. Martin</span>
+                    <v-checkbox-btn
+                      :model-value="true"
+                      readonly
+                      color="amber-accent-3"
+                      class="mr-2"
+                    />
+                    <span class="text-decoration-line-through"
+                      >Rendez-vous Dr. Martin</span
+                    >
                   </div>
-                   <div class="d-flex align-center">
+                  <div class="d-flex align-center">
                     <v-checkbox-btn :model-value="false" readonly class="mr-2" />
                     <span>Préparer démo</span>
                   </div>
@@ -108,34 +123,19 @@
             <h2 class="text-h3 font-weight-bold">Fonctionnalités Principales</h2>
           </v-col>
         </v-row>
-        
+
         <v-row>
-          <v-col
-            v-for="feature in features"
-            :key="feature.title"
-            cols="12"
-            sm="6"
-            md="4"
-          >
-            <v-card
-              class="feature-card"
-              elevation="4"
-              hover
-            >
+          <v-col v-for="feature in features" :key="feature.title" cols="12" sm="6" md="4">
+            <v-card class="feature-card" elevation="4" hover>
               <v-card-text class="text-center pa-6">
-                <v-avatar
-                  size="80"
-                  class="mb-4"
-                  color="primary"
-                  variant="tonal"
-                >
+                <v-avatar size="80" class="mb-4" color="primary" variant="tonal">
                   <v-icon size="40" :icon="feature.icon" />
                 </v-avatar>
-                
+
                 <v-card-title class="text-h6 mb-2">
                   {{ feature.title }}
                 </v-card-title>
-                
+
                 <p class="text-body-2 text-medium-emphasis">
                   {{ feature.description }}
                 </p>
@@ -153,7 +153,7 @@
               Prêt à optimiser votre gestion commerciale ?
             </h2>
             <p class="text-h6 mb-8">
-              Rejoignez les professionnels qui font confiance à Medical CRM
+              Rejoignez les professionnels qui font confiance à OPEx_CRM
             </p>
             <v-btn
               color="amber-accent-3"
@@ -173,14 +173,12 @@
         <v-container>
           <v-row>
             <v-col cols="12" md="4">
-              <h4 class="text-h6 font-weight-bold mb-4 text-amber-accent-3">
-                Medical CRM
-              </h4>
+              <h4 class="text-h6 font-weight-bold mb-4 text-amber-accent-3">OPEx_CRM</h4>
               <p class="text-body-2 text-grey-lighten-1">
                 Solution complète pour la gestion commerciale dans le secteur médical
               </p>
             </v-col>
-            
+
             <v-col cols="12" md="4">
               <h4 class="text-h6 font-weight-bold mb-4 text-amber-accent-3">
                 Liens Utiles
@@ -198,23 +196,19 @@
                 </v-list-item>
               </v-list>
             </v-col>
-            
+
             <v-col cols="12" md="4">
-              <h4 class="text-h6 font-weight-bold mb-4 text-amber-accent-3">
-                Contact
-              </h4>
-              <p class="text-body-2 text-grey-lighten-1">
-                support@medical-crm.com
-              </p>
+              <h4 class="text-h6 font-weight-bold mb-4 text-amber-accent-3">Contact</h4>
+              <p class="text-body-2 text-grey-lighten-1">support@medical-crm.com</p>
             </v-col>
           </v-row>
-          
+
           <v-divider class="my-6" />
-          
+
           <v-row>
             <v-col cols="12" class="text-center">
               <p class="text-body-2 text-grey">
-                &copy; 2025 Medical CRM. Tous droits réservés.
+                &copy; 2025 OPEx_CRM. Tous droits réservés.
               </p>
             </v-col>
           </v-row>
@@ -232,34 +226,37 @@ const router = useRouter()
 const features = [
   {
     title: "Gestion des Institutions",
-    description: "Centralisez toutes les informations de vos institutions médicales partenaires",
-    icon: "mdi-domain"
+    description:
+      "Centralisez toutes les informations de vos institutions médicales partenaires",
+    icon: "mdi-domain",
   },
   {
-    title: "Suivi des Tâches", 
-    description: "Organisez et suivez vos tâches commerciales avec un système de workflow intuitif",
-    icon: "mdi-check-circle"
+    title: "Suivi des Tâches",
+    description:
+      "Organisez et suivez vos tâches commerciales avec un système de workflow intuitif",
+    icon: "mdi-check-circle",
   },
   {
     title: "Devis & Factures",
-    description: "Générez et gérez vos devis et factures directement depuis la plateforme",
-    icon: "mdi-file-document-edit"
+    description:
+      "Générez et gérez vos devis et factures directement depuis la plateforme",
+    icon: "mdi-file-document-edit",
   },
   {
     title: "Gestion d'Équipe",
     description: "Collaborez efficacement avec votre équipe et assignez les tâches",
-    icon: "mdi-account-group"
+    icon: "mdi-account-group",
   },
   {
     title: "Tableau de Bord",
     description: "Visualisez vos performances et KPIs en temps réel",
-    icon: "mdi-chart-line"
+    icon: "mdi-chart-line",
   },
   {
     title: "Sécurité",
     description: "Données sécurisées et conformes aux standards médicaux",
-    icon: "mdi-shield-check"
-  }
+    icon: "mdi-shield-check",
+  },
 ]
 
 const goToLogin = () => {
@@ -295,10 +292,11 @@ const scrollToFeatures = () => {
 .hero-highlight {
   color: #fbbf24;
   display: block;
+  font-size: 2rem;
 }
 
 .hero-description {
-  font-size: 1.25rem;
+  font-size: 1.1rem;
   line-height: 1.6;
   margin-bottom: 2rem;
   opacity: 0.9;
@@ -318,7 +316,9 @@ const scrollToFeatures = () => {
   height: 400px;
   transform: rotate(-5deg);
 }
-.mockup-card, .mockup-card-2, .mockup-card-3 {
+.mockup-card,
+.mockup-card-2,
+.mockup-card-3 {
   position: absolute;
   background-color: rgba(255, 255, 255, 0.15);
   backdrop-filter: blur(12px);
@@ -346,8 +346,30 @@ const scrollToFeatures = () => {
   transform: rotate(5deg);
 }
 
-:deep(.v-sparkline__label) {
-  fill: white !important;
+.mini-chart {
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+  height: 60px;
+}
+
+.mini-chart-bar {
+  flex: 1;
+  background: linear-gradient(180deg, #40c4ff 0%, #00b0ff 100%);
+  border-radius: 4px 4px 0 0;
+  min-height: 4px;
+  animation: growBar 0.8s ease-out forwards;
+}
+
+@keyframes growBar {
+  from {
+    transform: scaleY(0);
+    transform-origin: bottom;
+  }
+  to {
+    transform: scaleY(1);
+    transform-origin: bottom;
+  }
 }
 
 /* Features Section */
@@ -358,13 +380,15 @@ const scrollToFeatures = () => {
 
 .feature-card {
   height: 100%;
-  transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+  transition:
+    transform 0.2s ease-in-out,
+    box-shadow 0.2s ease-in-out;
   border-radius: 16px;
 }
 
 .feature-card:hover {
   transform: translateY(-8px);
-  box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
 }
 
 /* CTA Section */

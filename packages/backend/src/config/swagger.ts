@@ -1,18 +1,19 @@
-import swaggerJsdoc from "swagger-jsdoc"
-import { koaSwagger } from "koa2-swagger-ui"
-import type Koa from "koa"
 import Router from "@koa/router"
+import type Koa from "koa"
+import { koaSwagger } from "koa2-swagger-ui"
+import swaggerJsdoc from "swagger-jsdoc"
 
 /**
- * Swagger/OpenAPI configuration for Medical CRM API
+ * Swagger/OpenAPI configuration for OPEx_CRM API
  */
 const swaggerOptions: swaggerJsdoc.Options = {
   definition: {
     openapi: "3.0.0",
     info: {
-      title: "Medical CRM API",
+      title: "OPEx_CRM API",
       version: "1.0.0",
-      description: "API Documentation for Medical CRM - A comprehensive B2B CRM solution for medical institutions",
+      description:
+        "API Documentation for OPEx_CRM - A comprehensive B2B CRM solution for medical institutions",
       contact: {
         name: "API Support",
         email: "support@medical-crm.com",
@@ -106,7 +107,15 @@ const swaggerOptions: swaggerJsdoc.Options = {
             },
             type: {
               type: "string",
-              enum: ["hospital", "clinic", "laboratory", "pharmacy", "nursing_home", "medical_center", "other"],
+              enum: [
+                "hospital",
+                "clinic",
+                "laboratory",
+                "pharmacy",
+                "nursing_home",
+                "medical_center",
+                "other",
+              ],
               example: "hospital",
             },
             isActive: {
@@ -152,7 +161,14 @@ const swaggerOptions: swaggerJsdoc.Options = {
             name: { type: "string", example: "Équipement Scanner IRM" },
             stage: {
               type: "string",
-              enum: ["prospecting", "qualification", "proposal", "negotiation", "closed_won", "closed_lost"],
+              enum: [
+                "prospecting",
+                "qualification",
+                "proposal",
+                "negotiation",
+                "closed_won",
+                "closed_lost",
+              ],
               example: "proposal",
             },
             value: {
@@ -388,11 +404,7 @@ const swaggerOptions: swaggerJsdoc.Options = {
     ],
   },
   // Paths to files containing OpenAPI definitions
-  apis: [
-    "./src/routes/*.ts",
-    "./src/controllers/*.ts",
-    "./src/models/*.ts",
-  ],
+  apis: ["./src/routes/*.ts", "./src/controllers/*.ts", "./src/models/*.ts"],
 }
 
 /**
@@ -414,9 +426,9 @@ export function setupSwagger(app: Koa) {
       swaggerOptions: {
         spec: swaggerSpec as Record<string, unknown>,
       },
-      title: "Medical CRM API Documentation",
+      title: "OPEx_CRM API Documentation",
       favicon: "/favicon.ico",
-    })
+    }),
   )
 
   // Serve OpenAPI JSON spec

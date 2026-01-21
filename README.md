@@ -1,4 +1,4 @@
-# Medical CRM
+# OPEx_CRM
 
 A modern Customer Relationship Management system designed specifically for managing business relationships with medical institutions such as hospitals and clinics.
 

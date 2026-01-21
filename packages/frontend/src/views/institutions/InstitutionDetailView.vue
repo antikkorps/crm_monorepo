@@ -243,7 +243,7 @@
             </v-window-item>
 
             <v-window-item value="timeline">
-              <TimelineTab :institution-id="institution.id" />
+              <TimelineTab :institution-id="institution.id" :is-active="activeTab === 'timeline'" />
             </v-window-item>
 
             <v-window-item value="medical">

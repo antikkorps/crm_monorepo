@@ -2,7 +2,7 @@
 
 ## Overview
 
-This directory contains comprehensive documentation for the Medical CRM backend system.
+This directory contains comprehensive documentation for the OPEx_CRM backend system.
 
 ## Documentation Index
 

@@ -4,8 +4,12 @@ import Koa from "koa"
 import bodyParser from "koa-bodyparser"
 import helmet from "koa-helmet"
 import config from "./config/environment"
+import { setupSwagger } from "./config/swagger"
 import { errorHandler } from "./middleware/errorHandler"
+import { inputValidationMiddleware } from "./middleware/inputSanitization"
+import { generalRateLimiter } from "./middleware/rateLimiting"
 import { requestLogger } from "./middleware/requestLogger"
+import { securityLoggingMiddleware } from "./middleware/securityLogging"
 import authRoutes from "./routes/auth"
 import avatarRoutes from "./routes/avatars"
 import billingAnalyticsRoutes from "./routes/billing-analytics"
@@ -14,34 +18,30 @@ import catalogRoutes from "./routes/catalog"
 import contactRoutes from "./routes/contacts"
 import dashboardRoutes from "./routes/dashboard"
 import digiformaRoutes from "./routes/digiforma"
-import sageRoutes from "./routes/sage"
+import exportRoutes from "./routes/export"
 import filterOptionsRoutes from "./routes/filterOptions"
+import importRoutes from "./routes/import"
 import institutionRoutes from "./routes/institutions"
 import invoiceRoutes from "./routes/invoices"
-import exportRoutes from "./routes/export"
-import importRoutes from "./routes/import"
-import noteRoutes from "./routes/notes"
 import meetingRoutes from "./routes/meetings"
+import noteRoutes from "./routes/notes"
 import opportunityRoutes from "./routes/opportunities"
 import pluginRoutes from "./routes/plugins"
 import quoteRoutes from "./routes/quotes"
-import reminderRoutes from "./routes/reminders"
 import reminderRuleRoutes from "./routes/reminderRules"
+import reminderRoutes from "./routes/reminders"
 import revenueRoutes from "./routes/revenue"
+import sageRoutes from "./routes/sage"
+import securityLogRoutes from "./routes/security-logs"
 import segmentRoutes from "./routes/segments"
+import settingsRoutes from "./routes/settings"
 import socketRoutes from "./routes/socket"
 import taskRoutes from "./routes/tasks"
 import teamRoutes from "./routes/teams"
 import templateRoutes from "./routes/templates"
 import userRoutes from "./routes/users"
 import webhookRoutes from "./routes/webhooks"
-import securityLogRoutes from "./routes/security-logs"
-import settingsRoutes from "./routes/settings"
 import { logger } from "./utils/logger"
-import { securityLoggingMiddleware } from "./middleware/securityLogging"
-import { generalRateLimiter } from "./middleware/rateLimiting"
-import { inputValidationMiddleware } from "./middleware/inputSanitization"
-import { setupSwagger } from "./config/swagger"
 
 export const createApp = (): Koa => {
   const app = new Koa()
@@ -61,7 +61,7 @@ export const createApp = (): Koa => {
     helmet({
       contentSecurityPolicy: false, // Disable CSP for API
       crossOriginEmbedderPolicy: false,
-    })
+    }),
   )
 
   // CORS configuration
@@ -69,14 +69,21 @@ export const createApp = (): Koa => {
   // Production: Only allow configured origin from environment
   app.use(
     cors({
-      origin: config.env === 'development' ? '*' : config.cors.origin,
-      credentials: config.env !== 'development', // Only enable credentials in production
+      origin: config.env === "development" ? "*" : config.cors.origin,
+      credentials: config.env !== "development", // Only enable credentials in production
       allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
-      allowHeaders: ["Origin", "X-Requested-With", "Content-Type", "Accept", "Authorization", "X-Request-ID"],
+      allowHeaders: [
+        "Origin",
+        "X-Requested-With",
+        "Content-Type",
+        "Accept",
+        "Authorization",
+        "X-Request-ID",
+      ],
       exposeHeaders: ["X-Request-ID"],
       maxAge: 86400, // 24 hours
       // @koa/cors handles OPTIONS preflight requests automatically
-    })
+    }),
   )
 
   // Body parser with size limits
@@ -89,7 +96,7 @@ export const createApp = (): Koa => {
       onerror: (err, ctx) => {
         ctx.throw(422, "Body parse error", { details: err.message })
       },
-    })
+    }),
   )
 
   // Input validation and sanitization middleware
@@ -102,7 +109,7 @@ export const createApp = (): Koa => {
   app.use(securityLoggingMiddleware)
 
   // Setup Swagger API documentation
-  if (config.env !== 'test') {
+  if (config.env !== "test") {
     setupSwagger(app)
   }
 
@@ -127,7 +134,7 @@ export const createApp = (): Koa => {
   // API info endpoint
   router.get("/api", async (ctx) => {
     ctx.body = {
-      name: "Medical CRM Backend API",
+      name: "OPEx_CRM Backend API",
       version: "1.0.0",
       environment: config.env,
       timestamp: new Date().toISOString(),

@@ -1,4 +1,4 @@
-// User types for Medical CRM
+// User types for OPEx_CRM
 
 export interface User {
   id: string

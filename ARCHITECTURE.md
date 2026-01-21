@@ -1,4 +1,4 @@
-# Medical CRM - Architecture Documentation
+# OPEx_CRM - Architecture Documentation
 
 ## Table des matières
 
@@ -15,7 +15,7 @@
 
 ## Vue d'ensemble
 
-Medical CRM est une application de gestion de relation client spécialement conçue pour les professionnels de l'audit médical. Le système permet de gérer les institutions médicales (hôpitaux, cliniques), les contacts, la facturation, et intègre des sources de revenus multiples (Audit et Formation via Digiforma).
+OPEx_CRM est une application de gestion de relation client spécialement conçue pour les professionnels de l'audit médical. Le système permet de gérer les institutions médicales (hôpitaux, cliniques), les contacts, la facturation, et intègre des sources de revenus multiples (Audit et Formation via Digiforma).
 
 ### Principes architecturaux
 
@@ -171,7 +171,7 @@ router.get(
   "/invoices",
   authenticate,
   requirePermissions("canViewInvoices"),
-  InvoiceController.list
+  InvoiceController.list,
 )
 ```
 
@@ -454,7 +454,7 @@ app.use(
     origin: process.env.FRONTEND_URL,
     credentials: true,
     allowedHeaders: ["Content-Type", "Authorization"],
-  })
+  }),
 )
 ```
 
@@ -563,7 +563,7 @@ SMTP_PASSWORD=password
 
 ```bash
 VITE_API_URL=http://localhost:3001
-VITE_APP_TITLE=Medical CRM
+VITE_APP_TITLE=OPEx_CRM
 ```
 
 ### Build & Déploiement
@@ -713,7 +713,7 @@ Format JSON pour parsing facile :
 
 ## Contributeurs
 
-Ce projet est maintenu par l'équipe Medical CRM.
+Ce projet est maintenu par l'équipe OPEx_CRM.
 
 Pour toute question : [contact@medical-crm.example.com](mailto:contact@medical-crm.example.com)
 

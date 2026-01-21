@@ -56,7 +56,7 @@ describe("Koa.js Application", () => {
       const response = await request(server).get("/api").expect(200)
 
       expect(response.body).toMatchObject({
-        name: "Medical CRM Backend API",
+        name: "OPEx_CRM Backend API",
         version: "1.0.0",
         environment: "test",
       })
@@ -75,9 +75,11 @@ describe("Koa.js Application", () => {
 
       // All should return 404 or 401, but not other error codes
       responses.forEach((response, index) => {
-        expect([401, 404]).toContain(response.status, 
-          `Response ${index} returned unexpected status: ${response.status}`)
-        
+        expect([401, 404]).toContain(
+          response.status,
+          `Response ${index} returned unexpected status: ${response.status}`,
+        )
+
         if (response.status === 404) {
           expect(response.body.error).toMatchObject({
             code: "NOT_FOUND",

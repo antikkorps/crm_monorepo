@@ -2,7 +2,7 @@
 
 ## Overview
 
-This guide covers database indexing strategies, optimization techniques, and best practices for the Medical CRM PostgreSQL database.
+This guide covers database indexing strategies, optimization techniques, and best practices for the OPEx_CRM PostgreSQL database.
 
 ## Index Audit Script
 
@@ -13,6 +13,7 @@ npm run db:audit-indexes
 ```
 
 This script provides:
+
 - Table size statistics
 - Missing foreign key indexes
 - Unused indexes
@@ -216,6 +217,7 @@ WHERE assigned_to_id = '123'
 ```
 
 Look for:
+
 - `Seq Scan` - May need an index
 - `Index Scan` - Good, using index
 - High `cost` values - Potential optimization opportunity
@@ -260,7 +262,7 @@ WHERE city = 'Paris'
   AND type = 'hospital';
 ```
 
-### 2. Avoid SELECT *
+### 2. Avoid SELECT \*
 
 Fetch only needed columns:
 
@@ -359,6 +361,7 @@ ORDER BY duration DESC;
 ## Index Recommendations by Table
 
 ### Users Table
+
 ```sql
 CREATE INDEX idx_users_email ON users(email);
 CREATE INDEX idx_users_role ON users(role);
@@ -367,6 +370,7 @@ CREATE INDEX idx_users_active ON users(is_active) WHERE is_active = true;
 ```
 
 ### Medical Institutions Table
+
 ```sql
 CREATE INDEX idx_institutions_type ON medical_institutions(type);
 CREATE INDEX idx_institutions_city ON medical_institutions(city);
@@ -376,6 +380,7 @@ CREATE INDEX idx_institutions_siret ON medical_institutions(siret) WHERE siret I
 ```
 
 ### Tasks Table
+
 ```sql
 CREATE INDEX idx_tasks_assigned_to ON tasks(assigned_to_id);
 CREATE INDEX idx_tasks_institution ON tasks(medical_institution_id);
@@ -386,6 +391,7 @@ CREATE INDEX idx_tasks_institution_status ON tasks(medical_institution_id, statu
 ```
 
 ### Quotes Table
+
 ```sql
 CREATE INDEX idx_quotes_institution ON quotes(medical_institution_id);
 CREATE INDEX idx_quotes_created_by ON quotes(created_by_id);
@@ -395,6 +401,7 @@ CREATE INDEX idx_quotes_valid_until ON quotes(valid_until);
 ```
 
 ### Invoices Table
+
 ```sql
 CREATE INDEX idx_invoices_institution ON invoices(medical_institution_id);
 CREATE INDEX idx_invoices_created_by ON invoices(created_by_id);

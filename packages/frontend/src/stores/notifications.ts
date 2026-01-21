@@ -135,7 +135,7 @@ export const useNotificationStore = defineStore("notifications", {
     },
 
     addNotification(
-      notification: Omit<NotificationHistory, "id" | "read" | "dismissed">
+      notification: Omit<NotificationHistory, "id" | "read" | "dismissed">,
     ) {
       const newNotification: NotificationHistory = {
         ...notification,
@@ -237,7 +237,7 @@ export const useNotificationStore = defineStore("notifications", {
       }
 
       try {
-        const desktopNotification = new Notification("Medical CRM", {
+        const desktopNotification = new Notification("OPEx_CRM", {
           body: notification.message,
           icon: "/favicon.ico",
           tag: notification.id,
@@ -265,8 +265,9 @@ export const useNotificationStore = defineStore("notifications", {
       }
 
       try {
-        const audioContext = new (window.AudioContext ||
-          (window as any).webkitAudioContext)()
+        const audioContext = new (
+          window.AudioContext || (window as any).webkitAudioContext
+        )()
         const oscillator = audioContext.createOscillator()
         const gainNode = audioContext.createGain()
 
@@ -279,7 +280,7 @@ export const useNotificationStore = defineStore("notifications", {
         gainNode.gain.setValueAtTime(0, audioContext.currentTime)
         gainNode.gain.linearRampToValueAtTime(
           this.preferences.soundVolume * 0.1,
-          audioContext.currentTime + 0.01
+          audioContext.currentTime + 0.01,
         )
         gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.2)
 
@@ -360,7 +361,7 @@ export const useNotificationStore = defineStore("notifications", {
       try {
         localStorage.setItem(
           "notification-offline-queue",
-          JSON.stringify(this.offlineQueue)
+          JSON.stringify(this.offlineQueue),
         )
       } catch (error) {
         console.error("Failed to save offline notification queue:", error)

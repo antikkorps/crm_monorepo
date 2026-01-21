@@ -2,7 +2,7 @@
   "name": "@medical-crm/plugins",
   "version": "1.0.0",
   "private": true,
-  "description": "Plugin packages for medical CRM",
+  "description": "Plugin packages for OPEx_CRM",
   "scripts": {
     "build": "npm run build --workspace=@medical-crm/sage-integration",
     "dev": "npm run dev --workspace=@medical-crm/sage-integration",

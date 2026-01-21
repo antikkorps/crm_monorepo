@@ -34,7 +34,7 @@ export class EmailService {
   constructor() {
     this.enabled = process.env.EMAIL_ENABLED === "true"
     this.fromAddress = process.env.EMAIL_FROM_ADDRESS || "noreply@medical-crm.com"
-    this.fromName = process.env.EMAIL_FROM_NAME || "Medical CRM"
+    this.fromName = process.env.EMAIL_FROM_NAME || "OPEx_CRM"
 
     this.transporter = nodemailer.createTransport({
       host: process.env.SMTP_HOST || "localhost",
@@ -141,7 +141,7 @@ export class EmailService {
     quoteNumber: string,
     companyName: string,
     pdfBuffer: Buffer,
-    customMessage?: string
+    customMessage?: string,
   ): Promise<EmailDeliveryResult> {
     const subject = `Quote ${quoteNumber} from ${companyName}`
 
@@ -182,7 +182,7 @@ export class EmailService {
     dueDate: Date | string | undefined,
     totalAmount: number | string,
     pdfBuffer: Buffer,
-    customMessage?: string
+    customMessage?: string,
   ): Promise<EmailDeliveryResult> {
     const safeCompany = companyName || process.env.EMAIL_FROM_NAME || "MVO"
     const safeNumber = invoiceNumber || "N/A"
@@ -257,7 +257,7 @@ export class EmailService {
     dueDate: Date,
     remainingAmount: number,
     daysOverdue: number,
-    customMessage?: string
+    customMessage?: string,
   ): Promise<EmailDeliveryResult> {
     const subject = `Payment Reminder: Invoice ${invoiceNumber} - ${daysOverdue} days overdue`
 
@@ -294,7 +294,7 @@ export class EmailService {
   public async sendPasswordResetCode(
     recipientEmail: string,
     code: string,
-    firstName: string
+    firstName: string,
   ): Promise<EmailDeliveryResult> {
     const subject = "Code de réinitialisation de mot de passe"
 
@@ -330,7 +330,7 @@ export class EmailService {
     recipientEmail: string | string[],
     subject: string,
     message: string,
-    attachments?: EmailAttachment[]
+    attachments?: EmailAttachment[],
   ): Promise<EmailDeliveryResult> {
     return this.sendEmail({
       to: recipientEmail,
