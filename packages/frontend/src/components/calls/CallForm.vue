@@ -81,7 +81,8 @@
                 item-value="value"
                 :label="t('calls.institutionField')"
                 :placeholder="t('calls.institutionPlaceholder')"
-                clearable
+                :clearable="!isInstitutionPreselected"
+                :disabled="isInstitutionPreselected"
                 :loading="loadingInstitutions"
                 density="comfortable"
                 hide-details="auto"
@@ -139,6 +140,7 @@ interface Props {
   modelValue: boolean
   call?: Call | null
   loading?: boolean
+  preselectedInstitutionId?: string
 }
 
 interface Emits {
@@ -179,6 +181,7 @@ const loadingInstitutions = computed(
 )
 
 const isEditing = computed(() => !!props.call)
+const isInstitutionPreselected = computed(() => !!props.preselectedInstitutionId)
 
 const { t } = useI18n()
 
@@ -220,10 +223,15 @@ const resetForm = () => {
     callType: "outgoing" as CallType,
     duration: undefined,
     summary: "",
-    institutionId: "",
+    institutionId: props.preselectedInstitutionId || "",
     contactPersonId: "",
   }
   errors.value = {}
+
+  // Load contacts for preselected institution
+  if (props.preselectedInstitutionId) {
+    loadContactsForInstitution(props.preselectedInstitutionId)
+  }
 }
 
 const populateForm = (call: Call) => {

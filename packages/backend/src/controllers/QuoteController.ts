@@ -512,13 +512,29 @@ export class QuoteController {
 
       await pdfService.cleanup()
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Unknown error"
+
+      // Check for specific "no template configured" error
+      if (errorMessage.startsWith("NO_TEMPLATE_CONFIGURED:")) {
+        const userMessage = errorMessage.replace("NO_TEMPLATE_CONFIGURED:", "")
+        ctx.status = 422
+        ctx.body = {
+          success: false,
+          error: {
+            code: "NO_TEMPLATE_CONFIGURED",
+            message: userMessage,
+          },
+        }
+        return
+      }
+
       ctx.status = 500
       ctx.body = {
         success: false,
         error: {
           code: "PDF_GENERATION_ERROR",
           message: "Failed to generate quote PDF",
-          details: error instanceof Error ? error.message : "Unknown error",
+          details: errorMessage,
         },
       }
     }
@@ -566,13 +582,29 @@ export class QuoteController {
 
       await pdfService.cleanup()
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Unknown error"
+
+      // Check for specific "no template configured" error
+      if (errorMessage.startsWith("NO_TEMPLATE_CONFIGURED:")) {
+        const userMessage = errorMessage.replace("NO_TEMPLATE_CONFIGURED:", "")
+        ctx.status = 422
+        ctx.body = {
+          success: false,
+          error: {
+            code: "NO_TEMPLATE_CONFIGURED",
+            message: userMessage,
+          },
+        }
+        return
+      }
+
       ctx.status = 500
       ctx.body = {
         success: false,
         error: {
           code: "ORDER_PDF_GENERATION_ERROR",
           message: "Failed to generate order PDF",
-          details: error instanceof Error ? error.message : "Unknown error",
+          details: errorMessage,
         },
       }
     }

@@ -109,10 +109,14 @@ export interface LeadScore {
   }
   signals: Array<{
     type: "positive" | "negative" | "neutral"
-    signal: string
+    signalKey: string // i18n key for translation
+    signalParams?: Record<string, string | number> // Parameters for interpolation
     impact: number
   }>
-  recommendations: string[]
+  recommendations: Array<{
+    key: string // i18n key for translation
+    params?: Record<string, string | number> // Parameters for interpolation
+  }>
 }
 
 export interface NextBestAction {

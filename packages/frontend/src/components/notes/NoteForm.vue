@@ -79,7 +79,8 @@
             :label="$t('notes.institutionField')"
             :placeholder="$t('notes.institutionPlaceholder')"
             prepend-inner-icon="mdi-office-building"
-            clearable
+            :clearable="!isInstitutionPreselected"
+            :disabled="isInstitutionPreselected"
             :loading="loadingInstitutions"
             variant="outlined"
             density="comfortable"
@@ -218,6 +219,7 @@ interface Props {
   modelValue: boolean
   note?: Note
   loading?: boolean
+  preselectedInstitutionId?: string
 }
 
 interface Emits {
@@ -248,6 +250,7 @@ const formData = ref<NoteCreateRequest>({
 })
 
 const isEdit = computed(() => !!props.note)
+const isInstitutionPreselected = computed(() => !!props.preselectedInstitutionId)
 
 const { t } = useI18n()
 
@@ -364,7 +367,7 @@ const resetForm = () => {
       title: "",
       content: "",
       tags: [],
-      institutionId: undefined,
+      institutionId: props.preselectedInstitutionId || undefined,
       isPrivate: false,
       shareWith: [],
     }

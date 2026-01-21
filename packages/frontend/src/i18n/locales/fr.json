@@ -13,6 +13,7 @@
     "no": "Non",
     "ok": "OK",
     "back": "Retour",
+    "backToInstitution": "Retour à l'institution",
     "next": "Suivant",
     "previous": "Précédent",
     "refresh": "Actualiser",
@@ -49,6 +50,7 @@
     "or": "ou",
     "and": "et",
     "date": "Date",
+    "noDate": "Date non définie",
     "time": "Heure",
     "dateTime": "Date et heure",
     "startDate": "Date de début",
@@ -2565,6 +2567,95 @@
       "tasks": "Tâches",
       "institutions": "Institutions",
       "interactions": "Notes & Réunions"
+    }
+  },
+  "leadScore": {
+    "title": "Lead Score",
+    "clickForDetails": "Cliquez pour plus de détails",
+    "detailsTitle": "Détails du Lead Score",
+    "scoreBreakdown": "Répartition du score",
+    "signals": "Signaux détectés",
+    "recommendations": "Suggestions stratégiques",
+    "impact": "Impact",
+    "close": "Fermer",
+    "noData": "N/A",
+    "levels": {
+      "hot": "Chaud",
+      "warm": "Tiède",
+      "cold": "Froid"
+    },
+    "factors": {
+      "size": "Taille",
+      "sizeMax": "20",
+      "specialty": "Spécialité",
+      "specialtyMax": "20",
+      "engagement": "Engagement",
+      "engagementMax": "30",
+      "budget": "Budget",
+      "budgetMax": "20",
+      "response": "Réactivité",
+      "responseMax": "10"
+    },
+    "signalMessages": {
+      "sizeLarge": "Grande institution ({beds}+ lits)",
+      "sizeMediumLarge": "Institution moyenne-grande ({minBeds}-{maxBeds} lits)",
+      "sizeMedium": "Institution moyenne ({minBeds}-{maxBeds} lits)",
+      "sizeSmall": "Petite institution (<{beds} lits)",
+      "specialtyHigh": "Forte correspondance spécialités ({count} correspondances)",
+      "specialtyGood": "Bonne correspondance spécialités ({count} correspondances)",
+      "specialtySome": "Quelques correspondances spécialités ({count} correspondance)",
+      "specialtyLow": "Faible correspondance spécialités",
+      "engagementHigh": "Très engagé ({count} interactions en {months} mois)",
+      "engagementGood": "Engagé ({count} interactions en {months} mois)",
+      "engagementModerate": "Engagement modéré ({count} interactions en {months} mois)",
+      "engagementLow": "Faible engagement ({count} interactions en {months} mois)",
+      "budgetHigh": "Budget élevé ({amount}€ de CA historique)",
+      "budgetGood": "Bon budget ({amount}€ de CA historique)",
+      "budgetModerate": "Budget modéré ({amount}€ de CA historique)",
+      "budgetLimited": "Budget limité ({amount}€ de CA historique)",
+      "budgetNone": "Aucun CA historique",
+      "responseQuick": "Réponse rapide avec fort taux d'acceptation ({rate}%)",
+      "responseGood": "Réponse correcte avec bon taux d'acceptation ({rate}%)",
+      "responseSlow": "Réponse lente ou faible taux d'acceptation ({rate}%)",
+      "activeOpportunities": "{count} opportunité(s) active(s) dans le pipeline"
+    },
+    "recommendationMessages": {
+      "maintainEngagement": "Continuez les points de contact réguliers pour maintenir l'engagement",
+      "increaseInteraction": "Augmentez la fréquence des interactions avec les contacts clés",
+      "scheduleDiscoveryCall": "Planifiez un appel découverte pour réengager",
+      "exploreUpsell": "Explorez les opportunités de vente additionnelle",
+      "buildRelationship": "Concentrez-vous sur la relation et la démonstration de valeur",
+      "qualifyBudget": "Qualifiez le budget et le processus décisionnel",
+      "followUpQuotes": "Relancez les devis en attente et comprenez les objections",
+      "prioritizeImmediate": "Prospect à forte valeur - priorisez pour action immédiate",
+      "continueNurturing": "Lead qualifié - continuez à développer la relation",
+      "assessFitInterest": "Nécessite qualification - évaluez l'adéquation et l'intérêt"
+    }
+  },
+  "nextBestActions": {
+    "title": "Actions Recommandées",
+    "loading": "Chargement des recommandations...",
+    "loadError": "Impossible de charger les recommandations",
+    "empty": "Aucune action recommandée pour le moment",
+    "allUpToDate": "Tout est à jour !",
+    "priorities": {
+      "urgent": "Urgent",
+      "high": "Élevé",
+      "medium": "Moyen",
+      "low": "Faible"
+    },
+    "categories": {
+      "follow_up": "Suivi",
+      "upsell": "Upsell",
+      "retention": "Rétention",
+      "reactivation": "Réactivation",
+      "closing": "Conclusion"
+    },
+    "dueDate": {
+      "overdue": "En retard de {days} jour(s)",
+      "today": "Aujourd'hui",
+      "tomorrow": "Demain",
+      "inDays": "Dans {days} jours"
     }
   },
   "success": {

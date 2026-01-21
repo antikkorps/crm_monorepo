@@ -529,11 +529,26 @@ export class PdfService {
       if (defaultTemplate) {
         return { template: defaultTemplate, isFallback: false }
       }
+
+      // Check if any compatible template exists (not default but usable)
+      const anyTemplate = await DocumentTemplate.findOne({
+        where: {
+          isActive: true,
+          type: [type, TemplateType.BOTH],
+        },
+        order: [["createdAt", "DESC"]],
+      })
+      if (anyTemplate) {
+        return { template: anyTemplate, isFallback: false }
+      }
     }
 
-    // Create a fallback template if none exists
-    const fallbackTemplate = this.createFallbackTemplate(type || TemplateType.BOTH)
-    return { template: fallbackTemplate, isFallback: true }
+    // No template found - throw a clear error instead of using fallback
+    const documentType = type === TemplateType.QUOTE ? "devis" : type === TemplateType.INVOICE ? "facture" : "document"
+    throw new Error(
+      `NO_TEMPLATE_CONFIGURED:Aucun modèle de document n'est configuré pour les ${documentType}s. ` +
+      `Veuillez créer un modèle dans Paramètres > Modèles de documents avant de générer des PDFs.`
+    )
   }
 
   private createFallbackTemplate(type: TemplateType): DocumentTemplate {

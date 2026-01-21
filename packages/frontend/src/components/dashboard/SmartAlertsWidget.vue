@@ -24,14 +24,12 @@
     <v-card-text v-else-if="alerts.length === 0" class="text-center py-12">
       <v-icon icon="mdi-check-circle" size="64" color="success" class="mb-4" />
       <p class="text-h6 text-medium-emphasis">Tout est sous contrôle !</p>
-      <p class="text-body-2 text-medium-emphasis">
-        Aucune alerte pour le moment
-      </p>
+      <p class="text-body-2 text-medium-emphasis">Aucune alerte pour le moment</p>
     </v-card-text>
 
     <!-- Alerts List -->
     <v-card-text v-else>
-      <v-list density="compact" lines="two">
+      <v-list density="compact" lines="two" class="overflow-hidden">
         <template v-for="(alert, index) in alerts" :key="alert.id">
           <v-list-item
             class="alert-item mb-2"
@@ -46,12 +44,7 @@
 
             <v-list-item-title class="font-weight-bold">
               {{ alert.title }}
-              <v-chip
-                :color="alert.color"
-                size="x-small"
-                variant="flat"
-                class="ml-2"
-              >
+              <v-chip :color="alert.color" size="x-small" variant="flat" class="ml-2">
                 {{ alert.count }}
               </v-chip>
             </v-list-item-title>
@@ -71,7 +64,11 @@
           </v-list-item>
 
           <!-- Divider between alerts -->
-          <v-divider v-if="index < alerts.length - 1" :key="`divider-${index}`" class="my-2" />
+          <v-divider
+            v-if="index < alerts.length - 1"
+            :key="`divider-${index}`"
+            class="my-2"
+          />
         </template>
       </v-list>
 
@@ -87,7 +84,8 @@
         <div class="d-flex align-center">
           <v-icon icon="mdi-alert-octagon" class="mr-2" />
           <span class="text-body-2">
-            <strong>{{ criticalCount }}</strong> alerte(s) critique(s) nécessitent votre attention immédiate
+            <strong>{{ criticalCount }}</strong> alerte(s) critique(s) nécessitent votre
+            attention immédiate
           </span>
         </div>
       </v-alert>
@@ -96,9 +94,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
-import { dashboardApi, type Alert } from '@/services/api/dashboard'
+import { dashboardApi, type Alert } from "@/services/api/dashboard"
+import { computed, onMounted, ref } from "vue"
+import { useRouter } from "vue-router"
 
 const router = useRouter()
 
@@ -108,7 +106,7 @@ const loading = ref(false)
 
 // Computed
 const criticalCount = computed(() => {
-  return alerts.value.filter(alert => alert.type === 'critical').length
+  return alerts.value.filter((alert) => alert.type === "critical").length
 })
 
 // Load alerts
@@ -118,7 +116,7 @@ async function loadAlerts() {
   try {
     alerts.value = await dashboardApi.getAlerts()
   } catch (error) {
-    console.error('Error loading alerts:', error)
+    console.error("Error loading alerts:", error)
   } finally {
     loading.value = false
   }

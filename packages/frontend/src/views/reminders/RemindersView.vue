@@ -1,6 +1,18 @@
 <template>
   <AppLayout>
     <div class="reminders-view">
+      <!-- Back to Institution Button -->
+      <v-btn
+        v-if="isFilteredByInstitution"
+        variant="text"
+        color="primary"
+        prepend-icon="mdi-arrow-left"
+        class="mb-4"
+        @click="goBackToInstitution"
+      >
+        {{ $t('common.backToInstitution') }}
+      </v-btn>
+
       <!-- Header -->
       <div class="reminders-header">
         <div class="header-content">
@@ -207,8 +219,21 @@ import type {
   ReminderUpdateRequest,
 } from "@medical-crm/shared"
 import { computed, onMounted, ref } from "vue"
+import { useRoute, useRouter } from "vue-router"
 
 const remindersStore = useRemindersStore()
+const route = useRoute()
+const router = useRouter()
+
+// Institution filter from URL query
+const institutionId = computed(() => route.query.institutionId as string | undefined)
+const isFilteredByInstitution = computed(() => !!institutionId.value)
+
+const goBackToInstitution = () => {
+  if (institutionId.value) {
+    router.push(`/institutions/${institutionId.value}`)
+  }
+}
 const { showSnackbar } = useSnackbar()
 const { t } = useI18n()
 
@@ -347,6 +372,10 @@ const applySorting = () => {
 }
 
 onMounted(async () => {
+  // Apply institution filter if coming from institution detail
+  if (institutionId.value) {
+    remindersStore.updateFilters({ institutionId: institutionId.value })
+  }
   await loadReminders()
 })
 </script>

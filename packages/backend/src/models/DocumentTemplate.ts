@@ -211,6 +211,15 @@ export class DocumentTemplate
     })
   }
 
+  public static async hasAnyTemplate(type?: TemplateType): Promise<boolean> {
+    const where: any = { isActive: true }
+    if (type) {
+      where[Op.or] = [{ type }, { type: TemplateType.BOTH }]
+    }
+    const count = await this.count({ where })
+    return count > 0
+  }
+
   public static async getActiveTemplates(
     type?: TemplateType
   ): Promise<DocumentTemplate[]> {

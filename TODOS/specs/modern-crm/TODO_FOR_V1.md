@@ -26,7 +26,7 @@ we are almost done to v1 but still have some elements to prepare
 - [x] missing translation in fr.json for TeamActivityFeed.vue
 - [x] It seems that there is an issue with socket.io for the notifications (debug => one task with an issue tomorrow not appearing in notification center)
 - [x] While adding a team member to a team, before typing it loads a list with every user... a bit confusing before typing
-- [ ] Polish some style in creating invoice and quotes => specifically the catalogue background color which is not very beautiful
+- [x] Polish some style in creating invoice and quotes => specifically the catalogue background color which is not very beautiful (fixed: gradient background + modern header styling)
 - [x] A validation message for the resetting password is perhaps not the best option. We should validate live during the user typing and live comparing the two inputs...
 - [x] SQL Error on /billing/analytics (fixed with migration + SQL query correction)
 - [ ] Tests: Protection auto-lock (task 31.3 from tasks.md) - Ensure data protection system reliability
@@ -39,5 +39,6 @@ we are almost done to v1 but still have some elements to prepare
 - [x] Export opportunities to CSV/XLSX/JSON + Stats by collaborator display in OpportunitiesView + ExportCenter integration
 - [x] Fix: OpportunitiesView responsive layout (mobile-first) - removed min-width constraints causing overflow, fixed pipeline columns (4 cols desktop, 2 tablet, 1 mobile)
 - [x] Fix: Export invalid file - generateXLSX was returning empty buffer for empty data, now returns valid empty workbook
+- [x] Fix: PDF generation error without template - now returns clear user message instead of crashing (422 status with "Aucun modèle de document n'est configuré...")
 
 ### Decision

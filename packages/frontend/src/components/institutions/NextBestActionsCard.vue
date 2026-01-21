@@ -2,7 +2,7 @@
   <v-card>
     <v-card-title class="d-flex align-center">
       <v-icon class="mr-2" color="primary">mdi-lightbulb-on-outline</v-icon>
-      Actions Recommandées
+      {{ t('nextBestActions.title') }}
     </v-card-title>
 
     <v-divider />
@@ -11,7 +11,7 @@
       <!-- Loading State -->
       <div v-if="loading" class="text-center py-8">
         <v-progress-circular indeterminate color="primary" size="48" />
-        <p class="mt-4 text-medium-emphasis">Chargement des recommandations...</p>
+        <p class="mt-4 text-medium-emphasis">{{ t('nextBestActions.loading') }}</p>
       </div>
 
       <!-- Error State -->
@@ -22,8 +22,8 @@
       <!-- Empty State -->
       <div v-else-if="!actions || actions.length === 0" class="text-center py-8">
         <v-icon size="64" color="grey-lighten-1">mdi-check-circle-outline</v-icon>
-        <p class="mt-4 text-medium-emphasis">Aucune action recommandée pour le moment</p>
-        <p class="text-caption text-medium-emphasis">Tout est à jour !</p>
+        <p class="mt-4 text-medium-emphasis">{{ t('nextBestActions.empty') }}</p>
+        <p class="text-caption text-medium-emphasis">{{ t('nextBestActions.allUpToDate') }}</p>
       </div>
 
       <!-- Actions List -->
@@ -31,7 +31,10 @@
         <v-list-item
           v-for="(action, index) in actions"
           :key="index"
-          :class="{ 'bg-red-lighten-5': action.priority === 'urgent', 'bg-orange-lighten-5': action.priority === 'high' }"
+          :class="{
+            'bg-red-lighten-5': action.priority === 'urgent',
+            'bg-orange-lighten-5': action.priority === 'high',
+          }"
         >
           <template v-slot:prepend>
             <v-avatar :color="getPriorityColor(action.priority)" size="40">
@@ -81,18 +84,21 @@
         variant="text"
         color="primary"
         prepend-icon="mdi-refresh"
-        @click="loadActions"
+        @click="refreshActions"
       >
-        Actualiser
+        {{ t('common.refresh') }}
       </v-btn>
     </v-card-actions>
   </v-card>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from "vue"
 import { analyticsApi } from "@/services/api"
 import type { NextBestAction } from "@/services/api/analytics"
+import { onMounted, ref } from "vue"
+import { useI18n } from "vue-i18n"
+
+const { t } = useI18n()
 
 const props = defineProps<{
   institutionId: string
@@ -101,20 +107,32 @@ const props = defineProps<{
 const actions = ref<NextBestAction[]>([])
 const loading = ref(false)
 const error = ref<string | null>(null)
+const loadedOnce = ref(false)
 
-const loadActions = async () => {
+const loadActions = async (forceRefresh = false) => {
+  // Prevent duplicate calls on initial mount, allow manual refresh
+  if (!props.institutionId || loading.value || (!forceRefresh && loadedOnce.value)) {
+    return
+  }
+
   loading.value = true
+  loadedOnce.value = true
   error.value = null
 
   try {
     const response = await analyticsApi.getNextActions(props.institutionId)
-    actions.value = response.data.data
-  } catch (err: any) {
-    error.value = err.message || "Impossible de charger les recommandations"
+    // apiClient (fetch) returns JSON directly: { success, data }
+    actions.value = response.data || []
+  } catch (err) {
+    error.value = t('nextBestActions.loadError')
     console.error("Failed to load next actions:", err)
   } finally {
     loading.value = false
   }
+}
+
+const refreshActions = () => {
+  loadActions(true)
 }
 
 const getPriorityColor = (priority: "urgent" | "high" | "medium" | "low"): string => {
@@ -127,8 +145,13 @@ const getPriorityColor = (priority: "urgent" | "high" | "medium" | "low"): strin
   return colors[priority] || "grey"
 }
 
-const getCategoryColor = (category: "follow_up" | "upsell" | "retention" | "reactivation" | "closing"): string => {
-  const colors: Record<"follow_up" | "upsell" | "retention" | "reactivation" | "closing", string> = {
+const getCategoryColor = (
+  category: "follow_up" | "upsell" | "retention" | "reactivation" | "closing",
+): string => {
+  const colors: Record<
+    "follow_up" | "upsell" | "retention" | "reactivation" | "closing",
+    string
+  > = {
     follow_up: "primary",
     upsell: "success",
     retention: "warning",
@@ -138,8 +161,13 @@ const getCategoryColor = (category: "follow_up" | "upsell" | "retention" | "reac
   return colors[category] || "grey"
 }
 
-const getCategoryIcon = (category: "follow_up" | "upsell" | "retention" | "reactivation" | "closing"): string => {
-  const icons: Record<"follow_up" | "upsell" | "retention" | "reactivation" | "closing", string> = {
+const getCategoryIcon = (
+  category: "follow_up" | "upsell" | "retention" | "reactivation" | "closing",
+): string => {
+  const icons: Record<
+    "follow_up" | "upsell" | "retention" | "reactivation" | "closing",
+    string
+  > = {
     follow_up: "mdi-phone-outline",
     upsell: "mdi-trending-up",
     retention: "mdi-account-heart",
@@ -149,25 +177,22 @@ const getCategoryIcon = (category: "follow_up" | "upsell" | "retention" | "react
   return icons[category] || "mdi-information"
 }
 
-const formatPriority = (priority: "urgent" | "high" | "medium" | "low"): string => {
-  const labels: Record<"urgent" | "high" | "medium" | "low", string> = {
-    urgent: "🔴 Urgent",
-    high: "🟠 Élevé",
-    medium: "🟡 Moyen",
-    low: "🟢 Faible",
-  }
-  return labels[priority] || priority
+const priorityIcons: Record<"urgent" | "high" | "medium" | "low", string> = {
+  urgent: "🔴",
+  high: "🟠",
+  medium: "🟡",
+  low: "🟢",
 }
 
-const formatCategory = (category: "follow_up" | "upsell" | "retention" | "reactivation" | "closing"): string => {
-  const labels: Record<"follow_up" | "upsell" | "retention" | "reactivation" | "closing", string> = {
-    follow_up: "Suivi",
-    upsell: "Upsell",
-    retention: "Rétention",
-    reactivation: "Réactivation",
-    closing: "Conclusion",
-  }
-  return labels[category] || category
+const formatPriority = (priority: "urgent" | "high" | "medium" | "low"): string => {
+  const icon = priorityIcons[priority] || ""
+  return `${icon} ${t(`nextBestActions.priorities.${priority}`)}`
+}
+
+const formatCategory = (
+  category: "follow_up" | "upsell" | "retention" | "reactivation" | "closing",
+): string => {
+  return t(`nextBestActions.categories.${category}`)
 }
 
 const formatDueDate = (dueDate: string): string => {
@@ -177,15 +202,19 @@ const formatDueDate = (dueDate: string): string => {
   const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
 
   if (diffDays < 0) {
-    return `En retard de ${Math.abs(diffDays)} jour(s)`
+    return t('nextBestActions.dueDate.overdue', { days: Math.abs(diffDays) })
   } else if (diffDays === 0) {
-    return "Aujourd'hui"
+    return t('nextBestActions.dueDate.today')
   } else if (diffDays === 1) {
-    return "Demain"
+    return t('nextBestActions.dueDate.tomorrow')
   } else if (diffDays < 7) {
-    return `Dans ${diffDays} jours`
+    return t('nextBestActions.dueDate.inDays', { days: diffDays })
   } else {
-    return date.toLocaleDateString("fr-FR", { day: "2-digit", month: "long", year: "numeric" })
+    return date.toLocaleDateString("fr-FR", {
+      day: "2-digit",
+      month: "long",
+      year: "numeric",
+    })
   }
 }
 
