@@ -13,6 +13,7 @@ router.get("/contacts", ExportController.exportContacts)
 router.get("/tasks", ExportController.exportTasks)
 router.get("/quotes", ExportController.exportQuotes)
 router.get("/invoices", ExportController.exportInvoices)
+router.get("/opportunities", ExportController.exportOpportunities)
 
 // Queue export endpoint
 router.post("/queue", ExportController.queueExport)

@@ -44,6 +44,13 @@ router.get(
   OpportunityController.getAnalytics
 )
 
+// GET /api/opportunities/stats/by-user - Get stats grouped by user
+router.get(
+  "/stats/by-user",
+  requirePermission("canViewAllOpportunities"),
+  OpportunityController.getStatsByUser
+)
+
 // GET /api/opportunities/:id - Get single opportunity
 router.get(
   "/:id",

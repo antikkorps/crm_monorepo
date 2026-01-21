@@ -9,6 +9,7 @@ import {
   Task,
   Quote,
   Invoice,
+  Opportunity,
 } from "../models"
 import { UserRole } from "../models/User"
 
@@ -27,6 +28,8 @@ export interface ExportOptions {
   taskStatus?: string
   quoteStatus?: string
   invoiceStatus?: string
+  opportunityStage?: string
+  opportunityStatus?: string
   limit?: number // For pagination
   offset?: number // For pagination
   useQueue?: boolean // Use queue system for large exports
@@ -667,6 +670,140 @@ export class ExportService {
   }
 
   /**
+   * Export opportunities with filtering options
+   */
+  static async exportOpportunities(options: ExportOptions): Promise<ExportResult> {
+    try {
+      const whereClause: any = {}
+
+      // Apply date range filtering
+      if (options.dateRange) {
+        whereClause.createdAt = {
+          [Op.gte]: options.dateRange.start,
+          [Op.lte]: options.dateRange.end,
+        }
+      }
+
+      // Apply opportunity stage filtering
+      if (options.opportunityStage) {
+        whereClause.stage = options.opportunityStage
+      }
+
+      // Apply opportunity status filtering
+      if (options.opportunityStatus) {
+        whereClause.status = options.opportunityStatus
+      }
+
+      // Apply search query
+      if (options.searchQuery) {
+        whereClause[Op.or] = [
+          { name: { [Op.iLike]: `%${options.searchQuery}%` } },
+          { description: { [Op.iLike]: `%${options.searchQuery}%` } },
+        ]
+      }
+
+      // Apply team-based filtering
+      if (options.teamMemberIds && options.teamMemberIds.length > 0) {
+        const teamFilter = {
+          assignedUserId: {
+            [Op.in]: options.teamMemberIds,
+          },
+        }
+
+        // If there's already an Op.or (from search), combine them
+        if (whereClause[Op.or]) {
+          whereClause[Op.and] = [
+            { [Op.or]: whereClause[Op.or] },
+            teamFilter
+          ]
+          delete whereClause[Op.or]
+        } else {
+          Object.assign(whereClause, teamFilter)
+        }
+      } else if (options.userId) {
+        whereClause.assignedUserId = options.userId
+      }
+
+      const opportunities = await Opportunity.findAll({
+        where: whereClause,
+        include: [
+          {
+            model: User,
+            as: "assignedUser",
+            attributes: ["id", "firstName", "lastName", "email"],
+          },
+          {
+            model: MedicalInstitution,
+            as: "institution",
+            attributes: ["id", "name", "type"],
+          },
+          {
+            model: ContactPerson,
+            as: "contactPerson",
+            attributes: ["id", "firstName", "lastName", "email"],
+          },
+        ],
+        order: [["expectedCloseDate", "ASC"]],
+        limit: options.limit,
+        offset: options.offset,
+      })
+
+      const data = opportunities.map(opportunity => ({
+        id: opportunity.id,
+        name: opportunity.name,
+        description: opportunity.description,
+        stage: opportunity.stage,
+        status: opportunity.status,
+        value: opportunity.value,
+        probability: opportunity.probability,
+        weightedValue: (parseFloat(opportunity.value.toString()) * opportunity.probability) / 100,
+        expectedCloseDate: opportunity.expectedCloseDate,
+        actualCloseDate: opportunity.actualCloseDate,
+        institutionId: opportunity.institutionId,
+        institutionName: opportunity.institution?.name || null,
+        institutionType: opportunity.institution?.type || null,
+        contactPersonId: opportunity.contactPersonId,
+        contactPersonName: opportunity.contactPerson
+          ? `${opportunity.contactPerson.firstName} ${opportunity.contactPerson.lastName}`
+          : null,
+        contactPersonEmail: opportunity.contactPerson?.email || null,
+        assignedUserId: opportunity.assignedUserId,
+        assignedUser: opportunity.assignedUser
+          ? `${opportunity.assignedUser.firstName} ${opportunity.assignedUser.lastName}`
+          : null,
+        assignedUserEmail: opportunity.assignedUser?.email || null,
+        tags: Array.isArray(opportunity.tags) ? opportunity.tags.join(', ') : '',
+        source: opportunity.source,
+        notes: opportunity.notes,
+        competitors: Array.isArray(opportunity.competitors) ? opportunity.competitors.join(', ') : '',
+        wonReason: opportunity.wonReason,
+        lostReason: opportunity.lostReason,
+        createdAt: opportunity.createdAt,
+        updatedAt: opportunity.updatedAt,
+        isOverdue: opportunity.status === 'active' &&
+          opportunity.expectedCloseDate &&
+          new Date(opportunity.expectedCloseDate) < new Date(),
+      }))
+
+      return {
+        success: true,
+        data,
+        totalRecords: data.length,
+        filename: `opportunities-${new Date().toISOString().split('T')[0]}`,
+        contentType: options.format === 'csv' ? 'text/csv' :
+                     options.format === 'xlsx' ? 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' :
+                     'application/json',
+      }
+    } catch (error) {
+      console.error('Error exporting opportunities:', error)
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error occurred',
+      }
+    }
+  }
+
+  /**
    * Generate CSV content from data
    */
   static generateCSV(data: any[], includeHeaders: boolean = true): string {
@@ -711,12 +848,14 @@ export class ExportService {
     * Generate XLSX content from data using ExcelJS
     */
   static async generateXLSX(data: any[], includeHeaders: boolean = true): Promise<Buffer> {
-    if (data.length === 0) {
-      return Buffer.from('')
-    }
-
     const workbook = new ExcelJS.Workbook()
     const worksheet = workbook.addWorksheet('Data')
+
+    // Handle empty data case - return valid empty workbook
+    if (data.length === 0) {
+      const buffer = await workbook.xlsx.writeBuffer()
+      return Buffer.from(buffer as ArrayBuffer)
+    }
 
     const headers = Object.keys(data[0])
     
@@ -760,7 +899,7 @@ export class ExportService {
     }
 
     const buffer = await workbook.xlsx.writeBuffer()
-    return Buffer.from(buffer)
+    return Buffer.from(buffer as ArrayBuffer)
   }
 
   /**
@@ -779,8 +918,8 @@ export class ExportService {
 
       // Team admins can export team data
       if (user.role === UserRole.TEAM_ADMIN) {
-        // Team admins can export institutions, contacts, tasks, quotes, invoices
-        return ['institutions', 'contacts', 'tasks', 'quotes', 'invoices'].includes(exportType)
+        // Team admins can export institutions, contacts, tasks, quotes, invoices, opportunities
+        return ['institutions', 'contacts', 'tasks', 'quotes', 'invoices', 'opportunities'].includes(exportType)
       }
 
       // Regular users can only export their own data
@@ -834,6 +973,8 @@ export class ExportService {
           return await this.exportQuotes(options)
         case 'invoices':
           return await this.exportInvoices(options)
+        case 'opportunities':
+          return await this.exportOpportunities(options)
         default:
           return {
             success: false,
@@ -927,12 +1068,20 @@ export class ExportService {
       }
       const invoiceCount = await Invoice.count({ where: invoiceWhereClause })
 
+      // Count opportunities
+      const opportunityWhereClause: any = {}
+      if (teamMemberIds) {
+        opportunityWhereClause.assignedUserId = { [Op.in]: teamMemberIds }
+      }
+      const opportunityCount = await Opportunity.count({ where: opportunityWhereClause })
+
       return {
         institutions: institutionCount,
         contacts: contactCount,
         tasks: taskCount,
         quotes: quoteCount,
         invoices: invoiceCount,
+        opportunities: opportunityCount,
       }
     } catch (error) {
       logger.error('Error getting record counts:', { error })
@@ -942,6 +1091,7 @@ export class ExportService {
         tasks: 0,
         quotes: 0,
         invoices: 0,
+        opportunities: 0,
       }
     }
   }

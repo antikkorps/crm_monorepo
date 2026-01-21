@@ -45,8 +45,7 @@
 </template>
 
 <script setup lang="ts">
-import { useLocale } from "@/composables/useLocale"
-import type { SupportedLocale } from "@/plugins/i18n"
+import { useLocale, type SupportedLocale } from "@/composables/useLocale"
 
 interface Props {
   variant?: "text" | "outlined" | "elevated" | "tonal" | "plain"

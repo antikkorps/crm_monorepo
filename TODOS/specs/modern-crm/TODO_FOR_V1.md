@@ -35,5 +35,9 @@ we are almost done to v1 but still have some elements to prepare
 - [ ] action type verification failed due to missing share folder
 - [x] erreur lors de la récupération du catalogue d'articles (fixed with migration + SQL query correction)
 - [ ] UserProfileForm => integrate i18n and traduction. Ensure that it checks the user's rights to create or update a user + ts_errors.
+- [x] in the sell pipeline the dropdown which is supposed to show the medical institutions is not working (no data available) - Fixed: load 20 institutions on focus + hint message
+- [x] Export opportunities to CSV/XLSX/JSON + Stats by collaborator display in OpportunitiesView + ExportCenter integration
+- [x] Fix: OpportunitiesView responsive layout (mobile-first) - removed min-width constraints causing overflow, fixed pipeline columns (4 cols desktop, 2 tablet, 1 mobile)
+- [x] Fix: Export invalid file - generateXLSX was returning empty buffer for empty data, now returns valid empty workbook
 
 ### Decision

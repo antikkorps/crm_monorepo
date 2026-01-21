@@ -15,6 +15,17 @@ export const useOpportunitiesStore = defineStore("opportunities", () => {
   const opportunities = ref<Opportunity[]>([])
   const pipeline = ref<PipelineStage[]>([])
   const forecast = ref<ForecastResponse | null>(null)
+  const statsByUser = ref<
+    Array<{
+      userId: string
+      userName: string
+      userEmail: string
+      count: number
+      totalValue: number
+      weightedValue: number
+      overdueCount: number
+    }>
+  >([])
   const loading = ref(false)
   const error = ref<string | null>(null)
   const pagination = ref({
@@ -240,11 +251,29 @@ export const useOpportunitiesStore = defineStore("opportunities", () => {
     error.value = null
   }
 
+  const fetchStatsByUser = async () => {
+    loading.value = true
+    error.value = null
+
+    try {
+      const response: any = await opportunitiesApi.getStatsByUser()
+      const data = response.data?.data || response.data || response
+      statsByUser.value = data.statsByUser || []
+    } catch (err) {
+      console.error("Error fetching stats by user:", err)
+      error.value = err instanceof Error ? err.message : "Failed to fetch stats by user"
+      throw err
+    } finally {
+      loading.value = false
+    }
+  }
+
   return {
     // State
     opportunities,
     pipeline,
     forecast,
+    statsByUser,
     loading,
     error,
     pagination,
@@ -261,6 +290,7 @@ export const useOpportunitiesStore = defineStore("opportunities", () => {
     fetchOpportunities,
     fetchPipeline,
     fetchForecast,
+    fetchStatsByUser,
     getOpportunityById,
     createOpportunity,
     updateOpportunity,

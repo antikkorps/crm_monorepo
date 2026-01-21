@@ -1,18 +1,16 @@
-import { getCurrentLocale, setLocale, type SupportedLocale } from "@/plugins/i18n"
+import { getCurrentLocale, setLocale, availableLocales as i18nLocales, type Locale } from "@/i18n"
 import { computed, ref } from "vue"
 import { useI18n } from "vue-i18n"
+
+// Re-export Locale type for backwards compatibility
+export type SupportedLocale = Locale
 
 export function useLocale() {
   const { locale, t, d, n } = useI18n()
   const isChangingLocale = ref(false)
 
   // Available locales with display names
-  const availableLocales = computed(() => [
-    { code: "fr", name: "Français", flag: "🇫🇷" },
-    { code: "en", name: "English", flag: "🇺🇸" },
-    { code: "es", name: "Español", flag: "🇪🇸" },
-    { code: "de", name: "Deutsch", flag: "🇩🇪" },
-  ])
+  const availableLocales = computed(() => i18nLocales)
 
   // Current locale info
   const currentLocale = computed(() => {
@@ -23,14 +21,14 @@ export function useLocale() {
   })
 
   // Change locale function
-  const changeLocale = async (newLocale: SupportedLocale) => {
+  const changeLocale = async (newLocale: Locale) => {
     if (newLocale === getCurrentLocale()) {
       return
     }
 
     try {
       isChangingLocale.value = true
-      await setLocale(newLocale)
+      setLocale(newLocale)
     } catch (error) {
       console.error("Failed to change locale:", error)
       throw error
@@ -63,30 +61,26 @@ export function useLocale() {
   }
 
   // Get currency for locale
-  const getCurrencyForLocale = (locale: SupportedLocale): string => {
-    const currencyMap: Record<SupportedLocale, string> = {
+  const getCurrencyForLocale = (loc: Locale): string => {
+    const currencyMap: Record<Locale, string> = {
       fr: "EUR",
       en: "USD",
-      es: "EUR",
-      de: "EUR",
     }
-    return currencyMap[locale]
+    return currencyMap[loc] || "EUR"
   }
 
   // Get date format for locale
-  const getDateFormatForLocale = (locale: SupportedLocale): string => {
-    const formatMap: Record<SupportedLocale, string> = {
+  const getDateFormatForLocale = (loc: Locale): string => {
+    const formatMap: Record<Locale, string> = {
       fr: "DD/MM/YYYY",
       en: "MM/DD/YYYY",
-      es: "DD/MM/YYYY",
-      de: "DD.MM.YYYY",
     }
-    return formatMap[locale]
+    return formatMap[loc] || "DD/MM/YYYY"
   }
 
   // Check if locale is RTL (Right-to-Left)
   const isRTL = computed(() => {
-    const rtlLocales: SupportedLocale[] = []
+    const rtlLocales: Locale[] = []
     return rtlLocales.includes(getCurrentLocale())
   })
 

@@ -2162,6 +2162,16 @@
     "unit": "opportunité",
     "empty": "Aucune opportunité trouvée",
     "overdue": "En retard",
+    "statsByCollaborator": {
+      "title": "Statistiques par collaborateur",
+      "collaborator": "Collaborateur",
+      "count": "Nombre d'opportunités",
+      "totalValue": "Valeur totale",
+      "weightedValue": "Valeur pondérée",
+      "overdue": "En Retard",
+      "button": "Statistiques par collaborateur"
+    },
+    "export": "Exporter les opportunités",
     "forecast": {
       "title": "Prévisions",
       "byMonth": "Par mois",
@@ -2281,23 +2291,107 @@
     }
   },
   "export": {
-    "title": "Export",
-    "subtitle": "Exportez vos données",
+    "title": "Centre d'Export",
+    "description": "Exportez vos données CRM dans différents formats pour l'analyse et les rapports",
     "exportData": "Exporter les données",
+    "availableExports": "Exports Disponibles",
+    "records": "enregistrements",
+    "exportButton": "Exporter",
+    "noPermission": "Accès refusé",
     "selectFormat": "Sélectionner le format",
     "selectFields": "Sélectionner les champs",
+    "history": "Historique des Exports",
+    "types": {
+      "institutions": "Établissements",
+      "contacts": "Contacts",
+      "tasks": "Tâches",
+      "quotes": "Devis",
+      "invoices": "Factures",
+      "opportunities": "Opportunités"
+    },
+    "descriptions": {
+      "institutions": "Exporter les établissements médicaux avec leurs profils et contacts",
+      "contacts": "Exporter les contacts avec les détails de leurs établissements",
+      "tasks": "Exporter les tâches avec les assignations et statuts",
+      "quotes": "Exporter les devis avec les lignes et détails financiers",
+      "invoices": "Exporter les factures avec les paiements et détails financiers",
+      "opportunities": "Exporter les opportunités commerciales avec les données du pipeline"
+    },
     "format": {
-      "csv": "CSV",
-      "excel": "Excel",
-      "json": "JSON",
+      "csv": "CSV (Valeurs séparées par virgule)",
+      "xlsx": "Excel (XLSX)",
+      "json": "JSON (Données structurées)",
       "pdf": "PDF"
+    },
+    "institutionTypes": {
+      "hospital": "Hôpital",
+      "clinic": "Clinique",
+      "medical_center": "Centre médical",
+      "specialty_center": "Centre spécialisé"
+    },
+    "taskStatuses": {
+      "pending": "En attente",
+      "in_progress": "En cours",
+      "completed": "Terminée",
+      "cancelled": "Annulée"
     },
     "errors": {
       "export": "Erreur lors de l'export",
       "noData": "Aucune donnée à exporter"
     },
     "success": {
-      "exported": "Export réussi"
+      "exported": "Export réussi",
+      "exportedType": "{type} exporté avec succès"
+    },
+    "notifications": {
+      "exportError": "Une erreur est survenue lors de l'export. Veuillez réessayer.",
+      "loadError": "Impossible de charger les options d'export"
+    },
+    "preview": {
+      "title": "Aperçu des données",
+      "description": "Aperçu des {count} premiers enregistrements qui seront exportés",
+      "totalRecords": "Total :",
+      "format": "Format :",
+      "estimatedSize": "Taille estimée :",
+      "jsonNote": "Affichage des 3 premiers enregistrements. L'export complet inclura les {count} enregistrements.",
+      "csvNote": "Format CSV avec {columns} colonnes et {count} enregistrements au total.",
+      "noData": "Aucune donnée disponible",
+      "noDataDescription": "Aucun enregistrement ne correspond aux critères d'export.",
+      "fieldSelection": "Sélection des champs",
+      "fieldSelectionDescription": "Sélectionnez les champs à inclure dans l'export :",
+      "requiredField": "Champ obligatoire",
+      "selectAll": "Tout sélectionner",
+      "deselectAll": "Tout désélectionner",
+      "resetDefault": "Réinitialiser"
+    },
+    "dialog": {
+      "title": "Export {type}",
+      "options": "Options d'export",
+      "formatLabel": "Format d'export *",
+      "selectFormat": "Sélectionner le format",
+      "startDate": "Date de début",
+      "endDate": "Date de fin",
+      "to": "à",
+      "searchQuery": "Recherche (Optionnel)",
+      "searchPlaceholder": "Filtrer les résultats...",
+      "institutionType": "Type d'établissement",
+      "allTypes": "Tous les types",
+      "taskStatus": "Statut de la tâche",
+      "allStatuses": "Tous les statuts",
+      "includeHeaders": "Inclure les en-têtes de colonnes",
+      "useQueue": "Utiliser le traitement en arrière-plan pour les gros exports",
+      "dataPreview": "Aperçu des données",
+      "cancel": "Annuler",
+      "export": "Exporter"
+    },
+    "errorDialog": {
+      "title": "Détails de l'erreur d'export",
+      "exportFailed": "L'export a échoué",
+      "details": "Détails :",
+      "type": "Type :",
+      "format": "Format :",
+      "date": "Date :",
+      "close": "Fermer"
     }
   },
   "exportCenter": {
