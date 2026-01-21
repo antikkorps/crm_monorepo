@@ -8,10 +8,10 @@
               <v-icon left>mdi-filter-variant</v-icon>
               <span class="text-truncate">{{ $t("segmentation.title") }}</span>
             </div>
-            <v-btn 
-              color="primary" 
+            <v-btn
+              color="primary"
               @click="startCreateSegment"
-              class="ml-2"
+              class="ml-2 mt-2 mt-sm-0"
               size="small"
             >
               <v-icon left size="small">mdi-plus</v-icon>

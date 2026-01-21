@@ -324,6 +324,7 @@
         "message": "No segments match your search criteria"
       },
       "createFirst": "Create your first segment",
+      "createFirstShort": "New segment",
       "bulkActions": {
         "title": "Bulk Actions",
         "export": "Export",

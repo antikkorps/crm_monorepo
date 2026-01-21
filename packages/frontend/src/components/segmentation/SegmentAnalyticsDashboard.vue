@@ -3,18 +3,20 @@
     <v-row>
       <v-col cols="12">
         <v-card>
-          <v-card-title class="d-flex align-center">
-            <v-icon left>mdi-chart-bar</v-icon>
-            {{ $t('segmentation.analytics.title') }}
-            <v-spacer />
+          <v-card-title class="analytics-header">
+            <div class="analytics-header-title">
+              <v-icon class="mr-2">mdi-chart-bar</v-icon>
+              {{ $t('segmentation.analytics.title') }}
+            </div>
             <v-select
               v-model="selectedTimeRange"
               :items="timeRangeOptions"
               item-title="text"
               item-value="value"
-              outlined
-              dense
-              style="max-width: 200px"
+              variant="outlined"
+              density="compact"
+              hide-details
+              class="analytics-time-select"
             />
           </v-card-title>
 
@@ -45,68 +47,68 @@
             <div v-else>
             <!-- Key Metrics -->
             <v-row class="mb-6">
-              <v-col cols="12" md="3">
-                <v-card outlined class="text-center metric-card">
-                  <v-card-text class="pa-4">
-                    <div class="metric-value primary--text">
+              <v-col cols="12" sm="6" md="6" lg="3">
+                <v-card variant="outlined" class="text-center metric-card">
+                  <v-card-text class="metric-card-content">
+                    <div class="metric-value text-primary">
                       {{ formatNumber(analyticsData.totalRecords) }}
                     </div>
                     <div class="metric-label">
                       {{ $t('segmentation.analytics.totalRecords') }}
                     </div>
                     <div class="metric-change" :class="getChangeClass(analyticsData.totalRecordsChange)">
-                      <v-icon small>{{ getChangeIcon(analyticsData.totalRecordsChange) }}</v-icon>
+                      <v-icon size="small">{{ getChangeIcon(analyticsData.totalRecordsChange) }}</v-icon>
                       {{ Math.abs(analyticsData.totalRecordsChange) }}%
                     </div>
                   </v-card-text>
                 </v-card>
               </v-col>
 
-              <v-col cols="12" md="3">
-                <v-card outlined class="text-center metric-card">
-                  <v-card-text class="pa-4">
-                    <div class="metric-value success--text">
+              <v-col cols="12" sm="6" md="6" lg="3">
+                <v-card variant="outlined" class="text-center metric-card">
+                  <v-card-text class="metric-card-content">
+                    <div class="metric-value text-success">
                       {{ formatNumber(analyticsData.activeRecords) }}
                     </div>
                     <div class="metric-label">
                       {{ $t('segmentation.analytics.activeRecords') }}
                     </div>
                     <div class="metric-change" :class="getChangeClass(analyticsData.activeRecordsChange)">
-                      <v-icon small>{{ getChangeIcon(analyticsData.activeRecordsChange) }}</v-icon>
+                      <v-icon size="small">{{ getChangeIcon(analyticsData.activeRecordsChange) }}</v-icon>
                       {{ Math.abs(analyticsData.activeRecordsChange) }}%
                     </div>
                   </v-card-text>
                 </v-card>
               </v-col>
 
-              <v-col cols="12" md="3">
-                <v-card outlined class="text-center metric-card">
-                  <v-card-text class="pa-4">
-                    <div class="metric-value info--text">
+              <v-col cols="12" sm="6" md="6" lg="3">
+                <v-card variant="outlined" class="text-center metric-card">
+                  <v-card-text class="metric-card-content">
+                    <div class="metric-value text-info">
                       {{ formatPercentage(analyticsData.engagementRate) }}
                     </div>
                     <div class="metric-label">
                       {{ $t('segmentation.analytics.engagementRate') }}
                     </div>
                     <div class="metric-change" :class="getChangeClass(analyticsData.engagementRateChange)">
-                      <v-icon small>{{ getChangeIcon(analyticsData.engagementRateChange) }}</v-icon>
+                      <v-icon size="small">{{ getChangeIcon(analyticsData.engagementRateChange) }}</v-icon>
                       {{ Math.abs(analyticsData.engagementRateChange) }}%
                     </div>
                   </v-card-text>
                 </v-card>
               </v-col>
 
-              <v-col cols="12" md="3">
-                <v-card outlined class="text-center metric-card">
-                  <v-card-text class="pa-4">
-                    <div class="metric-value warning--text">
+              <v-col cols="12" sm="6" md="6" lg="3">
+                <v-card variant="outlined" class="text-center metric-card">
+                  <v-card-text class="metric-card-content">
+                    <div class="metric-value text-warning">
                       {{ formatNumber(analyticsData.avgInteractions) }}
                     </div>
                     <div class="metric-label">
                       {{ $t('segmentation.analytics.avgInteractions') }}
                     </div>
                     <div class="metric-change" :class="getChangeClass(analyticsData.interactionsChange)">
-                      <v-icon small>{{ getChangeIcon(analyticsData.interactionsChange) }}</v-icon>
+                      <v-icon size="small">{{ getChangeIcon(analyticsData.interactionsChange) }}</v-icon>
                       {{ Math.abs(analyticsData.interactionsChange) }}%
                     </div>
                   </v-card-text>
@@ -582,27 +584,61 @@ onMounted(() => {
   min-height: 600px;
 }
 
+/* Header layout */
+.analytics-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px;
+}
+
+.analytics-header-title {
+  display: flex;
+  align-items: center;
+  font-size: 1.25rem;
+  font-weight: 500;
+}
+
+.analytics-time-select {
+  min-width: 140px;
+  max-width: 180px;
+}
+
+/* Metric cards */
 .metric-card {
-  height: 120px;
+  height: 100%;
+  min-height: 110px;
+}
+
+.metric-card-content {
+  padding: 16px 12px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  height: 100%;
 }
 
 .metric-value {
-  font-size: 2rem;
+  font-size: 1.75rem;
   font-weight: bold;
   margin-bottom: 4px;
+  line-height: 1.2;
 }
 
 .metric-value-large {
-  font-size: 2.5rem;
+  font-size: 2rem;
   font-weight: bold;
   color: #1976D2;
   margin-bottom: 8px;
 }
 
 .metric-label {
-  font-size: 0.875rem;
+  font-size: 0.75rem;
   color: rgba(0, 0, 0, 0.6);
   margin-bottom: 4px;
+  line-height: 1.3;
 }
 
 .metric-subtitle {
@@ -637,5 +673,36 @@ onMounted(() => {
 .chart-container {
   position: relative;
   height: 300px;
+}
+
+/* Mobile responsive */
+@media (max-width: 599px) {
+  .analytics-header {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 12px;
+  }
+
+  .analytics-header-title {
+    justify-content: center;
+    margin-bottom: 8px;
+  }
+
+  .analytics-time-select {
+    max-width: none;
+    width: 100%;
+  }
+
+  .metric-card-content {
+    padding: 12px 8px;
+  }
+
+  .metric-value {
+    font-size: 1.5rem;
+  }
+
+  .metric-label {
+    font-size: 0.7rem;
+  }
 }
 </style>

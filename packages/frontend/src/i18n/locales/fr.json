@@ -727,6 +727,7 @@
         "message": "Aucun segment ne correspond aux critères de recherche"
       },
       "createFirst": "Créer votre premier segment",
+      "createFirstShort": "Nouveau segment",
       "bulkActions": {
         "title": "Actions en masse",
         "export": "Exporter",

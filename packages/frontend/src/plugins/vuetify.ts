@@ -111,6 +111,7 @@ import {
   VExpandTransition,
   VFadeTransition,
   VSlideXTransition,
+  VSlideYReverseTransition,
 } from 'vuetify/components'
 
 // Directives
@@ -249,6 +250,7 @@ export default createVuetify({
     VExpandTransition,
     VFadeTransition,
     VSlideXTransition,
+    VSlideYReverseTransition,
   },
   directives: {
     Ripple,
