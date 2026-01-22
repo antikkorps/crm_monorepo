@@ -1,4 +1,4 @@
-# B2B MEDICAL CRM ARCHITECTURE AUDIT REPORT
+# B2B OPEx_CRM ARCHITECTURE AUDIT REPORT
 
 **Date**: 2025-11-16
 **Audit Scope**: B2B CRM Architecture & 360° Customer View
@@ -8,7 +8,7 @@
 
 ## Executive Summary
 
-Le Medical CRM monorepo est **bien structuré pour la vente B2B aux institutions médicales** avec une architecture fondamentale solide. Le système se concentre correctement sur les clients institutionnels (PAS la gestion de patients) et implémente la plupart des bonnes pratiques CRM B2B. Cependant, il existe des lacunes notables dans la gestion du pipeline de ventes et l'analytique client 360° qui devraient être adressées.
+Le OPEx_CRM monorepo est **bien structuré pour la vente B2B aux institutions médicales** avec une architecture fondamentale solide. Le système se concentre correctement sur les clients institutionnels (PAS la gestion de patients) et implémente la plupart des bonnes pratiques CRM B2B. Cependant, il existe des lacunes notables dans la gestion du pipeline de ventes et l'analytique client 360° qui devraient être adressées.
 
 ---
 
@@ -97,6 +97,7 @@ MedicalInstitution (Client/Prospect)
    - Recherche unifiée à travers tous les types d'entités
 
 **Agrégation de Données:**
+
 ```javascript
 {
   stats: {
@@ -129,6 +130,7 @@ MedicalInstitution (Client/Prospect)
 #### ✅ IMPLÉMENTÉ
 
 **Structure Onglets InstitutionDetailView :**
+
 1. **Aperçu** - Info institution, adresse, tags
 2. **Activité** - `<CollaborationTab>` (interactions) ✅ NOUVEAU
 3. **Médical** - Profil médical, spécialités, conformité
@@ -154,29 +156,29 @@ MedicalInstitution (Client/Prospect)
 
 ## 3. CHECKLIST FONCTIONNALITÉS CRM B2B
 
-| Fonctionnalité | Statut | Notes |
-|---------------|--------|-------|
-| **Entités B2B Core** | ✅ | MedicalInstitution, ContactPerson, Quote, Invoice |
-| **Gestion Devis** | ✅ | Cycle complet : Draft → Sent → Accepted/Rejected/Expired |
-| **Gestion Factures** | ✅ | Suivi paiements, workflow statuts, numérotation auto |
-| **Gestion Contacts** | ✅ | Multiples contacts/institution, désignation principal |
-| **Gestion Tâches** | ✅ | Liées aux institutions, suivi statuts, priorités |
-| **Gestion Réunions** | ✅ | Export .ics pour intégration Outlook/Teams |
-| **Logging Appels** | ✅ | Interactions téléphoniques, durée, auto-link contacts |
-| **Notes/Documentation** | ✅ | Partageables, contrôles privacité, tags |
-| **Rappels** | ✅ | Liés aux institutions, niveaux priorité |
-| **Intégration Email** | ✅ | Envoi devis, invitations réunion via SMTP |
-| **Intégration Calendrier** | ✅ | Export .ics (stratégie Outlook/Teams) |
-| **Segmentation Clients** | ✅ | Segments dynamiques avec query builder |
-| **Suivi Revenus** | ⚠️ | Totaux factures existent, mais pas d'agrégation niveau institution |
-| **Pipeline/Opportunités** | ❌ | **MANQUANT** - Gap B2B critique |
-| **Gestion Leads** | ❌ | Pas de scoring leads, étapes qualification |
-| **Prévisions** | ❌ | Pas de capacité de forecasting revenus |
-| **Historique Contact** | ⚠️ | Interactions suivies mais pas par contact |
-| **Analyse Gagné/Perdu** | ❌ | Pas de suivi résultats devis au-delà du statut |
-| **Score Santé Client** | ❌ | Pas de métriques engagement/risque churn |
-| **Flux Activité** | ✅ | Endpoint timeline existe |
-| **Reporting/Analytique** | ⚠️ | Dashboard existe, mais KPIs niveau institution limités |
+| Fonctionnalité             | Statut | Notes                                                              |
+| -------------------------- | ------ | ------------------------------------------------------------------ |
+| **Entités B2B Core**       | ✅     | MedicalInstitution, ContactPerson, Quote, Invoice                  |
+| **Gestion Devis**          | ✅     | Cycle complet : Draft → Sent → Accepted/Rejected/Expired           |
+| **Gestion Factures**       | ✅     | Suivi paiements, workflow statuts, numérotation auto               |
+| **Gestion Contacts**       | ✅     | Multiples contacts/institution, désignation principal              |
+| **Gestion Tâches**         | ✅     | Liées aux institutions, suivi statuts, priorités                   |
+| **Gestion Réunions**       | ✅     | Export .ics pour intégration Outlook/Teams                         |
+| **Logging Appels**         | ✅     | Interactions téléphoniques, durée, auto-link contacts              |
+| **Notes/Documentation**    | ✅     | Partageables, contrôles privacité, tags                            |
+| **Rappels**                | ✅     | Liés aux institutions, niveaux priorité                            |
+| **Intégration Email**      | ✅     | Envoi devis, invitations réunion via SMTP                          |
+| **Intégration Calendrier** | ✅     | Export .ics (stratégie Outlook/Teams)                              |
+| **Segmentation Clients**   | ✅     | Segments dynamiques avec query builder                             |
+| **Suivi Revenus**          | ⚠️     | Totaux factures existent, mais pas d'agrégation niveau institution |
+| **Pipeline/Opportunités**  | ❌     | **MANQUANT** - Gap B2B critique                                    |
+| **Gestion Leads**          | ❌     | Pas de scoring leads, étapes qualification                         |
+| **Prévisions**             | ❌     | Pas de capacité de forecasting revenus                             |
+| **Historique Contact**     | ⚠️     | Interactions suivies mais pas par contact                          |
+| **Analyse Gagné/Perdu**    | ❌     | Pas de suivi résultats devis au-delà du statut                     |
+| **Score Santé Client**     | ❌     | Pas de métriques engagement/risque churn                           |
+| **Flux Activité**          | ✅     | Endpoint timeline existe                                           |
+| **Reporting/Analytique**   | ⚠️     | Dashboard existe, mais KPIs niveau institution limités             |
 
 ### Score : **13/20 Fonctionnalités Complètement Implémentées (65%)**
 
@@ -253,16 +255,17 @@ interface OpportunityAttributes {
 }
 
 enum OpportunityStage {
-  PROSPECTING = 'prospecting',
-  QUALIFICATION = 'qualification',
-  PROPOSAL = 'proposal',
-  NEGOTIATION = 'negotiation',
-  CLOSED_WON = 'closed_won',
-  CLOSED_LOST = 'closed_lost'
+  PROSPECTING = "prospecting",
+  QUALIFICATION = "qualification",
+  PROPOSAL = "proposal",
+  NEGOTIATION = "negotiation",
+  CLOSED_WON = "closed_won",
+  CLOSED_LOST = "closed_lost",
 }
 ```
 
 **Endpoints à créer** :
+
 - `POST /api/opportunities` - Créer opportunité
 - `GET /api/opportunities` - Liste avec filtres (stage, institution, assigné)
 - `PUT /api/opportunities/:id/stage` - Changer étape
@@ -270,6 +273,7 @@ enum OpportunityStage {
 - `GET /api/opportunities/forecast` - Prévisions revenus
 
 **Vue Frontend** :
+
 - `/opportunities` - Vue pipeline Kanban par stage
 - Drag & drop entre étapes
 - Filtres par institution, commercial, valeur
@@ -307,6 +311,7 @@ Response: {
 ```
 
 **Améliorations Vue Frontend** :
+
 - Onglet "Revenus" : Ajouter cartes KPI
   - 💰 Revenus Totaux
   - ⏳ En Attente
@@ -351,6 +356,7 @@ Response: {
 ```
 
 **Types d'événements à inclure** :
+
 - 📅 Réunions (passées et à venir)
 - 📞 Appels (entrants, sortants, manqués)
 - 📝 Notes créées
@@ -361,6 +367,7 @@ Response: {
 - 📧 Emails envoyés (à venir)
 
 **Ajouter onglet** dans `InstitutionDetailView.vue` :
+
 ```vue
 <v-tab value="timeline">Historique</v-tab>
 ...
@@ -380,17 +387,18 @@ Response: {
 **Objectif** : Identifier clients à risque de churn ou opportunités d'upsell
 
 **Algorithme de Score** (0-100) :
+
 ```javascript
-healthScore = (
-  lastInteractionScore * 0.3 +      // Récence dernière interaction
-  interactionFrequencyScore * 0.2 +  // Fréquence interactions
-  quoteAcceptanceScore * 0.2 +       // Taux acceptation devis
-  paymentTimelinessScore * 0.2 +     // Ponctualité paiements
-  engagementScore * 0.1              // Engagement (ouverture emails, etc.)
-)
+healthScore =
+  lastInteractionScore * 0.3 + // Récence dernière interaction
+  interactionFrequencyScore * 0.2 + // Fréquence interactions
+  quoteAcceptanceScore * 0.2 + // Taux acceptation devis
+  paymentTimelinessScore * 0.2 + // Ponctualité paiements
+  engagementScore * 0.1 // Engagement (ouverture emails, etc.)
 ```
 
 **Indicateurs Visuels** :
+
 - 🟢 80-100 : Client sain
 - 🟡 50-79 : Attention requise
 - 🔴 0-49 : Risque de churn
@@ -404,6 +412,7 @@ healthScore = (
 **Objectif** : Prioriser efforts commerciaux sur prospects à fort potentiel
 
 **Critères de Scoring** :
+
 - Taille institution (capacité lits)
 - Spécialités (correspondance offre)
 - Fréquence demandes devis
@@ -411,6 +420,7 @@ healthScore = (
 - Budget estimé (basé sur historique)
 
 **Actions** :
+
 - Filtrer institutions par score lead
 - Alertes pour leads chauds (score >80)
 
@@ -421,6 +431,7 @@ healthScore = (
 **PROBLÈME** : Impossible de voir toutes les interactions avec une personne spécifique.
 
 **SOLUTION** :
+
 ```typescript
 GET /api/contacts/:id/timeline
 
@@ -442,9 +453,11 @@ Response: {
 ## 6. PLAN D'ACTION RECOMMANDÉ
 
 ### Phase 1 (Semaines 1-2) : Fonctionnalités B2B Essentielles
+
 **Priorité** : 🔴 Critique
 
 **Tâches** :
+
 1. ✅ Implémenter modèle `Opportunity`
    - Créer migration, modèle, validation
    - Relations : `institutionId`, `contactPersonId`, `assignedUserId`
@@ -458,6 +471,7 @@ Response: {
    - Statistiques pipeline
 
 **Livrables** :
+
 - Modèle Opportunity fonctionnel
 - Vue Pipeline accessible via `/opportunities`
 - Capacité de suivre deals de la prospection à la conclusion
@@ -467,9 +481,11 @@ Response: {
 ---
 
 ### Phase 2 (Semaines 3-4) : Vue 360° Améliorée
+
 **Priorité** : 🟡 Élevée
 
 **Tâches** :
+
 1. ✅ Créer endpoint revenus institution
    - Agrégation factures/paiements
    - Calculs : LTV, taux conversion, revenus mensuels
@@ -486,6 +502,7 @@ Response: {
    - Badge visuel dans liste et détail
 
 **Livrables** :
+
 - Dashboard revenus complet par institution
 - Timeline visuelle dans fiche institution
 - Indicateur santé client
@@ -495,9 +512,11 @@ Response: {
 ---
 
 ### Phase 3 (Semaines 5-6) : Analytics & Insights
+
 **Priorité** : 🟢 Moyenne
 
 **Tâches** :
+
 1. ✅ Reporting pipeline
    - Taux conversion par stage
    - Durée moyenne cycle de vente
@@ -514,6 +533,7 @@ Response: {
    - Alertes clients inactifs
 
 **Livrables** :
+
 - Dashboard analytique commercial
 - Système de prévisions
 - Moteur de recommandations
@@ -560,6 +580,7 @@ Response: {
 Le Medical B2B CRM est **architecturalement solide** et correctement scopé pour la vente institutionnelle. Il évite avec succès les fonctionnalités de gestion de patients et se concentre sur les relations B2B. L'infrastructure de vue 360° existe (données collaboration, endpoints timeline) mais nécessite amélioration frontend et profondeur analytique.
 
 **Forces Clés** :
+
 - ✅ Modèle entités B2B approprié
 - ✅ Toutes interactions liées aux institutions
 - ✅ Gestion cycle de vie Devis/Factures
@@ -567,6 +588,7 @@ Le Medical B2B CRM est **architecturalement solide** et correctement scopé pour
 - ✅ Segmentation et gestion équipes
 
 **Gaps Critiques** :
+
 - ❌ Pas de suivi pipeline/opportunités
 - ❌ Analytique revenus limitée par institution
 - ❌ Visualisation 360° incomplète
@@ -583,26 +605,31 @@ Avec Phase 1-2 complétées, le score atteindrait **9/10**.
 ## FICHIERS AUDITÉS
 
 **Backend Models** (27 fichiers) :
+
 - MedicalInstitution, ContactPerson, Quote, Invoice
 - Meeting, Call, Note, Reminder, Task
 - DigiformaCompany, DigiformaContact, DigiformaQuote
 - User, Team, SystemSettings, Webhook, etc.
 
 **Backend Controllers** :
+
 - MedicalInstitutionController (endpoints collaboration/timeline)
 - QuoteController, InvoiceController, TaskController
 - MeetingController, CallController, NoteController
 
 **Backend Services** :
+
 - MedicalInstitutionAnalyticsService ✅
 - EmailService, PdfService, NotificationService
 
 **Frontend Views** :
+
 - InstitutionDetailView (6 onglets dont Activity ✅)
 - MeetingsView, CallsView, NotesView, RemindersView ✅
 - QuotesView, InvoicesView, TasksView
 
 **Configuration** :
+
 - AGENTS.md (contexte B2B documenté ✅)
 
 ---

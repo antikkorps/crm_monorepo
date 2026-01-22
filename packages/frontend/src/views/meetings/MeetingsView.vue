@@ -1,6 +1,18 @@
 <template>
   <AppLayout>
     <div class="meetings-view">
+      <!-- Back to Institution Button -->
+      <v-btn
+        v-if="isFilteredByInstitution"
+        variant="text"
+        color="primary"
+        prepend-icon="mdi-arrow-left"
+        class="mb-4"
+        @click="goBackToInstitution"
+      >
+        {{ $t("common.backToInstitution") }}
+      </v-btn>
+
       <!-- Header -->
       <div class="meetings-header">
         <div class="header-content">
@@ -236,10 +248,17 @@ import type {
 } from "@medical-crm/shared"
 import { computed, onMounted, ref } from "vue"
 import { useI18n } from "vue-i18n"
+import { useRoute, useRouter } from "vue-router"
 
 const meetingsStore = useMeetingsStore()
 const { showSnackbar } = useSnackbar()
 const { t } = useI18n()
+const route = useRoute()
+const router = useRouter()
+
+// Check if filtered by institution from query params
+const institutionId = computed(() => route.query.institutionId as string | undefined)
+const isFilteredByInstitution = computed(() => !!institutionId.value)
 
 // Component state
 const sortBy = ref("startDate")
@@ -450,7 +469,18 @@ const applySorting = () => {
   // Sorting is handled by the computed property
 }
 
+// Navigation helpers
+const goBackToInstitution = () => {
+  if (institutionId.value) {
+    router.push(`/institutions/${institutionId.value}`)
+  }
+}
+
 onMounted(async () => {
+  // Apply institution filter if present in query
+  if (institutionId.value) {
+    meetingsStore.updateFilters({ institutionId: institutionId.value })
+  }
   await loadMeetings()
 })
 </script>

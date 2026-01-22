@@ -136,7 +136,7 @@ const routes: RouteRecordRaw[] = [
       requiresAuth: true,
       title: "Edit Invoice",
     },
-    props: route => ({ ...route.params, editMode: true })
+    props: (route) => ({ ...route.params, editMode: true }),
   },
   {
     path: "/team",
@@ -210,24 +210,24 @@ const routes: RouteRecordRaw[] = [
       title: "Webhooks",
     },
   },
-   {
-     path: "/export",
-     name: "ExportCenter",
-     component: ExportCenter,
-     meta: {
-       requiresAuth: true,
-       title: "Export Center",
-     },
-   },
-   {
-     path: "/segmentation",
-     name: "Segmentation",
-     component: Segmentation,
-     meta: {
-       requiresAuth: true,
-       title: "Segmentation",
-     },
-   },
+  {
+    path: "/export",
+    name: "ExportCenter",
+    component: ExportCenter,
+    meta: {
+      requiresAuth: true,
+      title: "Export Center",
+    },
+  },
+  {
+    path: "/segmentation",
+    name: "Segmentation",
+    component: Segmentation,
+    meta: {
+      requiresAuth: true,
+      title: "Segmentation",
+    },
+  },
   {
     path: "/contacts",
     name: "Contacts",
@@ -366,7 +366,10 @@ router.beforeEach(async (to, _from, next) => {
   }
 
   // Redirect to dashboard if already authenticated and trying to access login, forgot password or landing
-  if ((to.name === "Login" || to.name === "ForgotPassword" || to.name === "Landing") && authStore.isAuthenticated) {
+  if (
+    (to.name === "Login" || to.name === "ForgotPassword" || to.name === "Landing") &&
+    authStore.isAuthenticated
+  ) {
     next({ name: "Dashboard" })
     return
   }
@@ -383,7 +386,7 @@ router.beforeEach(async (to, _from, next) => {
 // Set page title
 router.afterEach((to) => {
   const title = to.meta.title as string
-  document.title = title ? `${title} - Medical CRM` : "Medical CRM"
+  document.title = title ? `${title} - OPEx_CRM` : "OPEx_CRM"
 })
 
 export default router

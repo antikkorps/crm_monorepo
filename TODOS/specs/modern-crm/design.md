@@ -2,7 +2,7 @@
 
 ## Overview
 
-The Modern Medical CRM is a comprehensive customer relationship management system designed specifically for businesses serving medical institutions (hospitals and clinics). The system follows a monorepo architecture with clear separation between frontend and backend services, providing real-time collaboration, medical-specific segmentation, billing capabilities, and extensible plugin architecture.
+The Modern OPEx_CRM is a comprehensive customer relationship management system designed specifically for businesses serving medical institutions (hospitals and clinics). The system follows a monorepo architecture with clear separation between frontend and backend services, providing real-time collaboration, medical-specific segmentation, billing capabilities, and extensible plugin architecture.
 
 ### Technology Stack
 
@@ -528,7 +528,7 @@ function requirePermission(permission: keyof RolePermissions) {
         {
           required: permission,
           userRole: user.role,
-        }
+        },
       )
     }
 
@@ -565,7 +565,7 @@ function requireTeamPermission(permission: keyof RolePermissions) {
     throw createError(
       "Insufficient permissions to access this resource",
       403,
-      "INSUFFICIENT_PERMISSIONS"
+      "INSUFFICIENT_PERMISSIONS",
     )
   }
 }
@@ -1042,7 +1042,7 @@ class PDFGenerationService {
 
   private async getTemplate(
     templateId?: string,
-    documentType: string
+    documentType: string,
   ): Promise<DocumentTemplate> {
     if (templateId) {
       return DocumentTemplateService.findById(templateId)
@@ -1116,7 +1116,7 @@ function calculateDocumentTotal(lines: (QuoteLine | InvoiceLine)[]): DocumentTot
 
 ### Supported Languages
 
-The Medical CRM system supports multiple languages to serve international healthcare markets:
+The OPEx_CRM system supports multiple languages to serve international healthcare markets:
 
 - **French (fr)**: Primary language, complete translation
 - **English (en)**: Secondary language, complete translation

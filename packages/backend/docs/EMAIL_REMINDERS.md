@@ -40,16 +40,19 @@ FRONTEND_URL=https://votre-crm.com
 ## Types de Notifications Email
 
 ### 🗓️ Tâches (Tasks)
+
 - **7 jours avant échéance** : Email avec countdown
 - **En retard** : Email urgent avec mise en évidence
 - **Contenu** : Titre, échéance, institution, statut, lien direct
 
-### 📋 Devis (Quotes)  
+### 📋 Devis (Quotes)
+
 - **7 jours avant expiration** : Email de relance commercial
 - **Expiré** : Email d'alerte avec recommandations
 - **Contenu** : Numéro devis, montant, échéance, institution, lien
 
 ### 💰 Factures (Invoices)
+
 - **7 jours avant échéance** : Email de rappel paiement
 - **En retard** : Email urgent de relance paiement
 - **Contenu** : Numéro facture, montant, échéance, institution, lien
@@ -75,7 +78,7 @@ ENABLE_EMAIL_REMINDERS=false     # Activer les emails de rappels
 
 # Configuration expéditeur
 EMAIL_FROM_ADDRESS=noreply@medical-crm.com
-EMAIL_FROM_NAME=Medical CRM
+EMAIL_FROM_NAME=OPEx_CRM
 
 # Configuration SMTP
 SMTP_HOST=localhost              # Serveur SMTP
@@ -97,6 +100,7 @@ FRONTEND_URL=http://localhost:3000  # URL pour les liens email
 ### Planification des Rappels
 
 Les rappels s'exécutent automatiquement via cron job :
+
 - **Fréquence** : Quotidienne à 9h (configurable)
 - **Fuseau horaire** : Europe/Paris (configurable)
 - **Anti-spam** : Cache 23h pour éviter doublons
@@ -120,6 +124,7 @@ node test-email-reminders.js
 ## logs et Debugging
 
 Les logs incluent :
+
 - **Connexion SMTP** : Vérification automatique au démarrage
 - **Envoi d'emails** : Succès/échec avec détails
 - **Traitement rappels** : Volume d'entités traitées
@@ -128,11 +133,13 @@ Les logs incluent :
 ## Sécurité et Performance
 
 ### Sécurité
+
 - **Validation destinataires** : Vérification email avant envoi
 - **Anti-spam** : Cache pour éviter doublons
 - **Logs sécurisés** : Pas de mots de passe dans les logs
 
-### Performance  
+### Performance
+
 - **Traitement par lot** : 100 entités maximum par type
 - **Templates optimisés** : HTML léger et responsive
 - **Timeouts** : Gestion automatique des échecs SMTP
@@ -142,8 +149,9 @@ Les logs incluent :
 ### Modifier les Templates
 
 Les templates sont dans `ReminderService.ts` :
+
 - `sendTaskReminderEmail()` - Tâches
-- `sendQuoteReminderEmail()` - Devis  
+- `sendQuoteReminderEmail()` - Devis
 - `sendInvoiceReminderEmail()` - Factures
 
 ### Ajouter Nouveaux Types
@@ -155,6 +163,7 @@ Les templates sont dans `ReminderService.ts` :
 ## Support
 
 En cas de problème :
+
 1. Vérifiez les logs serveur
 2. Testez la configuration SMTP
 3. Validez les variables d'environnement
@@ -163,5 +172,5 @@ En cas de problème :
 ---
 
 **Version** : 1.0  
-**Compatibilité** : Medical CRM v1.0+  
+**Compatibilité** : OPEx_CRM v1.0+  
 **Maintenance** : Système inclus dans les mises à jour automatiques

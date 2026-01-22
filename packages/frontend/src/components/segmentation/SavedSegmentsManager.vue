@@ -1,21 +1,30 @@
 <template>
   <div class="saved-segments-manager">
     <v-card>
-      <v-card-title class="d-flex align-center">
-        <v-icon left>mdi-bookmark-multiple</v-icon>
-        {{ $t("segmentation.saved.title") }}
-        <v-spacer />
-        <v-text-field
-          v-model="searchQuery"
-          :label="$t('segmentation.saved.search')"
-          prepend-inner-icon="mdi-magnify"
-          variant="outlined"
-          class="mr-2"
-          style="max-width: 300px"
-        />
-        <v-btn icon @click="refreshSegments" :loading="loading" class="align-self-center">
-          <v-icon>mdi-refresh</v-icon>
-        </v-btn>
+      <v-card-title class="segment-header">
+        <div class="segment-header-title">
+          <v-icon class="mr-2">mdi-bookmark-multiple</v-icon>
+          {{ $t("segmentation.saved.title") }}
+        </div>
+        <div class="segment-header-actions">
+          <v-text-field
+            v-model="searchQuery"
+            :label="$t('segmentation.saved.search')"
+            prepend-inner-icon="mdi-magnify"
+            variant="outlined"
+            density="compact"
+            hide-details
+            class="segment-search-field"
+          />
+          <v-btn
+            icon
+            variant="text"
+            @click="refreshSegments"
+            :loading="loading"
+          >
+            <v-icon>mdi-refresh</v-icon>
+          </v-btn>
+        </div>
       </v-card-title>
 
       <v-card-text>
@@ -145,66 +154,73 @@
           </v-col>
         </v-row>
 
-        <!-- Bulk Actions Bar -->
-        <v-bottom-sheet v-model="showBulkActions" persistent>
-          <v-card class="bulk-sheet">
-            <v-card-title class="bulk-title">
-              {{ $t("segmentation.saved.bulkActions.title") }}
-              <v-spacer />
-              <v-btn icon @click="showBulkActions = false">
-                <v-icon>mdi-close</v-icon>
-              </v-btn>
-            </v-card-title>
-            <v-card-text>
-              <div class="d-flex align-center mb-4 bulk-bar">
-                <v-chip class="mr-2" size="small">
-                  {{ selectedSegments.length }} {{ $t("segmentation.saved.selected") }}
+        <!-- Bulk Actions Bar - Only visible when segments are selected -->
+        <v-slide-y-reverse-transition>
+          <v-card
+            v-if="selectedSegments.length > 0"
+            class="bulk-actions-bar"
+            elevation="8"
+          >
+            <div class="bulk-actions-content">
+              <div class="bulk-actions-info">
+                <v-chip color="primary" size="small" variant="flat">
+                  {{ selectedSegments.length }}
                 </v-chip>
-                <v-spacer />
+                <span class="bulk-actions-label">{{ $t("segmentation.saved.selected") }}</span>
+              </div>
+              <div class="bulk-actions-buttons">
                 <v-btn
                   color="primary"
                   size="small"
+                  variant="tonal"
                   @click="executeBulkAction('export')"
-                  :disabled="selectedSegments.length === 0"
                 >
-                  <v-icon left>mdi-download</v-icon>
-                  {{ $t("segmentation.saved.bulkActions.export") }}
+                  <v-icon start>mdi-download</v-icon>
+                  <span class="d-none d-sm-inline">{{ $t("segmentation.saved.bulkActions.export") }}</span>
                 </v-btn>
                 <v-btn
                   color="secondary"
                   size="small"
+                  variant="tonal"
                   @click="executeBulkAction('share')"
-                  :disabled="selectedSegments.length === 0"
-                  class="ml-2"
                 >
-                  <v-icon left>mdi-share-variant</v-icon>
-                  {{ $t("segmentation.saved.bulkActions.share") }}
+                  <v-icon start>mdi-share-variant</v-icon>
+                  <span class="d-none d-sm-inline">{{ $t("segmentation.saved.bulkActions.share") }}</span>
                 </v-btn>
                 <v-btn
                   color="error"
                   size="small"
+                  variant="tonal"
                   @click="executeBulkAction('delete')"
-                  :disabled="selectedSegments.length === 0"
-                  class="ml-2"
                 >
-                  <v-icon left>mdi-delete</v-icon>
-                  {{ $t("segmentation.saved.bulkActions.delete") }}
+                  <v-icon start>mdi-delete</v-icon>
+                  <span class="d-none d-sm-inline">{{ $t("segmentation.saved.bulkActions.delete") }}</span>
                 </v-btn>
               </div>
-            </v-card-text>
+              <v-btn
+                icon
+                size="small"
+                variant="text"
+                @click="clearSelection"
+                class="bulk-actions-close"
+              >
+                <v-icon>mdi-close</v-icon>
+              </v-btn>
+            </div>
           </v-card>
-        </v-bottom-sheet>
+        </v-slide-y-reverse-transition>
 
         <!-- Empty State -->
-        <v-card v-if="filteredSegments.length === 0" class="text-center pa-8" outlined>
-          <v-icon size="64" color="grey lighten-1">mdi-bookmark-off</v-icon>
-          <div class="mt-4 text-h6">{{ $t("segmentation.saved.empty.title") }}</div>
-          <div class="text-body-1 text-medium-emphasis mb-4">
+        <v-card v-if="filteredSegments.length === 0" class="empty-state text-center" variant="outlined">
+          <v-icon size="48" color="grey-lighten-1" class="mb-3">mdi-bookmark-off</v-icon>
+          <div class="text-subtitle-1 font-weight-medium">{{ $t("segmentation.saved.empty.title") }}</div>
+          <div class="text-body-2 text-medium-emphasis mb-4">
             {{ $t("segmentation.saved.empty.message") }}
           </div>
-          <v-btn color="primary" @click="$emit('create-new')">
-            <v-icon left>mdi-plus</v-icon>
-            {{ $t("segmentation.saved.createFirst") }}
+          <v-btn color="primary" size="small" @click="$emit('create-new')">
+            <v-icon start>mdi-plus</v-icon>
+            <span class="d-none d-sm-inline">{{ $t("segmentation.saved.createFirst") }}</span>
+            <span class="d-sm-none">{{ $t("segmentation.saved.createFirstShort") }}</span>
           </v-btn>
         </v-card>
       </v-card-text>
@@ -247,7 +263,6 @@ const emit = defineEmits<{
 const searchQuery = ref("")
 const activeTab = ref("all")
 const selectedSegments = ref<string[]>([])
-const showBulkActions = ref(false)
 
 // Computed
 const filteredSegments = computed(() => {
@@ -324,8 +339,10 @@ const toggleSelection = (segmentId: string) => {
   } else {
     selectedSegments.value.push(segmentId)
   }
+}
 
-  showBulkActions.value = selectedSegments.value.length > 0
+const clearSelection = () => {
+  selectedSegments.value = []
 }
 
 const viewSegment = (segment: Segment) => {
@@ -356,15 +373,13 @@ const refreshSegments = () => {
 const executeBulkAction = (action: string) => {
   emit("bulk-action", action, selectedSegments.value)
   selectedSegments.value = []
-  showBulkActions.value = false
 }
 
-// Watchers
+// Watchers - Clear selection when switching tabs or searching
 watch(
   () => activeTab.value,
   () => {
     selectedSegments.value = []
-    showBulkActions.value = false
   }
 )
 
@@ -372,7 +387,6 @@ watch(
   () => searchQuery.value,
   () => {
     selectedSegments.value = []
-    showBulkActions.value = false
   }
 )
 </script>
@@ -380,6 +394,65 @@ watch(
 <style scoped>
 .saved-segments-manager {
   min-height: 400px;
+}
+
+/* Empty State */
+.empty-state {
+  padding: 32px 24px;
+}
+
+/* Header layout */
+.segment-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px;
+}
+
+.segment-header-title {
+  display: flex;
+  align-items: center;
+  font-size: 1.25rem;
+  font-weight: 500;
+}
+
+.segment-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  justify-content: flex-end;
+  min-width: 200px;
+}
+
+.segment-search-field {
+  max-width: 300px;
+  min-width: 150px;
+  flex: 1;
+}
+
+/* Responsive: stack on mobile */
+@media (max-width: 599px) {
+  .segment-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .segment-header-title {
+    justify-content: center;
+  }
+
+  .segment-header-actions {
+    justify-content: center;
+    width: 100%;
+  }
+
+  .segment-search-field {
+    max-width: none;
+    flex: 1;
+  }
 }
 
 .segment-card {
@@ -401,28 +474,92 @@ watch(
   opacity: 0.9;
 }
 
-@media (max-width: 600px) {
-  .mr-2 {
-    margin-right: 6px !important;
+/* Bulk Actions Bar - Fixed at bottom */
+.bulk-actions-bar {
+  position: fixed;
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 100;
+  border-radius: 12px;
+  max-width: calc(100% - 32px);
+  width: auto;
+}
+
+.bulk-actions-content {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+}
+
+.bulk-actions-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+.bulk-actions-label {
+  font-size: 0.875rem;
+  color: rgba(var(--v-theme-on-surface), 0.7);
+}
+
+.bulk-actions-buttons {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.bulk-actions-close {
+  margin-left: auto;
+}
+
+/* Mobile responsive */
+@media (max-width: 599px) {
+  .saved-segments-manager :deep(.v-card-text) {
+    padding: 12px;
   }
+
+  .segment-header {
+    padding: 12px;
+  }
+
+  .empty-state {
+    padding: 24px 16px;
+  }
+
+  .bulk-actions-bar {
+    bottom: 8px;
+    left: 8px;
+    right: 8px;
+    transform: none;
+    max-width: none;
+  }
+
+  .bulk-actions-content {
+    padding: 8px 12px;
+    gap: 8px;
+  }
+
+  .bulk-actions-label {
+    display: none;
+  }
+
+  .bulk-actions-buttons {
+    gap: 4px;
+  }
+
   .segment-card {
     padding-bottom: 6px;
   }
+
   .segment-actions {
     justify-content: space-between;
   }
+
   .segment-actions .v-btn {
     transform: scale(0.95);
-  }
-  .bulk-sheet {
-    padding-bottom: 6px;
-  }
-  .bulk-title {
-    padding: 8px 12px;
-  }
-  .bulk-bar {
-    gap: 6px;
-    flex-wrap: wrap;
   }
 }
 </style>

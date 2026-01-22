@@ -2,9 +2,9 @@
   <v-card variant="outlined" class="catalog-selection">
     <v-card-title class="text-subtitle-1 pa-3">
       <v-icon class="mr-2">mdi-package-variant</v-icon>
-      {{ t('billing.catalogSelector.title') }}
+      {{ t("billing.catalogSelector.title") }}
     </v-card-title>
-    <v-card-text class="pt-0">
+    <v-card-text class="pt-4">
       <v-row>
         <v-col cols="12" md="8">
           <v-autocomplete
@@ -32,8 +32,11 @@
                 </template>
                 <v-list-item-title>{{ item.raw.name }}</v-list-item-title>
                 <v-list-item-subtitle>
-                  {{ item.raw.description || t('billing.catalogSelector.noDescription') }} •
-                  <span class="font-weight-bold">{{ formatCurrency(item.raw.unitPrice) }}</span>
+                  {{ item.raw.description || t("billing.catalogSelector.noDescription") }}
+                  •
+                  <span class="font-weight-bold">{{
+                    formatCurrency(item.raw.unitPrice)
+                  }}</span>
                   <span v-if="item.raw.category"> • {{ item.raw.category }}</span>
                 </v-list-item-subtitle>
               </v-list-item>
@@ -41,10 +44,10 @@
             <template #no-data>
               <div class="text-center pa-4">
                 <div v-if="catalogSearch && catalogSearch.length > 0">
-                  {{ t('billing.catalogSelector.noResults', { search: catalogSearch }) }}
+                  {{ t("billing.catalogSelector.noResults", { search: catalogSearch }) }}
                 </div>
                 <div v-else>
-                  {{ t('billing.catalogSelector.searchPrompt') }}
+                  {{ t("billing.catalogSelector.searchPrompt") }}
                 </div>
               </div>
             </template>
@@ -66,9 +69,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
-import { useI18n } from 'vue-i18n'
-import { useCatalogStore, type CatalogItem } from '@/stores/catalog'
+import { useCatalogStore, type CatalogItem } from "@/stores/catalog"
+import { onMounted, ref } from "vue"
+import { useI18n } from "vue-i18n"
 
 const { t } = useI18n()
 
@@ -79,13 +82,13 @@ interface Props {
 
 const props = withDefaults(defineProps<Props>(), {
   modelValue: null,
-  customLine: true
+  customLine: true,
 })
 
 const emit = defineEmits<{
-  'update:modelValue': [value: string | null]
-  'update:customLine': [value: boolean]
-  'item-selected': [item: CatalogItem | null]
+  "update:modelValue": [value: string | null]
+  "update:customLine": [value: boolean]
+  "item-selected": [item: CatalogItem | null]
 }>()
 
 // Catalog integration
@@ -93,7 +96,7 @@ const catalogStore = useCatalogStore()
 const selectedItem = ref<string | null>(props.modelValue)
 const catalogItems = ref<CatalogItem[]>([])
 const catalogLoading = ref(false)
-const catalogSearch = ref('')
+const catalogSearch = ref("")
 const isCustomLine = ref(props.customLine)
 
 // Catalog methods
@@ -108,7 +111,7 @@ const onCatalogSearch = async (search: string) => {
     catalogLoading.value = true
     catalogItems.value = await catalogStore.searchItems(search)
   } catch (error) {
-    console.error('Error searching catalog:', error)
+    console.error("Error searching catalog:", error)
     catalogItems.value = []
   } finally {
     catalogLoading.value = false
@@ -117,63 +120,63 @@ const onCatalogSearch = async (search: string) => {
 
 const onItemSelect = async (itemId: string | null) => {
   selectedItem.value = itemId
-  emit('update:modelValue', itemId)
+  emit("update:modelValue", itemId)
 
   if (!itemId) {
-    emit('item-selected', null)
+    emit("item-selected", null)
     isCustomLine.value = true
-    emit('update:customLine', true)
+    emit("update:customLine", true)
     return
   }
 
   try {
     const item = await catalogStore.getItemById(itemId)
     if (item) {
-      emit('item-selected', item)
+      emit("item-selected", item)
       isCustomLine.value = false
-      emit('update:customLine', false)
+      emit("update:customLine", false)
     }
   } catch (error) {
-    console.error('Error fetching catalog item:', error)
-    emit('item-selected', null)
+    console.error("Error fetching catalog item:", error)
+    emit("item-selected", null)
   }
 }
 
 const onCustomLineToggle = () => {
-  emit('update:customLine', isCustomLine.value)
+  emit("update:customLine", isCustomLine.value)
   if (isCustomLine.value) {
     selectedItem.value = null
-    emit('update:modelValue', null)
-    emit('item-selected', null)
+    emit("update:modelValue", null)
+    emit("item-selected", null)
   }
 }
 
 const formatCurrency = (amount: number) => {
-  return new Intl.NumberFormat('fr-FR', {
-    style: 'currency',
-    currency: 'EUR',
+  return new Intl.NumberFormat("fr-FR", {
+    style: "currency",
+    currency: "EUR",
   }).format(amount || 0)
 }
 
 // Load active catalog items on mount
 onMounted(async () => {
   try {
-    await catalogStore.fetchItems({ isActive: 'true', limit: 100 })
+    await catalogStore.fetchItems({ isActive: "true", limit: 100 })
   } catch (error) {
-    console.error('Error loading catalog items:', error)
+    console.error("Error loading catalog items:", error)
   }
 })
 </script>
 
 <style scoped>
 .catalog-selection {
-  background-color: rgb(var(--v-theme-surface-variant));
-  border: 1px solid rgb(var(--v-theme-outline-variant));
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  border: 1px solid #e2e8f0;
 }
 
 .catalog-selection .v-card-title {
-  background-color: rgb(var(--v-theme-primary));
-  color: rgb(var(--v-theme-on-primary));
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  color: white;
   margin: -1px -1px 0 -1px;
   border-radius: 4px 4px 0 0;
 }

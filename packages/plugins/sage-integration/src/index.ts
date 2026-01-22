@@ -1,4 +1,4 @@
-// SAGE Integration Plugin for Medical CRM
+// SAGE Integration Plugin for OPEx_CRM
 
 export interface SageConfig {
   apiUrl: string

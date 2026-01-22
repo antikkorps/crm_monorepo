@@ -1,4 +1,4 @@
-# Medical CRM - Projet Suivi des Tâches
+# OPEx_CRM - Projet Suivi des Tâches
 
 **Dernière mise à jour**: 2025-12-23
 **Branch**: `main`
@@ -51,13 +51,11 @@
 #### Configuration Security Fixes ✅
 
 1. **CORS Misconfiguration** (`app.ts`)
-
    - **Problème**: Wildcard `*` forcé en production
    - **Solution**: Respecte config.cors.origin en production
    - **Impact**: Prévient l'accès non autorisé aux APIs
 
 2. **Weak Password Hashing** (`User.ts`)
-
    - **Problème**: bcrypt rounds = 10 (insuffisant)
    - **Solution**: Augmenté à 12 rounds
    - **Impact**: Protection renforcée contre brute force
@@ -85,7 +83,6 @@
 **Vulnérabilités restantes** (11 moderate - non-critiques):
 
 1. **esbuild <=0.24.2** (6 packages)
-
    - Sévérité: MODERATE
    - Impact: Développement seulement
    - Recommandation: Upgrade vitest (breaking change)
@@ -362,7 +359,7 @@
 
 **AGENTS.md mis à jour**:
 
-- ✅ Contexte B2B Medical CRM clarifié
+- ✅ Contexte B2B OPEx_CRM clarifié
 - ✅ Stratégie Outlook/Teams documentée
 - ✅ Pas de calendrier UI (utiliser .ics export)
 - ✅ Focus sur valeur CRM (tracking, notes, follow-ups)
@@ -502,6 +499,7 @@
 **Champs ajoutés** :
 
 Tables `contact_persons` et `medical_institutions` :
+
 - `data_source` (ENUM) : 'crm', 'digiforma', 'sage', 'import' - **NE CHANGE JAMAIS** (provenance historique)
 - `is_locked` (BOOLEAN) : True = CRM-owned, ne peut plus être écrasé par sync externe
 - `locked_at` (DATE) : Date de verrouillage
@@ -510,11 +508,13 @@ Tables `contact_persons` et `medical_institutions` :
 - `last_sync_at` (JSONB) : `{ digiforma: Date, sage: Date, import: Date }`
 
 **Migration automatique des données existantes** :
+
 - Contacts/Institutions liés à Digiforma → `data_source='digiforma'`
 - Contacts avec Notes/Meetings/Calls → `is_locked=true` (auto-lock)
 - Institutions avec activités CRM → `is_locked=true`
 
 **Index créés** :
+
 - `idx_contact_persons_is_locked`
 - `idx_contact_persons_data_source`
 - `idx_medical_institutions_is_locked`
@@ -523,17 +523,19 @@ Tables `contact_persons` et `medical_institutions` :
 #### ✅ Tâche 34: Models - Auto-Lock Hooks
 
 **Fichiers modifiés** :
+
 - `ContactPerson.ts` (+50 lignes)
 - `MedicalInstitution.ts` (+60 lignes)
 
 **Types ajoutés** :
+
 ```typescript
-export type DataSource = 'crm' | 'digiforma' | 'sage' | 'import'
+export type DataSource = "crm" | "digiforma" | "sage" | "import"
 
 interface ExternalData {
-  digiforma?: { id, firstname, lastname, phone, position, title, lastSync }
-  sage?: { id, accountingCode, creditLimit, lastSync }
-  import?: { source_file, import_date, import_user_id, original_data }
+  digiforma?: { id; firstname; lastname; phone; position; title; lastSync }
+  sage?: { id; accountingCode; creditLimit; lastSync }
+  import?: { source_file; import_date; import_user_id; original_data }
 }
 
 interface LastSyncAt {
@@ -560,6 +562,7 @@ interface LastSyncAt {
 **Fichier modifié** : `DigiformaSyncService.ts` (+450 lignes refactorisées)
 
 **Types custom créés** :
+
 ```typescript
 interface SyncInstanceUpdateOptions<T> extends InstanceUpdateOptions<T> {
   context?: { isSync: boolean }
@@ -591,6 +594,7 @@ interface SyncCreateOptions<T> extends CreateOptions<T> {
    - 🆕 Nouvelle → CREATE avec `dataSource='digiforma'`
 
 **Exemple de log** :
+
 ```
 ✅ Digiforma contacts sync completed
    synced: 45
@@ -603,8 +607,10 @@ interface SyncCreateOptions<T> extends CreateOptions<T> {
 **Fichier modifié** : `AGENTS.md`
 
 **Règle ajoutée** :
+
 ```markdown
 ### TypeScript
+
 - **NEVER use `any`**: Create proper type extensions instead
   - ❌ BAD: `context: { isSync: true } } as any)`
   - ✅ GOOD: `interface SyncUpdateOptions<T> extends UpdateOptions<T> { context?: { isSync: boolean } }`
@@ -646,17 +652,19 @@ interface SyncCreateOptions<T> extends CreateOptions<T> {
 
 **Matrice de Décision** :
 
-| État | dataSource | isLocked | Action Sync |
-|------|------------|----------|-------------|
-| Nouveau | - | - | ✅ CREATE (digiforma/sage/import) |
-| Existant non-locked | digiforma | false | ✅ UPDATE (mode=initial) |
-| Existant locked | any | true | 🔒 Skip CRM, update externalData |
+| État                | dataSource | isLocked | Action Sync                       |
+| ------------------- | ---------- | -------- | --------------------------------- |
+| Nouveau             | -          | -        | ✅ CREATE (digiforma/sage/import) |
+| Existant non-locked | digiforma  | false    | ✅ UPDATE (mode=initial)          |
+| Existant locked     | any        | true     | 🔒 Skip CRM, update externalData  |
 
 **Badge UI (Option 4 - À implémenter)** :
+
 - `isLocked=false` → Badge "Digiforma" (orange)
 - `isLocked=true` → Badge "CRM" (bleu) + tooltip "Source: Digiforma"
 
 **Métriques** :
+
 - ✅ 5 tâches complétées
 - ✅ 7 fichiers créés/modifiés
 - ✅ ~800 lignes de code (migration + models + service + doc)
@@ -664,6 +672,7 @@ interface SyncCreateOptions<T> extends CreateOptions<T> {
 - ✅ Types TypeScript stricts (zéro `any`)
 
 **Bénéfices Business** :
+
 - 🚀 Double saisie temporaire acceptable (pas de perte de données)
 - 🔒 Données CRM enrichies protégées automatiquement
 - 📊 Traçabilité complète (source, date lock, raison)
@@ -671,6 +680,7 @@ interface SyncCreateOptions<T> extends CreateOptions<T> {
 - ✅ Transition douce vers CRM source unique
 
 **Prochaines étapes** :
+
 - Phase 2 : Hooks auto-lock dans Note/Meeting/Call/Task/Reminder
 - Phase 3 : ImportService Excel avec même logique
 - Phase 4 : UI badges (ContactSourceBadge, InstitutionSourceBadge)
@@ -705,7 +715,6 @@ Database initialization failed: connect ECONNREFUSED 127.0.0.1:5432
    ```
 
 2. **Option B**: Configurer SQLite pour les tests (recommandé)
-
    - Plus rapide
    - Pas de dépendance externe
    - Isolation complète
@@ -777,7 +786,6 @@ Database initialization failed: connect ECONNREFUSED 127.0.0.1:5432
 **Résultats**:
 
 - ✅ **AvatarService étendu** (+179 lignes):
-
   - `generateAndStoreAvatar()` - Télécharge et stocke le SVG localement
   - `getAvatarContent()` - Récupère le SVG local (génère si manquant)
   - `getLocalAvatarUrl()` - Retourne l'URL locale (`/api/avatars/{userId}-{style}.svg`)
@@ -786,14 +794,12 @@ Database initialization failed: connect ECONNREFUSED 127.0.0.1:5432
   - `regenerateAvatar()` - Regénère un avatar
 
 - ✅ **AvatarController créé** (145 lignes):
-
   - `GET /api/avatars/:filename` - Sert les fichiers SVG
   - `POST /api/avatars/:userId/regenerate` - Regénère un avatar
   - Génération à la volée si fichier manquant (fallback)
   - Cache HTTP (24h)
 
 - ✅ **User model mis à jour**:
-
   - Hook `afterCreate` - Génère l'avatar automatiquement
   - Hook `afterUpdate` - Regénère si nom/style change
   - `getAvatarUrl()` - Retourne l'URL locale au lieu de DiceBear
@@ -827,7 +833,6 @@ Database initialization failed: connect ECONNREFUSED 127.0.0.1:5432
 **Résultats**:
 
 - ✅ **UserController.createUser()** (97 lignes):
-
   - `POST /api/users` - Créer un nouvel utilisateur
   - Validation email unique
   - Validation force du mot de passe (8+ chars, majuscule, minuscule, chiffre, caractère spécial)
@@ -837,7 +842,6 @@ Database initialization failed: connect ECONNREFUSED 127.0.0.1:5432
   - Restriction: super_admin uniquement
 
 - ✅ **UserController.resetUserPassword()** (58 lignes):
-
   - `POST /api/users/:id/reset-password` - Réinitialiser le mot de passe d'un utilisateur
   - Validation force du mot de passe
   - Restriction: super_admin uniquement

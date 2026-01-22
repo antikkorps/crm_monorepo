@@ -13,10 +13,10 @@
           <v-card-text class="pa-3">
             <div class="d-flex align-center justify-space-between">
               <div>
-                <div class="text-caption text-medium-emphasis">Lead Score</div>
+                <div class="text-caption text-medium-emphasis">{{ t('leadScore.title') }}</div>
                 <div class="text-h4 font-weight-bold">
-                  {{ loading ? "..." : leadScore?.score || 0 }}
-                  <span class="text-h6">/100</span>
+                  {{ loading ? "..." : error ? t('leadScore.noData') : leadScore?.score || 0 }}
+                  <span class="text-h6" v-if="!error">/100</span>
                 </div>
                 <v-chip
                   v-if="!loading && leadScore"
@@ -38,13 +38,15 @@
                 >
                   <v-icon size="32">{{ getLevelIcon(leadScore.level) }}</v-icon>
                 </v-progress-circular>
-                <v-progress-circular v-else indeterminate color="grey" :size="80" />
+                <v-progress-circular v-else-if="loading" indeterminate color="grey" :size="80" />
+                <v-icon v-else-if="error" size="80" color="error">mdi-alert-circle-outline</v-icon>
+                <v-icon v-else size="80" color="grey">mdi-help-circle-outline</v-icon>
               </div>
             </div>
           </v-card-text>
         </v-card>
       </template>
-      <span>Cliquez pour plus de détails</span>
+      <span>{{ t('leadScore.clickForDetails') }}</span>
     </v-tooltip>
 
     <!-- Details Dialog -->
@@ -55,7 +57,7 @@
             <v-icon :color="leadScore.color" class="mr-2" size="large">
               {{ getLevelIcon(leadScore.level) }}
             </v-icon>
-            <span>Détails du Lead Score</span>
+            <span>{{ t('leadScore.detailsTitle') }}</span>
           </div>
           <v-chip :color="leadScore.color" variant="tonal">
             {{ leadScore.score }}/100 - {{ formatLevel(leadScore.level) }}
@@ -67,14 +69,14 @@
         <v-card-text class="pa-4">
           <!-- Score Breakdown -->
           <div class="mb-6">
-            <h3 class="text-h6 mb-3">Répartition du score</h3>
+            <h3 class="text-h6 mb-3">{{ t('leadScore.scoreBreakdown') }}</h3>
             <v-row>
               <v-col cols="12" sm="6" md="4">
                 <v-card variant="outlined">
                   <v-card-text class="text-center pa-3">
                     <v-icon color="primary" size="large" class="mb-2">mdi-domain</v-icon>
                     <div class="text-h5 font-weight-bold">{{ leadScore.factors.sizeScore }}</div>
-                    <div class="text-caption">Taille (20)</div>
+                    <div class="text-caption">{{ t('leadScore.factors.size') }} ({{ t('leadScore.factors.sizeMax') }})</div>
                   </v-card-text>
                 </v-card>
               </v-col>
@@ -83,7 +85,7 @@
                   <v-card-text class="text-center pa-3">
                     <v-icon color="success" size="large" class="mb-2">mdi-medical-bag</v-icon>
                     <div class="text-h5 font-weight-bold">{{ leadScore.factors.specialtyMatchScore }}</div>
-                    <div class="text-caption">Spécialité (20)</div>
+                    <div class="text-caption">{{ t('leadScore.factors.specialty') }} ({{ t('leadScore.factors.specialtyMax') }})</div>
                   </v-card-text>
                 </v-card>
               </v-col>
@@ -92,7 +94,7 @@
                   <v-card-text class="text-center pa-3">
                     <v-icon color="warning" size="large" class="mb-2">mdi-chart-timeline-variant</v-icon>
                     <div class="text-h5 font-weight-bold">{{ leadScore.factors.engagementScore }}</div>
-                    <div class="text-caption">Engagement (30)</div>
+                    <div class="text-caption">{{ t('leadScore.factors.engagement') }} ({{ t('leadScore.factors.engagementMax') }})</div>
                   </v-card-text>
                 </v-card>
               </v-col>
@@ -101,7 +103,7 @@
                   <v-card-text class="text-center pa-3">
                     <v-icon color="info" size="large" class="mb-2">mdi-cash-multiple</v-icon>
                     <div class="text-h5 font-weight-bold">{{ leadScore.factors.budgetScore }}</div>
-                    <div class="text-caption">Budget (20)</div>
+                    <div class="text-caption">{{ t('leadScore.factors.budget') }} ({{ t('leadScore.factors.budgetMax') }})</div>
                   </v-card-text>
                 </v-card>
               </v-col>
@@ -110,7 +112,7 @@
                   <v-card-text class="text-center pa-3">
                     <v-icon color="purple" size="large" class="mb-2">mdi-clock-fast</v-icon>
                     <div class="text-h5 font-weight-bold">{{ leadScore.factors.responseScore }}</div>
-                    <div class="text-caption">Réactivité (10)</div>
+                    <div class="text-caption">{{ t('leadScore.factors.response') }} ({{ t('leadScore.factors.responseMax') }})</div>
                   </v-card-text>
                 </v-card>
               </v-col>
@@ -121,7 +123,7 @@
 
           <!-- Signals -->
           <div v-if="leadScore.signals && leadScore.signals.length > 0" class="mb-6">
-            <h3 class="text-h6 mb-3">Signaux détectés</h3>
+            <h3 class="text-h6 mb-3">{{ t('leadScore.signals') }}</h3>
             <v-list>
               <v-list-item
                 v-for="(signal, index) in leadScore.signals"
@@ -133,14 +135,14 @@
                     {{ getSignalIcon(signal.type) }}
                   </v-icon>
                 </template>
-                <v-list-item-title>{{ signal.signal }}</v-list-item-title>
+                <v-list-item-title>{{ t(`leadScore.signalMessages.${signal.signalKey}`, signal.signalParams || {}) }}</v-list-item-title>
                 <template v-slot:append>
                   <v-chip
                     :color="getSignalColor(signal.type)"
                     size="x-small"
                     variant="tonal"
                   >
-                    Impact: {{ signal.impact > 0 ? '+' : '' }}{{ signal.impact }}
+                    {{ t('leadScore.impact') }}: {{ signal.impact > 0 ? '+' : '' }}{{ signal.impact }}
                   </v-chip>
                 </template>
               </v-list-item>
@@ -151,7 +153,7 @@
 
           <!-- Recommendations -->
           <div v-if="leadScore.recommendations && leadScore.recommendations.length > 0">
-            <h3 class="text-h6 mb-3">Recommandations</h3>
+            <h3 class="text-h6 mb-3">{{ t('leadScore.recommendations') }}</h3>
             <v-list>
               <v-list-item
                 v-for="(recommendation, index) in leadScore.recommendations"
@@ -161,7 +163,7 @@
                 <template v-slot:prepend>
                   <v-icon color="primary">mdi-lightbulb-outline</v-icon>
                 </template>
-                <v-list-item-title>{{ recommendation }}</v-list-item-title>
+                <v-list-item-title>{{ t(`leadScore.recommendationMessages.${recommendation.key}`, recommendation.params || {}) }}</v-list-item-title>
               </v-list-item>
             </v-list>
           </div>
@@ -169,7 +171,7 @@
 
         <v-card-actions>
           <v-spacer />
-          <v-btn variant="text" @click="showDetails = false">Fermer</v-btn>
+          <v-btn variant="text" @click="showDetails = false">{{ t('leadScore.close') }}</v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
@@ -177,9 +179,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed } from "vue"
+import { ref, onMounted } from "vue"
+import { useI18n } from "vue-i18n"
 import { analyticsApi } from "@/services/api"
 import type { LeadScore } from "@/services/api/analytics"
+
+const { t } = useI18n()
 
 const props = defineProps<{
   institutionId: string
@@ -188,19 +193,28 @@ const props = defineProps<{
 const leadScore = ref<LeadScore & { color: string } | null>(null)
 const loading = ref(false)
 const showDetails = ref(false)
+const error = ref(false)
+const loadedOnce = ref(false)
 
 const loadLeadScore = async () => {
+  // Only load once per component mount, prevent duplicate calls
+  if (!props.institutionId || loading.value || loadedOnce.value) {
+    return
+  }
+
   loading.value = true
+  loadedOnce.value = true
+  error.value = false
 
   try {
     const response = await analyticsApi.getLeadScore(props.institutionId)
-    const data = response.data.data
+    // apiClient (fetch) returns JSON directly: { success, data }
+    const data = response.data
 
     // Check if data exists before accessing properties
     if (!data) {
       console.warn("No lead score data returned from API")
       leadScore.value = null
-      loading.value = false
       return
     }
 
@@ -209,20 +223,23 @@ const loadLeadScore = async () => {
       ...data,
       color: getLevelColor(data.level),
     }
-  } catch (err: any) {
+  } catch (err) {
     console.error("Failed to load lead score:", err)
+    error.value = true
   } finally {
     loading.value = false
   }
 }
 
+const levelIcons: Record<"hot" | "warm" | "cold", string> = {
+  hot: "🔥",
+  warm: "🌡️",
+  cold: "❄️",
+}
+
 const formatLevel = (level: "hot" | "warm" | "cold"): string => {
-  const labels: Record<"hot" | "warm" | "cold", string> = {
-    hot: "🔥 Chaud",
-    warm: "🌡️ Tiède",
-    cold: "❄️ Froid",
-  }
-  return labels[level] || level
+  const icon = levelIcons[level] || ""
+  return `${icon} ${t(`leadScore.levels.${level}`)}`
 }
 
 const getLevelIcon = (level: "hot" | "warm" | "cold"): string => {

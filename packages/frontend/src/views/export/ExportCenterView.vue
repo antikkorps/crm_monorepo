@@ -4,11 +4,11 @@
       <div class="page-header">
         <div class="header-content">
           <h1 class="page-title">
-            <i class="pi pi-download"></i>
-            Export Center
+            <v-icon class="mr-2">mdi-download</v-icon>
+            {{ $t('export.title') }}
           </h1>
           <p class="page-subtitle">
-            Export your CRM data in various formats for analysis and reporting
+            {{ $t('export.description') }}
           </p>
         </div>
       </div>
@@ -16,7 +16,7 @@
       <div class="export-content">
         <!-- Export Types Grid -->
         <div class="export-types-section">
-          <h2>Available Exports</h2>
+          <h2>{{ $t('export.availableExports') }}</h2>
           <div class="export-types-grid">
             <div
               v-for="exportType in availableExports"
@@ -26,16 +26,16 @@
             >
               <div class="card-header">
                 <div class="card-icon">
-                  <i :class="getExportIcon(exportType.type)"></i>
+                  <v-icon>{{ getExportIcon(exportType.type) }}</v-icon>
                 </div>
                 <div class="card-title">
-                  <h3>{{ exportType.name }}</h3>
+                  <h3>{{ getExportTypeName(exportType.type) }}</h3>
                   <span class="export-count" v-if="exportType.permissions">
-                    {{ getRecordCount(exportType.type) }} records
+                    {{ getRecordCount(exportType.type) }} {{ $t('export.records') }}
                   </span>
                 </div>
               </div>
-              <p class="card-description">{{ exportType.description }}</p>
+              <p class="card-description">{{ $t(`export.descriptions.${exportType.type}`) }}</p>
               <div class="card-actions">
                 <v-btn
                   v-if="exportType.permissions"
@@ -44,104 +44,26 @@
                   class="export-btn"
                   @click="openExportDialog(exportType)"
                 >
-                  Export {{ exportType.name }}
+                  {{ $t('export.exportButton') }} {{ getExportTypeName(exportType.type) }}
                 </v-btn>
                 <v-btn v-else color="secondary" prepend-icon="mdi-lock" disabled>
-                  No Permission
+                  {{ $t('export.noPermission') }}
                 </v-btn>
               </div>
             </div>
           </div>
         </div>
 
-        <!-- Export History -->
-        <div class="export-history-section">
-          <h2>Export History</h2>
-          <v-data-table
-            :items="exportHistory"
-            :loading="loadingHistory"
-            class="export-history-table"
-            :items-per-page="10"
-            :items-per-page-options="[5, 10, 25]"
-            density="compact"
-          >
-            <template #top>
-              <div class="table-header">
-                <v-text-field
-                  v-model="historyFilters.global.value"
-                  placeholder="Search exports..."
-                  prepend-inner-icon="mdi-magnify"
-                  variant="outlined"
-                  density="compact"
-                  class="search-field"
-                />
-              </div>
-            </template>
-
-            <template #item.exportType="{ item }">
-              <span class="export-type-badge" :class="item.exportType || 'unknown'">
-                {{ getExportTypeName(item.exportType || "unknown") }}
-              </span>
-            </template>
-
-            <template #item.createdAt="{ item }">
-              {{ formatDate(item.createdAt) }}
-            </template>
-
-            <template #item.format="{ item }">
-              <span class="format-badge">{{
-                (item.format || "unknown").toUpperCase()
-              }}</span>
-            </template>
-
-            <template #item.status="{ item }">
-              <span class="status-badge" :class="item.status">
-                {{ item.status }}
-              </span>
-            </template>
-
-            <template #item.recordCount="{ item }">
-              {{ item.recordCount?.toLocaleString() || "N/A" }}
-            </template>
-
-            <template #item.actions="{ item }">
-              <div class="action-buttons">
-                <v-btn
-                  v-if="item.status === 'completed' && item.downloadUrl"
-                  icon="mdi-download"
-                  variant="text"
-                  size="small"
-                  @click="downloadExport(item)"
-                />
-                <v-btn
-                  v-if="item.status === 'failed'"
-                  icon="mdi-alert-circle"
-                  variant="text"
-                  color="error"
-                  size="small"
-                  @click="showErrorDetails(item)"
-                />
-                <v-btn
-                  icon="mdi-delete"
-                  variant="text"
-                  color="error"
-                  size="small"
-                  @click="deleteExport(item)"
-                />
-              </div>
-            </template>
-          </v-data-table>
-        </div>
       </div>
 
       <!-- Export Configuration Dialog -->
       <v-dialog v-model="showExportDialog" persistent width="600" class="export-dialog">
         <v-card>
-          <v-card-title>{{ `Export ${selectedExportType?.name || ""}` }}</v-card-title>
+          <v-card-title>{{ $t('export.dialog.title', { type: getExportTypeName(selectedExportType?.type || '') }) }}</v-card-title>
           <v-card-text>
             <div class="export-form" v-if="selectedExportType">
               <div class="form-section">
-                <h3>Export Options</h3>
+                <h3>{{ $t('export.dialog.options') }}</h3>
 
                 <!-- Format Selection -->
                 <div class="field">
@@ -150,8 +72,8 @@
                     :items="formatOptions"
                     item-title="name"
                     item-value="value"
-                    label="Export Format *"
-                    placeholder="Select format"
+                    :label="$t('export.dialog.formatLabel')"
+                    :placeholder="$t('export.dialog.selectFormat')"
                     density="compact"
                     variant="outlined"
                   />
@@ -163,16 +85,16 @@
                     <v-text-field
                       v-model="dateRangeStart"
                       type="date"
-                      label="Start Date"
+                      :label="$t('export.dialog.startDate')"
                       density="compact"
                       variant="outlined"
                       class="date-input"
                     />
-                    <span class="date-separator">to</span>
+                    <span class="date-separator">{{ $t('export.dialog.to') }}</span>
                     <v-text-field
                       v-model="dateRangeEnd"
                       type="date"
-                      label="End Date"
+                      :label="$t('export.dialog.endDate')"
                       density="compact"
                       variant="outlined"
                       class="date-input"
@@ -184,8 +106,8 @@
                 <div class="field">
                   <v-text-field
                     v-model="exportOptions.searchQuery"
-                    label="Search Query (Optional)"
-                    placeholder="Filter results..."
+                    :label="$t('export.dialog.searchQuery')"
+                    :placeholder="$t('export.dialog.searchPlaceholder')"
                     density="compact"
                     variant="outlined"
                   />
@@ -198,8 +120,8 @@
                     :items="institutionTypeOptions"
                     item-title="name"
                     item-value="value"
-                    label="Institution Type"
-                    placeholder="All types"
+                    :label="$t('export.dialog.institutionType')"
+                    :placeholder="$t('export.dialog.allTypes')"
                     clearable
                     density="compact"
                     variant="outlined"
@@ -212,8 +134,8 @@
                     :items="taskStatusOptions"
                     item-title="name"
                     item-value="value"
-                    label="Task Status"
-                    placeholder="All statuses"
+                    :label="$t('export.dialog.taskStatus')"
+                    :placeholder="$t('export.dialog.allStatuses')"
                     clearable
                     density="compact"
                     variant="outlined"
@@ -224,7 +146,7 @@
                 <div class="field-checkbox">
                   <v-checkbox
                     v-model="exportOptions.includeHeaders"
-                    label="Include column headers"
+                    :label="$t('export.dialog.includeHeaders')"
                     density="compact"
                   />
                 </div>
@@ -233,7 +155,7 @@
                 <div class="field-checkbox">
                   <v-checkbox
                     v-model="exportOptions.useQueue"
-                    label="Use background processing for large exports"
+                    :label="$t('export.dialog.useQueue')"
                     density="compact"
                   />
                 </div>
@@ -241,7 +163,7 @@
 
               <!-- Data Preview -->
               <div class="preview-section" v-if="previewData.length > 0">
-                <h3>Data Preview</h3>
+                <h3>{{ $t('export.dialog.dataPreview') }}</h3>
                 <ExportPreview
                   :data="previewData"
                   :total-records="estimatedRecordCount"
@@ -255,7 +177,7 @@
               <v-card-actions class="form-actions">
                 <v-spacer></v-spacer>
                 <v-btn variant="text" prepend-icon="mdi-close" @click="closeExportDialog">
-                  Cancel
+                  {{ $t('export.dialog.cancel') }}
                 </v-btn>
                 <v-btn
                   color="primary"
@@ -263,7 +185,7 @@
                   :loading="exporting"
                   @click="performExport"
                 >
-                  Export
+                  {{ $t('export.dialog.export') }}
                 </v-btn>
               </v-card-actions>
             </div>
@@ -274,36 +196,36 @@
       <!-- Error Details Dialog -->
       <v-dialog v-model="showErrorDialog" persistent width="500" class="error-dialog">
         <v-card>
-          <v-card-title>Export Error Details</v-card-title>
+          <v-card-title>{{ $t('export.errorDialog.title') }}</v-card-title>
           <v-card-text>
             <div class="error-content" v-if="selectedErrorExport">
               <div class="error-message">
-                <i class="pi pi-exclamation-triangle error-icon"></i>
+                <v-icon color="error" class="error-icon">mdi-alert-circle</v-icon>
                 <div>
-                  <h4>Export Failed</h4>
+                  <h4>{{ $t('export.errorDialog.exportFailed') }}</h4>
                   <p>{{ selectedErrorExport.error }}</p>
                 </div>
               </div>
               <div class="error-details">
-                <h5>Details:</h5>
+                <h5>{{ $t('export.errorDialog.details') }}</h5>
                 <ul>
                   <li>
-                    <strong>Type:</strong>
+                    <strong>{{ $t('export.errorDialog.type') }}</strong>
                     {{ getExportTypeName(selectedErrorExport.exportType || "unknown") }}
                   </li>
                   <li>
-                    <strong>Format:</strong>
+                    <strong>{{ $t('export.errorDialog.format') }}</strong>
                     {{ (selectedErrorExport.format || "unknown").toUpperCase() }}
                   </li>
                   <li>
-                    <strong>Date:</strong> {{ formatDate(selectedErrorExport.createdAt) }}
+                    <strong>{{ $t('export.errorDialog.date') }}</strong> {{ formatDate(selectedErrorExport.createdAt) }}
                   </li>
                 </ul>
               </div>
             </div>
             <v-card-actions>
               <v-spacer></v-spacer>
-              <v-btn variant="text" @click="showErrorDialog = false">Close</v-btn>
+              <v-btn variant="text" @click="showErrorDialog = false">{{ $t('export.errorDialog.close') }}</v-btn>
             </v-card-actions>
           </v-card-text>
         </v-card>
@@ -322,7 +244,7 @@
         </div>
 
         <template v-slot:actions>
-          <v-btn variant="text" @click="snackbar.visible = false"> Close </v-btn>
+          <v-btn variant="text" @click="snackbar.visible = false">{{ $t('common.close') }}</v-btn>
         </template>
       </v-snackbar>
     </div>
@@ -340,19 +262,17 @@ import {
   ExportOptions,
 } from "@/services/api/export"
 import { computed, onMounted, ref } from "vue"
+import { useI18n } from "vue-i18n"
+
+const { t } = useI18n()
 
 // Reactive data
 const availableExports = ref<ExportMetadata["availableExports"]>([])
-const exportHistory = ref<ExportJob[]>([])
-const loadingHistory = ref(false)
 const showExportDialog = ref(false)
 const showErrorDialog = ref(false)
 const selectedExportType = ref<ExportMetadata["availableExports"][0] | null>(null)
 const selectedErrorExport = ref<ExportJob | null>(null)
 const exporting = ref(false)
-const historyFilters = ref({
-  global: { value: null },
-})
 
 // Vuetify snackbar state
 const snackbar = ref({
@@ -376,26 +296,26 @@ const exportOptions = ref<ExportOptions>({
   useQueue: false,
 })
 
-// Options for dropdowns
-const formatOptions = [
-  { name: "CSV (Comma Separated Values)", value: "csv" },
-  { name: "Excel (XLSX)", value: "xlsx" },
-  { name: "JSON (Structured Data)", value: "json" },
-]
+// Options for dropdowns (computed for i18n reactivity)
+const formatOptions = computed(() => [
+  { name: t('export.format.csv'), value: "csv" },
+  { name: t('export.format.xlsx'), value: "xlsx" },
+  { name: t('export.format.json'), value: "json" },
+])
 
-const institutionTypeOptions = [
-  { name: "Hospital", value: "hospital" },
-  { name: "Clinic", value: "clinic" },
-  { name: "Medical Center", value: "medical_center" },
-  { name: "Specialty Center", value: "specialty_center" },
-]
+const institutionTypeOptions = computed(() => [
+  { name: t('export.institutionTypes.hospital'), value: "hospital" },
+  { name: t('export.institutionTypes.clinic'), value: "clinic" },
+  { name: t('export.institutionTypes.medical_center'), value: "medical_center" },
+  { name: t('export.institutionTypes.specialty_center'), value: "specialty_center" },
+])
 
-const taskStatusOptions = [
-  { name: "Pending", value: "pending" },
-  { name: "In Progress", value: "in_progress" },
-  { name: "Completed", value: "completed" },
-  { name: "Cancelled", value: "cancelled" },
-]
+const taskStatusOptions = computed(() => [
+  { name: t('export.taskStatuses.pending'), value: "pending" },
+  { name: t('export.taskStatuses.in_progress'), value: "in_progress" },
+  { name: t('export.taskStatuses.completed'), value: "completed" },
+  { name: t('export.taskStatuses.cancelled'), value: "cancelled" },
+])
 
 // Computed properties for date range handling
 const dateRangeStart = computed({
@@ -434,24 +354,21 @@ const showNotification = (
 
 const getExportIcon = (type: string) => {
   const icons = {
-    institutions: "pi pi-building",
-    contacts: "pi pi-users",
-    tasks: "pi pi-check-square",
-    quotes: "pi pi-file-pdf",
-    invoices: "pi pi-receipt",
+    institutions: "mdi-domain",
+    contacts: "mdi-account-group",
+    tasks: "mdi-checkbox-marked-outline",
+    quotes: "mdi-file-document-outline",
+    invoices: "mdi-receipt",
+    opportunities: "mdi-chart-line",
   }
-  return icons[type as keyof typeof icons] || "pi pi-file"
+  return icons[type as keyof typeof icons] || "mdi-file"
 }
 
 const getExportTypeName = (type: string) => {
-  const names = {
-    institutions: "Medical Institutions",
-    contacts: "Contacts",
-    tasks: "Tasks",
-    quotes: "Quotes",
-    invoices: "Invoices",
-  }
-  return names[type as keyof typeof names] || type
+  const key = `export.types.${type}`
+  const translated = t(key)
+  // Return the translated value, or fallback to the type if not found
+  return translated !== key ? translated : type
 }
 
 const getRecordCount = (type: string) => {
@@ -464,7 +381,7 @@ const getRecordCount = (type: string) => {
 }
 
 const formatDate = (date: string) => {
-  return new Date(date).toLocaleDateString("en-US", {
+  return new Date(date).toLocaleDateString("fr-FR", {
     year: "numeric",
     month: "short",
     day: "numeric",
@@ -530,6 +447,9 @@ const performExport = async () => {
       case "invoices":
         blob = await ExportApiService.exportInvoices(options)
         break
+      case "opportunities":
+        blob = await ExportApiService.exportOpportunities(options)
+        break
       default:
         throw new Error("Unsupported export type")
     }
@@ -542,17 +462,16 @@ const performExport = async () => {
     ExportApiService.downloadBlob(blob, filename)
 
     showNotification(
-      `${selectedExportType.value.name} exported successfully`,
+      t('export.success.exportedType', { type: getExportTypeName(selectedExportType.value.type) }),
       "success",
       "mdi-check-circle"
     )
 
     closeExportDialog()
-    loadExportHistory() // Refresh history
   } catch (error) {
     console.error("Export error:", error)
     showNotification(
-      "An error occurred during export. Please try again.",
+      t('export.notifications.exportError'),
       "error",
       "mdi-alert-circle"
     )
@@ -561,30 +480,13 @@ const performExport = async () => {
   }
 }
 
-const downloadExport = (exportJob: ExportJob) => {
-  if (exportJob.downloadUrl) {
-    window.open(exportJob.downloadUrl, "_blank")
-  }
-}
-
-const showErrorDetails = (exportJob: ExportJob) => {
-  selectedErrorExport.value = exportJob
-  showErrorDialog.value = true
-}
-
-const deleteExport = (exportJob: ExportJob) => {
-  // Implement delete functionality
-  console.log("Delete export:", exportJob)
-  showNotification("Delete functionality not yet implemented", "info", "mdi-information")
-}
-
 const loadExportMetadata = async () => {
   try {
     const metadata = await ExportApiService.getExportMetadata()
     availableExports.value = metadata.availableExports
   } catch (error) {
     console.error("Failed to load export metadata:", error)
-    showNotification("Failed to load export options", "error", "mdi-alert-circle")
+    showNotification(t('export.notifications.loadError'), "error", "mdi-alert-circle")
   }
 }
 
@@ -747,6 +649,55 @@ const generateMockPreviewData = (exportType: string) => {
         ],
       }
 
+    case "opportunities":
+      return {
+        totalCount: 150,
+        fields: [
+          { key: "id", label: "ID", type: "string" as const, required: true },
+          { key: "name", label: "Opportunity Name", type: "string" as const, required: true },
+          { key: "stage", label: "Stage", type: "string" as const },
+          { key: "value", label: "Value", type: "number" as const },
+          { key: "probability", label: "Probability (%)", type: "number" as const },
+          { key: "expectedCloseDate", label: "Expected Close", type: "date" as const },
+          { key: "institutionName", label: "Institution", type: "string" as const },
+          { key: "contactPersonName", label: "Contact", type: "string" as const },
+          { key: "assignedUser", label: "Assigned To", type: "string" as const },
+          { key: "tags", label: "Tags", type: "string" as const },
+          { key: "source", label: "Source", type: "string" as const },
+          { key: "createdAt", label: "Created Date", type: "date" as const },
+        ],
+        data: [
+          {
+            id: "1",
+            name: "Hospital Equipment Deal",
+            stage: "proposal",
+            value: 50000,
+            probability: 75,
+            expectedCloseDate: "2025-02-15T00:00:00Z",
+            institutionName: "City General Hospital",
+            contactPersonName: "John Smith",
+            assignedUser: "Jane Doe",
+            tags: "medical, equipment",
+            source: "referral",
+            createdAt: "2024-12-01T10:30:00Z",
+          },
+          {
+            id: "2",
+            name: "Training Program",
+            stage: "negotiation",
+            value: 25000,
+            probability: 60,
+            expectedCloseDate: "2025-03-01T00:00:00Z",
+            institutionName: "Medical Center Plus",
+            contactPersonName: "Sarah Johnson",
+            assignedUser: "Bob Wilson",
+            tags: "training, services",
+            source: "web",
+            createdAt: "2024-12-05T14:15:00Z",
+          },
+        ],
+      }
+
     default:
       return {
         totalCount: 0,
@@ -756,41 +707,9 @@ const generateMockPreviewData = (exportType: string) => {
   }
 }
 
-const loadExportHistory = async () => {
-  loadingHistory.value = true
-  try {
-    // For now, load mock data. In real implementation, this would come from backend
-    exportHistory.value = [
-      {
-        jobId: "job-001",
-        exportType: "institutions",
-        format: "csv",
-        status: "completed",
-        recordCount: 1234,
-        createdAt: new Date().toISOString(),
-        downloadUrl: "#",
-      },
-      {
-        jobId: "job-002",
-        exportType: "tasks",
-        format: "xlsx",
-        status: "completed",
-        recordCount: 567,
-        createdAt: new Date(Date.now() - 86400000).toISOString(),
-        downloadUrl: "#",
-      },
-    ] as ExportJob[]
-  } catch (error) {
-    console.error("Failed to load export history:", error)
-  } finally {
-    loadingHistory.value = false
-  }
-}
-
 // Lifecycle
 onMounted(() => {
   loadExportMetadata()
-  loadExportHistory()
 })
 </script>
 
@@ -817,11 +736,7 @@ onMounted(() => {
   color: #374151;
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-}
-
-.page-title i {
-  color: #3b82f6;
+  margin: 0;
 }
 
 .page-subtitle {
@@ -856,6 +771,8 @@ onMounted(() => {
   padding: 1.5rem;
   transition: all 0.2s ease;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
 }
 
 .export-type-card:hover:not(.disabled) {
@@ -908,11 +825,13 @@ onMounted(() => {
   font-size: 0.875rem;
   line-height: 1.5;
   margin-bottom: 1.5rem;
+  flex-grow: 1;
 }
 
 .card-actions {
   display: flex;
   justify-content: flex-end;
+  margin-top: auto;
 }
 
 .export-btn {

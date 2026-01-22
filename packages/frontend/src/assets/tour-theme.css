@@ -1,4 +1,4 @@
-/* Custom Shepherd.js theme for Medical CRM */
+/* Custom Shepherd.js theme for OPEx_CRM */
 
 .shepherd-element {
   z-index: 9999;
@@ -84,19 +84,19 @@
 }
 
 /* Arrow customization */
-.shepherd-element[data-popper-placement^='top'] > .shepherd-arrow {
+.shepherd-element[data-popper-placement^="top"] > .shepherd-arrow {
   bottom: -8px;
 }
 
-.shepherd-element[data-popper-placement^='bottom'] > .shepherd-arrow {
+.shepherd-element[data-popper-placement^="bottom"] > .shepherd-arrow {
   top: -8px;
 }
 
-.shepherd-element[data-popper-placement^='left'] > .shepherd-arrow {
+.shepherd-element[data-popper-placement^="left"] > .shepherd-arrow {
   right: -8px;
 }
 
-.shepherd-element[data-popper-placement^='right'] > .shepherd-arrow {
+.shepherd-element[data-popper-placement^="right"] > .shepherd-arrow {
   left: -8px;
 }
 

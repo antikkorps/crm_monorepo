@@ -2,22 +2,22 @@
   <div class="export-preview">
     <div class="preview-header">
       <div class="header-info">
-        <h3>Data Preview</h3>
+        <h3>{{ $t('export.preview.title') }}</h3>
         <p class="preview-description">
-          Preview of the first {{ data.length }} records that will be exported
+          {{ $t('export.preview.description', { count: data.length }) }}
         </p>
       </div>
       <div class="header-stats">
         <div class="stat-item">
-          <span class="stat-label">Total Records:</span>
-          <span class="stat-value">{{ totalRecords.toLocaleString() }}</span>
+          <span class="stat-label">{{ $t('export.preview.totalRecords') }}</span>
+          <span class="stat-value">{{ totalRecords.toLocaleString('fr-FR') }}</span>
         </div>
         <div class="stat-item">
-          <span class="stat-label">Format:</span>
+          <span class="stat-label">{{ $t('export.preview.format') }}</span>
           <span class="stat-value">{{ format.toUpperCase() }}</span>
         </div>
         <div class="stat-item">
-          <span class="stat-label">Estimated Size:</span>
+          <span class="stat-label">{{ $t('export.preview.estimatedSize') }}</span>
           <span class="stat-value">{{ estimatedSize }}</span>
         </div>
       </div>
@@ -70,7 +70,7 @@
         <pre class="json-preview">{{ JSON.stringify(data.slice(0, 3), null, 2) }}</pre>
         <p class="json-note">
           <v-icon size="small" class="mr-1">mdi-information</v-icon>
-          Showing first 3 records. Full export will include all {{ totalRecords }} records.
+          {{ $t('export.preview.jsonNote', { count: totalRecords }) }}
         </p>
       </div>
 
@@ -79,7 +79,7 @@
         <pre class="csv-preview">{{ generateCSVPreview() }}</pre>
         <p class="csv-note">
           <v-icon size="small" class="mr-1">mdi-information</v-icon>
-          CSV format with {{ columns.length }} columns and {{ totalRecords }} total records.
+          {{ $t('export.preview.csvNote', { columns: columns.length, count: totalRecords }) }}
         </p>
       </div>
 
@@ -87,18 +87,49 @@
       <div class="no-data" v-if="data.length === 0">
         <div class="no-data-content">
           <v-icon size="3rem" color="grey" class="mb-3">mdi-inbox</v-icon>
-          <h4>No Data Available</h4>
-          <p>No records match the current export criteria.</p>
+          <h4>{{ $t('export.preview.noData') }}</h4>
+          <p>{{ $t('export.preview.noDataDescription') }}</p>
         </div>
       </div>
     </div>
 
     <!-- Field Selection -->
     <div class="field-selection" v-if="availableFields.length > 0">
-      <h4>Field Selection</h4>
-      <p class="field-description">
-        Select which fields to include in your export:
-      </p>
+      <div class="field-selection-header">
+        <div>
+          <h4>{{ $t('export.preview.fieldSelection') }}</h4>
+          <p class="field-description">
+            {{ $t('export.preview.fieldSelectionDescription') }}
+          </p>
+        </div>
+        <div class="field-actions">
+          <v-btn
+            variant="text"
+            size="small"
+            prepend-icon="mdi-checkbox-multiple-marked"
+            @click="selectAllFields"
+          >
+            {{ $t('export.preview.selectAll') }}
+          </v-btn>
+          <v-btn
+            variant="text"
+            size="small"
+            color="error"
+            prepend-icon="mdi-checkbox-multiple-blank"
+            @click="deselectAllFields"
+          >
+            {{ $t('export.preview.deselectAll') }}
+          </v-btn>
+          <v-btn
+            variant="text"
+            size="small"
+            prepend-icon="mdi-refresh"
+            @click="resetToDefault"
+          >
+            {{ $t('export.preview.resetDefault') }}
+          </v-btn>
+        </div>
+      </div>
 
       <div class="field-grid">
         <div
@@ -119,40 +150,12 @@
             color="warning"
             size="small"
             class="ml-1"
-            title="Required field"
+            :title="$t('export.preview.requiredField')"
           >
             mdi-star
           </v-icon>
         </div>
       </div>
-
-       <div class="field-actions">
-         <v-btn
-           variant="text"
-           size="small"
-           prepend-icon="mdi-checkbox-multiple-marked"
-           @click="selectAllFields"
-         >
-           Select All
-         </v-btn>
-         <v-btn
-           variant="text"
-           size="small"
-           color="error"
-           prepend-icon="mdi-checkbox-multiple-blank"
-           @click="deselectAllFields"
-         >
-           Deselect All
-         </v-btn>
-         <v-btn
-           variant="text"
-           size="small"
-           prepend-icon="mdi-refresh"
-           @click="resetToDefault"
-         >
-           Reset to Default
-         </v-btn>
-       </div>
     </div>
   </div>
 </template>
@@ -256,7 +259,7 @@ const inferType = (value: any): string => {
 const formatDate = (date: string | Date) => {
   if (!date) return '-'
   try {
-    return new Date(date).toLocaleDateString('en-US', {
+    return new Date(date).toLocaleDateString('fr-FR', {
       year: 'numeric',
       month: 'short',
       day: 'numeric'
@@ -268,9 +271,9 @@ const formatDate = (date: string | Date) => {
 
 const formatCurrency = (amount: number) => {
   if (amount === null || amount === undefined) return '-'
-  return new Intl.NumberFormat('en-US', {
+  return new Intl.NumberFormat('fr-FR', {
     style: 'currency',
-    currency: 'USD'
+    currency: 'EUR'
   }).format(amount)
 }
 
@@ -500,15 +503,24 @@ onMounted(() => {
   border-radius: 0.5rem;
 }
 
+.field-selection-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+}
+
 .field-selection h4 {
-  margin: 0 0 0.5rem 0;
+  margin: 0 0 0.25rem 0;
   font-size: 1rem;
   font-weight: 600;
   color: #374151;
 }
 
 .field-description {
-  margin: 0 0 1rem 0;
+  margin: 0;
   color: #6b7280;
   font-size: 0.875rem;
 }
@@ -517,7 +529,6 @@ onMounted(() => {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
   gap: 0.75rem;
-  margin-bottom: 1rem;
 }
 
 .field-item {
@@ -562,9 +573,7 @@ onMounted(() => {
 .field-actions {
   display: flex;
   gap: 0.5rem;
-  justify-content: flex-end;
-  padding-top: 1rem;
-  border-top: 1px solid #e9ecef;
+  flex-wrap: wrap;
 }
 
 /* Responsive design */
@@ -579,16 +588,17 @@ onMounted(() => {
     flex-wrap: wrap;
   }
 
+  .field-selection-header {
+    flex-direction: column;
+  }
+
   .field-grid {
     grid-template-columns: 1fr;
   }
 
   .field-actions {
-    flex-direction: column;
-  }
-
-  .field-actions .v-btn {
     width: 100%;
+    justify-content: flex-start;
   }
 }
 </style>

@@ -94,7 +94,7 @@ describe("SocketService", () => {
 
     it("should reject connection with invalid token", (done) => {
       vi.mocked(AuthService.getUserFromToken).mockRejectedValue(
-        new Error("Invalid token")
+        new Error("Invalid token"),
       )
 
       clientSocket = Client(serverAddress, {
@@ -132,7 +132,7 @@ describe("SocketService", () => {
       })
 
       clientSocket.on("connected", (data) => {
-        expect(data.message).toBe("Successfully connected to Medical CRM")
+        expect(data.message).toBe("Successfully connected to OPEx_CRM")
         expect(data.userId).toBe(mockUser.id)
         expect(data.timestamp).toBeDefined()
         done()

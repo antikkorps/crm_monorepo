@@ -13,6 +13,7 @@
     "no": "Non",
     "ok": "OK",
     "back": "Retour",
+    "backToInstitution": "Retour à l'institution",
     "next": "Suivant",
     "previous": "Précédent",
     "refresh": "Actualiser",
@@ -49,6 +50,7 @@
     "or": "ou",
     "and": "et",
     "date": "Date",
+    "noDate": "Date non définie",
     "time": "Heure",
     "dateTime": "Date et heure",
     "startDate": "Date de début",
@@ -130,7 +132,7 @@
     "logout": "Se déconnecter"
   },
   "sidebar": {
-    "appName": "Medical CRM",
+    "appName": "OPEx_CRM",
     "billing": "Facturation",
     "collaboration": "Collaboration",
     "contactsSegmentation": "Contacts & Segmentation",
@@ -725,6 +727,7 @@
         "message": "Aucun segment ne correspond aux critères de recherche"
       },
       "createFirst": "Créer votre premier segment",
+      "createFirstShort": "Nouveau segment",
       "bulkActions": {
         "title": "Actions en masse",
         "export": "Exporter",
@@ -2162,6 +2165,16 @@
     "unit": "opportunité",
     "empty": "Aucune opportunité trouvée",
     "overdue": "En retard",
+    "statsByCollaborator": {
+      "title": "Statistiques par collaborateur",
+      "collaborator": "Collaborateur",
+      "count": "Nombre d'opportunités",
+      "totalValue": "Valeur totale",
+      "weightedValue": "Valeur pondérée",
+      "overdue": "En Retard",
+      "button": "Statistiques par collaborateur"
+    },
+    "export": "Exporter les opportunités",
     "forecast": {
       "title": "Prévisions",
       "byMonth": "Par mois",
@@ -2281,23 +2294,107 @@
     }
   },
   "export": {
-    "title": "Export",
-    "subtitle": "Exportez vos données",
+    "title": "Centre d'Export",
+    "description": "Exportez vos données CRM dans différents formats pour l'analyse et les rapports",
     "exportData": "Exporter les données",
+    "availableExports": "Exports Disponibles",
+    "records": "enregistrements",
+    "exportButton": "Exporter",
+    "noPermission": "Accès refusé",
     "selectFormat": "Sélectionner le format",
     "selectFields": "Sélectionner les champs",
+    "history": "Historique des Exports",
+    "types": {
+      "institutions": "Établissements",
+      "contacts": "Contacts",
+      "tasks": "Tâches",
+      "quotes": "Devis",
+      "invoices": "Factures",
+      "opportunities": "Opportunités"
+    },
+    "descriptions": {
+      "institutions": "Exporter les établissements médicaux avec leurs profils et contacts",
+      "contacts": "Exporter les contacts avec les détails de leurs établissements",
+      "tasks": "Exporter les tâches avec les assignations et statuts",
+      "quotes": "Exporter les devis avec les lignes et détails financiers",
+      "invoices": "Exporter les factures avec les paiements et détails financiers",
+      "opportunities": "Exporter les opportunités commerciales avec les données du pipeline"
+    },
     "format": {
-      "csv": "CSV",
-      "excel": "Excel",
-      "json": "JSON",
+      "csv": "CSV (Valeurs séparées par virgule)",
+      "xlsx": "Excel (XLSX)",
+      "json": "JSON (Données structurées)",
       "pdf": "PDF"
+    },
+    "institutionTypes": {
+      "hospital": "Hôpital",
+      "clinic": "Clinique",
+      "medical_center": "Centre médical",
+      "specialty_center": "Centre spécialisé"
+    },
+    "taskStatuses": {
+      "pending": "En attente",
+      "in_progress": "En cours",
+      "completed": "Terminée",
+      "cancelled": "Annulée"
     },
     "errors": {
       "export": "Erreur lors de l'export",
       "noData": "Aucune donnée à exporter"
     },
     "success": {
-      "exported": "Export réussi"
+      "exported": "Export réussi",
+      "exportedType": "{type} exporté avec succès"
+    },
+    "notifications": {
+      "exportError": "Une erreur est survenue lors de l'export. Veuillez réessayer.",
+      "loadError": "Impossible de charger les options d'export"
+    },
+    "preview": {
+      "title": "Aperçu des données",
+      "description": "Aperçu des {count} premiers enregistrements qui seront exportés",
+      "totalRecords": "Total :",
+      "format": "Format :",
+      "estimatedSize": "Taille estimée :",
+      "jsonNote": "Affichage des 3 premiers enregistrements. L'export complet inclura les {count} enregistrements.",
+      "csvNote": "Format CSV avec {columns} colonnes et {count} enregistrements au total.",
+      "noData": "Aucune donnée disponible",
+      "noDataDescription": "Aucun enregistrement ne correspond aux critères d'export.",
+      "fieldSelection": "Sélection des champs",
+      "fieldSelectionDescription": "Sélectionnez les champs à inclure dans l'export :",
+      "requiredField": "Champ obligatoire",
+      "selectAll": "Tout sélectionner",
+      "deselectAll": "Tout désélectionner",
+      "resetDefault": "Réinitialiser"
+    },
+    "dialog": {
+      "title": "Export {type}",
+      "options": "Options d'export",
+      "formatLabel": "Format d'export *",
+      "selectFormat": "Sélectionner le format",
+      "startDate": "Date de début",
+      "endDate": "Date de fin",
+      "to": "à",
+      "searchQuery": "Recherche (Optionnel)",
+      "searchPlaceholder": "Filtrer les résultats...",
+      "institutionType": "Type d'établissement",
+      "allTypes": "Tous les types",
+      "taskStatus": "Statut de la tâche",
+      "allStatuses": "Tous les statuts",
+      "includeHeaders": "Inclure les en-têtes de colonnes",
+      "useQueue": "Utiliser le traitement en arrière-plan pour les gros exports",
+      "dataPreview": "Aperçu des données",
+      "cancel": "Annuler",
+      "export": "Exporter"
+    },
+    "errorDialog": {
+      "title": "Détails de l'erreur d'export",
+      "exportFailed": "L'export a échoué",
+      "details": "Détails :",
+      "type": "Type :",
+      "format": "Format :",
+      "date": "Date :",
+      "close": "Fermer"
     }
   },
   "exportCenter": {
@@ -2398,6 +2495,72 @@
       "missed": "Manqué"
     }
   },
+  "timeline": {
+    "searchPlaceholder": "Rechercher dans la timeline...",
+    "retry": "Réessayer",
+    "loading": "Chargement...",
+    "loadingMore": "Chargement en cours...",
+    "loadMore": "Charger plus",
+    "itemsLoaded": "{loaded} éléments chargés sur {total}",
+    "scrollForMore": "Défiler pour voir {remaining} éléments de plus",
+    "showingItems": "{count} sur {total} éléments affichés",
+    "empty": {
+      "title": "Aucune activité",
+      "description": "Aucune activité trouvée pour les filtres sélectionnés"
+    },
+    "filters": {
+      "all": "Tout",
+      "meetings": "Réunions",
+      "calls": "Appels",
+      "notes": "Notes",
+      "reminders": "Rappels",
+      "tasks": "Tâches"
+    },
+    "labels": {
+      "note": "Note",
+      "meeting": "Réunion",
+      "call": "Appel",
+      "reminder": "Rappel",
+      "task": "Tâche"
+    },
+    "callTypes": {
+      "incoming": "Entrant",
+      "outgoing": "Sortant",
+      "missed": "Manqué"
+    },
+    "callTo": "Appel vers {phone}",
+    "callFrom": "Appel de {phone}",
+    "callMissed": "Appel manqué de {phone}",
+    "assignedTo": "Assigné",
+    "completed": "Complété",
+    "private": "Privé",
+    "dueDate": "Échéance",
+    "relativeTime": {
+      "now": "À l'instant",
+      "minutes": "Il y a {n} min",
+      "hours": "Il y a {n} h",
+      "days": "Il y a {n} j"
+    },
+    "meetingStatus": {
+      "scheduled": "Planifié",
+      "in_progress": "En cours",
+      "completed": "Terminé",
+      "cancelled": "Annulé"
+    },
+    "taskStatus": {
+      "pending": "En attente",
+      "in_progress": "En cours",
+      "blocked": "Bloqué",
+      "completed": "Terminé",
+      "cancelled": "Annulé"
+    },
+    "priorities": {
+      "low": "Basse",
+      "medium": "Moyenne",
+      "high": "Haute",
+      "urgent": "Urgente"
+    }
+  },
   "team": {
     "title": "Équipe",
     "subtitle": "Gérez votre équipe et les membres",
@@ -2412,6 +2575,8 @@
     "subtitle": "Gérez vos équipes et membres",
     "teamActivity": "Activité de l'Équipe",
     "getStarted": "Commencer avec les Équipes",
+    "typeToSearch": "Tapez au moins 2 caractères pour rechercher un utilisateur...",
+    "noAvailableUsers": "Aucun utilisateur ne correspond à votre recherche",
     "gridView": "Grille",
     "listView": "Liste",
     "createNew": "Créer une équipe",
@@ -2423,6 +2588,7 @@
     "totalMembers": "Total membres",
     "activeMembers": "Membres actifs",
     "teamMembers": "Membres des équipes",
+    "addUser": "Ajouter un utilisateur",
     "addMember": "Ajouter un membre",
     "addMemberTo": "Ajouter un membre à",
     "addFirstMember": "Ajouter le premier membre",
@@ -2468,6 +2634,95 @@
       "tasks": "Tâches",
       "institutions": "Institutions",
       "interactions": "Notes & Réunions"
+    }
+  },
+  "leadScore": {
+    "title": "Lead Score",
+    "clickForDetails": "Cliquez pour plus de détails",
+    "detailsTitle": "Détails du Lead Score",
+    "scoreBreakdown": "Répartition du score",
+    "signals": "Signaux détectés",
+    "recommendations": "Suggestions stratégiques",
+    "impact": "Impact",
+    "close": "Fermer",
+    "noData": "N/A",
+    "levels": {
+      "hot": "Chaud",
+      "warm": "Tiède",
+      "cold": "Froid"
+    },
+    "factors": {
+      "size": "Taille",
+      "sizeMax": "20",
+      "specialty": "Spécialité",
+      "specialtyMax": "20",
+      "engagement": "Engagement",
+      "engagementMax": "30",
+      "budget": "Budget",
+      "budgetMax": "20",
+      "response": "Réactivité",
+      "responseMax": "10"
+    },
+    "signalMessages": {
+      "sizeLarge": "Grande institution ({beds}+ lits)",
+      "sizeMediumLarge": "Institution moyenne-grande ({minBeds}-{maxBeds} lits)",
+      "sizeMedium": "Institution moyenne ({minBeds}-{maxBeds} lits)",
+      "sizeSmall": "Petite institution (<{beds} lits)",
+      "specialtyHigh": "Forte correspondance spécialités ({count} correspondances)",
+      "specialtyGood": "Bonne correspondance spécialités ({count} correspondances)",
+      "specialtySome": "Quelques correspondances spécialités ({count} correspondance)",
+      "specialtyLow": "Faible correspondance spécialités",
+      "engagementHigh": "Très engagé ({count} interactions en {months} mois)",
+      "engagementGood": "Engagé ({count} interactions en {months} mois)",
+      "engagementModerate": "Engagement modéré ({count} interactions en {months} mois)",
+      "engagementLow": "Faible engagement ({count} interactions en {months} mois)",
+      "budgetHigh": "Budget élevé ({amount}€ de CA historique)",
+      "budgetGood": "Bon budget ({amount}€ de CA historique)",
+      "budgetModerate": "Budget modéré ({amount}€ de CA historique)",
+      "budgetLimited": "Budget limité ({amount}€ de CA historique)",
+      "budgetNone": "Aucun CA historique",
+      "responseQuick": "Réponse rapide avec fort taux d'acceptation ({rate}%)",
+      "responseGood": "Réponse correcte avec bon taux d'acceptation ({rate}%)",
+      "responseSlow": "Réponse lente ou faible taux d'acceptation ({rate}%)",
+      "activeOpportunities": "{count} opportunité(s) active(s) dans le pipeline"
+    },
+    "recommendationMessages": {
+      "maintainEngagement": "Continuez les points de contact réguliers pour maintenir l'engagement",
+      "increaseInteraction": "Augmentez la fréquence des interactions avec les contacts clés",
+      "scheduleDiscoveryCall": "Planifiez un appel découverte pour réengager",
+      "exploreUpsell": "Explorez les opportunités de vente additionnelle",
+      "buildRelationship": "Concentrez-vous sur la relation et la démonstration de valeur",
+      "qualifyBudget": "Qualifiez le budget et le processus décisionnel",
+      "followUpQuotes": "Relancez les devis en attente et comprenez les objections",
+      "prioritizeImmediate": "Prospect à forte valeur - priorisez pour action immédiate",
+      "continueNurturing": "Lead qualifié - continuez à développer la relation",
+      "assessFitInterest": "Nécessite qualification - évaluez l'adéquation et l'intérêt"
+    }
+  },
+  "nextBestActions": {
+    "title": "Actions Recommandées",
+    "loading": "Chargement des recommandations...",
+    "loadError": "Impossible de charger les recommandations",
+    "empty": "Aucune action recommandée pour le moment",
+    "allUpToDate": "Tout est à jour !",
+    "priorities": {
+      "urgent": "Urgent",
+      "high": "Élevé",
+      "medium": "Moyen",
+      "low": "Faible"
+    },
+    "categories": {
+      "follow_up": "Suivi",
+      "upsell": "Upsell",
+      "retention": "Rétention",
+      "reactivation": "Réactivation",
+      "closing": "Conclusion"
+    },
+    "dueDate": {
+      "overdue": "En retard de {days} jour(s)",
+      "today": "Aujourd'hui",
+      "tomorrow": "Demain",
+      "inDays": "Dans {days} jours"
     }
   },
   "success": {

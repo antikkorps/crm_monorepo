@@ -11,9 +11,11 @@
           >
             <div class="text-center pa-8">
               <v-icon size="80" color="white" class="mb-4"> mdi-lock-reset </v-icon>
-              <h1 class="text-h2 font-weight-bold text-white">{{ t('auth.forgotPassword.title') }}</h1>
+              <h1 class="text-h2 font-weight-bold text-white">
+                {{ t("auth.forgotPassword.title") }}
+              </h1>
               <p class="text-h5 text-white mt-4 opacity-80">
-                {{ t('auth.forgotPassword.subtitle') }}
+                {{ t("auth.forgotPassword.subtitle") }}
               </p>
             </div>
           </v-col>
@@ -33,16 +35,16 @@
               color="transparent"
             >
               <div class="text-center mb-8 d-md-none">
-                <h1 class="text-h4 font-weight-bold text-primary mb-2">Medical CRM</h1>
+                <h1 class="text-h4 font-weight-bold text-primary mb-2">OPEx_CRM</h1>
               </div>
 
               <!-- Step 1: Request Code -->
               <div v-if="step === 1">
                 <h2 class="text-h5 font-weight-bold text-center mb-2">
-                  {{ t('auth.forgotPassword.requestTitle') }}
+                  {{ t("auth.forgotPassword.requestTitle") }}
                 </h2>
                 <p class="text-subtitle-1 text-medium-emphasis text-center mb-8">
-                  {{ t('auth.forgotPassword.requestSubtitle') }}
+                  {{ t("auth.forgotPassword.requestSubtitle") }}
                 </p>
 
                 <v-form @submit.prevent="handleRequestCode">
@@ -72,7 +74,7 @@
                     block
                     class="mb-4"
                   >
-                    {{ t('auth.forgotPassword.sendCodeButton') }}
+                    {{ t("auth.forgotPassword.sendCodeButton") }}
                   </v-btn>
 
                   <v-btn
@@ -83,7 +85,7 @@
                     block
                     @click="goToLogin"
                   >
-                    {{ t('auth.forgotPassword.backToLogin') }}
+                    {{ t("auth.forgotPassword.backToLogin") }}
                   </v-btn>
 
                   <v-alert
@@ -101,10 +103,10 @@
               <!-- Step 2: Verify Code -->
               <div v-if="step === 2">
                 <h2 class="text-h5 font-weight-bold text-center mb-2">
-                  {{ t('auth.forgotPassword.verifyTitle') }}
+                  {{ t("auth.forgotPassword.verifyTitle") }}
                 </h2>
                 <p class="text-subtitle-1 text-medium-emphasis text-center mb-8">
-                  {{ t('auth.forgotPassword.verifySubtitle', { email }) }}
+                  {{ t("auth.forgotPassword.verifySubtitle", { email }) }}
                 </p>
 
                 <v-form @submit.prevent="handleVerifyCode">
@@ -136,7 +138,7 @@
                     block
                     class="mb-4"
                   >
-                    {{ t('auth.forgotPassword.verifyCodeButton') }}
+                    {{ t("auth.forgotPassword.verifyCodeButton") }}
                   </v-btn>
 
                   <v-btn
@@ -148,7 +150,7 @@
                     :disabled="isLoading"
                     @click="handleResendCode"
                   >
-                    {{ t('auth.forgotPassword.resendCode') }}
+                    {{ t("auth.forgotPassword.resendCode") }}
                   </v-btn>
 
                   <v-alert
@@ -166,109 +168,112 @@
               <!-- Step 3: Reset Password -->
               <div v-if="step === 3">
                 <h2 class="text-h5 font-weight-bold text-center mb-2">
-                  {{ t('auth.forgotPassword.resetTitle') }}
+                  {{ t("auth.forgotPassword.resetTitle") }}
                 </h2>
                 <p class="text-subtitle-1 text-medium-emphasis text-center mb-8">
-                  {{ t('auth.forgotPassword.resetSubtitle') }}
+                  {{ t("auth.forgotPassword.resetSubtitle") }}
                 </p>
 
-                 <v-form @submit.prevent="handleResetPassword">
-                   <v-text-field
-                     v-model="newPassword"
-                     :label="t('auth.forgotPassword.newPasswordLabel')"
-                     :type="showPassword ? 'text' : 'password'"
-                     :placeholder="t('auth.forgotPassword.newPasswordPlaceholder')"
-                     prepend-inner-icon="mdi-lock-outline"
-                     :append-inner-icon="
-                       showPassword ? 'mdi-eye-outline' : 'mdi-eye-off-outline'
-                     "
-                     variant="outlined"
-                     :error-messages="errors.newPassword"
-                     :error="!!errors.newPassword"
-                     autocomplete="new-password"
-                     required
-                     autofocus
-                     class="mb-4"
-                     @click:append-inner="showPassword = !showPassword"
-                     @input="validatePasswords"
-                   />
+                <v-form @submit.prevent="handleResetPassword">
+                  <v-text-field
+                    v-model="newPassword"
+                    :label="t('auth.forgotPassword.newPasswordLabel')"
+                    :type="showPassword ? 'text' : 'password'"
+                    :placeholder="t('auth.forgotPassword.newPasswordPlaceholder')"
+                    prepend-inner-icon="mdi-lock-outline"
+                    :append-inner-icon="
+                      showPassword ? 'mdi-eye-outline' : 'mdi-eye-off-outline'
+                    "
+                    variant="outlined"
+                    :error-messages="errors.newPassword"
+                    :error="!!errors.newPassword"
+                    autocomplete="new-password"
+                    required
+                    autofocus
+                    class="mb-4"
+                    @click:append-inner="showPassword = !showPassword"
+                    @input="validatePasswords"
+                  />
 
-                   <v-text-field
-                     v-model="confirmPassword"
-                     :label="t('auth.forgotPassword.confirmPasswordLabel')"
-                     :type="showPassword ? 'text' : 'password'"
-                     :placeholder="t('auth.forgotPassword.confirmPasswordPlaceholder')"
-                     prepend-inner-icon="mdi-lock-check-outline"
-                     :append-inner-icon="
-                       showPassword ? 'mdi-eye-outline' : 'mdi-eye-off-outline'
-                     "
-                     variant="outlined"
-                     :error-messages="errors.confirmPassword"
-                     :error="!!errors.confirmPassword"
-                     autocomplete="new-password"
-                     required
-                     class="mb-4"
-                     @click:append-inner="showPassword = !showPassword"
-                     @input="validatePasswords"
-                   />
+                  <v-text-field
+                    v-model="confirmPassword"
+                    :label="t('auth.forgotPassword.confirmPasswordLabel')"
+                    :type="showPassword ? 'text' : 'password'"
+                    :placeholder="t('auth.forgotPassword.confirmPasswordPlaceholder')"
+                    prepend-inner-icon="mdi-lock-check-outline"
+                    :append-inner-icon="
+                      showPassword ? 'mdi-eye-outline' : 'mdi-eye-off-outline'
+                    "
+                    variant="outlined"
+                    :error-messages="errors.confirmPassword"
+                    :error="!!errors.confirmPassword"
+                    autocomplete="new-password"
+                    required
+                    class="mb-4"
+                    @click:append-inner="showPassword = !showPassword"
+                    @input="validatePasswords"
+                  />
 
-                   <div class="mb-4 pa-3 bg-grey-lighten-4 rounded">
-                     <div class="text-caption text-medium-emphasis mb-2">
-                       {{ t('auth.forgotPassword.passwordRequirements') }}
-                     </div>
-                     <div class="text-caption">
-                       <div :class="hasMinLength ? 'text-success' : 'text-error'">
-                         <v-icon size="small">
-                           {{ hasMinLength ? 'mdi-check-circle' : 'mdi-circle-outline' }}
-                         </v-icon>
-                         {{ t('auth.forgotPassword.minLength') }}
-                       </div>
-                       <div :class="hasUppercase ? 'text-success' : 'text-error'">
-                         <v-icon size="small">
-                           {{ hasUppercase ? 'mdi-check-circle' : 'mdi-circle-outline' }}
-                         </v-icon>
-                         {{ t('auth.forgotPassword.uppercaseRequired') }}
-                       </div>
-                       <div :class="hasLowercase ? 'text-success' : 'text-error'">
-                         <v-icon size="small">
-                           {{ hasLowercase ? 'mdi-check-circle' : 'mdi-circle-outline' }}
-                         </v-icon>
-                         {{ t('auth.forgotPassword.lowercaseRequired') }}
-                       </div>
-                       <div :class="hasNumber ? 'text-success' : 'text-error'">
-                         <v-icon size="small">
-                           {{ hasNumber ? 'mdi-check-circle' : 'mdi-circle-outline' }}
-                         </v-icon>
-                         {{ t('auth.forgotPassword.numberRequired') }}
-                       </div>
-                       <div :class="hasSpecialChar ? 'text-success' : 'text-error'">
-                         <v-icon size="small">
-                           {{ hasSpecialChar ? 'mdi-check-circle' : 'mdi-circle-outline' }}
-                         </v-icon>
-                         {{ t('auth.forgotPassword.specialCharRequired') }}
-                       </div>
-                       <div v-if="confirmPassword" :class="passwordsMatch ? 'text-success' : 'text-error'">
-                         <v-icon size="small">
-                           {{ passwordsMatch ? 'mdi-check-circle' : 'mdi-circle-outline' }}
-                         </v-icon>
-                         {{ t('auth.forgotPassword.passwordsMatch') }}
-                       </div>
-                     </div>
-                   </div>
+                  <div class="mb-4 pa-3 bg-grey-lighten-4 rounded">
+                    <div class="text-caption text-medium-emphasis mb-2">
+                      {{ t("auth.forgotPassword.passwordRequirements") }}
+                    </div>
+                    <div class="text-caption">
+                      <div :class="hasMinLength ? 'text-success' : 'text-error'">
+                        <v-icon size="small">
+                          {{ hasMinLength ? "mdi-check-circle" : "mdi-circle-outline" }}
+                        </v-icon>
+                        {{ t("auth.forgotPassword.minLength") }}
+                      </div>
+                      <div :class="hasUppercase ? 'text-success' : 'text-error'">
+                        <v-icon size="small">
+                          {{ hasUppercase ? "mdi-check-circle" : "mdi-circle-outline" }}
+                        </v-icon>
+                        {{ t("auth.forgotPassword.uppercaseRequired") }}
+                      </div>
+                      <div :class="hasLowercase ? 'text-success' : 'text-error'">
+                        <v-icon size="small">
+                          {{ hasLowercase ? "mdi-check-circle" : "mdi-circle-outline" }}
+                        </v-icon>
+                        {{ t("auth.forgotPassword.lowercaseRequired") }}
+                      </div>
+                      <div :class="hasNumber ? 'text-success' : 'text-error'">
+                        <v-icon size="small">
+                          {{ hasNumber ? "mdi-check-circle" : "mdi-circle-outline" }}
+                        </v-icon>
+                        {{ t("auth.forgotPassword.numberRequired") }}
+                      </div>
+                      <div :class="hasSpecialChar ? 'text-success' : 'text-error'">
+                        <v-icon size="small">
+                          {{ hasSpecialChar ? "mdi-check-circle" : "mdi-circle-outline" }}
+                        </v-icon>
+                        {{ t("auth.forgotPassword.specialCharRequired") }}
+                      </div>
+                      <div
+                        v-if="confirmPassword"
+                        :class="passwordsMatch ? 'text-success' : 'text-error'"
+                      >
+                        <v-icon size="small">
+                          {{ passwordsMatch ? "mdi-check-circle" : "mdi-circle-outline" }}
+                        </v-icon>
+                        {{ t("auth.forgotPassword.passwordsMatch") }}
+                      </div>
+                    </div>
+                  </div>
 
-                   <v-btn
-                     type="submit"
-                     color="primary"
-                     size="large"
-                     :loading="isLoading"
-                     :disabled="!isPasswordValid || !passwordsMatch"
-                     prepend-icon="mdi-lock-reset"
-                     variant="elevated"
-                     block
-                     class="mb-4"
-                   >
-                     {{ t('auth.forgotPassword.resetPasswordButton') }}
-                   </v-btn>
+                  <v-btn
+                    type="submit"
+                    color="primary"
+                    size="large"
+                    :loading="isLoading"
+                    :disabled="!isPasswordValid || !passwordsMatch"
+                    prepend-icon="mdi-lock-reset"
+                    variant="elevated"
+                    block
+                    class="mb-4"
+                  >
+                    {{ t("auth.forgotPassword.resetPasswordButton") }}
+                  </v-btn>
 
                   <v-alert
                     v-if="errorMessage"
@@ -300,10 +305,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed } from "vue"
-import { useRouter } from "vue-router"
-import { useI18n } from "vue-i18n"
 import { apiClient } from "@/services/api"
+import { computed, reactive, ref } from "vue"
+import { useI18n } from "vue-i18n"
+import { useRouter } from "vue-router"
 
 const { t } = useI18n()
 const router = useRouter()
@@ -336,7 +341,13 @@ const passwordsMatch = computed(() => {
   return newPassword.value === confirmPassword.value
 })
 const isPasswordValid = computed(() => {
-  return hasMinLength.value && hasUppercase.value && hasLowercase.value && hasNumber.value && hasSpecialChar.value
+  return (
+    hasMinLength.value &&
+    hasUppercase.value &&
+    hasLowercase.value &&
+    hasNumber.value &&
+    hasSpecialChar.value
+  )
 })
 
 const goToLogin = () => {
@@ -345,7 +356,7 @@ const goToLogin = () => {
 
 const handleRequestCode = async () => {
   if (!email.value) {
-    errors.email = t('auth.forgotPassword.emailRequired')
+    errors.email = t("auth.forgotPassword.emailRequired")
     return
   }
 
@@ -358,7 +369,7 @@ const handleRequestCode = async () => {
     code.value = ""
   } catch (error: any) {
     errorMessage.value =
-      error.response?.data?.error?.message || t('auth.forgotPassword.requestError')
+      error.response?.data?.error?.message || t("auth.forgotPassword.requestError")
   } finally {
     isLoading.value = false
   }
@@ -372,7 +383,7 @@ const handleResendCode = async () => {
 
 const handleVerifyCode = async () => {
   if (code.value.length !== 6) {
-    errors.code = t('auth.forgotPassword.codeInvalid')
+    errors.code = t("auth.forgotPassword.codeInvalid")
     return
   }
 
@@ -389,7 +400,7 @@ const handleVerifyCode = async () => {
     confirmPassword.value = ""
   } catch (error: any) {
     errorMessage.value =
-      error.response?.data?.error?.message || t('auth.forgotPassword.verifyError')
+      error.response?.data?.error?.message || t("auth.forgotPassword.verifyError")
   } finally {
     isLoading.value = false
   }
@@ -400,11 +411,11 @@ const validatePasswords = () => {
   errors.confirmPassword = ""
 
   if (newPassword.value && !isPasswordValid.value) {
-    errors.newPassword = t('auth.forgotPassword.passwordWeak')
+    errors.newPassword = t("auth.forgotPassword.passwordWeak")
   }
 
   if (confirmPassword.value && !passwordsMatch.value) {
-    errors.confirmPassword = t('auth.forgotPassword.passwordMismatch')
+    errors.confirmPassword = t("auth.forgotPassword.passwordMismatch")
   }
 }
 
@@ -425,13 +436,13 @@ const handleResetPassword = async () => {
       code: code.value,
       newPassword: newPassword.value,
     })
-    successMessage.value = t('auth.forgotPassword.resetSuccess')
+    successMessage.value = t("auth.forgotPassword.resetSuccess")
     setTimeout(() => {
       router.push("/login")
     }, 2000)
   } catch (error: any) {
     errorMessage.value =
-      error.response?.data?.error?.message || t('auth.forgotPassword.resetError')
+      error.response?.data?.error?.message || t("auth.forgotPassword.resetError")
   } finally {
     isLoading.value = false
   }

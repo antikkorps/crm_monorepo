@@ -1,6 +1,6 @@
 # Example Logger Plugin
 
-This is a demonstration plugin for the Medical CRM system that logs various system events. It serves as both a useful debugging tool and an example of how to create plugins for the system.
+This is a demonstration plugin for the OPEx_CRM system that logs various system events. It serves as both a useful debugging tool and an example of how to create plugins for the system.
 
 ## Features
 
@@ -52,7 +52,7 @@ The plugin can be configured with the following options:
 
 ## Installation
 
-1. The plugin is included by default in the Medical CRM system
+1. The plugin is included by default in the OPEx_CRM system
 2. It can be enabled/disabled via the plugin management API
 3. Configuration can be updated through the admin interface
 

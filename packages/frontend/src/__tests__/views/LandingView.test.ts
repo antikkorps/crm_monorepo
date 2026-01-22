@@ -6,7 +6,7 @@ const LandingView = {
   template: `
     <div>
       <div class="hero-section">
-        <h1 class="hero-title">Medical CRM</h1>
+        <h1 class="hero-title">OPEx_CRM</h1>
         <p class="hero-description">Gérez efficacement vos relations avec les institutions médicales</p>
         <div class="hero-actions">
           <button data-testid="login-button" @click="goToLogin">Se connecter</button>
@@ -27,8 +27,8 @@ const LandingView = {
     },
     scrollToFeatures() {
       document.getElementById("features")?.scrollIntoView({ behavior: "smooth" })
-    }
-  }
+    },
+  },
 }
 
 // Mock router
@@ -47,15 +47,15 @@ describe("LandingView", () => {
       global: {
         mocks: {
           $router: {
-            push: mockPush
-          }
-        }
+            push: mockPush,
+          },
+        },
       },
     })
   })
 
   it("renders hero section", () => {
-    expect(wrapper.find(".hero-title").text()).toContain("Medical CRM")
+    expect(wrapper.find(".hero-title").text()).toContain("OPEx_CRM")
     expect(wrapper.find(".hero-description").exists()).toBe(true)
   })
 
@@ -64,7 +64,7 @@ describe("LandingView", () => {
     expect(wrapper.findAll(".feature-card")).toHaveLength(6)
   })
 
-it("navigates to login when login button is clicked", async () => {
+  it("navigates to login when login button is clicked", async () => {
     const loginButton = wrapper.find('[data-testid="login-button"]')
     await loginButton.trigger("click")
 

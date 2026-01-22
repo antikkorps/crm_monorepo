@@ -64,7 +64,7 @@ async function startServer() {
 
     // Start server
     const server = httpServer.listen(config.port, () => {
-      logger.info(`🚀 Medical CRM Backend server started`, {
+      logger.info(`🚀 OPEx_CRM Backend server started`, {
         port: config.port,
         environment: config.env,
         nodeVersion: process.version,

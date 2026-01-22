@@ -1,17 +1,21 @@
 import { Op } from "sequelize"
-import { ReminderRule } from "../models/ReminderRule"
+import { Invoice } from "../models/Invoice"
+import { MedicalInstitution } from "../models/MedicalInstitution"
+import { Quote } from "../models/Quote"
 import {
-  ReminderNotificationLog,
   ReminderEntityType,
+  ReminderNotificationLog,
   ReminderNotificationType,
 } from "../models/ReminderNotificationLog"
+import { ReminderRule } from "../models/ReminderRule"
 import { Task, TaskPriority, TaskStatus } from "../models/Task"
-import { Quote } from "../models/Quote"
-import { Invoice } from "../models/Invoice"
 import { User } from "../models/User"
-import { MedicalInstitution } from "../models/MedicalInstitution"
-import { NotificationService, NotificationType, NotificationPriority } from "./NotificationService"
 import EmailService from "./EmailService"
+import {
+  NotificationPriority,
+  NotificationService,
+  NotificationType,
+} from "./NotificationService"
 
 import { logger } from "../utils/logger"
 
@@ -107,7 +111,7 @@ export class ReminderService {
 
       for (const entity of entities) {
         await this.sendReminderNotification(rule, entity)
-        
+
         // Auto-create task if enabled
         if (rule.autoCreateTask) {
           await this.createReminderTask(rule, entity)
@@ -132,7 +136,7 @@ export class ReminderService {
       const dueDateFrom = new Date(currentDate)
       const dueDateTo = new Date(currentDate)
       dueDateTo.setDate(dueDateTo.getDate() + rule.daysBefore)
-      
+
       whereClause.dueDate = {
         [Op.between]: [dueDateFrom, dueDateTo],
       }
@@ -140,7 +144,7 @@ export class ReminderService {
     } else if (rule.triggerType === "overdue") {
       const overdueDate = new Date(currentDate)
       overdueDate.setDate(overdueDate.getDate() - rule.daysAfter)
-      
+
       whereClause.dueDate = {
         [Op.lt]: overdueDate,
       }
@@ -159,7 +163,7 @@ export class ReminderService {
       limit: 100, // Pagination for performance
     })
 
-    return tasks.map(task => ({
+    return tasks.map((task) => ({
       id: task.id,
       title: task.title,
       dueDate: task.dueDate,
@@ -182,7 +186,7 @@ export class ReminderService {
       const validUntilFrom = new Date(currentDate)
       const validUntilTo = new Date(currentDate)
       validUntilTo.setDate(validUntilTo.getDate() + rule.daysBefore)
-      
+
       whereClause.validUntil = {
         [Op.between]: [validUntilFrom, validUntilTo],
       }
@@ -190,7 +194,7 @@ export class ReminderService {
     } else if (rule.triggerType === "expired") {
       const expiredDate = new Date(currentDate)
       expiredDate.setDate(expiredDate.getDate() - rule.daysAfter)
-      
+
       whereClause.validUntil = {
         [Op.lt]: expiredDate,
       }
@@ -209,7 +213,7 @@ export class ReminderService {
       limit: 100, // Pagination for performance
     })
 
-    return quotes.map(quote => ({
+    return quotes.map((quote) => ({
       id: quote.id,
       title: quote.quoteNumber,
       validUntil: quote.validUntil,
@@ -235,7 +239,7 @@ export class ReminderService {
       const dueDateFrom = new Date(currentDate)
       const dueDateTo = new Date(currentDate)
       dueDateTo.setDate(dueDateTo.getDate() + rule.daysBefore)
-      
+
       whereClause.dueAt = {
         [Op.between]: [dueDateFrom, dueDateTo],
       }
@@ -243,7 +247,7 @@ export class ReminderService {
     } else if (rule.triggerType === "unpaid") {
       const unpaidDate = new Date(currentDate)
       unpaidDate.setDate(unpaidDate.getDate() - rule.daysAfter)
-      
+
       whereClause.dueAt = {
         [Op.lt]: unpaidDate,
       }
@@ -262,7 +266,7 @@ export class ReminderService {
       limit: 100, // Pagination for performance
     })
 
-    return invoices.map(invoice => ({
+    return invoices.map((invoice) => ({
       id: invoice.id,
       title: invoice.invoiceNumber,
       dueAt: invoice.dueDate,
@@ -291,7 +295,7 @@ export class ReminderService {
     ruleId: string,
     entityType: ReminderEntityType,
     entityId: string,
-    recipientId: string
+    recipientId: string,
   ): Promise<boolean> {
     try {
       const recentLog = await ReminderNotificationLog.findRecentNotification(
@@ -299,7 +303,7 @@ export class ReminderService {
         entityType,
         entityId,
         recipientId,
-        23 // 23 hours - prevent daily spam
+        23, // 23 hours - prevent daily spam
       )
 
       if (!recentLog) {
@@ -342,7 +346,7 @@ export class ReminderService {
     entityType: ReminderEntityType,
     entityId: string,
     recipientId: string,
-    notificationType: ReminderNotificationType = ReminderNotificationType.IN_APP
+    notificationType: ReminderNotificationType = ReminderNotificationType.IN_APP,
   ): Promise<void> {
     try {
       await ReminderNotificationLog.logNotification({
@@ -377,7 +381,7 @@ export class ReminderService {
    */
   private async sendReminderNotification(
     rule: ReminderRule,
-    entity: ReminderData
+    entity: ReminderData,
   ): Promise<void> {
     try {
       const entityType = rule.entityType as ReminderEntityType
@@ -404,8 +408,8 @@ export class ReminderService {
       // If rule is team-specific, notify team members (except assignee to avoid duplicates)
       if (rule.teamId) {
         const teamMembers = await this.getTeamMembers(rule.teamId)
-        const teamMembersToNotify = teamMembers.filter(memberId =>
-          !notificationTargets.includes(memberId)
+        const teamMembersToNotify = teamMembers.filter(
+          (memberId) => !notificationTargets.includes(memberId),
         )
         notificationTargets.push(...teamMembersToNotify)
       }
@@ -420,7 +424,7 @@ export class ReminderService {
           rule.id,
           entityType,
           entity.id,
-          recipientId
+          recipientId,
         )
 
         if (!shouldSend) {
@@ -438,9 +442,10 @@ export class ReminderService {
         await this.notificationService.notifyUser(recipientId, notificationData)
 
         // Determine notification type to log
-        const logNotificationType = process.env.ENABLE_EMAIL_REMINDERS === 'true'
-          ? ReminderNotificationType.BOTH
-          : ReminderNotificationType.IN_APP
+        const logNotificationType =
+          process.env.ENABLE_EMAIL_REMINDERS === "true"
+            ? ReminderNotificationType.BOTH
+            : ReminderNotificationType.IN_APP
 
         // Mark notification as sent for this specific recipient
         await this.markNotificationSent(
@@ -448,14 +453,14 @@ export class ReminderService {
           entityType,
           entity.id,
           recipientId,
-          logNotificationType
+          logNotificationType,
         )
 
         sentCount++
       }
 
       // Send email reminder if enabled and we sent to at least one recipient
-      if (sentCount > 0 && process.env.ENABLE_EMAIL_REMINDERS === 'true') {
+      if (sentCount > 0 && process.env.ENABLE_EMAIL_REMINDERS === "true") {
         await this.sendEmailReminder(rule, entity)
       }
 
@@ -477,10 +482,13 @@ export class ReminderService {
   /**
    * Create automatic task for reminder
    */
-  private async createReminderTask(rule: ReminderRule, entity: ReminderData): Promise<void> {
+  private async createReminderTask(
+    rule: ReminderRule,
+    entity: ReminderData,
+  ): Promise<void> {
     try {
       const taskTitle = rule.formatTaskTitle(entity)
-      
+
       if (!taskTitle) {
         logger.warn(`No task title template for rule ${rule.id}`)
         return
@@ -523,7 +531,7 @@ export class ReminderService {
         where: { teamId, isActive: true },
         attributes: ["id"],
       })
-      return users.map(user => user.id)
+      return users.map((user) => user.id)
     } catch (error) {
       logger.error("Error fetching team members", {
         error: error instanceof Error ? error.message : String(error),
@@ -536,10 +544,7 @@ export class ReminderService {
   /**
    * Get notification type based on entity and trigger
    */
-  private getNotificationType(
-    entityType: string,
-    triggerType: string
-  ): NotificationType {
+  private getNotificationType(entityType: string, triggerType: string): NotificationType {
     switch (entityType) {
       case "task":
         if (triggerType === "due_soon") return NotificationType.TASK_ASSIGNED
@@ -692,7 +697,9 @@ export class ReminderService {
 
       if (!existingRule) {
         await ReminderRule.create(ruleData)
-        logger.info(`Created default reminder rule for ${ruleData.entityType} ${ruleData.triggerType}`)
+        logger.info(
+          `Created default reminder rule for ${ruleData.entityType} ${ruleData.triggerType}`,
+        )
       }
     }
   }
@@ -700,7 +707,10 @@ export class ReminderService {
   /**
    * Send email reminder based on entity type
    */
-  private async sendEmailReminder(rule: ReminderRule, entity: ReminderData): Promise<void> {
+  private async sendEmailReminder(
+    rule: ReminderRule,
+    entity: ReminderData,
+  ): Promise<void> {
     try {
       const currentDate = new Date()
       let daysUntil: number | undefined
@@ -708,13 +718,19 @@ export class ReminderService {
       // Calculate days until due/expiry for the email subject
       if (entity.dueDate) {
         const dueDate = new Date(entity.dueDate)
-        daysUntil = Math.ceil((dueDate.getTime() - currentDate.getTime()) / (1000 * 60 * 60 * 24))
+        daysUntil = Math.ceil(
+          (dueDate.getTime() - currentDate.getTime()) / (1000 * 60 * 60 * 24),
+        )
       } else if (entity.validUntil) {
         const validUntil = new Date(entity.validUntil)
-        daysUntil = Math.ceil((validUntil.getTime() - currentDate.getTime()) / (1000 * 60 * 60 * 24))
+        daysUntil = Math.ceil(
+          (validUntil.getTime() - currentDate.getTime()) / (1000 * 60 * 60 * 24),
+        )
       } else if (entity.dueAt) {
         const dueAt = new Date(entity.dueAt)
-        daysUntil = Math.ceil((dueAt.getTime() - currentDate.getTime()) / (1000 * 60 * 60 * 24))
+        daysUntil = Math.ceil(
+          (dueAt.getTime() - currentDate.getTime()) / (1000 * 60 * 60 * 24),
+        )
       }
 
       switch (rule.entityType) {
@@ -728,7 +744,9 @@ export class ReminderService {
           await this.sendInvoiceReminderEmail(entity, rule, daysUntil)
           break
         default:
-          logger.warn(`Email reminder not implemented for entity type: ${rule.entityType}`)
+          logger.warn(
+            `Email reminder not implemented for entity type: ${rule.entityType}`,
+          )
       }
     } catch (error) {
       logger.error("Error sending email reminder", {
@@ -746,7 +764,7 @@ export class ReminderService {
   private async sendTaskReminderEmail(
     entity: ReminderData,
     rule: ReminderRule,
-    daysUntilDue?: number
+    daysUntilDue?: number,
   ): Promise<void> {
     try {
       if (!entity.assignee?.email || !entity.assignee.firstName) {
@@ -757,12 +775,15 @@ export class ReminderService {
         return
       }
 
-      const assigneeName = `${entity.assignee.firstName} ${entity.assignee.lastName || ""}`.trim()
+      const assigneeName =
+        `${entity.assignee.firstName} ${entity.assignee.lastName || ""}`.trim()
       const taskUrl = `${process.env.FRONTEND_URL || "http://localhost:3000"}/tasks/${entity.id}`
-      const dueDateStr = entity.dueDate ? new Date(entity.dueDate).toLocaleDateString("fr-FR") : "Non définie"
+      const dueDateStr = entity.dueDate
+        ? new Date(entity.dueDate).toLocaleDateString("fr-FR")
+        : "Non définie"
 
       const isOverdue = rule.triggerType === "overdue"
-      const subject = isOverdue 
+      const subject = isOverdue
         ? `🚨 TÂCHE EN RETARD: ${entity.title}`
         : `⏰ RAPPEL: Tâche à échéance dans ${daysUntilDue} jour(s)`
 
@@ -778,23 +799,20 @@ export class ReminderService {
           <p style="margin: 5px 0;"><strong>Statut :</strong> ${entity.status || "À faire"}</p>
         </div>
         
-        ${isOverdue 
-          ? `<p style="color: #d32f2f; font-weight: bold;">⚠️ Cette tâche est en retard !</p>`
-          : `<p style="color: #1976d2;">📅 Plus que ${daysUntilDue} jour(s) avant l'échéance.</p>`
+        ${
+          isOverdue
+            ? `<p style="color: #d32f2f; font-weight: bold;">⚠️ Cette tâche est en retard !</p>`
+            : `<p style="color: #1976d2;">📅 Plus que ${daysUntilDue} jour(s) avant l'échéance.</p>`
         }
         
         <p><a href="${taskUrl}" style="background-color: #1976d2; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Voir la tâche</a></p>
         
         <p>Si vous avez des questions ou besoin d'aide, n'hésitez pas à nous contacter.</p>
         
-        <p>Cordialement,<br>Équipe Medical CRM</p>
+        <p>Cordialement,<br>Équipe OPEx_CRM</p>
       `
 
-      await this.emailService.sendCustomEmail(
-        entity.assignee.email,
-        subject,
-        message
-      )
+      await this.emailService.sendCustomEmail(entity.assignee.email, subject, message)
 
       logger.info("Task reminder email sent", {
         entityId: entity.id,
@@ -815,7 +833,7 @@ export class ReminderService {
   private async sendQuoteReminderEmail(
     entity: ReminderData,
     rule: ReminderRule,
-    daysUntilExpiry?: number
+    daysUntilExpiry?: number,
   ): Promise<void> {
     try {
       if (!entity.assignee?.email || !entity.assignee.firstName) {
@@ -826,12 +844,15 @@ export class ReminderService {
         return
       }
 
-      const assigneeName = `${entity.assignee.firstName} ${entity.assignee.lastName || ""}`.trim()
+      const assigneeName =
+        `${entity.assignee.firstName} ${entity.assignee.lastName || ""}`.trim()
       const quoteUrl = `${process.env.FRONTEND_URL || "http://localhost:3000"}/quotes/${entity.id}`
-      const validUntilStr = entity.validUntil ? new Date(entity.validUntil).toLocaleDateString("fr-FR") : "Non définie"
+      const validUntilStr = entity.validUntil
+        ? new Date(entity.validUntil).toLocaleDateString("fr-FR")
+        : "Non définie"
 
       const isExpired = rule.triggerType === "expired"
-      const subject = isExpired 
+      const subject = isExpired
         ? `⚠️ DEVIS EXPIRÉ: ${entity.title || entity.quoteNumber}`
         : `⏰ RAPPEL: Devis à échéance dans ${daysUntilExpiry} jour(s)`
 
@@ -848,23 +869,20 @@ export class ReminderService {
           ${entity.institution ? `<p style="margin: 5px 0;"><strong>Institution :</strong> ${entity.institution.name}</p>` : ""}
         </div>
         
-        ${isExpired 
-          ? `<p style="color: #d32f2f; font-weight: bold;">❗ Ce devis a expiré !</p>
+        ${
+          isExpired
+            ? `<p style="color: #d32f2f; font-weight: bold;">❗ Ce devis a expiré !</p>
              <p>Nous recommandons de contacter le client pour proposer un nouveau devis ou une extension.</p>`
-          : `<p style="color: #1976d2;">📅 Plus que ${daysUntilExpiry} jour(s) avant l'expiration.</p>
+            : `<p style="color: #1976d2;">📅 Plus que ${daysUntilExpiry} jour(s) avant l'expiration.</p>
              <p>N'oubliez pas de relancer le client pour éviter la perte de cette opportunité.</p>`
         }
         
         <p><a href="${quoteUrl}" style="background-color: #1976d2; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Voir le devis</a></p>
         
-        <p>Cordialement,<br>Équipe Medical CRM</p>
+        <p>Cordialement,<br>Équipe OPEx_CRM</p>
       `
 
-      await this.emailService.sendCustomEmail(
-        entity.assignee.email,
-        subject,
-        message
-      )
+      await this.emailService.sendCustomEmail(entity.assignee.email, subject, message)
 
       logger.info("Quote reminder email sent", {
         entityId: entity.id,
@@ -885,7 +903,7 @@ export class ReminderService {
   private async sendInvoiceReminderEmail(
     entity: ReminderData,
     rule: ReminderRule,
-    daysUntilDue?: number
+    daysUntilDue?: number,
   ): Promise<void> {
     try {
       if (!entity.assignee?.email || !entity.assignee.firstName) {
@@ -896,12 +914,15 @@ export class ReminderService {
         return
       }
 
-      const assigneeName = `${entity.assignee.firstName} ${entity.assignee.lastName || ""}`.trim()
+      const assigneeName =
+        `${entity.assignee.firstName} ${entity.assignee.lastName || ""}`.trim()
       const invoiceUrl = `${process.env.FRONTEND_URL || "http://localhost:3000"}/invoices/${entity.id}`
-      const dueAtStr = entity.dueAt ? new Date(entity.dueAt).toLocaleDateString("fr-FR") : "Non définie"
+      const dueAtStr = entity.dueAt
+        ? new Date(entity.dueAt).toLocaleDateString("fr-FR")
+        : "Non définie"
 
       const isOverdue = rule.triggerType === "unpaid"
-      const subject = isOverdue 
+      const subject = isOverdue
         ? `🚨 FACTURE EN RETARD: ${entity.title || entity.invoiceNumber}`
         : `💰 RAPPEL: Facture à échéance dans ${daysUntilDue} jour(s)`
 
@@ -918,23 +939,20 @@ export class ReminderService {
           ${entity.institution ? `<p style="margin: 5px 0;"><strong>Institution :</strong> ${entity.institution.name}</p>` : ""}
         </div>
         
-        ${isOverdue 
-          ? `<p style="color: #d32f2f; font-weight: bold;">⚠️ Cette facture est en retard de paiement !</p>
+        ${
+          isOverdue
+            ? `<p style="color: #d32f2f; font-weight: bold;">⚠️ Cette facture est en retard de paiement !</p>
              <p>Veuillez contacter le client pour récupérer le paiement ou proposer un échéancier.</p>`
-          : `<p style="color: #1976d2;">📅 Plus que ${daysUntilDue} jour(s) avant l'échéance.</p>
+            : `<p style="color: #1976d2;">📅 Plus que ${daysUntilDue} jour(s) avant l'échéance.</p>
              <p>N'oubliez pas de relancer le client pour le paiement.</p>`
         }
         
         <p><a href="${invoiceUrl}" style="background-color: #1976d2; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Voir la facture</a></p>
         
-        <p>Cordialement,<br>Équipe Medical CRM</p>
+        <p>Cordialement,<br>Équipe OPEx_CRM</p>
       `
 
-      await this.emailService.sendCustomEmail(
-        entity.assignee.email,
-        subject,
-        message
-      )
+      await this.emailService.sendCustomEmail(entity.assignee.email, subject, message)
 
       logger.info("Invoice reminder email sent", {
         entityId: entity.id,

@@ -780,4 +780,103 @@ export class OpportunityController {
       throw error
     }
   }
+
+  /**
+   * GET /api/opportunities/stats/by-user
+   * Get opportunity statistics grouped by assigned user
+   */
+  static async getStatsByUser(ctx: Context) {
+    try {
+      const user = ctx.state.user as User
+
+      const where: any = { status: OpportunityStatus.ACTIVE }
+
+      // Team filtering for non-super-admins
+      if (user.role !== UserRole.SUPER_ADMIN && user.teamId) {
+        const teamUsers = await User.findAll({
+          where: { teamId: user.teamId },
+          attributes: ["id"],
+        })
+        const teamUserIds = teamUsers.map((u) => u.id)
+        where.assignedUserId = { [Op.in]: teamUserIds }
+      }
+
+      const opportunities = await Opportunity.findAll({
+        where,
+        include: [
+          {
+            model: User,
+            as: "assignedUser",
+            attributes: ["id", "firstName", "lastName", "email"],
+          },
+        ],
+      })
+
+      // Group by assigned user
+      const statsByUser: Record<
+        string,
+        {
+          userId: string
+          userName: string
+          userEmail: string
+          count: number
+          totalValue: number
+          weightedValue: number
+          overdueCount: number
+        }
+      > = {}
+
+      const now = new Date()
+
+      opportunities.forEach((opp) => {
+        const userId = opp.assignedUserId
+        const userName = opp.assignedUser
+          ? `${opp.assignedUser.firstName} ${opp.assignedUser.lastName}`
+          : "Non assigné"
+        const userEmail = opp.assignedUser?.email || ""
+
+        if (!statsByUser[userId]) {
+          statsByUser[userId] = {
+            userId,
+            userName,
+            userEmail,
+            count: 0,
+            totalValue: 0,
+            weightedValue: 0,
+            overdueCount: 0,
+          }
+        }
+
+        statsByUser[userId].count++
+        statsByUser[userId].totalValue += parseFloat(opp.value.toString())
+        statsByUser[userId].weightedValue +=
+          (parseFloat(opp.value.toString()) * opp.probability) / 100
+
+        // Check if overdue
+        if (opp.expectedCloseDate && new Date(opp.expectedCloseDate) < now) {
+          statsByUser[userId].overdueCount++
+        }
+      })
+
+      ctx.body = {
+        success: true,
+        data: {
+          statsByUser: Object.values(statsByUser).sort(
+            (a, b) => b.totalValue - a.totalValue
+          ),
+        },
+      }
+
+      logger.info("Stats by user retrieved", {
+        userId: user.id,
+        userCount: Object.keys(statsByUser).length,
+      })
+    } catch (error) {
+      logger.error("Get stats by user failed", {
+        userId: ctx.state.user?.id,
+        error: (error as Error).message,
+      })
+      throw error
+    }
+  }
 }

@@ -14,7 +14,7 @@
 
 ## Overview
 
-This runbook documents emergency procedures for the Medical CRM production deployment on Hetzner.
+This runbook documents emergency procedures for the OPEx_CRM production deployment on Hetzner.
 
 **Environment:**
 
@@ -87,7 +87,6 @@ curl -f https://crm.fvienot.link/health || echo "❌ Frontend DOWN"
 **Actions:**
 
 1. **Check Hetzner Cloud Console**
-
    - Login: https://console.hetzner.cloud/
    - Verify server status (Running/Stopped)
    - Check console output for errors
@@ -112,7 +111,6 @@ curl -f https://crm.fvienot.link/health || echo "❌ Frontend DOWN"
    ```
 
 4. **If Server Won't Start**
-
    - Check if disk is full (Hetzner metrics)
    - Resize disk if necessary
    - Reboot into Rescue Mode (Hetzner feature)
@@ -296,7 +294,6 @@ curl -f https://crm.fvienot.link/health || echo "❌ Frontend DOWN"
    ```
 
    **C. Storage Quota Exceeded**
-
    - Check Cloudflare R2 dashboard
    - Verify bucket exists and is accessible
    - Check usage limits
@@ -462,19 +459,16 @@ docker compose -f docker-compose.prod.yml exec postgres-backup /scripts/test-res
 **If Hetzner server is completely lost:**
 
 1. **New Hetzner Server**
-
    - Create new server (same specs or better)
    - Same location (Nuremberg)
 
 2. **Recover Data**
-
    - Clone repository
    - Configure `.env.production`
    - Restore from latest R2 backup
    - Restore volumes from R2
 
 3. **Update DNS**
-
    - Point `crm.fvienot.link` to new IP
    - Wait for DNS propagation (up to 24h)
 
@@ -578,12 +572,10 @@ docker compose -f docker-compose.prod.yml exec postgres-backup /scripts/test-res
 ### Recommended Monitoring Tools
 
 1. **UptimeRobot** - External monitoring (free tier available)
-
    - Monitor: `https://crm.fvienot.link`
    - Monitor: `https://crmapi.fvienot.link/health`
 
 2. **Docker Health Checks** - Already configured
-
    - All services have health checks
    - Auto-restart on failure
 

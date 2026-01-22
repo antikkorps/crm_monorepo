@@ -1,6 +1,18 @@
 <template>
   <AppLayout>
     <div class="calls-view">
+      <!-- Back to Institution Button -->
+      <v-btn
+        v-if="isFilteredByInstitution"
+        variant="text"
+        color="primary"
+        prepend-icon="mdi-arrow-left"
+        class="mb-4"
+        @click="goBackToInstitution"
+      >
+        {{ $t('common.backToInstitution') }}
+      </v-btn>
+
       <!-- Header -->
       <div class="calls-header">
         <div class="header-content">
@@ -206,10 +218,17 @@ import type {
   CallUpdateRequest,
 } from "@medical-crm/shared"
 import { computed, onMounted, ref } from "vue"
+import { useRoute, useRouter } from "vue-router"
 
 const callsStore = useCallsStore()
 const { showSnackbar } = useSnackbar()
 const { t } = useI18n()
+const route = useRoute()
+const router = useRouter()
+
+// Check if filtered by institution from query params
+const institutionId = computed(() => route.query.institutionId as string | undefined)
+const isFilteredByInstitution = computed(() => !!institutionId.value)
 
 // Component state
 const sortBy = ref("createdAt")
@@ -337,7 +356,18 @@ const applySorting = () => {
   // Sorting is handled by the computed property
 }
 
+// Navigation helpers
+const goBackToInstitution = () => {
+  if (institutionId.value) {
+    router.push(`/institutions/${institutionId.value}`)
+  }
+}
+
 onMounted(async () => {
+  // Apply institution filter if present in query
+  if (institutionId.value) {
+    callsStore.updateFilters({ institutionId: institutionId.value })
+  }
   await loadCalls()
 })
 </script>

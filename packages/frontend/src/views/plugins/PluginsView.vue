@@ -8,7 +8,7 @@
 import { PluginManager } from "../../components/plugins"
 
 // Set page title
-document.title = "Plugin Management - Medical CRM"
+document.title = "Plugin Management - OPEx_CRM"
 </script>
 
 <style scoped>

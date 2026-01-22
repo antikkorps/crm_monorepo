@@ -25,7 +25,16 @@
           :search="institutionSearch"
           @update:search="handleInstitutionSearch"
           @update:modelValue="loadContacts"
-        ></v-autocomplete>
+          @focus="loadInitialInstitutions"
+        >
+          <template #no-data>
+            <v-list-item>
+              <v-list-item-title>
+                {{ institutionSearch.length < 2 ? t('opportunities.institutionSearchHint') : t('messages.noData') }}
+              </v-list-item-title>
+            </v-list-item>
+          </template>
+        </v-autocomplete>
       </v-col>
 
       <v-col cols="12" md="6">
@@ -237,9 +246,38 @@ const rules = computed(() => ({
   positive: (value: number) => value >= 0 || "Value must be positive",
 }))
 
+// Store initial institutions list to restore after search
+const initialInstitutions = ref<any[]>([])
+const initialInstitutionsLoaded = ref(false)
+
+const loadInitialInstitutions = async () => {
+  // Only load initial list once
+  if (initialInstitutionsLoaded.value) {
+    // Restore from cache
+    institutions.value = initialInstitutions.value
+    return
+  }
+
+  loadingInstitutions.value = true
+  try {
+    const response = await institutionsApi.getAll({ limit: 20 }) as ApiResponse<{ institutions: MedicalInstitution[] }>
+    const result = response.data?.institutions || []
+    initialInstitutions.value = result
+    institutions.value = result
+    initialInstitutionsLoaded.value = true
+  } catch (err) {
+    console.error("Failed to load initial institutions:", err)
+  } finally {
+    loadingInstitutions.value = false
+  }
+}
+
 const searchInstitutions = async (query: string) => {
   if (!query || query.length < 2) {
-    institutions.value = []
+    // Restore initial institutions list when clearing search
+    if (initialInstitutionsLoaded.value) {
+      institutions.value = initialInstitutions.value
+    }
     return
   }
 

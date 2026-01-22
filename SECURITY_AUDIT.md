@@ -1,4 +1,4 @@
-# Security Audit Report - Medical CRM Monorepo
+# Security Audit Report - OPEx_CRM Monorepo
 
 **Date**: 2025-11-15
 **Audit Scope**: CodeQL alerts, npm vulnerabilities, manual security review

@@ -91,7 +91,8 @@
             :label="$t('reminders.institutionField')"
             :placeholder="$t('reminders.institutionPlaceholder')"
             prepend-inner-icon="mdi-office-building"
-            clearable
+            :clearable="!isInstitutionPreselected"
+            :disabled="isInstitutionPreselected"
             :loading="loadingInstitutions"
             variant="outlined"
             density="comfortable"
@@ -196,6 +197,7 @@ interface Props {
   modelValue: boolean
   reminder?: Reminder
   loading?: boolean
+  preselectedInstitutionId?: string
 }
 
 interface Emits {
@@ -228,6 +230,7 @@ const formData = ref<any>({
 })
 
 const isEdit = computed(() => !!props.reminder)
+const isInstitutionPreselected = computed(() => !!props.preselectedInstitutionId)
 
 const { t } = useI18n()
 
@@ -359,7 +362,7 @@ const resetForm = () => {
       description: "",
       reminderDate: "",
       priority: "medium",
-      institutionId: undefined,
+      institutionId: props.preselectedInstitutionId || undefined,
       contactPersonId: undefined,
       recurring: {
         frequency: "daily",
@@ -368,6 +371,11 @@ const resetForm = () => {
     }
     isRecurring.value = false
     formRef.value?.resetValidation()
+
+    // Load contacts for preselected institution
+    if (props.preselectedInstitutionId) {
+      loadContacts(props.preselectedInstitutionId)
+    }
   }
 }
 

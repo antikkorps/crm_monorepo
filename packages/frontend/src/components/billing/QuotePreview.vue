@@ -248,13 +248,20 @@ const downloadPDF = async () => {
       return
     }
     // Use selected template if present in form
-    const templateId = (props as any)?.quoteData?.templateId as string | undefined
+    const templateId = (props as unknown as { quoteData?: { templateId?: string } })?.quoteData?.templateId
     const response = await (await import("@/services/api")).quotesApi.generatePdf(
       props.quoteData.id,
       templateId
     )
     if (!response.ok) {
-      throw new Error(`HTTP ${response.status}`)
+      // Try to parse error message from JSON response
+      const contentType = response.headers.get("content-type")
+      if (contentType?.includes("application/json")) {
+        const errorData = await response.json()
+        const errorMessage = errorData?.error?.message || `Erreur HTTP ${response.status}`
+        throw new Error(errorMessage)
+      }
+      throw new Error(`Erreur HTTP ${response.status}`)
     }
     const blob = await response.blob()
     const url = window.URL.createObjectURL(blob)
@@ -267,7 +274,8 @@ const downloadPDF = async () => {
     window.URL.revokeObjectURL(url)
   } catch (error) {
     console.error("Failed to download PDF:", error)
-    alert("Erreur lors du téléchargement du PDF")
+    const message = error instanceof Error ? error.message : "Erreur lors du téléchargement du PDF"
+    alert(message)
   } finally {
     downloading.value = false
   }
@@ -317,12 +325,21 @@ const downloadOrderPDF = async () => {
       alert("Aucun devis à télécharger")
       return
     }
-    const templateId = (props as any)?.quoteData?.templateId as string | undefined
+    const templateId = (props as unknown as { quoteData?: { templateId?: string } })?.quoteData?.templateId
     const response = await (await import("@/services/api")).quotesApi.generateOrderPdf(
       props.quoteData.id,
       templateId
     )
-    if (!response.ok) throw new Error(`HTTP ${response.status}`)
+    if (!response.ok) {
+      // Try to parse error message from JSON response
+      const contentType = response.headers.get("content-type")
+      if (contentType?.includes("application/json")) {
+        const errorData = await response.json()
+        const errorMessage = errorData?.error?.message || `Erreur HTTP ${response.status}`
+        throw new Error(errorMessage)
+      }
+      throw new Error(`Erreur HTTP ${response.status}`)
+    }
     const blob = await response.blob()
     const url = window.URL.createObjectURL(blob)
     const link = document.createElement("a")
@@ -334,7 +351,8 @@ const downloadOrderPDF = async () => {
     window.URL.revokeObjectURL(url)
   } catch (error) {
     console.error("Failed to download Order PDF:", error)
-    alert("Erreur lors du téléchargement du bon de commande")
+    const message = error instanceof Error ? error.message : "Erreur lors du téléchargement du bon de commande"
+    alert(message)
   } finally {
     downloading.value = false
   }

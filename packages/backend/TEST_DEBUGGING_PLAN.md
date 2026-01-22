@@ -1,4 +1,4 @@
-# Plan de Débogage des Tests - Medical CRM
+# Plan de Débogage des Tests - OPEx_CRM
 
 ## 🎯 Objectif
 
@@ -66,7 +66,7 @@ role: UserRole.SUPER_ADMIN,
 const token = jwt.sign(
   { userId: user.id, email: user.email, role: user.role },
   process.env.JWT_SECRET || "test-jwt-secret",
-  { expiresIn: "1h" }
+  { expiresIn: "1h" },
 )
 
 // ✅ Correction - Utiliser AuthService pour cohérence
@@ -136,7 +136,7 @@ NoteShare.init(
     timestamps: true, // ✅ Important
     createdAt: "createdAt",
     updatedAt: false, // Si pas de updatedAt
-  }
+  },
 )
 ```
 
@@ -233,7 +233,7 @@ function fixJwtSign(filePath) {
   // Simplifié - à adapter selon le contexte
   const fixed = content.replace(
     /jwt\.sign\([^}]+\}/g,
-    "AuthService.generateAccessToken(user.id)"
+    "AuthService.generateAccessToken(user.id)",
   )
   fs.writeFileSync(filePath, fixed)
   console.log(`✅ Fixed jwt.sign in ${filePath}`)

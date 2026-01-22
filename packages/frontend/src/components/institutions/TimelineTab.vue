@@ -9,7 +9,7 @@
               v-model="searchQuery"
               density="compact"
               prepend-inner-icon="mdi-magnify"
-              placeholder="Rechercher dans la timeline..."
+              :placeholder="t('timeline.searchPlaceholder')"
               variant="outlined"
               hide-details
               clearable
@@ -25,27 +25,27 @@
             >
               <v-chip filter variant="outlined" value="all" size="small">
                 <v-icon start>mdi-all-inclusive</v-icon>
-                Tout
+                {{ t('timeline.filters.all') }}
               </v-chip>
               <v-chip filter variant="outlined" value="meeting" size="small">
                 <v-icon start>mdi-calendar-account</v-icon>
-                Réunions
+                {{ t('timeline.filters.meetings') }}
               </v-chip>
               <v-chip filter variant="outlined" value="call" size="small">
                 <v-icon start>mdi-phone</v-icon>
-                Appels
+                {{ t('timeline.filters.calls') }}
               </v-chip>
               <v-chip filter variant="outlined" value="note" size="small">
                 <v-icon start>mdi-note-text</v-icon>
-                Notes
+                {{ t('timeline.filters.notes') }}
               </v-chip>
               <v-chip filter variant="outlined" value="reminder" size="small">
                 <v-icon start>mdi-bell-alert</v-icon>
-                Rappels
+                {{ t('timeline.filters.reminders') }}
               </v-chip>
               <v-chip filter variant="outlined" value="task" size="small">
                 <v-icon start>mdi-checkbox-marked-circle-outline</v-icon>
-                Tâches
+                {{ t('timeline.filters.tasks') }}
               </v-chip>
             </v-chip-group>
           </v-col>
@@ -57,15 +57,15 @@
     <div v-if="error" class="text-center py-12">
       <v-icon size="64" color="error">mdi-alert-circle-outline</v-icon>
       <p class="text-h6 mt-4">{{ error }}</p>
-      <v-btn prepend-icon="mdi-refresh" @click="loadTimeline(true)" class="mt-4">Réessayer</v-btn>
+      <v-btn prepend-icon="mdi-refresh" @click="loadTimeline(true)" class="mt-4">{{ t('timeline.retry') }}</v-btn>
     </div>
 
     <div v-else-if="filteredItems.length === 0 && !loading">
       <v-card elevation="0" variant="outlined">
         <v-card-text class="text-center py-12">
           <v-icon size="64" color="grey-lighten-2">mdi-timeline-clock-outline</v-icon>
-          <p class="text-h6 mt-4">Aucune activité</p>
-          <p class="text-medium-emphasis">Aucune activité trouvée pour les filtres sélectionnés</p>
+          <p class="text-h6 mt-4">{{ t('timeline.empty.title') }}</p>
+          <p class="text-medium-emphasis">{{ t('timeline.empty.description') }}</p>
         </v-card-text>
       </v-card>
     </div>
@@ -87,7 +87,7 @@
               <v-chip :color="getItemColor(item.type)" variant="tonal" size="small" class="mr-2">
                 {{ getItemLabel(item.type) }}
               </v-chip>
-              <span class="text-body-1">{{ item.title }}</span>
+              <span class="text-body-1">{{ getDisplayTitle(item) }}</span>
             </div>
             <v-chip size="x-small" variant="text">
               {{ formatRelativeTime(item.createdAt) }}
@@ -107,7 +107,7 @@
 
               <!-- Assignee info for tasks -->
               <v-chip v-if="item.assignee" size="small" variant="tonal" color="secondary" prepend-icon="mdi-account-check">
-                Assigné: {{ item.assignee.firstName }} {{ item.assignee.lastName }}
+                {{ t('timeline.assignedTo') }}: {{ item.assignee.firstName }} {{ item.assignee.lastName }}
               </v-chip>
 
               <!-- Type-specific metadata -->
@@ -143,7 +143,7 @@
                   {{ formatPriority(item.metadata.priority) }}
                 </v-chip>
                 <v-chip v-if="item.metadata.isCompleted" size="small" color="success" variant="tonal" prepend-icon="mdi-check">
-                  Complété
+                  {{ t('timeline.completed') }}
                 </v-chip>
               </template>
 
@@ -155,13 +155,13 @@
                   {{ formatPriority(item.metadata.priority) }}
                 </v-chip>
                 <v-chip v-if="item.metadata.dueDate" size="small" variant="outlined" prepend-icon="mdi-calendar-clock">
-                  Échéance: {{ formatDate(item.metadata.dueDate) }}
+                  {{ t('timeline.dueDate') }}: {{ formatDate(item.metadata.dueDate) }}
                 </v-chip>
               </template>
 
               <template v-if="item.type === 'note'">
                 <v-chip v-if="item.metadata.isPrivate" size="small" color="error" variant="tonal" prepend-icon="mdi-lock">
-                  Privé
+                  {{ t('timeline.private') }}
                 </v-chip>
                 <v-chip v-if="item.metadata.tags && item.metadata.tags.length" size="small" variant="outlined" prepend-icon="mdi-tag">
                   {{ item.metadata.tags.join(", ") }}
@@ -177,18 +177,33 @@
         </v-card>
       </v-timeline-item>
 
-      <!-- Intersection observer for infinite scroll -->
-      <v-timeline-item v-if="hasMore && !loading">
-        <v-card v-intersect="onIntersect" elevation="0">
+      <!-- Loading more indicator (shown when loading additional items) -->
+      <v-timeline-item v-if="loading && items.length > 0" dot-color="primary">
+        <v-card elevation="1" class="loading-more-card">
           <v-card-text class="text-center py-4">
-            <v-progress-circular indeterminate color="primary" size="24" />
-            <p class="text-caption mt-2">Chargement...</p>
+            <v-progress-circular indeterminate color="primary" size="32" />
+            <p class="text-body-2 mt-2 font-weight-medium">{{ t('timeline.loadingMore') }}</p>
+            <p class="text-caption text-medium-emphasis">
+              {{ t('timeline.itemsLoaded', { loaded: items.length, total: total }) }}
+            </p>
           </v-card-text>
         </v-card>
       </v-timeline-item>
 
-      <!-- Loading skeleton -->
-      <v-timeline-item v-if="loading" v-for="i in 3" :key="`skeleton-${i}`" dot-color="grey">
+      <!-- Intersection observer trigger for infinite scroll -->
+      <v-timeline-item v-if="hasMore && !loading" dot-color="grey-lighten-2">
+        <v-card v-intersect="onIntersect" elevation="0" variant="outlined" class="load-trigger-card">
+          <v-card-text class="text-center py-3">
+            <v-icon color="grey" class="mb-1">mdi-dots-horizontal</v-icon>
+            <p class="text-caption text-medium-emphasis">
+              {{ t('timeline.scrollForMore', { remaining: total - items.length }) }}
+            </p>
+          </v-card-text>
+        </v-card>
+      </v-timeline-item>
+
+      <!-- Initial loading skeleton -->
+      <v-timeline-item v-if="loading && items.length === 0" v-for="i in 3" :key="`skeleton-${i}`" dot-color="grey">
         <v-card elevation="2">
           <v-card-title>
             <v-skeleton-loader type="text" width="200" />
@@ -200,23 +215,37 @@
       </v-timeline-item>
     </v-timeline>
 
-    <!-- Load more button (fallback) -->
-    <div v-if="hasMore && !loading && filteredItems.length > 0" class="text-center mt-4">
-      <v-btn variant="outlined" prepend-icon="mdi-refresh" @click="loadMore">
-        Charger plus
+    <!-- Items count indicator -->
+    <div v-if="items.length > 0 && !loading" class="text-center mt-4 mb-2">
+      <v-chip size="small" variant="tonal" color="grey">
+        {{ t('timeline.showingItems', { count: filteredItems.length, total: total }) }}
+      </v-chip>
+    </div>
+
+    <!-- Load more button (fallback for users who prefer clicking) -->
+    <div v-if="hasMore && !loading && filteredItems.length > 0" class="text-center mt-2">
+      <v-btn variant="text" size="small" prepend-icon="mdi-chevron-down" @click="loadMore">
+        {{ t('timeline.loadMore') }}
       </v-btn>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from "vue"
+import { ref, computed, watch } from "vue"
+import { useI18n } from "vue-i18n"
 import { timelineApi } from "@/services/api"
 import type { TimelineItem, TimelineItemType } from "@/services/api/timeline"
 
+const { t } = useI18n()
+
 const props = defineProps<{
   institutionId: string
+  isActive?: boolean // For lazy loading - only load when tab is active
 }>()
+
+// Track if data has been loaded at least once
+const hasLoadedOnce = ref(false)
 
 // State
 const items = ref<TimelineItem[]>([])
@@ -224,7 +253,7 @@ const loading = ref(false)
 const error = ref<string | null>(null)
 const offset = ref(0)
 const total = ref(0)
-const limit = 50
+const limit = 15 // Load fewer items initially for better UX
 const searchQuery = ref("")
 const selectedTypes = ref<(TimelineItemType | "all")[]>(["all"])
 
@@ -346,10 +375,10 @@ const formatRelativeTime = (date: string): string => {
   const diffHours = Math.floor(diffMs / 3600000)
   const diffDays = Math.floor(diffMs / 86400000)
 
-  if (diffMins < 1) return "À l'instant"
-  if (diffMins < 60) return `Il y a ${diffMins} min`
-  if (diffHours < 24) return `Il y a ${diffHours} h`
-  if (diffDays < 7) return `Il y a ${diffDays} j`
+  if (diffMins < 1) return t("timeline.relativeTime.now")
+  if (diffMins < 60) return t("timeline.relativeTime.minutes", { n: diffMins })
+  if (diffHours < 24) return t("timeline.relativeTime.hours", { n: diffHours })
+  if (diffDays < 7) return t("timeline.relativeTime.days", { n: diffDays })
   return formatDate(date)
 }
 
@@ -360,42 +389,42 @@ const formatDuration = (seconds: number): string => {
 }
 
 const formatCallType = (type: string): string => {
-  const map: Record<string, string> = {
-    incoming: "Entrant",
-    outgoing: "Sortant",
-    missed: "Manqué",
+  return t(`timeline.callTypes.${type}`) || type
+}
+
+// Format the title displayed for a call based on its type
+const formatCallTitle = (item: TimelineItem): string => {
+  const callType = item.metadata?.callType
+  const phoneNumber = item.title // Backend now sends phoneNumber as title
+
+  if (callType === "incoming") {
+    return t("timeline.callFrom", { phone: phoneNumber })
+  } else if (callType === "outgoing") {
+    return t("timeline.callTo", { phone: phoneNumber })
+  } else if (callType === "missed") {
+    return t("timeline.callMissed", { phone: phoneNumber })
   }
-  return map[type] || type
+  return phoneNumber
+}
+
+// Get the display title for a timeline item (handles call special case)
+const getDisplayTitle = (item: TimelineItem): string => {
+  if (item.type === "call") {
+    return formatCallTitle(item)
+  }
+  return item.title
 }
 
 const formatMeetingStatus = (status: string): string => {
-  const map: Record<string, string> = {
-    scheduled: "Planifié",
-    completed: "Terminé",
-    cancelled: "Annulé",
-  }
-  return map[status] || status
+  return t(`timeline.meetingStatus.${status}`) || status
 }
 
 const formatTaskStatus = (status: string): string => {
-  const map: Record<string, string> = {
-    pending: "En attente",
-    in_progress: "En cours",
-    blocked: "Bloqué",
-    completed: "Terminé",
-    cancelled: "Annulé",
-  }
-  return map[status] || status
+  return t(`timeline.taskStatus.${status}`) || status
 }
 
 const formatPriority = (priority: string): string => {
-  const map: Record<string, string> = {
-    low: "Basse",
-    medium: "Moyenne",
-    high: "Haute",
-    urgent: "Urgente",
-  }
-  return map[priority] || priority
+  return t(`timeline.priorities.${priority}`) || priority
 }
 
 // Icon and color helpers
@@ -422,14 +451,7 @@ const getItemColor = (type: TimelineItemType): string => {
 }
 
 const getItemLabel = (type: TimelineItemType): string => {
-  const labels: Record<TimelineItemType, string> = {
-    note: "Note",
-    meeting: "Réunion",
-    call: "Appel",
-    reminder: "Rappel",
-    task: "Tâche",
-  }
-  return labels[type] || type
+  return t(`timeline.labels.${type}`) || type
 }
 
 const getCallTypeColor = (type: string): string => {
@@ -471,10 +493,48 @@ const getPriorityColor = (priority: string): string => {
   return colors[priority] || "grey"
 }
 
-// Lifecycle
-onMounted(() => {
+// Watch for filter changes - deselect "all" when specific filters are selected
+watch(
+  () => selectedTypes.value,
+  (newTypes, oldTypes) => {
+    if (!oldTypes) return
+
+    // If "all" was not selected and now a specific type is selected, make sure "all" is not selected
+    const hadAll = oldTypes.includes("all")
+    const hasAll = newTypes.includes("all")
+    const specificTypes = newTypes.filter((t) => t !== "all")
+
+    if (hadAll && specificTypes.length > 0 && hasAll) {
+      // User selected a specific filter while "all" was selected - remove "all"
+      selectedTypes.value = specificTypes
+    } else if (!hadAll && hasAll && specificTypes.length > 0) {
+      // User selected "all" while specific filters were selected - keep only "all"
+      selectedTypes.value = ["all"]
+    } else if (newTypes.length === 0) {
+      // If nothing selected, default to "all"
+      selectedTypes.value = ["all"]
+    }
+  },
+  { deep: true }
+)
+
+// Lazy loading - only load when tab becomes active for the first time
+watch(
+  () => props.isActive,
+  (isActive) => {
+    if (isActive && !hasLoadedOnce.value) {
+      hasLoadedOnce.value = true
+      loadTimeline(true)
+    }
+  },
+  { immediate: true }
+)
+
+// Also load if isActive is not provided (backwards compatibility)
+if (props.isActive === undefined) {
+  hasLoadedOnce.value = true
   loadTimeline(true)
-})
+}
 </script>
 
 <style scoped>
@@ -484,5 +544,20 @@ onMounted(() => {
 
 .v-timeline {
   padding-top: 0;
+}
+
+.loading-more-card {
+  background: linear-gradient(135deg, #f5f7fa 0%, #e4e8eb 100%);
+  border: 1px dashed rgba(var(--v-theme-primary), 0.3);
+}
+
+.load-trigger-card {
+  border-style: dashed;
+  opacity: 0.7;
+  transition: opacity 0.2s;
+}
+
+.load-trigger-card:hover {
+  opacity: 1;
 }
 </style>

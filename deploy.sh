@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # ============================================
-# Medical CRM - Deployment Helper Script
+# OPEx_CRM - Deployment Helper Script
 # ============================================
 
 set -e
@@ -53,7 +53,7 @@ load_env() {
 # Show help
 show_help() {
     cat << EOF
-Medical CRM - Deployment Helper
+OPEx_CRM - Deployment Helper
 
 Usage: ./deploy.sh [COMMAND]
 

@@ -1,6 +1,6 @@
-# Medical CRM - Backend
+# OPEx_CRM - Backend
 
-Node.js/TypeScript backend for the Medical CRM application, built with Koa.js and PostgreSQL.
+Node.js/TypeScript backend for the OPEx_CRM application, built with Koa.js and PostgreSQL.
 
 ## Architecture
 
@@ -39,23 +39,27 @@ packages/backend/
 ### Installation
 
 1. Install dependencies:
+
    ```bash
    cd packages/backend
    npm install
    ```
 
 2. Configure environment variables:
+
    ```bash
    cp .env.example .env
    # Edit .env with your configuration
    ```
 
 3. Run database migrations:
+
    ```bash
    npm run migrate
    ```
 
 4. Seed development data (optional):
+
    ```bash
    npm run seed
    ```
@@ -72,18 +76,22 @@ The API will be available at `http://localhost:3001`
 See `.env.example` for all available environment variables. Key configurations:
 
 ### Database
+
 - `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD`
 - `DB_SYNC_ON_START`: Auto-sync models on startup (dev only)
 
 ### Authentication
+
 - `JWT_SECRET`, `JWT_REFRESH_SECRET`: JWT signing keys
 - `JWT_EXPIRES_IN`, `JWT_REFRESH_EXPIRES_IN`: Token validity periods
 
 ### Email/SMTP
+
 - `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`: SMTP server config
 - `EMAIL_FROM_ADDRESS`, `EMAIL_FROM_NAME`: Default sender identity
 
 ### Reminder System
+
 - `ENABLE_EMAIL_REMINDERS`: Enable/disable email notifications (default: `true`)
 - `REMINDER_TIMEZONE`: Timezone for cron jobs (default: `Europe/Paris`)
 - `REMINDER_CRON_SCHEDULE`: Cron schedule for reminder processing (default: `0 9 * * *` = daily at 9am)
@@ -94,6 +102,7 @@ See `.env.example` for all available environment variables. Key configurations:
 ## Automated Reminder System
 
 The backend includes an automated reminder system for:
+
 - **Tasks**: Alerts 7 days before due date and when overdue
 - **Quotes**: Alerts 7 days before expiration
 - **Invoices**: Alerts 30 days after due date for unpaid invoices
@@ -108,6 +117,7 @@ The backend includes an automated reminder system for:
 ### Configuration
 
 Reminder rules can be configured via:
+
 - **API**: `POST /api/reminder-rules` (SUPER_ADMIN only)
 - **Database Seeder**: Creates default rules on first run
 - **Admin UI**: Manage rules via frontend settings
@@ -115,6 +125,7 @@ Reminder rules can be configured via:
 ### Email Templates
 
 Professional HTML email templates are automatically generated with:
+
 - Responsive design for mobile/desktop
 - Direct links to entities in the CRM
 - Dynamic content (days remaining, amounts, etc.)
@@ -143,6 +154,7 @@ API endpoints are organized by domain:
 Most endpoints require JWT authentication via `Authorization: Bearer <token>` header.
 
 Role-based access control (RBAC) levels:
+
 - `SUPER_ADMIN`: Full system access
 - `TEAM_ADMIN`: Team management and data access
 - `USER`: Limited to assigned data
@@ -190,26 +202,30 @@ For detailed deployment instructions, see the main repository README.
 ### Common Issues
 
 **Database Connection Errors**
+
 - Verify PostgreSQL is running
 - Check database credentials in `.env`
 - Ensure database exists: `createdb medical_crm_dev`
 
 **Email Not Sending**
+
 - Verify SMTP credentials in `.env`
 - Check `ENABLE_EMAIL_REMINDERS=true`
 - Review logs for SMTP connection errors
 - Test with Mailtrap for development
 
 **Reminders Not Working**
+
 - Verify cron job is running (check logs for "Processing reminders...")
 - Ensure reminder rules exist: `SELECT * FROM reminder_rules WHERE is_active = true`
 - Check entities match rule criteria (due dates, statuses, etc.)
 - Review anti-spam cache if notifications seem missing
 
 For more help, check:
+
 - [`docs/REMINDERS.md`](./docs/REMINDERS.md) - Reminder system documentation
 - [`docs/EMAIL_REMINDERS.md`](./docs/EMAIL_REMINDERS.md) - Email configuration guide
 
 ## License
 
-Copyright © 2025 Medical CRM. All rights reserved.
+Copyright © 2025 OPEx_CRM. All rights reserved.

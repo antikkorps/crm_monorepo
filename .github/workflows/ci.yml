@@ -47,6 +47,10 @@ jobs:
       - name: Install dependencies
         run: PUPPETEER_SKIP_DOWNLOAD=true npm ci
 
+      - name: Build shared package
+        working-directory: packages/shared
+        run: npm run build
+
       - name: Type check
         working-directory: packages/backend
         run: npm run type-check
@@ -98,6 +102,10 @@ jobs:
 
       - name: Install dependencies
         run: PUPPETEER_SKIP_DOWNLOAD=true npm ci
+
+      - name: Build shared package
+        working-directory: packages/shared
+        run: npm run build
 
       - name: Type check frontend
         if: hashFiles('packages/frontend/tsconfig.json') != ''

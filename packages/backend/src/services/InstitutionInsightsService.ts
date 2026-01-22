@@ -27,10 +27,14 @@ export interface LeadScore {
   }
   signals: Array<{
     type: "positive" | "negative" | "neutral"
-    signal: string
+    signalKey: string // i18n key for translation
+    signalParams?: Record<string, string | number> // Parameters for interpolation
     impact: number
   }>
-  recommendations: string[]
+  recommendations: Array<{
+    key: string // i18n key for translation
+    params?: Record<string, string | number> // Parameters for interpolation
+  }>
 }
 
 /**
@@ -98,8 +102,8 @@ export class InstitutionInsightsService {
         }
       })
 
-      const signals: Array<{ type: "positive" | "negative" | "neutral"; signal: string; impact: number }> = []
-      const recommendations: string[] = []
+      const signals: Array<{ type: "positive" | "negative" | "neutral"; signalKey: string; signalParams?: Record<string, string | number>; impact: number }> = []
+      const recommendations: Array<{ key: string; params?: Record<string, string | number> }> = []
 
       // 1. SIZE SCORE (0-20 points) - Based on bed capacity
       let sizeScore = 0
@@ -107,16 +111,16 @@ export class InstitutionInsightsService {
         const capacity = institution.medicalProfile.bedCapacity
         if (capacity >= 500) {
           sizeScore = 20
-          signals.push({ type: "positive", signal: "Large institution (500+ beds)", impact: 20 })
+          signals.push({ type: "positive", signalKey: "sizeLarge", signalParams: { beds: 500 }, impact: 20 })
         } else if (capacity >= 200) {
           sizeScore = 15
-          signals.push({ type: "positive", signal: "Medium-large institution (200-499 beds)", impact: 15 })
+          signals.push({ type: "positive", signalKey: "sizeMediumLarge", signalParams: { minBeds: 200, maxBeds: 499 }, impact: 15 })
         } else if (capacity >= 100) {
           sizeScore = 10
-          signals.push({ type: "neutral", signal: "Medium institution (100-199 beds)", impact: 10 })
+          signals.push({ type: "neutral", signalKey: "sizeMedium", signalParams: { minBeds: 100, maxBeds: 199 }, impact: 10 })
         } else {
           sizeScore = 5
-          signals.push({ type: "neutral", signal: "Small institution (<100 beds)", impact: 5 })
+          signals.push({ type: "neutral", signalKey: "sizeSmall", signalParams: { beds: 100 }, impact: 5 })
         }
       }
 
@@ -130,16 +134,16 @@ export class InstitutionInsightsService {
         )
         if (matchingSpecialties.length >= 3) {
           specialtyMatchScore = 20
-          signals.push({ type: "positive", signal: `High specialty match (${matchingSpecialties.length} matches)`, impact: 20 })
+          signals.push({ type: "positive", signalKey: "specialtyHigh", signalParams: { count: matchingSpecialties.length }, impact: 20 })
         } else if (matchingSpecialties.length >= 2) {
           specialtyMatchScore = 15
-          signals.push({ type: "positive", signal: `Good specialty match (${matchingSpecialties.length} matches)`, impact: 15 })
+          signals.push({ type: "positive", signalKey: "specialtyGood", signalParams: { count: matchingSpecialties.length }, impact: 15 })
         } else if (matchingSpecialties.length >= 1) {
           specialtyMatchScore = 10
-          signals.push({ type: "neutral", signal: `Some specialty match (${matchingSpecialties.length} match)`, impact: 10 })
+          signals.push({ type: "neutral", signalKey: "specialtySome", signalParams: { count: matchingSpecialties.length }, impact: 10 })
         } else {
           specialtyMatchScore = 5
-          signals.push({ type: "neutral", signal: "Low specialty match", impact: 5 })
+          signals.push({ type: "neutral", signalKey: "specialtyLow", impact: 5 })
         }
       }
 
@@ -148,19 +152,19 @@ export class InstitutionInsightsService {
       let engagementScore = 0
       if (recentInteractions >= 20) {
         engagementScore = 30
-        signals.push({ type: "positive", signal: `Highly engaged (${recentInteractions} interactions in 3 months)`, impact: 30 })
+        signals.push({ type: "positive", signalKey: "engagementHigh", signalParams: { count: recentInteractions, months: 3 }, impact: 30 })
       } else if (recentInteractions >= 10) {
         engagementScore = 20
-        signals.push({ type: "positive", signal: `Engaged (${recentInteractions} interactions in 3 months)`, impact: 20 })
-        recommendations.push("Continue regular touchpoints to maintain engagement")
+        signals.push({ type: "positive", signalKey: "engagementGood", signalParams: { count: recentInteractions, months: 3 }, impact: 20 })
+        recommendations.push({ key: "maintainEngagement" })
       } else if (recentInteractions >= 5) {
         engagementScore = 10
-        signals.push({ type: "neutral", signal: `Moderate engagement (${recentInteractions} interactions in 3 months)`, impact: 10 })
-        recommendations.push("Increase interaction frequency with key contacts")
+        signals.push({ type: "neutral", signalKey: "engagementModerate", signalParams: { count: recentInteractions, months: 3 }, impact: 10 })
+        recommendations.push({ key: "increaseInteraction" })
       } else {
         engagementScore = 5
-        signals.push({ type: "negative", signal: `Low engagement (${recentInteractions} interactions in 3 months)`, impact: 5 })
-        recommendations.push("Schedule discovery call to re-engage")
+        signals.push({ type: "negative", signalKey: "engagementLow", signalParams: { count: recentInteractions, months: 3 }, impact: 5 })
+        recommendations.push({ key: "scheduleDiscoveryCall" })
       }
 
       // 4. BUDGET SCORE (0-20 points) - Historical revenue
@@ -171,22 +175,22 @@ export class InstitutionInsightsService {
       let budgetScore = 0
       if (historicalRevenue >= 50000) {
         budgetScore = 20
-        signals.push({ type: "positive", signal: `High budget (€${Math.round(historicalRevenue)} historical revenue)`, impact: 20 })
+        signals.push({ type: "positive", signalKey: "budgetHigh", signalParams: { amount: Math.round(historicalRevenue) }, impact: 20 })
       } else if (historicalRevenue >= 20000) {
         budgetScore = 15
-        signals.push({ type: "positive", signal: `Good budget (€${Math.round(historicalRevenue)} historical revenue)`, impact: 15 })
+        signals.push({ type: "positive", signalKey: "budgetGood", signalParams: { amount: Math.round(historicalRevenue) }, impact: 15 })
       } else if (historicalRevenue >= 5000) {
         budgetScore = 10
-        signals.push({ type: "neutral", signal: `Moderate budget (€${Math.round(historicalRevenue)} historical revenue)`, impact: 10 })
-        recommendations.push("Explore upsell opportunities for additional services")
+        signals.push({ type: "neutral", signalKey: "budgetModerate", signalParams: { amount: Math.round(historicalRevenue) }, impact: 10 })
+        recommendations.push({ key: "exploreUpsell" })
       } else if (historicalRevenue > 0) {
         budgetScore = 5
-        signals.push({ type: "neutral", signal: `Limited budget (€${Math.round(historicalRevenue)} historical revenue)`, impact: 5 })
-        recommendations.push("Focus on building relationship and demonstrating value")
+        signals.push({ type: "neutral", signalKey: "budgetLimited", signalParams: { amount: Math.round(historicalRevenue) }, impact: 5 })
+        recommendations.push({ key: "buildRelationship" })
       } else {
         budgetScore = 0
-        signals.push({ type: "neutral", signal: "No historical revenue", impact: 0 })
-        recommendations.push("Qualify budget and decision-making process")
+        signals.push({ type: "neutral", signalKey: "budgetNone", impact: 0 })
+        recommendations.push({ key: "qualifyBudget" })
       }
 
       // 5. RESPONSE SCORE (0-10 points) - Quote response time and acceptance
@@ -212,14 +216,14 @@ export class InstitutionInsightsService {
 
         if (acceptanceRate >= 50 && avgResponseTime <= 7) {
           responseScore = 10
-          signals.push({ type: "positive", signal: `Quick responder with high acceptance (${Math.round(acceptanceRate)}%)`, impact: 10 })
+          signals.push({ type: "positive", signalKey: "responseQuick", signalParams: { rate: Math.round(acceptanceRate) }, impact: 10 })
         } else if (acceptanceRate >= 30 || avgResponseTime <= 14) {
           responseScore = 7
-          signals.push({ type: "positive", signal: `Responsive with decent acceptance (${Math.round(acceptanceRate)}%)`, impact: 7 })
+          signals.push({ type: "positive", signalKey: "responseGood", signalParams: { rate: Math.round(acceptanceRate) }, impact: 7 })
         } else {
           responseScore = 3
-          signals.push({ type: "negative", signal: `Slow response or low acceptance (${Math.round(acceptanceRate)}%)`, impact: 3 })
-          recommendations.push("Follow up on pending quotes and understand objections")
+          signals.push({ type: "negative", signalKey: "responseSlow", signalParams: { rate: Math.round(acceptanceRate) }, impact: 3 })
+          recommendations.push({ key: "followUpQuotes" })
         }
       }
 
@@ -230,13 +234,13 @@ export class InstitutionInsightsService {
       let level: "hot" | "warm" | "cold"
       if (totalScore >= 70) {
         level = "hot"
-        recommendations.push("High-value prospect - prioritize for immediate action")
+        recommendations.push({ key: "prioritizeImmediate" })
       } else if (totalScore >= 40) {
         level = "warm"
-        recommendations.push("Qualified lead - continue nurturing relationship")
+        recommendations.push({ key: "continueNurturing" })
       } else {
         level = "cold"
-        recommendations.push("Requires qualification - assess fit and interest")
+        recommendations.push({ key: "assessFitInterest" })
       }
 
       // Add opportunity-based signals
@@ -246,7 +250,8 @@ export class InstitutionInsightsService {
       if (activeOpportunities.length > 0) {
         signals.push({
           type: "positive",
-          signal: `${activeOpportunities.length} active opportunity(ies) in pipeline`,
+          signalKey: "activeOpportunities",
+          signalParams: { count: activeOpportunities.length },
           impact: 10,
         })
       }

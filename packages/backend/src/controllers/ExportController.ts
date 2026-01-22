@@ -151,6 +151,17 @@ export class ExportController {
     })
   }
 
+  /**
+   * Export opportunities
+   * GET /api/export/opportunities
+   */
+  static async exportOpportunities(ctx: Context) {
+    return ExportController.handleExport(ctx, 'opportunities', ExportService.exportOpportunities, {
+      opportunityStage: ctx.query.stage as string,
+      opportunityStatus: ctx.query.status as string,
+    })
+  }
+
 /**
    * Queue export for large datasets
    * POST /api/export/queue
@@ -309,6 +320,14 @@ export class ExportController {
             formats: ['csv', 'xlsx', 'json'],
             permissions: await ExportService.checkExportPermissions(userId, 'invoices'),
             recordCount: recordCounts.invoices,
+          },
+          {
+            type: 'opportunities',
+            name: 'Opportunities',
+            description: 'Export sales opportunities with pipeline and forecast data',
+            formats: ['csv', 'xlsx', 'json'],
+            permissions: await ExportService.checkExportPermissions(userId, 'opportunities'),
+            recordCount: recordCounts.opportunities,
           },
         ],
         formats: {

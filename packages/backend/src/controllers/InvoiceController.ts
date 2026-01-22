@@ -528,69 +528,98 @@ export class InvoiceController {
     const { PdfService } = await import("../services/PdfService")
     const pdfService = new PdfService()
 
-    const emailOptions =
-      email === "true"
-        ? {
-            recipients: Array.isArray((ctx.request.body as any)?.recipients)
-              ? (ctx.request.body as any).recipients
-              : undefined,
-            customMessage: (ctx.request.body as EmailOptionsBody).customMessage,
-          }
-        : undefined
+    try {
+      const emailOptions =
+        email === "true"
+          ? {
+              recipients: Array.isArray((ctx.request.body as any)?.recipients)
+                ? (ctx.request.body as any).recipients
+                : undefined,
+              customMessage: (ctx.request.body as EmailOptionsBody).customMessage,
+            }
+          : undefined
 
-    const result = await pdfService.generateInvoicePdf(
-      id,
-      user.id,
-      templateId as string,
-      {
-        // Do not persist PDFs when emailing; persist for download only
-        saveToFile: !emailOptions,
-        emailOptions,
-      }
-    )
-
-    if (emailOptions && result.emailResult) {
-      console.log("Returning email result instead of PDF download")
-      ctx.body = {
-        success: true,
-        data: {
-          version: result.version,
-          emailSent: result.emailResult.success,
-          emailError: result.emailResult.error,
-        },
-        message: result.emailResult.success
-          ? "Invoice PDF generated and emailed successfully"
-          : "Invoice PDF generated but email failed",
-      }
-    } else {
-      // Return PDF as download
-      console.log("Returning PDF for download, buffer size:", result.buffer?.length)
-      let filename = `Invoice-${id}.pdf`
-      try {
-        const { Invoice } = await import("../models/Invoice")
-        const inv = await Invoice.findByPk(id)
-        if (inv?.invoiceNumber) {
-          filename = `Invoice-${inv.invoiceNumber}.pdf`
+      const result = await pdfService.generateInvoicePdf(
+        id,
+        user.id,
+        templateId as string,
+        {
+          // Do not persist PDFs when emailing; persist for download only
+          saveToFile: !emailOptions,
+          emailOptions,
         }
-      } catch (_) {}
-      ctx.set("Content-Type", "application/pdf")
-      ctx.set("Content-Disposition", `attachment; filename="${filename}"`)
-      ctx.body = result.buffer
+      )
 
-      // Clean up: delete the PDF file from storage after serving it
-      if (result.filePath) {
+      if (emailOptions && result.emailResult) {
+        console.log("Returning email result instead of PDF download")
+        ctx.body = {
+          success: true,
+          data: {
+            version: result.version,
+            emailSent: result.emailResult.success,
+            emailError: result.emailResult.error,
+          },
+          message: result.emailResult.success
+            ? "Invoice PDF generated and emailed successfully"
+            : "Invoice PDF generated but email failed",
+        }
+      } else {
+        // Return PDF as download
+        console.log("Returning PDF for download, buffer size:", result.buffer?.length)
+        let filename = `Invoice-${id}.pdf`
         try {
-          const fs = await import("fs/promises")
-          await fs.unlink(result.filePath)
-          console.log("PDF file deleted from storage:", result.filePath)
-        } catch (error) {
-          console.warn("Could not delete PDF file:", error)
-          // Don't throw error - the download was successful
+          const { Invoice } = await import("../models/Invoice")
+          const inv = await Invoice.findByPk(id)
+          if (inv?.invoiceNumber) {
+            filename = `Invoice-${inv.invoiceNumber}.pdf`
+          }
+        } catch (_) {}
+        ctx.set("Content-Type", "application/pdf")
+        ctx.set("Content-Disposition", `attachment; filename="${filename}"`)
+        ctx.body = result.buffer
+
+        // Clean up: delete the PDF file from storage after serving it
+        if (result.filePath) {
+          try {
+            const fs = await import("fs/promises")
+            await fs.unlink(result.filePath)
+            console.log("PDF file deleted from storage:", result.filePath)
+          } catch (error) {
+            console.warn("Could not delete PDF file:", error)
+            // Don't throw error - the download was successful
+          }
         }
+      }
+
+      await pdfService.cleanup()
+    } catch (error) {
+      await pdfService.cleanup()
+      const errorMessage = error instanceof Error ? error.message : "Unknown error"
+
+      // Check for specific "no template configured" error
+      if (errorMessage.startsWith("NO_TEMPLATE_CONFIGURED:")) {
+        const userMessage = errorMessage.replace("NO_TEMPLATE_CONFIGURED:", "")
+        ctx.status = 422
+        ctx.body = {
+          success: false,
+          error: {
+            code: "NO_TEMPLATE_CONFIGURED",
+            message: userMessage,
+          },
+        }
+        return
+      }
+
+      ctx.status = 500
+      ctx.body = {
+        success: false,
+        error: {
+          code: "PDF_GENERATION_ERROR",
+          message: "Failed to generate invoice PDF",
+          details: errorMessage,
+        },
       }
     }
-
-    await pdfService.cleanup()
   }
 
   // GET /api/invoices/:id/versions - Get document versions for invoice

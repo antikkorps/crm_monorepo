@@ -2,7 +2,7 @@
   "name": "example-logger-plugin",
   "version": "1.0.0",
   "description": "Example plugin that logs system events for demonstration purposes",
-  "author": "Medical CRM Team",
+  "author": "OPEx_CRM Team",
   "license": "MIT",
   "main": "index.js",
   "displayName": "Example Event Logger",

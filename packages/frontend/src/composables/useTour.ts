@@ -23,7 +23,7 @@ export function useTour() {
           popover: {
             title: "🎉 Bienvenue sur votre Tableau de Bord !",
             description:
-              "Découvrez en quelques étapes comment utiliser efficacement votre tableau de bord Medical CRM. Cette visite guidée vous prendra environ 2 minutes.",
+              "Découvrez en quelques étapes comment utiliser efficacement votre tableau de bord OPEx_CRM. Cette visite guidée vous prendra environ 2 minutes.",
           },
         },
         {
@@ -120,7 +120,7 @@ export function useTour() {
           popover: {
             title: "🎓 Vous êtes prêt !",
             description:
-              "Vous maîtrisez maintenant les bases du tableau de bord. Explorez les autres sections pour découvrir toutes les fonctionnalités de Medical CRM. Bon travail ! 🚀",
+              "Vous maîtrisez maintenant les bases du tableau de bord. Explorez les autres sections pour découvrir toutes les fonctionnalités de OPEx_CRM. Bon travail ! 🚀",
           },
         },
       ],
@@ -347,7 +347,7 @@ export function useTour() {
           popover: {
             title: "📈 Vous êtes maintenant un analyste expert !",
             description:
-              "Vous maîtrisez les analytics de Medical CRM. Consultez régulièrement ces données pour optimiser vos performances et prendre des décisions éclairées. Data-driven success ! 🎓",
+              "Vous maîtrisez les analytics de OPEx_CRM. Consultez régulièrement ces données pour optimiser vos performances et prendre des décisions éclairées. Data-driven success ! 🎓",
           },
         },
       ],

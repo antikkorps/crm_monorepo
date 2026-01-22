@@ -15,8 +15,8 @@
               <div>
                 <div class="text-caption text-medium-emphasis">Santé Client</div>
                 <div class="text-h4 font-weight-bold">
-                  {{ loading ? "..." : healthScore?.total || 0 }}
-                  <span class="text-h6">/100</span>
+                  {{ loading ? "..." : error ? "N/A" : healthScore?.total || 0 }}
+                  <span class="text-h6" v-if="!error">/100</span>
                 </div>
                 <v-chip
                   v-if="!loading && healthScore"
@@ -38,7 +38,9 @@
                 >
                   <v-icon size="32">{{ getLevelIcon(healthScore.level) }}</v-icon>
                 </v-progress-circular>
-                <v-progress-circular v-else indeterminate color="grey" :size="80" />
+                <v-progress-circular v-else-if="loading" indeterminate color="grey" :size="80" />
+                <v-icon v-else-if="error" size="80" color="error">mdi-alert-circle-outline</v-icon>
+                <v-icon v-else size="80" color="grey">mdi-help-circle-outline</v-icon>
               </div>
             </div>
           </v-card-text>
@@ -191,7 +193,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from "vue"
+import { ref, onMounted, watch } from "vue"
 import { healthScoreApi } from "@/services/api"
 import type { HealthScoreBreakdown, HealthScoreLevel } from "@/services/api/healthScore"
 
@@ -202,15 +204,26 @@ const props = defineProps<{
 const healthScore = ref<HealthScoreBreakdown | null>(null)
 const loading = ref(false)
 const showDetails = ref(false)
+const error = ref(false)
+const loadedOnce = ref(false)
 
 const loadHealthScore = async () => {
+  // Only load once per component mount, prevent duplicate calls
+  if (!props.institutionId || loading.value || loadedOnce.value) {
+    return
+  }
+
   loading.value = true
+  loadedOnce.value = true
+  error.value = false
 
   try {
     const response = await healthScoreApi.getInstitutionHealthScore(props.institutionId)
-    healthScore.value = response.data.data
+    // apiClient (fetch) returns JSON directly: { success, data }
+    healthScore.value = response.data
   } catch (err: any) {
     console.error("Failed to load health score:", err)
+    error.value = true
   } finally {
     loading.value = false
   }
@@ -267,6 +280,15 @@ const getCompletionColor = (rate: number): string => {
   if (rate >= 40) return "warning"
   return "error"
 }
+
+// Watch for prop changes and reload if needed
+watch(() => props.institutionId, (newId, oldId) => {
+  if (newId && newId !== oldId) {
+    loadedOnce.value = false // Reset to allow loading new institution
+    healthScore.value = null
+    loadHealthScore()
+  }
+})
 
 onMounted(() => {
   loadHealthScore()

@@ -89,7 +89,8 @@
                 item-value="value"
                 :label="$t('meetings.institutionField')"
                 :placeholder="$t('meetings.institutionPlaceholder')"
-                clearable
+                :clearable="!isInstitutionPreselected"
+                :disabled="isInstitutionPreselected"
                 :loading="loadingInstitutions"
                 density="comfortable"
                 hide-details="auto"
@@ -213,6 +214,7 @@ interface Props {
   modelValue: boolean
   meeting?: Meeting | null
   loading?: boolean
+  preselectedInstitutionId?: string
 }
 
 interface Emits {
@@ -258,6 +260,7 @@ const loadingUsers = computed(() => teamStore.loading)
 const loadingInstitutions = computed(() => institutionsStore.loading || loadingInstitutionsSearch.value)
 
 const isEditing = computed(() => !!props.meeting)
+const isInstitutionPreselected = computed(() => !!props.preselectedInstitutionId)
 
 const { t } = useI18n()
 
@@ -287,13 +290,18 @@ const resetForm = () => {
     startDate: "",
     endDate: "",
     location: "",
-    institutionId: "",
+    institutionId: props.preselectedInstitutionId || "",
     participantIds: [],
     contactPersonIds: [],
     status: "scheduled" as MeetingStatus,
   }
   errors.value = {}
   contactPersonOptions.value = []
+
+  // Load contact persons for preselected institution
+  if (props.preselectedInstitutionId) {
+    loadContactPersons(props.preselectedInstitutionId)
+  }
 }
 
 const populateForm = async (meeting: Meeting) => {

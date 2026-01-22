@@ -132,4 +132,22 @@ export const opportunitiesApi = {
       `/opportunities/forecast${queryString ? `?${queryString}` : ""}`
     )
   },
+
+  /**
+   * Get opportunity statistics grouped by assigned user
+   */
+  getStatsByUser: () =>
+    apiClient.get<
+      ApiResponse<{
+        statsByUser: Array<{
+          userId: string
+          userName: string
+          userEmail: string
+          count: number
+          totalValue: number
+          weightedValue: number
+          overdueCount: number
+        }>
+      }>
+    >("/opportunities/stats/by-user"),
 }

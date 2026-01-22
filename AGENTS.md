@@ -1,4 +1,4 @@
-# Agent Guidelines for Medical CRM Monorepo
+# Agent Guidelines for OPEx_CRM Monorepo
 
 ## Business Context
 
