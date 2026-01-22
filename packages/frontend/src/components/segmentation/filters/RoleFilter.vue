@@ -1,6 +1,6 @@
 <template>
   <div class="role-filter">
-    <v-select
+    <v-autocomplete
       v-model="selectedRoles"
       :items="roleOptions"
       :label="$t('segmentation.filters.role.label')"
@@ -8,9 +8,11 @@
       item-value="value"
       multiple
       chips
-      outlined
-      dense
+      closable-chips
+      variant="outlined"
+      density="compact"
       :loading="loading"
+      :no-data-text="$t('segmentation.filters.role.noData')"
       class="mb-3"
     />
     <v-btn
@@ -19,7 +21,7 @@
       :disabled="selectedRoles.length === 0"
       class="mt-2"
     >
-      <v-icon left>mdi-plus</v-icon>
+      <v-icon start>mdi-plus</v-icon>
       {{ $t('segmentation.filters.addFilter') }}
     </v-btn>
   </div>
@@ -28,7 +30,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { filterOptionsApi } from '../../../services/api/filterOptions'
+import { filterOptionsApi } from '@/services/api'
 
 const { t } = useI18n()
 
@@ -54,13 +56,12 @@ onMounted(async () => {
   try {
     loading.value = true
     const response = await filterOptionsApi.getContactRoles()
-    roleOptions.value = response.data.map(role => ({
+    roleOptions.value = (response.data || []).map((role: string) => ({
       value: role,
       label: role
     }))
   } catch (error) {
     console.error('Error loading roles:', error)
-    // Fallback to empty array
     roleOptions.value = []
   } finally {
     loading.value = false

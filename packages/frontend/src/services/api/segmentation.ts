@@ -266,7 +266,8 @@ class SegmentationApiClient {
 
   // Comparison
   async compareSegments(segmentIds: string[]): Promise<{ data: any }> {
-    return this.post<{ data: any }>("/segments/compare", { segmentIds })
+    const ids = segmentIds.join(',')
+    return this.get<{ data: any }>(`/segments/compare?ids=${encodeURIComponent(ids)}`)
   }
 }
 

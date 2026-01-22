@@ -1,13 +1,17 @@
 <template>
   <v-card class="segment-builder">
-    <v-card-title class="d-flex align-center">
-      <v-icon left>mdi-filter-variant</v-icon>
-      {{ $t('segmentation.builder.title') }}
-      <v-spacer />
+    <v-card-title class="builder-header">
+      <div class="builder-title">
+        <v-icon start>mdi-filter-variant</v-icon>
+        <span>{{ $t('segmentation.builder.title') }}</span>
+      </div>
       <v-btn
         icon
+        variant="text"
+        size="small"
         @click="resetBuilder"
         :disabled="!hasFilters"
+        class="refresh-btn"
       >
         <v-icon>mdi-refresh</v-icon>
       </v-btn>
@@ -21,17 +25,17 @@
             v-model="segmentType"
             :items="segmentTypeOptions"
             :label="$t('segmentation.builder.segmentType')"
-            outlined
-            dense
-            @change="onSegmentTypeChange"
+            variant="outlined"
+            density="compact"
+            @update:model-value="onSegmentTypeChange"
           />
         </v-col>
         <v-col cols="12" md="6">
           <v-text-field
             v-model="segmentName"
             :label="$t('segmentation.builder.segmentName')"
-            outlined
-            dense
+            variant="outlined"
+            density="compact"
             :rules="nameRules"
           />
         </v-col>
@@ -43,10 +47,10 @@
           <!-- Institution Filters -->
           <v-expansion-panel v-if="segmentType === 'institution'">
             <v-expansion-panel-title>
-              <v-icon left>mdi-hospital-building</v-icon>
+              <v-icon start>mdi-hospital-building</v-icon>
               {{ $t('segmentation.builder.institutionFilters') }}
               <v-chip
-                small
+                size="small"
                 class="ml-2"
                 color="primary"
                 v-if="institutionFilters.length > 0"
@@ -66,10 +70,10 @@
           <!-- Contact Filters -->
           <v-expansion-panel v-if="segmentType === 'contact'">
             <v-expansion-panel-title>
-              <v-icon left>mdi-account-multiple</v-icon>
+              <v-icon start>mdi-account-multiple</v-icon>
               {{ $t('segmentation.builder.contactFilters') }}
               <v-chip
-                small
+                size="small"
                 class="ml-2"
                 color="primary"
                 v-if="contactFilters.length > 0"
@@ -89,10 +93,10 @@
           <!-- Combined Filters -->
           <v-expansion-panel>
             <v-expansion-panel-title>
-              <v-icon left>mdi-link</v-icon>
+              <v-icon start>mdi-link</v-icon>
               {{ $t('segmentation.builder.combinedFilters') }}
               <v-chip
-                small
+                size="small"
                 class="ml-2"
                 color="primary"
                 v-if="combinedFilters.length > 0"
@@ -114,7 +118,7 @@
       <!-- Real-time Preview -->
       <v-card class="mt-4" outlined>
         <v-card-title class="text-h6">
-          <v-icon left>mdi-eye</v-icon>
+          <v-icon start>mdi-eye</v-icon>
           {{ $t('segmentation.builder.preview.title') }}
         </v-card-title>
         <v-card-text>
@@ -128,12 +132,14 @@
       </v-card>
 
       <!-- Action Buttons -->
-      <v-card-actions class="mt-4">
-        <v-spacer />
+      <div class="action-buttons mt-4">
         <v-btn
+          variant="outlined"
           @click="$emit('cancel')"
           :disabled="saving"
+          class="action-btn cancel-btn"
         >
+          <v-icon start>mdi-close</v-icon>
           {{ $t('common.cancel') }}
         </v-btn>
         <v-btn
@@ -141,11 +147,12 @@
           @click="saveSegment"
           :loading="saving"
           :disabled="!canSave"
+          class="action-btn save-btn"
         >
-          <v-icon left>mdi-content-save</v-icon>
+          <v-icon start>mdi-content-save</v-icon>
           {{ $t('segmentation.builder.saveSegment') }}
         </v-btn>
-      </v-card-actions>
+      </div>
     </v-card-text>
   </v-card>
 </template>
@@ -319,6 +326,17 @@ const buildContactFilters = () => {
       case 'activityLevel':
         filters.activityLevel = filter.value
         break
+      case 'preferredContactMethod':
+        // Convert contact method selection to hasEmail/hasPhone booleans
+        if (Array.isArray(filter.value)) {
+          if (filter.value.includes('email')) {
+            filters.hasEmail = true
+          }
+          if (filter.value.includes('phone') || filter.value.includes('mobile')) {
+            filters.hasPhone = true
+          }
+        }
+        break
     }
   })
 
@@ -400,6 +418,49 @@ onMounted(() => {
   margin: 0 auto;
 }
 
+.builder-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.builder-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 1.25rem;
+  font-weight: 500;
+  min-width: 0;
+  flex: 1;
+}
+
+.builder-title span {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.refresh-btn {
+  flex-shrink: 0;
+}
+
+/* Action buttons */
+.action-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 16px 0;
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.action-btn {
+  min-width: 120px;
+  text-transform: none;
+  font-weight: 500;
+}
+
 .filter-groups {
   margin-bottom: 16px;
 }
@@ -410,5 +471,89 @@ onMounted(() => {
 
 .v-expansion-panel-content {
   padding: 0 16px 16px;
+}
+
+/* Mobile optimizations */
+@media (max-width: 600px) {
+  .segment-builder {
+    margin: 0;
+  }
+
+  /* Builder header - title and refresh button */
+  .builder-header {
+    padding: 10px 12px !important;
+    gap: 4px;
+  }
+
+  .builder-title {
+    font-size: 1rem;
+    gap: 6px;
+  }
+
+  .builder-title .v-icon {
+    font-size: 1.25rem;
+  }
+
+  .refresh-btn {
+    width: 32px;
+    height: 32px;
+  }
+
+  .segment-builder :deep(.v-card-text) {
+    padding: 12px;
+  }
+
+  .segment-builder .v-row.mb-4 {
+    margin-bottom: 8px !important;
+  }
+
+  .filter-groups {
+    margin-bottom: 8px;
+  }
+
+  .filter-groups :deep(.v-expansion-panel-title) {
+    padding: 12px;
+    min-height: 44px;
+  }
+
+  .filter-groups :deep(.v-expansion-panel-text__wrapper) {
+    padding: 8px 12px 12px;
+  }
+
+  /* Reduce nested card padding for preview */
+  .segment-builder :deep(.v-card.mt-4 .v-card-title) {
+    padding: 10px 12px;
+    font-size: 1rem;
+  }
+
+  .segment-builder :deep(.v-card.mt-4 .v-card-text) {
+    padding: 8px;
+  }
+
+  /* Preview stats cards */
+  .segment-builder :deep(.segment-preview .v-card) {
+    margin-bottom: 8px;
+  }
+
+  .segment-builder :deep(.segment-preview .v-card .v-card-text) {
+    padding: 10px;
+  }
+
+  /* Action buttons on mobile */
+  .action-buttons {
+    flex-direction: column;
+    gap: 8px;
+    padding: 12px 0;
+  }
+
+  .action-btn {
+    width: 100%;
+    min-width: unset;
+  }
+
+  /* Reverse order: Save first, Cancel second */
+  .action-buttons {
+    flex-direction: column-reverse;
+  }
 }
 </style>

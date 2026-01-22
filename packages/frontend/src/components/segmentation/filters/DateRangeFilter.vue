@@ -1,43 +1,44 @@
 <template>
   <div class="date-range-filter">
-    <v-row>
-      <v-col cols="6">
-        <v-date-picker
-          v-model="startDate"
-          :label="$t('segmentation.filters.dateRange.startDate')"
-          outlined
-          dense
-          class="mb-3"
-        />
-      </v-col>
-      <v-col cols="6">
-        <v-date-picker
-          v-model="endDate"
-          :label="$t('segmentation.filters.dateRange.endDate')"
-          :min="startDate"
-          outlined
-          dense
-          class="mb-3"
-        />
-      </v-col>
-    </v-row>
     <v-select
       v-model="dateField"
       :items="dateFieldOptions"
       :label="$t('segmentation.filters.dateRange.field')"
       item-title="label"
       item-value="value"
-      outlined
-      dense
+      variant="outlined"
+      density="compact"
       class="mb-3"
     />
+    <v-row>
+      <v-col cols="12" sm="6">
+        <v-text-field
+          v-model="startDate"
+          :label="$t('segmentation.filters.dateRange.startDate')"
+          type="date"
+          variant="outlined"
+          density="compact"
+          :max="endDate || undefined"
+        />
+      </v-col>
+      <v-col cols="12" sm="6">
+        <v-text-field
+          v-model="endDate"
+          :label="$t('segmentation.filters.dateRange.endDate')"
+          type="date"
+          variant="outlined"
+          density="compact"
+          :min="startDate || undefined"
+        />
+      </v-col>
+    </v-row>
     <v-btn
       color="primary"
       @click="addFilter"
       :disabled="!startDate || !endDate || !dateField"
       class="mt-2"
     >
-      <v-icon left>mdi-plus</v-icon>
+      <v-icon start>mdi-plus</v-icon>
       {{ $t('segmentation.filters.addFilter') }}
     </v-btn>
   </div>
@@ -73,9 +74,18 @@ const dateFieldOptions = [
   { value: 'nextAppointment', label: t('segmentation.filters.dateRange.fields.nextAppointment') }
 ]
 
+// Format date for display
+const formatDate = (dateStr: string): string => {
+  if (!dateStr) return ''
+  const date = new Date(dateStr)
+  return date.toLocaleDateString()
+}
+
 // Methods
 const addFilter = () => {
   if (!startDate.value || !endDate.value || !dateField.value) return
+
+  const fieldLabel = dateFieldOptions.find(f => f.value === dateField.value)?.label || dateField.value
 
   emit('add-filter', {
     type: 'combined',
@@ -85,7 +95,7 @@ const addFilter = () => {
       start: startDate.value,
       end: endDate.value
     },
-    label: `${t('segmentation.filters.dateRange.label')}: ${dateFieldOptions.find(f => f.value === dateField.value)?.label}`,
+    label: `${fieldLabel}: ${formatDate(startDate.value)} - ${formatDate(endDate.value)}`,
     group: 'combined'
   })
 
@@ -94,3 +104,9 @@ const addFilter = () => {
   dateField.value = ''
 }
 </script>
+
+<style scoped>
+.date-range-filter {
+  min-width: 300px;
+}
+</style>

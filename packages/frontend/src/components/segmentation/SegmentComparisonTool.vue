@@ -1,14 +1,19 @@
 <template>
   <div class="segment-comparison-tool">
     <v-card>
-      <v-card-title class="d-flex align-center">
-        <v-icon left>mdi-chart-scatter-plot</v-icon>
-        {{ $t('segmentation.comparison.title') }}
-        <v-spacer />
+      <v-card-title class="comparison-header">
+        <div class="header-title">
+          <v-icon start>mdi-chart-scatter-plot</v-icon>
+          <span>{{ $t('segmentation.comparison.title') }}</span>
+        </div>
         <v-btn
           icon
+          variant="text"
+          size="small"
           @click="refreshComparison"
           :loading="loading"
+          :disabled="selectedSegments.length < 2"
+          class="refresh-btn"
         >
           <v-icon>mdi-refresh</v-icon>
         </v-btn>
@@ -18,7 +23,7 @@
         <!-- Segment Selection -->
         <v-row class="mb-4">
           <v-col cols="12">
-            <v-card outlined>
+            <v-card variant="outlined">
               <v-card-title class="text-h6 pb-2">
                 {{ $t('segmentation.comparison.selectSegments') }}
               </v-card-title>
@@ -29,24 +34,21 @@
                   :label="$t('segmentation.comparison.chooseSegments')"
                   multiple
                   chips
-                  outlined
-                  dense
+                  variant="outlined"
+                  density="compact"
                   item-title="name"
                   item-value="id"
                   :rules="segmentSelectionRules"
                 >
-                  <template v-slot:selection="{ attrs, item, select, selected }">
+                  <template v-slot:selection="{ item }">
                     <v-chip
-                      v-bind="attrs"
-                      :input-value="selected"
-                      close
-                      @click="select"
-                      @click:close="removeSegment(item)"
-                      small
-                      :color="getSegmentColor(item)"
+                      closable
+                      @click:close="removeSegment(item.raw)"
+                      size="small"
+                      :color="getSegmentColor(item.raw)"
                     >
-                      <v-icon left small>{{ getSegmentIcon(item.type) }}</v-icon>
-                      {{ item.name }}
+                      <v-icon start size="small">{{ getSegmentIcon(item.raw.type) }}</v-icon>
+                      {{ item.raw.name }}
                     </v-chip>
                   </template>
                 </v-select>
@@ -58,8 +60,14 @@
           </v-col>
         </v-row>
 
+        <!-- Loading State -->
+        <div v-if="loading" class="text-center pa-8">
+          <v-progress-circular indeterminate color="primary" size="64" />
+          <div class="mt-4 text-h6">{{ $t('common.loading') }}</div>
+        </div>
+
         <!-- Comparison Results -->
-        <div v-if="selectedSegments.length >= 2">
+        <div v-else-if="selectedSegments.length >= 2 && comparisonData.segments.length > 0">
           <!-- Summary Cards -->
           <v-row class="mb-4">
             <v-col
@@ -76,8 +84,8 @@
                 <v-card-title class="pb-2">
                   <v-icon
                     :color="getSegmentColor(segment)"
-                    left
-                    small
+                    start
+                    size="small"
                   >
                     {{ getSegmentIcon(segment.type) }}
                   </v-icon>
@@ -103,92 +111,108 @@
           <!-- Overlap Analysis -->
           <v-row class="mb-4">
             <v-col cols="12">
-              <v-card outlined>
-                <v-card-title class="text-h6">
+              <v-card variant="outlined">
+                <v-card-title class="overlap-header">
+                  <v-icon start size="small">mdi-set-center</v-icon>
                   {{ $t('segmentation.comparison.overlap.title') }}
                 </v-card-title>
-                <v-card-text>
-                  <div class="overlap-matrix">
+                <v-card-text class="pa-0">
+                  <!-- Mobile: List view -->
+                  <div class="overlap-list d-md-none">
+                    <div
+                      v-for="overlap in comparisonData.overlaps"
+                      :key="overlap.id"
+                      class="overlap-item"
+                    >
+                      <div class="overlap-pair">
+                        <span class="segment-name">{{ overlap.segmentAName }}</span>
+                        <v-icon size="small" class="mx-2">mdi-arrow-left-right</v-icon>
+                        <span class="segment-name">{{ overlap.segmentBName }}</span>
+                      </div>
+                      <div class="overlap-stats">
+                        <div class="overlap-bar-container">
+                          <div
+                            class="overlap-bar"
+                            :style="{ width: overlap.percentage + '%' }"
+                          ></div>
+                        </div>
+                        <div class="overlap-values">
+                          <span class="overlap-pct">{{ overlap.percentage.toFixed(0) }}%</span>
+                          <span class="overlap-cnt">{{ formatNumber(overlap.count) }} {{ $t('segmentation.comparison.overlap.shared') }}</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div v-if="comparisonData.overlaps.length === 0" class="no-overlap">
+                      {{ $t('segmentation.comparison.overlap.noData') }}
+                    </div>
+                  </div>
+
+                  <!-- Desktop: Simple table -->
+                  <div class="overlap-table-wrapper d-none d-md-block">
                     <table class="overlap-table">
                       <thead>
                         <tr>
-                          <th></th>
-                          <th
-                            v-for="segment in comparisonData.segments"
-                            :key="segment.id"
-                            class="segment-header"
-                          >
-                            {{ segment.name }}
-                          </th>
+                          <th>{{ $t('segmentation.comparison.overlap.segments') }}</th>
+                          <th>{{ $t('segmentation.comparison.overlap.shared') }}</th>
+                          <th>{{ $t('segmentation.comparison.overlap.percentage') }}</th>
                         </tr>
                       </thead>
                       <tbody>
-                        <tr
-                          v-for="(segmentA, indexA) in comparisonData.segments"
-                          :key="segmentA.id"
-                        >
-                          <td class="segment-label">{{ segmentA.name }}</td>
-                          <td
-                            v-for="(segmentB, indexB) in comparisonData.segments"
-                            :key="segmentB.id"
-                            :class="getOverlapCellClass(indexA, indexB)"
-                          >
-                            <div v-if="indexA === indexB" class="diagonal-cell">
-                              {{ formatNumber(segmentA.count) }}
+                        <tr v-for="overlap in comparisonData.overlaps" :key="overlap.id">
+                          <td class="pair-cell">
+                            <span>{{ overlap.segmentAName }}</span>
+                            <v-icon size="x-small" class="mx-1">mdi-close</v-icon>
+                            <span>{{ overlap.segmentBName }}</span>
+                          </td>
+                          <td class="count-cell">{{ formatNumber(overlap.count) }}</td>
+                          <td class="pct-cell">
+                            <div class="pct-bar-wrapper">
+                              <div class="pct-bar" :style="{ width: overlap.percentage + '%' }"></div>
+                              <span class="pct-value">{{ overlap.percentage.toFixed(1) }}%</span>
                             </div>
-                            <div v-else class="overlap-cell">
-                              <div class="overlap-count">
-                                {{ formatNumber(getOverlapCount(segmentA.id, segmentB.id)) }}
-                              </div>
-                              <div class="overlap-percentage">
-                                {{ getOverlapPercentage(segmentA.id, segmentB.id).toFixed(1) }}%
-                              </div>
-                            </div>
+                          </td>
+                        </tr>
+                        <tr v-if="comparisonData.overlaps.length === 0">
+                          <td colspan="3" class="text-center text-medium-emphasis pa-4">
+                            {{ $t('segmentation.comparison.overlap.noData') }}
                           </td>
                         </tr>
                       </tbody>
                     </table>
                   </div>
+
                 </v-card-text>
               </v-card>
             </v-col>
           </v-row>
 
-          <!-- Venn Diagram Visualization -->
+          <!-- Insights Section -->
           <v-row class="mb-4">
-            <v-col cols="12" md="8">
-              <v-card outlined>
-                <v-card-title class="text-h6">
-                  {{ $t('segmentation.comparison.visualization.title') }}
-                </v-card-title>
-                <v-card-text>
-                  <div class="venn-diagram-container">
-                    <canvas ref="vennDiagramRef" width="600" height="400"></canvas>
-                  </div>
-                </v-card-text>
-              </v-card>
-            </v-col>
-
-            <v-col cols="12" md="4">
-              <v-card outlined>
-                <v-card-title class="text-h6">
+            <v-col cols="12">
+              <v-card variant="outlined">
+                <v-card-title class="insights-header">
+                  <v-icon start size="small">mdi-lightbulb-outline</v-icon>
                   {{ $t('segmentation.comparison.insights.title') }}
                 </v-card-title>
                 <v-card-text>
-                  <div class="insights-list">
+                  <div v-if="comparisonData.insights.length > 0" class="insights-grid">
                     <v-alert
                       v-for="insight in comparisonData.insights"
                       :key="insight.id"
                       :type="insight.type"
-                      outlined
-                      dense
-                      class="mb-2"
+                      variant="tonal"
+                      density="compact"
+                      class="insight-alert"
                     >
                       <div class="insight-content">
                         <div class="insight-title">{{ insight.title }}</div>
                         <div class="insight-description">{{ insight.description }}</div>
                       </div>
                     </v-alert>
+                  </div>
+                  <div v-else class="no-insights">
+                    <v-icon size="32" color="grey">mdi-information-outline</v-icon>
+                    <span>{{ $t('segmentation.comparison.insights.empty') }}</span>
                   </div>
                 </v-card-text>
               </v-card>
@@ -198,7 +222,7 @@
           <!-- Detailed Overlap Analysis -->
           <v-row>
             <v-col cols="12">
-              <v-card outlined>
+              <v-card variant="outlined">
                 <v-card-title class="text-h6">
                   {{ $t('segmentation.comparison.details.title') }}
                 </v-card-title>
@@ -267,8 +291,8 @@
                           v-model="selectedAttribute"
                           :items="attributeOptions"
                           :label="$t('segmentation.comparison.details.selectAttribute')"
-                          outlined
-                          dense
+                          variant="outlined"
+                          density="compact"
                           class="mb-4"
                         />
                         <div v-if="selectedAttribute" class="attribute-breakdown">
@@ -283,14 +307,28 @@
           </v-row>
         </div>
 
-        <!-- Empty State -->
+        <!-- Error State -->
+        <v-alert v-else-if="error" type="error" class="mb-4">
+          {{ error }}
+        </v-alert>
+
+        <!-- No Segments Available State -->
+        <v-card v-else-if="availableSegments.length === 0" outlined class="text-center pa-8">
+          <v-icon size="64" color="grey-lighten-1">mdi-folder-alert-outline</v-icon>
+          <div class="mt-4 text-h6">{{ $t('segmentation.comparison.noSegments.title') }}</div>
+          <div class="text-body-1 text-medium-emphasis mb-4">
+            {{ $t('segmentation.comparison.noSegments.message') }}
+          </div>
+        </v-card>
+
+        <!-- Not Enough Selected State -->
         <v-card v-else outlined class="text-center pa-8">
-          <v-icon size="64" color="grey lighten-1">mdi-chart-scatter-plot</v-icon>
+          <v-icon size="64" color="grey-lighten-1">mdi-chart-scatter-plot</v-icon>
           <div class="mt-4 text-h6">{{ $t('segmentation.comparison.empty.title') }}</div>
           <div class="text-body-1 text-medium-emphasis mb-4">
             {{ $t('segmentation.comparison.empty.message') }}
           </div>
-          <v-alert type="info" outlined dense>
+          <v-alert type="info" variant="outlined" density="compact">
             {{ $t('segmentation.comparison.empty.hint') }}
           </v-alert>
         </v-card>
@@ -300,18 +338,22 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, onMounted } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import type { Segment, SegmentType } from '@medical-crm/shared'
+import { segmentationApi } from '../../services/api/segmentation'
 
 const { t } = useI18n()
+
+// Segment colors for visualization
+const SEGMENT_COLORS = ['#1976D2', '#388E3C', '#FBC02D', '#E53935']
 
 // Props
 interface Props {
   segments: Segment[]
 }
 
-defineProps<Props>()
+const props = defineProps<Props>()
 
 // Emits
 const emit = defineEmits<{
@@ -321,42 +363,19 @@ const emit = defineEmits<{
 // Reactive data
 const selectedSegments = ref<string[]>([])
 const loading = ref(false)
+const error = ref<string | null>(null)
 const activeDetailTab = ref('unique')
 const selectedAttribute = ref('')
 const vennDiagramRef = ref<HTMLCanvasElement>()
 const attributeChartRef = ref<HTMLCanvasElement>()
 
-// Mock data
-const availableSegments = ref([
-  {
-    id: '1',
-    name: 'Large Hospitals',
-    type: 'institution' as SegmentType,
-    count: 450,
-    color: '#1976D2'
-  },
-  {
-    id: '2',
-    name: 'Active Clients',
-    type: 'contact' as SegmentType,
-    count: 320,
-    color: '#388E3C'
-  },
-  {
-    id: '3',
-    name: 'High Priority',
-    type: 'institution' as SegmentType,
-    count: 280,
-    color: '#FBC02D'
-  },
-  {
-    id: '4',
-    name: 'New Contacts',
-    type: 'contact' as SegmentType,
-    count: 200,
-    color: '#E53935'
-  }
-])
+// Use actual segments from props
+const availableSegments = computed(() => {
+  return props.segments.map((segment, index) => ({
+    ...segment,
+    color: SEGMENT_COLORS[index % SEGMENT_COLORS.length]
+  }))
+})
 
 const comparisonData = ref({
   segments: [] as any[],
@@ -371,10 +390,10 @@ const segmentSelectionRules = computed(() => [
 ])
 
 const attributeOptions = computed(() => [
-  { text: 'Institution Type', value: 'type' },
-  { text: 'Location', value: 'location' },
-  { text: 'Size', value: 'size' },
-  { text: 'Activity Level', value: 'activity' }
+  { title: t('segmentation.comparison.attributes.type'), value: 'type' },
+  { title: t('segmentation.comparison.attributes.location'), value: 'location' },
+  { title: t('segmentation.comparison.attributes.size'), value: 'size' },
+  { title: t('segmentation.comparison.attributes.activity'), value: 'activity' }
 ])
 
 // Methods
@@ -397,101 +416,143 @@ const removeSegment = (segment: any) => {
   }
 }
 
-const getOverlapCellClass = (indexA: number, indexB: number): string => {
-  if (indexA === indexB) return 'diagonal-cell'
-  return 'overlap-cell'
-}
-
-const getOverlapCount = (segmentAId: string, segmentBId: string): number => {
-  const overlap = comparisonData.value.overlaps.find(
-    o => (o.segmentAId === segmentAId && o.segmentBId === segmentBId) ||
-         (o.segmentAId === segmentBId && o.segmentBId === segmentAId)
-  )
-  return overlap?.count || 0
-}
-
-const getOverlapPercentage = (segmentAId: string, segmentBId: string): number => {
-  const overlap = comparisonData.value.overlaps.find(
-    o => (o.segmentAId === segmentAId && o.segmentBId === segmentBId) ||
-         (o.segmentAId === segmentBId && o.segmentBId === segmentAId)
-  )
-  return overlap?.percentage || 0
-}
-
 const refreshComparison = async () => {
   if (selectedSegments.value.length < 2) return
 
   loading.value = true
+  error.value = null
 
   try {
-    // TODO: Load actual comparison data from API
     console.log('Loading comparison for segments:', selectedSegments.value)
 
-    // Mock comparison data
+    // Call the real API to get comparison data
+    const response = await segmentationApi.compareSegments(selectedSegments.value)
+    const apiData = response.data
+
+    // New API format: { segments: [...], overlaps: [...] }
+    const segmentsData = apiData.segments || apiData
+    const overlapsData = apiData.overlaps || []
+
+    // Calculate total count for percentage calculation
+    const totalCount = segmentsData.reduce((sum: number, seg: any) => sum + (seg.totalCount || 0), 0)
+
+    // Process overlaps from backend (real data)
+    const processedOverlaps = overlapsData.map((overlap: any) => ({
+      id: `${overlap.segmentAId}-${overlap.segmentBId}`,
+      segmentAId: overlap.segmentAId,
+      segmentBId: overlap.segmentBId,
+      segmentAName: overlap.segmentAName,
+      segmentBName: overlap.segmentBName,
+      count: overlap.overlapCount,
+      percentage: overlap.overlapPercentage,
+      segmentACount: overlap.segmentACount,
+      segmentBCount: overlap.segmentBCount
+    }))
+
+    // Calculate unique counts for each segment based on real overlaps
+    const segmentOverlapCounts = new Map<string, number>()
+    for (const overlap of processedOverlaps) {
+      segmentOverlapCounts.set(
+        overlap.segmentAId,
+        (segmentOverlapCounts.get(overlap.segmentAId) || 0) + overlap.count
+      )
+      segmentOverlapCounts.set(
+        overlap.segmentBId,
+        (segmentOverlapCounts.get(overlap.segmentBId) || 0) + overlap.count
+      )
+    }
+
+    // Process API response into our comparison data structure
     comparisonData.value = {
-      segments: selectedSegments.value.map(id => {
-        const segment = availableSegments.value.find(s => s.id === id)
+      segments: segmentsData.map((segData: any, index: number) => {
+        const localSegment = availableSegments.value.find(s => s.id === segData.id)
+        const count = segData.totalCount || 0
+        // Approximate unique count (records not shared with any other segment)
+        const overlapSum = segmentOverlapCounts.get(segData.id) || 0
+        const uniqueCount = Math.max(0, count - overlapSum)
         return {
-          ...segment,
-          percentage: Math.random() * 100,
-          uniqueCount: Math.floor(Math.random() * 100) + 50
+          id: segData.id,
+          name: segData.name,
+          type: segData.type,
+          count: count,
+          color: localSegment?.color || SEGMENT_COLORS[index % SEGMENT_COLORS.length],
+          percentage: totalCount > 0 ? (count / totalCount) * 100 : 0,
+          uniqueCount: uniqueCount,
+          // Additional stats from API
+          institutionStats: segData.institutionStats,
+          contactStats: segData.contactStats
         }
       }),
-      overlaps: generateMockOverlaps(),
-      insights: generateMockInsights()
+      overlaps: processedOverlaps,
+      insights: generateInsights(segmentsData)
     }
 
     // Update visualizations
     drawVennDiagram()
     drawAttributeChart()
-  } catch (error) {
-    console.error('Error loading comparison data:', error)
+  } catch (err) {
+    console.error('Error loading comparison data:', err)
+    error.value = (err as Error).message
   } finally {
     loading.value = false
   }
 }
 
-const generateMockOverlaps = () => {
-  const overlaps = []
-  for (let i = 0; i < selectedSegments.value.length; i++) {
-    for (let j = i + 1; j < selectedSegments.value.length; j++) {
-      const segmentA = availableSegments.value.find(s => s.id === selectedSegments.value[i])
-      const segmentB = availableSegments.value.find(s => s.id === selectedSegments.value[j])
-      overlaps.push({
-        id: `${segmentA.id}-${segmentB.id}`,
-        segmentAId: segmentA.id,
-        segmentBId: segmentB.id,
-        segmentAName: segmentA.name,
-        segmentBName: segmentB.name,
-        count: Math.floor(Math.random() * 50) + 10,
-        percentage: Math.random() * 30 + 5
+// Generate insights based on comparison data
+const generateInsights = (apiData: any[]) => {
+  const insights = []
+
+  if (apiData.length >= 2) {
+    // Check for large size differences
+    const counts = apiData.map(s => s.totalCount || 0)
+    const maxCount = Math.max(...counts)
+    const minCount = Math.min(...counts)
+
+    if (maxCount > minCount * 3 && minCount > 0) {
+      insights.push({
+        id: 'size-diff',
+        type: 'info',
+        title: t('segmentation.comparison.insights.sizeDifference'),
+        description: t('segmentation.comparison.insights.sizeDifferenceDesc')
       })
     }
-  }
-  return overlaps
-}
 
-const generateMockInsights = () => {
-  return [
-    {
-      id: '1',
-      type: 'info',
-      title: 'High Overlap Detected',
-      description: 'Two segments share 25% of their records, indicating potential redundancy.'
-    },
-    {
-      id: '2',
-      type: 'success',
-      title: 'Good Segmentation',
-      description: 'Segments show distinct characteristics with minimal overlap.'
-    },
-    {
-      id: '3',
-      type: 'warning',
-      title: 'Consider Consolidation',
-      description: 'Small segments with high overlap could be combined for efficiency.'
+    // Check for type diversity
+    const types = new Set(apiData.map(s => s.type))
+    if (types.size > 1) {
+      insights.push({
+        id: 'type-diversity',
+        type: 'success',
+        title: t('segmentation.comparison.insights.typeDiversity'),
+        description: t('segmentation.comparison.insights.typeDiversityDesc')
+      })
     }
-  ]
+
+    // Check for same type segments
+    const sameTypeSegments = apiData.filter(s => s.type === apiData[0].type)
+    if (sameTypeSegments.length === apiData.length) {
+      insights.push({
+        id: 'same-type',
+        type: 'warning',
+        title: t('segmentation.comparison.insights.sameType'),
+        description: t('segmentation.comparison.insights.sameTypeDesc')
+      })
+    }
+
+    // Always add a summary insight
+    const totalRecords = counts.reduce((a, b) => a + b, 0)
+    insights.push({
+      id: 'summary',
+      type: 'info',
+      title: t('segmentation.comparison.insights.summary'),
+      description: t('segmentation.comparison.insights.summaryDesc', {
+        count: apiData.length,
+        total: totalRecords
+      })
+    })
+  }
+
+  return insights
 }
 
 const drawVennDiagram = () => {
@@ -574,21 +635,51 @@ watch(selectedSegments, (newValue) => {
 watch(selectedAttribute, () => {
   drawAttributeChart()
 })
-
-// Initialize
-onMounted(() => {
-  // Pre-select first two segments for demonstration
-  selectedSegments.value = availableSegments.value.slice(0, 2).map(s => s.id)
-})
 </script>
 
 <style scoped>
 .segment-comparison-tool {
-  min-height: 600px;
+  min-height: 400px;
 }
 
+/* Header */
+.comparison-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.header-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 1.125rem;
+  font-weight: 600;
+  flex: 1;
+  min-width: 0;
+}
+
+.header-title span {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.refresh-btn {
+  flex-shrink: 0;
+}
+
+/* Summary Cards */
 .segment-summary-card {
   border-left: 4px solid;
+  height: 100%;
+}
+
+.segment-summary-card :deep(.v-card-title) {
+  font-size: 0.9375rem;
+  padding: 12px 16px 8px;
 }
 
 .segment-1 { border-left-color: #1976D2; }
@@ -597,13 +688,13 @@ onMounted(() => {
 .segment-4 { border-left-color: #E53935; }
 
 .metric-large {
-  font-size: 2rem;
-  font-weight: bold;
+  font-size: 1.75rem;
+  font-weight: 700;
   color: #1976D2;
 }
 
 .metric-label {
-  font-size: 0.875rem;
+  font-size: 0.8125rem;
   color: rgba(0, 0, 0, 0.6);
   margin-bottom: 8px;
 }
@@ -615,13 +706,99 @@ onMounted(() => {
 .percentage-text {
   position: absolute;
   right: 0;
-  top: -20px;
+  top: -18px;
   font-size: 0.75rem;
   color: rgba(0, 0, 0, 0.6);
 }
 
-.overlap-matrix {
-  overflow-x: auto;
+/* Overlap Section */
+.overlap-header {
+  font-size: 1rem !important;
+  padding: 12px 16px !important;
+  border-bottom: 1px solid rgba(0,0,0,0.08);
+}
+
+/* Mobile: List view */
+.overlap-list {
+  padding: 12px;
+}
+
+.overlap-item {
+  background: #f8f9fa;
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 10px;
+}
+
+.overlap-item:last-child {
+  margin-bottom: 0;
+}
+
+.overlap-pair {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 10px;
+}
+
+.overlap-pair .segment-name {
+  font-weight: 600;
+  font-size: 0.875rem;
+  color: #1976D2;
+  max-width: 40%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.overlap-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.overlap-bar-container {
+  height: 8px;
+  background: #e0e0e0;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.overlap-bar {
+  height: 100%;
+  background: linear-gradient(90deg, #ff9800, #f57c00);
+  border-radius: 4px;
+  min-width: 2px;
+  transition: width 0.3s ease;
+}
+
+.overlap-values {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.overlap-pct {
+  font-weight: 700;
+  font-size: 1.125rem;
+  color: #e65100;
+}
+
+.overlap-cnt {
+  font-size: 0.75rem;
+  color: rgba(0,0,0,0.6);
+}
+
+.no-overlap {
+  text-align: center;
+  padding: 24px;
+  color: rgba(0,0,0,0.5);
+  font-size: 0.875rem;
+}
+
+/* Desktop: Table view */
+.overlap-table-wrapper {
+  padding: 16px;
 }
 
 .overlap-table {
@@ -629,68 +806,236 @@ onMounted(() => {
   border-collapse: collapse;
 }
 
-.overlap-table th,
+.overlap-table th {
+  text-align: left;
+  padding: 10px 12px;
+  background: #f5f5f5;
+  font-weight: 600;
+  font-size: 0.8125rem;
+  color: #424242;
+  border-bottom: 2px solid #e0e0e0;
+}
+
 .overlap-table td {
   padding: 12px;
-  text-align: center;
-  border: 1px solid #e0e0e0;
+  border-bottom: 1px solid #f0f0f0;
 }
 
-.segment-header {
-  font-weight: bold;
-  background-color: #f5f5f5;
-}
-
-.segment-label {
-  font-weight: bold;
-  background-color: #f5f5f5;
-  text-align: left;
-}
-
-.diagonal-cell {
-  background-color: #e3f2fd;
-  font-weight: bold;
-}
-
-.overlap-cell {
-  background-color: #fff3e0;
-}
-
-.overlap-count {
-  font-weight: bold;
-  color: #1976D2;
-}
-
-.overlap-percentage {
-  font-size: 0.75rem;
-  color: rgba(0, 0, 0, 0.6);
-}
-
-.venn-diagram-container {
+.pair-cell {
   display: flex;
-  justify-content: center;
   align-items: center;
-  min-height: 400px;
+  font-weight: 500;
 }
 
-.insights-list {
-  max-height: 400px;
-  overflow-y: auto;
+.count-cell {
+  font-weight: 600;
+  color: #1976D2;
+  text-align: center;
+}
+
+.pct-cell {
+  width: 200px;
+}
+
+.pct-bar-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.pct-bar {
+  flex: 1;
+  height: 6px;
+  background: linear-gradient(90deg, #ff9800, #f57c00);
+  border-radius: 3px;
+  min-width: 2px;
+}
+
+.pct-value {
+  font-weight: 600;
+  font-size: 0.875rem;
+  color: #e65100;
+  min-width: 50px;
+  text-align: right;
+}
+
+/* Insights Section */
+.insights-header {
+  font-size: 1rem !important;
+  padding: 12px 16px !important;
+  border-bottom: 1px solid rgba(0,0,0,0.08);
+}
+
+.insights-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 12px;
+}
+
+.insight-alert {
+  margin: 0 !important;
 }
 
 .insight-content {
-  font-size: 0.875rem;
+  font-size: 0.8125rem;
 }
 
 .insight-title {
-  font-weight: bold;
-  margin-bottom: 4px;
+  font-weight: 600;
+  margin-bottom: 2px;
 }
 
+.insight-description {
+  opacity: 0.85;
+}
+
+.no-insights {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 24px;
+  color: rgba(0,0,0,0.5);
+  font-size: 0.875rem;
+}
+
+/* Details Section */
+.segment-comparison-tool :deep(.v-tabs) {
+  border-bottom: 1px solid rgba(0,0,0,0.08);
+}
+
+.segment-comparison-tool :deep(.v-tab) {
+  text-transform: none;
+  font-weight: 500;
+  font-size: 0.875rem;
+}
+
+/* Attribute Breakdown */
 .attribute-breakdown {
   display: flex;
   justify-content: center;
   align-items: center;
-  min-height: 400px;
+  min-height: 200px;
+  background: #f5f5f5;
+  border-radius: 8px;
+}
+
+/* Mobile Optimizations */
+@media (max-width: 600px) {
+  .segment-comparison-tool {
+    min-height: auto;
+  }
+
+  .comparison-header {
+    padding: 8px 8px;
+  }
+
+  .header-title {
+    font-size: 0.9375rem;
+    gap: 6px;
+  }
+
+  .header-title .v-icon {
+    font-size: 1.125rem;
+  }
+
+  .refresh-btn {
+    width: 32px;
+    height: 32px;
+  }
+
+  .segment-comparison-tool :deep(.v-card > .v-card-text) {
+    padding: 0;
+  }
+
+  /* Summary cards */
+  .segment-summary-card {
+    min-height: auto;
+  }
+
+  .segment-summary-card :deep(.v-card-title) {
+    padding: 10px 12px 6px;
+    font-size: 0.8125rem;
+  }
+
+  .segment-summary-card :deep(.v-card-text) {
+    padding: 6px 12px 12px;
+  }
+
+  .metric-large {
+    font-size: 1.375rem;
+  }
+
+  .metric-label {
+    font-size: 0.75rem;
+  }
+
+  /* Overlap mobile */
+  .overlap-header {
+    padding: 10px 12px !important;
+    font-size: 0.9375rem !important;
+  }
+
+  .overlap-list {
+    padding: 10px;
+  }
+
+  .overlap-item {
+    padding: 10px;
+  }
+
+  .overlap-pair .segment-name {
+    font-size: 0.8125rem;
+  }
+
+  .overlap-pct {
+    font-size: 1rem;
+  }
+
+  /* Insights mobile */
+  .insights-header {
+    padding: 10px 12px !important;
+    font-size: 0.9375rem !important;
+  }
+
+  .insights-grid {
+    grid-template-columns: 1fr;
+    gap: 8px;
+    padding: 10px;
+  }
+
+  .insight-content {
+    font-size: 0.75rem;
+  }
+
+  .no-insights {
+    padding: 16px;
+  }
+
+  /* Tabs mobile */
+  .segment-comparison-tool :deep(.v-tabs) {
+    margin: 0 12px;
+  }
+
+  .segment-comparison-tool :deep(.v-tab) {
+    font-size: 0.75rem;
+    min-width: auto;
+    padding: 0 10px;
+  }
+
+  /* Details tables */
+  .segment-comparison-tool :deep(.v-window-item > .mt-4) {
+    margin-top: 12px !important;
+    padding: 0 12px;
+  }
+
+  .segment-comparison-tool :deep(.v-table) {
+    font-size: 0.75rem;
+  }
+
+  .segment-comparison-tool :deep(.v-table th),
+  .segment-comparison-tool :deep(.v-table td) {
+    padding: 8px !important;
+  }
 }
 </style>

@@ -6,8 +6,8 @@
       :label="$t('segmentation.filters.activityLevel.label')"
       item-title="label"
       item-value="value"
-      outlined
-      dense
+      variant="outlined"
+      density="compact"
       class="mb-3"
     />
     <v-select
@@ -16,8 +16,8 @@
       :label="$t('segmentation.filters.activityLevel.timeframe')"
       item-title="label"
       item-value="value"
-      outlined
-      dense
+      variant="outlined"
+      density="compact"
       class="mb-3"
     />
     <v-btn
@@ -26,7 +26,7 @@
       :disabled="!activityLevel || !timeframe"
       class="mt-2"
     >
-      <v-icon left>mdi-plus</v-icon>
+      <v-icon start>mdi-plus</v-icon>
       {{ $t('segmentation.filters.addFilter') }}
     </v-btn>
   </div>

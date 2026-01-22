@@ -684,6 +684,9 @@ export { healthScoreApi } from './healthScore'
 // Export Teams API
 export { teamsApi } from './teams'
 
+// Export Filter Options API
+export { filterOptionsApi } from './filterOptions'
+
 // System Settings API
 export const settingsApi = {
   getPublic: () => apiClient.get("/settings/public"),

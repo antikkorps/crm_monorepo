@@ -6,8 +6,8 @@
       :label="$t('segmentation.filters.compliance.type')"
       item-title="label"
       item-value="value"
-      outlined
-      dense
+      variant="outlined"
+      density="compact"
       class="mb-3"
     />
     <v-select
@@ -16,8 +16,8 @@
       :label="$t('segmentation.filters.compliance.status')"
       item-title="label"
       item-value="value"
-      outlined
-      dense
+      variant="outlined"
+      density="compact"
       class="mb-3"
       :disabled="!complianceType"
     />
@@ -27,7 +27,7 @@
       :disabled="!complianceType || !complianceStatus"
       class="mt-2"
     >
-      <v-icon left>mdi-plus</v-icon>
+      <v-icon start>mdi-plus</v-icon>
       {{ $t('segmentation.filters.addFilter') }}
     </v-btn>
   </div>

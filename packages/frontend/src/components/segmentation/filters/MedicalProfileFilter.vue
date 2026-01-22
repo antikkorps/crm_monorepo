@@ -3,7 +3,7 @@
     <v-radio-group
       v-model="filterValue"
       :label="$t('segmentation.filters.medicalProfile.label')"
-      row
+      inline
     >
       <v-radio
         :label="$t('segmentation.filters.medicalProfile.hasProfile')"
@@ -20,7 +20,7 @@
       :disabled="filterValue === null"
       class="mt-2"
     >
-      <v-icon left>mdi-plus</v-icon>
+      <v-icon start>mdi-plus</v-icon>
       {{ $t('segmentation.filters.addFilter') }}
     </v-btn>
   </div>
@@ -51,12 +51,16 @@ const filterValue = ref<boolean | null>(null)
 const addFilter = () => {
   if (filterValue.value === null) return
 
+  const valueLabel = filterValue.value
+    ? t('segmentation.filters.medicalProfile.hasProfile')
+    : t('segmentation.filters.medicalProfile.noProfile')
+
   emit('add-filter', {
     type: 'combined',
     field: 'hasMedicalProfile',
     operator: 'equals',
     value: filterValue.value,
-    label: t('segmentation.filters.medicalProfile.label'),
+    label: `${t('segmentation.filters.medicalProfile.label')}: ${valueLabel}`,
     group: 'combined'
   })
 

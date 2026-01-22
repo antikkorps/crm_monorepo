@@ -235,13 +235,16 @@
       "name": { "label": "Name" },
       "type": {
         "label": "Type",
-        "placeholder": "Select type..."
+        "placeholder": "Select types...",
+        "noData": "No types available"
       },
       "location": {
         "label": "Location",
         "country": "Country",
         "region": "Region/State",
         "city": "City",
+        "noStates": "No regions available",
+        "noCities": "No cities available",
         "countries": {
           "us": "United States",
           "ca": "Canada",
@@ -250,6 +253,8 @@
       },
       "specialty": {
         "label": "Specialty",
+        "placeholder": "Select specialties...",
+        "noData": "No specialties available",
         "specialties": {
           "cardiology": "Cardiology",
           "neurology": "Neurology",
@@ -290,9 +295,9 @@
           "expired": "Expired"
         }
       },
-      "role": { "label": "Role" },
-      "department": { "label": "Department" },
-      "title": { "label": "Title" },
+      "role": { "label": "Role", "noData": "No roles available" },
+      "department": { "label": "Department", "noData": "No departments available" },
+      "title": { "label": "Title", "noData": "No titles available" },
       "primary": {
         "label": "Primary Contact",
         "primaryOnly": "Primary only",
@@ -337,6 +342,28 @@
       "private": "Private",
       "team": "Team",
       "public": "Public"
+    },
+    "preview": {
+      "title": "Segment Preview",
+      "subtitle": "Preview of records matching your filter criteria",
+      "totalRecords": "Total Records",
+      "activeRecords": "Active Records",
+      "matchPercentage": "Match Percentage",
+      "sampleRecords": "Sample Records",
+      "refresh": "Refresh",
+      "loading": "Loading preview data...",
+      "noResults": "No records match your current filter criteria",
+      "noData": "No data available",
+      "addFilters": "Add Filters",
+      "exportResults": "Export Results",
+      "saveAsSegment": "Save as Segment",
+      "applyFilters": "Apply Filters",
+      "name": "Name",
+      "type": "Type",
+      "city": "City",
+      "status": "Status",
+      "department": "Department",
+      "title": "Title"
     },
     "records": "Records"
   },

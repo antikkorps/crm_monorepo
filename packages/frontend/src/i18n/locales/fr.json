@@ -571,13 +571,16 @@
       },
       "type": {
         "label": "Type",
-        "placeholder": "Sélectionner un type..."
+        "placeholder": "Sélectionner des types...",
+        "noData": "Aucun type disponible"
       },
       "location": {
         "label": "Localisation",
         "country": "Pays",
         "region": "Région/État",
         "city": "Ville",
+        "noStates": "Aucune région disponible",
+        "noCities": "Aucune ville disponible",
         "countries": {
           "us": "États-Unis",
           "ca": "Canada",
@@ -586,6 +589,8 @@
       },
       "specialty": {
         "label": "Spécialité",
+        "placeholder": "Sélectionner des spécialités...",
+        "noData": "Aucune spécialité disponible",
         "specialties": {
           "cardiology": "Cardiologie",
           "neurology": "Neurologie",
@@ -628,6 +633,7 @@
       },
       "role": {
         "label": "Rôle",
+        "noData": "Aucun rôle disponible",
         "roles": {
           "admin": "Administrateur",
           "manager": "Gestionnaire",
@@ -641,6 +647,7 @@
       },
       "department": {
         "label": "Département",
+        "noData": "Aucun département disponible",
         "departments": {
           "administration": "Administration",
           "medical": "Médical",
@@ -654,6 +661,7 @@
       },
       "title": {
         "label": "Titre",
+        "noData": "Aucun titre disponible",
         "titles": {
           "dr": "Dr",
           "prof": "Prof",
@@ -743,6 +751,7 @@
       "activeRecords": "Enregistrements Actifs",
       "matchPercentage": "Pourcentage de Correspondance",
       "sampleRecords": "Échantillon d'Enregistrements",
+      "refresh": "Actualiser",
       "loading": "Chargement des données d'aperçu...",
       "noResults": "Aucun enregistrement ne correspond aux critères de filtre actuels",
       "noData": "Aucune donnée disponible",
@@ -750,15 +759,19 @@
       "exportResults": "Exporter les Résultats",
       "saveAsSegment": "Enregistrer comme Segment",
       "applyFilters": "Appliquer les Filtres",
-      "name": "",
-      "type": "",
-      "city": "",
-      "status": "",
-      "department": ""
+      "name": "Nom",
+      "type": "Type",
+      "city": "Ville",
+      "status": "Statut",
+      "department": "Département",
+      "title": "Titre"
     },
     "analytics": {
       "title": "Analyses du Segment",
       "subtitle": "Analyses détaillées et insights pour vos segments",
+      "selectSegment": "Sélectionner un segment",
+      "noSegmentSelected": "Aucun segment sélectionné",
+      "selectSegmentHint": "Sélectionnez un segment dans la liste pour voir ses analyses",
       "overview": "Aperçu",
       "demographics": "Démographie",
       "behavior": "Comportement",
@@ -870,6 +883,7 @@
     "comparison": {
       "title": "Comparer les Segments",
       "subtitle": "Comparer plusieurs segments côte à côte",
+      "refresh": "Actualiser",
       "selectSegments": "Sélectionner les Segments à Comparer",
       "chooseSegments": "Choisir les Segments",
       "selectedCount": "{count} sur {max} segments sélectionnés",
@@ -877,14 +891,33 @@
       "removeSegment": "Supprimer le Segment",
       "comparisonMetrics": "Métriques de Comparaison",
       "records": "Enregistrements",
+      "attributes": {
+        "type": "Type d'institution",
+        "location": "Localisation",
+        "size": "Taille",
+        "activity": "Niveau d'activité"
+      },
       "overlap": {
-        "title": "Chevauchement des Segments"
+        "title": "Chevauchement des Segments",
+        "segments": "Segments",
+        "shared": "en commun",
+        "percentage": "Chevauchement",
+        "noData": "Aucune donnée de chevauchement"
       },
       "visualization": {
         "title": "Visualisation"
       },
       "insights": {
-        "title": "Insights"
+        "title": "Insights",
+        "empty": "Sélectionnez des segments pour voir les insights",
+        "sizeDifference": "Différence de taille",
+        "sizeDifferenceDesc": "Les segments ont des tailles très différentes, ce qui peut indiquer des critères de ciblage différents.",
+        "typeDiversity": "Diversité de types",
+        "typeDiversityDesc": "Bonne diversité : vous comparez des segments d'institutions et de contacts.",
+        "sameType": "Même type de segment",
+        "sameTypeDesc": "Tous les segments sont du même type. Vérifiez qu'ils ne se chevauchent pas trop.",
+        "summary": "Résumé",
+        "summaryDesc": "Comparaison de {count} segments représentant {total} enregistrements au total."
       },
       "details": {
         "title": "Détails de la Comparaison",
@@ -903,6 +936,10 @@
         "title": "Aucun segment sélectionné",
         "message": "Sélectionnez au moins 2 segments pour commencer la comparaison.",
         "hint": "Utilisez le sélecteur ci-dessus pour choisir les segments."
+      },
+      "noSegments": {
+        "title": "Aucun segment disponible",
+        "message": "Créez d'abord des segments dans l'onglet Constructeur pour pouvoir les comparer."
       },
       "metrics": {
         "size": "Taille du Segment",

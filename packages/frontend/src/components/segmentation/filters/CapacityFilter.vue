@@ -6,8 +6,8 @@
           v-model.number="minCapacity"
           :label="$t('segmentation.filters.capacity.minCapacity')"
           type="number"
-          outlined
-          dense
+          variant="outlined"
+          density="compact"
           class="mb-3"
           :min="0"
         />
@@ -17,8 +17,8 @@
           v-model.number="maxCapacity"
           :label="$t('segmentation.filters.capacity.maxCapacity')"
           type="number"
-          outlined
-          dense
+          variant="outlined"
+          density="compact"
           class="mb-3"
           :min="minCapacity || 0"
         />
@@ -30,8 +30,8 @@
       :label="$t('segmentation.filters.capacity.type')"
       item-title="label"
       item-value="value"
-      outlined
-      dense
+      variant="outlined"
+      density="compact"
       class="mb-3"
     />
     <v-btn
@@ -40,7 +40,7 @@
       :disabled="!minCapacity && !maxCapacity"
       class="mt-2"
     >
-      <v-icon left>mdi-plus</v-icon>
+      <v-icon start>mdi-plus</v-icon>
       {{ $t('segmentation.filters.addFilter') }}
     </v-btn>
   </div>
@@ -96,7 +96,7 @@ const addFilter = () => {
 
   const typeLabel = capacityTypeOptions.find(opt => opt.value === capacityType.value)?.label || capacityType.value
   let rangeLabel = ''
-  
+
   if (minCapacity.value && maxCapacity.value) {
     rangeLabel = `${minCapacity.value} - ${maxCapacity.value}`
   } else if (minCapacity.value) {

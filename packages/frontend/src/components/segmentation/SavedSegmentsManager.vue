@@ -47,68 +47,77 @@
           >
             <v-card
               class="segment-card"
-              :class="{ selected: selectedSegments.includes(segment.id) }"
+              :class="[
+                { selected: selectedSegments.includes(segment.id) },
+                `segment-type-${segment.type}`
+              ]"
               @click="toggleSelection(segment.id)"
             >
-              <v-card-title class="pb-2">
-                <div class="d-flex align-center">
-                  <v-icon :color="getTypeColor(segment.type)" left small>
-                    {{ getTypeIcon(segment.type) }}
-                  </v-icon>
-                  <div class="flex-grow-1">
-                    <div class="text-h6">{{ segment.name }}</div>
-                    <div
-                      class="text-caption text-medium-emphasis"
-                      v-if="segment.description"
+              <!-- Type indicator bar -->
+              <div class="segment-type-bar" :style="{ backgroundColor: getTypeColor(segment.type) }"></div>
+
+              <v-card-title class="segment-card-header">
+                <div class="segment-card-header-content">
+                  <div class="segment-icon-wrapper" :style="{ backgroundColor: getTypeColor(segment.type) + '20' }">
+                    <v-icon :color="getTypeColor(segment.type)" size="20">
+                      {{ getTypeIcon(segment.type) }}
+                    </v-icon>
+                  </div>
+                  <div class="segment-title-wrapper">
+                    <div class="segment-name text-subtitle-1 font-weight-medium">{{ segment.name }}</div>
+                    <v-chip
+                      size="x-small"
+                      :color="getVisibilityColor(segment.visibility)"
+                      variant="tonal"
+                      class="segment-visibility-chip"
                     >
-                      {{ segment.description }}
-                    </div>
+                      {{ getVisibilityLabel(segment.visibility) }}
+                    </v-chip>
                   </div>
                 </div>
               </v-card-title>
 
-              <v-card-text class="pt-0">
-                <v-row dense class="mb-2">
-                  <v-col cols="6">
-                    <div class="text-center">
-                      <div class="text-h6 font-weight-bold primary--text">
-                        {{ formatNumber(segment.stats?.totalCount || 0) }}
-                      </div>
-                      <div class="text-caption">{{ $t("segmentation.records") }}</div>
-                    </div>
-                  </v-col>
-                  <v-col cols="6">
-                    <div class="text-center">
-                      <div class="text-h6 font-weight-bold success--text">
-                        {{ segment.filterCount }}
-                      </div>
-                      <div class="text-caption">
-                        {{ $t("segmentation.filters.label") }}
-                      </div>
-                    </div>
-                  </v-col>
-                </v-row>
+              <v-card-text class="segment-card-body">
+                <p
+                  class="text-body-2 text-medium-emphasis segment-description"
+                  v-if="segment.description"
+                >
+                  {{ segment.description }}
+                </p>
 
-                <div class="d-flex align-center justify-space-between mb-2">
-                  <v-chip small :color="getVisibilityColor(segment.visibility)" outlined>
-                    {{ getVisibilityLabel(segment.visibility) }}
-                  </v-chip>
-                  <div class="text-caption text-medium-emphasis">
-                    {{ formatDate(segment.updatedAt) }}
+                <!-- Stats row -->
+                <div class="segment-stats">
+                  <div class="segment-stat">
+                    <v-icon size="16" color="primary" class="mr-1">mdi-account-group</v-icon>
+                    <span class="segment-stat-value">{{ formatNumber(segment.stats?.totalCount || 0) }}</span>
+                    <span class="segment-stat-label">{{ $t("segmentation.records") }}</span>
+                  </div>
+                  <div class="segment-stat">
+                    <v-icon size="16" color="secondary" class="mr-1">mdi-filter-variant</v-icon>
+                    <span class="segment-stat-value">{{ segment.filterCount || 0 }}</span>
+                    <span class="segment-stat-label">{{ $t("segmentation.filters.label") }}</span>
                   </div>
                 </div>
 
-                <div class="d-flex align-center mb-2" v-if="segment.owner">
-                  <v-avatar size="24" class="mr-2">
-                    <v-img :src="segment.owner.avatar" />
-                  </v-avatar>
-                  <div class="text-caption">
-                    {{ segment.owner.firstName }} {{ segment.owner.lastName }}
+                <!-- Meta info -->
+                <div class="segment-meta">
+                  <div class="segment-owner" v-if="segment.owner">
+                    <v-avatar size="20" class="mr-1">
+                      <v-img v-if="segment.owner.avatar" :src="segment.owner.avatar" />
+                      <span v-else class="text-caption">{{ segment.owner.firstName?.[0] }}{{ segment.owner.lastName?.[0] }}</span>
+                    </v-avatar>
+                    <span class="text-caption">{{ segment.owner.firstName }} {{ segment.owner.lastName?.[0] }}.</span>
+                  </div>
+                  <div class="segment-date text-caption text-medium-emphasis">
+                    <v-icon size="12" class="mr-1">mdi-clock-outline</v-icon>
+                    {{ formatDate(segment.updatedAt) }}
                   </div>
                 </div>
               </v-card-text>
 
-              <v-card-actions class="pt-0 segment-actions">
+              <v-divider />
+
+              <v-card-actions class="segment-actions">
                 <v-btn icon small @click.stop="viewSegment(segment)" title="View">
                   <v-icon>mdi-eye</v-icon>
                 </v-btn>
@@ -128,15 +137,6 @@
                   title="Duplicate"
                 >
                   <v-icon>mdi-content-copy</v-icon>
-                </v-btn>
-                <v-btn
-                  icon
-                  small
-                  @click.stop="shareSegment(segment)"
-                  title="Share"
-                  :disabled="!canShare(segment)"
-                >
-                  <v-icon>mdi-share-variant</v-icon>
                 </v-btn>
                 <v-spacer />
                 <v-btn
@@ -177,15 +177,6 @@
                 >
                   <v-icon start>mdi-download</v-icon>
                   <span class="d-none d-sm-inline">{{ $t("segmentation.saved.bulkActions.export") }}</span>
-                </v-btn>
-                <v-btn
-                  color="secondary"
-                  size="small"
-                  variant="tonal"
-                  @click="executeBulkAction('share')"
-                >
-                  <v-icon start>mdi-share-variant</v-icon>
-                  <span class="d-none d-sm-inline">{{ $t("segmentation.saved.bulkActions.share") }}</span>
                 </v-btn>
                 <v-btn
                   color="error"
@@ -253,7 +244,6 @@ const emit = defineEmits<{
   view: [segment: Segment]
   edit: [segment: Segment]
   duplicate: [segment: Segment]
-  share: [segment: Segment]
   delete: [segment: Segment]
   "create-new": []
   "bulk-action": [action: string, segmentIds: string[]]
@@ -328,10 +318,6 @@ const canEdit = (segment: Segment): boolean => {
   return segment.ownerId === currentUserId.value || segment.visibility === "team"
 }
 
-const canShare = (segment: Segment): boolean => {
-  return canEdit(segment)
-}
-
 const toggleSelection = (segmentId: string) => {
   const index = selectedSegments.value.indexOf(segmentId)
   if (index > -1) {
@@ -355,10 +341,6 @@ const editSegment = (segment: Segment) => {
 
 const duplicateSegment = (segment: Segment) => {
   emit("duplicate", segment)
-}
-
-const shareSegment = (segment: Segment) => {
-  emit("share", segment)
 }
 
 const deleteSegment = (segment: Segment) => {
@@ -455,23 +437,142 @@ watch(
   }
 }
 
+/* Segment Cards */
 .segment-card {
   transition: all 0.2s ease;
   cursor: pointer;
+  overflow: hidden;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  height: 100%;
+  display: flex;
+  flex-direction: column;
 }
 
 .segment-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
 }
 
 .segment-card.selected {
-  border-color: var(--v-primary-base);
+  border-color: rgb(var(--v-theme-primary));
   border-width: 2px;
+  box-shadow: 0 0 0 2px rgba(var(--v-theme-primary), 0.2);
+}
+
+.segment-type-bar {
+  height: 4px;
+  width: 100%;
+}
+
+.segment-card-header {
+  padding: 12px 16px 8px;
+}
+
+.segment-card-header-content {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  width: 100%;
+}
+
+.segment-icon-wrapper {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.segment-title-wrapper {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.segment-name {
+  line-height: 1.3;
+  word-break: break-word;
+}
+
+.segment-visibility-chip {
+  align-self: flex-start;
+}
+
+.segment-card-body {
+  padding: 0 16px 12px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.segment-description {
+  margin-bottom: 12px;
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.segment-stats {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 12px;
+  padding: 8px 12px;
+  background: rgba(0, 0, 0, 0.02);
+  border-radius: 8px;
+}
+
+.segment-stat {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.segment-stat-value {
+  font-weight: 600;
+  font-size: 0.875rem;
+  color: rgba(var(--v-theme-on-surface), 0.87);
+}
+
+.segment-stat-label {
+  font-size: 0.75rem;
+  color: rgba(var(--v-theme-on-surface), 0.6);
+}
+
+.segment-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: auto;
+}
+
+.segment-owner {
+  display: flex;
+  align-items: center;
+}
+
+.segment-date {
+  display: flex;
+  align-items: center;
+}
+
+.segment-actions {
+  padding: 8px 12px;
+  justify-content: flex-start;
+  gap: 4px;
 }
 
 .segment-actions .v-btn {
-  opacity: 0.9;
+  opacity: 0.7;
+}
+
+.segment-actions .v-btn:hover {
+  opacity: 1;
 }
 
 /* Bulk Actions Bar - Fixed at bottom */

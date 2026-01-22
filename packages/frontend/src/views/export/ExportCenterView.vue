@@ -44,9 +44,9 @@
                   class="export-btn"
                   @click="openExportDialog(exportType)"
                 >
-                  {{ $t('export.exportButton') }} {{ getExportTypeName(exportType.type) }}
+                  <span class="d-none d-sm-inline">{{ $t('export.exportButton') }}&nbsp;</span>{{ getExportTypeName(exportType.type) }}
                 </v-btn>
-                <v-btn v-else color="secondary" prepend-icon="mdi-lock" disabled>
+                <v-btn v-else color="secondary" prepend-icon="mdi-lock" disabled class="export-btn">
                   {{ $t('export.noPermission') }}
                 </v-btn>
               </div>
@@ -57,7 +57,13 @@
       </div>
 
       <!-- Export Configuration Dialog -->
-      <v-dialog v-model="showExportDialog" persistent width="600" class="export-dialog">
+      <v-dialog
+        v-model="showExportDialog"
+        persistent
+        :width="isMobile ? '100%' : 600"
+        :fullscreen="isMobile"
+        class="export-dialog"
+      >
         <v-card>
           <v-card-title>{{ $t('export.dialog.title', { type: getExportTypeName(selectedExportType?.type || '') }) }}</v-card-title>
           <v-card-text>
@@ -174,9 +180,14 @@
                 />
               </div>
 
-              <v-card-actions class="form-actions">
-                <v-spacer></v-spacer>
-                <v-btn variant="text" prepend-icon="mdi-close" @click="closeExportDialog">
+              <v-card-actions class="form-actions" :class="{ 'flex-column-reverse': isMobile }">
+                <v-spacer v-if="!isMobile"></v-spacer>
+                <v-btn
+                  variant="text"
+                  prepend-icon="mdi-close"
+                  @click="closeExportDialog"
+                  :block="isMobile"
+                >
                   {{ $t('export.dialog.cancel') }}
                 </v-btn>
                 <v-btn
@@ -184,6 +195,7 @@
                   prepend-icon="mdi-download"
                   :loading="exporting"
                   @click="performExport"
+                  :block="isMobile"
                 >
                   {{ $t('export.dialog.export') }}
                 </v-btn>
@@ -194,7 +206,13 @@
       </v-dialog>
 
       <!-- Error Details Dialog -->
-      <v-dialog v-model="showErrorDialog" persistent width="500" class="error-dialog">
+      <v-dialog
+        v-model="showErrorDialog"
+        persistent
+        :width="isMobile ? '100%' : 500"
+        :fullscreen="isMobile"
+        class="error-dialog"
+      >
         <v-card>
           <v-card-title>{{ $t('export.errorDialog.title') }}</v-card-title>
           <v-card-text>
@@ -263,8 +281,11 @@ import {
 } from "@/services/api/export"
 import { computed, onMounted, ref } from "vue"
 import { useI18n } from "vue-i18n"
+import { useDisplay } from "vuetify"
 
 const { t } = useI18n()
+const { smAndDown } = useDisplay()
+const isMobile = smAndDown
 
 // Reactive data
 const availableExports = ref<ExportMetadata["availableExports"]>([])
@@ -1037,20 +1058,73 @@ onMounted(() => {
   color: #374151;
 }
 
-/* Responsive design */
-@media (max-width: 768px) {
+/* Responsive design - Tablet */
+@media (max-width: 960px) {
+  .export-types-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Responsive design - Mobile */
+@media (max-width: 600px) {
   .export-center {
-    padding: 1rem;
+    padding: 0.75rem;
+  }
+
+  .page-title {
+    font-size: 1.5rem;
+  }
+
+  .page-subtitle {
+    font-size: 0.875rem;
+  }
+
+  .export-types-section h2 {
+    font-size: 1.25rem;
+    margin-bottom: 1rem;
   }
 
   .export-types-grid {
-    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .export-type-card {
+    padding: 1rem;
   }
 
   .card-header {
     flex-direction: column;
     align-items: flex-start;
     gap: 0.75rem;
+  }
+
+  .card-icon {
+    width: 2.5rem;
+    height: 2.5rem;
+    font-size: 1rem;
+  }
+
+  .card-title h3 {
+    font-size: 1rem;
+  }
+
+  .card-description {
+    font-size: 0.8125rem;
+    margin-bottom: 1rem;
+  }
+
+  .export-btn {
+    width: 100%;
+    min-width: unset;
+  }
+
+  /* Dialog form optimizations */
+  .export-form {
+    gap: 1rem;
+  }
+
+  .form-section h3 {
+    font-size: 1rem;
   }
 
   .date-range {
@@ -1061,6 +1135,26 @@ onMounted(() => {
 
   .date-separator {
     align-self: center;
+  }
+
+  .form-actions {
+    gap: 0.5rem;
+    padding-top: 0.75rem;
+  }
+
+  /* Preview section */
+  .preview-section h3 {
+    font-size: 1rem;
+  }
+
+  /* Error dialog */
+  .error-message {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .error-details ul {
+    padding-left: 1rem;
   }
 }
 </style>

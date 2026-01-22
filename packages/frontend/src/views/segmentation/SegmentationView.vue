@@ -5,7 +5,7 @@
         <v-card class="main-card">
           <v-card-title class="d-flex align-center flex-wrap">
             <div class="d-flex align-center flex-grow-1">
-              <v-icon left>mdi-filter-variant</v-icon>
+              <v-icon start>mdi-filter-variant</v-icon>
               <span class="text-truncate">{{ $t("segmentation.title") }}</span>
             </div>
             <v-btn
@@ -23,12 +23,12 @@
           <v-card-text>
             <!-- Error Banner -->
             <div v-if="error" class="error-banner">
-              <v-icon left>mdi-alert-circle</v-icon>
+              <v-icon start>mdi-alert-circle</v-icon>
               {{ error }}
-              <v-btn 
-                icon 
-                small 
-                class="ml-2" 
+              <v-btn
+                icon
+                size="small"
+                class="ml-2"
                 @click="clearError"
               >
                 <v-icon>mdi-close</v-icon>
@@ -60,7 +60,6 @@
                   @view="viewSegment"
                   @edit="editSegment"
                   @duplicate="handleDuplicateSegment"
-                  @share="handleShareSegment"
                   @delete="handleDeleteSegment"
                   @bulk-action="onBulkAction"
                   @create-new="startCreateSegment"
@@ -90,7 +89,7 @@
                     {{ $t("segmentation.builder.empty.message") }}
                   </div>
                   <v-btn color="primary" @click="showCreateDialog = true">
-                    <v-icon left>mdi-plus</v-icon>
+                    <v-icon start>mdi-plus</v-icon>
                     {{ $t("segmentation.builder.createNew") }}
                   </v-btn>
                 </div>
@@ -98,7 +97,10 @@
 
               <!-- Analytics Dashboard -->
               <v-window-item value="analytics">
-                <SegmentAnalyticsDashboard :segment-id="selectedSegment?.id" />
+                <SegmentAnalyticsDashboard
+                  :segment-id="selectedSegment?.id"
+                  :segments="segments"
+                />
               </v-window-item>
 
               <!-- Comparison Tool -->
@@ -134,8 +136,6 @@
       @confirm="confirmDelete"
     />
 
-    <!-- Share Dialog Placeholder -->
-    <ShareSegmentDialog v-model="showShareDialog" :count="deleteTargetIds.length || 1" />
     </div>
   </AppLayout>
 </template>
@@ -160,11 +160,8 @@ const SegmentBuilder = defineAsyncComponent(() =>
 const SegmentComparisonTool = defineAsyncComponent(() => 
   import("@/components/segmentation/SegmentComparisonTool.vue")
 )
-const ConfirmDialog = defineAsyncComponent(() => 
+const ConfirmDialog = defineAsyncComponent(() =>
   import("@/components/common/ConfirmDialog.vue")
-)
-const ShareSegmentDialog = defineAsyncComponent(() => 
-  import("@/components/segmentation/ShareSegmentDialog.vue")
 )
 import { useSegmentation } from "@/composables/useSegmentation"
 import type { Segment } from "@medical-crm/shared"
@@ -182,7 +179,6 @@ const {
   updateSegment,
   deleteSegment,
   duplicateSegment,
-  shareSegment,
   exportSegment,
   clearError,
 } = useSegmentation()
@@ -192,7 +188,6 @@ const activeTab = ref("list")
 const showCreateDialog = ref(false)
 const showBulkDialog = ref(false)
 const showDeleteDialog = ref(false)
-const showShareDialog = ref(false)
 const editingSegment = ref<Segment | null>(null)
 const selectedSegment = ref<Segment | null>(null)
 const segmentBuilderRef = ref()
@@ -227,13 +222,6 @@ const handleDuplicateSegment = async (segment: Segment) => {
   }
 }
 
-const handleShareSegment = async (_segment: Segment) => {
-  // Placeholder until sharing workflow is implemented
-  alert('Partage: fonctionnalité à venir')
-}
-
-// Bulk actions handler - removed as not used in template
-
 const handleDeleteSegment = (segment: Segment) => {
   deleteTargetIds.value = [segment.id]
   deleteTargetNames.value = [segment.name]
@@ -258,6 +246,9 @@ const onSegmentSave = async (segmentData: {
 
     showCreateDialog.value = false
     editingSegment.value = null
+
+    // Redirect to list view after successful save
+    activeTab.value = 'list'
   } catch (error) {
     console.error("Error saving segment:", error)
     try { showSnackbar('Erreur lors de l\'enregistrement du segment', 'error') } catch {}
@@ -302,8 +293,6 @@ const onBulkAction = async (action: string, segmentIds: string[]) => {
         .filter(s => segmentIds.includes(s.id))
         .map(s => s.name)
       showDeleteDialog.value = true
-    } else if (action === 'share') {
-      showShareDialog.value = true
     } else if (action === 'export') {
       for (const id of segmentIds) {
         try {
@@ -481,5 +470,28 @@ onMounted(() => {
   border-radius: 8px;
   margin-bottom: 1rem;
   border-left: 4px solid var(--p-red-500);
+}
+
+/* SegmentBuilder mobile optimizations - reduce nested padding */
+@media (max-width: 600px) {
+  /* Remove double padding from segment builder wrapper */
+  .segmentation-view :deep(.v-window-item .segment-builder) {
+    margin: -8px;
+  }
+
+  .segmentation-view :deep(.segment-builder > .v-card-text) {
+    padding: 8px !important;
+  }
+
+  /* Reduce expansion panel padding */
+  .segmentation-view :deep(.segment-builder .v-expansion-panel-text__wrapper) {
+    padding: 4px 8px 8px !important;
+  }
+
+  /* Empty state optimization */
+  .text-center.pa-8 {
+    padding: 1.5rem 1rem !important;
+    margin: 1rem 0;
+  }
 }
 </style>
