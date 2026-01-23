@@ -42,7 +42,7 @@ we are almost done to v1 but still have some elements to prepare
   - [x] SavedSegmentsManager: reduce padding on mobile, shorter button text ("Nouveau segment" on mobile)
   - [x] SegmentAnalyticsDashboard: fix metric cards overflow (1 col mobile, 2 cols tablet/md, 4 on lg), fix time filter visibility on mobile
   - [x] SegmentationView: add margin-top on create button (mobile only)
-  - [ ] Vérifier le bon fonctionnement général de la segmentation
+  - [x] Vérifier le bon fonctionnement général de la segmentation (nettoyage code mort: vennDiagram, attributeChart stub, fix compteur segments)
 - [x] in the sell pipeline the dropdown which is supposed to show the medical institutions is not working (no data available) - Fixed: load 20 institutions on focus + hint message
 - [x] Export opportunities to CSV/XLSX/JSON + Stats by collaborator display in OpportunitiesView + ExportCenter integration
 - [x] Fix: OpportunitiesView responsive layout (mobile-first) - removed min-width constraints causing overflow, fixed pipeline columns (4 cols desktop, 2 tablet, 1 mobile)

@@ -53,7 +53,7 @@
                   </template>
                 </v-select>
                 <div class="mt-2 text-caption text-medium-emphasis">
-                  {{ $t('segmentation.comparison.selectedCount', { count: selectedSegments.length, max: 4 }) }}
+                  {{ $t('segmentation.comparison.selectedCount', { count: selectedSegments.length, max: Math.min(4, availableSegments.length) }) }}
                 </div>
               </v-card-text>
             </v-card>
@@ -230,7 +230,6 @@
                   <v-tabs v-model="activeDetailTab">
                     <v-tab value="unique">{{ $t('segmentation.comparison.details.unique') }}</v-tab>
                     <v-tab value="shared">{{ $t('segmentation.comparison.details.shared') }}</v-tab>
-                    <v-tab value="breakdown">{{ $t('segmentation.comparison.details.breakdown') }}</v-tab>
                   </v-tabs>
 
                   <v-window v-model="activeDetailTab">
@@ -281,23 +280,6 @@
                             </tr>
                           </tbody>
                         </v-table>
-                      </div>
-                    </v-window-item>
-
-                    <!-- Attribute Breakdown -->
-                    <v-window-item value="breakdown">
-                      <div class="mt-4">
-                        <v-select
-                          v-model="selectedAttribute"
-                          :items="attributeOptions"
-                          :label="$t('segmentation.comparison.details.selectAttribute')"
-                          variant="outlined"
-                          density="compact"
-                          class="mb-4"
-                        />
-                        <div v-if="selectedAttribute" class="attribute-breakdown">
-                          <canvas ref="attributeChartRef" width="800" height="400"></canvas>
-                        </div>
                       </div>
                     </v-window-item>
                   </v-window>
@@ -365,9 +347,6 @@ const selectedSegments = ref<string[]>([])
 const loading = ref(false)
 const error = ref<string | null>(null)
 const activeDetailTab = ref('unique')
-const selectedAttribute = ref('')
-const vennDiagramRef = ref<HTMLCanvasElement>()
-const attributeChartRef = ref<HTMLCanvasElement>()
 
 // Use actual segments from props
 const availableSegments = computed(() => {
@@ -387,13 +366,6 @@ const comparisonData = ref({
 const segmentSelectionRules = computed(() => [
   (v: string[]) => v.length >= 2 || t('segmentation.comparison.validation.minSegments'),
   (v: string[]) => v.length <= 4 || t('segmentation.comparison.validation.maxSegments')
-])
-
-const attributeOptions = computed(() => [
-  { title: t('segmentation.comparison.attributes.type'), value: 'type' },
-  { title: t('segmentation.comparison.attributes.location'), value: 'location' },
-  { title: t('segmentation.comparison.attributes.size'), value: 'size' },
-  { title: t('segmentation.comparison.attributes.activity'), value: 'activity' }
 ])
 
 // Methods
@@ -487,9 +459,6 @@ const refreshComparison = async () => {
       insights: generateInsights(segmentsData)
     }
 
-    // Update visualizations
-    drawVennDiagram()
-    drawAttributeChart()
   } catch (err) {
     console.error('Error loading comparison data:', err)
     error.value = (err as Error).message
@@ -555,75 +524,6 @@ const generateInsights = (apiData: any[]) => {
   return insights
 }
 
-const drawVennDiagram = () => {
-  if (!vennDiagramRef.value) return
-
-  const canvas = vennDiagramRef.value
-  const ctx = canvas.getContext('2d')
-  if (!ctx) return
-
-  // Clear canvas
-  ctx.clearRect(0, 0, canvas.width, canvas.height)
-
-  // Simple Venn diagram drawing (simplified for demonstration)
-  const centerX = canvas.width / 2
-  const centerY = canvas.height / 2
-  const radius = 80
-
-  // Draw circles for each segment
-  comparisonData.value.segments.forEach((segment, index) => {
-    const angle = (index / comparisonData.value.segments.length) * 2 * Math.PI
-    const x = centerX + Math.cos(angle) * radius
-    const y = centerY + Math.sin(angle) * radius
-
-    ctx.beginPath()
-    ctx.arc(x, y, radius, 0, 2 * Math.PI)
-    ctx.fillStyle = segment.color + '20' // Add transparency
-    ctx.fill()
-    ctx.strokeStyle = segment.color
-    ctx.lineWidth = 2
-    ctx.stroke()
-
-    // Add label
-    ctx.fillStyle = '#000'
-    ctx.font = '12px Arial'
-    ctx.textAlign = 'center'
-    ctx.fillText(segment.name, x, y + radius + 20)
-  })
-}
-
-const drawAttributeChart = () => {
-  if (!attributeChartRef.value || !selectedAttribute.value) return
-
-  const canvas = attributeChartRef.value
-  const ctx = canvas.getContext('2d')
-  if (!ctx) return
-
-  // Clear canvas
-  ctx.clearRect(0, 0, canvas.width, canvas.height)
-
-  // Simple bar chart (simplified for demonstration)
-  const barWidth = 40
-  const barSpacing = 20
-  const startX = 50
-  const startY = canvas.height - 50
-
-  comparisonData.value.segments.forEach((segment, index) => {
-    const x = startX + index * (barWidth + barSpacing)
-    const height = Math.random() * 200 + 50
-
-    // Draw bar
-    ctx.fillStyle = segment.color
-    ctx.fillRect(x, startY - height, barWidth, height)
-
-    // Draw label
-    ctx.fillStyle = '#000'
-    ctx.font = '12px Arial'
-    ctx.textAlign = 'center'
-    ctx.fillText(segment.name, x + barWidth / 2, startY + 20)
-  })
-}
-
 // Watchers
 watch(selectedSegments, (newValue) => {
   emit('segments-selected', newValue)
@@ -631,10 +531,6 @@ watch(selectedSegments, (newValue) => {
     refreshComparison()
   }
 }, { deep: true })
-
-watch(selectedAttribute, () => {
-  drawAttributeChart()
-})
 </script>
 
 <style scoped>
@@ -908,16 +804,6 @@ watch(selectedAttribute, () => {
   text-transform: none;
   font-weight: 500;
   font-size: 0.875rem;
-}
-
-/* Attribute Breakdown */
-.attribute-breakdown {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  min-height: 200px;
-  background: #f5f5f5;
-  border-radius: 8px;
 }
 
 /* Mobile Optimizations */

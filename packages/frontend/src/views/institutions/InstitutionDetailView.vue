@@ -10,7 +10,7 @@
       </div>
 
       <div v-else-if="institution">
-        <div class="page-header mb-6">
+        <div id="tour-detail-header" class="page-header mb-6">
           <div
             class="d-flex flex-column flex-md-row align-start align-md-center justify-space-between"
           >
@@ -31,7 +31,14 @@
                 </p>
               </div>
             </div>
-            <div class="page-actions">
+            <div id="tour-detail-actions" class="page-actions">
+              <v-btn
+                icon="mdi-help-circle-outline"
+                variant="text"
+                color="primary"
+                @click="startGuidedTour"
+                title="Visite guidée"
+              />
               <v-btn
                 prepend-icon="mdi-pencil"
                 :variant="editMode ? 'outlined' : 'elevated'"
@@ -48,7 +55,7 @@
               >
             </div>
           </div>
-          <div class="mt-4 d-flex flex-wrap gap-2">
+          <div id="tour-detail-badges" class="mt-4 d-flex flex-wrap gap-2">
             <!-- Data Source Badge -->
             <DataSourceBadge
               :data-source="institution.dataSource"
@@ -61,30 +68,41 @@
               v-if="institution.medicalProfile"
               :color="getComplianceSeverity(institution.medicalProfile.complianceStatus)"
               variant="tonal"
+              size="small"
               prepend-icon="mdi-shield-check-outline"
             >
               {{ formatComplianceStatus(institution.medicalProfile.complianceStatus) }}
             </v-chip>
-            <v-chip v-else variant="tonal" prepend-icon="mdi-help-circle-outline"
-              >Pas de profil</v-chip
-            >
             <v-chip
+              v-else
+              variant="tonal"
+              size="small"
+              prepend-icon="mdi-help-circle-outline"
+            >
+              Pas de profil
+            </v-chip>
+            <v-chip
+              v-if="institution.assignedUserId"
               color="info"
               variant="tonal"
-              v-if="institution.assignedUserId"
+              size="small"
               prepend-icon="mdi-account-check-outline"
-              >Assigné</v-chip
             >
+              Assigné
+            </v-chip>
             <v-chip
+              v-else
               color="secondary"
               variant="tonal"
-              v-else
+              size="small"
               prepend-icon="mdi-account-off-outline"
-              >Non assigné</v-chip
             >
+              Non assigné
+            </v-chip>
             <v-chip
               :color="institution.isActive ? 'success' : 'error'"
               variant="tonal"
+              size="small"
               :prepend-icon="
                 institution.isActive
                   ? 'mdi-check-circle-outline'
@@ -96,7 +114,7 @@
           </div>
 
           <!-- Health Score Badge -->
-          <div class="mt-4">
+          <div id="tour-detail-health-score" class="mt-8">
             <HealthScoreBadge :institution-id="institution.id" />
           </div>
         </div>
@@ -115,7 +133,7 @@
         </div>
 
         <div v-else>
-          <v-tabs v-model="activeTab" class="mb-6">
+          <v-tabs id="tour-detail-tabs" v-model="activeTab" class="mb-6">
             <v-tab value="overview">Aperçu</v-tab>
             <v-tab value="insights">Insights</v-tab>
             <v-tab value="activity">Activité</v-tab>
@@ -127,9 +145,9 @@
           </v-tabs>
           <v-window v-model="activeTab">
             <v-window-item value="overview">
-              <v-row>
+              <v-row class="align-stretch">
                 <v-col cols="12" md="6">
-                  <v-card>
+                  <v-card class="fill-height">
                     <v-list lines="two">
                       <v-list-subheader>Informations de base</v-list-subheader>
                       <v-list-item
@@ -196,7 +214,7 @@
                   </v-card>
                 </v-col>
                 <v-col cols="12" md="6">
-                  <v-card>
+                  <v-card class="fill-height">
                     <v-list lines="two">
                       <v-list-subheader>Adresse</v-list-subheader>
                       <v-list-item
@@ -243,7 +261,10 @@
             </v-window-item>
 
             <v-window-item value="timeline">
-              <TimelineTab :institution-id="institution.id" :is-active="activeTab === 'timeline'" />
+              <TimelineTab
+                :institution-id="institution.id"
+                :is-active="activeTab === 'timeline'"
+              />
             </v-window-item>
 
             <v-window-item value="medical">
@@ -398,11 +419,11 @@
               </v-card>
             </v-window-item>
 
-            <v-window-item value="revenue">
+            <v-window-item value="revenue" eager>
               <RevenueTab :institution-id="institution.id" />
             </v-window-item>
 
-            <v-window-item value="digiforma">
+            <v-window-item value="digiforma" eager>
               <DigiformaTab :institution-id="institution.id" />
             </v-window-item>
           </v-window>
@@ -469,6 +490,7 @@ import RevenueTab from "@/components/institutions/RevenueTab.vue"
 import TimelineTab from "@/components/institutions/TimelineTab.vue"
 import AppLayout from "@/components/layout/AppLayout.vue"
 import { DetailSkeleton } from "@/components/skeletons"
+import { useTour } from "@/composables/useTour"
 import { institutionsApi } from "@/services/api"
 import type {
   ComplianceStatus,
@@ -481,6 +503,7 @@ import { useRoute, useRouter } from "vue-router"
 
 const route = useRoute()
 const router = useRouter()
+const { startTour } = useTour()
 
 const snackbar = ref<{ visible: boolean; color: string; message: string }>({
   visible: false,
@@ -587,7 +610,7 @@ const deleteContact = async (contact: ContactPerson) => {
   try {
     await institutionsApi.contacts.delete(institution.value.id, contact.id)
     institution.value.contactPersons = institution.value.contactPersons.filter(
-      (c) => c.id !== contact.id
+      (c) => c.id !== contact.id,
     )
     showSnackbar(`${contact.firstName} ${contact.lastName} a été supprimé`, "success")
   } catch (error) {
@@ -597,10 +620,11 @@ const deleteContact = async (contact: ContactPerson) => {
 }
 
 const onContactSaved = (savedContact: ContactPerson) => {
-  if (!institution.value?.contactPersons) institution.value!.contactPersons = []
+  if (!institution.value) return
+  if (!institution.value.contactPersons) institution.value.contactPersons = []
 
   const index = institution.value.contactPersons.findIndex(
-    (c) => c.id === savedContact.id
+    (c) => c.id === savedContact.id,
   )
   if (index > -1) {
     institution.value.contactPersons.splice(index, 1, savedContact)
@@ -613,6 +637,10 @@ const onContactSaved = (savedContact: ContactPerson) => {
 
 const goBack = () => {
   router.push("/institutions")
+}
+
+const startGuidedTour = () => {
+  startTour("institutionDetail")
 }
 
 const formatInstitutionType = (type: InstitutionType): string => {
@@ -680,6 +708,7 @@ onMounted(loadInstitution)
 .page-actions {
   display: flex;
   gap: 0.75rem;
+  align-items: center;
 }
 
 .gap-1 {
@@ -689,6 +718,16 @@ onMounted(loadInstitution)
   gap: 0.5rem;
 }
 
+/* Prevent scrollbars in overview cards */
+:deep(.v-list) {
+  overflow-x: hidden !important;
+  overflow-y: visible !important;
+}
+
+:deep(.v-list-item) {
+  overflow: hidden;
+}
+
 @media (max-width: 768px) {
   .institution-detail-view {
     padding: 1rem;
@@ -696,7 +735,8 @@ onMounted(loadInstitution)
   .page-actions {
     width: 100%;
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: auto 1fr 1fr;
+    gap: 0.5rem;
   }
 }
 </style>

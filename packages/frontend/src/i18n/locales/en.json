@@ -455,5 +455,59 @@
       "specialty_clinic": "Specialty Clinic",
       "specialtyClinic": "Specialty Clinic"
     }
+  },
+  "timeline": {
+    "searchPlaceholder": "Search in timeline...",
+    "retry": "Retry",
+    "loading": "Loading...",
+    "loadingMore": "Loading more...",
+    "loadMore": "Load more",
+    "itemsLoaded": "{loaded} items loaded of {total}",
+    "scrollForMore": "Scroll to see {remaining} more items",
+    "showingItems": "{count} of {total} items shown",
+    "empty": {
+      "title": "No activity",
+      "description": "No activity found for selected filters"
+    },
+    "filters": {
+      "all": "All",
+      "meetings": "Meetings",
+      "calls": "Calls",
+      "notes": "Notes",
+      "reminders": "Reminders",
+      "tasks": "Tasks"
+    },
+    "labels": {
+      "note": "Note",
+      "meeting": "Meeting",
+      "call": "Call",
+      "reminder": "Reminder",
+      "task": "Task"
+    },
+    "callTypes": {
+      "incoming": "Incoming",
+      "outgoing": "Outgoing",
+      "missed": "Missed"
+    },
+    "meetingStatus": {
+      "scheduled": "Scheduled",
+      "in_progress": "In Progress",
+      "completed": "Completed",
+      "cancelled": "Cancelled"
+    },
+    "taskStatus": {
+      "todo": "To Do",
+      "pending": "Pending",
+      "in_progress": "In Progress",
+      "blocked": "Blocked",
+      "completed": "Completed",
+      "cancelled": "Cancelled"
+    },
+    "priorities": {
+      "low": "Low",
+      "medium": "Medium",
+      "high": "High",
+      "urgent": "Urgent"
+    }
   }
 }

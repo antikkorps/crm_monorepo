@@ -1,22 +1,26 @@
 <template>
   <AppLayout>
     <!-- Page Header -->
-    <v-row class="mb-6">
+    <v-row class="mb-4 mb-md-6">
       <v-col cols="12">
-        <div class="d-flex justify-space-between align-center">
-          <div>
-            <h1 class="text-h3 font-weight-bold mb-2">{{ t("dashboard.title") }}</h1>
-            <p class="text-h6 text-medium-emphasis">
-              {{ t("dashboard.welcome") }}, <strong>{{ authStore.userName }}</strong>
-            </p>
-          </div>
+        <div class="dashboard-header">
           <v-chip
             :text="getCurrentDate()"
             prepend-icon="mdi-calendar"
             color="primary"
             variant="tonal"
-            size="large"
+            size="small"
+            class="dashboard-date-chip"
           />
+          <div class="dashboard-header-text">
+            <h1 class="text-h5 text-md-h3 font-weight-bold mb-1 mb-md-2">
+              {{ t("dashboard.title") }}
+            </h1>
+            <p class="text-body-2 text-md-h6 text-medium-emphasis">
+              {{ t("dashboard.welcome") }},
+              <strong>{{ authStore.user?.firstName || "User" }}</strong> !
+            </p>
+          </div>
         </div>
       </v-col>
     </v-row>
@@ -63,7 +67,7 @@
                 variant="text"
                 color="primary"
                 size="small"
-                style="pointer-events: none;"
+                style="pointer-events: none"
               />
             </v-card-text>
           </v-card>
@@ -74,123 +78,106 @@
       <v-row v-if="metrics" class="mb-6">
         <v-col cols="12">
           <v-card id="tour-performance-metrics" elevation="2">
-            <v-card-title class="d-flex align-center justify-space-between">
+            <v-card-title class="performance-header">
               <div class="d-flex align-center">
-                <v-icon icon="mdi-chart-timeline-variant" color="primary" class="mr-2" />
-                {{ t("dashboard.performanceIndicators") }}
+                <v-icon icon="mdi-chart-timeline-variant" color="primary" class="mr-2" size="small" />
+                <span>{{ t("dashboard.performanceIndicators") }}</span>
               </div>
-              <v-btn-group id="tour-period-selector" variant="outlined" density="compact">
-                <v-btn
-                  :color="period === 'week' ? 'primary' : undefined"
-                  size="small"
-                  @click="setPeriod('week')"
-                >
-                  {{ t("dashboard.period.week") }}
-                </v-btn>
-                <v-btn
-                  :color="period === 'month' ? 'primary' : undefined"
-                  size="small"
-                  @click="setPeriod('month')"
-                >
-                  {{ t("dashboard.period.month") }}
-                </v-btn>
-                <v-btn
-                  :color="period === 'quarter' ? 'primary' : undefined"
-                  size="small"
-                  @click="setPeriod('quarter')"
-                >
-                  {{ t("dashboard.period.quarter") }}
-                </v-btn>
-              </v-btn-group>
+              <v-btn-toggle
+                id="tour-period-selector"
+                v-model="period"
+                mandatory
+                density="compact"
+                variant="outlined"
+                class="period-selector"
+              >
+                <v-btn value="week" size="small">{{ t("dashboard.period.week") }}</v-btn>
+                <v-btn value="month" size="small">{{ t("dashboard.period.month") }}</v-btn>
+                <v-btn value="quarter" size="small">{{ t("dashboard.period.quarter") }}</v-btn>
+              </v-btn-toggle>
             </v-card-title>
 
-            <v-card-text>
-              <v-row>
+            <v-card-text class="pa-2 pa-sm-4">
+              <v-row dense>
                 <!-- Revenue Growth -->
-                <v-col cols="12" md="4">
-                  <v-card variant="outlined" class="performance-card">
-                    <v-card-text>
-                      <div class="d-flex align-center justify-space-between mb-2">
-                        <span class="text-subtitle-2 text-medium-emphasis">{{
-                          t("dashboard.metrics.revenueGrowth")
-                        }}</span>
-                        <v-icon
-                          :icon="
-                            metrics.growth.revenueGrowth >= 0
-                              ? 'mdi-trending-up'
-                              : 'mdi-trending-down'
-                          "
-                          :color="metrics.growth.revenueGrowth >= 0 ? 'success' : 'error'"
-                          size="24"
-                        />
-                      </div>
-                      <div
-                        :class="`text-h4 font-weight-bold ${
+                <v-col cols="12" sm="4">
+                  <div class="performance-metric">
+                    <div class="d-flex align-center justify-space-between mb-2">
+                      <span class="text-caption text-medium-emphasis">{{
+                        t("dashboard.metrics.revenueGrowth")
+                      }}</span>
+                      <v-icon
+                        :icon="
                           metrics.growth.revenueGrowth >= 0
-                            ? 'text-success'
-                            : 'text-error'
-                        }`"
-                      >
-                        {{ metrics.growth.revenueGrowth > 0 ? "+" : ""
-                        }}{{ metrics.growth.revenueGrowth.toFixed(1) }}%
-                      </div>
-                      <div class="text-caption text-medium-emphasis mt-2">
-                        {{ t("dashboard.metrics.vsPreviousPeriod") }}
-                      </div>
-                    </v-card-text>
-                  </v-card>
+                            ? 'mdi-trending-up'
+                            : 'mdi-trending-down'
+                        "
+                        :color="metrics.growth.revenueGrowth >= 0 ? 'success' : 'error'"
+                        size="20"
+                      />
+                    </div>
+                    <div
+                      :class="`text-h5 text-sm-h4 font-weight-bold ${
+                        metrics.growth.revenueGrowth >= 0
+                          ? 'text-success'
+                          : 'text-error'
+                      }`"
+                    >
+                      {{ metrics.growth.revenueGrowth > 0 ? "+" : ""
+                      }}{{ metrics.growth.revenueGrowth.toFixed(1) }}%
+                    </div>
+                    <div class="text-caption text-medium-emphasis mt-1">
+                      {{ t("dashboard.metrics.vsPreviousPeriod") }}
+                    </div>
+                  </div>
                 </v-col>
 
                 <!-- New Clients -->
-                <v-col cols="12" md="4">
-                  <v-card variant="outlined" class="performance-card">
-                    <v-card-text>
-                      <div class="d-flex align-center justify-space-between mb-2">
-                        <span class="text-subtitle-2 text-medium-emphasis">{{
-                          t("dashboard.metrics.newClients")
-                        }}</span>
-                        <v-icon icon="mdi-account-multiple-plus" color="blue" size="24" />
-                      </div>
-                      <div class="text-h4 font-weight-bold text-blue">
-                        {{ metrics.newClients.count }}
-                      </div>
-                      <div class="text-caption text-medium-emphasis mt-2">
-                        <span
-                          :class="
-                            metrics.newClients.percentageChange >= 0
-                              ? 'text-success'
-                              : 'text-error'
-                          "
-                        >
-                          {{ metrics.newClients.percentageChange > 0 ? "+" : ""
-                          }}{{ metrics.newClients.percentageChange.toFixed(1) }}%
-                        </span>
-                        {{ t("dashboard.metrics.thisMonth") }}
-                      </div>
-                    </v-card-text>
-                  </v-card>
+                <v-col cols="12" sm="4">
+                  <div class="performance-metric">
+                    <div class="d-flex align-center justify-space-between mb-2">
+                      <span class="text-caption text-medium-emphasis">{{
+                        t("dashboard.metrics.newClients")
+                      }}</span>
+                      <v-icon icon="mdi-account-multiple-plus" color="blue" size="20" />
+                    </div>
+                    <div class="text-h5 text-sm-h4 font-weight-bold text-blue">
+                      {{ metrics.newClients.count }}
+                    </div>
+                    <div class="text-caption text-medium-emphasis mt-1">
+                      <span
+                        :class="
+                          metrics.newClients.percentageChange >= 0
+                            ? 'text-success'
+                            : 'text-error'
+                        "
+                      >
+                        {{ metrics.newClients.percentageChange > 0 ? "+" : ""
+                        }}{{ metrics.newClients.percentageChange.toFixed(1) }}%
+                      </span>
+                      {{ t("dashboard.metrics.thisMonth") }}
+                    </div>
+                  </div>
                 </v-col>
 
                 <!-- Conversion Rate -->
-                <v-col cols="12" md="4">
-                  <v-card variant="outlined" class="performance-card">
-                    <v-card-text>
-                      <div class="d-flex align-center justify-space-between mb-2">
-                        <span class="text-subtitle-2 text-medium-emphasis">{{
-                          t("dashboard.metrics.conversionRate")
-                        }}</span>
-                        <v-icon icon="mdi-percent" color="orange" size="24" />
-                      </div>
-                      <div class="text-h4 font-weight-bold text-orange">
-                        {{ metrics.conversionRate.rate.toFixed(1) }}%
-                      </div>
-                      <div class="text-caption text-medium-emphasis mt-2">
-                        {{ metrics.conversionRate.quotesAccepted }} /
-                        {{ metrics.conversionRate.quotesTotal }}
-                        {{ t("dashboard.metrics.quotesAccepted") }}
-                      </div>
-                    </v-card-text>
-                  </v-card>
+                <v-col cols="12" sm="4">
+                  <div class="performance-metric">
+                    <div class="d-flex align-center justify-space-between mb-2">
+                      <span class="text-caption text-medium-emphasis">{{
+                        t("dashboard.metrics.conversionRate")
+                      }}</span>
+                      <v-icon icon="mdi-percent" color="orange" size="20" />
+                    </div>
+                    <div class="text-h5 text-sm-h4 font-weight-bold text-orange">
+                      {{ metrics.conversionRate.rate.toFixed(1) }}%
+                    </div>
+                    <div class="text-caption text-medium-emphasis mt-1">
+                      {{ metrics.conversionRate.quotesAccepted }} /
+                      {{ metrics.conversionRate.quotesTotal }}
+                      {{ t("dashboard.metrics.quotesAccepted") }}
+                    </div>
+                  </div>
                 </v-col>
               </v-row>
 
@@ -273,156 +260,121 @@
       <v-row class="mb-6">
         <v-col cols="12">
           <v-card id="tour-recent-tasks" elevation="2">
-            <v-card-title class="d-flex align-center justify-space-between">
+            <v-card-title
+              class="d-flex align-center justify-space-between card-title-responsive"
+            >
               <div class="d-flex align-center">
-                <v-icon icon="mdi-check-circle" color="primary" class="mr-2" />
-                {{ t("tasks.recent") }}
+                <v-icon
+                  icon="mdi-check-circle"
+                  color="primary"
+                  class="mr-2"
+                  size="small"
+                />
+                <span>{{ t("tasks.recent") }}</span>
               </div>
               <v-btn
                 :text="t('dashboard.stats.viewAll')"
                 prepend-icon="mdi-arrow-right"
                 color="primary"
                 variant="text"
+                size="small"
                 @click="$router.push('/tasks')"
               />
             </v-card-title>
 
-            <v-card-text v-if="tasksStore.loading">
-              <div class="d-flex justify-center py-8">
-                <v-progress-circular indeterminate size="32" />
-              </div>
+            <v-card-text v-if="tasksStore.loading" class="text-center py-8">
+              <v-progress-circular indeterminate size="32" />
             </v-card-text>
 
-            <v-card-text v-else-if="recentTasks.length === 0">
-              <div class="text-center py-8">
-                <v-icon size="48" color="grey-lighten-1" class="mb-4"
-                  >mdi-check-all</v-icon
-                >
-                <p class="text-h6 text-medium-emphasis mb-2">{{ t("tasks.noTasks") }}</p>
-                <p class="text-body-2 text-medium-emphasis">
-                  {{ t("tasks.noTasksDescription") }}
-                </p>
-                <v-btn
-                  :text="t('tasks.createTask')"
-                  prepend-icon="mdi-plus"
-                  color="primary"
-                  variant="elevated"
-                  class="mt-4"
-                  @click="$router.push('/tasks')"
-                />
-              </div>
+            <v-card-text v-else-if="recentTasks.length === 0" class="text-center py-8">
+              <v-icon size="48" color="grey-lighten-1" class="mb-3">mdi-check-all</v-icon>
+              <p class="text-body-1 font-weight-medium">{{ t("tasks.noTasks") }}</p>
+              <p class="text-body-2 text-medium-emphasis">
+                {{ t("tasks.noTasksDescription") }}
+              </p>
+              <v-btn
+                :text="t('tasks.createTask')"
+                prepend-icon="mdi-plus"
+                color="primary"
+                variant="elevated"
+                class="mt-4"
+                size="small"
+                @click="$router.push('/tasks')"
+              />
             </v-card-text>
 
-            <v-card-text v-else>
-              <v-row>
-                <v-col
+            <v-card-text v-else class="pa-2 pa-sm-4">
+              <div class="tasks-list">
+                <div
                   v-for="task in recentTasks"
                   :key="task.id"
-                  cols="12"
-                  md="6"
-                  class="mb-4"
+                  class="task-item"
+                  @click="$router.push('/tasks')"
                 >
-                  <v-card
-                    variant="outlined"
-                    class="task-widget-card"
-                    hover
-                    @click="$router.push('/tasks')"
-                  >
-                    <v-card-text class="pa-4">
-                      <!-- Priority and status badges -->
-                      <div class="d-flex justify-space-between align-start mb-3">
-                        <v-chip
-                          :color="getPriorityColor(task.priority)"
-                          :prepend-icon="getPriorityIcon(task.priority)"
-                          size="small"
-                          variant="flat"
-                          class="priority-chip"
-                        >
-                          {{ getPriorityLabel(task.priority) }}
-                        </v-chip>
+                  <div class="task-content">
+                    <!-- Priority indicator -->
+                    <div
+                      class="task-priority-indicator"
+                      :class="`priority-${task.priority}`"
+                    />
 
-                        <div class="d-flex gap-1">
+                    <!-- Task info -->
+                    <div class="task-info">
+                      <div class="task-header">
+                        <span class="task-title">{{ task.title }}</span>
+                        <div class="task-badges">
                           <v-chip
                             v-if="isOverdue(task)"
                             color="error"
-                            size="small"
-                            variant="outlined"
+                            size="x-small"
+                            variant="flat"
+                            density="compact"
+                            class="task-status-chip"
                           >
-                            <v-icon start size="small">mdi-alert-circle</v-icon>
-                            {{ t("tasks.overdue") }}
+                            En retard
                           </v-chip>
                           <v-chip
                             v-else-if="isDueSoon(task)"
                             color="warning"
-                            size="small"
-                            variant="outlined"
+                            size="x-small"
+                            variant="flat"
+                            density="compact"
+                            class="task-status-chip"
                           >
-                            <v-icon start size="small">mdi-clock-outline</v-icon>
-                            {{ t("tasks.dueSoon") }}
+                            Bientôt
                           </v-chip>
                         </div>
                       </div>
-
-                      <!-- Task title -->
-                      <h4 class="task-title text-h6 font-weight-medium mb-2">
-                        {{ task.title }}
-                      </h4>
-
-                      <!-- Task description (truncated) -->
-                      <p
-                        v-if="task.description"
-                        class="task-description text-body-2 text-medium-emphasis mb-3"
-                      >
-                        {{ truncateText(task.description, 80) }}
-                      </p>
-
-                      <!-- Meta information -->
-                      <div class="task-meta d-flex flex-wrap gap-3">
-                        <!-- Assignee -->
-                        <div v-if="task.assignee" class="meta-item d-flex align-center">
-                          <v-avatar
-                            :image="getAvatarUrl(task.assignee.id)"
-                            :alt="
-                              getInitials(task.assignee.firstName, task.assignee.lastName)
-                            "
-                            size="24"
-                            class="mr-2"
-                          >
-                            <span class="avatar-text">{{
-                              getInitials(task.assignee.firstName, task.assignee.lastName)
-                            }}</span>
-                          </v-avatar>
-                          <span class="text-caption"
-                            >{{ task.assignee.firstName }}
-                            {{ task.assignee.lastName }}</span
-                          >
-                        </div>
-
-                        <!-- Due date -->
-                        <div v-if="task.dueDate" class="meta-item d-flex align-center">
-                          <v-icon size="16" :color="getDueDateColor(task)" class="mr-1"
-                            >mdi-calendar</v-icon
-                          >
-                          <span class="text-caption" :class="getDueDateClass(task)">
-                            {{ formatDueDate(task.dueDate) }}
-                          </span>
-                        </div>
-
-                        <!-- Institution -->
-                        <div
-                          v-if="task.institution"
-                          class="meta-item d-flex align-center"
+                      <div class="task-meta">
+                        <span
+                          v-if="task.dueDate"
+                          class="meta-item"
+                          :class="getDueDateClass(task)"
                         >
-                          <v-icon size="16" color="primary" class="mr-1"
-                            >mdi-office-building</v-icon
-                          >
-                          <span class="text-caption">{{ task.institution.name }}</span>
-                        </div>
+                          <v-icon size="12" class="mr-1">mdi-calendar</v-icon>
+                          {{ formatDueDate(task.dueDate) }}
+                        </span>
+                        <span v-if="task.assignee" class="meta-item">
+                          <v-icon size="12" class="mr-1">mdi-account</v-icon>
+                          {{ task.assignee.firstName }}
+                        </span>
+                        <span v-if="task.institution" class="meta-item">
+                          <v-icon size="12" class="mr-1">mdi-office-building</v-icon>
+                          {{ truncateText(task.institution.name, 20) }}
+                        </span>
                       </div>
-                    </v-card-text>
-                  </v-card>
-                </v-col>
-              </v-row>
+                    </div>
+
+                    <!-- Arrow -->
+                    <v-icon
+                      icon="mdi-chevron-right"
+                      size="20"
+                      color="grey"
+                      class="task-arrow"
+                    />
+                  </div>
+                </div>
+              </div>
             </v-card-text>
           </v-card>
         </v-col>
@@ -466,7 +418,7 @@ import { dashboardApi, type DashboardMetrics } from "@/services/api/dashboard"
 import { useAuthStore } from "@/stores/auth"
 import { useInstitutionsStore } from "@/stores/institutions"
 import { useTasksStore } from "@/stores/tasks"
-import { computed, onMounted, ref } from "vue"
+import { computed, onMounted, ref, watch } from "vue"
 import { useI18n } from "vue-i18n"
 import { useRouter } from "vue-router"
 
@@ -497,7 +449,7 @@ const recentTasks = computed(() => {
     (task) =>
       (task.assigneeId === userId || !task.assigneeId) &&
       task.status !== "completed" &&
-      task.status !== "cancelled"
+      task.status !== "cancelled",
   )
 
   // Sort by priority: overdue first, then due soon, then by due date, then by status
@@ -546,36 +498,6 @@ const getCurrentDate = () => {
 }
 
 // Task widget helper functions
-const getPriorityLabel = (priority: string) => {
-  const labels = {
-    low: t("tasks.priority.low"),
-    medium: t("tasks.priority.medium"),
-    high: t("tasks.priority.high"),
-    urgent: t("tasks.priority.urgent"),
-  }
-  return labels[priority as keyof typeof labels] || priority
-}
-
-const getPriorityColor = (priority: string) => {
-  const colors = {
-    low: "success",
-    medium: "info",
-    high: "warning",
-    urgent: "error",
-  }
-  return colors[priority as keyof typeof colors] || "grey"
-}
-
-const getPriorityIcon = (priority: string) => {
-  const icons = {
-    low: "mdi-priority-low",
-    medium: "mdi-priority-medium",
-    high: "mdi-priority-high",
-    urgent: "mdi-alert-circle",
-  }
-  return icons[priority as keyof typeof icons] || "mdi-priority-medium"
-}
-
 const isOverdue = (task: any) => {
   if (!task.dueDate || task.status === "completed") return false
   return new Date(task.dueDate) < new Date()
@@ -588,12 +510,6 @@ const isDueSoon = (task: any) => {
   const diffTime = dueDate.getTime() - now.getTime()
   const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
   return diffDays <= 3 && diffDays > 0
-}
-
-const getDueDateColor = (task: any) => {
-  if (isOverdue(task)) return "error"
-  if (isDueSoon(task)) return "warning"
-  return "success"
 }
 
 const getDueDateClass = (task: any) => ({
@@ -618,14 +534,6 @@ const formatDueDate = (date: Date | string) => {
     day: "numeric",
     month: "short",
   })
-}
-
-const getAvatarUrl = (userId: string) => {
-  return `https://api.dicebear.com/7.x/initials/svg?seed=${userId}`
-}
-
-const getInitials = (firstName: string, lastName: string) => {
-  return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase()
 }
 
 const truncateText = (text: string, maxLength: number) => {
@@ -654,7 +562,7 @@ const statsCards = computed(() => {
         title: t("dashboard.stats.tasks"),
         value: tasksStore.taskStats.total.toString(),
         description: `${tasksStore.taskStats.inProgress} ${t(
-          "dashboard.stats.inProgress"
+          "dashboard.stats.inProgress",
         )}, ${tasksStore.taskStats.overdue} ${t("tasks.overdue")}`,
         icon: "mdi-check-circle",
         color: tasksStore.taskStats.overdue > 0 ? "error" : "green",
@@ -764,11 +672,10 @@ const loadMetrics = async () => {
   }
 }
 
-// Set period and reload metrics
-const setPeriod = (newPeriod: "week" | "month" | "quarter") => {
-  period.value = newPeriod
+// Watch period changes to reload metrics
+watch(period, () => {
   loadMetrics()
-}
+})
 
 // Auto-redirect logic (if needed)
 onMounted(async () => {
@@ -788,6 +695,41 @@ onMounted(async () => {
 </script>
 
 <style scoped>
+.dashboard-header {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.dashboard-date-chip {
+  align-self: flex-end;
+  order: -1;
+}
+
+.dashboard-header-text {
+  min-width: 0;
+}
+
+@media (min-width: 600px) {
+  .dashboard-header {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .dashboard-date-chip {
+    align-self: auto;
+    order: 1;
+  }
+}
+
+.card-title-responsive {
+  font-size: 1rem;
+  padding: 12px 16px;
+}
+
 .stat-card {
   cursor: pointer;
   transition: transform 0.2s ease-in-out;
@@ -797,128 +739,185 @@ onMounted(async () => {
   transform: translateY(-4px);
 }
 
-.performance-card {
-  transition: all 0.2s ease-in-out;
-  height: 100%;
-}
-
-.performance-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-}
-
-.quick-action-card {
-  cursor: pointer;
-  transition: all 0.2s ease-in-out;
-  min-height: 200px;
+/* Performance metrics header */
+.performance-header {
   display: flex;
   flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+  font-size: 1rem;
+  padding: 12px 16px;
 }
 
-.quick-action-card:hover {
-  transform: translateY(-2px);
+.period-selector {
+  align-self: stretch;
 }
 
-.task-widget-card {
+.period-selector :deep(.v-btn) {
+  flex: 1;
+}
+
+.performance-metric {
+  padding: 12px;
+  border-radius: 8px;
+  background: rgba(var(--v-theme-on-surface), 0.03);
+}
+
+@media (min-width: 600px) {
+  .performance-header {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .period-selector {
+    align-self: auto;
+  }
+
+  .period-selector :deep(.v-btn) {
+    flex: none;
+  }
+}
+
+/* Tasks list styles */
+.tasks-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.task-item {
   cursor: pointer;
-  transition: all 0.2s ease-in-out;
-  border-radius: 12px;
+  border-radius: 8px;
+  background: rgb(var(--v-theme-surface));
+  border: 1px solid rgba(var(--v-border-color), var(--v-border-opacity));
+  transition: all 0.2s ease;
 }
 
-.task-widget-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+.task-item:hover {
+  background: rgba(var(--v-theme-primary), 0.04);
+  border-color: rgba(var(--v-theme-primary), 0.3);
+}
+
+.task-content {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+}
+
+.task-priority-indicator {
+  width: 4px;
+  height: 40px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+.task-priority-indicator.priority-low {
+  background-color: rgb(var(--v-theme-success));
+}
+
+.task-priority-indicator.priority-medium {
+  background-color: rgb(var(--v-theme-info));
+}
+
+.task-priority-indicator.priority-high {
+  background-color: rgb(var(--v-theme-warning));
+}
+
+.task-priority-indicator.priority-urgent {
+  background-color: rgb(var(--v-theme-error));
+}
+
+.task-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.task-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
 }
 
 .task-title {
-  line-height: 1.3;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: rgb(var(--v-theme-on-surface));
+  white-space: nowrap;
   overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.task-description {
-  line-height: 1.4;
-  margin-bottom: 0.75rem;
+.task-badges {
+  display: flex;
+  gap: 4px;
+}
+
+.task-status-chip {
+  padding-top: 2px;
+  font-size: 0.625rem;
 }
 
 .task-meta {
-  margin-top: auto;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
 }
 
-.meta-item {
-  opacity: 0.8;
+.task-meta .meta-item {
+  display: flex;
+  align-items: center;
+  font-size: 0.75rem;
+  color: rgba(var(--v-theme-on-surface), 0.6);
 }
 
-.avatar-text {
-  font-size: 0.625rem;
-  font-weight: 600;
-  color: #374151;
+.task-arrow {
+  flex-shrink: 0;
+  opacity: 0.5;
+  transition: all 0.2s ease;
 }
 
-.priority-chip {
-  font-weight: 500;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  font-size: 0.7rem;
+.task-item:hover .task-arrow {
+  opacity: 1;
+  transform: translateX(2px);
 }
 
 .due-date-overdue {
-  color: #dc2626 !important;
+  color: rgb(var(--v-theme-error)) !important;
   font-weight: 600;
 }
 
 .due-date-soon {
-  color: #d97706 !important;
+  color: rgb(var(--v-theme-warning)) !important;
   font-weight: 600;
 }
 
-/* Responsive design for task widget */
-@media (max-width: 768px) {
-  .task-widget-card .v-card-text {
-    padding: 1rem;
+/* Mobile optimizations */
+@media (max-width: 600px) {
+  .card-title-responsive {
+    font-size: 0.875rem;
+    padding: 8px 12px;
   }
 
-  .task-title {
-    font-size: 1.1rem !important;
-    margin-bottom: 0.5rem;
+  .task-content {
+    padding: 10px;
+    gap: 10px;
   }
 
-  .task-description {
-    font-size: 0.85rem;
-    margin-bottom: 0.5rem;
-  }
-
-  .task-meta {
-    gap: 0.5rem;
-  }
-
-  .meta-item {
-    font-size: 0.75rem;
-  }
-
-  .meta-item .v-avatar {
-    margin-right: 0.25rem !important;
-  }
-}
-
-@media (max-width: 480px) {
-  .task-widget-card .v-card-text {
-    padding: 0.875rem;
-  }
-
-  .task-title {
-    font-size: 1rem !important;
+  .task-priority-indicator {
+    height: 32px;
   }
 
   .task-meta {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.25rem;
+    gap: 8px;
   }
 
-  .meta-item {
+  .task-meta .meta-item {
     font-size: 0.7rem;
   }
 }

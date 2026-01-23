@@ -1,16 +1,18 @@
 <template>
-  <v-row>
-    <v-col cols="12" md="6" lg="3">
-      <v-card class="kpi-card" elevation="2" hover>
-        <v-card-text>
-          <div class="d-flex align-center">
+  <v-row class="kpi-row">
+    <!-- First row: 4 cards -->
+    <v-col cols="6" md="6" lg="3">
+      <v-card class="kpi-card fill-height" elevation="2" hover>
+        <v-card-text class="d-flex flex-column h-100">
+          <div class="d-flex align-center flex-grow-1">
             <div class="flex-grow-1">
               <div class="text-medium-emphasis text-body-2 mb-1">Factures Actives</div>
-              <div class="text-h4 font-weight-bold">
+              <div class="text-h5 text-md-h4 font-weight-bold">
                 {{ formatNumber(kpis?.totalActiveInvoices || 0) }}
               </div>
+              <div class="kpi-status-placeholder"></div>
             </div>
-            <v-avatar color="blue-lighten-4" size="48">
+            <v-avatar color="blue-lighten-4" size="48" class="d-none d-sm-flex">
               <v-icon icon="mdi-file-document-outline" color="blue" />
             </v-avatar>
           </div>
@@ -18,18 +20,18 @@
       </v-card>
     </v-col>
 
-    <v-col cols="12" md="6" lg="3">
-      <v-card class="kpi-card" elevation="2" hover>
-        <v-card-text>
-          <div class="d-flex align-center">
+    <v-col cols="6" md="6" lg="3">
+      <v-card class="kpi-card fill-height" elevation="2" hover>
+        <v-card-text class="d-flex flex-column h-100">
+          <div class="d-flex align-center flex-grow-1">
             <div class="flex-grow-1">
-              <div class="text-medium-emphasis text-body-2 mb-1">Temps de Recouvrement Moyen</div>
-              <div class="text-h4 font-weight-bold">
+              <div class="text-medium-emphasis text-body-2 mb-1">Temps Recouvrement</div>
+              <div class="text-h5 text-md-h4 font-weight-bold">
                 {{ formatDays(kpis?.averageCollectionTime || 0) }}
               </div>
               <div class="text-body-2 text-medium-emphasis">jours</div>
             </div>
-            <v-avatar color="green-lighten-4" size="48">
+            <v-avatar color="green-lighten-4" size="48" class="d-none d-sm-flex">
               <v-icon icon="mdi-clock-outline" color="green" />
             </v-avatar>
           </div>
@@ -37,13 +39,13 @@
       </v-card>
     </v-col>
 
-    <v-col cols="12" md="6" lg="3">
-      <v-card class="kpi-card" elevation="2" hover>
-        <v-card-text>
-          <div class="d-flex align-center">
+    <v-col cols="6" md="6" lg="3">
+      <v-card class="kpi-card fill-height" elevation="2" hover>
+        <v-card-text class="d-flex flex-column h-100">
+          <div class="d-flex align-center flex-grow-1">
             <div class="flex-grow-1">
-              <div class="text-medium-emphasis text-body-2 mb-1">Taux de Recouvrement</div>
-              <div class="text-h4 font-weight-bold">
+              <div class="text-medium-emphasis text-body-2 mb-1">Taux Recouvrement</div>
+              <div class="text-h5 text-md-h4 font-weight-bold">
                 {{ formatPercentage(kpis?.collectionRate || 0) }}
               </div>
               <div class="d-flex align-center mt-1">
@@ -53,7 +55,7 @@
                 </span>
               </div>
             </div>
-            <v-avatar color="purple-lighten-4" size="48">
+            <v-avatar color="purple-lighten-4" size="48" class="d-none d-sm-flex">
               <v-icon icon="mdi-percent" color="purple" />
             </v-avatar>
           </div>
@@ -61,13 +63,13 @@
       </v-card>
     </v-col>
 
-    <v-col cols="12" md="6" lg="3">
-      <v-card class="kpi-card" elevation="2" hover>
-        <v-card-text>
-          <div class="d-flex align-center">
+    <v-col cols="6" md="6" lg="3">
+      <v-card class="kpi-card fill-height" elevation="2" hover>
+        <v-card-text class="d-flex flex-column h-100">
+          <div class="d-flex align-center flex-grow-1">
             <div class="flex-grow-1">
               <div class="text-medium-emphasis text-body-2 mb-1">Taux d'Impayés</div>
-              <div class="text-h4 font-weight-bold">
+              <div class="text-h5 text-md-h4 font-weight-bold">
                 {{ formatPercentage(kpis?.overdueRate || 0) }}
               </div>
               <div class="d-flex align-center mt-1">
@@ -77,7 +79,7 @@
                 </span>
               </div>
             </div>
-            <v-avatar color="orange-lighten-4" size="48">
+            <v-avatar color="orange-lighten-4" size="48" class="d-none d-sm-flex">
               <v-icon icon="mdi-alert-triangle" color="orange" />
             </v-avatar>
           </div>
@@ -85,13 +87,14 @@
       </v-card>
     </v-col>
 
-    <v-col cols="12" md="6" lg="4">
-      <v-card class="kpi-card" elevation="2" hover>
-        <v-card-text>
-          <div class="d-flex align-center">
+    <!-- Second row: 3 cards -->
+    <v-col cols="6" md="4" lg="4">
+      <v-card class="kpi-card fill-height" elevation="2" hover>
+        <v-card-text class="d-flex flex-column h-100">
+          <div class="d-flex align-center flex-grow-1">
             <div class="flex-grow-1">
               <div class="text-medium-emphasis text-body-2 mb-1">Croissance Mensuelle</div>
-              <div class="text-h4 font-weight-bold">
+              <div class="text-h5 text-md-h4 font-weight-bold">
                 {{ formatPercentage(kpis?.monthlyGrowthRate || 0) }}
               </div>
               <div class="d-flex align-center mt-1">
@@ -101,7 +104,7 @@
                 </span>
               </div>
             </div>
-            <v-avatar color="teal-lighten-4" size="48">
+            <v-avatar color="teal-lighten-4" size="48" class="d-none d-sm-flex">
               <v-icon icon="mdi-chart-line" color="teal" />
             </v-avatar>
           </div>
@@ -109,16 +112,16 @@
       </v-card>
     </v-col>
 
-    <v-col cols="12" md="6" lg="4">
-      <v-card class="kpi-card" elevation="2" hover>
-        <v-card-text>
-          <div class="d-flex align-center">
+    <v-col cols="6" md="4" lg="4">
+      <v-card class="kpi-card fill-height" elevation="2" hover>
+        <v-card-text class="d-flex flex-column h-100">
+          <div class="d-flex align-center flex-grow-1">
             <div class="flex-grow-1">
               <div class="text-medium-emphasis text-body-2 mb-1">Score de Paiement</div>
-              <div class="text-h4 font-weight-bold">
+              <div class="text-h5 text-md-h4 font-weight-bold">
                 {{ Math.round(kpis?.customerPaymentScore || 0) }}/100
               </div>
-              <div class="mt-2">
+              <div class="mt-1">
                 <v-progress-linear
                   :model-value="kpis?.customerPaymentScore || 0"
                   height="8"
@@ -127,7 +130,7 @@
                 />
               </div>
             </div>
-            <v-avatar color="indigo-lighten-4" size="48">
+            <v-avatar color="indigo-lighten-4" size="48" class="d-none d-sm-flex">
               <v-icon icon="mdi-star" color="indigo" />
             </v-avatar>
           </div>
@@ -135,22 +138,22 @@
       </v-card>
     </v-col>
 
-    <v-col cols="12" md="12" lg="4">
+    <v-col cols="12" md="4" lg="4">
       <v-card class="kpi-card fill-height" elevation="2" hover>
-        <v-card-text class="text-center">
+        <v-card-text class="text-center d-flex flex-column justify-center h-100">
           <div class="text-medium-emphasis text-body-2 mb-2">Score de Santé Global</div>
-          <div class="d-flex justify-center mb-3">
+          <div class="d-flex justify-center mb-2">
             <v-progress-circular
               :model-value="overallHealthScore"
-              :size="120"
+              :size="100"
               :width="8"
               :color="getHealthScoreColor(overallHealthScore)"
             >
               <div class="text-center">
-                <div class="text-h4 font-weight-bold">
+                <div class="text-h5 text-md-h4 font-weight-bold">
                   {{ Math.round(overallHealthScore) }}
                 </div>
-                <div class="text-body-2 text-medium-emphasis">Score</div>
+                <div class="text-caption text-medium-emphasis">Score</div>
               </div>
             </v-progress-circular>
           </div>
@@ -335,11 +338,32 @@ const getHealthScoreLabel = (score: number): string => {
 </script>
 
 <style scoped>
+.kpi-row {
+  align-items: stretch;
+}
+
 .kpi-card {
   transition: transform 0.2s ease-in-out;
+  height: 100%;
 }
 
 .kpi-card:hover {
   transform: translateY(-2px);
+}
+
+.h-100 {
+  height: 100%;
+}
+
+/* Placeholder to maintain consistent card height */
+.kpi-status-placeholder {
+  height: 20px;
+}
+
+/* Mobile optimizations */
+@media (max-width: 600px) {
+  .kpi-card :deep(.v-card-text) {
+    padding: 12px !important;
+  }
 }
 </style>

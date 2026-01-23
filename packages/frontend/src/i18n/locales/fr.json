@@ -2585,6 +2585,7 @@
       "cancelled": "Annulé"
     },
     "taskStatus": {
+      "todo": "À faire",
       "pending": "En attente",
       "in_progress": "En cours",
       "blocked": "Bloqué",
@@ -2788,5 +2789,42 @@
     "deleteFailed": "Échec de la suppression",
     "importFailed": "Échec de l'importation",
     "exportFailed": "Échec de l'exportation"
+  },
+  "charts": {
+    "noData": "Aucune donnée disponible",
+    "loading": "Chargement du graphique...",
+    "revenue": {
+      "title": "Répartition des revenus",
+      "won": "Gagné",
+      "pipeline": "Pipeline",
+      "lost": "Perdu",
+      "total": "Total"
+    },
+    "winLoss": {
+      "winReasons": "Raisons de victoire",
+      "lossReasons": "Raisons de perte",
+      "noReasons": "Aucune raison enregistrée"
+    },
+    "competitors": {
+      "title": "Analyse concurrentielle",
+      "lostDeals": "Deals perdus",
+      "lostValue": "Valeur perdue"
+    },
+    "conversion": {
+      "title": "Taux de conversion par étape",
+      "rate": "Taux"
+    },
+    "periods": {
+      "daily": "Journalier",
+      "weekly": "Hebdomadaire",
+      "monthly": "Mensuel",
+      "quarterly": "Trimestriel",
+      "yearly": "Annuel"
+    },
+    "tooltips": {
+      "value": "Valeur",
+      "percentage": "Pourcentage",
+      "count": "Nombre"
+    }
   }
 }
