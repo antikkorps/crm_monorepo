@@ -366,6 +366,145 @@
             </v-list>
           </v-card>
         </v-col>
+
+        <!-- Recent Quotes -->
+        <v-col cols="12" md="6" class="d-flex">
+          <v-card class="flex-grow-1">
+            <v-card-title class="d-flex align-center justify-space-between">
+              <div class="d-flex align-center">
+                <v-icon class="mr-2" color="purple">mdi-file-document-outline</v-icon>
+                <span>{{ t("collaboration.recentQuotes") }}</span>
+                <v-chip class="ml-2" size="small" color="purple" variant="tonal">
+                  {{ collaborationData.stats.totalQuotes ?? 0 }}
+                </v-chip>
+              </div>
+              <v-btn
+                size="small"
+                variant="text"
+                prepend-icon="mdi-plus"
+                color="purple"
+                @click="navigateTo('/billing/quotes')"
+              >
+                {{ t("collaboration.add") }}
+              </v-btn>
+            </v-card-title>
+            <v-divider></v-divider>
+            <div
+              v-if="!collaborationData.recentQuotes || collaborationData.recentQuotes.length === 0"
+              class="text-center py-8"
+            >
+              <v-icon size="48" color="grey-lighten-2">mdi-file-document-outline</v-icon>
+              <p class="mt-2 text-medium-emphasis">
+                {{ t("collaboration.noRecentQuotes") }}
+              </p>
+            </div>
+            <v-list v-else lines="two">
+              <v-list-item
+                v-for="quote in collaborationData.recentQuotes"
+                :key="quote.id"
+                @click="navigateTo('/billing/quotes')"
+              >
+                <template v-slot:prepend>
+                  <v-avatar :color="getQuoteStatusColor(quote.status)" variant="tonal">
+                    <v-icon>mdi-file-document-outline</v-icon>
+                  </v-avatar>
+                </template>
+                <v-list-item-title class="font-weight-medium">
+                  {{ quote.quoteNumber }} - {{ quote.title }}
+                  <v-chip
+                    size="x-small"
+                    class="ml-2"
+                    :color="getQuoteStatusColor(quote.status)"
+                    variant="tonal"
+                  >
+                    {{ formatQuoteStatus(quote.status) }}
+                  </v-chip>
+                </v-list-item-title>
+                <v-list-item-subtitle>
+                  <div class="d-flex align-center">
+                    <v-icon size="small" class="mr-1">mdi-currency-eur</v-icon>
+                    {{ formatCurrency(quote.total) }}
+                  </div>
+                  <div v-if="quote.validUntil" class="d-flex align-center mt-1">
+                    <v-icon size="small" class="mr-1">mdi-calendar-clock</v-icon>
+                    {{ t("collaboration.validUntil") }}: {{ formatDate(quote.validUntil) }}
+                  </div>
+                </v-list-item-subtitle>
+              </v-list-item>
+            </v-list>
+          </v-card>
+        </v-col>
+
+        <!-- Recent Invoices -->
+        <v-col cols="12" md="6" class="d-flex">
+          <v-card class="flex-grow-1">
+            <v-card-title class="d-flex align-center justify-space-between">
+              <div class="d-flex align-center">
+                <v-icon class="mr-2" color="teal">mdi-receipt</v-icon>
+                <span>{{ t("collaboration.recentInvoices") }}</span>
+                <v-chip class="ml-2" size="small" color="teal" variant="tonal">
+                  {{ collaborationData.stats.totalInvoices ?? 0 }}
+                </v-chip>
+              </div>
+              <v-btn
+                size="small"
+                variant="text"
+                prepend-icon="mdi-plus"
+                color="teal"
+                @click="navigateTo('/billing/invoices')"
+              >
+                {{ t("collaboration.add") }}
+              </v-btn>
+            </v-card-title>
+            <v-divider></v-divider>
+            <div
+              v-if="!collaborationData.recentInvoices || collaborationData.recentInvoices.length === 0"
+              class="text-center py-8"
+            >
+              <v-icon size="48" color="grey-lighten-2">mdi-receipt</v-icon>
+              <p class="mt-2 text-medium-emphasis">
+                {{ t("collaboration.noRecentInvoices") }}
+              </p>
+            </div>
+            <v-list v-else lines="two">
+              <v-list-item
+                v-for="invoice in collaborationData.recentInvoices"
+                :key="invoice.id"
+                @click="navigateTo('/billing/invoices')"
+              >
+                <template v-slot:prepend>
+                  <v-avatar :color="getInvoiceStatusColor(invoice.status)" variant="tonal">
+                    <v-icon>mdi-receipt</v-icon>
+                  </v-avatar>
+                </template>
+                <v-list-item-title class="font-weight-medium">
+                  {{ invoice.invoiceNumber }} - {{ invoice.title }}
+                  <v-chip
+                    size="x-small"
+                    class="ml-2"
+                    :color="getInvoiceStatusColor(invoice.status)"
+                    variant="tonal"
+                  >
+                    {{ formatInvoiceStatus(invoice.status) }}
+                  </v-chip>
+                </v-list-item-title>
+                <v-list-item-subtitle>
+                  <div class="d-flex align-center">
+                    <v-icon size="small" class="mr-1">mdi-currency-eur</v-icon>
+                    {{ formatCurrency(invoice.total) }}
+                    <span v-if="invoice.remainingAmount > 0" class="ml-2 text-error">
+                      ({{ t("collaboration.remaining") }}: {{ formatCurrency(invoice.remainingAmount) }})
+                    </span>
+                  </div>
+                  <div v-if="invoice.dueDate" class="d-flex align-center mt-1">
+                    <v-icon size="small" class="mr-1">mdi-calendar-clock</v-icon>
+                    {{ t("collaboration.dueDate") }}: {{ formatDate(invoice.dueDate) }}
+                  </div>
+                </v-list-item-subtitle>
+              </v-list-item>
+            </v-list>
+          </v-card>
+        </v-col>
       </v-row>
     </div>
 
@@ -474,6 +613,18 @@ const statsCards = computed(() => {
       value: stats.totalTasks,
       icon: "mdi-clipboard-text",
       color: "secondary",
+    },
+    {
+      label: t("collaboration.stats.quotes"),
+      value: stats.totalQuotes ?? 0,
+      icon: "mdi-file-document-outline",
+      color: "purple",
+    },
+    {
+      label: t("collaboration.stats.invoices"),
+      value: stats.totalInvoices ?? 0,
+      icon: "mdi-receipt",
+      color: "teal",
     },
     {
       label: t("collaboration.stats.upcoming"),
@@ -686,6 +837,68 @@ const stripHtml = (html: string): string => {
   const tmp = document.createElement("div")
   tmp.innerHTML = html
   return tmp.textContent || tmp.innerText || ""
+}
+
+const formatCurrency = (amount: number | null | undefined): string => {
+  if (amount == null) return "0,00 €"
+  return new Intl.NumberFormat("fr-FR", {
+    style: "currency",
+    currency: "EUR",
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(amount)
+}
+
+const getQuoteStatusColor = (status: string): string => {
+  const colorMap: Record<string, string> = {
+    draft: "grey",
+    pending: "warning",
+    sent: "info",
+    accepted: "success",
+    rejected: "error",
+    expired: "grey-darken-1",
+    ordered: "purple",
+  }
+  return colorMap[status] || "grey"
+}
+
+const formatQuoteStatus = (status: string): string => {
+  const statusMap: Record<string, string> = {
+    draft: t("quotes.status.draft"),
+    pending: t("quotes.status.pending"),
+    sent: t("quotes.status.sent"),
+    accepted: t("quotes.status.accepted"),
+    rejected: t("quotes.status.rejected"),
+    expired: t("quotes.status.expired"),
+    ordered: t("quotes.status.ordered"),
+  }
+  return statusMap[status] || status
+}
+
+const getInvoiceStatusColor = (status: string): string => {
+  const colorMap: Record<string, string> = {
+    draft: "grey",
+    pending: "warning",
+    sent: "info",
+    partial: "orange",
+    paid: "success",
+    overdue: "error",
+    cancelled: "grey-darken-1",
+  }
+  return colorMap[status] || "grey"
+}
+
+const formatInvoiceStatus = (status: string): string => {
+  const statusMap: Record<string, string> = {
+    draft: t("invoices.status.draft"),
+    pending: t("invoices.status.pending"),
+    sent: t("invoices.status.sent"),
+    partial: t("invoices.status.partial"),
+    paid: t("invoices.status.paid"),
+    overdue: t("invoices.status.overdue"),
+    cancelled: t("invoices.status.cancelled"),
+  }
+  return statusMap[status] || status
 }
 
 onMounted(() => {

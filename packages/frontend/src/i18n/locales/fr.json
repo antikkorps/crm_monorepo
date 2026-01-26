@@ -2593,13 +2593,22 @@
       "notes": "Notes",
       "reminders": "Rappels",
       "tasks": "Tâches",
+      "quotes": "Devis",
+      "invoices": "Factures",
       "upcoming": "À venir"
     },
     "callTypes": {
       "incoming": "Entrant",
       "outgoing": "Sortant",
       "missed": "Manqué"
-    }
+    },
+    "recentQuotes": "Devis récents",
+    "noRecentQuotes": "Aucun devis récent",
+    "recentInvoices": "Factures récentes",
+    "noRecentInvoices": "Aucune facture récente",
+    "validUntil": "Valide jusqu'au",
+    "remaining": "Reste",
+    "dueDate": "Échéance"
   },
   "timeline": {
     "searchPlaceholder": "Rechercher dans la timeline...",

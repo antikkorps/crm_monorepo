@@ -19,19 +19,25 @@ export class MedicalInstitutionAnalyticsService {
       totalCalls: number
       totalReminders: number
       totalTasks: number
+      totalQuotes: number
+      totalInvoices: number
       upcomingMeetings: number
       pendingReminders: number
       openTasks: number
+      pendingQuotes: number
+      unpaidInvoices: number
     }
     recentNotes: any[]
     upcomingMeetings: any[]
     recentCalls: any[]
     pendingReminders: any[]
     openTasks: any[]
+    recentQuotes: any[]
+    recentInvoices: any[]
   }> {
     try {
       // Get all collaboration data in parallel for performance
-      const [notes, meetings, calls, reminders, tasks] = await Promise.all([
+      const [notes, meetings, calls, reminders, tasks, quotes, invoices] = await Promise.all([
         // Get notes related to this institution
         import("../models/Note").then(({ Note }) =>
           Note.findByInstitution(institutionId)
@@ -97,18 +103,52 @@ export class MedicalInstitutionAnalyticsService {
             order: [["createdAt", "DESC"]],
           })
         ),
+        // Get quotes related to this institution
+        import("../models/Quote").then(({ Quote }) =>
+          Quote.findAll({
+            where: { institutionId },
+            include: [
+              {
+                model: User,
+                as: "assignedUser",
+                attributes: ["id", "firstName", "lastName", "email"],
+              },
+            ],
+            order: [["createdAt", "DESC"]],
+          })
+        ),
+        // Get invoices related to this institution
+        import("../models/Invoice").then(({ Invoice }) =>
+          Invoice.findAll({
+            where: { institutionId },
+            include: [
+              {
+                model: User,
+                as: "assignedUser",
+                attributes: ["id", "firstName", "lastName", "email"],
+              },
+            ],
+            order: [["createdAt", "DESC"]],
+          })
+        ),
       ])
 
       // Calculate summary statistics
+      const pendingQuoteStatuses = ['draft', 'pending', 'sent']
+      const unpaidInvoiceStatuses = ['draft', 'pending', 'sent', 'partial', 'overdue']
       const stats = {
         totalNotes: notes.length,
         totalMeetings: meetings.length,
         totalCalls: calls.length,
         totalReminders: reminders.length,
         totalTasks: tasks.length,
+        totalQuotes: quotes.length,
+        totalInvoices: invoices.length,
         upcomingMeetings: meetings.filter(m => new Date(m.startDate) > new Date()).length,
         pendingReminders: reminders.filter(r => !r.isCompleted && new Date(r.reminderDate) > new Date()).length,
         openTasks: tasks.filter(t => t.status !== TaskStatus.COMPLETED && t.status !== TaskStatus.CANCELLED).length,
+        pendingQuotes: quotes.filter(q => pendingQuoteStatuses.includes(q.status)).length,
+        unpaidInvoices: invoices.filter(i => unpaidInvoiceStatuses.includes(i.status)).length,
       }
 
       const result = {
@@ -124,6 +164,8 @@ export class MedicalInstitutionAnalyticsService {
         openTasks: tasks
           .filter(t => t.status !== TaskStatus.COMPLETED && t.status !== TaskStatus.CANCELLED)
           .slice(0, 10),
+        recentQuotes: quotes.slice(0, 5),
+        recentInvoices: invoices.slice(0, 5),
       }
 
       logger.info("Collaboration data retrieved", {
