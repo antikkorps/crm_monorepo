@@ -158,10 +158,30 @@ const formatCurrency = (amount: number) => {
   }).format(amount || 0)
 }
 
+// Load initial catalog item if there's a pre-selected value
+const loadInitialItem = async () => {
+  if (props.modelValue) {
+    try {
+      catalogLoading.value = true
+      const item = await catalogStore.getItemById(props.modelValue)
+      if (item) {
+        // Add the item to the list so v-autocomplete can display its name
+        catalogItems.value = [item]
+      }
+    } catch (error) {
+      console.error("Error loading initial catalog item:", error)
+    } finally {
+      catalogLoading.value = false
+    }
+  }
+}
+
 // Load active catalog items on mount
 onMounted(async () => {
   try {
     await catalogStore.fetchItems({ isActive: "true", limit: 100 })
+    // Load initial item if pre-selected (for editing existing quotes)
+    await loadInitialItem()
   } catch (error) {
     console.error("Error loading catalog items:", error)
   }

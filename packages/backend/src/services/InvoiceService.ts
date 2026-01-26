@@ -191,6 +191,7 @@ export class InvoiceService {
             as: "lines",
           },
         ],
+        transaction,
       })
 
       if (!quote) {
@@ -201,17 +202,17 @@ export class InvoiceService {
         }
       }
 
-      // Check if quote is accepted
-      if (quote.status !== "accepted") {
+      // Check if quote is accepted or ordered (bon de commande)
+      if (quote.status !== "accepted" && quote.status !== "ordered") {
         throw {
           code: "QUOTE_NOT_ACCEPTED",
-          message: "Only accepted quotes can be converted to invoices",
+          message: "Only accepted or ordered quotes can be converted to invoices",
           status: 400,
         }
       }
 
-      // Create invoice from quote
-      const invoice = await Invoice.createFromQuote(quote)
+      // Create invoice from quote - pass the assignedUserId explicitly and the transaction
+      const invoice = await Invoice.createFromQuote(quote, assignedUserId, transaction)
 
       await transaction.commit()
 

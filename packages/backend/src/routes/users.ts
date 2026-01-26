@@ -24,6 +24,7 @@ router.get(
 router.get("/:id", requirePermission("canViewAllTasks"), UserController.getUser)
 router.put("/:id", requirePermission("canManageTeamUsers"), UserController.updateUser)
 router.post("/:id/reset-password", UserController.resetUserPassword) // Super admin only (checked in controller)
+router.post("/:id/send-invitation", UserController.sendInvitation) // Super admin only (checked in controller)
 
 // Avatar management
 router.get("/:id/avatar", UserController.getUserAvatar) // No special permission needed for avatar viewing

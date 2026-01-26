@@ -53,7 +53,7 @@
                 <span class="text-h6 font-weight-medium">{{ stat.title }}</span>
               </div>
 
-              <div class="text-h3 font-weight-bold mb-2" :style="{ color: stat.color }">
+              <div class="stat-value" :style="{ color: stat.color }">
                 {{ stat.value }}
               </div>
 
@@ -647,14 +647,18 @@ const statsCards = computed(() => {
   ]
 })
 
-// Format currency helper
+// Format currency helper with compact notation (2099 → 2.10k€)
 const formatCurrency = (amount: number): string => {
-  return new Intl.NumberFormat("fr-FR", {
+  const formatted = new Intl.NumberFormat("fr-FR", {
     style: "currency",
     currency: "EUR",
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+    notation: "compact",
+    compactDisplay: "short",
   }).format(amount)
+  // Remove space before € and between number and k/M
+  return formatted.replace(/\s+/g, "").replace(",", ".")
 }
 
 // Load dashboard metrics from API
@@ -737,6 +741,15 @@ onMounted(async () => {
 
 .stat-card:hover {
   transform: translateY(-4px);
+}
+
+.stat-value {
+  font-size: clamp(1.5rem, 5vw, 2.125rem);
+  font-weight: 700;
+  line-height: 1.2;
+  margin-bottom: 0.5rem;
+  word-break: break-word;
+  overflow-wrap: break-word;
 }
 
 /* Performance metrics header */

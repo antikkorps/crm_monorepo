@@ -202,13 +202,27 @@ export class DocumentTemplate
   public static async getDefaultTemplate(
     type: TemplateType
   ): Promise<DocumentTemplate | null> {
-    return this.findOne({
+    // First try to find a default template of the exact type
+    let template = await this.findOne({
       where: {
         type,
         isDefault: true,
         isActive: true,
       },
     })
+
+    // If not found, try to find a default template of type "both"
+    if (!template && type !== TemplateType.BOTH) {
+      template = await this.findOne({
+        where: {
+          type: TemplateType.BOTH,
+          isDefault: true,
+          isActive: true,
+        },
+      })
+    }
+
+    return template
   }
 
   public static async hasAnyTemplate(type?: TemplateType): Promise<boolean> {
@@ -225,7 +239,8 @@ export class DocumentTemplate
   ): Promise<DocumentTemplate[]> {
     const where: any = { isActive: true }
     if (type) {
-      where.type = type
+      // Include templates of the specific type AND templates of type "both"
+      where[Op.or] = [{ type }, { type: TemplateType.BOTH }]
     }
 
     return this.findAll({

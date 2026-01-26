@@ -77,10 +77,10 @@ export class Quote
   declare readonly createdAt: Date
   declare readonly updatedAt: Date
 
-  // Associations
-  public lines?: QuoteLine[]
-  public institution?: MedicalInstitution
-  public assignedUser?: User
+  // Associations - use declare to avoid shadowing Sequelize's getters
+  declare lines?: QuoteLine[]
+  declare institution?: MedicalInstitution
+  declare assignedUser?: User
 
   public static override associations: {
     lines: Association<Quote, QuoteLine>
@@ -92,21 +92,38 @@ export class Quote
   public isExpired(): boolean {
     const status = this.status || this.getDataValue('status')
     const validUntil = this.validUntil || this.getDataValue('validUntil')
+    // Handle case where validUntil is not loaded (partial association)
+    if (!validUntil) {
+      return false
+    }
     return status !== QuoteStatus.ACCEPTED && new Date() > validUntil
   }
 
   public canBeModified(): boolean {
     const status = this.status || this.getDataValue('status')
+    // Handle case where status is not loaded
+    if (!status) {
+      return false
+    }
     return [QuoteStatus.DRAFT, QuoteStatus.SENT].includes(status)
   }
 
   public canBeAccepted(): boolean {
     const status = this.status || this.getDataValue('status')
-    return status === QuoteStatus.SENT && !this.isExpired()
+    // Handle case where status is not loaded
+    if (!status) {
+      return false
+    }
+    // Allow acceptance from draft (manual send) or sent status
+    return [QuoteStatus.DRAFT, QuoteStatus.SENT].includes(status) && !this.isExpired()
   }
 
   public canBeRejected(): boolean {
     const status = this.status || this.getDataValue('status')
+    // Handle case where status is not loaded
+    if (!status) {
+      return false
+    }
     return status === QuoteStatus.SENT && !this.isExpired()
   }
 
@@ -147,7 +164,8 @@ export class Quote
 
   public async confirmOrder(): Promise<void> {
     const status = this.status || this.getDataValue('status')
-    if (![QuoteStatus.DRAFT, QuoteStatus.SENT].includes(status)) {
+    // Allow order confirmation from draft, sent, or accepted status
+    if (![QuoteStatus.DRAFT, QuoteStatus.SENT, QuoteStatus.ACCEPTED].includes(status)) {
       throw new Error("Quote cannot be ordered in its current state")
     }
     const number = await (this.constructor as typeof Quote).generateOrderNumber()
@@ -211,6 +229,10 @@ export class Quote
     }
 
     const validUntil = this.validUntil || this.getDataValue('validUntil')
+    // Handle case where validUntil is not loaded (partial association)
+    if (!validUntil) {
+      return null
+    }
     const now = new Date()
     const diffTime = validUntil.getTime() - now.getTime()
     return Math.ceil(diffTime / (1000 * 60 * 60 * 24))

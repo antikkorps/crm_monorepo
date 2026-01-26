@@ -645,7 +645,8 @@
               :loading="saving"
               :disabled="!canPreview"
             >
-              <span class="d-none d-sm-inline">{{ t('templates.actions.save') }} </span>{{ t('templates.actions.saveDraft') }}
+              <span class="d-none d-sm-inline">{{ t('templates.actions.saveDraft') }}</span>
+              <span class="d-sm-none">{{ t('common.save') }}</span>
             </v-btn>
 
             <v-btn
@@ -667,8 +668,8 @@
 
 <script setup lang="ts">
 import type { DocumentTemplate, DocumentTemplateCreateRequest } from "@medical-crm/shared"
-import { LogoPosition } from "@medical-crm/shared"
-import { computed, onMounted, ref, watch } from "vue"
+import { LogoPosition, TemplateType } from "@medical-crm/shared"
+import { computed, ref, watch } from "vue"
 import { useI18n } from "vue-i18n"
 import { templatesApi } from "../../services/api"
 import { useSnackbar } from "../../composables/useSnackbar"
@@ -702,7 +703,7 @@ const previewDevice = ref("desktop")
 // Form data
 const formData = ref<DocumentTemplateCreateRequest>({
   name: "",
-  type: "quote",
+  type: TemplateType.QUOTE,
   companyName: "",
   companyAddress: {
     street: "",
@@ -719,7 +720,7 @@ const formData = ref<DocumentTemplateCreateRequest>({
   siretNumber: "",
   registrationNumber: "",
   logoUrl: "",
-  logoPosition: "top_left",
+  logoPosition: LogoPosition.TOP_LEFT,
   logoSize: "medium",
   primaryColor: "#3f51b5",
   secondaryColor: "#2196f3",
@@ -739,9 +740,9 @@ const formData = ref<DocumentTemplateCreateRequest>({
 
 // Options
 const templateTypeOptions = computed(() => [
-  { label: t("templates.types.quoteTemplate"), value: "quote" },
-  { label: t("templates.types.invoiceTemplate"), value: "invoice" },
-  { label: t("templates.types.bothQuoteInvoice"), value: "both" },
+  { label: t("templates.types.quoteTemplate"), value: TemplateType.QUOTE },
+  { label: t("templates.types.invoiceTemplate"), value: TemplateType.INVOICE },
+  { label: t("templates.types.bothQuoteInvoice"), value: TemplateType.BOTH },
 ])
 
 const logoPositionOptions = computed(() => [
@@ -771,7 +772,7 @@ const canPreview = computed(() => {
 const isFormValid = computed(() => {
   return (
     formData.value.name.trim() !== "" &&
-    formData.value.type !== "" &&
+    !!formData.value.type &&
     formData.value.companyName.trim() !== "" &&
     formData.value.companyAddress.street.trim() !== "" &&
     formData.value.companyAddress.city.trim() !== "" &&
@@ -791,7 +792,7 @@ const urlRule = (v: string) =>
 const resetForm = () => {
   formData.value = {
     name: "",
-    type: "quote",
+    type: TemplateType.QUOTE,
     companyName: "",
     companyAddress: {
       street: "",
@@ -808,7 +809,7 @@ const resetForm = () => {
     siretNumber: "",
     registrationNumber: "",
     logoUrl: "",
-    logoPosition: LogoPosition.HEADER_LEFT,
+    logoPosition: LogoPosition.TOP_LEFT,
     logoSize: "medium",
     primaryColor: "#3f51b5",
     secondaryColor: "#2196f3",
@@ -841,8 +842,32 @@ watch(
   { immediate: true }
 )
 
+// Also watch for dialog visibility to ensure form is loaded when opening
+watch(
+  () => props.visible,
+  (isVisible) => {
+    if (isVisible && props.template) {
+      // When dialog opens with a template, ensure data is loaded
+      console.log('Dialog opened for editing, loading template:', props.template.name)
+      loadTemplateData(props.template)
+      activeTab.value = "form" // Reset to form tab
+    } else if (isVisible && !props.template) {
+      // When dialog opens for creation, reset form
+      console.log('Dialog opened for creation, resetting form')
+      resetForm()
+      activeTab.value = "form" // Reset to form tab
+    } else if (!isVisible) {
+      // When dialog closes, reset form after a small delay to allow animation
+      setTimeout(() => {
+        resetForm()
+      }, 300)
+    }
+  }
+)
+
 // Load template data for editing
 const loadTemplateData = (template: DocumentTemplate) => {
+  console.log('loadTemplateData called with:', { id: template.id, name: template.name, type: template.type })
   formData.value = {
     name: template.name,
     type: template.type,
@@ -948,8 +973,8 @@ const handleLogoUpload = (logoUrl: string) => {
   formData.value.logoUrl = logoUrl
 }
 
-// Handle tab change
-const handleTabChange = (newTab: string) => {
+// Handle tab change - preview is reactive, no action needed
+const handleTabChange = (_newTab: unknown) => {
   // Tab change handled automatically by reactive preview
 }
 
@@ -1098,29 +1123,15 @@ const handlePreview = () => {
 // Handle cancel
 const handleCancel = () => {
   emit("update:visible", false)
-  resetForm()
+  // Don't reset form immediately - let the visibility watch handle it
+  // This prevents race conditions when the form is reopened quickly
 }
 
-// Initialize form when component mounts
-onMounted(() => {
-  if (props.template) {
-    loadTemplateData(props.template)
-  }
-})
+// Note: Form initialization is handled by the visibility watch
+// which triggers when the dialog opens with a template
 
-// Auto-refresh preview on changes when on preview tab (debounced)
-let previewTimeout: ReturnType<typeof setTimeout> | null = null
-watch(
-  formData,
-  () => {
-    if (activeTab.value !== "preview" || !canPreview.value) return
-    if (previewTimeout) clearTimeout(previewTimeout)
-    previewTimeout = setTimeout(() => {
-      updatePreview()
-    }, 400)
-  },
-  { deep: true }
-)
+// Preview is reactive - no need for manual refresh since TemplatePreviewRenderer
+// watches formData directly via props
 </script>
 
 <style scoped>

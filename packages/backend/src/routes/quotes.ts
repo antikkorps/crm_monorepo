@@ -51,6 +51,9 @@ router.put("/:id/cancel", QuoteController.cancelQuote)
 // PUT /api/quotes/:id/order - Confirm order (bon de commande)
 router.put("/:id/order", QuoteController.confirmOrder)
 
+// POST /api/quotes/:id/convert-to-invoice - Convert quote to invoice
+router.post("/:id/convert-to-invoice", requirePermission("canCreateQuotes"), QuoteController.convertToInvoice)
+
 // Quote line management endpoints
 // GET /api/quotes/:id/lines - Get quote lines
 router.get("/:id/lines", QuoteController.getQuoteLines)

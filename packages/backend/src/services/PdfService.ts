@@ -55,6 +55,7 @@ export class PdfService {
     if (!this.browser) {
       this.browser = await puppeteer.launch({
         headless: true,
+        executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || undefined,
         args: ["--no-sandbox", "--disable-setuid-sandbox"],
       })
     }
@@ -383,6 +384,12 @@ export class PdfService {
         throw new Error(`Quote with ID ${quoteId} not found`)
       }
 
+      // If institution wasn't loaded via include, try loading it separately
+      let institution: MedicalInstitution | null | undefined = quote.institution
+      if (!institution && quote.institutionId) {
+        institution = await MedicalInstitution.findByPk(quote.institutionId)
+      }
+
       const linesRaw = quote.lines && quote.lines.length > 0 ? quote.lines : await quote.getLines()
       const lines = linesRaw.map((l: any) => (typeof l.toJSON === "function" ? l.toJSON() : l))
 
@@ -396,16 +403,19 @@ export class PdfService {
       const template = templateResult.template
       const isFallbackTemplate = templateResult.isFallback
 
+      // Calculate totals - handle both camelCase and snake_case field names
       const computed = {
-        subtotal: lines.reduce((s: number, l: any) => s + Number(l.subtotal || 0), 0),
-        totalDiscountAmount: lines.reduce((s: number, l: any) => s + Number(l.discountAmount || 0), 0),
-        totalTaxAmount: lines.reduce((s: number, l: any) => s + Number(l.taxAmount || 0), 0),
+        subtotal: lines.reduce((s: number, l: any) => s + Number(l.subtotal || l.sub_total || 0), 0),
+        totalDiscountAmount: lines.reduce((s: number, l: any) => s + Number(l.discountAmount || l.discount_amount || 0), 0),
+        totalTaxAmount: lines.reduce((s: number, l: any) => s + Number(l.taxAmount || l.tax_amount || 0), 0),
         total: lines.reduce((s: number, l: any) => s + Number(l.total || 0), 0),
       }
+
       const quoteForRender: any = { ...(quote.toJSON?.() || quote) }
       if (!Number(quoteForRender.total)) Object.assign(quoteForRender, computed)
 
-      const institutionData = quote.institution?.toJSON ? quote.institution.toJSON() : quote.institution
+      // Use the institution variable (which may have been loaded separately)
+      const institutionData = institution?.toJSON ? institution.toJSON() : institution
       const assignedUserData = quote.assignedUser?.toJSON ? quote.assignedUser.toJSON() : quote.assignedUser
 
       const html = await this.renderTemplate(template, {
@@ -723,6 +733,25 @@ export class PdfService {
       if (!address) return ""
       return `${address.street}<br>${address.city}, ${address.state} ${address.zipCode}<br>${address.country}`
     })
+
+    // Equality check helper
+    Handlebars.registerHelper("ifEquals", function (this: any, arg1: any, arg2: any, options: any) {
+      return arg1 === arg2 ? options.fn(this) : options.inverse(this)
+    })
+
+    // Logo position check helper (checks if position starts with prefix)
+    Handlebars.registerHelper("ifLogoPosition", function (this: any, position: string, prefix: string, options: any) {
+      return position && position.startsWith(prefix) ? options.fn(this) : options.inverse(this)
+    })
+
+    // Current date helper
+    Handlebars.registerHelper("currentDate", function () {
+      return new Intl.DateTimeFormat("fr-FR", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      }).format(new Date())
+    })
   }
 
   private async ensureDirectoryExists(dirPath: string): Promise<void> {
@@ -745,8 +774,11 @@ export class PdfService {
   private getDefaultTemplate(type: TemplateType): string {
     if (type === TemplateType.QUOTE) {
       return this.getDefaultQuoteTemplate()
-    } else {
+    } else if (type === TemplateType.INVOICE) {
       return this.getDefaultInvoiceTemplate()
+    } else {
+      // For type "both", use combined template
+      return this.getDefaultBothTemplate()
     }
   }
 
@@ -760,27 +792,27 @@ export class PdfService {
           <div class="company-info">
             <h1>{{template.companyName}}</h1>
             <div class="address">{{{formatAddress template.companyAddress}}}</div>
-            {{#if template.companyPhone}}<div>Phone: {{template.companyPhone}}</div>{{/if}}
+            {{#if template.companyPhone}}<div>Tél: {{template.companyPhone}}</div>{{/if}}
             {{#if template.companyEmail}}<div>Email: {{template.companyEmail}}</div>{{/if}}
           </div>
         </header>
 
         <div class="document-info">
-          <h2>{{#if order}}ORDER{{else}}QUOTE{{/if}}</h2>
+          <h2>{{#if order}}BON DE COMMANDE{{else}}DEVIS{{/if}}</h2>
           <table class="info-table">
             {{#if order}}
-              <tr><td><strong>Order Number:</strong></td><td>{{quote.orderNumber}}</td></tr>
-              <tr><td><strong>Quote Ref:</strong></td><td>{{quote.quoteNumber}}</td></tr>
+              <tr><td><strong>N° Commande:</strong></td><td>{{quote.orderNumber}}</td></tr>
+              <tr><td><strong>Réf. Devis:</strong></td><td>{{quote.quoteNumber}}</td></tr>
             {{else}}
-              <tr><td><strong>Quote Number:</strong></td><td>{{quote.quoteNumber}}</td></tr>
+              <tr><td><strong>N° Devis:</strong></td><td>{{quote.quoteNumber}}</td></tr>
             {{/if}}
             <tr><td><strong>Date:</strong></td><td>{{date quote.createdAt}}</td></tr>
-            <tr><td><strong>Valid Until:</strong></td><td>{{date quote.validUntil}}</td></tr>
+            <tr><td><strong>Valide jusqu'au:</strong></td><td>{{date quote.validUntil}}</td></tr>
           </table>
         </div>
 
         <div class="client-info">
-          <h3>Bill To:</h3>
+          <h3>Destinataire:</h3>
           <div><strong>{{institution.name}}</strong></div>
           <div>{{{formatAddress institution.address}}}</div>
         </div>
@@ -789,10 +821,10 @@ export class PdfService {
           <thead>
             <tr>
               <th>Description</th>
-              <th>Qty</th>
-              <th>Unit Price</th>
-              <th>Discount</th>
-              <th>Tax</th>
+              <th>Qté</th>
+              <th>Prix unitaire</th>
+              <th>Remise</th>
+              <th>TVA</th>
               <th>Total</th>
             </tr>
           </thead>
@@ -812,16 +844,16 @@ export class PdfService {
 
         <div class="totals">
           <table class="totals-table">
-            <tr><td>Subtotal:</td><td>{{currency quote.subtotal}}</td></tr>
-            <tr><td>Total Discount:</td><td>{{currency quote.totalDiscountAmount}}</td></tr>
-            <tr><td>Total Tax:</td><td>{{currency quote.totalTaxAmount}}</td></tr>
-            <tr class="total-row"><td><strong>Total:</strong></td><td><strong>{{currency quote.total}}</strong></td></tr>
+            <tr><td>Sous-total HT:</td><td>{{currency quote.subtotal}}</td></tr>
+            <tr><td>Remise totale:</td><td>{{currency quote.totalDiscountAmount}}</td></tr>
+            <tr><td>TVA:</td><td>{{currency quote.totalTaxAmount}}</td></tr>
+            <tr class="total-row"><td><strong>Total TTC:</strong></td><td><strong>{{currency quote.total}}</strong></td></tr>
           </table>
         </div>
 
         {{#if template.termsAndConditions}}
         <div class="terms">
-          <h3>Terms and Conditions</h3>
+          <h3>Conditions générales</h3>
           <p>{{template.termsAndConditions}}</p>
         </div>
         {{/if}}
@@ -830,7 +862,114 @@ export class PdfService {
           {{#if template.customFooter}}
             <p>{{template.customFooter}}</p>
           {{else}}
-            <p>Thank you for your business!</p>
+            <p>Merci pour votre confiance!</p>
+          {{/if}}
+        </footer>
+      </div>
+    `
+  }
+
+  private getDefaultBothTemplate(): string {
+    return `
+      <div class="document">
+        <header class="header">
+          {{#if template.logoUrl}}
+            <img src="{{template.logoUrl}}" alt="{{template.companyName}}" class="logo logo-{{template.logoPosition}}" />
+          {{/if}}
+          <div class="company-info">
+            <h1>{{template.companyName}}</h1>
+            <div class="address">{{{formatAddress template.companyAddress}}}</div>
+            {{#if template.companyPhone}}<div>Tél: {{template.companyPhone}}</div>{{/if}}
+            {{#if template.companyEmail}}<div>Email: {{template.companyEmail}}</div>{{/if}}
+          </div>
+        </header>
+
+        <div class="document-info">
+          {{#if invoice}}
+            <h2>FACTURE</h2>
+            <table class="info-table">
+              <tr><td><strong>N° Facture:</strong></td><td>{{invoice.invoiceNumber}}</td></tr>
+              <tr><td><strong>Date:</strong></td><td>{{date invoice.createdAt}}</td></tr>
+              <tr><td><strong>Échéance:</strong></td><td>{{date invoice.dueDate}}</td></tr>
+            </table>
+          {{else}}
+            <h2>{{#if order}}BON DE COMMANDE{{else}}DEVIS{{/if}}</h2>
+            <table class="info-table">
+              {{#if order}}
+                <tr><td><strong>N° Commande:</strong></td><td>{{quote.orderNumber}}</td></tr>
+                <tr><td><strong>Réf. Devis:</strong></td><td>{{quote.quoteNumber}}</td></tr>
+              {{else}}
+                <tr><td><strong>N° Devis:</strong></td><td>{{quote.quoteNumber}}</td></tr>
+              {{/if}}
+              <tr><td><strong>Date:</strong></td><td>{{date quote.createdAt}}</td></tr>
+              <tr><td><strong>Valide jusqu'au:</strong></td><td>{{date quote.validUntil}}</td></tr>
+            </table>
+          {{/if}}
+        </div>
+
+        <div class="client-info">
+          {{#if invoice}}<h3>Facturé à:</h3>{{else}}<h3>Destinataire:</h3>{{/if}}
+          <div><strong>{{institution.name}}</strong></div>
+          <div>{{{formatAddress institution.address}}}</div>
+        </div>
+
+        <table class="line-items">
+          <thead>
+            <tr>
+              <th>Description</th>
+              <th>Qté</th>
+              <th>Prix unitaire</th>
+              <th>Remise</th>
+              <th>TVA</th>
+              <th>Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            {{#each lines}}
+            <tr>
+              <td>{{description}}</td>
+              <td>{{quantity}}</td>
+              <td>{{currency unitPrice}}</td>
+              <td>{{currency discountAmount}}</td>
+              <td>{{currency taxAmount}}</td>
+              <td>{{currency total}}</td>
+            </tr>
+            {{/each}}
+          </tbody>
+        </table>
+
+        <div class="totals">
+          <table class="totals-table">
+            {{#if invoice}}
+              <tr><td>Sous-total HT:</td><td>{{currency invoice.subtotal}}</td></tr>
+              <tr><td>Remise totale:</td><td>{{currency invoice.totalDiscountAmount}}</td></tr>
+              <tr><td>TVA:</td><td>{{currency invoice.totalTaxAmount}}</td></tr>
+              <tr class="total-row"><td><strong>Total TTC:</strong></td><td><strong>{{currency invoice.total}}</strong></td></tr>
+              {{#if invoice.totalPaid}}
+              <tr><td>Déjà payé:</td><td>{{currency invoice.totalPaid}}</td></tr>
+              <tr class="balance-row"><td><strong>Reste à payer:</strong></td><td><strong>{{currency invoice.remainingAmount}}</strong></td></tr>
+              {{/if}}
+            {{else}}
+              <tr><td>Sous-total HT:</td><td>{{currency quote.subtotal}}</td></tr>
+              <tr><td>Remise totale:</td><td>{{currency quote.totalDiscountAmount}}</td></tr>
+              <tr><td>TVA:</td><td>{{currency quote.totalTaxAmount}}</td></tr>
+              <tr class="total-row"><td><strong>Total TTC:</strong></td><td><strong>{{currency quote.total}}</strong></td></tr>
+            {{/if}}
+          </table>
+        </div>
+
+        {{#if template.termsAndConditions}}
+        <div class="terms">
+          <h3>Conditions générales</h3>
+          <p>{{template.termsAndConditions}}</p>
+        </div>
+        {{/if}}
+
+        <footer class="footer">
+          {{#if template.customFooter}}
+            <p>{{template.customFooter}}</p>
+          {{else}}
+            <p>Merci pour votre confiance!</p>
           {{/if}}
         </footer>
       </div>
@@ -847,23 +986,23 @@ export class PdfService {
           <div class="company-info">
             <h1>{{template.companyName}}</h1>
             <div class="address">{{{formatAddress template.companyAddress}}}</div>
-            {{#if template.companyPhone}}<div>Phone: {{template.companyPhone}}</div>{{/if}}
+            {{#if template.companyPhone}}<div>Tél: {{template.companyPhone}}</div>{{/if}}
             {{#if template.companyEmail}}<div>Email: {{template.companyEmail}}</div>{{/if}}
           </div>
         </header>
 
         <div class="document-info">
-          <h2>INVOICE</h2>
+          <h2>FACTURE</h2>
           <table class="info-table">
-            <tr><td><strong>Invoice Number:</strong></td><td>{{invoice.invoiceNumber}}</td></tr>
+            <tr><td><strong>N° Facture:</strong></td><td>{{invoice.invoiceNumber}}</td></tr>
             <tr><td><strong>Date:</strong></td><td>{{date invoice.createdAt}}</td></tr>
-            <tr><td><strong>Due Date:</strong></td><td>{{date invoice.dueDate}}</td></tr>
-            {{#if invoice.quoteId}}<tr><td><strong>Quote Reference:</strong></td><td>{{invoice.quote.quoteNumber}}</td></tr>{{/if}}
+            <tr><td><strong>Échéance:</strong></td><td>{{date invoice.dueDate}}</td></tr>
+            {{#if invoice.quoteId}}<tr><td><strong>Réf. Devis:</strong></td><td>{{invoice.quote.quoteNumber}}</td></tr>{{/if}}
           </table>
         </div>
 
         <div class="client-info">
-          <h3>Bill To:</h3>
+          <h3>Facturé à:</h3>
           <div><strong>{{institution.name}}</strong></div>
           <div>{{{formatAddress institution.address}}}</div>
         </div>
@@ -872,10 +1011,10 @@ export class PdfService {
           <thead>
             <tr>
               <th>Description</th>
-              <th>Qty</th>
-              <th>Unit Price</th>
-              <th>Discount</th>
-              <th>Tax</th>
+              <th>Qté</th>
+              <th>Prix unitaire</th>
+              <th>Remise</th>
+              <th>TVA</th>
               <th>Total</th>
             </tr>
           </thead>
@@ -895,23 +1034,23 @@ export class PdfService {
 
         <div class="totals">
           <table class="totals-table">
-            <tr><td>Subtotal:</td><td>{{currency invoice.subtotal}}</td></tr>
-            <tr><td>Total Discount:</td><td>{{currency invoice.totalDiscountAmount}}</td></tr>
-            <tr><td>Total Tax:</td><td>{{currency invoice.totalTaxAmount}}</td></tr>
-            <tr class="total-row"><td><strong>Total:</strong></td><td><strong>{{currency invoice.total}}</strong></td></tr>
+            <tr><td>Sous-total HT:</td><td>{{currency invoice.subtotal}}</td></tr>
+            <tr><td>Remise totale:</td><td>{{currency invoice.totalDiscountAmount}}</td></tr>
+            <tr><td>TVA:</td><td>{{currency invoice.totalTaxAmount}}</td></tr>
+            <tr class="total-row"><td><strong>Total TTC:</strong></td><td><strong>{{currency invoice.total}}</strong></td></tr>
             {{#if invoice.totalPaid}}
-            <tr><td>Amount Paid:</td><td>{{currency invoice.totalPaid}}</td></tr>
-            <tr class="balance-row"><td><strong>Balance Due:</strong></td><td><strong>{{currency invoice.remainingAmount}}</strong></td></tr>
+            <tr><td>Déjà payé:</td><td>{{currency invoice.totalPaid}}</td></tr>
+            <tr class="balance-row"><td><strong>Reste à payer:</strong></td><td><strong>{{currency invoice.remainingAmount}}</strong></td></tr>
             {{/if}}
           </table>
         </div>
 
         {{#if payments.length}}
         <div class="payments">
-          <h3>Payment History</h3>
+          <h3>Historique des paiements</h3>
           <table class="payments-table">
             <thead>
-              <tr><th>Date</th><th>Method</th><th>Amount</th><th>Status</th></tr>
+              <tr><th>Date</th><th>Méthode</th><th>Montant</th><th>Statut</th></tr>
             </thead>
             <tbody>
               {{#each payments}}
@@ -954,74 +1093,220 @@ export class PdfService {
 
   private getDefaultStyles(): string {
     return `
-      body {
-        font-family: Arial, sans-serif;
-        font-size: 12px;
-        line-height: 1.4;
-        color: #333;
+      * {
         margin: 0;
         padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        font-size: 13px;
+        line-height: 1.5;
+        color: #333;
+        background: white;
       }
 
       .document {
         max-width: 800px;
         margin: 0 auto;
-        padding: 20px;
+        padding: 30px;
       }
 
+      /* Header */
       .header {
         display: flex;
-        justify-content: space-between;
-        align-items: flex-start;
-        margin-bottom: 30px;
-        border-bottom: 2px solid #eee;
+        align-items: center;
+        gap: 20px;
         padding-bottom: 20px;
+        border-bottom: 3px solid #3f51b5;
+        margin-bottom: 25px;
       }
 
-      .logo {
+      .header-logo {
+        flex-shrink: 0;
+      }
+
+      .header-logo.logo-small img {
+        max-height: 40px;
+        max-width: 80px;
+      }
+
+      .header-logo.logo-medium img {
+        max-height: 60px;
+        max-width: 120px;
+      }
+
+      .header-logo.logo-large img {
         max-height: 80px;
-        max-width: 200px;
+        max-width: 160px;
       }
 
-      .company-info {
-        text-align: right;
+      .header-logo img {
+        object-fit: contain;
       }
 
-      .company-info h1 {
-        margin: 0 0 10px 0;
-        font-size: 24px;
-        color: #2c3e50;
+      .header-content h1 {
+        font-size: 1.8rem;
+        font-weight: 700;
+        color: #3f51b5;
+        margin: 0;
       }
 
-      .document-info {
+      /* Document meta info */
+      .document-meta {
         margin-bottom: 30px;
       }
 
-      .document-info h2 {
-        font-size: 28px;
-        color: #2c3e50;
-        margin: 0 0 15px 0;
+      .document-type {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #333;
+        margin-bottom: 10px;
       }
 
-      .info-table {
-        width: 300px;
+      .document-details p {
+        margin: 4px 0;
+        color: #555;
       }
 
-      .info-table td {
-        padding: 5px 10px 5px 0;
+      /* Parties table for two-column layout */
+      .parties-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 30px;
+      }
+
+      .parties-table td.party {
+        width: 50%;
+        vertical-align: top;
+        padding-right: 30px;
+      }
+
+      .parties-table td.party:last-child {
+        padding-right: 0;
+        padding-left: 30px;
+      }
+
+      .party h3 {
+        font-size: 0.85rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        color: #888;
+        margin: 0 0 10px 0;
+        letter-spacing: 0.5px;
+      }
+
+      .party-name {
+        font-weight: 600;
+        color: #333;
+        margin-bottom: 5px;
+      }
+
+      .party p {
+        margin: 3px 0;
+        color: #555;
+      }
+
+      /* Custom message */
+      .custom-message {
+        background: #fff8e1;
+        border-left: 3px solid #ffc107;
+        padding: 12px 15px;
+        margin-bottom: 25px;
+        color: #856404;
+      }
+
+      /* Items table */
+      .items-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 20px;
+      }
+
+      .items-table th {
+        background: #3f51b5;
+        color: white;
+        padding: 12px 10px;
+        text-align: left;
+        font-weight: 600;
+        font-size: 0.85rem;
+      }
+
+      .items-table td {
+        padding: 12px 10px;
+        border-bottom: 1px solid #eee;
         vertical-align: top;
       }
 
-      .client-info {
+      .text-center {
+        text-align: center;
+      }
+
+      .text-right {
+        text-align: right;
+      }
+
+      /* Totals section */
+      .totals-section {
+        width: 280px;
+        margin-left: auto;
         margin-bottom: 30px;
       }
 
-      .client-info h3 {
-        margin: 0 0 10px 0;
-        font-size: 16px;
-        color: #2c3e50;
+      .total-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 8px 0;
+        border-bottom: 1px solid #eee;
       }
 
+      .total-final {
+        font-weight: 700;
+        font-size: 1.1rem;
+        color: #3f51b5;
+        border-bottom: 2px solid #3f51b5;
+        border-top: 1px solid #ccc;
+        margin-top: 5px;
+        padding-top: 10px;
+      }
+
+      /* Footer info */
+      .footer-info {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 30px;
+        margin-bottom: 30px;
+        padding-top: 20px;
+        border-top: 1px solid #eee;
+      }
+
+      .footer-block h4 {
+        font-size: 0.85rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        color: #888;
+        margin: 0 0 8px 0;
+        letter-spacing: 0.5px;
+      }
+
+      .footer-block p {
+        margin: 0;
+        color: #555;
+        font-size: 0.9rem;
+        line-height: 1.6;
+      }
+
+      /* Document footer */
+      .document-footer {
+        text-align: center;
+        padding-top: 20px;
+        border-top: 1px solid #eee;
+        color: #888;
+        font-size: 0.85rem;
+      }
+
+      /* Legacy support for old templates */
       .line-items {
         width: 100%;
         border-collapse: collapse;
@@ -1036,31 +1321,18 @@ export class PdfService {
       }
 
       .line-items th {
-        background-color: #f8f9fa;
+        background-color: #3f51b5;
+        color: white;
         font-weight: bold;
-        color: #2c3e50;
-      }
-
-      .line-items td:nth-child(2),
-      .line-items td:nth-child(3),
-      .line-items td:nth-child(4),
-      .line-items td:nth-child(5),
-      .line-items td:nth-child(6) {
-        text-align: right;
-      }
-
-      .totals {
-        display: flex;
-        justify-content: flex-end;
-        margin-bottom: 30px;
       }
 
       .totals-table {
-        width: 300px;
+        width: 280px;
+        margin-left: auto;
       }
 
       .totals-table td {
-        padding: 8px 10px;
+        padding: 8px 0;
         border-bottom: 1px solid #eee;
       }
 
@@ -1068,70 +1340,39 @@ export class PdfService {
         text-align: right;
       }
 
-      .total-row td {
-        border-top: 2px solid #2c3e50;
-        border-bottom: 2px solid #2c3e50;
-        font-size: 16px;
-      }
-
-      .balance-row td {
-        border-top: 1px solid #e74c3c;
-        color: #e74c3c;
-        font-size: 14px;
-      }
-
-      .payments {
-        margin-bottom: 30px;
-      }
-
-      .payments h3 {
-        margin: 0 0 15px 0;
-        font-size: 16px;
-        color: #2c3e50;
-      }
-
-      .payments-table {
-        width: 100%;
-        border-collapse: collapse;
-      }
-
-      .payments-table th,
-      .payments-table td {
-        padding: 8px;
-        text-align: left;
-        border-bottom: 1px solid #ddd;
-      }
-
-      .payments-table th {
-        background-color: #f8f9fa;
-        font-weight: bold;
-      }
-
-      .payment-instructions,
-      .terms {
-        margin-bottom: 30px;
-      }
-
-      .payment-instructions h3,
-      .terms h3 {
-        margin: 0 0 10px 0;
-        font-size: 16px;
-        color: #2c3e50;
-      }
-
       .footer {
         text-align: center;
-        margin-top: 40px;
         padding-top: 20px;
         border-top: 1px solid #eee;
-        color: #666;
+        color: #888;
+        font-size: 0.85rem;
       }
 
       @media print {
         .document {
-          max-width: none;
-          margin: 0;
-          padding: 0;
+          padding: 20px;
+        }
+      }
+
+      @media (max-width: 768px) {
+        .header {
+          flex-direction: column;
+          align-items: flex-start;
+          gap: 15px;
+        }
+
+        .parties-section {
+          grid-template-columns: 1fr;
+          gap: 25px;
+        }
+
+        .footer-info {
+          grid-template-columns: 1fr;
+          gap: 20px;
+        }
+
+        .totals-section {
+          width: 100%;
         }
       }
     `

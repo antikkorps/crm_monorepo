@@ -174,38 +174,80 @@
 
             <v-col cols="12" md="4">
               <div class="totals-actions">
+                <!-- PDF Download -->
+                <v-btn
+                  v-if="isEditing"
+                  color="primary"
+                  variant="outlined"
+                  prepend-icon="mdi-download"
+                  block
+                  class="mb-2"
+                  @click="downloadQuotePdf"
+                  :loading="downloading"
+                >
+                  {{ t('billing.quoteBuilder.actions.downloadPdf') }}
+                </v-btn>
+
+                <!-- Send to client -->
                 <v-btn
                   color="success"
                   prepend-icon="mdi-send"
                   block
+                  class="mb-2"
                   @click="sendQuote"
                   :disabled="!canSendQuote"
                   :loading="sending"
-                  class="mb-3"
                 >
                   {{ t('billing.quoteBuilder.actions.sendToClient') }}
                 </v-btn>
-                <v-btn
-                  v-if="isEditing && ['draft','sent'].includes(String(props.quote?.status || ''))"
-                  color="secondary"
-                  variant="tonal"
-                  prepend-icon="mdi-clipboard-check"
-                  block
-                  class="mb-3"
-                  @click="confirmOrder"
+
+                <!-- Bon de commande - only show when editing -->
+                <v-tooltip
+                  v-if="isEditing"
+                  :text="orderButtonTooltip"
+                  :disabled="canConfirmOrder"
+                  location="top"
                 >
-                  {{ t('billing.quoteBuilder.actions.confirmOrder') }}
-                </v-btn>
-                <v-btn
-                  color="warning"
-                  variant="outlined"
-                  prepend-icon="mdi-arrow-right"
-                  block
-                  @click="convertToInvoice"
-                  :disabled="!canConvertToInvoice"
+                  <template #activator="{ props }">
+                    <div v-bind="props">
+                      <v-btn
+                        color="secondary"
+                        variant="tonal"
+                        prepend-icon="mdi-clipboard-check"
+                        block
+                        class="mb-2"
+                        @click="confirmOrder"
+                        :disabled="!canConfirmOrder"
+                        :loading="saving"
+                      >
+                        {{ t('billing.quoteBuilder.actions.confirmOrder') }}
+                      </v-btn>
+                    </div>
+                  </template>
+                </v-tooltip>
+
+                <!-- Convert to Invoice - only show when editing -->
+                <v-tooltip
+                  v-if="isEditing"
+                  :text="invoiceButtonTooltip"
+                  :disabled="canConvertToInvoice"
+                  location="top"
                 >
-                  {{ t('billing.quoteBuilder.actions.convertToInvoice') }}
-                </v-btn>
+                  <template #activator="{ props }">
+                    <div v-bind="props">
+                      <v-btn
+                        color="warning"
+                        prepend-icon="mdi-receipt"
+                        block
+                        @click="convertToInvoice"
+                        :disabled="!canConvertToInvoice"
+                        :loading="saving"
+                      >
+                        {{ t('billing.quoteBuilder.actions.convertToInvoice') }}
+                      </v-btn>
+                    </div>
+                  </template>
+                </v-tooltip>
               </div>
             </v-col>
           </v-row>
@@ -258,11 +300,11 @@
     <!-- Send Quote Dialog -->
     <v-dialog v-model="showSendDialog" max-width="500">
       <v-card>
-        <v-card-title>Envoyer le devis au client</v-card-title>
+        <v-card-title>{{ t('billing.quoteBuilder.sendDialog.title') }}</v-card-title>
         <v-card-text>
           <div class="send-content">
             <div class="recipient-info mb-4">
-              <h4 class="text-h6 mb-2">Destinataire</h4>
+              <h4 class="text-h6 mb-2">{{ t('billing.quoteBuilder.sendDialog.recipient') }}</h4>
               <v-card variant="outlined" class="pa-3">
                 <div class="font-weight-bold">{{ selectedInstitution?.name }}</div>
                 <div class="text-medium-emphasis">{{ institutionContactEmail }}</div>
@@ -271,8 +313,8 @@
 
             <v-textarea
               v-model="emailMessage"
-              label="Message personnalisé (optionnel)"
-              placeholder="Ajoutez un message personnel à inclure avec le devis..."
+              :label="t('billing.quoteBuilder.sendDialog.message')"
+              :placeholder="t('billing.quoteBuilder.sendDialog.messagePlaceholder')"
               rows="4"
               variant="outlined"
             />
@@ -280,14 +322,14 @@
         </v-card-text>
         <v-card-actions>
           <v-spacer />
-          <v-btn variant="outlined" @click="showSendDialog = false"> Annuler </v-btn>
+          <v-btn variant="outlined" @click="showSendDialog = false">{{ t('billing.quoteBuilder.sendDialog.cancel') }}</v-btn>
           <v-btn
             color="primary"
             prepend-icon="mdi-send"
             @click="confirmSendQuote"
             :loading="sending"
           >
-            Envoyer le devis
+            {{ t('billing.quoteBuilder.sendDialog.send') }}
           </v-btn>
         </v-card-actions>
       </v-card>
@@ -339,6 +381,7 @@ const router = useRouter()
 const institutionsStore = useInstitutionsStore()
 const saving = ref(false)
 const sending = ref(false)
+const downloading = ref(false)
 const showPreview = ref(false)
 const showSendDialog = ref(false)
 const emailMessage = ref("")
@@ -452,9 +495,37 @@ const canSendQuote = computed(() => {
   return isFormValid.value && institutionContactEmail.value !== "No contact email"
 })
 
+// Bon de commande: backend allows from draft or sent status
+const canConfirmOrder = computed(() => {
+  const status = String(props.quote?.status || '')
+  return isEditing.value && ["draft", "sent"].includes(status)
+})
+
+// Convert to Invoice: backend allows from accepted OR ordered status
 const canConvertToInvoice = computed(() => {
   const status = String(props.quote?.status || '')
   return isEditing.value && ["accepted", "ordered"].includes(status)
+})
+
+// Tooltip for disabled order button
+const orderButtonTooltip = computed(() => {
+  const status = String(props.quote?.status || '')
+  if (status === "ordered") {
+    return t('billing.quoteBuilder.workflow.alreadyOrdered')
+  }
+  if (["accepted", "rejected", "expired", "cancelled"].includes(status)) {
+    return t('billing.quoteBuilder.workflow.cannotOrder')
+  }
+  return ""
+})
+
+// Tooltip for disabled invoice button
+const invoiceButtonTooltip = computed(() => {
+  const status = String(props.quote?.status || '')
+  if (!["accepted", "ordered"].includes(status)) {
+    return t('billing.quoteBuilder.workflow.needAcceptedOrOrdered')
+  }
+  return ""
 })
 
 const previewData = computed(() => {
@@ -475,10 +546,34 @@ const previewData = computed(() => {
 
 const loadTemplates = async () => {
   try {
-    const response = await templatesApi.getAll({ type: "quote" })
-    templates.value = (response as any)?.data || []
+    // Load templates that support quotes (both 'quote' and 'both' types)
+    const [quoteResponse, bothResponse] = await Promise.all([
+      templatesApi.getAll({ type: "quote" }),
+      templatesApi.getAll({ type: "both" }),
+    ])
+    const quoteTemplates = (quoteResponse as any)?.data || []
+    const bothTemplates = (bothResponse as any)?.data || []
+    templates.value = [...quoteTemplates, ...bothTemplates]
   } catch (error) {
     console.error("Failed to load templates:", error)
+  }
+}
+
+// Load a specific template by ID (for editing existing quotes)
+const loadTemplateById = async (templateId: string) => {
+  if (!templateId) return
+
+  // Check if template is already in the list
+  const existingTemplate = templates.value.find(t => t.id === templateId)
+  if (existingTemplate) return
+
+  try {
+    const template = await templatesApi.getById(templateId)
+    if (template) {
+      templates.value = [...templates.value, template as DocumentTemplate]
+    }
+  } catch (error) {
+    console.error("Failed to load template:", error)
   }
 }
 
@@ -489,6 +584,25 @@ const loadInstitutions = async () => {
   } catch (error) {
     console.error("Error loading institutions:", error)
     institutionOptions.value = []
+  }
+}
+
+// Load a specific institution by ID (for editing existing quotes)
+const loadInstitutionById = async (institutionId: string) => {
+  if (!institutionId) return
+
+  // Check if institution is already in the list
+  const existingInstitution = institutionOptions.value.find((i: any) => i.id === institutionId)
+  if (existingInstitution) return
+
+  try {
+    const response = await institutionsApi.getById(institutionId)
+    const institution = (response as any)?.data || response
+    if (institution) {
+      institutionOptions.value = [...institutionOptions.value, institution]
+    }
+  } catch (error) {
+    console.error("Failed to load institution:", error)
   }
 }
 
@@ -666,6 +780,35 @@ const sendQuote = () => {
   showSendDialog.value = true
 }
 
+const downloadQuotePdf = async () => {
+  if (!isEditing.value || !props.quote) return
+  try {
+    downloading.value = true
+    const response = await quotesApi.generatePdf(props.quote.id)
+
+    if (!response.ok) {
+      throw new Error(`HTTP error ${response.status}`)
+    }
+
+    const blob = await response.blob()
+    const url = window.URL.createObjectURL(blob)
+    const link = document.createElement("a")
+    link.href = url
+    link.download = `devis-${props.quote.quoteNumber || props.quote.id}.pdf`
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    window.URL.revokeObjectURL(url)
+
+    showSnackbar(t("billing.quoteBuilder.messages.pdfDownloaded"), "success")
+  } catch (error) {
+    console.error("Failed to download PDF:", error)
+    showSnackbar(t("billing.quoteBuilder.messages.pdfDownloadError"), "error")
+  } finally {
+    downloading.value = false
+  }
+}
+
 const confirmSendQuote = async () => {
   try {
     sending.value = true
@@ -688,18 +831,31 @@ const confirmSendQuote = async () => {
   }
 }
 
-const convertToInvoice = () => {
-  if (!canConvertToInvoice.value) return
+const convertToInvoice = async () => {
+  if (!canConvertToInvoice.value || !props.quote) return
 
-  // Navigate to invoice creation with quote data
-  router.push({
-    name: "CreateInvoice",
-    query: { fromQuote: props.quote?.id },
-  })
+  try {
+    saving.value = true
+    const result = await quotesApi.convertToInvoice(props.quote.id)
+    const invoice = (result as any)?.data || result
+    showSnackbar(t("billing.quoteBuilder.messages.convertedToInvoice"), "success")
+
+    // Navigate to the newly created invoice
+    if (invoice?.id) {
+      router.push({ name: "InvoiceDetail", params: { id: invoice.id } })
+    } else {
+      router.push({ name: "Invoices" })
+    }
+  } catch (error) {
+    console.error("Failed to convert to invoice:", error)
+    showSnackbar(t("billing.quoteBuilder.messages.convertToInvoiceError"), "error")
+  } finally {
+    saving.value = false
+  }
 }
 
 const confirmOrder = async () => {
-  if (!isEditing.value || !props.quote) return
+  if (!canConfirmOrder.value || !props.quote) return
   try {
     saving.value = true
     const updated = await quotesApi.order(props.quote.id)
@@ -725,7 +881,7 @@ const showSnackbar = (message: string, color: string = "info") => {
 }
 
 // Load quote data for editing
-const loadQuoteData = () => {
+const loadQuoteData = async () => {
   if (props.quote) {
     console.log("Loading quote data:", props.quote)
     console.log("Quote lines:", props.quote.lines)
@@ -748,6 +904,12 @@ const loadQuoteData = () => {
     }
 
     console.log("Loaded lines:", formData.value.lines)
+
+    // Load the specific institution and template to ensure they appear in dropdowns
+    await Promise.all([
+      loadInstitutionById(props.quote.institutionId),
+      props.quote.templateId ? loadTemplateById(props.quote.templateId) : Promise.resolve(),
+    ])
   }
 }
 
@@ -843,7 +1005,20 @@ onMounted(async () => {
 .totals-actions {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: 0.5rem;
+}
+
+.totals-actions .v-btn {
+  white-space: normal;
+  height: auto !important;
+  min-height: 40px;
+  padding: 8px 16px;
+}
+
+.totals-actions .v-btn .v-btn__content {
+  white-space: normal;
+  word-wrap: break-word;
+  line-height: 1.2;
 }
 
 .form-actions-section {
@@ -857,21 +1032,40 @@ onMounted(async () => {
   flex-wrap: wrap;
 }
 
-/* Responsive design */
-@media (max-width: 768px) {
+/* Responsive design - Mobile First */
+@media (max-width: 960px) {
   .quote-builder {
-    padding: 1rem;
+    padding: 0.75rem;
   }
 
   .quote-header {
     flex-direction: column;
     align-items: stretch;
+    margin-bottom: 1rem;
+  }
+
+  .header-content h2 {
+    font-size: 1.25rem;
   }
 
   .header-actions {
     width: 100%;
     justify-content: flex-start;
     gap: 0.5rem;
+  }
+
+  /* Stack the summary section on mobile - actions first */
+  .totals-section :deep(.v-row) {
+    flex-direction: column-reverse;
+  }
+
+  .totals-section :deep(.v-col) {
+    max-width: 100% !important;
+    flex: 0 0 100% !important;
+  }
+
+  .totals-actions {
+    margin-bottom: 1.5rem;
   }
 
   .form-actions {
@@ -881,6 +1075,39 @@ onMounted(async () => {
 
   .form-actions .v-btn {
     width: 100%;
+  }
+
+  .totals-actions .v-btn {
+    font-size: 0.875rem;
+    min-height: 40px;
+  }
+
+  /* Make totals more compact on mobile */
+  .totals-breakdown {
+    gap: 0.25rem;
+  }
+
+  .total-row {
+    padding: 0.25rem 0;
+  }
+
+  .final-total {
+    font-size: 1rem;
+  }
+}
+
+@media (max-width: 600px) {
+  .quote-builder {
+    padding: 0.5rem;
+  }
+
+  .header-content h2 {
+    font-size: 1.1rem;
+  }
+
+  .header-content {
+    flex-wrap: wrap;
+    gap: 0.5rem;
   }
 }
 </style>

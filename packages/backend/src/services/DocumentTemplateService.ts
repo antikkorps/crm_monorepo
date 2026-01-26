@@ -34,8 +34,14 @@ export class DocumentTemplateService {
     createdBy: string
   ): Promise<DocumentTemplate> {
     try {
+      // Auto-generate htmlTemplate if not provided
+      const templateData = { ...data }
+      if (!templateData.htmlTemplate || templateData.htmlTemplate.trim() === "") {
+        templateData.htmlTemplate = this.generateHtmlTemplate(templateData.type, templateData)
+      }
+
       const template = await DocumentTemplate.createTemplate({
-        ...data,
+        ...templateData,
         createdBy,
       })
 
@@ -68,7 +74,22 @@ export class DocumentTemplateService {
         throw new Error(`Template with ID ${templateId} not found`)
       }
 
+      // Always regenerate htmlTemplate to ensure it matches the current CSS/layout
+      // The UI doesn't allow users to edit htmlTemplate directly, so we always generate it
+      // from the template settings (company info, colors, etc.)
+      const updateData = { ...updates }
+      const templateType = updateData.type || template.type
+
+      // Merge current template data with updates for generation
+      const mergedData = {
+        ...template.toJSON(),
+        ...updateData,
+      }
+      updateData.htmlTemplate = this.generateHtmlTemplate(templateType, mergedData)
+      logger.info("Regenerated htmlTemplate during update", { templateId, templateType })
+
       // Create a new version if this is a significant update
+      // Use the original 'updates' to check, not 'updateData' (which always has htmlTemplate)
       if (this.isSignificantUpdate(updates)) {
         logger.info("Original template before creating version:", {
           type: template.type,
@@ -77,8 +98,8 @@ export class DocumentTemplateService {
           createdBy: template.createdBy
         })
 
-        // First, update the original template with the new data to ensure required fields are present
-        await template.update(updates)
+        // First, update the original template with the new data (including regenerated htmlTemplate)
+        await template.update(updateData)
 
         // Reload to get the updated values
         await template.reload()
@@ -95,12 +116,13 @@ export class DocumentTemplateService {
 
         return newVersion
       } else {
-        // Minor update, just update the existing template
-        await template.update(updates)
+        // Minor update, just update the existing template (including regenerated htmlTemplate)
+        await template.update(updateData)
 
         logger.info("Document template updated", {
           templateId,
           updatedBy,
+          htmlTemplateUpdated: !!updateData.htmlTemplate,
         })
 
         return template
@@ -646,269 +668,513 @@ export class DocumentTemplateService {
 
   private getDefaultStyles(): string {
     return `
-      * { margin: 0; padding: 0; box-sizing: border-box; }
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
       body {
         font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        line-height: 1.6;
-        color: #2c3e50;
+        font-size: 13px;
+        line-height: 1.5;
+        color: #333;
         background: white;
       }
+
       .document {
         max-width: 800px;
         margin: 0 auto;
-        background: white;
-        padding: 20px;
+        padding: 30px;
       }
+
+      /* Header */
       .header {
         display: flex;
-        justify-content: space-between;
         align-items: center;
-        padding: 30px 20px;
-        background: #f8f9fa;
-        border: 1px solid #e9ecef;
-        border-left: 4px solid #3f51b5;
-        color: #2c3e50;
-        margin-bottom: 30px;
+        gap: 20px;
+        padding-bottom: 20px;
+        border-bottom: 3px solid #3f51b5;
+        margin-bottom: 25px;
       }
-      .header h1 {
-        font-size: 2.2rem;
+
+      .header-logo {
+        flex-shrink: 0;
+      }
+
+      .header-logo.logo-small img {
+        max-height: 40px;
+        max-width: 80px;
+      }
+
+      .header-logo.logo-medium img {
+        max-height: 60px;
+        max-width: 120px;
+      }
+
+      .header-logo.logo-large img {
+        max-height: 80px;
+        max-width: 160px;
+      }
+
+      .header-logo img {
+        object-fit: contain;
+      }
+
+      .header-content h1 {
+        font-size: 1.8rem;
         font-weight: 700;
-        margin-bottom: 5px;
         color: #3f51b5;
+        margin: 0;
       }
-      .header h2 {
-        font-size: 1.5rem;
-        font-weight: 600;
-        margin-bottom: 5px;
-      }
-      .company-details {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 40px;
+
+      /* Document meta info */
+      .document-meta {
         margin-bottom: 30px;
-        padding: 0 20px;
       }
-      .company-info, .client-info {
-        background: #f8f9fa;
-        padding: 25px;
-        border-radius: 12px;
-        border-left: 4px solid #3f51b5;
+
+      .document-type {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #333;
+        margin-bottom: 10px;
       }
-      .company-info h3, .client-info h3 {
-        color: #3f51b5;
-        margin-bottom: 15px;
-        font-size: 1.2rem;
+
+      .document-details p {
+        margin: 4px 0;
+        color: #555;
+      }
+
+      /* Parties table for two-column layout */
+      .parties-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 30px;
+      }
+
+      .parties-table td.party {
+        width: 50%;
+        vertical-align: top;
+        padding-right: 30px;
+      }
+
+      .parties-table td.party:last-child {
+        padding-right: 0;
+        padding-left: 30px;
+      }
+
+      .party h3 {
+        font-size: 0.85rem;
         font-weight: 600;
+        text-transform: uppercase;
+        color: #888;
+        margin: 0 0 10px 0;
+        letter-spacing: 0.5px;
       }
-      .company-info p, .client-info p {
-        margin-bottom: 8px;
-        color: #5a6c7d;
+
+      .party-name {
+        font-weight: 600;
+        color: #333;
+        margin-bottom: 5px;
       }
-      .content {
-        padding: 0 20px;
-        margin-bottom: 40px;
+
+      .party p {
+        margin: 3px 0;
+        color: #555;
       }
+
+      /* Custom message */
+      .custom-message {
+        background: #fff8e1;
+        border-left: 3px solid #ffc107;
+        padding: 12px 15px;
+        margin-bottom: 25px;
+        color: #856404;
+      }
+
+      /* Items table */
       .items-table {
         width: 100%;
         border-collapse: collapse;
-        margin: 30px 0;
-        background: white;
-        border-radius: 8px;
-        overflow: hidden;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        margin-bottom: 20px;
       }
+
       .items-table th {
         background: #3f51b5;
         color: white;
-        padding: 15px;
+        padding: 12px 10px;
         text-align: left;
         font-weight: 600;
+        font-size: 0.85rem;
       }
+
       .items-table td {
-        padding: 15px;
+        padding: 12px 10px;
         border-bottom: 1px solid #eee;
+        vertical-align: top;
       }
-      .items-table tr:hover {
-        background: #f8f9fa;
+
+      .text-center {
+        text-align: center;
       }
-      .total-section {
+
+      .text-right {
         text-align: right;
-        margin: 30px 0;
-        padding: 20px;
-        background: #f8f9fa;
-        border-radius: 8px;
       }
-      .total-line {
+
+      /* Totals section */
+      .totals-section {
+        width: 280px;
+        margin-left: auto;
+        margin-bottom: 30px;
+      }
+
+      .total-row {
         display: flex;
         justify-content: space-between;
-        margin-bottom: 10px;
-        padding: 5px 0;
+        padding: 8px 0;
+        border-bottom: 1px solid #eee;
       }
+
       .total-final {
-        font-size: 1.2rem;
         font-weight: 700;
+        font-size: 1.1rem;
         color: #3f51b5;
-        border-top: 2px solid #3f51b5;
+        border-bottom: 2px solid #3f51b5;
+        border-top: 1px solid #ccc;
+        margin-top: 5px;
         padding-top: 10px;
       }
+
+      /* Footer info */
+      .footer-info {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 30px;
+        margin-bottom: 30px;
+        padding-top: 20px;
+        border-top: 1px solid #eee;
+      }
+
+      .footer-block h4 {
+        font-size: 0.85rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        color: #888;
+        margin: 0 0 8px 0;
+        letter-spacing: 0.5px;
+      }
+
+      .footer-block p {
+        margin: 0;
+        color: #555;
+        font-size: 0.9rem;
+        line-height: 1.6;
+      }
+
+      /* Document footer */
+      .document-footer {
+        text-align: center;
+        padding-top: 20px;
+        border-top: 1px solid #eee;
+        color: #888;
+        font-size: 0.85rem;
+      }
+
+      @media print {
+        .document {
+          padding: 20px;
+        }
+      }
+
       @media (max-width: 768px) {
-        .company-details { grid-template-columns: 1fr; gap: 20px; }
-        .header { flex-direction: column; text-align: center; gap: 20px; }
-        .document-info { text-align: center; }
+        .header {
+          flex-direction: column;
+          align-items: flex-start;
+          gap: 15px;
+        }
+
+        .parties-section {
+          grid-template-columns: 1fr;
+          gap: 25px;
+        }
+
+        .footer-info {
+          grid-template-columns: 1fr;
+          gap: 20px;
+        }
+
+        .totals-section {
+          width: 100%;
+        }
       }
     `
   }
 
 
-  private getDefaultHtmlTemplate(type: TemplateType): string {
-    if (type === TemplateType.QUOTE) {
-      return this.getDefaultQuoteTemplate()
-    } else if (type === TemplateType.INVOICE) {
-      return this.getDefaultInvoiceTemplate()
+  /**
+   * Generate HTML template with Handlebars variables based on template type and data
+   * This creates a template that matches the frontend preview (TemplatePreviewRenderer)
+   */
+  public generateHtmlTemplate(type: TemplateType, _data: Partial<DocumentTemplateCreationAttributes>): string {
+    // Generate document type specific sections
+    const documentMeta = this.getDocumentMetaSection(type)
+    const clientSection = this.getClientSectionLabel(type)
+    const totalsSection = this.getTotalsSection(type)
+
+    return `
+      <div class="document">
+        <!-- Header with logo and company name -->
+        <div class="header">
+          {{#if template.logoUrl}}
+          <div class="header-logo logo-{{template.logoSize}}">
+            <img src="{{template.logoUrl}}" alt="{{template.companyName}}" />
+          </div>
+          {{/if}}
+          <div class="header-content">
+            <h1>{{template.companyName}}</h1>
+          </div>
+        </div>
+
+        <!-- Document meta info - left aligned -->
+        <div class="document-meta">
+          ${documentMeta}
+        </div>
+
+        <!-- Two columns: Émetteur and Destinataire using table for PDF compatibility -->
+        <table class="parties-table">
+          <tr>
+            <td class="party">
+              <h3>Émetteur</h3>
+              <p class="party-name">{{template.companyName}}</p>
+              <p>{{template.companyAddress.street}}</p>
+              <p>{{template.companyAddress.zipCode}} {{template.companyAddress.city}}</p>
+              <p>{{template.companyAddress.country}}</p>
+              {{#if template.companyPhone}}<p>Tél : {{template.companyPhone}}</p>{{/if}}
+              {{#if template.companyEmail}}<p>Email : {{template.companyEmail}}</p>{{/if}}
+              {{#if template.siretNumber}}<p>SIRET : {{template.siretNumber}}</p>{{/if}}
+              {{#if template.taxNumber}}<p>TVA : {{template.taxNumber}}</p>{{/if}}
+            </td>
+            <td class="party">
+              <h3>${clientSection}</h3>
+              <p class="party-name">{{institution.name}}</p>
+              {{#if institution.address}}
+              <p>{{institution.address.street}}</p>
+              <p>{{institution.address.zipCode}} {{institution.address.city}}</p>
+              <p>{{institution.address.country}}</p>
+              {{else}}
+              {{#if institution.street}}<p>{{institution.street}}</p>{{/if}}
+              {{#if institution.city}}<p>{{institution.zipCode}} {{institution.city}}</p>{{/if}}
+              {{#if institution.country}}<p>{{institution.country}}</p>{{/if}}
+              {{/if}}
+              {{#if institution.phone}}<p>Tél : {{institution.phone}}</p>{{/if}}
+              {{#if institution.email}}<p>Email : {{institution.email}}</p>{{/if}}
+            </td>
+          </tr>
+        </table>
+
+        {{#if template.customHeader}}
+        <div class="custom-message">
+          {{template.customHeader}}
+        </div>
+        {{/if}}
+
+        <!-- Items table -->
+        <table class="items-table">
+          <thead>
+            <tr>
+              <th>Description</th>
+              <th class="text-center">Qté</th>
+              <th class="text-right">Prix unitaire</th>
+              <th class="text-right">Remise</th>
+              <th class="text-right">TVA</th>
+              <th class="text-right">Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            {{#each lines}}
+            <tr>
+              <td>{{this.description}}</td>
+              <td class="text-center">{{this.quantity}}</td>
+              <td class="text-right">{{currency this.unitPrice}}</td>
+              <td class="text-right">{{currency this.discountAmount}}</td>
+              <td class="text-right">{{currency this.taxAmount}}</td>
+              <td class="text-right">{{currency this.total}}</td>
+            </tr>
+            {{/each}}
+          </tbody>
+        </table>
+
+        <!-- Totals section -->
+        <div class="totals-section">
+          ${totalsSection}
+        </div>
+
+        <!-- Footer info -->
+        <div class="footer-info">
+          {{#if template.termsAndConditions}}
+          <div class="footer-block">
+            <h4>Conditions générales</h4>
+            <p>{{template.termsAndConditions}}</p>
+          </div>
+          {{/if}}
+
+          {{#if template.paymentInstructions}}
+          <div class="footer-block">
+            <h4>Modalités de paiement</h4>
+            <p>{{template.paymentInstructions}}</p>
+          </div>
+          {{/if}}
+        </div>
+
+        <!-- Document footer -->
+        <div class="document-footer">
+          {{#if template.customFooter}}
+          {{template.customFooter}}
+          {{else}}
+          {{template.companyName}} - Document généré le {{currentDate}}
+          {{/if}}
+        </div>
+      </div>
+    `
+  }
+
+  private getDocumentMetaSection(type: TemplateType): string {
+    if (type === TemplateType.INVOICE) {
+      return `
+          <div class="document-type">FACTURE</div>
+          <div class="document-details">
+            <p><strong>N° :</strong> {{invoice.invoiceNumber}}</p>
+            <p><strong>Date :</strong> {{currentDate}}</p>
+            <p><strong>Échéance :</strong> {{formatDate invoice.dueDate}}</p>
+          </div>
+      `
+    } else if (type === TemplateType.QUOTE) {
+      return `
+          {{#if order}}
+          <div class="document-type">BON DE COMMANDE</div>
+          <div class="document-details">
+            <p><strong>N° Commande :</strong> {{quote.orderNumber}}</p>
+            <p><strong>Réf. Devis :</strong> {{quote.quoteNumber}}</p>
+            <p><strong>Date :</strong> {{currentDate}}</p>
+          </div>
+          {{else}}
+          <div class="document-type">DEVIS</div>
+          <div class="document-details">
+            <p><strong>N° :</strong> {{quote.quoteNumber}}</p>
+            <p><strong>Date :</strong> {{currentDate}}</p>
+            <p><strong>Valide jusqu'au :</strong> {{formatDate quote.validUntil}}</p>
+          </div>
+          {{/if}}
+      `
     } else {
-      // For 'both' type, use quote template as default
-      return this.getDefaultQuoteTemplate()
+      // Type "both" - dynamic based on document
+      return `
+          {{#if invoice}}
+          <div class="document-type">FACTURE</div>
+          <div class="document-details">
+            <p><strong>N° :</strong> {{invoice.invoiceNumber}}</p>
+            <p><strong>Date :</strong> {{currentDate}}</p>
+            <p><strong>Échéance :</strong> {{formatDate invoice.dueDate}}</p>
+          </div>
+          {{else}}
+          {{#if order}}
+          <div class="document-type">BON DE COMMANDE</div>
+          <div class="document-details">
+            <p><strong>N° Commande :</strong> {{quote.orderNumber}}</p>
+            <p><strong>Réf. Devis :</strong> {{quote.quoteNumber}}</p>
+            <p><strong>Date :</strong> {{currentDate}}</p>
+          </div>
+          {{else}}
+          <div class="document-type">DEVIS</div>
+          <div class="document-details">
+            <p><strong>N° :</strong> {{quote.quoteNumber}}</p>
+            <p><strong>Date :</strong> {{currentDate}}</p>
+            <p><strong>Valide jusqu'au :</strong> {{formatDate quote.validUntil}}</p>
+          </div>
+          {{/if}}
+          {{/if}}
+      `
     }
   }
 
-  private getDefaultQuoteTemplate(): string {
-    return `
-      <div class="document">
-        <div class="header">
-          <h1>{{template.companyName}}</h1>
-          <div class="document-info">
-            <h2>DEVIS</h2>
-            <p>Date: {{currentDate}}</p>
-          </div>
-        </div>
-
-        <div class="company-details">
-          <div class="company-info">
-            <h3>Émetteur</h3>
-            <p><strong>{{template.companyName}}</strong></p>
-            <p>{{template.companyAddress.street}}</p>
-            <p>{{template.companyAddress.city}}, {{template.companyAddress.state}} {{template.companyAddress.zipCode}}</p>
-            <p>{{template.companyAddress.country}}</p>
-            {{#if template.companyEmail}}<p>Email: {{template.companyEmail}}</p>{{/if}}
-            {{#if template.companyPhone}}<p>Téléphone: {{template.companyPhone}}</p>{{/if}}
-          </div>
-
-          <div class="client-info">
-            <h3>Destinataire</h3>
-            <p><strong>{{institution.name}}</strong></p>
-            <p>{{institution.address.street}}</p>
-            <p>{{institution.address.city}}, {{institution.address.state}} {{institution.address.zipCode}}</p>
-            <p>{{institution.address.country}}</p>
-          </div>
-        </div>
-
-        <div class="content">
-          <table class="items-table">
-            <thead>
-              <tr>
-                <th>Description</th>
-                <th>Quantité</th>
-                <th>Prix unitaire</th>
-                <th>Total HT</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td>Équipement médical spécialisé</td>
-                <td>2</td>
-                <td>1 250,00 €</td>
-                <td>2 500,00 €</td>
-              </tr>
-            </tbody>
-          </table>
-
-          <div class="total-section">
-            <div class="total-line">
-              <span>Sous-total HT:</span>
-              <span>2 500,00 €</span>
-            </div>
-            <div class="total-line">
-              <span>TVA (20%):</span>
-              <span>500,00 €</span>
-            </div>
-            <div class="total-line total-final">
-              <span><strong>Total TTC:</strong></span>
-              <span><strong>3 000,00 €</strong></span>
-            </div>
-          </div>
-        </div>
-      </div>
-    `
+  private getClientSectionLabel(type: TemplateType): string {
+    if (type === TemplateType.INVOICE) {
+      return "Facturé à"
+    } else if (type === TemplateType.QUOTE) {
+      return "Destinataire"
+    } else {
+      return "{{#if invoice}}Facturé à{{else}}Destinataire{{/if}}"
+    }
   }
 
-  private getDefaultInvoiceTemplate(): string {
-    return `
-      <div class="document">
-        <div class="header">
-          <h1>{{template.companyName}}</h1>
-          <div class="document-info">
-            <h2>FACTURE</h2>
-            <p>Date: {{currentDate}}</p>
+  private getTotalsSection(type: TemplateType): string {
+    const quoteTotals = `
+          <div class="total-row">
+            <span>Sous-total HT</span>
+            <span>{{currency quote.subtotal}}</span>
           </div>
-        </div>
-
-        <div class="company-details">
-          <div class="company-info">
-            <h3>Émetteur</h3>
-            <p><strong>{{template.companyName}}</strong></p>
-            <p>{{template.companyAddress.street}}</p>
-            <p>{{template.companyAddress.city}}, {{template.companyAddress.state}} {{template.companyAddress.zipCode}}</p>
-            <p>{{template.companyAddress.country}}</p>
-            {{#if template.companyEmail}}<p>Email: {{template.companyEmail}}</p>{{/if}}
-            {{#if template.companyPhone}}<p>Téléphone: {{template.companyPhone}}</p>{{/if}}
+          <div class="total-row">
+            <span>Remise totale</span>
+            <span>-{{currency quote.totalDiscountAmount}}</span>
           </div>
-
-          <div class="client-info">
-            <h3>Facturé à</h3>
-            <p><strong>{{institution.name}}</strong></p>
-            <p>{{institution.address.street}}</p>
-            <p>{{institution.address.city}}, {{institution.address.state}} {{institution.address.zipCode}}</p>
-            <p>{{institution.address.country}}</p>
+          <div class="total-row">
+            <span>TVA</span>
+            <span>{{currency quote.totalTaxAmount}}</span>
           </div>
-        </div>
-
-        <div class="content">
-          <table class="items-table">
-            <thead>
-              <tr>
-                <th>Description</th>
-                <th>Quantité</th>
-                <th>Prix unitaire</th>
-                <th>Total HT</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td>Équipement médical spécialisé</td>
-                <td>2</td>
-                <td>1 250,00 €</td>
-                <td>2 500,00 €</td>
-              </tr>
-            </tbody>
-          </table>
-
-          <div class="total-section">
-            <div class="total-line">
-              <span>Sous-total HT:</span>
-              <span>2 500,00 €</span>
-            </div>
-            <div class="total-line">
-              <span>TVA (20%):</span>
-              <span>500,00 €</span>
-            </div>
-            <div class="total-line total-final">
-              <span><strong>Total TTC:</strong></span>
-              <span><strong>3 000,00 €</strong></span>
-            </div>
+          <div class="total-row total-final">
+            <span>Total TTC</span>
+            <span>{{currency quote.total}}</span>
           </div>
-        </div>
-      </div>
     `
+
+    const invoiceTotals = `
+          <div class="total-row">
+            <span>Sous-total HT</span>
+            <span>{{currency invoice.subtotal}}</span>
+          </div>
+          <div class="total-row">
+            <span>Remise totale</span>
+            <span>-{{currency invoice.totalDiscountAmount}}</span>
+          </div>
+          <div class="total-row">
+            <span>TVA</span>
+            <span>{{currency invoice.totalTaxAmount}}</span>
+          </div>
+          <div class="total-row total-final">
+            <span>Total TTC</span>
+            <span>{{currency invoice.total}}</span>
+          </div>
+          {{#if invoice.totalPaid}}
+          <div class="total-row">
+            <span>Déjà payé</span>
+            <span>-{{currency invoice.totalPaid}}</span>
+          </div>
+          <div class="total-row total-final">
+            <span>Reste à payer</span>
+            <span>{{currency invoice.remainingAmount}}</span>
+          </div>
+          {{/if}}
+    `
+
+    if (type === TemplateType.INVOICE) {
+      return invoiceTotals
+    } else if (type === TemplateType.QUOTE) {
+      return quoteTotals
+    } else {
+      return `
+          {{#if invoice}}
+          ${invoiceTotals}
+          {{else}}
+          ${quoteTotals}
+          {{/if}}
+      `
+    }
+  }
+
+  // Keep for backward compatibility - delegates to generateHtmlTemplate
+  private getDefaultHtmlTemplate(type: TemplateType): string {
+    return this.generateHtmlTemplate(type, {})
   }
 }
 

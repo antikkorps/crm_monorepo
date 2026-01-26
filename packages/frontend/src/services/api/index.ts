@@ -104,6 +104,26 @@ class ApiClient {
         window.location.href = "/login"
         throw new Error("Unauthorized")
       }
+      // Try to extract error message from JSON body if available
+      try {
+        const contentType = response.headers.get("content-type") || ""
+        if (contentType.includes("application/json")) {
+          const errJson = await response.json().catch(() => null)
+          const serverMsg = errJson?.error?.message || errJson?.message || null
+          if (serverMsg) {
+            const e = new Error(serverMsg)
+            ;(e as any).status = response.status
+            ;(e as any).code = errJson?.error?.code || errJson?.code
+            throw e
+          }
+        }
+      } catch (innerErr) {
+        // If we already created an error with server message, rethrow it
+        if (innerErr instanceof Error && (innerErr as any).status) {
+          throw innerErr
+        }
+        // Otherwise fallthrough to generic error
+      }
       throw new Error(`HTTP error! status: ${response.status}`)
     }
 
@@ -344,6 +364,7 @@ export const quotesApi = {
   reject: (id: string) => apiClient.put(`/quotes/${id}/reject`),
   cancel: (id: string) => apiClient.put(`/quotes/${id}/cancel`),
   order: (id: string) => apiClient.put(`/quotes/${id}/order`),
+  convertToInvoice: (id: string) => apiClient.post(`/quotes/${id}/convert-to-invoice`),
 
   // Quote lines
   lines: {
@@ -546,6 +567,8 @@ export const usersApi = {
     apiClient.post(`/users/${userId}/reset-password`, { newPassword }),
   assignTerritory: (userId: string, institutionIds: string[]) =>
     apiClient.post(`/users/${userId}/territory`, { institutionIds }),
+  sendInvitation: (userId: string) =>
+    apiClient.post(`/users/${userId}/send-invitation`, {}),
 }
 
 export const templatesApi = {

@@ -3,8 +3,7 @@
     <!-- Navigation Drawer -->
     <v-navigation-drawer
       v-model="drawer"
-      :rail="shouldShowRail"
-      :permanent="isPermanent"
+      :temporary="mobile"
       class="sidebar-gradient"
       elevation="3"
     >
@@ -16,19 +15,12 @@
           </v-avatar>
         </template>
         <template v-slot:title>
-          <span v-show="!shouldShowRail" class="text-h6 font-weight-bold text-primary">
+          <span class="text-h6 font-weight-bold text-primary">
             {{ $t("sidebar.appName") }}
           </span>
         </template>
         <template v-slot:append>
           <v-btn
-            v-if="!mobile"
-            variant="text"
-            icon="mdi-chevron-left"
-            @click.stop="rail = !rail"
-          ></v-btn>
-          <v-btn
-            v-if="mobile"
             variant="text"
             icon="mdi-close"
             @click.stop="drawer = false"
@@ -168,7 +160,6 @@
         <div class="pa-2">
           <!-- User Info Card -->
           <v-card
-            v-if="!shouldShowRail"
             class="user-card mb-3"
             variant="outlined"
             @click="$router.push('/profile')"
@@ -204,55 +195,16 @@
             </v-card-text>
           </v-card>
 
-          <!-- Mini User Card for Rail Mode -->
-          <v-card
-            v-else-if="shouldShowRail"
-            class="user-card-mini mb-3 d-flex justify-center"
-            variant="outlined"
-            @click="$router.push('/profile')"
-            hover
-          >
-            <v-card-text class="pa-2">
-              <UserAvatar
-                v-if="authStore.user?.avatarSeed"
-                :seed="authStore.user.avatarSeed"
-                :style="authStore.user.avatarStyle"
-                size="small"
-              />
-              <v-avatar v-else size="32">
-                <v-img
-                  src="https://randomuser.me/api/portraits/women/85.jpg"
-                  alt="Default Avatar"
-                ></v-img>
-              </v-avatar>
-              <v-tooltip activator="parent" location="right">
-                <div>
-                  <div class="font-weight-bold">{{ authStore.userName || "User" }}</div>
-                  <div class="text-caption">
-                    {{ authStore.user?.email || "user@example.com" }}
-                  </div>
-                  <div class="text-caption mt-1">
-                    {{ $t("sidebar.clickToViewProfile") }}
-                  </div>
-                </div>
-              </v-tooltip>
-            </v-card-text>
-          </v-card>
-
           <!-- Logout Button -->
           <v-btn
             color="error"
             variant="tonal"
-            :block="!shouldShowRail"
-            :icon="shouldShowRail"
+            block
             @click="handleLogout"
             class="logout-button"
           >
             <v-icon>mdi-logout</v-icon>
-            <span v-if="!shouldShowRail" class="ml-2">{{ $t("navigation.logout") }}</span>
-            <v-tooltip v-if="shouldShowRail" activator="parent" location="right">
-              {{ $t("navigation.logout") }}
-            </v-tooltip>
+            <span class="ml-2">{{ $t("navigation.logout") }}</span>
           </v-btn>
         </div>
       </template>
@@ -262,7 +214,7 @@
     <v-app-bar color="primary" density="compact" elevation="2">
       <template v-slot:prepend>
         <v-app-bar-nav-icon
-          @click="mobile ? (drawer = !drawer) : (rail = !rail)"
+          @click="drawer = !drawer"
         ></v-app-bar-nav-icon>
       </template>
 
@@ -337,6 +289,23 @@
     <!-- Main Content -->
     <v-main>
       <v-container fluid>
+        <!-- Breadcrumb navigation -->
+        <div
+          v-if="showBreadcrumb"
+          class="breadcrumb-nav mb-4 d-flex align-center"
+        >
+          <v-btn
+            variant="text"
+            color="primary"
+            size="small"
+            prepend-icon="mdi-home"
+            :to="{ name: 'Dashboard' }"
+          >
+            {{ $t("navigation.dashboard") }}
+          </v-btn>
+          <v-icon size="small" class="mx-1 text-medium-emphasis">mdi-chevron-right</v-icon>
+          <span class="text-body-2 font-weight-medium">{{ currentPageTitle }}</span>
+        </div>
         <slot />
       </v-container>
     </v-main>
@@ -380,23 +349,69 @@ import { useAuthStore } from "@/stores/auth"
 import { useSettingsStore } from "@/stores/settings"
 import { UserRole } from "@medical-crm/shared"
 import { computed, ref } from "vue"
-import { useRouter } from "vue-router"
+import { useI18n } from "vue-i18n"
+import { useRoute, useRouter } from "vue-router"
 import { useDisplay } from "vuetify"
 
+const { t } = useI18n()
 const authStore = useAuthStore()
 const settingsStore = useSettingsStore()
 const router = useRouter()
-const { mobile } = useDisplay()
+const route = useRoute()
+const { mobile, lgAndUp } = useDisplay()
 
-// Reactive state
-const drawer = ref(!mobile.value) // Fermé par défaut sur mobile
-const rail = ref(false)
+// Reactive state - drawer closed by default on mobile/tablet, open on desktop
+const drawer = ref(lgAndUp.value)
 const showSearch = ref(false)
 const searchQuery = ref("")
 
-// Computed properties for responsive sidebar
-const isPermanent = computed(() => !mobile.value)
-const shouldShowRail = computed(() => !mobile.value && rail.value)
+// Breadcrumb - shown on all pages except Dashboard and Landing
+const showBreadcrumb = computed(() => {
+  return route.name !== "Dashboard" && route.name !== "Landing"
+})
+
+// Map route names to translation keys
+const routeTitleKeys: Record<string, string> = {
+  MedicalInstitutions: "navigation.institutions",
+  InstitutionDetail: "navigation.institutions",
+  Tasks: "navigation.tasks",
+  Quotes: "navigation.quotes",
+  Invoices: "navigation.invoices",
+  InvoiceDetail: "navigation.invoices",
+  InvoiceEdit: "navigation.invoices",
+  Users: "navigation.users",
+  Team: "navigation.team",
+  TeamDetail: "navigation.team",
+  Profile: "navigation.profile",
+  Notifications: "navigation.notifications",
+  Templates: "navigation.templates",
+  Catalog: "navigation.catalog",
+  BillingAnalytics: "navigation.billingAnalytics",
+  Webhooks: "navigation.webhooks",
+  ExportCenter: "navigation.exportCenter",
+  Segmentation: "navigation.segmentation",
+  Contacts: "navigation.contacts",
+  Meetings: "navigation.meetings",
+  Calls: "navigation.calls",
+  Notes: "navigation.notes",
+  Reminders: "navigation.reminders",
+  Opportunities: "navigation.pipeline",
+  Analytics: "navigation.analyticsIntelligence",
+  HotLeads: "navigation.hotLeads",
+  DigiformaSettings: "navigation.digiforma",
+  SecurityLogs: "navigation.securityLogs",
+  FeaturesSettings: "navigation.featuresSettings",
+}
+
+const currentPageTitle = computed(() => {
+  const routeName = route.name?.toString() || ""
+  const titleKey = routeTitleKeys[routeName]
+  if (titleKey) {
+    return t(titleKey)
+  }
+  // Fallback to route meta title or route name
+  return (route.meta?.title as string) || routeName
+})
 
 // Navigation items
 const mainNavigation = [
@@ -496,26 +511,41 @@ const contactsNavigation = [
 ]
 
 const configNavigation = computed(() => {
-  const items = [
-    {
-      title: "navigation.team",
-      icon: "mdi-account-group",
-      to: "/team",
-      value: "team",
-    },
-    {
-      title: "navigation.webhooks",
-      icon: "mdi-webhook",
-      to: "/webhooks",
-      value: "webhooks",
-    },
-    {
-      title: "navigation.digiforma",
-      icon: "mdi-school",
-      to: "/settings/digiforma",
-      value: "digiforma",
-    },
-  ]
+  const items: Array<{ title: string; icon: string; to: string; value: string }> = []
+
+  // Users management - visible for SUPER_ADMIN and TEAM_ADMIN
+  if (authStore.userRole === UserRole.SUPER_ADMIN || authStore.userRole === UserRole.TEAM_ADMIN) {
+    items.push({
+      title: "navigation.users",
+      icon: "mdi-account-multiple",
+      to: "/users",
+      value: "users",
+    })
+  }
+
+  // Teams
+  items.push({
+    title: "navigation.team",
+    icon: "mdi-account-group",
+    to: "/team",
+    value: "team",
+  })
+
+  // Webhooks
+  items.push({
+    title: "navigation.webhooks",
+    icon: "mdi-webhook",
+    to: "/webhooks",
+    value: "webhooks",
+  })
+
+  // Digiforma
+  items.push({
+    title: "navigation.digiforma",
+    icon: "mdi-school",
+    to: "/settings/digiforma",
+    value: "digiforma",
+  })
 
   // Add System Settings for SUPER_ADMIN only
   if (authStore.userRole === UserRole.SUPER_ADMIN) {
@@ -552,7 +582,8 @@ const handleLogout = async () => {
 
 // Handle navigation clicks - close sidebar on mobile
 const onNavigationClick = () => {
-  if (mobile.value) {
+  // Close sidebar on mobile and tablet/medium screens
+  if (!lgAndUp.value) {
     drawer.value = false
   }
 }

@@ -6,7 +6,7 @@
   >
     <v-card>
       <v-card-title>
-        {{ isEditing ? "Edit User Profile" : "Create New User" }}
+        {{ isEditing ? t("profile.form.editTitle") : t("profile.form.createTitle") }}
       </v-card-title>
 
       <v-card-text class="user-profile-form">
@@ -24,14 +24,14 @@
         </v-avatar>
         <div class="avatar-info">
           <p class="avatar-description">
-            Avatar is automatically generated based on the user's name
+            {{ t("profile.form.avatarDescription") }}
           </p>
         </div>
       </div>
 
       <!-- Personal Information -->
       <div class="form-section">
-        <h4 class="section-title">Personal Information</h4>
+        <h4 class="section-title">{{ t("profile.form.personalInformation") }}</h4>
 
         <div class="form-row">
           <div class="form-group">
@@ -39,8 +39,8 @@
               id="firstName"
               v-model="formData.firstName"
               :error-messages="errors.firstName ? [errors.firstName] : []"
-              label="First Name *"
-              placeholder="Enter first name"
+              :label="t('profile.form.firstNameLabel') + ' *'"
+              :placeholder="t('profile.form.firstNamePlaceholder')"
               density="comfortable"
             />
           </div>
@@ -50,8 +50,8 @@
               id="lastName"
               v-model="formData.lastName"
               :error-messages="errors.lastName ? [errors.lastName] : []"
-              label="Last Name *"
-              placeholder="Enter last name"
+              :label="t('profile.form.lastNameLabel') + ' *'"
+              :placeholder="t('profile.form.lastNamePlaceholder')"
               density="comfortable"
             />
           </div>
@@ -62,32 +62,95 @@
             id="email"
             v-model="formData.email"
             :error-messages="errors.email ? [errors.email] : []"
-            label="Email *"
-            placeholder="Enter email address"
+            :label="t('profile.form.emailLabel') + ' *'"
+            :placeholder="t('profile.form.emailPlaceholder')"
             type="email"
             density="comfortable"
           />
         </div>
 
-        <div class="form-group" v-if="!isEditing">
-          <v-text-field
-            id="password"
-            v-model="formData.password"
-            :error-messages="errors.password ? [errors.password] : []"
-            label="Password *"
-            placeholder="Enter password"
-            type="password"
-            density="comfortable"
-          />
-          <small class="form-help">
-            Password must be at least 8 characters and contain uppercase, lowercase, number, and special character (!@#$%^&*(),.?":{}|&lt;&gt;)
-          </small>
-        </div>
+        <!-- Password section with live validation (only for creation) -->
+        <template v-if="!isEditing">
+          <div class="form-group">
+            <v-text-field
+              id="password"
+              v-model="formData.password"
+              :error-messages="errors.password ? [errors.password] : []"
+              :label="t('profile.form.passwordLabel') + ' *'"
+              :placeholder="t('profile.form.passwordPlaceholder')"
+              :type="showPassword ? 'text' : 'password'"
+              :append-inner-icon="showPassword ? 'mdi-eye-outline' : 'mdi-eye-off-outline'"
+              density="comfortable"
+              @click:append-inner="showPassword = !showPassword"
+              @input="validatePasswords"
+            />
+          </div>
+
+          <div class="form-group">
+            <v-text-field
+              id="confirmPassword"
+              v-model="confirmPassword"
+              :error-messages="errors.confirmPassword ? [errors.confirmPassword] : []"
+              :label="t('profile.form.confirmPasswordLabel') + ' *'"
+              :placeholder="t('profile.form.confirmPasswordPlaceholder')"
+              :type="showPassword ? 'text' : 'password'"
+              :append-inner-icon="showPassword ? 'mdi-eye-outline' : 'mdi-eye-off-outline'"
+              density="comfortable"
+              @click:append-inner="showPassword = !showPassword"
+              @input="validatePasswords"
+            />
+          </div>
+
+          <!-- Password requirements checklist -->
+          <div class="password-requirements" v-if="formData.password">
+            <div class="text-caption text-medium-emphasis mb-2">
+              {{ t("auth.forgotPassword.passwordRequirements") }}
+            </div>
+            <div class="requirements-list">
+              <div :class="hasMinLength ? 'text-success' : 'text-error'">
+                <v-icon size="small">
+                  {{ hasMinLength ? "mdi-check-circle" : "mdi-circle-outline" }}
+                </v-icon>
+                {{ t("auth.forgotPassword.minLength") }}
+              </div>
+              <div :class="hasUppercase ? 'text-success' : 'text-error'">
+                <v-icon size="small">
+                  {{ hasUppercase ? "mdi-check-circle" : "mdi-circle-outline" }}
+                </v-icon>
+                {{ t("auth.forgotPassword.uppercaseRequired") }}
+              </div>
+              <div :class="hasLowercase ? 'text-success' : 'text-error'">
+                <v-icon size="small">
+                  {{ hasLowercase ? "mdi-check-circle" : "mdi-circle-outline" }}
+                </v-icon>
+                {{ t("auth.forgotPassword.lowercaseRequired") }}
+              </div>
+              <div :class="hasNumber ? 'text-success' : 'text-error'">
+                <v-icon size="small">
+                  {{ hasNumber ? "mdi-check-circle" : "mdi-circle-outline" }}
+                </v-icon>
+                {{ t("auth.forgotPassword.numberRequired") }}
+              </div>
+              <div :class="hasSpecialChar ? 'text-success' : 'text-error'">
+                <v-icon size="small">
+                  {{ hasSpecialChar ? "mdi-check-circle" : "mdi-circle-outline" }}
+                </v-icon>
+                {{ t("auth.forgotPassword.specialCharRequired") }}
+              </div>
+              <div v-if="confirmPassword" :class="passwordsMatch ? 'text-success' : 'text-error'">
+                <v-icon size="small">
+                  {{ passwordsMatch ? "mdi-check-circle" : "mdi-circle-outline" }}
+                </v-icon>
+                {{ t("auth.forgotPassword.passwordsMatch") }}
+              </div>
+            </div>
+          </div>
+        </template>
       </div>
 
       <!-- Role and Team Assignment -->
       <div class="form-section">
-        <h4 class="section-title">Role & Team Assignment</h4>
+        <h4 class="section-title">{{ t("profile.form.roleTeamSection") }}</h4>
 
         <div class="form-row">
           <div class="form-group">
@@ -97,8 +160,8 @@
               :items="roleOptions"
               item-title="label"
               item-value="value"
-              label="Role"
-              placeholder="Select role"
+              :label="t('profile.form.roleLabel')"
+              :placeholder="t('profile.form.rolePlaceholder')"
               density="comfortable"
             />
           </div>
@@ -110,8 +173,8 @@
               :items="teamOptions"
               item-title="label"
               item-value="value"
-              label="Team"
-              placeholder="Select team (optional)"
+              :label="t('profile.form.teamLabel')"
+              :placeholder="t('profile.form.teamPlaceholder')"
               clearable
               :loading="loadingTeams"
               density="comfortable"
@@ -123,16 +186,16 @@
           <v-checkbox
             id="isActive"
             v-model="formData.isActive"
-            label="Active User"
+            :label="t('profile.form.activeUser')"
             density="comfortable"
           />
-          <small class="form-help"> Inactive users cannot log in to the system </small>
+          <small class="form-help">{{ t("profile.form.inactiveUserHelp") }}</small>
         </div>
       </div>
 
       <!-- Territory Assignment -->
       <div class="form-section">
-        <h4 class="section-title">Territory Assignment</h4>
+        <h4 class="section-title">{{ t("profile.form.territorySection") }}</h4>
 
         <div class="form-group">
           <v-select
@@ -140,8 +203,8 @@
             :items="institutionOptions"
             item-title="label"
             item-value="value"
-            label="Assigned Medical Institutions"
-            placeholder="Select institutions"
+            :label="t('profile.form.institutionsLabel')"
+            :placeholder="t('profile.form.institutionsPlaceholder')"
             multiple
             :loading="loadingInstitutions"
             density="comfortable"
@@ -149,7 +212,7 @@
             closable-chips
           />
           <small class="form-help">
-            Select medical institutions this user will manage
+            {{ t("profile.form.institutionsHelp") }}
           </small>
         </div>
       </div>
@@ -164,14 +227,15 @@
           variant="outlined"
           @click="handleCancel"
         >
-          Cancel
+          {{ t("common.cancel") }}
         </v-btn>
         <v-btn
           color="primary"
           :loading="loading"
+          :disabled="!isEditing && (!isPasswordValid || !passwordsMatch)"
           @click="handleSubmit"
         >
-          {{ isEditing ? 'Update Profile' : 'Create User' }}
+          {{ isEditing ? t("profile.form.updateButton") : t("profile.form.createButton") }}
         </v-btn>
       </v-card-actions>
     </v-card>
@@ -186,8 +250,10 @@ import type {
   UserRole,
   UserUpdateAttributes,
 } from "@medical-crm/shared"
-import { useSnackbar } from "@/composables/useSnackbar"
 import { computed, onMounted, ref, watch } from "vue"
+import { useI18n } from "vue-i18n"
+
+const { t } = useI18n()
 
 interface Props {
   modelValue: boolean
@@ -209,9 +275,18 @@ const visible = computed({
   set: (value) => emit("update:modelValue", value)
 })
 
-const formData = ref<
-  UserCreationAttributes & { isActive?: boolean; assignedInstitutions?: string[] }
->({
+interface FormData {
+  firstName: string
+  lastName: string
+  email: string
+  password: string
+  role: UserRole
+  teamId: string
+  isActive: boolean
+  assignedInstitutions: string[]
+}
+
+const formData = ref<FormData>({
   firstName: "",
   lastName: "",
   email: "",
@@ -222,6 +297,8 @@ const formData = ref<
   assignedInstitutions: [],
 })
 
+const confirmPassword = ref("")
+const showPassword = ref(false)
 const errors = ref<Record<string, string>>({})
 const loadingTeams = ref(false)
 const loadingInstitutions = ref(false)
@@ -230,15 +307,41 @@ const institutionOptions = ref<Array<{ label: string; value: string }>>([])
 
 const isEditing = computed(() => !!props.user)
 
-const roleOptions = [
-  { label: "User", value: "user" },
-  { label: "Team Admin", value: "team_admin" },
-  { label: "Super Admin", value: "super_admin" },
-]
+// Password validation computed properties
+const hasMinLength = computed(() => formData.value.password.length >= 8)
+const hasUppercase = computed(() => /[A-Z]/.test(formData.value.password))
+const hasLowercase = computed(() => /[a-z]/.test(formData.value.password))
+const hasNumber = computed(() => /\d/.test(formData.value.password))
+const hasSpecialChar = computed(() => /[!@#$%^&*(),.?":{}|<>]/.test(formData.value.password))
+const passwordsMatch = computed(() => {
+  if (!confirmPassword.value) return false
+  return formData.value.password === confirmPassword.value
+})
+const isPasswordValid = computed(() => {
+  return (
+    hasMinLength.value &&
+    hasUppercase.value &&
+    hasLowercase.value &&
+    hasNumber.value &&
+    hasSpecialChar.value
+  )
+})
+
+// Role options with i18n
+const roleOptions = computed(() => [
+  { label: t("profile.roles.user"), value: "user" },
+  { label: t("profile.roles.team_admin"), value: "team_admin" },
+  { label: t("profile.roles.super_admin"), value: "super_admin" },
+])
 
 const avatarPreviewUrl = computed(() => {
+  // Use user's actual avatar when editing
+  if (props.user?.avatarUrl) {
+    return props.user.avatarUrl
+  }
+  // Fallback to DiceBear for new users
   const seed = `${formData.value.firstName}${formData.value.lastName}`.toLowerCase()
-  return `https://api.dicebear.com/7.x/initials/svg?seed=${seed}`
+  return `https://api.dicebear.com/7.x/avataaars/svg?seed=${seed}`
 })
 
 const avatarInitials = computed(() => {
@@ -270,6 +373,7 @@ const resetForm = () => {
     isActive: true,
     assignedInstitutions: [],
   }
+  confirmPassword.value = ""
   errors.value = {}
 }
 
@@ -278,11 +382,25 @@ const populateForm = (user: User) => {
     firstName: user.firstName,
     lastName: user.lastName,
     email: user.email,
-    password: "", // Don't populate password for editing
+    password: "",
     role: user.role,
     teamId: user.teamId || "",
     isActive: user.isActive,
-    assignedInstitutions: [], // TODO: Load from user's assigned institutions
+    assignedInstitutions: [],
+  }
+  confirmPassword.value = ""
+}
+
+const validatePasswords = () => {
+  errors.value.password = ""
+  errors.value.confirmPassword = ""
+
+  if (formData.value.password && !isPasswordValid.value) {
+    errors.value.password = t("auth.forgotPassword.passwordWeak")
+  }
+
+  if (confirmPassword.value && !passwordsMatch.value) {
+    errors.value.confirmPassword = t("auth.forgotPassword.passwordMismatch")
   }
 }
 
@@ -290,21 +408,31 @@ const validateForm = (): boolean => {
   errors.value = {}
 
   if (!formData.value.firstName.trim()) {
-    errors.value.firstName = "First name is required"
+    errors.value.firstName = t("profile.validation.firstNameRequired")
   }
 
   if (!formData.value.lastName.trim()) {
-    errors.value.lastName = "Last name is required"
+    errors.value.lastName = t("profile.validation.lastNameRequired")
   }
 
   if (!formData.value.email.trim()) {
-    errors.value.email = "Email is required"
+    errors.value.email = t("profile.validation.emailRequired")
   } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.value.email)) {
-    errors.value.email = "Please enter a valid email address"
+    errors.value.email = t("profile.validation.emailInvalid")
   }
 
-  if (!isEditing.value && !formData.value.password) {
-    errors.value.password = "Password is required for new users"
+  if (!isEditing.value) {
+    if (!formData.value.password) {
+      errors.value.password = t("profile.validation.passwordRequired")
+    } else if (!isPasswordValid.value) {
+      errors.value.password = t("auth.forgotPassword.passwordWeak")
+    }
+
+    if (!confirmPassword.value) {
+      errors.value.confirmPassword = t("profile.validation.confirmPasswordRequired")
+    } else if (!passwordsMatch.value) {
+      errors.value.confirmPassword = t("auth.forgotPassword.passwordMismatch")
+    }
   }
 
   return Object.keys(errors.value).length === 0
@@ -313,20 +441,28 @@ const validateForm = (): boolean => {
 const handleSubmit = () => {
   if (!validateForm()) return
 
-  const submitData = { ...formData.value }
-
-  // Clean up empty values
-  if (!submitData.teamId) {
-    delete submitData.teamId
+  // Build submit data without optional fields
+  const submitData: UserCreationAttributes | UserUpdateAttributes = {
+    firstName: formData.value.firstName,
+    lastName: formData.value.lastName,
+    email: formData.value.email,
+    role: formData.value.role,
   }
 
-  // Remove password if editing and not provided
-  if (isEditing.value && !submitData.password) {
-    delete submitData.password
+  // Add teamId if set
+  if (formData.value.teamId) {
+    submitData.teamId = formData.value.teamId
   }
 
-  // Remove assignedInstitutions from user data (handle separately)
-  delete submitData.assignedInstitutions
+  // Add password for creation
+  if (!isEditing.value && formData.value.password) {
+    (submitData as UserCreationAttributes).password = formData.value.password
+  }
+
+  // Add isActive for editing
+  if (isEditing.value) {
+    (submitData as UserUpdateAttributes).isActive = formData.value.isActive
+  }
 
   emit("submit", submitData)
 }
@@ -339,8 +475,8 @@ const handleCancel = () => {
 const loadTeams = async () => {
   try {
     loadingTeams.value = true
-    const response = await teamApi.getAll()
-    const teams = response.data || response
+    const response = await teamApi.getAll() as { data?: unknown[] } | unknown[]
+    const teams = Array.isArray(response) ? response : (response as { data?: unknown[] }).data || []
 
     if (Array.isArray(teams)) {
       teamOptions.value = teams.map((team: any) => ({
@@ -362,15 +498,15 @@ const loadTeams = async () => {
 const loadInstitutions = async () => {
   try {
     loadingInstitutions.value = true
-    const response = await institutionsApi.getAll()
-    const data = response.data || response
+    const response = await institutionsApi.getAll() as { data?: { institutions?: unknown[] } | unknown[] } | unknown[]
+    const data = Array.isArray(response) ? response : (response as { data?: unknown }).data || response
 
     // Handle paginated response: {institutions: [...], pagination: {...}}
     let institutionsArray: any[] = []
     if (Array.isArray(data)) {
       institutionsArray = data
-    } else if (data && Array.isArray(data.institutions)) {
-      institutionsArray = data.institutions
+    } else if (data && typeof data === 'object' && 'institutions' in data && Array.isArray((data as any).institutions)) {
+      institutionsArray = (data as any).institutions
     } else {
       console.warn("Institutions response format unexpected:", data)
       institutionsArray = []
@@ -490,6 +626,25 @@ onMounted(() => {
   color: #6b7280;
   font-size: 0.75rem;
   margin-top: 0.25rem;
+}
+
+.password-requirements {
+  padding: 0.75rem;
+  background: #f5f5f5;
+  border-radius: 8px;
+}
+
+.requirements-list {
+  font-size: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.requirements-list div {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 .dialog-footer {

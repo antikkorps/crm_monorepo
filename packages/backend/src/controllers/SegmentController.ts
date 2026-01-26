@@ -272,7 +272,7 @@ export class SegmentController {
       }
 
       // Check if user can edit this segment
-      if (!segment.canEdit(user.id, user.teamId)) {
+      if (!segment.canEdit(user.id, user.teamId ?? undefined)) {
         ctx.status = 403
         ctx.body = {
           success: false,

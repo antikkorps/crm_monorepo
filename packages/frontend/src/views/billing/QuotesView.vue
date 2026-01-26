@@ -264,6 +264,21 @@ const downloadQuotePDF = async (quote: Quote) => {
   try {
     // Pass the selected templateId so the backend applies the custom template
     const response = await quotesApi.generatePdf(quote.id, (quote as any).templateId)
+
+    // Check if the response is an error
+    if (!response.ok) {
+      // Try to extract error message from JSON response
+      const contentType = response.headers.get("content-type")
+      if (contentType?.includes("application/json")) {
+        const errorData = await response.json()
+        const errorMessage = errorData?.error?.message || t("quotes.messages.quotePdfError")
+        showSnackbar(errorMessage, "error")
+        return
+      }
+      showSnackbar(t("quotes.messages.quotePdfError"), "error")
+      return
+    }
+
     const blob = await response.blob()
 
     // Create download link
@@ -286,6 +301,20 @@ const downloadQuotePDF = async (quote: Quote) => {
 const downloadOrderPDF = async (quote: Quote) => {
   try {
     const response = await quotesApi.generateOrderPdf(quote.id, (quote as any).templateId)
+
+    // Check if the response is an error
+    if (!response.ok) {
+      const contentType = response.headers.get("content-type")
+      if (contentType?.includes("application/json")) {
+        const errorData = await response.json()
+        const errorMessage = errorData?.error?.message || t("quotes.messages.orderPdfError")
+        showSnackbar(errorMessage, "error")
+        return
+      }
+      showSnackbar(t("quotes.messages.orderPdfError"), "error")
+      return
+    }
+
     const blob = await response.blob()
     const url = window.URL.createObjectURL(blob)
     const link = document.createElement("a")

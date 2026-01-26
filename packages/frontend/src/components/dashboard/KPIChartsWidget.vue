@@ -16,7 +16,7 @@
       <v-row dense>
         <!-- Revenue Chart -->
         <v-col cols="12" sm="6">
-          <v-card variant="outlined" class="kpi-chart-card">
+          <v-card variant="tonal" class="kpi-chart-card">
             <v-card-text class="pa-3">
               <div class="d-flex align-center justify-space-between mb-1">
                 <span class="text-body-2 font-weight-medium">Chiffre d'affaires</span>
@@ -47,7 +47,7 @@
 
         <!-- Clients Chart -->
         <v-col cols="12" sm="6">
-          <v-card variant="outlined" class="kpi-chart-card">
+          <v-card variant="tonal" class="kpi-chart-card">
             <v-card-text class="pa-3">
               <div class="d-flex align-center justify-space-between mb-1">
                 <span class="text-body-2 font-weight-medium">Nouveaux clients</span>
@@ -78,7 +78,7 @@
 
         <!-- Conversion Rate -->
         <v-col cols="12" sm="6">
-          <v-card variant="outlined" class="kpi-chart-card">
+          <v-card variant="tonal" class="kpi-chart-card">
             <v-card-text class="pa-3">
               <div class="d-flex align-center justify-space-between mb-1">
                 <span class="text-body-2 font-weight-medium">Taux de conversion</span>
@@ -109,7 +109,7 @@
 
         <!-- Tasks Completed Chart -->
         <v-col cols="12" sm="6">
-          <v-card variant="outlined" class="kpi-chart-card">
+          <v-card variant="tonal" class="kpi-chart-card">
             <v-card-text class="pa-3">
               <div class="d-flex align-center justify-space-between mb-1">
                 <span class="text-body-2 font-weight-medium">Tâches complétées</span>
@@ -246,11 +246,12 @@ watch(() => props.period, () => {
 .kpi-chart-card {
   height: 100%;
   transition: all 0.2s ease-in-out;
+  border-radius: 12px;
 }
 
 .kpi-chart-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 }
 
 .h-100 {

@@ -22,7 +22,7 @@ we are almost done to v1 but still have some elements to prepare
 - [x] "Se souvenir de moi" on login page (make it useful)
 - [ ] correct the tests which are not passing (mock database connexions in order to not have to set up a test database)
 - [ ] Search functionnality to set up (meilisearch dockerize? which is best option ?)
-- [ ] component back to dashboard to implement on all pages
+- [x] component back to dashboard to implement on all pages (ajouté dans AppLayout.vue - breadcrumb visible quand sidebar fermée, affiche le titre de la page courante)
 - [x] missing translation in fr.json for TeamActivityFeed.vue
 - [x] It seems that there is an issue with socket.io for the notifications (debug => one task with an issue tomorrow not appearing in notification center)
 - [x] While adding a team member to a team, before typing it loads a list with every user... a bit confusing before typing
@@ -32,11 +32,12 @@ we are almost done to v1 but still have some elements to prepare
 - [ ] Tests: Protection auto-lock (task 31.3 from tasks.md) - Ensure data protection system reliability
 - [ ] Test: Import institution via Excel (vérifier le fonctionnement de l'import)
 - [x] Fix: Dashboard team card click not working (SCSS build error in AddTeamMemberDialog.vue and TeamMemberCard.vue - converted to CSS)
-- [ ] Verify production monitoring and logging configuration (from task 19.2)
+- [x] Verify production monitoring and logging configuration (from task 19.2) - AlertService créé pour envoyer des emails d'alerte sur les erreurs 5xx à ADMIN_EMAIL (throttling inclus)
 - [x] action type verification failed due to missing share folder (fixed: CI now builds shared package before type-check)
 - [x] erreur lors de la récupération du catalogue d'articles (fixed with migration + SQL query correction)
-- [ ] UserProfileForm => integrate i18n and traduction. Ensure that it checks the user's rights to create or update a user + ts_errors.
-- [ ] Segmentation: polish UX et expérience utilisateur
+- [x] UserProfileForm => integrate i18n and traduction. Ensure that it checks the user's rights to create or update a user + ts_errors. (i18n complet, validation mot de passe réactive, confirmation mot de passe, affichage avatar réel en édition)
+- [x] Users management: nouvelle vue /users avec table desktop/cartes mobile, actions (éditer, inviter, reset password, activer/désactiver, supprimer), système d'invitation par email
+- [x] Segmentation: polish UX et expérience utilisateur
   - [x] SavedSegmentsManager: fix search field and reload button alignment (desktop + mobile responsive)
   - [x] SavedSegmentsManager: refactor bulk actions bar (floating card instead of bottom sheet, X button clears selection, mobile-first design with icon-only buttons on small screens)
   - [x] SavedSegmentsManager: reduce padding on mobile, shorter button text ("Nouveau segment" on mobile)

@@ -101,6 +101,7 @@
             <div class="d-flex gap-1 action-buttons">
               <v-btn icon="mdi-eye" variant="text" size="small" @click="viewInvoice(item.id)" title="Voir"></v-btn>
               <v-btn :class="!canModifyInvoice(item) ? 'invisible-placeholder' : ''" :disabled="!canModifyInvoice(item)" icon="mdi-pencil" variant="text" size="small" @click="editInvoice(item.id)" title="Modifier"></v-btn>
+              <v-btn icon="mdi-download" variant="text" size="small" @click="downloadInvoicePDF(item)" title="Télécharger la facture"></v-btn>
               <v-btn :class="!canSend(item) ? 'invisible-placeholder' : ''" :disabled="!canSend(item)" :icon="'mdi-send'" variant="text" size="small" color="primary" @click="openSendDialog(item)" :title="item.status === 'draft' ? 'Envoyer' : 'Renvoyer'"></v-btn>
               <v-btn :class="'invisible-placeholder'" v-if="!item.archived" icon="mdi-archive-outline" variant="text" size="small" color="secondary" @click="archiveInvoice(item)" title="Archiver"></v-btn>
               <v-btn :class="'invisible-placeholder'" v-else icon="mdi-archive-arrow-up-outline" variant="text" size="small" color="secondary" @click="unarchiveInvoice(item)" title="Désarchiver"></v-btn>
@@ -307,6 +308,22 @@ const clearFilters = () => {
 const viewInvoice = (id: string) => router.push(`/invoices/${id}`)
 const editInvoice = (id: string) => router.push(`/invoices/${id}/edit`)
 const canSend = (item: Invoice) => ['draft','sent','overdue','partially_paid','paid'].includes(item.status)
+
+const downloadInvoicePDF = async (invoice: Invoice) => {
+  try {
+    const blob = await documentsApi.generateInvoicePdf(invoice.id, {
+      templateId: (invoice as any).templateId || undefined,
+    }) as Blob
+
+    const filename = `Facture-${invoice.invoiceNumber}.pdf`
+    documentsApi.downloadBlob(blob, filename)
+    showSnackbar("Facture téléchargée", "success")
+  } catch (error: any) {
+    console.error("Error downloading invoice PDF:", error)
+    const errorMessage = error?.message || "Erreur lors du téléchargement de la facture"
+    showSnackbar(errorMessage, "error")
+  }
+}
 
 const archiveInvoice = async (item: Invoice) => {
   try {
