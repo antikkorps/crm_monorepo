@@ -187,7 +187,7 @@ export class MedicalInstitutionAnalyticsService {
       }
 
       // Get all interactions for this institution in parallel
-      const [notes, meetings, calls, reminders, tasks] = await Promise.all([
+      const [notes, meetings, calls, reminders, tasks, quotes, invoices] = await Promise.all([
         import("../models/Note").then(({ Note }) =>
           Note.findAll({
             where: whereClause,
@@ -248,6 +248,32 @@ export class MedicalInstitutionAnalyticsService {
               {
                 model: User,
                 as: "creator",
+                attributes: ["id", "firstName", "lastName", "email"],
+              },
+            ],
+          })
+        ),
+        // Get quotes for this institution
+        import("../models/Quote").then(({ Quote }) =>
+          Quote.findAll({
+            where: whereClause,
+            include: [
+              {
+                model: User,
+                as: "assignedUser",
+                attributes: ["id", "firstName", "lastName", "email"],
+              },
+            ],
+          })
+        ),
+        // Get invoices for this institution
+        import("../models/Invoice").then(({ Invoice }) =>
+          Invoice.findAll({
+            where: whereClause,
+            include: [
+              {
+                model: User,
+                as: "assignedUser",
                 attributes: ["id", "firstName", "lastName", "email"],
               },
             ],
@@ -340,6 +366,49 @@ export class MedicalInstitutionAnalyticsService {
             status: task.status,
             priority: task.priority,
             dueDate: task.dueDate,
+          },
+        })
+      })
+
+      // Add quotes to timeline
+      quotes.forEach(quote => {
+        timelineItems.push({
+          id: quote.id,
+          type: 'quote',
+          title: `${quote.quoteNumber} - ${quote.title}`,
+          description: quote.description || '',
+          user: quote.assignedUser,
+          createdAt: quote.createdAt,
+          metadata: {
+            quoteNumber: quote.quoteNumber,
+            status: quote.status,
+            total: quote.total,
+            validUntil: quote.validUntil,
+            acceptedAt: quote.acceptedAt,
+            rejectedAt: quote.rejectedAt,
+            orderedAt: quote.orderedAt,
+            orderNumber: quote.orderNumber,
+          },
+        })
+      })
+
+      // Add invoices to timeline
+      invoices.forEach(invoice => {
+        timelineItems.push({
+          id: invoice.id,
+          type: 'invoice',
+          title: `${invoice.invoiceNumber} - ${invoice.title}`,
+          description: '',
+          user: invoice.assignedUser,
+          createdAt: invoice.createdAt,
+          metadata: {
+            invoiceNumber: invoice.invoiceNumber,
+            status: invoice.status,
+            total: invoice.total,
+            dueDate: invoice.dueDate,
+            paidAt: invoice.paidAt,
+            totalPaid: invoice.totalPaid,
+            remainingAmount: invoice.remainingAmount,
           },
         })
       })

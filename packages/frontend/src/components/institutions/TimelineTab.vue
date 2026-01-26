@@ -47,6 +47,14 @@
                 <v-icon start>mdi-checkbox-marked-circle-outline</v-icon>
                 {{ t('timeline.filters.tasks') }}
               </v-chip>
+              <v-chip filter variant="outlined" value="quote" size="small">
+                <v-icon start>mdi-file-document-outline</v-icon>
+                {{ t('timeline.filters.quotes') }}
+              </v-chip>
+              <v-chip filter variant="outlined" value="invoice" size="small">
+                <v-icon start>mdi-receipt</v-icon>
+                {{ t('timeline.filters.invoices') }}
+              </v-chip>
             </v-chip-group>
           </v-col>
         </v-row>
@@ -165,6 +173,39 @@
                 </v-chip>
                 <v-chip v-if="item.metadata.tags && item.metadata.tags.length" size="small" variant="outlined" prepend-icon="mdi-tag">
                   {{ item.metadata.tags.join(", ") }}
+                </v-chip>
+              </template>
+
+              <template v-if="item.type === 'quote'">
+                <v-chip size="small" :color="getQuoteStatusColor(item.metadata.status)" variant="tonal">
+                  {{ formatQuoteStatus(item.metadata.status) }}
+                </v-chip>
+                <v-chip size="small" variant="outlined" prepend-icon="mdi-currency-eur">
+                  {{ formatCurrency(item.metadata.total) }}
+                </v-chip>
+                <v-chip v-if="item.metadata.validUntil" size="small" variant="outlined" prepend-icon="mdi-calendar-clock">
+                  {{ t('timeline.validUntil') }}: {{ formatDate(item.metadata.validUntil) }}
+                </v-chip>
+                <v-chip v-if="item.metadata.orderNumber" size="small" color="success" variant="tonal" prepend-icon="mdi-cart-check">
+                  {{ item.metadata.orderNumber }}
+                </v-chip>
+              </template>
+
+              <template v-if="item.type === 'invoice'">
+                <v-chip size="small" :color="getInvoiceStatusColor(item.metadata.status)" variant="tonal">
+                  {{ formatInvoiceStatus(item.metadata.status) }}
+                </v-chip>
+                <v-chip size="small" variant="outlined" prepend-icon="mdi-currency-eur">
+                  {{ formatCurrency(item.metadata.total) }}
+                </v-chip>
+                <v-chip v-if="item.metadata.dueDate" size="small" variant="outlined" prepend-icon="mdi-calendar-clock">
+                  {{ t('timeline.dueDate') }}: {{ formatDate(item.metadata.dueDate) }}
+                </v-chip>
+                <v-chip v-if="item.metadata.paidAt" size="small" color="success" variant="tonal" prepend-icon="mdi-check-circle">
+                  {{ t('timeline.paidOn') }}: {{ formatDate(item.metadata.paidAt) }}
+                </v-chip>
+                <v-chip v-if="item.metadata.remainingAmount > 0" size="small" color="warning" variant="tonal" prepend-icon="mdi-cash-clock">
+                  {{ t('timeline.remaining') }}: {{ formatCurrency(item.metadata.remainingAmount) }}
                 </v-chip>
               </template>
             </div>
@@ -435,6 +476,8 @@ const getItemIcon = (type: TimelineItemType): string => {
     call: "mdi-phone",
     reminder: "mdi-bell-alert",
     task: "mdi-checkbox-marked-circle-outline",
+    quote: "mdi-file-document-outline",
+    invoice: "mdi-receipt",
   }
   return icons[type] || "mdi-circle"
 }
@@ -446,12 +489,59 @@ const getItemColor = (type: TimelineItemType): string => {
     call: "success",
     reminder: "info",
     task: "secondary",
+    quote: "purple",
+    invoice: "teal",
   }
   return colors[type] || "grey"
 }
 
 const getItemLabel = (type: TimelineItemType): string => {
   return t(`timeline.labels.${type}`) || type
+}
+
+// Format currency
+const formatCurrency = (amount: number): string => {
+  return new Intl.NumberFormat("fr-FR", {
+    style: "currency",
+    currency: "EUR",
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(amount || 0)
+}
+
+// Quote status helpers
+const getQuoteStatusColor = (status: string): string => {
+  const colors: Record<string, string> = {
+    draft: "grey",
+    sent: "info",
+    accepted: "success",
+    rejected: "error",
+    expired: "warning",
+    cancelled: "grey-darken-1",
+    ordered: "purple",
+  }
+  return colors[status] || "grey"
+}
+
+const formatQuoteStatus = (status: string): string => {
+  return t(`quotes.status.${status}`) || status
+}
+
+// Invoice status helpers
+const getInvoiceStatusColor = (status: string): string => {
+  const colors: Record<string, string> = {
+    draft: "grey",
+    sent: "info",
+    paid: "success",
+    partial: "warning",
+    overdue: "error",
+    cancelled: "grey-darken-1",
+  }
+  return colors[status] || "grey"
+}
+
+const formatInvoiceStatus = (status: string): string => {
+  return t(`invoices.status.${status}`) || status
 }
 
 const getCallTypeColor = (type: string): string => {

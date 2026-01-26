@@ -2620,14 +2620,18 @@
       "calls": "Appels",
       "notes": "Notes",
       "reminders": "Rappels",
-      "tasks": "Tâches"
+      "tasks": "Tâches",
+      "quotes": "Devis",
+      "invoices": "Factures"
     },
     "labels": {
       "note": "Note",
       "meeting": "Réunion",
       "call": "Appel",
       "reminder": "Rappel",
-      "task": "Tâche"
+      "task": "Tâche",
+      "quote": "Devis",
+      "invoice": "Facture"
     },
     "callTypes": {
       "incoming": "Entrant",
@@ -2641,6 +2645,9 @@
     "completed": "Complété",
     "private": "Privé",
     "dueDate": "Échéance",
+    "validUntil": "Valide jusqu'au",
+    "paidOn": "Payé le",
+    "remaining": "Reste",
     "relativeTime": {
       "now": "À l'instant",
       "minutes": "Il y a {n} min",

@@ -3,7 +3,7 @@ import { apiClient } from "./index"
 /**
  * Timeline Item Type
  */
-export type TimelineItemType = "note" | "meeting" | "call" | "reminder" | "task"
+export type TimelineItemType = "note" | "meeting" | "call" | "reminder" | "task" | "quote" | "invoice"
 
 /**
  * Timeline Item Interface
