@@ -98,7 +98,7 @@
                   Délai moyen paiement
                 </div>
                 <div class="text-h6 font-weight-bold">
-                  {{ Math.round(data.averagePaymentTime) }} jours
+                  {{ Number.isFinite(data.averagePaymentTime) ? Math.round(data.averagePaymentTime) : 0 }} jours
                 </div>
               </div>
               <v-icon icon="mdi-clock-fast" size="large" color="success" />
@@ -226,7 +226,7 @@ const statusChartData = computed(() => {
 
 // Methods
 const formatCurrency = (value: number): string => {
-  if (value === null || value === undefined) return "0 €"
+  if (!Number.isFinite(value)) return "0 €"
   return new Intl.NumberFormat("fr-FR", {
     style: "currency",
     currency: "EUR",

@@ -7,40 +7,44 @@
  * Format number as currency (EUR)
  */
 export function formatCurrency(value: number, compact = false): string {
+  const safeValue = Number.isFinite(value) ? value : 0
   return new Intl.NumberFormat('fr-FR', {
     style: 'currency',
     currency: 'EUR',
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
     notation: compact ? 'compact' : 'standard',
-  }).format(value)
+  }).format(safeValue)
 }
 
 /**
  * Format number as percentage
  */
 export function formatPercentage(value: number, decimals = 1): string {
-  return `${value.toFixed(decimals)}%`
+  const safeValue = Number.isFinite(value) ? value : 0
+  return `${safeValue.toFixed(decimals)}%`
 }
 
 /**
  * Format large numbers with K, M suffixes
  */
 export function formatCompactNumber(value: number): string {
+  const safeValue = Number.isFinite(value) ? value : 0
   return new Intl.NumberFormat('fr-FR', {
     notation: 'compact',
     compactDisplay: 'short',
-  }).format(value)
+  }).format(safeValue)
 }
 
 /**
  * Format number with French locale
  */
 export function formatNumber(value: number, decimals = 0): string {
+  const safeValue = Number.isFinite(value) ? value : 0
   return new Intl.NumberFormat('fr-FR', {
     minimumFractionDigits: decimals,
     maximumFractionDigits: decimals,
-  }).format(value)
+  }).format(safeValue)
 }
 
 /**
@@ -68,20 +72,22 @@ export function labeledTooltipFormatter(value: number, label: string): string {
  * ApexCharts Y-axis currency formatter
  */
 export function yAxisCurrencyFormatter(value: number): string {
-  if (value >= 1000000) {
-    return `${(value / 1000000).toFixed(1)}M €`
+  const safeValue = Number.isFinite(value) ? value : 0
+  if (safeValue >= 1000000) {
+    return `${(safeValue / 1000000).toFixed(1)}M €`
   }
-  if (value >= 1000) {
-    return `${(value / 1000).toFixed(0)}K €`
+  if (safeValue >= 1000) {
+    return `${(safeValue / 1000).toFixed(0)}K €`
   }
-  return `${value} €`
+  return `${safeValue} €`
 }
 
 /**
  * ApexCharts data label formatter for percentages in donut charts
  */
 export function donutPercentageFormatter(value: number): string {
-  return `${value.toFixed(0)}%`
+  const safeValue = Number.isFinite(value) ? value : 0
+  return `${safeValue.toFixed(0)}%`
 }
 
 /**
