@@ -44,7 +44,7 @@
 
           <!-- Tags -->
           <div class="mb-4">
-            <v-label class="mb-2">{{ $t('notes.tagsField') }}</v-label>
+            <label class="v-label text-subtitle-2 mb-2 d-block">{{ $t('notes.tagsField') }}</label>
             <div class="tags-input-container">
               <v-chip
                 v-for="(tag, index) in formData.tags"

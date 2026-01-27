@@ -1,4 +1,4 @@
-import { ComplianceStatus, InstitutionType } from "@medical-crm/shared"
+import { CommercialStatus, ComplianceStatus, InstitutionType } from "@medical-crm/shared"
 import { ContactPerson, MedicalInstitution, MedicalProfile } from "../models"
 import { logger } from "../utils/logger"
 import { CsvMatchingService, type MatchInput } from "./CsvMatchingService"
@@ -31,7 +31,6 @@ export interface CsvPreviewRow {
   matchType?: string
   existingInstitutionId?: string
   existingInstitutionName?: string
-  digiformaStatus: 'exists' | 'will_create' | 'unknown'
   sageStatus: 'linked' | 'not_linked'
   hasErrors: boolean
   errors: Array<{ field?: string; message: string }>
@@ -89,7 +88,17 @@ export class CsvImportService {
     contactPhone: ["contactPhone", "contact_phone", "phone", "telephone_contact", "téléphone_contact", "telephone", "téléphone"],
     contactTitle: ["contactTitle", "contact_title", "title", "fonction_contact", "titre_contact"],
     contactDepartment: ["contactDepartment", "contact_department", "departement_contact", "département_contact", "service_contact"],
-    contactIsPrimary: ["contactIsPrimary", "contact_is_primary", "is_primary", "contact_principal", "est_principal", "principal"]
+    contactIsPrimary: ["contactIsPrimary", "contact_is_primary", "is_primary", "contact_principal", "est_principal", "principal"],
+    // Commercial fields
+    finess: ["finess", "numero_finess", "n_finess", "finess_number"],
+    groupName: ["groupName", "group_name", "groupe", "nom_groupe", "group"],
+    commercialStatus: ["commercialStatus", "commercial_status", "statut", "type_client", "prospect_client", "statut_commercial"],
+    mainPhone: ["mainPhone", "main_phone", "standard", "telephone_standard", "téléphone_standard", "tel_standard"],
+    // Medical profile activity fields
+    staffCount: ["staffCount", "staff_count", "nombre_agents", "nb_agents", "effectif", "personnel"],
+    endoscopyRooms: ["endoscopyRooms", "endoscopy_rooms", "salles_endo", "salle_endo", "salles_endoscopie", "nb_salles_endo"],
+    surgicalInterventions: ["surgicalInterventions", "surgical_interventions", "nb_inter_chir", "interventions_chir", "interventions_chirurgicales"],
+    endoscopyInterventions: ["endoscopyInterventions", "endoscopy_interventions", "nb_inter_endo", "interventions_endo", "interventions_endoscopie"]
   }
 
   static getMedicalInstitutionTemplate(): string {
@@ -184,13 +193,21 @@ export class CsvImportService {
       return []
     }
 
-    const headers = lines[0].split(',').map(h => h.trim())
+    // Auto-detect delimiter: if more semicolons than commas in header, use semicolon
+    const firstLine = lines[0]
+    const commaCount = (firstLine.match(/,/g) || []).length
+    const semicolonCount = (firstLine.match(/;/g) || []).length
+    const delimiter = semicolonCount > commaCount ? ';' : ','
+
+    logger.info(`CSV delimiter detected: "${delimiter}" (commas: ${commaCount}, semicolons: ${semicolonCount})`)
+
+    const headers = this.parseCsvLine(firstLine, delimiter).map(h => h.trim())
     const rows: ParsedRow[] = []
 
     for (let i = 1; i < lines.length; i++) {
-      const values = this.parseCsvLine(lines[i])
+      const values = this.parseCsvLine(lines[i], delimiter)
       const data: Record<string, string> = {}
-      
+
       // Map headers to standardized field names
       headers.forEach((header, index) => {
         const value = values[index] || ''
@@ -210,24 +227,24 @@ export class CsvImportService {
     return rows
   }
 
-  private static parseCsvLine(line: string): string[] {
+  private static parseCsvLine(line: string, delimiter: string = ','): string[] {
     const result: string[] = []
     let current = ''
     let inQuotes = false
-    
+
     for (let i = 0; i < line.length; i++) {
       const char = line[i]
-      
+
       if (char === '"') {
         inQuotes = !inQuotes
-      } else if (char === ',' && !inQuotes) {
+      } else if (char === delimiter && !inQuotes) {
         result.push(current)
         current = ''
       } else {
         current += char
       }
     }
-    
+
     result.push(current)
     return result
   }
@@ -309,6 +326,51 @@ export class CsvImportService {
         errors.push({
           field: 'complianceStatus',
           message: `Invalid compliance status: ${row.data.complianceStatus}`
+        })
+      }
+
+      // Validate FINESS number (exactly 9 digits)
+      if (row.data.finess && !/^\d{9}$/.test(row.data.finess)) {
+        errors.push({
+          field: 'finess',
+          message: 'FINESS must be exactly 9 digits'
+        })
+      }
+
+      // Validate commercial status
+      if (row.data.commercialStatus && !Object.values(CommercialStatus).includes(row.data.commercialStatus as CommercialStatus)) {
+        errors.push({
+          field: 'commercialStatus',
+          message: `Invalid commercial status: ${row.data.commercialStatus}. Must be 'prospect' or 'client'`
+        })
+      }
+
+      // Validate numeric activity fields
+      if (row.data.staffCount && isNaN(Number(row.data.staffCount))) {
+        errors.push({
+          field: 'staffCount',
+          message: 'staffCount must be a number'
+        })
+      }
+
+      if (row.data.endoscopyRooms && isNaN(Number(row.data.endoscopyRooms))) {
+        errors.push({
+          field: 'endoscopyRooms',
+          message: 'endoscopyRooms must be a number'
+        })
+      }
+
+      if (row.data.surgicalInterventions && isNaN(Number(row.data.surgicalInterventions))) {
+        errors.push({
+          field: 'surgicalInterventions',
+          message: 'surgicalInterventions must be a number'
+        })
+      }
+
+      if (row.data.endoscopyInterventions && isNaN(Number(row.data.endoscopyInterventions))) {
+        errors.push({
+          field: 'endoscopyInterventions',
+          message: 'endoscopyInterventions must be a number'
         })
       }
 
@@ -633,7 +695,7 @@ export class CsvImportService {
     const currentType = existing.type || existing.getDataValue('type')
     const currentAddress = existing.address || existing.getDataValue('address')
     const currentTags = existing.tags || existing.getDataValue('tags')
-    
+
       await existing.update({
         name: data.name || currentName,
         type: (data.type as unknown as InstitutionType) || currentType,
@@ -645,14 +707,23 @@ export class CsvImportService {
         zipCode: data.zipCode || currentAddress.zipCode,
         country: data.country || currentAddress.country
       },
-      tags: data.tags ? data.tags.split(',').map(t => t.trim()) : currentTags
+      tags: data.tags ? data.tags.split(',').map(t => t.trim()) : currentTags,
+      // Commercial fields
+      finess: data.finess || existing.getDataValue('finess'),
+      groupName: data.groupName || existing.getDataValue('groupName'),
+      commercialStatus: (data.commercialStatus as CommercialStatus) || existing.getDataValue('commercialStatus'),
+      mainPhone: data.mainPhone || existing.getDataValue('mainPhone')
     })
     
     // Update medical profile if medical data exists
-    if (data.bedCapacity || data.surgicalRooms || data.specialties || data.departments || data.equipmentTypes || data.certifications || data.complianceStatus) {
+    const hasMedicalData = data.bedCapacity || data.surgicalRooms || data.specialties || data.departments ||
+      data.equipmentTypes || data.certifications || data.complianceStatus ||
+      data.staffCount || data.endoscopyRooms || data.surgicalInterventions || data.endoscopyInterventions
+
+    if (hasMedicalData) {
       const institutionId = existing.id || existing.getDataValue('id')
       const existingProfile = await MedicalProfile.findOne({ where: { institutionId } })
-      
+
       if (existingProfile) {
         // Update existing medical profile
         await existingProfile.update({
@@ -665,7 +736,12 @@ export class CsvImportService {
           complianceStatus: (data.complianceStatus as unknown as ComplianceStatus) || existingProfile.getDataValue('complianceStatus'),
           lastAuditDate: data.lastAuditDate ? new Date(data.lastAuditDate) : existingProfile.getDataValue('lastAuditDate'),
           complianceExpirationDate: data.complianceExpirationDate ? new Date(data.complianceExpirationDate) : existingProfile.getDataValue('complianceExpirationDate'),
-          complianceNotes: data.complianceNotes || existingProfile.getDataValue('complianceNotes')
+          complianceNotes: data.complianceNotes || existingProfile.getDataValue('complianceNotes'),
+          // Activity metrics
+          staffCount: data.staffCount ? Number.parseInt(data.staffCount) : existingProfile.getDataValue('staffCount'),
+          endoscopyRooms: data.endoscopyRooms ? Number.parseInt(data.endoscopyRooms) : existingProfile.getDataValue('endoscopyRooms'),
+          surgicalInterventions: data.surgicalInterventions ? Number.parseInt(data.surgicalInterventions) : existingProfile.getDataValue('surgicalInterventions'),
+          endoscopyInterventions: data.endoscopyInterventions ? Number.parseInt(data.endoscopyInterventions) : existingProfile.getDataValue('endoscopyInterventions')
         })
       } else {
         // Create new medical profile
@@ -680,14 +756,20 @@ export class CsvImportService {
           complianceStatus: data.complianceStatus as ComplianceStatus || ComplianceStatus.PENDING_REVIEW,
           lastAuditDate: data.lastAuditDate ? new Date(data.lastAuditDate) : undefined,
           complianceExpirationDate: data.complianceExpirationDate ? new Date(data.complianceExpirationDate) : undefined,
-          complianceNotes: data.complianceNotes
+          complianceNotes: data.complianceNotes,
+          // Activity metrics
+          staffCount: data.staffCount ? Number.parseInt(data.staffCount) : undefined,
+          endoscopyRooms: data.endoscopyRooms ? Number.parseInt(data.endoscopyRooms) : undefined,
+          surgicalInterventions: data.surgicalInterventions ? Number.parseInt(data.surgicalInterventions) : undefined,
+          endoscopyInterventions: data.endoscopyInterventions ? Number.parseInt(data.endoscopyInterventions) : undefined
         })
       }
     }
   }
 
   private static async createInstitution(data: Record<string, string>, assignedUserId?: string): Promise<MedicalInstitution> {
-    // Create institution
+    // Create institution with dataSource='import' to track origin
+    // Note: afterCreate hook will auto-lock with lockedReason='manual_creation'
     const institution = await MedicalInstitution.create({
       name: data.name,
       type: data.type as InstitutionType,
@@ -699,18 +781,28 @@ export class CsvImportService {
         country: data.country
       },
       tags: data.tags ? data.tags.split(',').map(t => t.trim()) : [],
-      assignedUserId
+      assignedUserId,
+      dataSource: 'import',
+      lastSyncAt: { import: new Date() },
+      // Commercial fields
+      finess: data.finess || undefined,
+      groupName: data.groupName || undefined,
+      commercialStatus: (data.commercialStatus as CommercialStatus) || CommercialStatus.PROSPECT,
+      mainPhone: data.mainPhone || undefined
     })
 
     // Create medical profile if relevant data exists
-    if (data.bedCapacity || data.surgicalRooms || data.specialties) {
+    const hasMedicalData = data.bedCapacity || data.surgicalRooms || data.specialties ||
+      data.staffCount || data.endoscopyRooms || data.surgicalInterventions || data.endoscopyInterventions
+
+    if (hasMedicalData) {
       const institutionId = institution.id || institution.getDataValue('id') || (institution as any).dataValues?.id
-      
+
       if (!institutionId) {
         throw new Error('Institution ID is required for MedicalProfile creation')
       }
-      
-      const medicalProfile = await MedicalProfile.create({
+
+      await MedicalProfile.create({
         institutionId,
         bedCapacity: data.bedCapacity ? Number.parseInt(data.bedCapacity) : undefined,
         surgicalRooms: data.surgicalRooms ? Number.parseInt(data.surgicalRooms) : undefined,
@@ -721,7 +813,12 @@ export class CsvImportService {
         complianceStatus: data.complianceStatus as ComplianceStatus || ComplianceStatus.PENDING_REVIEW,
         lastAuditDate: data.lastAuditDate ? new Date(data.lastAuditDate) : undefined,
         complianceExpirationDate: data.complianceExpirationDate ? new Date(data.complianceExpirationDate) : undefined,
-        complianceNotes: data.complianceNotes
+        complianceNotes: data.complianceNotes,
+        // Activity metrics
+        staffCount: data.staffCount ? Number.parseInt(data.staffCount) : undefined,
+        endoscopyRooms: data.endoscopyRooms ? Number.parseInt(data.endoscopyRooms) : undefined,
+        surgicalInterventions: data.surgicalInterventions ? Number.parseInt(data.surgicalInterventions) : undefined,
+        endoscopyInterventions: data.endoscopyInterventions ? Number.parseInt(data.endoscopyInterventions) : undefined
       })
     }
 
@@ -770,11 +867,6 @@ export class CsvImportService {
     const parsedRows = this.parseCsv(csvData)
     const validatedRows = await this.validateRows(parsedRows)
 
-    // Initialize Digiforma service if available
-    const digiformaToken = process.env.DIGIFORMA_BEARER_TOKEN
-    const digiformaEnabled = digiformaToken && process.env.DIGIFORMA_INTEGRATION_ENABLED === 'true'
-    const digiformaService = digiformaEnabled ? new DigiformaService(digiformaToken!) : null
-
     const preview: CsvPreviewRow[] = []
 
     for (const row of validatedRows) {
@@ -787,7 +879,6 @@ export class CsvImportService {
         accountingNumber: row.data.accountingNumber,
         city: row.data.city,
         matchStatus: 'none',
-        digiformaStatus: 'unknown',
         sageStatus: row.data.accountingNumber ? 'linked' : 'not_linked',
         hasErrors,
         errors: row.errors
@@ -821,17 +912,9 @@ export class CsvImportService {
           previewRow.matchType = matchResult.matchType
           previewRow.existingInstitutionId = matchResult.institution.id
           previewRow.existingInstitutionName = matchResult.institution.name
-
-          // Check Digiforma status for existing institution
-          if (matchResult.institution.digiformaId) {
-            previewRow.digiformaStatus = 'exists'
-          } else {
-            previewRow.digiformaStatus = digiformaService ? 'will_create' : 'unknown'
-          }
         } else {
           // No match found - will be created
           previewRow.matchStatus = 'none'
-          previewRow.digiformaStatus = digiformaService ? 'will_create' : 'unknown'
         }
       } catch (error) {
         logger.warn('Error during preview matching', {
@@ -863,9 +946,16 @@ export class CsvImportService {
   static generateCsvTemplate(): string {
     const headers = [
       'name', 'type', 'accountingNumber', 'street', 'city', 'state', 'zipCode', 'country',
+      // Commercial fields
+      'finess', 'groupName', 'commercialStatus', 'mainPhone',
+      // Medical profile fields
       'bedCapacity', 'surgicalRooms', 'specialties', 'departments',
       'equipmentTypes', 'certifications', 'complianceStatus',
-      'lastAuditDate', 'complianceExpirationDate', 'complianceNotes', 'tags',
+      'lastAuditDate', 'complianceExpirationDate', 'complianceNotes',
+      // Activity metrics
+      'staffCount', 'endoscopyRooms', 'surgicalInterventions', 'endoscopyInterventions',
+      // Contact and tags
+      'tags',
       'contactFirstName', 'contactLastName', 'contactEmail', 'contactPhone',
       'contactTitle', 'contactDepartment', 'contactIsPrimary'
     ].join(',')
@@ -873,17 +963,61 @@ export class CsvImportService {
     // Quote any value that contains commas or quotes to avoid column shifts in spreadsheet apps
     const esc = (v: string) => (/,|"|\n/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v)
 
-    const exampleValues = [
-      'General Hospital', 'hospital', 'CLI001', '123 Medical Center Dr', 'Healthcare City', 'CA', '90210', 'US',
-      '150', '8', 'cardiology,neurology', 'emergency,icu',
-      'mri,ct_scan', 'jcaho,iso_9001', 'compliant',
-      '2024-01-15', '2025-01-15', 'All requirements met', 'cardiology,emergency',
-      'John', 'Doe', 'john.doe@hospital.com', '+1234567890',
-      'Chief Medical Officer', 'Administration', 'true'
+    // First institution with primary contact
+    const row1Values = [
+      'CHU Exemple', 'public_hospital', 'CLI001', '1 Avenue de la Santé', 'Paris', 'Île-de-France', '75013', 'France',
+      // Commercial fields
+      '750000001', 'AP-HP', 'client', '+33145678900',
+      // Medical profile fields
+      '800', '12', 'cardiologie,neurologie,oncologie', 'urgences,réanimation,bloc opératoire',
+      'irm,scanner,robot chirurgical', 'has,iso_9001', 'compliant',
+      '2024-06-15', '2027-06-15', 'Certification renouvelée',
+      // Activity metrics
+      '2500', '4', '15000', '8000',
+      // Contact and tags
+      'chu,public,ile-de-france',
+      'Marie', 'Dupont', 'marie.dupont@chu-exemple.fr', '+33145678901',
+      'Directrice des Achats', 'Direction', 'true'
     ]
 
-    const exampleRow = exampleValues.map(esc).join(',')
+    // Same institution (same accountingNumber) with second contact - shows how to add multiple contacts
+    const row2Values = [
+      'CHU Exemple', 'public_hospital', 'CLI001', '1 Avenue de la Santé', 'Paris', 'Île-de-France', '75013', 'France',
+      // Commercial fields (can be empty on duplicate rows)
+      '', '', '', '',
+      // Medical profile fields (can be empty on duplicate rows)
+      '', '', '', '',
+      '', '', '',
+      '', '', '',
+      // Activity metrics (can be empty on duplicate rows)
+      '', '', '', '',
+      // Contact and tags
+      '',
+      'Pierre', 'Martin', 'pierre.martin@chu-exemple.fr', '+33145678902',
+      'Pharmacien Chef', 'Pharmacie', 'false'
+    ]
 
-    return `${headers}\n${exampleRow}`
+    // Second institution with one contact
+    const row3Values = [
+      'Clinique du Soleil', 'private_clinic', 'CLI002', '25 Boulevard des Soins', 'Lyon', 'Auvergne-Rhône-Alpes', '69003', 'France',
+      // Commercial fields
+      '690000123', 'Groupe Ramsay', 'prospect', '+33478123456',
+      // Medical profile fields
+      '120', '6', 'orthopédie,chirurgie digestive', 'bloc opératoire,soins intensifs',
+      'arthroscopie,coelioscopie', 'iso_9001', 'pending_review',
+      '2023-11-01', '2026-11-01', 'En attente audit HAS',
+      // Activity metrics
+      '350', '2', '4500', '1200',
+      // Contact and tags
+      'clinique,privé,rhone-alpes',
+      'Sophie', 'Bernard', 'sophie.bernard@clinique-soleil.fr', '+33478123457',
+      'Cadre de Santé', 'Direction des Soins', 'true'
+    ]
+
+    const row1 = row1Values.map(esc).join(',')
+    const row2 = row2Values.map(esc).join(',')
+    const row3 = row3Values.map(esc).join(',')
+
+    return `${headers}\n${row1}\n${row2}\n${row3}`
   }
 }

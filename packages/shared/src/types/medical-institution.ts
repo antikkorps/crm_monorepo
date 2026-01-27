@@ -16,6 +16,11 @@ export enum ComplianceStatus {
   EXPIRED = "expired",
 }
 
+export enum CommercialStatus {
+  PROSPECT = "prospect",
+  CLIENT = "client",
+}
+
 export interface MedicalProfile {
   id: string
   bedCapacity?: number
@@ -28,6 +33,11 @@ export interface MedicalProfile {
   lastAuditDate?: Date
   complianceExpirationDate?: Date
   complianceNotes?: string
+  // Activity metrics
+  staffCount?: number
+  endoscopyRooms?: number
+  surgicalInterventions?: number
+  endoscopyInterventions?: number
 }
 
 export interface MedicalInstitution extends BaseEntity {
@@ -41,6 +51,12 @@ export interface MedicalInstitution extends BaseEntity {
   assignedUserId?: string
   tags: string[]
   isActive: boolean
+
+  // Commercial fields
+  finess?: string
+  groupName?: string
+  commercialStatus: CommercialStatus
+  mainPhone?: string
 
   // Multi-source tracking
   dataSource: DataSource
@@ -60,6 +76,11 @@ export interface MedicalInstitutionCreationAttributes {
   assignedUserId?: string
   tags?: string[]
   isActive?: boolean
+  // Commercial fields
+  finess?: string
+  groupName?: string
+  commercialStatus?: CommercialStatus
+  mainPhone?: string
   medicalProfile: Omit<MedicalProfile, "id">
   contactPersons?: Omit<ContactPerson, "id">[]
 }
@@ -78,4 +99,7 @@ export interface MedicalInstitutionSearchFilters {
   complianceStatus?: ComplianceStatus
   tags?: string[]
   isActive?: boolean
+  // Commercial filters
+  commercialStatus?: CommercialStatus
+  groupName?: string
 }

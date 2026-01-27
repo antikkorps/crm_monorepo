@@ -309,7 +309,7 @@
                 variant="text"
                 prepend-icon="mdi-plus"
                 color="secondary"
-                @click="navigateTo('/tasks')"
+                @click="openTaskForm"
               >
                 {{ t("collaboration.add") }}
               </v-btn>
@@ -325,7 +325,7 @@
               <v-list-item
                 v-for="task in collaborationData.openTasks"
                 :key="task.id"
-                @click="navigateTo('/tasks')"
+                @click="openTaskForEdit(task)"
               >
                 <template v-slot:prepend>
                   <v-avatar :color="getTaskStatusColor(task.status)" variant="tonal">
@@ -383,7 +383,7 @@
                 variant="text"
                 prepend-icon="mdi-plus"
                 color="purple"
-                @click="navigateTo('/billing/quotes')"
+                @click="navigateTo('/quotes')"
               >
                 {{ t("collaboration.add") }}
               </v-btn>
@@ -402,7 +402,7 @@
               <v-list-item
                 v-for="quote in collaborationData.recentQuotes"
                 :key="quote.id"
-                @click="navigateTo('/billing/quotes')"
+                @click="navigateTo('/quotes')"
               >
                 <template v-slot:prepend>
                   <v-avatar :color="getQuoteStatusColor(quote.status)" variant="tonal">
@@ -451,7 +451,7 @@
                 variant="text"
                 prepend-icon="mdi-plus"
                 color="teal"
-                @click="navigateTo('/billing/invoices')"
+                @click="navigateTo('/invoices')"
               >
                 {{ t("collaboration.add") }}
               </v-btn>
@@ -470,7 +470,7 @@
               <v-list-item
                 v-for="invoice in collaborationData.recentInvoices"
                 :key="invoice.id"
-                @click="navigateTo('/billing/invoices')"
+                @click="navigateTo('/invoices')"
               >
                 <template v-slot:prepend>
                   <v-avatar :color="getInvoiceStatusColor(invoice.status)" variant="tonal">
@@ -540,6 +540,15 @@
       @submit="handleReminderSubmit"
       @cancel="showReminderForm = false"
     />
+
+    <TaskForm
+      v-model="showTaskForm"
+      :task="selectedTask"
+      :loading="formLoading"
+      :preselected-institution-id="props.institutionId"
+      @submit="handleTaskSubmit"
+      @cancel="showTaskForm = false; selectedTask = null"
+    />
   </div>
 </template>
 
@@ -548,7 +557,8 @@ import CallForm from "@/components/calls/CallForm.vue"
 import MeetingForm from "@/components/meetings/MeetingForm.vue"
 import NoteForm from "@/components/notes/NoteForm.vue"
 import ReminderForm from "@/components/reminders/ReminderForm.vue"
-import { callsApi, institutionsApi, meetingsApi, notesApi, remindersApi } from "@/services/api"
+import TaskForm from "@/components/tasks/TaskForm.vue"
+import { callsApi, institutionsApi, meetingsApi, notesApi, remindersApi, tasksApi } from "@/services/api"
 import type {
   CallCreateRequest,
   CallUpdateRequest,
@@ -556,6 +566,7 @@ import type {
   MeetingUpdateRequest,
   NoteCreateRequest,
   ReminderCreateRequest,
+  TaskCreateRequest,
 } from "@medical-crm/shared"
 import { computed, onMounted, ref } from "vue"
 import { useI18n } from "vue-i18n"
@@ -578,6 +589,8 @@ const showCallForm = ref(false)
 const showMeetingForm = ref(false)
 const showNoteForm = ref(false)
 const showReminderForm = ref(false)
+const showTaskForm = ref(false)
+const selectedTask = ref<any>(null)
 const formLoading = ref(false)
 
 const statsCards = computed(() => {
@@ -675,6 +688,16 @@ const openReminderForm = () => {
   showReminderForm.value = true
 }
 
+const openTaskForm = () => {
+  selectedTask.value = null
+  showTaskForm.value = true
+}
+
+const openTaskForEdit = (task: any) => {
+  selectedTask.value = task
+  showTaskForm.value = true
+}
+
 // Form submit handlers
 const handleCallSubmit = async (data: CallCreateRequest | CallUpdateRequest) => {
   formLoading.value = true
@@ -735,6 +758,29 @@ const handleReminderSubmit = async (data: ReminderCreateRequest) => {
     loadData()
   } catch (err) {
     console.error("Error creating reminder:", err)
+  } finally {
+    formLoading.value = false
+  }
+}
+
+const handleTaskSubmit = async (data: TaskCreateRequest) => {
+  formLoading.value = true
+  try {
+    if (selectedTask.value) {
+      // Update existing task
+      await tasksApi.update(selectedTask.value.id, data)
+    } else {
+      // Create new task
+      await tasksApi.create({
+        ...data,
+        institutionId: props.institutionId,
+      })
+    }
+    showTaskForm.value = false
+    selectedTask.value = null
+    loadData()
+  } catch (err) {
+    console.error("Error saving task:", err)
   } finally {
     formLoading.value = false
   }

@@ -1,5 +1,6 @@
 import {
   BillingSearchFilters,
+  CommercialStatus,
   DiscountType,
   InvoiceCreateRequest,
   InvoiceLineCreateRequest,
@@ -165,6 +166,19 @@ export class InvoiceService {
         })
       }
 
+      // Update commercial status from prospect to client if needed
+      const commercialStatus = institution.getDataValue('commercialStatus') || institution.commercialStatus
+      if (commercialStatus === CommercialStatus.PROSPECT) {
+        await institution.update(
+          { commercialStatus: CommercialStatus.CLIENT },
+          { transaction }
+        )
+        logger.info('Institution commercial status updated from prospect to client', {
+          institutionId: institution.id,
+          invoiceId: invoiceId
+        })
+      }
+
       await transaction.commit()
 
       // Return invoice with associations using the correct ID
@@ -213,6 +227,23 @@ export class InvoiceService {
 
       // Create invoice from quote - pass the assignedUserId explicitly and the transaction
       const invoice = await Invoice.createFromQuote(quote, assignedUserId, transaction)
+
+      // Update commercial status from prospect to client if needed
+      const institution = await MedicalInstitution.findByPk(quote.institutionId, { transaction })
+      if (institution) {
+        const commercialStatus = institution.getDataValue('commercialStatus') || institution.commercialStatus
+        if (commercialStatus === CommercialStatus.PROSPECT) {
+          await institution.update(
+            { commercialStatus: CommercialStatus.CLIENT },
+            { transaction }
+          )
+          logger.info('Institution commercial status updated from prospect to client (from quote)', {
+            institutionId: institution.id,
+            invoiceId: invoice.id,
+            quoteId: quoteId
+          })
+        }
+      }
 
       await transaction.commit()
 

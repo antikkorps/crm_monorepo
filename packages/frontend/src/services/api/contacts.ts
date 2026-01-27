@@ -11,6 +11,8 @@ export const contactsApi = {
     return apiClient.get<{ data: ContactPerson[], pagination: any }>(`/contacts?${urlParams}`);
   },
   getById: (id: string) => apiClient.get<{ data: ContactPerson }>(`/contacts/${id}`),
+  getByInstitution: (institutionId: string) =>
+    apiClient.get<{ data: ContactPerson[] }>(`/contacts?institutionId=${institutionId}`),
   create: (data: ContactCreateRequest) => apiClient.post<{ data: ContactPerson }>('/contacts', data),
   update: (id: string, data: ContactUpdateRequest) => apiClient.put<{ data: ContactPerson }>(`/contacts/${id}`, data),
   delete: (id: string) => apiClient.delete(`/contacts/${id}`),

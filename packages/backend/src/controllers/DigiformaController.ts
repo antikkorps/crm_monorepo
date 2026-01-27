@@ -332,12 +332,13 @@ export class DigiformaController {
         },
       }
     } catch (error) {
-      logger.error('Failed to get Digiforma company for institution', {
+      // Don't throw 500 errors - just return null company
+      logger.warn('Failed to get Digiforma company for institution (returning null)', {
         userId: ctx.state.user?.id,
         institutionId: id,
         error: (error as Error).message,
       })
-      throw error
+      ctx.body = { success: true, data: { company: null } }
     }
   }
 
@@ -410,12 +411,13 @@ export class DigiformaController {
         },
       }
     } catch (error) {
-      logger.error('Failed to get Digiforma quotes for institution', {
+      // Don't throw 500 errors - just return empty quotes
+      logger.warn('Failed to get Digiforma quotes for institution (returning empty)', {
         userId: ctx.state.user?.id,
         institutionId: id,
         error: (error as Error).message,
       })
-      throw error
+      ctx.body = { success: true, data: { quotes: [] } }
     }
   }
 
@@ -486,12 +488,14 @@ export class DigiformaController {
         },
       }
     } catch (error) {
-      logger.error('Failed to get Digiforma invoices for institution', {
+      // Don't throw 500 errors for Digiforma issues - just return empty data
+      // This prevents critical error notifications when Digiforma is not configured
+      logger.warn('Failed to get Digiforma invoices for institution (returning empty)', {
         userId: ctx.state.user?.id,
         institutionId: id,
         error: (error as Error).message,
       })
-      throw error
+      ctx.body = { success: true, data: { invoices: [] } }
     }
   }
 
@@ -533,12 +537,20 @@ export class DigiformaController {
         institutionId: id,
       })
     } catch (error) {
-      logger.error('Failed to get consolidated revenue for institution', {
+      // Don't throw 500 errors - return empty revenue data
+      logger.warn('Failed to get consolidated revenue for institution (returning empty)', {
         userId: ctx.state.user?.id,
         institutionId: id,
         error: (error as Error).message,
       })
-      throw error
+      ctx.body = {
+        success: true,
+        data: {
+          audit: { invoiced: 0, paid: 0, pending: 0, count: 0 },
+          formation: { invoiced: 0, paid: 0, pending: 0, count: 0 },
+          total: { invoiced: 0, paid: 0, pending: 0, count: 0 },
+        },
+      }
     }
   }
 
@@ -572,11 +584,19 @@ export class DigiformaController {
         userId: ctx.state.user?.id,
       })
     } catch (error) {
-      logger.error('Failed to get global consolidated revenue', {
+      // Don't throw 500 errors - return empty revenue data
+      logger.warn('Failed to get global consolidated revenue (returning empty)', {
         userId: ctx.state.user?.id,
         error: (error as Error).message,
       })
-      throw error
+      ctx.body = {
+        success: true,
+        data: {
+          audit: { invoiced: 0, paid: 0, pending: 0, count: 0 },
+          formation: { invoiced: 0, paid: 0, pending: 0, count: 0 },
+          total: { invoiced: 0, paid: 0, pending: 0, count: 0 },
+        },
+      }
     }
   }
 
@@ -613,11 +633,17 @@ export class DigiformaController {
         months: value.months,
       })
     } catch (error) {
-      logger.error('Failed to get revenue evolution', {
+      // Don't throw 500 errors - return empty evolution data
+      logger.warn('Failed to get revenue evolution (returning empty)', {
         userId: ctx.state.user?.id,
         error: (error as Error).message,
       })
-      throw error
+      ctx.body = {
+        success: true,
+        data: {
+          evolution: [],
+        },
+      }
     }
   }
 

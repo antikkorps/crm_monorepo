@@ -56,6 +56,16 @@
             </div>
           </div>
           <div id="tour-detail-badges" class="mt-4 d-flex flex-wrap gap-2">
+            <!-- Commercial Status Badge -->
+            <v-chip
+              :color="institution.commercialStatus === CommercialStatus.CLIENT ? 'success' : 'warning'"
+              variant="tonal"
+              size="small"
+              :prepend-icon="institution.commercialStatus === CommercialStatus.CLIENT ? 'mdi-handshake' : 'mdi-account-search'"
+            >
+              {{ institution.commercialStatus === CommercialStatus.CLIENT ? 'Client' : 'Prospect' }}
+            </v-chip>
+
             <!-- Data Source Badge -->
             <DataSourceBadge
               :data-source="institution.dataSource"
@@ -210,6 +220,24 @@
                           >
                         </template>
                       </v-list-item>
+                      <v-list-item
+                        v-if="institution.finess"
+                        title="N° FINESS"
+                        :subtitle="institution.finess"
+                        prepend-icon="mdi-identifier"
+                      />
+                      <v-list-item
+                        v-if="institution.groupName"
+                        title="Groupe"
+                        :subtitle="institution.groupName"
+                        prepend-icon="mdi-domain"
+                      />
+                      <v-list-item
+                        v-if="institution.mainPhone"
+                        title="Téléphone standard"
+                        :subtitle="institution.mainPhone"
+                        prepend-icon="mdi-phone"
+                      />
                     </v-list>
                   </v-card>
                 </v-col>
@@ -498,6 +526,7 @@ import type {
   InstitutionType,
   MedicalInstitution,
 } from "@medical-crm/shared"
+import { CommercialStatus } from "@medical-crm/shared"
 import { computed, onMounted, ref } from "vue"
 import { useRoute, useRouter } from "vue-router"
 
@@ -530,12 +559,25 @@ const showEditContactDialog = ref(false)
 const editingContact = ref<ContactPerson | null>(null)
 const activeTab = ref("overview")
 
+// Format large numbers with K suffix (e.g., 5000 -> "5K")
+const formatLargeNumber = (num: number | undefined): string => {
+  if (num === undefined || num === null) return "N/A"
+  if (num >= 1000) {
+    return `${(num / 1000).toFixed(num % 1000 === 0 ? 0 : 1)}K`
+  }
+  return num.toString()
+}
+
 const medicalStats = computed(() => {
   if (!institution.value?.medicalProfile) return []
   const profile = institution.value.medicalProfile
   return [
     { label: "Capacité (lits)", value: profile.bedCapacity || "N/A" },
     { label: "Salles d'opération", value: profile.surgicalRooms || "N/A" },
+    { label: "Salles d'endoscopie", value: profile.endoscopyRooms || "N/A" },
+    { label: "Effectif", value: profile.staffCount || "N/A" },
+    { label: "Interventions chir./an", value: formatLargeNumber(profile.surgicalInterventions) },
+    { label: "Interventions endo./an", value: formatLargeNumber(profile.endoscopyInterventions) },
     { label: "Spécialités", value: (profile.specialties || []).length },
     { label: "Départements", value: (profile.departments || []).length },
   ]

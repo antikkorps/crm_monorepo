@@ -1,4 +1,4 @@
-import { InstitutionType } from "@medical-crm/shared"
+import { CommercialStatus, InstitutionType } from "@medical-crm/shared"
 import { Association, DataTypes, Model, Op, Optional, Sequelize, InstanceUpdateOptions, CreateOptions } from "sequelize"
 import { sequelize } from "../config/database"
 import { InstitutionAddress } from "./InstitutionAddress"
@@ -66,6 +66,12 @@ export interface MedicalInstitutionAttributes {
   tags: string[]
   isActive: boolean
 
+  // Commercial fields
+  finess?: string
+  groupName?: string
+  commercialStatus: CommercialStatus
+  mainPhone?: string
+
   // Multi-source tracking
   dataSource: DataSource
   isLocked: boolean
@@ -81,7 +87,7 @@ export interface MedicalInstitutionAttributes {
 export interface MedicalInstitutionCreationAttributes
   extends Optional<
     MedicalInstitutionAttributes,
-    "id" | "createdAt" | "updatedAt" | "tags" | "isActive" | "dataSource" | "isLocked" | "externalData" | "lastSyncAt"
+    "id" | "createdAt" | "updatedAt" | "tags" | "isActive" | "dataSource" | "isLocked" | "externalData" | "lastSyncAt" | "commercialStatus" | "finess" | "groupName" | "mainPhone"
   > {}
 
 export class MedicalInstitution
@@ -99,6 +105,12 @@ export class MedicalInstitution
   declare assignedUserId?: string
   declare tags: string[]
   declare isActive: boolean
+
+  // Commercial fields
+  declare finess?: string
+  declare groupName?: string
+  declare commercialStatus: CommercialStatus
+  declare mainPhone?: string
 
   // Multi-source tracking
   declare dataSource: DataSource
@@ -618,6 +630,42 @@ MedicalInstitution.init(
       allowNull: false,
       defaultValue: true,
       field: "is_active",
+    },
+
+    // Commercial fields
+    finess: {
+      type: DataTypes.STRING(9),
+      allowNull: true,
+      unique: true,
+      validate: {
+        len: [0, 9],
+        isValidFiness(value: string | null) {
+          if (value !== null && value !== undefined && value !== '') {
+            if (!/^\d{9}$/.test(value)) {
+              throw new Error('FINESS must be exactly 9 digits')
+            }
+          }
+        },
+      },
+    },
+    groupName: {
+      type: DataTypes.STRING(255),
+      allowNull: true,
+      field: "group_name",
+    },
+    commercialStatus: {
+      type: DataTypes.STRING(20),
+      allowNull: false,
+      defaultValue: 'prospect',
+      field: "commercial_status",
+      validate: {
+        isIn: [['prospect', 'client']],
+      },
+    },
+    mainPhone: {
+      type: DataTypes.STRING(20),
+      allowNull: true,
+      field: "main_phone",
     },
 
     // Multi-source tracking fields

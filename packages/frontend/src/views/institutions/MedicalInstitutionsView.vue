@@ -197,10 +197,37 @@
                   @update:model-value="applyFilters"
                 />
               </v-col>
-              <v-col cols="12" sm="6" md="3">
+              <v-col cols="6" sm="6" md="3">
+                <v-select
+                  v-model="filters.commercialStatus"
+                  :items="commercialStatusOptions"
+                  item-title="label"
+                  item-value="value"
+                  label="Statut commercial"
+                  variant="outlined"
+                  density="compact"
+                  clearable
+                  hide-details
+                  @update:model-value="applyFilters"
+                />
+              </v-col>
+              <v-col cols="6" sm="6" md="3">
+                <v-autocomplete
+                  v-model="filters.groupName"
+                  :items="groupOptions"
+                  :label="t('institutions.groupName')"
+                  variant="outlined"
+                  density="compact"
+                  clearable
+                  hide-details
+                  :loading="loadingGroups"
+                  @update:model-value="applyFilters"
+                />
+              </v-col>
+              <v-col cols="6" sm="6" md="3">
                 <v-switch
                   v-model="showInactive"
-                  label="Afficher les inactives"
+                  :label="t('institutions.showInactive')"
                   color="primary"
                   density="compact"
                   hide-details
@@ -286,7 +313,7 @@
             </template>
 
             <template #item.profile="{ item }">
-              <div v-if="item.medicalProfile" class="d-flex flex-wrap gap-2">
+              <div v-if="item.medicalProfile" class="d-flex gap-2">
                 <v-chip
                   v-if="item.medicalProfile?.bedCapacity"
                   size="small"
@@ -312,7 +339,14 @@
             </template>
 
             <template #item.status="{ item }">
-              <div class="d-flex align-center">
+              <div class="d-flex align-center gap-1">
+                <v-chip
+                  :color="item.commercialStatus === CommercialStatus.CLIENT ? 'success' : 'warning'"
+                  variant="tonal"
+                  size="small"
+                >
+                  {{ item.commercialStatus === CommercialStatus.CLIENT ? 'Client' : 'Prospect' }}
+                </v-chip>
                 <v-chip
                   :color="item.isActive ? 'success' : 'grey'"
                   variant="flat"
@@ -482,6 +516,13 @@
                 </div>
                 <div class="d-flex flex-wrap gap-2 mt-3">
                   <v-chip
+                    :color="institution.commercialStatus === CommercialStatus.CLIENT ? 'success' : 'warning'"
+                    variant="tonal"
+                    size="small"
+                  >
+                    {{ institution.commercialStatus === CommercialStatus.CLIENT ? 'Client' : 'Prospect' }}
+                  </v-chip>
+                  <v-chip
                     size="small"
                     variant="tonal"
                     :color="getInstitutionColor(institution.type)"
@@ -566,12 +607,12 @@ import ImportInstitutionsDialog from "@/components/institutions/ImportInstitutio
 import MedicalInstitutionForm from "@/components/institutions/MedicalInstitutionForm.vue"
 import AppLayout from "@/components/layout/AppLayout.vue"
 import { ListSkeleton, TableSkeleton } from "@/components/skeletons"
-import { institutionsApi } from "@/services/api"
+import { institutionsApi, usersApi } from "@/services/api"
 import type {
   MedicalInstitution,
   MedicalInstitutionSearchFilters,
 } from "@medical-crm/shared"
-import { ComplianceStatus, InstitutionType } from "@medical-crm/shared"
+import { CommercialStatus, ComplianceStatus, InstitutionType } from "@medical-crm/shared"
 import { computed, onMounted, onUnmounted, ref, watch } from "vue"
 import { useI18n } from "vue-i18n"
 import { useRoute, useRouter } from "vue-router"
@@ -637,8 +678,16 @@ const complianceStatusOptions = computed(() => [
   { label: "En Révision", value: "under_review" },
 ])
 
+const commercialStatusOptions = computed(() => [
+  { label: "Prospect", value: CommercialStatus.PROSPECT },
+  { label: "Client", value: CommercialStatus.CLIENT },
+])
+
 const userOptions = ref<Array<{ label: string; value: string }>>([])
 const loadingUsers = ref(false)
+
+const groupOptions = ref<string[]>([])
+const loadingGroups = ref(false)
 
 const hasActiveFilters = computed(
   () => Object.values(filters.value).some((v) => v) || searchQuery.value,
@@ -660,23 +709,16 @@ const loadUsers = async () => {
 
   loadingUsers.value = true
   try {
-    // Simuler le chargement des utilisateurs depuis l'API
-    // TODO: Remplacer par un vrai appel API
-    const response = await new Promise((resolve) =>
-      setTimeout(
-        () =>
-          resolve({
-            data: [
-              { id: "1", firstName: "Jean", lastName: "Dupont" },
-              { id: "2", firstName: "Marie", lastName: "Martin" },
-              { id: "3", firstName: "Pierre", lastName: "Bernard" },
-            ],
-          }),
-        500,
-      ),
-    )
+    const response = await usersApi.getAll()
+    const data = (response as any).data || response
 
-    const users = (response as any).data || []
+    let users: any[] = []
+    if (Array.isArray(data)) {
+      users = data
+    } else if (data && Array.isArray(data.users)) {
+      users = data.users
+    }
+
     userOptions.value = users.map((user: any) => ({
       label: `${user.firstName} ${user.lastName}`,
       value: user.id,
@@ -686,6 +728,39 @@ const loadUsers = async () => {
     userOptions.value = []
   } finally {
     loadingUsers.value = false
+  }
+}
+
+const loadGroups = async () => {
+  if (loadingGroups.value) return
+
+  loadingGroups.value = true
+  try {
+    // Fetch all institutions to extract unique group names
+    const response = await institutionsApi.getAll({ limit: -1 })
+    const data = (response as any).data || response
+
+    let institutions: any[] = []
+    if (Array.isArray(data)) {
+      institutions = data
+    } else if (data && Array.isArray(data.institutions)) {
+      institutions = data.institutions
+    }
+
+    // Extract unique group names, filter out empty values
+    const groups = new Set<string>()
+    institutions.forEach((inst: any) => {
+      if (inst.groupName && inst.groupName.trim()) {
+        groups.add(inst.groupName.trim())
+      }
+    })
+
+    groupOptions.value = Array.from(groups).sort()
+  } catch (error) {
+    console.error("Erreur lors du chargement des groupes:", error)
+    groupOptions.value = []
+  } finally {
+    loadingGroups.value = false
   }
 }
 
@@ -937,6 +1012,7 @@ onMounted(() => {
   loadStats()
   loadInstitutions()
   loadUsers()
+  loadGroups()
 
   // Rafraîchir les données quand la page redevient visible
   const handleVisibilityChange = () => {
@@ -1051,6 +1127,15 @@ watch(
   border-top: 1px solid rgba(var(--v-border-color), var(--v-border-opacity));
 }
 
+/* Make table horizontally scrollable on smaller screens */
+.enhanced-table {
+  overflow-x: auto;
+}
+
+.enhanced-table :deep(.v-table__wrapper) {
+  overflow-x: auto;
+}
+
 .enhanced-table :deep(tbody tr) {
   transition: background-color 0.2s ease;
 }
@@ -1062,6 +1147,48 @@ watch(
 .enhanced-table :deep(.v-data-table__td) {
   padding-top: 1rem;
   padding-bottom: 1rem;
+}
+
+/* Column widths for desktop consistency */
+.enhanced-table :deep(th:nth-child(1)),
+.enhanced-table :deep(td:nth-child(1)) {
+  min-width: 250px;
+}
+
+.enhanced-table :deep(th:nth-child(2)),
+.enhanced-table :deep(td:nth-child(2)) {
+  min-width: 140px;
+}
+
+.enhanced-table :deep(th:nth-child(3)),
+.enhanced-table :deep(td:nth-child(3)) {
+  min-width: 120px;
+}
+
+.enhanced-table :deep(th:nth-child(4)),
+.enhanced-table :deep(td:nth-child(4)) {
+  min-width: 150px;
+  white-space: nowrap;
+}
+
+.enhanced-table :deep(th:nth-child(5)),
+.enhanced-table :deep(td:nth-child(5)) {
+  min-width: 160px;
+}
+
+.enhanced-table :deep(th:nth-child(6)),
+.enhanced-table :deep(td:nth-child(6)) {
+  min-width: 140px;
+  white-space: nowrap;
+}
+
+/* Actions container - always horizontal */
+.actions-container {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: nowrap;
 }
 
 .enhanced-table :deep(.inactive-institution) {
