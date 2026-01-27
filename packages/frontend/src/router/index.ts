@@ -14,6 +14,7 @@ const MedicalInstitutions = () =>
 const InstitutionDetail = () => import("@/views/institutions/InstitutionDetailView.vue")
 const Tasks = () => import("@/views/tasks/TasksView.vue")
 const Quotes = () => import("@/views/billing/QuotesView.vue")
+const EngagementLetters = () => import("@/views/billing/EngagementLettersView.vue")
 const Invoices = () => import("@/views/billing/InvoicesView.vue")
 const InvoiceDetail = () => import("@/views/billing/InvoiceDetailView.vue")
 const Team = () => import("@/views/team/TeamView.vue")
@@ -119,6 +120,15 @@ const routes: RouteRecordRaw[] = [
     meta: {
       requiresAuth: true,
       title: "Quotes",
+    },
+  },
+  {
+    path: "/engagement-letters",
+    name: "EngagementLetters",
+    component: EngagementLetters,
+    meta: {
+      requiresAuth: true,
+      title: "Lettres de Mission",
     },
   },
   {

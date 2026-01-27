@@ -500,20 +500,24 @@ export class OpportunityController {
   /**
    * GET /api/opportunities/pipeline
    * Get pipeline view (opportunities grouped by stage)
+   * Includes closed opportunities from the last 30 days
    */
   static async getPipeline(ctx: Context) {
     try {
       const user = ctx.state.user as User
-      const { assignedUserId, institutionId } = ctx.query
+      const { assignedUserId, institutionId, includeArchived } = ctx.query
 
-      const where: any = { status: OpportunityStatus.ACTIVE }
+      // Calculate date 30 days ago for closed opportunities filter
+      const thirtyDaysAgo = new Date()
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
 
+      // Base filters for user/institution
+      const baseFilters: any = {}
       if (assignedUserId) {
-        where.assignedUserId = assignedUserId
+        baseFilters.assignedUserId = assignedUserId
       }
-
       if (institutionId) {
-        where.institutionId = institutionId
+        baseFilters.institutionId = institutionId
       }
 
       // Team filtering
@@ -523,21 +527,24 @@ export class OpportunityController {
           attributes: ["id"],
         }).then((users) => users.map((u) => u.id))
 
-        // Combine with existing assignedUserId filter if present
-        if (where.assignedUserId !== undefined) {
-          where.assignedUserId = {
+        if (baseFilters.assignedUserId !== undefined) {
+          baseFilters.assignedUserId = {
             [Op.and]: [
-              { [Op.eq]: where.assignedUserId },
+              { [Op.eq]: baseFilters.assignedUserId },
               { [Op.in]: teamUserIds }
             ]
           }
         } else {
-          where.assignedUserId = { [Op.in]: teamUserIds }
+          baseFilters.assignedUserId = { [Op.in]: teamUserIds }
         }
       }
 
-      const opportunities = await Opportunity.findAll({
-        where,
+      // Fetch active opportunities
+      const activeOpportunities = await Opportunity.findAll({
+        where: {
+          ...baseFilters,
+          status: OpportunityStatus.ACTIVE,
+        },
         include: [
           {
             model: MedicalInstitution,
@@ -558,22 +565,66 @@ export class OpportunityController {
         order: [["expectedCloseDate", "ASC"]],
       })
 
-      // Group by stage
-      const pipeline = Object.values(OpportunityStage)
-        .filter((stage) => stage !== OpportunityStage.CLOSED_WON && stage !== OpportunityStage.CLOSED_LOST)
-        .map((stage) => {
-          const stageOpportunities = opportunities.filter((opp) => opp.stage === stage)
-          const totalValue = stageOpportunities.reduce((sum, opp) => sum + parseFloat(opp.value.toString()), 0)
-          const weightedValue = stageOpportunities.reduce((sum, opp) => sum + opp.getWeightedValue(), 0)
+      // Fetch closed opportunities (won/lost) from last 30 days (or all if includeArchived)
+      const closedWhere: any = {
+        ...baseFilters,
+        status: { [Op.in]: [OpportunityStatus.WON, OpportunityStatus.LOST] },
+      }
 
-          return {
-            stage,
-            count: stageOpportunities.length,
-            totalValue,
-            weightedValue,
-            opportunities: stageOpportunities,
-          }
-        })
+      // Only filter by date if not including archived
+      if (includeArchived !== "true") {
+        closedWhere.actualCloseDate = { [Op.gte]: thirtyDaysAgo }
+      }
+
+      const closedOpportunities = await Opportunity.findAll({
+        where: closedWhere,
+        include: [
+          {
+            model: MedicalInstitution,
+            as: "institution",
+            attributes: ["id", "name", "type"],
+          },
+          {
+            model: ContactPerson,
+            as: "contactPerson",
+            attributes: ["id", "firstName", "lastName"],
+          },
+          {
+            model: User,
+            as: "assignedUser",
+            attributes: ["id", "firstName", "lastName", "email"],
+          },
+        ],
+        order: [["actualCloseDate", "DESC"]],
+      })
+
+      // Combine all opportunities
+      const allOpportunities = [...activeOpportunities, ...closedOpportunities]
+
+      // Define stage order (active stages first, then closed)
+      const stageOrder = [
+        OpportunityStage.PROSPECTING,
+        OpportunityStage.QUALIFICATION,
+        OpportunityStage.PROPOSAL,
+        OpportunityStage.NEGOTIATION,
+        OpportunityStage.CLOSED_WON,
+        OpportunityStage.CLOSED_LOST,
+      ]
+
+      // Group by stage
+      const pipeline = stageOrder.map((stage) => {
+        const stageOpportunities = allOpportunities.filter((opp) => opp.stage === stage)
+        const totalValue = stageOpportunities.reduce((sum, opp) => sum + parseFloat(opp.value.toString()), 0)
+        const weightedValue = stageOpportunities.reduce((sum, opp) => sum + opp.getWeightedValue(), 0)
+
+        return {
+          stage,
+          count: stageOpportunities.length,
+          totalValue,
+          weightedValue,
+          opportunities: stageOpportunities,
+        }
+      })
 
       ctx.body = {
         success: true,

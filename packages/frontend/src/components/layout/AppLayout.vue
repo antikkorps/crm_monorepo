@@ -50,7 +50,15 @@
           to="/opportunities"
           value="opportunities"
           @click="onNavigationClick"
-        ></v-list-item>
+        >
+          <template v-slot:append v-if="overdueCount > 0">
+            <v-badge
+              :content="overdueCount"
+              color="error"
+              inline
+            />
+          </template>
+        </v-list-item>
 
         <!-- Analytics Section -->
         <v-list-item
@@ -346,9 +354,11 @@ import TourButton from "@/components/common/TourButton.vue"
 import AllToursMenu from "@/components/common/AllToursMenu.vue"
 import UserAvatar from "@/components/common/UserAvatar.vue"
 import { useAuthStore } from "@/stores/auth"
+import { useOpportunitiesStore } from "@/stores/opportunities"
 import { useSettingsStore } from "@/stores/settings"
 import { UserRole } from "@medical-crm/shared"
-import { computed, ref } from "vue"
+import { storeToRefs } from "pinia"
+import { computed, onMounted, ref } from "vue"
 import { useI18n } from "vue-i18n"
 import { useRoute, useRouter } from "vue-router"
 import { useDisplay } from "vuetify"
@@ -356,9 +366,14 @@ import { useDisplay } from "vuetify"
 const { t } = useI18n()
 const authStore = useAuthStore()
 const settingsStore = useSettingsStore()
+const opportunitiesStore = useOpportunitiesStore()
 const router = useRouter()
 const route = useRoute()
 const { mobile, lgAndUp } = useDisplay()
+
+// Overdue opportunities count for badge
+const { overdueOpportunities } = storeToRefs(opportunitiesStore)
+const overdueCount = computed(() => overdueOpportunities.value?.length || 0)
 
 // Reactive state - drawer closed by default on mobile/tablet, open on desktop
 const drawer = ref(lgAndUp.value)
@@ -376,6 +391,7 @@ const routeTitleKeys: Record<string, string> = {
   InstitutionDetail: "navigation.institutions",
   Tasks: "navigation.tasks",
   Quotes: "navigation.quotes",
+  EngagementLetters: "navigation.engagementLetters",
   Invoices: "navigation.invoices",
   InvoiceDetail: "navigation.invoices",
   InvoiceEdit: "navigation.invoices",
@@ -468,6 +484,12 @@ const billingNavigation = [
     icon: "mdi-file-document-edit",
     to: "/quotes",
     value: "quotes",
+  },
+  {
+    title: "navigation.engagementLetters",
+    icon: "mdi-briefcase-outline",
+    to: "/engagement-letters",
+    value: "engagement-letters",
   },
   {
     title: "navigation.invoices",
@@ -587,6 +609,17 @@ const onNavigationClick = () => {
     drawer.value = false
   }
 }
+
+// Fetch opportunities on mount to get overdue count
+onMounted(async () => {
+  if (authStore.isAuthenticated) {
+    try {
+      await opportunitiesStore.fetchOpportunities()
+    } catch (err) {
+      console.error("Failed to fetch opportunities for badge:", err)
+    }
+  }
+})
 </script>
 
 <style scoped>

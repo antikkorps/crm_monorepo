@@ -43,12 +43,12 @@
           </template>
 
           <v-list-item-title class="font-weight-medium">
-            {{ action.action }}
+            {{ t(`nextBestActions.actions.${action.actionKey}`, action.actionParams || {}) }}
           </v-list-item-title>
 
           <v-list-item-subtitle class="mt-1">
             <v-icon size="small" class="mr-1">mdi-information-outline</v-icon>
-            {{ action.reason }}
+            {{ t(`nextBestActions.reasons.${action.reasonKey}`, action.reasonParams || {}) }}
           </v-list-item-subtitle>
 
           <v-list-item-subtitle v-if="action.dueDate" class="mt-1">

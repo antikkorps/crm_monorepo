@@ -580,7 +580,14 @@ const loadTemplateById = async (templateId: string) => {
 const loadInstitutions = async () => {
   try {
     await institutionsStore.fetchInstitutions()
-    institutionOptions.value = institutionsStore.institutions || []
+    const storeInstitutions = institutionsStore.institutions || []
+    // Deduplicate by ID to prevent duplicate key warnings
+    const seenIds = new Set<string>()
+    institutionOptions.value = storeInstitutions.filter((inst: any) => {
+      if (seenIds.has(inst.id)) return false
+      seenIds.add(inst.id)
+      return true
+    })
   } catch (error) {
     console.error("Error loading institutions:", error)
     institutionOptions.value = []
@@ -599,7 +606,10 @@ const loadInstitutionById = async (institutionId: string) => {
     const response = await institutionsApi.getById(institutionId)
     const institution = (response as any)?.data || response
     if (institution) {
-      institutionOptions.value = [...institutionOptions.value, institution]
+      // Add only if not already present (re-check to handle race conditions)
+      if (!institutionOptions.value.some((i: any) => i.id === institution.id)) {
+        institutionOptions.value = [...institutionOptions.value, institution]
+      }
     }
   } catch (error) {
     console.error("Failed to load institution:", error)
@@ -637,7 +647,13 @@ const onInstitutionSearch = async (search: string | null) => {
         institutionsArray = data.institutions
       }
 
-      institutionOptions.value = institutionsArray
+      // Deduplicate by ID to prevent duplicate key warnings
+      const seenIds = new Set<string>()
+      institutionOptions.value = institutionsArray.filter((inst: any) => {
+        if (seenIds.has(inst.id)) return false
+        seenIds.add(inst.id)
+        return true
+      })
     } catch (error) {
       console.error("Error searching institutions:", error)
       institutionOptions.value = []

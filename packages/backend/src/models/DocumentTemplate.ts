@@ -6,6 +6,7 @@ export enum TemplateType {
   QUOTE = "quote",
   INVOICE = "invoice",
   BOTH = "both",
+  ENGAGEMENT_LETTER = "engagement_letter",
 }
 
 export enum LogoPosition {

@@ -5,6 +5,7 @@
     "cancel": "Annuler",
     "delete": "Supprimer",
     "edit": "Modifier",
+    "view": "Voir",
     "add": "Ajouter",
     "search": "Rechercher",
     "close": "Fermer",
@@ -118,6 +119,7 @@
     "notes": "Notes",
     "reminders": "Rappels",
     "quotes": "Devis",
+    "engagementLetters": "Lettres de Mission",
     "invoices": "Factures",
     "templates": "Modèles",
     "analytics": "Analytiques",
@@ -1653,7 +1655,11 @@
       "form": "Formulaire",
       "templateForm": "Formulaire de Modèle",
       "preview": "Aperçu",
-      "livePreview": "Aperçu en Direct"
+      "livePreview": "Aperçu en Direct",
+      "documents": "Modèles de Documents",
+      "documentsShort": "Documents",
+      "cgv": "Conditions Générales",
+      "cgvShort": "CGV"
     },
     "types": {
       "quote": "Devis",
@@ -1893,6 +1899,201 @@
       "deleteError": "Impossible de supprimer le devis"
     },
     "confirmDelete": "Supprimer le devis {number} ?"
+  },
+  "engagementLetters": {
+    "title": "Lettres de Mission",
+    "subtitle": "Gérez vos lettres de mission et contrats d'engagement",
+    "createNew": "Nouvelle lettre",
+    "noLettersFound": "Aucune lettre de mission trouvée",
+    "noLettersMessage": "Créez votre première lettre de mission pour commencer.",
+    "downloadPdf": "Télécharger le PDF",
+    "status": {
+      "draft": "Brouillon",
+      "sent": "Envoyée",
+      "accepted": "Acceptée",
+      "rejected": "Refusée",
+      "cancelled": "Annulée",
+      "completed": "Terminée"
+    },
+    "missionType": {
+      "audit": "Audit",
+      "conseil": "Conseil",
+      "formation": "Formation",
+      "autre": "Autre"
+    },
+    "billingType": {
+      "fixed": "Forfait",
+      "hourly": "Horaire",
+      "daily": "Journalier"
+    },
+    "filters": {
+      "status": "Statut",
+      "missionType": "Type de mission"
+    },
+    "table": {
+      "letterNumber": "N° Lettre",
+      "title": "Titre",
+      "missionType": "Type",
+      "amount": "Montant",
+      "status": "Statut",
+      "validUntil": "Validité",
+      "actions": "Actions"
+    },
+    "builder": {
+      "createTitle": "Nouvelle Lettre de Mission",
+      "editTitle": "Modifier la Lettre de Mission",
+      "backToList": "Retour à la liste",
+      "basicInfo": "Informations de base",
+      "institution": "Institution",
+      "institutionRequired": "L'institution est requise",
+      "template": "Modèle",
+      "title": "Titre",
+      "titleRequired": "Le titre est requis",
+      "missionType": "Type de mission",
+      "missionTypeRequired": "Le type de mission est requis",
+      "validUntil": "Validité",
+      "validUntilRequired": "La date de validité est requise",
+      "assignedUser": "Utilisateur assigné",
+      "missionDetails": "Détails de la mission",
+      "scope": "Périmètre de la mission",
+      "scopePlaceholder": "Décrivez le périmètre de la mission...",
+      "objectives": "Objectifs",
+      "objectivePlaceholder": "Décrivez un objectif...",
+      "addObjective": "Ajouter un objectif",
+      "deliverables": "Livrables",
+      "deliverableName": "Nom du livrable",
+      "deliverableDescription": "Description",
+      "deliverableDueDate": "Date limite",
+      "addDeliverable": "Ajouter un livrable",
+      "teamMembers": "Équipe intervenante",
+      "noMembers": "Aucun membre dans l'équipe",
+      "addFirstMember": "Ajouter le premier intervenant",
+      "addMember": "Ajouter un intervenant",
+      "memberName": "Nom",
+      "memberRole": "Rôle",
+      "memberQualification": "Qualification",
+      "dailyRate": "Taux journalier",
+      "hourlyRate": "Taux horaire",
+      "fixedAmount": "Montant forfaitaire",
+      "rate": "Taux",
+      "totalDays": "Nb jours",
+      "travelExpenses": "Frais de déplacement",
+      "totalFormula": "Total = (Taux journalier × Nb jours) + Frais de déplacement",
+      "estimatedDays": "Jours",
+      "isLead": "Responsable",
+      "memberSubtotal": "Sous-total",
+      "timeline": "Planning",
+      "startDate": "Date de début",
+      "endDate": "Date de fin",
+      "estimatedHours": "Heures estimées",
+      "financial": "Conditions financières",
+      "billingType": "Type de facturation",
+      "estimatedTotal": "Total estimé",
+      "showVat": "Afficher la TVA",
+      "vatRate": "Taux TVA",
+      "vatAmount": "Montant TVA",
+      "totalWithVat": "Total TTC",
+      "notes": "Notes internes",
+      "termsAndConditions": "Conditions générales",
+      "cgvTemplate": "Modèle de CGV",
+      "cgvTemplateHint": "Sélectionnez un modèle pour pré-remplir les CGV",
+      "termsAndConditionsContent": "Contenu des conditions générales",
+      "termsAndConditionsPlaceholder": "Saisissez ou modifiez les conditions générales...",
+      "internalNotes": "Notes internes",
+      "internalNotesHint": "Visible uniquement par l'équipe interne",
+      "actions": {
+        "saveDraft": "Enregistrer le brouillon",
+        "downloadPdf": "Télécharger PDF",
+        "send": "Envoyer au client",
+        "accept": "Accepter",
+        "reject": "Refuser",
+        "complete": "Marquer comme terminée",
+        "update": "Mettre à jour",
+        "create": "Créer"
+      }
+    },
+    "cgvTemplates": {
+      "standard": "CGV Standard",
+      "audit": "CGV Mission d'Audit",
+      "formation": "CGV Formation"
+    },
+    "confirmDelete": {
+      "title": "Confirmer la suppression",
+      "message": "Voulez-vous vraiment supprimer la lettre {number} ?"
+    },
+    "sendDialog": {
+      "title": "Envoyer au client",
+      "description": "Cette action marquera la lettre comme envoyée. Vous pouvez optionnellement envoyer un email au client.",
+      "recipientEmail": "Email du destinataire",
+      "recipientHint": "Laissez vide pour marquer comme envoyé sans email",
+      "confirm": "Envoyer"
+    },
+    "downloadDialog": {
+      "title": "Télécharger le PDF",
+      "markAsSent": "Marquer comme envoyé après téléchargement",
+      "markAsSentHint": "Le statut passera de brouillon à envoyé",
+      "readyToDownload": "Le PDF est prêt à être téléchargé.",
+      "confirm": "Télécharger"
+    },
+    "messages": {
+      "loadError": "Erreur lors du chargement des lettres de mission",
+      "saved": "Lettre de mission sauvegardée",
+      "saveError": "Erreur lors de la sauvegarde",
+      "deleted": "Lettre de mission supprimée",
+      "deleteError": "Erreur lors de la suppression",
+      "pdfDownloaded": "PDF téléchargé avec succès",
+      "pdfDownloadedAndSent": "PDF téléchargé et lettre marquée comme envoyée",
+      "pdfError": "Erreur lors de la génération du PDF",
+      "sent": "Lettre envoyée au client",
+      "sendError": "Erreur lors de l'envoi",
+      "accepted": "Lettre acceptée",
+      "acceptError": "Erreur lors de l'acceptation",
+      "rejected": "Lettre refusée",
+      "rejectError": "Erreur lors du refus",
+      "completed": "Mission terminée",
+      "completeError": "Erreur lors de la validation"
+    }
+  },
+  "cgvTemplates": {
+    "title": "Modèles de CGV",
+    "create": "Nouveau modèle",
+    "edit": "Modifier le modèle",
+    "noTemplates": "Aucun modèle de CGV",
+    "noTemplatesDescription": "Créez des modèles de conditions générales pour vos lettres de mission.",
+    "createFirst": "Créer un modèle",
+    "default": "Par défaut",
+    "setDefault": "Définir par défaut",
+    "categories": {
+      "general": "Général",
+      "audit": "Audit",
+      "conseil": "Conseil",
+      "formation": "Formation"
+    },
+    "form": {
+      "name": "Nom du modèle",
+      "nameRequired": "Le nom est requis",
+      "description": "Description",
+      "category": "Catégorie",
+      "isDefault": "Modèle par défaut",
+      "content": "Contenu des conditions générales",
+      "contentPlaceholder": "Saisissez les conditions générales..."
+    },
+    "confirmDelete": {
+      "title": "Supprimer le modèle",
+      "message": "Voulez-vous vraiment supprimer le modèle \"{name}\" ?"
+    },
+    "messages": {
+      "loadError": "Erreur lors du chargement des modèles",
+      "created": "Modèle créé avec succès",
+      "updated": "Modèle mis à jour avec succès",
+      "deleted": "Modèle supprimé",
+      "duplicated": "Modèle dupliqué",
+      "setDefault": "Modèle défini par défaut",
+      "saveError": "Erreur lors de l'enregistrement",
+      "deleteError": "Erreur lors de la suppression",
+      "duplicateError": "Erreur lors de la duplication",
+      "setDefaultError": "Erreur lors de la définition par défaut"
+    }
   },
   "catalog": {
     "title": "Catalogue d'Articles",
@@ -2290,7 +2491,15 @@
     "deleteConfirm": "Êtes-vous sûr de vouloir supprimer cette opportunité ?",
     "unit": "opportunité",
     "empty": "Aucune opportunité trouvée",
+    "dropHere": "Déposer ici",
     "overdue": "En retard",
+    "closedStages": "Opportunités clôturées",
+    "last30Days": "30 derniers jours",
+    "showAllArchived": "Afficher toutes les opportunités archivées",
+    "actions": {
+      "won": "Gagné",
+      "lost": "Perdu"
+    },
     "statsByCollaborator": {
       "title": "Statistiques par collaborateur",
       "collaborator": "Collaborateur",
@@ -2298,7 +2507,8 @@
       "totalValue": "Valeur totale",
       "weightedValue": "Valeur pondérée",
       "overdue": "En Retard",
-      "button": "Statistiques par collaborateur"
+      "button": "Statistiques par collaborateur",
+      "noData": "Aucune donnée disponible"
     },
     "export": "Exporter les opportunités",
     "forecast": {
@@ -2615,6 +2825,7 @@
       "tasks": "Tâches",
       "quotes": "Devis",
       "invoices": "Factures",
+      "engagementLetters": "Lettres de Mission",
       "upcoming": "À venir"
     },
     "callTypes": {
@@ -2626,6 +2837,8 @@
     "noRecentQuotes": "Aucun devis récent",
     "recentInvoices": "Factures récentes",
     "noRecentInvoices": "Aucune facture récente",
+    "engagementLetters": "Lettres de Mission",
+    "noEngagementLetters": "Aucune lettre de mission",
     "validUntil": "Valide jusqu'au",
     "remaining": "Reste",
     "dueDate": "Échéance"
@@ -2651,7 +2864,8 @@
       "reminders": "Rappels",
       "tasks": "Tâches",
       "quotes": "Devis",
-      "invoices": "Factures"
+      "invoices": "Factures",
+      "engagementLetters": "Lettres de Mission"
     },
     "labels": {
       "note": "Note",
@@ -2660,7 +2874,8 @@
       "reminder": "Rappel",
       "task": "Tâche",
       "quote": "Devis",
-      "invoice": "Facture"
+      "invoice": "Facture",
+      "engagementLetter": "Lettre de Mission"
     },
     "callTypes": {
       "incoming": "Entrant",
@@ -2905,6 +3120,23 @@
       "today": "Aujourd'hui",
       "tomorrow": "Demain",
       "inDays": "Dans {days} jours"
+    },
+    "actions": {
+      "followUpOverdueInvoices": "Relancer {count} facture(s) en retard",
+      "followUpPendingQuote": "Relancer le devis en attente",
+      "reengageOpportunity": "Relancer l'opportunité \"{name}\"",
+      "scheduleCheckIn": "Planifier un appel ou une réunion de suivi",
+      "convertQuoteToInvoice": "Convertir le devis accepté en facture",
+      "exploreUpsell": "Explorer des opportunités de vente additionnelle"
+    },
+    "reasons": {
+      "overduePayments": "{amount} € de paiements en retard",
+      "quoteNoResponse": "Devis envoyé il y a {days} jours sans réponse",
+      "opportunityNoActivity": "Aucune activité depuis {days} jours",
+      "noContactDays": "Aucun contact depuis {days} jours - risque de désengagement",
+      "noRecordedInteractions": "Aucune interaction enregistrée - établir le contact",
+      "quoteAcceptedNotInvoiced": "Devis accepté mais pas encore facturé",
+      "recentSuccessfulDeal": "Vente récente réussie - satisfaction client élevée"
     }
   },
   "success": {

@@ -505,6 +505,74 @@
             </v-list>
           </v-card>
         </v-col>
+
+        <!-- Engagement Letters -->
+        <v-col cols="12" md="6" class="d-flex">
+          <v-card class="flex-grow-1">
+            <v-card-title class="d-flex align-center justify-space-between">
+              <div class="d-flex align-center">
+                <v-icon class="mr-2" color="indigo">mdi-briefcase-outline</v-icon>
+                <span>{{ t("collaboration.engagementLetters") }}</span>
+                <v-chip class="ml-2" size="small" color="indigo" variant="tonal">
+                  {{ collaborationData.stats.totalEngagementLetters ?? 0 }}
+                </v-chip>
+              </div>
+              <v-btn
+                size="small"
+                variant="text"
+                prepend-icon="mdi-plus"
+                color="indigo"
+                @click="navigateTo('/engagement-letters')"
+              >
+                {{ t("collaboration.add") }}
+              </v-btn>
+            </v-card-title>
+            <v-divider></v-divider>
+            <div
+              v-if="!collaborationData.recentEngagementLetters || collaborationData.recentEngagementLetters.length === 0"
+              class="text-center py-8"
+            >
+              <v-icon size="48" color="grey-lighten-2">mdi-briefcase-outline</v-icon>
+              <p class="mt-2 text-medium-emphasis">
+                {{ t("collaboration.noEngagementLetters") }}
+              </p>
+            </div>
+            <v-list v-else lines="two">
+              <v-list-item
+                v-for="letter in collaborationData.recentEngagementLetters"
+                :key="letter.id"
+                @click="navigateTo('/engagement-letters')"
+              >
+                <template v-slot:prepend>
+                  <v-avatar :color="getEngagementLetterStatusColor(letter.status)" variant="tonal">
+                    <v-icon>mdi-briefcase-outline</v-icon>
+                  </v-avatar>
+                </template>
+                <v-list-item-title class="font-weight-medium">
+                  {{ letter.letterNumber }} - {{ letter.title }}
+                  <v-chip
+                    size="x-small"
+                    class="ml-2"
+                    :color="getEngagementLetterStatusColor(letter.status)"
+                    variant="tonal"
+                  >
+                    {{ formatEngagementLetterStatus(letter.status) }}
+                  </v-chip>
+                </v-list-item-title>
+                <v-list-item-subtitle>
+                  <div class="d-flex align-center">
+                    <v-icon size="small" class="mr-1">mdi-currency-eur</v-icon>
+                    {{ formatCurrency(letter.estimatedTotal) }}
+                  </div>
+                  <div v-if="letter.validUntil" class="d-flex align-center mt-1">
+                    <v-icon size="small" class="mr-1">mdi-calendar-clock</v-icon>
+                    {{ t("collaboration.validUntil") }}: {{ formatDate(letter.validUntil) }}
+                  </div>
+                </v-list-item-subtitle>
+              </v-list-item>
+            </v-list>
+          </v-card>
+        </v-col>
       </v-row>
     </div>
 
@@ -638,6 +706,12 @@ const statsCards = computed(() => {
       value: stats.totalInvoices ?? 0,
       icon: "mdi-receipt",
       color: "teal",
+    },
+    {
+      label: t("collaboration.stats.engagementLetters"),
+      value: stats.totalEngagementLetters ?? 0,
+      icon: "mdi-briefcase-outline",
+      color: "indigo",
     },
     {
       label: t("collaboration.stats.upcoming"),
@@ -943,6 +1017,30 @@ const formatInvoiceStatus = (status: string): string => {
     paid: t("invoices.status.paid"),
     overdue: t("invoices.status.overdue"),
     cancelled: t("invoices.status.cancelled"),
+  }
+  return statusMap[status] || status
+}
+
+const getEngagementLetterStatusColor = (status: string): string => {
+  const colorMap: Record<string, string> = {
+    draft: "grey",
+    sent: "blue",
+    accepted: "success",
+    rejected: "error",
+    cancelled: "grey-darken-1",
+    completed: "purple",
+  }
+  return colorMap[status] || "grey"
+}
+
+const formatEngagementLetterStatus = (status: string): string => {
+  const statusMap: Record<string, string> = {
+    draft: t("engagementLetters.status.draft"),
+    sent: t("engagementLetters.status.sent"),
+    accepted: t("engagementLetters.status.accepted"),
+    rejected: t("engagementLetters.status.rejected"),
+    cancelled: t("engagementLetters.status.cancelled"),
+    completed: t("engagementLetters.status.completed"),
   }
   return statusMap[status] || status
 }

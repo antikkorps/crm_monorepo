@@ -4,6 +4,8 @@ import Handlebars from "handlebars"
 import { dirname, join } from "path"
 import puppeteer, { Browser, PDFOptions } from "puppeteer"
 import { v4 as uuidv4 } from "uuid"
+import { generateHTML } from "@tiptap/html"
+import StarterKit from "@tiptap/starter-kit"
 import { sequelize } from "../config/database"
 import { DocumentTemplate, TemplateType } from "../models/DocumentTemplate"
 import { DocumentVersion, DocumentVersionType } from "../models/DocumentVersion"
@@ -703,20 +705,30 @@ export class PdfService {
       }).format(amount || 0)
     })
 
-    // Date formatting helper
+    // Date formatting helper - French locale
     Handlebars.registerHelper("formatDate", function (date: Date) {
       if (!date) return ""
-      return new Intl.DateTimeFormat("en-US", {
+      return new Intl.DateTimeFormat("fr-FR", {
         year: "numeric",
         month: "long",
         day: "numeric"
       }).format(new Date(date))
     })
 
-    // Date formatting helper
+    // Short date formatting helper - French locale
+    Handlebars.registerHelper("formatDateShort", function (date: Date) {
+      if (!date) return ""
+      return new Intl.DateTimeFormat("fr-FR", {
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit"
+      }).format(new Date(date))
+    })
+
+    // Date formatting helper - French locale
     Handlebars.registerHelper("date", function (date: Date, format?: string) {
       if (!date) return ""
-      return new Intl.DateTimeFormat("en-US", {
+      return new Intl.DateTimeFormat("fr-FR", {
         year: "numeric",
         month: "long",
         day: "numeric",
@@ -751,6 +763,75 @@ export class PdfService {
         month: "long",
         day: "numeric",
       }).format(new Date())
+    })
+
+    // Equality helper (eq)
+    Handlebars.registerHelper("eq", function (this: any, arg1: any, arg2: any, options: any) {
+      return arg1 === arg2 ? options.fn(this) : options.inverse(this)
+    })
+
+    // Multiply helper for calculations
+    Handlebars.registerHelper("multiply", function (a: number, b: number) {
+      return (Number(a) || 0) * (Number(b) || 0)
+    })
+
+    // Format currency helper (Euro format)
+    Handlebars.registerHelper("formatCurrency", function (amount: number) {
+      return new Intl.NumberFormat("fr-FR", {
+        style: "currency",
+        currency: "EUR",
+      }).format(Number(amount) || 0)
+    })
+
+    // VAT amount helper
+    Handlebars.registerHelper("vatAmount", function (total: number, vatRate: number) {
+      const t = Number(total) || 0
+      const r = Number(vatRate) || 0
+      return t * (r / 100)
+    })
+
+    // Total with VAT helper
+    Handlebars.registerHelper("totalWithVat", function (total: number, vatRate: number) {
+      const t = Number(total) || 0
+      const r = Number(vatRate) || 0
+      return t + t * (r / 100)
+    })
+
+    // ProseMirror JSON to HTML helper
+    // Converts TipTap JSON content to HTML for PDF rendering
+    Handlebars.registerHelper("richText", function (content: string | object) {
+      if (!content) return ""
+
+      try {
+        // If content is already a string, try to parse as JSON
+        let jsonContent: any
+        if (typeof content === "string") {
+          // Check if it looks like JSON
+          const trimmed = content.trim()
+          if (trimmed.startsWith("{") || trimmed.startsWith("[")) {
+            try {
+              jsonContent = JSON.parse(content)
+            } catch {
+              // Not valid JSON, return as-is (might be HTML or plain text)
+              return new Handlebars.SafeString(content)
+            }
+          } else {
+            // Plain text or HTML, return as-is
+            return new Handlebars.SafeString(content)
+          }
+        } else {
+          // Already an object
+          jsonContent = content
+        }
+
+        // Convert ProseMirror JSON to HTML using TipTap
+        const html = generateHTML(jsonContent, [StarterKit])
+        return new Handlebars.SafeString(html)
+      } catch (error) {
+        logger.warn("Failed to convert rich text content to HTML:", error)
+        // Return content as-is if conversion fails
+        return typeof content === "string" ? new Handlebars.SafeString(content) : ""
+      }
     })
   }
 
@@ -1429,6 +1510,845 @@ export class PdfService {
       daysOverdue,
       customMessage
     )
+  }
+
+  /**
+   * Generate engagement letter PDF
+   */
+  public static async generateEngagementLetterPdf(
+    letterId: string,
+    generatedBy: string,
+    templateId?: string,
+    options: PdfGenerationOptions = {}
+  ): Promise<PdfGenerationResult> {
+    const instance = new PdfService()
+    return instance.generateEngagementLetterPdfInstance(letterId, generatedBy, templateId, options)
+  }
+
+  private async generateEngagementLetterPdfInstance(
+    letterId: string,
+    generatedBy: string,
+    templateId?: string,
+    options: PdfGenerationOptions = {}
+  ): Promise<PdfGenerationResult> {
+    try {
+      // Import models dynamically to avoid circular dependencies
+      const { EngagementLetter } = await import("../models/EngagementLetter")
+      const { EngagementLetterMember } = await import("../models/EngagementLetterMember")
+
+      const letter = await EngagementLetter.findByPk(letterId, {
+        include: [
+          { model: MedicalInstitution, as: "institution" },
+          { model: User, as: "assignedUser" },
+          {
+            model: EngagementLetterMember,
+            as: "members",
+            include: [
+              {
+                model: User,
+                as: "user",
+                attributes: ["id", "firstName", "lastName", "email"],
+              },
+            ],
+          },
+        ],
+      })
+
+      if (!letter) {
+        throw new Error(`Engagement letter with ID ${letterId} not found`)
+      }
+
+      // Get template
+      let template: DocumentTemplate
+      let isFallbackTemplate = false
+
+      if (templateId) {
+        const foundTemplate = await DocumentTemplate.findByPk(templateId)
+        if (!foundTemplate) {
+          throw new Error(`Template with ID ${templateId} not found`)
+        }
+        template = foundTemplate
+      } else {
+        // Try to find a default engagement letter template or use fallback
+        const defaultTemplate = await DocumentTemplate.findOne({
+          where: {
+            isActive: true,
+            type: TemplateType.ENGAGEMENT_LETTER,
+            isDefault: true,
+          },
+        })
+
+        if (defaultTemplate) {
+          template = defaultTemplate
+        } else {
+          // Try any active engagement letter template
+          const anyTemplate = await DocumentTemplate.findOne({
+            where: {
+              isActive: true,
+              type: TemplateType.ENGAGEMENT_LETTER,
+            },
+          })
+
+          if (anyTemplate) {
+            template = anyTemplate
+          } else {
+            // Use fallback - create a temporary template object
+            template = this.createEngagementLetterFallbackTemplate()
+            isFallbackTemplate = true
+          }
+        }
+      }
+
+      // Prepare data for rendering
+      const letterData = letter.toJSON ? letter.toJSON() : (letter as any)
+      const membersData = (letter.members || []).map((m: any) =>
+        m.toJSON ? m.toJSON() : m
+      )
+      const institutionData = letter.institution?.toJSON
+        ? letter.institution.toJSON()
+        : letter.institution
+      const assignedUserData = letter.assignedUser?.toJSON
+        ? letter.assignedUser.toJSON()
+        : letter.assignedUser
+
+      // Calculate team totals
+      const teamTotal = membersData.reduce((sum: number, m: any) => {
+        const rate = Number(m.dailyRate || m.daily_rate || 0)
+        const days = Number(m.estimatedDays || m.estimated_days || 0)
+        return sum + rate * days
+      }, 0)
+
+      const html = await this.renderEngagementLetterTemplate(template, {
+        letter: letterData,
+        members: membersData,
+        institution: institutionData,
+        assignedUser: assignedUserData,
+        generatedAt: new Date(),
+        companyName: template.companyName,
+        companyAddress: template.companyAddress,
+        teamTotal,
+      })
+
+      const pdfBuffer = await this.generatePdfFromHtml(html, options)
+
+      let filePath: string | undefined
+      let version: DocumentVersion | undefined
+
+      if (options.saveToFile !== false) {
+        // Ensure engagement-letters directory exists
+        const engagementLettersPath = join(this.documentsPath, "engagement-letters")
+        await this.ensureDirectoryExists(engagementLettersPath)
+
+        const nextVersion = await DocumentVersion.getNextVersion(
+          letterId,
+          DocumentVersionType.ENGAGEMENT_LETTER_PDF
+        )
+        const fileName = `EngagementLetter-${letterData.letterNumber}-v${nextVersion}.pdf`
+        filePath = join(engagementLettersPath, fileName)
+
+        await writeFile(filePath, pdfBuffer)
+
+        // Create document version record
+        version = await DocumentVersion.createVersion({
+          documentId: letterId,
+          documentType: DocumentVersionType.ENGAGEMENT_LETTER_PDF,
+          templateId: isFallbackTemplate ? undefined : template.id,
+          fileName,
+          filePath,
+          fileSize: pdfBuffer.length,
+          mimeType: "application/pdf",
+          generatedBy,
+          generatedAt: new Date(),
+          templateSnapshot: template.toJSON ? template.toJSON() : template,
+        })
+      }
+
+      return {
+        buffer: pdfBuffer,
+        filePath,
+        version,
+      }
+    } catch (error) {
+      logger.error("Error generating engagement letter PDF:", error)
+      throw new Error(`Failed to generate engagement letter PDF: ${(error as Error).message}`)
+    }
+  }
+
+  private createEngagementLetterFallbackTemplate(): DocumentTemplate {
+    // Create a mock template object with default values
+    return {
+      id: "fallback",
+      name: "Default Engagement Letter Template",
+      type: TemplateType.ENGAGEMENT_LETTER,
+      isDefault: true,
+      isActive: true,
+      companyName: "Company Name",
+      companyAddress: {
+        street: "",
+        city: "",
+        state: "",
+        zipCode: "",
+        country: "",
+      },
+      logoPosition: "top_left" as any,
+      htmlTemplate: this.getDefaultEngagementLetterTemplate(),
+      styles: this.getDefaultStyles(),
+      toJSON: function () {
+        return this
+      },
+    } as any
+  }
+
+  private async renderEngagementLetterTemplate(
+    template: DocumentTemplate,
+    data: any
+  ): Promise<string> {
+    // Use custom HTML template if available, otherwise use default
+    const htmlTemplate =
+      template.htmlTemplate || this.getDefaultEngagementLetterTemplate()
+    const styles = `${this.getDefaultStyles()}\n${template.styles || ""}`
+
+    // Register Handlebars helpers
+    this.registerHandlebarsHelpers()
+
+    // Allow styles to use Handlebars variables
+    const styleTemplate = Handlebars.compile(styles)
+    const styleHtml = styleTemplate({
+      ...data,
+      template: template.toJSON ? template.toJSON() : template,
+    })
+
+    const compiledTemplate = Handlebars.compile(htmlTemplate)
+    const html = compiledTemplate({
+      ...data,
+      template: template.toJSON ? template.toJSON() : template,
+    })
+
+    return `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="utf-8">
+          <style>${styleHtml}</style>
+        </head>
+        <body>
+          ${html}
+        </body>
+      </html>
+    `
+  }
+
+  private getDefaultEngagementLetterTemplate(): string {
+    return `
+      <style>
+        /* Engagement Letter Specific Styles */
+        .el-document {
+          font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+          font-size: 11pt;
+          line-height: 1.6;
+          color: #333;
+          padding: 40px;
+        }
+
+        .el-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: flex-start;
+          padding-bottom: 25px;
+          border-bottom: 3px solid #1a237e;
+          margin-bottom: 30px;
+        }
+
+        .el-company {
+          font-size: 18pt;
+          font-weight: 700;
+          color: #1a237e;
+          margin-bottom: 8px;
+        }
+
+        .el-company-details {
+          font-size: 9pt;
+          color: #666;
+          line-height: 1.5;
+        }
+
+        .el-document-title {
+          text-align: center;
+          font-size: 20pt;
+          font-weight: 700;
+          color: #1a237e;
+          margin: 30px 0;
+          padding: 15px;
+          background: #f5f5f5;
+          border-radius: 4px;
+        }
+
+        .el-document-info {
+          display: flex;
+          justify-content: space-between;
+          margin-bottom: 30px;
+          font-size: 10pt;
+        }
+
+        .el-document-info-ref {
+          text-align: left;
+        }
+
+        .el-document-info-dates {
+          text-align: right;
+        }
+
+        .el-document-info p {
+          margin: 0 0 4px 0;
+        }
+
+        .el-parties {
+          display: flex;
+          justify-content: space-between;
+          margin-bottom: 35px;
+          gap: 40px;
+        }
+
+        .el-party {
+          flex: 1;
+          padding: 20px;
+          background: #fafafa;
+          border-radius: 6px;
+          border-left: 2px solid #1a237e;
+        }
+
+        .el-party-label {
+          font-size: 9pt;
+          font-weight: 600;
+          text-transform: uppercase;
+          color: #888;
+          letter-spacing: 1px;
+          margin-bottom: 10px;
+        }
+
+        .el-party-name {
+          font-size: 12pt;
+          font-weight: 700;
+          color: #333;
+          margin-bottom: 8px;
+        }
+
+        .el-party p {
+          margin: 3px 0;
+          font-size: 10pt;
+          color: #555;
+        }
+
+        .el-section {
+          margin-bottom: 30px;
+        }
+
+        .el-section-title {
+          font-size: 14pt;
+          font-weight: 700;
+          color: #1a237e;
+          margin-bottom: 15px;
+          padding-bottom: 8px;
+          border-bottom: 2px solid #e0e0e0;
+        }
+
+        .el-subsection-title {
+          font-size: 11pt;
+          font-weight: 600;
+          color: #333;
+          margin: 20px 0 10px 0;
+        }
+
+        .el-mission-header {
+          display: flex;
+          align-items: center;
+          gap: 15px;
+          margin-bottom: 20px;
+        }
+
+        .el-mission-title {
+          font-size: 16pt;
+          font-weight: 700;
+          color: #333;
+          margin: 0;
+        }
+
+        .el-mission-type {
+          display: inline-block;
+          padding: 4px 12px;
+          background: #e8eaf6;
+          color: #1a237e;
+          border-radius: 4px;
+          font-size: 10pt;
+          font-weight: 600;
+          white-space: nowrap;
+        }
+
+        /* Rich text content styling */
+        .el-rich-content {
+          background: #fafafa;
+          padding: 15px 20px;
+          border-radius: 6px;
+          margin: 10px 0;
+        }
+
+        .el-rich-content p {
+          margin: 8px 0;
+        }
+
+        .el-rich-content ul, .el-rich-content ol {
+          margin: 10px 0;
+          padding-left: 25px;
+        }
+
+        .el-rich-content li {
+          margin: 5px 0;
+        }
+
+        .el-rich-content strong, .el-rich-content b {
+          font-weight: 600;
+        }
+
+        .el-objectives ul {
+          list-style: none;
+          padding: 0;
+          margin: 0;
+        }
+
+        .el-objectives li {
+          padding: 10px 15px;
+          background: #f5f5f5;
+          margin: 8px 0;
+          border-radius: 4px;
+          border-left: 3px solid #1a237e;
+        }
+
+        .el-deliverables-table {
+          width: 100%;
+          border-collapse: collapse;
+          margin-top: 10px;
+        }
+
+        .el-deliverables-table th {
+          background: #e8eaf6;
+          padding: 12px 15px;
+          text-align: left;
+          font-weight: 600;
+          font-size: 10pt;
+          color: #1a237e;
+        }
+
+        .el-deliverables-table td {
+          padding: 12px 15px;
+          border-bottom: 1px solid #eee;
+          font-size: 10pt;
+        }
+
+        .el-timeline-grid {
+          display: flex;
+          gap: 20px;
+          background: #f5f5f5;
+          padding: 15px 20px;
+          border-radius: 6px;
+        }
+
+        .el-timeline-item {
+          flex: 1;
+        }
+
+        .el-timeline-label {
+          font-size: 9pt;
+          color: #666;
+          margin-bottom: 4px;
+        }
+
+        .el-timeline-value {
+          font-size: 11pt;
+          font-weight: 600;
+          color: #333;
+        }
+
+        /* Team table styles */
+        .el-team-table {
+          width: 100%;
+          border-collapse: collapse;
+          margin-top: 15px;
+          font-size: 10pt;
+        }
+
+        .el-team-table thead {
+          background: #1a237e;
+        }
+
+        .el-team-table th {
+          padding: 12px 10px;
+          text-align: left;
+          font-weight: 600;
+          color: white;
+          font-size: 9pt;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+        }
+
+        .el-team-table tbody tr:nth-child(even) {
+          background: #f9f9f9;
+        }
+
+        .el-team-table tbody tr:hover {
+          background: #f0f0f0;
+        }
+
+        .el-team-table td {
+          padding: 12px 10px;
+          border-bottom: 1px solid #e0e0e0;
+          vertical-align: middle;
+        }
+
+        .el-team-lead {
+          display: inline-block;
+          padding: 2px 6px;
+          background: #1a237e;
+          color: white;
+          border-radius: 3px;
+          font-size: 8pt;
+          margin-left: 8px;
+        }
+
+        .el-team-table tfoot {
+          background: #e8eaf6;
+        }
+
+        .el-team-table tfoot td {
+          padding: 12px 10px;
+          font-weight: 700;
+          border-top: 2px solid #1a237e;
+        }
+
+        /* Financial section */
+        .el-financial-box {
+          background: #f5f5f5;
+          padding: 20px;
+          border-radius: 6px;
+          margin-top: 15px;
+        }
+
+        .el-financial-row {
+          display: flex;
+          justify-content: space-between;
+          padding: 8px 0;
+          border-bottom: 1px solid #e0e0e0;
+        }
+
+        .el-financial-row:last-child {
+          border-bottom: none;
+        }
+
+        .el-financial-total {
+          font-size: 14pt;
+          font-weight: 700;
+          color: #1a237e;
+          padding-top: 15px;
+          margin-top: 10px;
+          border-top: 2px solid #1a237e;
+        }
+
+        /* Terms section */
+        .el-terms {
+          background: #fafafa;
+          padding: 20px;
+          border-radius: 6px;
+          font-size: 9pt;
+          color: #555;
+          line-height: 1.7;
+        }
+
+        /* Signatures section */
+        .el-signatures {
+          display: flex;
+          justify-content: space-between;
+          gap: 60px;
+          margin-top: 50px;
+          padding-top: 30px;
+          border-top: 2px solid #e0e0e0;
+        }
+
+        .el-signature-block {
+          flex: 1;
+          text-align: center;
+        }
+
+        .el-signature-title {
+          font-size: 11pt;
+          font-weight: 700;
+          color: #333;
+          margin-bottom: 60px;
+        }
+
+        .el-signature-line {
+          border-bottom: 1px solid #333;
+          margin-bottom: 10px;
+        }
+
+        .el-signature-label {
+          font-size: 9pt;
+          color: #666;
+          margin-bottom: 5px;
+        }
+
+        .el-signature-date {
+          font-size: 10pt;
+          margin-top: 15px;
+        }
+
+        .el-signature-note {
+          font-size: 9pt;
+          font-style: italic;
+          color: #666;
+          margin-top: 10px;
+        }
+
+        /* Footer */
+        .el-footer {
+          margin-top: 40px;
+          padding-top: 15px;
+          border-top: 1px solid #e0e0e0;
+          font-size: 8pt;
+          color: #888;
+          text-align: center;
+        }
+      </style>
+
+      <div class="el-document">
+        <div class="el-header">
+          <div>
+            <div class="el-company">{{companyName}}</div>
+            <div class="el-company-details">
+              {{#if companyAddress.street}}{{companyAddress.street}}<br>{{/if}}
+              {{#if companyAddress.city}}{{companyAddress.zipCode}} {{companyAddress.city}}<br>{{/if}}
+              {{#if companyAddress.country}}{{companyAddress.country}}{{/if}}
+              {{#if companyPhone}}<br>Tél: {{companyPhone}}{{/if}}
+              {{#if companyEmail}}<br>{{companyEmail}}{{/if}}
+            </div>
+          </div>
+        </div>
+
+        <div class="el-document-title">LETTRE DE MISSION</div>
+
+        <div class="el-document-info">
+          <div class="el-document-info-ref">
+            <p><strong>Référence :</strong> {{letter.letterNumber}}</p>
+          </div>
+          <div class="el-document-info-dates">
+            <p><strong>Date :</strong> {{formatDate generatedAt}}</p>
+            <p><strong>Validité :</strong> {{formatDate letter.validUntil}}</p>
+          </div>
+        </div>
+
+        <div class="el-parties">
+          <div class="el-party">
+            <div class="el-party-label">Prestataire</div>
+            <div class="el-party-name">{{companyName}}</div>
+            {{#if companyAddress.street}}<p>{{companyAddress.street}}</p>{{/if}}
+            {{#if companyAddress.city}}<p>{{companyAddress.zipCode}} {{companyAddress.city}}</p>{{/if}}
+          </div>
+          <div class="el-party">
+            <div class="el-party-label">Client</div>
+            {{#if institution}}
+              <div class="el-party-name">{{institution.name}}</div>
+              {{#if institution.address}}
+                <p>{{institution.address.street}}</p>
+                <p>{{institution.address.zipCode}} {{institution.address.city}}</p>
+              {{/if}}
+            {{/if}}
+          </div>
+        </div>
+
+        <div class="el-section">
+          <div class="el-section-title">Objet de la Mission</div>
+          <div class="el-mission-header">
+            <div class="el-mission-title">{{letter.title}}</div>
+            <span class="el-mission-type">
+              {{#eq letter.missionType "audit"}}Audit{{/eq}}
+              {{#eq letter.missionType "conseil"}}Conseil{{/eq}}
+              {{#eq letter.missionType "formation"}}Formation{{/eq}}
+              {{#eq letter.missionType "autre"}}Autre{{/eq}}
+            </span>
+          </div>
+
+          {{#if letter.scope}}
+            <div class="el-subsection-title">Périmètre de la mission</div>
+            <div class="el-rich-content">
+              {{richText letter.scope}}
+            </div>
+          {{/if}}
+
+          {{#if letter.objectives.length}}
+            <div class="el-subsection-title">Objectifs</div>
+            <div class="el-objectives">
+              <ul>
+                {{#each letter.objectives}}
+                  <li>{{this}}</li>
+                {{/each}}
+              </ul>
+            </div>
+          {{/if}}
+
+          {{#if letter.deliverables.length}}
+            <div class="el-subsection-title">Livrables attendus</div>
+            <table class="el-deliverables-table">
+              <thead>
+                <tr>
+                  <th style="width: 30%;">Livrable</th>
+                  <th style="width: 50%;">Description</th>
+                  <th style="width: 20%;">Échéance</th>
+                </tr>
+              </thead>
+              <tbody>
+                {{#each letter.deliverables}}
+                  <tr>
+                    <td><strong>{{this.name}}</strong></td>
+                    <td>{{this.description}}</td>
+                    <td>{{#if this.dueDate}}{{formatDate this.dueDate}}{{else}}-{{/if}}</td>
+                  </tr>
+                {{/each}}
+              </tbody>
+            </table>
+          {{/if}}
+        </div>
+
+        {{#if letter.startDate}}
+          <div class="el-section">
+            <div class="el-section-title">Planning Prévisionnel</div>
+            <div class="el-timeline-grid">
+              <div class="el-timeline-item">
+                <div class="el-timeline-label">Date de début</div>
+                <div class="el-timeline-value">{{formatDate letter.startDate}}</div>
+              </div>
+              {{#if letter.endDate}}
+                <div class="el-timeline-item">
+                  <div class="el-timeline-label">Date de fin prévue</div>
+                  <div class="el-timeline-value">{{formatDate letter.endDate}}</div>
+                </div>
+              {{/if}}
+              {{#if letter.estimatedHours}}
+                <div class="el-timeline-item">
+                  <div class="el-timeline-label">Volume estimé</div>
+                  <div class="el-timeline-value">{{letter.estimatedHours}} heures</div>
+                </div>
+              {{/if}}
+            </div>
+          </div>
+        {{/if}}
+
+        {{#if members.length}}
+          <div class="el-section">
+            <div class="el-section-title">Équipe Intervenante</div>
+            <table class="el-team-table">
+              <thead>
+                <tr>
+                  <th style="width: 35%;">Intervenant</th>
+                  <th style="width: 30%;">Fonction</th>
+                  <th style="width: 35%;">Qualification</th>
+                </tr>
+              </thead>
+              <tbody>
+                {{#each members}}
+                  <tr>
+                    <td>
+                      {{this.name}}
+                      {{#if this.isLead}}<span class="el-team-lead">Chef de mission</span>{{/if}}
+                    </td>
+                    <td>{{this.role}}</td>
+                    <td>{{this.qualification}}</td>
+                  </tr>
+                {{/each}}
+              </tbody>
+            </table>
+          </div>
+        {{/if}}
+
+        <div class="el-section">
+          <div class="el-section-title">Conditions Financières</div>
+          <div class="el-financial-box">
+            <div class="el-financial-row">
+              <span>Taux journalier HT</span>
+              <strong>{{formatCurrency letter.rate}}</strong>
+            </div>
+            <div class="el-financial-row">
+              <span>Nombre de jours</span>
+              <strong>{{letter.totalDays}}</strong>
+            </div>
+            <div class="el-financial-row">
+              <span>Sous-total honoraires</span>
+              <strong>{{formatCurrency (multiply letter.rate letter.totalDays)}}</strong>
+            </div>
+            {{#if letter.travelExpenses}}
+              <div class="el-financial-row">
+                <span>Frais de déplacement</span>
+                <strong>{{formatCurrency letter.travelExpenses}}</strong>
+              </div>
+            {{/if}}
+            <div class="el-financial-row el-financial-total">
+              <span>Montant Total HT</span>
+              <span>{{formatCurrency letter.estimatedTotal}}</span>
+            </div>
+            {{#if letter.showVat}}
+              <div class="el-financial-row" style="margin-top: 10px;">
+                <span>TVA ({{letter.vatRate}}%)</span>
+                <strong>{{formatCurrency (vatAmount letter.estimatedTotal letter.vatRate)}}</strong>
+              </div>
+              <div class="el-financial-row el-financial-total">
+                <span>Montant Total TTC</span>
+                <span>{{formatCurrency (totalWithVat letter.estimatedTotal letter.vatRate)}}</span>
+              </div>
+            {{/if}}
+          </div>
+        </div>
+
+        {{#if letter.termsAndConditions}}
+          <div class="el-section">
+            <div class="el-section-title">Conditions Générales</div>
+            <div class="el-terms">
+              {{richText letter.termsAndConditions}}
+            </div>
+          </div>
+        {{/if}}
+
+        <div class="el-signatures">
+          <div class="el-signature-block">
+            <div class="el-signature-title">Pour le Prestataire</div>
+            <div class="el-signature-label">{{companyName}}</div>
+            <div class="el-signature-line"></div>
+            <div class="el-signature-date">
+              <span class="el-signature-label">Date :</span>
+              _______________________
+            </div>
+            <div class="el-signature-date">
+              <span class="el-signature-label">Signature :</span>
+            </div>
+          </div>
+          <div class="el-signature-block">
+            <div class="el-signature-title">Pour le Client</div>
+            {{#if institution}}
+              <div class="el-signature-label">{{institution.name}}</div>
+            {{/if}}
+            <div class="el-signature-line"></div>
+            <div class="el-signature-date">
+              <span class="el-signature-label">Date :</span>
+              _______________________
+            </div>
+            <div class="el-signature-date">
+              <span class="el-signature-label">Signature :</span>
+            </div>
+            <div class="el-signature-note">Lu et approuvé, bon pour accord</div>
+          </div>
+        </div>
+
+        <div class="el-footer">
+          Document généré le {{formatDate generatedAt}} - Réf. {{letter.letterNumber}}
+        </div>
+      </div>
+    `
   }
 
   public async cleanup(): Promise<void> {

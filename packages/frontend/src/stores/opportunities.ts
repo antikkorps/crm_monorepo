@@ -88,7 +88,7 @@ export const useOpportunitiesStore = defineStore("opportunities", () => {
     }
   }
 
-  const fetchPipeline = async (filters?: { assignedUserId?: string; institutionId?: string }) => {
+  const fetchPipeline = async (filters?: { assignedUserId?: string; institutionId?: string; includeArchived?: boolean }) => {
     loading.value = true
     error.value = null
 
@@ -201,16 +201,10 @@ export const useOpportunitiesStore = defineStore("opportunities", () => {
           stageData.opportunities = stageData.opportunities.filter((opp) => opp.id !== id)
         })
 
-        // Add to new stage if active
-        if (
-          updated.status === "active" &&
-          stage !== "closed_won" &&
-          stage !== "closed_lost"
-        ) {
-          const stageData = pipeline.value.find((s) => s.stage === stage)
-          if (stageData) {
-            stageData.opportunities.push(updated)
-          }
+        // Add to new stage (including closed stages)
+        const stageData = pipeline.value.find((s) => s.stage === stage)
+        if (stageData) {
+          stageData.opportunities.push(updated)
         }
       }
 

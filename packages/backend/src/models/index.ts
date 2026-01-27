@@ -1,10 +1,13 @@
 // Model exports and associations setup
 import { Call } from "./Call"
 import { CatalogItem } from "./CatalogItem"
+import { CgvTemplate } from "./CgvTemplate"
 import { Comment } from "./Comment"
 import { ContactPerson } from "./ContactPerson"
 import { DocumentTemplate } from "./DocumentTemplate"
 import { DocumentVersion } from "./DocumentVersion"
+import { EngagementLetter } from "./EngagementLetter"
+import { EngagementLetterMember } from "./EngagementLetterMember"
 import { Invoice } from "./Invoice"
 import { InvoiceLine } from "./InvoiceLine"
 import { MedicalInstitution } from "./MedicalInstitution"
@@ -902,14 +905,82 @@ MedicalInstitution.hasMany(DigiformaInstitutionMapping, {
   onDelete: 'CASCADE',
 })
 
+// EngagementLetter associations
+EngagementLetter.belongsTo(MedicalInstitution, {
+  foreignKey: "institutionId",
+  as: "institution",
+  onDelete: "CASCADE",
+})
+
+EngagementLetter.belongsTo(User, {
+  foreignKey: "assignedUserId",
+  as: "assignedUser",
+  onDelete: "CASCADE",
+})
+
+EngagementLetter.belongsTo(DocumentTemplate, {
+  foreignKey: "templateId",
+  as: "template",
+  onDelete: "SET NULL",
+})
+
+EngagementLetter.hasMany(EngagementLetterMember, {
+  foreignKey: "engagementLetterId",
+  as: "members",
+  onDelete: "CASCADE",
+})
+
+// EngagementLetterMember associations
+EngagementLetterMember.belongsTo(EngagementLetter, {
+  foreignKey: "engagementLetterId",
+  as: "engagementLetter",
+  onDelete: "CASCADE",
+})
+
+EngagementLetterMember.belongsTo(User, {
+  foreignKey: "userId",
+  as: "user",
+  onDelete: "SET NULL",
+})
+
+// User engagement letter associations
+User.hasMany(EngagementLetter, {
+  foreignKey: "assignedUserId",
+  as: "assignedEngagementLetters",
+  onDelete: "CASCADE",
+})
+
+User.hasMany(EngagementLetterMember, {
+  foreignKey: "userId",
+  as: "engagementLetterMemberships",
+  onDelete: "SET NULL",
+})
+
+// MedicalInstitution engagement letter associations
+MedicalInstitution.hasMany(EngagementLetter, {
+  foreignKey: "institutionId",
+  as: "engagementLetters",
+  onDelete: "CASCADE",
+})
+
+// DocumentTemplate engagement letter associations
+DocumentTemplate.hasMany(EngagementLetter, {
+  foreignKey: "templateId",
+  as: "engagementLetters",
+  onDelete: "SET NULL",
+})
+
 // Export all models
 export {
   Call,
   CatalogItem,
+  CgvTemplate,
   Comment,
   ContactPerson,
   DocumentTemplate,
   DocumentVersion,
+  EngagementLetter,
+  EngagementLetterMember,
   Invoice,
   InvoiceLine,
   MedicalInstitution,
@@ -959,6 +1030,8 @@ export default {
   Quote,
   QuoteLine,
   QuoteReminder,
+  EngagementLetter,
+  EngagementLetterMember,
   Invoice,
   InvoiceLine,
   Payment,

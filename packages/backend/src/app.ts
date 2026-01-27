@@ -15,9 +15,11 @@ import avatarRoutes from "./routes/avatars"
 import billingAnalyticsRoutes from "./routes/billing-analytics"
 import callRoutes from "./routes/calls"
 import catalogRoutes from "./routes/catalog"
+import cgvTemplateRoutes from "./routes/cgv-templates"
 import contactRoutes from "./routes/contacts"
 import dashboardRoutes from "./routes/dashboard"
 import digiformaRoutes from "./routes/digiforma"
+import engagementLetterRoutes from "./routes/engagement-letters"
 import exportRoutes from "./routes/export"
 import filterOptionsRoutes from "./routes/filterOptions"
 import importRoutes from "./routes/import"
@@ -165,6 +167,10 @@ export const createApp = (): Koa => {
   app.use(catalogRoutes.routes())
   app.use(catalogRoutes.allowedMethods())
 
+  // Apply CGV template routes
+  app.use(cgvTemplateRoutes.routes())
+  app.use(cgvTemplateRoutes.allowedMethods())
+
   // Apply contact routes
   app.use(contactRoutes.routes())
   app.use(contactRoutes.allowedMethods())
@@ -196,6 +202,10 @@ export const createApp = (): Koa => {
   // Apply quote routes
   app.use(quoteRoutes.routes())
   app.use(quoteRoutes.allowedMethods())
+
+  // Apply engagement letter routes
+  app.use(engagementLetterRoutes.routes())
+  app.use(engagementLetterRoutes.allowedMethods())
 
   // Apply reminder routes
   app.use(reminderRoutes.routes())

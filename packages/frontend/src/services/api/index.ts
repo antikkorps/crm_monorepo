@@ -671,6 +671,9 @@ export const catalogApi = {
 // Export Digiforma API
 export { digiformaApi } from './digiforma'
 
+// Export Engagement Letters API
+export { engagementLettersApi } from './engagement-letters'
+
 // Export Dashboard API
 export { dashboardApi } from './dashboard'
 

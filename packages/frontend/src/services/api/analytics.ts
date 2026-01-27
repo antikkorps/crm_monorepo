@@ -123,8 +123,10 @@ export interface NextBestAction {
   institutionId: string
   institutionName: string
   priority: "urgent" | "high" | "medium" | "low"
-  action: string
-  reason: string
+  actionKey: string
+  actionParams?: Record<string, string | number>
+  reasonKey: string
+  reasonParams?: Record<string, string | number>
   category: "follow_up" | "upsell" | "retention" | "reactivation" | "closing"
   dueDate?: string
   relatedData?: {
