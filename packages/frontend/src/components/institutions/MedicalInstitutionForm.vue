@@ -159,7 +159,7 @@
         <v-window-item value="assignment">
           <div class="formgrid grid">
             <div class="field col-12">
-              <v-select v-model="form.assignedUserId" :items="userOptions" item-title="label" item-value="value" label="Assigned User" clearable hint="Assign this institution to a team member for management" persistent-hint />
+              <v-select v-model="form.assignedUserId" :items="userOptions" item-title="label" item-value="value" label="Utilisateur assigné" clearable hint="Assigner cette institution à un membre de l'équipe" persistent-hint />
             </div>
           </div>
         </v-window-item>
@@ -185,7 +185,8 @@ import type {
   MedicalInstitutionCreationAttributes,
 } from "@medical-crm/shared"
 import { CommercialStatus } from "@medical-crm/shared"
-import { computed, reactive, ref, watch } from "vue"
+import { computed, onMounted, reactive, ref, watch } from "vue"
+import { usersApi } from "@/services/api"
 
 interface Props {
   institution?: MedicalInstitution
@@ -290,10 +291,28 @@ const specialtyOptions = [
   { label: "Otolaryngology", value: "otolaryngology" },
 ]
 
-const userOptions = ref([
-  { label: "John Doe", value: "user1" },
-  { label: "Jane Smith", value: "user2" },
-])
+const userOptions = ref<{ label: string; value: string }[]>([])
+
+// Load users on mount
+const loadUsers = async () => {
+  try {
+    const response = await usersApi.getAll({ isActive: true })
+    // API returns { success: true, data: [...users] }
+    const users = (response as any).data || (response as any).users || response
+    if (Array.isArray(users)) {
+      userOptions.value = users.map((user: any) => ({
+        label: `${user.firstName} ${user.lastName}`,
+        value: user.id,
+      }))
+    }
+  } catch (error) {
+    console.error("Failed to load users:", error)
+  }
+}
+
+onMounted(() => {
+  loadUsers()
+})
 
 // Initialize form with institution data if editing
 watch(

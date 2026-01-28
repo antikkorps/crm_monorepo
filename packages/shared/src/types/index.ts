@@ -8,6 +8,7 @@ export * from "./engagement-letter"
 export * from "./medical-institution"
 export * from "./opportunity"
 export * from "./segmentation"
+export * from "./simplified-transaction"
 export * from "./task"
 export * from "./user"
 

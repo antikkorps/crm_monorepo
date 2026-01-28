@@ -20,6 +20,11 @@
       </div>
     </div>
 
+    <BackToInstitutionBanner
+      :institution-id="fromInstitution"
+      :show-back-to-list="false"
+    />
+
     <div class="letter-form">
       <!-- Basic Information -->
       <v-card class="form-section mb-6">
@@ -672,6 +677,8 @@ import type {
 } from "@medical-crm/shared"
 import { computed, onMounted, ref, watch } from "vue"
 import { useI18n } from "vue-i18n"
+import { useRoute } from "vue-router"
+import BackToInstitutionBanner from "@/components/common/BackToInstitutionBanner.vue"
 
 const { t } = useI18n()
 
@@ -685,6 +692,10 @@ const emit = defineEmits<{
   saved: []
   cancelled: []
 }>()
+
+// Router state
+const route = useRoute()
+const fromInstitution = computed(() => route.query.fromInstitution as string | undefined)
 
 // Reactive state
 const institutionsStore = useInstitutionsStore()

@@ -1,9 +1,10 @@
-import { formatCurrency } from "@medical-crm/shared";
+import { formatCurrency, SimplifiedTransactionType, SimplifiedTransactionStatus } from "@medical-crm/shared";
 import { Op } from "sequelize";
 import { sequelize } from "../config/database";
 import { Invoice } from "../models/Invoice";
 import { MedicalInstitution } from "../models/MedicalInstitution";
 import { Quote } from "../models/Quote";
+import { SimplifiedTransaction } from "../models/SimplifiedTransaction";
 import { Task } from "../models/Task";
 import { Team } from "../models/Team";
 import { User, UserRole } from "../models/User";
@@ -257,6 +258,8 @@ export class DashboardController {
     invoicesCount: number;
     avgQuoteValue: number;
     avgInvoiceValue: number;
+    externalQuotesCount: number;
+    externalInvoicesCount: number;
   }> {
     const whereClause: any = {
       createdAt: {
@@ -268,6 +271,13 @@ export class DashboardController {
     if (user.role !== UserRole.SUPER_ADMIN && user.teamId) {
       whereClause.teamId = user.teamId;
     }
+
+    // Simplified transactions use 'date' field instead of 'createdAt'
+    const simplifiedWhereClause: any = {
+      date: {
+        [Op.between]: [startDate, endDate],
+      },
+    };
 
     // Get invoice metrics
     const invoices = await Invoice.findAll({
@@ -291,20 +301,75 @@ export class DashboardController {
       raw: true,
     });
 
+    // Get simplified transaction metrics (external references)
+    const simplifiedInvoices = await SimplifiedTransaction.findAll({
+      where: {
+        ...simplifiedWhereClause,
+        type: SimplifiedTransactionType.INVOICE,
+      },
+      attributes: [
+        [sequelize.fn("COUNT", sequelize.col("id")), "count"],
+        [sequelize.fn("SUM", sequelize.col("amount_ttc")), "totalRevenue"],
+      ],
+      raw: true,
+    });
+
+    const simplifiedPaidInvoices = await SimplifiedTransaction.findAll({
+      where: {
+        ...simplifiedWhereClause,
+        type: SimplifiedTransactionType.INVOICE,
+        [Op.or]: [
+          { status: SimplifiedTransactionStatus.PAID },
+          { paymentStatus: "paid" },
+        ],
+      },
+      attributes: [
+        [sequelize.fn("SUM", sequelize.col("amount_ttc")), "paidRevenue"],
+      ],
+      raw: true,
+    });
+
+    const simplifiedQuotes = await SimplifiedTransaction.findAll({
+      where: {
+        ...simplifiedWhereClause,
+        type: SimplifiedTransactionType.QUOTE,
+      },
+      attributes: [
+        [sequelize.fn("COUNT", sequelize.col("id")), "count"],
+      ],
+      raw: true,
+    });
+
     const invoiceData = invoices[0] as any;
     const quoteData = quotes[0] as any;
+    const simplifiedInvoiceData = simplifiedInvoices[0] as any;
+    const simplifiedPaidInvoiceData = simplifiedPaidInvoices[0] as any;
+    const simplifiedQuoteData = simplifiedQuotes[0] as any;
 
-    const totalRevenue = parseFloat(invoiceData?.totalRevenue || "0");
-    const paidRevenue = parseFloat(invoiceData?.paidRevenue || "0");
+    // Combine internal and external metrics
+    const internalTotalRevenue = parseFloat(invoiceData?.totalRevenue || "0");
+    const internalPaidRevenue = parseFloat(invoiceData?.paidRevenue || "0");
+    const externalTotalRevenue = parseFloat(simplifiedInvoiceData?.totalRevenue || "0");
+    const externalPaidRevenue = parseFloat(simplifiedPaidInvoiceData?.paidRevenue || "0");
+
+    const totalRevenue = internalTotalRevenue + externalTotalRevenue;
+    const paidRevenue = internalPaidRevenue + externalPaidRevenue;
+
+    const internalQuotesCount = Number.parseInt(quoteData?.count || "0");
+    const externalQuotesCount = Number.parseInt(simplifiedQuoteData?.count || "0");
+    const internalInvoicesCount = Number.parseInt(invoiceData?.count || "0");
+    const externalInvoicesCount = Number.parseInt(simplifiedInvoiceData?.count || "0");
 
     return {
       totalRevenue,
       paidRevenue,
       unpaidRevenue: totalRevenue - paidRevenue,
-      quotesCount: Number.parseInt(quoteData?.count || "0"),
-      invoicesCount: Number.parseInt(invoiceData?.count || "0"),
+      quotesCount: internalQuotesCount + externalQuotesCount,
+      invoicesCount: internalInvoicesCount + externalInvoicesCount,
       avgQuoteValue: parseFloat(quoteData?.avgValue || "0"),
       avgInvoiceValue: parseFloat(invoiceData?.avgValue || "0"),
+      externalQuotesCount,
+      externalInvoicesCount,
     };
   }
 
@@ -391,17 +456,36 @@ export class DashboardController {
       whereClause.teamId = user.teamId;
     }
 
-    const [quotesTotal, quotesAccepted] = await Promise.all([
+    // Simplified transactions use 'date' field instead of 'createdAt'
+    const simplifiedWhereClause: any = {
+      date: {
+        [Op.between]: [startDate, endDate],
+      },
+      type: SimplifiedTransactionType.QUOTE,
+    };
+
+    const [quotesTotal, quotesAccepted, externalQuotesTotal, externalQuotesAccepted] = await Promise.all([
       Quote.count({ where: whereClause }),
       Quote.count({ where: { ...whereClause, status: "accepted" } }),
+      SimplifiedTransaction.count({ where: simplifiedWhereClause }),
+      SimplifiedTransaction.count({
+        where: {
+          ...simplifiedWhereClause,
+          status: SimplifiedTransactionStatus.ACCEPTED
+        }
+      }),
     ]);
 
-    const rate = quotesTotal === 0 ? 0 : (quotesAccepted / quotesTotal) * 100;
+    // Combine internal and external quotes
+    const totalQuotes = quotesTotal + externalQuotesTotal;
+    const totalAccepted = quotesAccepted + externalQuotesAccepted;
+
+    const rate = totalQuotes === 0 ? 0 : (totalAccepted / totalQuotes) * 100;
 
     return {
       rate: Math.round(rate * 10) / 10,
-      quotesAccepted,
-      quotesTotal,
+      quotesAccepted: totalAccepted,
+      quotesTotal: totalQuotes,
     };
   }
 
@@ -428,13 +512,23 @@ export class DashboardController {
     const previousStartDate = new Date(startDate.getTime() - periodLength);
     const previousEndDate = new Date(startDate);
 
-    // Current period metrics
-    const [currentRevenue, currentClients, currentTasksCompleted] =
-      await Promise.all([
+    // Current period metrics (internal + external invoices)
+    const [
+      currentInternalRevenue,
+      currentExternalRevenue,
+      currentClients,
+      currentTasksCompleted
+    ] = await Promise.all([
         Invoice.sum("total", {
           where: {
             ...whereClause,
             createdAt: { [Op.between]: [startDate, endDate] },
+          },
+        }),
+        SimplifiedTransaction.sum("amountTtc", {
+          where: {
+            type: SimplifiedTransactionType.INVOICE,
+            date: { [Op.between]: [startDate, endDate] },
           },
         }),
         MedicalInstitution.count({
@@ -452,13 +546,23 @@ export class DashboardController {
         }),
       ]);
 
-    // Previous period metrics
-    const [previousRevenue, previousClients, previousTasksCompleted] =
-      await Promise.all([
+    // Previous period metrics (internal + external invoices)
+    const [
+      previousInternalRevenue,
+      previousExternalRevenue,
+      previousClients,
+      previousTasksCompleted
+    ] = await Promise.all([
         Invoice.sum("total", {
           where: {
             ...whereClause,
             createdAt: { [Op.between]: [previousStartDate, previousEndDate] },
+          },
+        }),
+        SimplifiedTransaction.sum("amountTtc", {
+          where: {
+            type: SimplifiedTransactionType.INVOICE,
+            date: { [Op.between]: [previousStartDate, previousEndDate] },
           },
         }),
         MedicalInstitution.count({
@@ -476,16 +580,16 @@ export class DashboardController {
         }),
       ]);
 
+    const currentRevenue = (currentInternalRevenue || 0) + (currentExternalRevenue || 0);
+    const previousRevenue = (previousInternalRevenue || 0) + (previousExternalRevenue || 0);
+
     const calculateGrowth = (current: number, previous: number): number => {
       if (previous === 0) return current > 0 ? 100 : 0;
       return Math.round(((current - previous) / previous) * 100 * 10) / 10;
     };
 
     return {
-      revenueGrowth: calculateGrowth(
-        currentRevenue || 0,
-        previousRevenue || 0
-      ),
+      revenueGrowth: calculateGrowth(currentRevenue, previousRevenue),
       clientsGrowth: calculateGrowth(currentClients, previousClients),
       tasksCompletedGrowth: calculateGrowth(
         currentTasksCompleted,
@@ -730,6 +834,84 @@ export class DashboardController {
             : null,
           icon: "mdi-receipt",
           color: "green",
+        }))
+      );
+    }
+
+    // Fetch recent simplified transactions / external references (if type filter allows)
+    if (!type || type === "external" || type === "simplified") {
+      const simplifiedTransactions = await SimplifiedTransaction.findAll({
+        order: [["date", "DESC"]],
+        limit: Math.ceil(limit / 4),
+        attributes: ["id", "type", "title", "referenceNumber", "amountTtc", "status", "date", "createdAt"],
+        include: [
+          {
+            model: MedicalInstitution,
+            as: "institution",
+            attributes: ["id", "name"],
+          },
+          {
+            model: User,
+            as: "createdBy",
+            attributes: ["id", "firstName", "lastName"],
+          },
+        ],
+      });
+
+      const getTypeLabel = (txType: string): string => {
+        const labels: Record<string, string> = {
+          quote: "Devis externe",
+          invoice: "Facture externe",
+          engagement_letter: "Lettre de mission externe",
+          contract: "Contrat externe",
+        };
+        return labels[txType] || "Référence externe";
+      };
+
+      const getTypeIcon = (txType: string): string => {
+        const icons: Record<string, string> = {
+          quote: "mdi-file-document-outline",
+          invoice: "mdi-receipt-text-outline",
+          engagement_letter: "mdi-file-sign",
+          contract: "mdi-file-document-edit-outline",
+        };
+        return icons[txType] || "mdi-link-variant";
+      };
+
+      const getTypeColor = (txType: string): string => {
+        const colors: Record<string, string> = {
+          quote: "orange",
+          invoice: "teal",
+          engagement_letter: "indigo",
+          contract: "deep-purple",
+        };
+        return colors[txType] || "grey";
+      };
+
+      activities.push(
+        ...simplifiedTransactions.map((tx: any) => ({
+          id: `simplified-${tx.id}`,
+          type: "external",
+          action: "created",
+          title: `${getTypeLabel(tx.type)} : ${tx.referenceNumber || tx.title}`,
+          description: `${formatCurrency(tx.amountTtc)} - ${tx.institution?.name || "N/A"}`,
+          entityId: tx.id,
+          entityType: "simplified_transaction",
+          timestamp: tx.date, // Use document date for chronological ordering
+          user: tx.createdBy
+            ? {
+                id: tx.createdBy.id,
+                name: `${tx.createdBy.firstName} ${tx.createdBy.lastName}`,
+              }
+            : null,
+          icon: getTypeIcon(tx.type),
+          color: getTypeColor(tx.type),
+          isExternal: true,
+          metadata: {
+            transactionType: tx.type,
+            referenceNumber: tx.referenceNumber,
+            status: tx.status,
+          },
         }))
       );
     }

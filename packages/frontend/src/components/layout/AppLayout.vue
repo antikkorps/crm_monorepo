@@ -591,6 +591,9 @@ const filteredBillingNavigation = computed(() => {
     if (item.value === "invoices") {
       return settingsStore.isInvoicesEnabled
     }
+    if (item.value === "engagement-letters") {
+      return settingsStore.isEngagementLettersEnabled
+    }
     // Templates, catalog, and analytics are always visible if any billing feature is enabled
     return settingsStore.isBillingEnabled
   })

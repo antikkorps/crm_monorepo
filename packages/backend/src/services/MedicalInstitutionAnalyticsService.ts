@@ -22,6 +22,7 @@ export class MedicalInstitutionAnalyticsService {
       totalQuotes: number
       totalInvoices: number
       totalEngagementLetters: number
+      totalSimplifiedTransactions: number
       upcomingMeetings: number
       pendingReminders: number
       openTasks: number
@@ -36,6 +37,7 @@ export class MedicalInstitutionAnalyticsService {
     recentQuotes: any[]
     recentInvoices: any[]
     recentEngagementLetters: any[]
+    recentSimplifiedTransactions: any[]
   }> {
     try {
       // Helper function to safely execute queries - returns empty array on error
@@ -52,7 +54,7 @@ export class MedicalInstitutionAnalyticsService {
       }
 
       // Get all collaboration data in parallel for performance
-      const [notes, meetings, calls, reminders, tasks, quotes, invoices, engagementLetters] = await Promise.all([
+      const [notes, meetings, calls, reminders, tasks, quotes, invoices, engagementLetters, simplifiedTransactions] = await Promise.all([
         // Get notes related to this institution
         safeQuery(async () => {
           const { Note } = await import("../models/Note")
@@ -168,6 +170,21 @@ export class MedicalInstitutionAnalyticsService {
             order: [["createdAt", "DESC"]],
           })
         }, 'engagementLetters'),
+        // Get simplified transactions (external references) related to this institution
+        safeQuery(async () => {
+          const { SimplifiedTransaction } = await import("../models/SimplifiedTransaction")
+          return SimplifiedTransaction.findAll({
+            where: { institutionId },
+            include: [
+              {
+                model: User,
+                as: "createdBy",
+                attributes: ["id", "firstName", "lastName", "email"],
+              },
+            ],
+            order: [["date", "DESC"]],
+          })
+        }, 'simplifiedTransactions'),
       ])
 
       // Calculate summary statistics
@@ -182,6 +199,7 @@ export class MedicalInstitutionAnalyticsService {
         totalQuotes: quotes.length,
         totalInvoices: invoices.length,
         totalEngagementLetters: engagementLetters.length,
+        totalSimplifiedTransactions: simplifiedTransactions.length,
         upcomingMeetings: meetings.filter(m => new Date(m.startDate) > new Date()).length,
         pendingReminders: reminders.filter(r => !r.isCompleted && new Date(r.reminderDate) > new Date()).length,
         openTasks: tasks.filter(t => t.status !== TaskStatus.COMPLETED && t.status !== TaskStatus.CANCELLED).length,
@@ -205,6 +223,7 @@ export class MedicalInstitutionAnalyticsService {
         recentQuotes: quotes.slice(0, 5),
         recentInvoices: invoices.slice(0, 5),
         recentEngagementLetters: engagementLetters.slice(0, 5),
+        recentSimplifiedTransactions: simplifiedTransactions.slice(0, 5),
       }
 
       logger.info("Collaboration data retrieved", {
@@ -281,7 +300,7 @@ export class MedicalInstitutionAnalyticsService {
       }
 
       // Get all interactions for this institution in parallel
-      const [notes, meetings, calls, reminders, tasks, quotes, invoices, engagementLetters] = await Promise.all([
+      const [notes, meetings, calls, reminders, tasks, quotes, invoices, engagementLetters, simplifiedTransactions] = await Promise.all([
         safeQuery(async () => {
           const { Note } = await import("../models/Note")
           return Note.findAll({
@@ -391,6 +410,19 @@ export class MedicalInstitutionAnalyticsService {
             ],
           })
         }, 'engagementLetters'),
+        safeQuery(async () => {
+          const { SimplifiedTransaction } = await import("../models/SimplifiedTransaction")
+          return SimplifiedTransaction.findAll({
+            where: whereClause,
+            include: [
+              {
+                model: User,
+                as: "createdBy",
+                attributes: ["id", "firstName", "lastName", "email"],
+              },
+            ],
+          })
+        }, 'simplifiedTransactions'),
       ])
 
       // Combine all interactions into a timeline
@@ -547,6 +579,40 @@ export class MedicalInstitutionAnalyticsService {
             acceptedAt: letter.acceptedAt,
             rejectedAt: letter.rejectedAt,
             completedAt: letter.completedAt,
+          },
+        })
+      })
+
+      // Add simplified transactions (external references) to timeline
+      // Use the document date (tx.date) as createdAt for proper chronological sorting
+      simplifiedTransactions.forEach(tx => {
+        timelineItems.push({
+          id: tx.id,
+          type: `simplified_${tx.type}`,
+          title: tx.referenceNumber ? `${tx.referenceNumber} - ${tx.title}` : tx.title,
+          description: tx.description || '',
+          user: tx.createdBy,
+          createdAt: tx.date, // Use document date for timeline sorting
+          isExternal: true,
+          metadata: {
+            transactionType: tx.type,
+            referenceNumber: tx.referenceNumber,
+            status: tx.status,
+            date: tx.date,
+            originalCreatedAt: tx.createdAt, // Keep original creation date in metadata
+            amountHt: tx.amountHt,
+            amountTtc: tx.amountTtc,
+            vatRate: tx.vatRate,
+            // Invoice-specific
+            paymentStatus: tx.paymentStatus,
+            paymentDate: tx.paymentDate,
+            paymentAmount: tx.paymentAmount,
+            dueDate: tx.dueDate,
+            // Contract-specific
+            contractType: tx.contractType,
+            contractStartDate: tx.contractStartDate,
+            contractEndDate: tx.contractEndDate,
+            isRecurring: tx.isRecurring,
           },
         })
       })

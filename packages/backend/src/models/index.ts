@@ -42,6 +42,7 @@ import { DigiformaSettings } from "./DigiformaSettings"
 import { DigiformaInstitutionMapping } from "./DigiformaInstitutionMapping"
 import { SageSettings } from "./SageSettings"
 import { SecurityLog } from "./SecurityLog"
+import { SimplifiedTransaction } from "./SimplifiedTransaction"
 import { SystemSettings } from "./SystemSettings"
 
 // Define associations
@@ -970,6 +971,33 @@ DocumentTemplate.hasMany(EngagementLetter, {
   onDelete: "SET NULL",
 })
 
+// SimplifiedTransaction associations
+SimplifiedTransaction.belongsTo(MedicalInstitution, {
+  foreignKey: "institutionId",
+  as: "institution",
+  onDelete: "CASCADE",
+})
+
+SimplifiedTransaction.belongsTo(User, {
+  foreignKey: "createdById",
+  as: "createdBy",
+  onDelete: "CASCADE",
+})
+
+// User simplified transaction associations
+User.hasMany(SimplifiedTransaction, {
+  foreignKey: "createdById",
+  as: "createdSimplifiedTransactions",
+  onDelete: "CASCADE",
+})
+
+// MedicalInstitution simplified transaction associations
+MedicalInstitution.hasMany(SimplifiedTransaction, {
+  foreignKey: "institutionId",
+  as: "simplifiedTransactions",
+  onDelete: "CASCADE",
+})
+
 // Export all models
 export {
   Call,
@@ -1001,6 +1029,7 @@ export {
   ReminderTemplate,
   ReminderNotificationLog,
   Segment,
+  SimplifiedTransaction,
   Task,
   Team,
   User,
@@ -1051,6 +1080,7 @@ export default {
   ReminderNotificationLog,
   ReminderTemplate,
   Segment,
+  SimplifiedTransaction,
   Webhook,
   WebhookLog,
   DigiformaSync,

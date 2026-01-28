@@ -2,6 +2,16 @@
   <AppLayout>
     <div class="quotes-view">
       <div v-if="!showBuilder">
+        <!-- Back to institution banner -->
+        <v-alert v-if="fromInstitution" type="info" variant="tonal" class="mb-4" closable>
+          <div class="d-flex align-center justify-space-between">
+            <span>Vous consultez les devis depuis une institution</span>
+            <v-btn variant="outlined" size="small" prepend-icon="mdi-arrow-left" @click="goBackToInstitution">
+              Retour à l'institution
+            </v-btn>
+          </div>
+        </v-alert>
+
         <div class="d-flex justify-space-between align-center mb-4">
           <div>
             <h1 class="text-h4 font-weight-bold">{{ t("quotes.title") }}</h1>
@@ -160,8 +170,13 @@ import { useAuthStore } from "@/stores/auth"
 import type { ApiResponse, Quote, QuoteStatus } from "@medical-crm/shared"
 import { computed, onMounted, ref } from "vue"
 import { useI18n } from "vue-i18n"
+import { useRoute, useRouter } from "vue-router"
 
 const { t } = useI18n()
+const route = useRoute()
+const router = useRouter()
+
+const fromInstitution = computed(() => route.query.fromInstitution as string | undefined)
 
 const quotes = ref<Quote[]>([])
 const loading = ref(false)
@@ -359,9 +374,13 @@ const handleQuoteSaved = (quote: Quote) => {
   showSnackbar(t("quotes.messages.saved"), "success")
 }
 
-const handleBuilderCancelled = () => {
+const handleBuilderCancelled = async () => {
   showBuilder.value = false
   selectedQuote.value = null
+  // Load the list if it wasn't loaded yet (direct navigation to a specific quote)
+  if (quotes.value.length === 0) {
+    await loadQuotes()
+  }
 }
 
 const formatCurrency = (amount: number) =>
@@ -403,7 +422,44 @@ const showSnackbar = (message: string, color: string = "info") => {
   snackbar.value = { visible: true, message, color }
 }
 
-onMounted(loadQuotes)
+const goBackToInstitution = () => {
+  if (fromInstitution.value) {
+    router.push(`/institutions/${fromInstitution.value}`)
+  }
+}
+
+onMounted(async () => {
+  // Scroll to top when navigating to this page
+  window.scrollTo(0, 0)
+
+  // Check if we need to open a specific quote BEFORE loading the list
+  const quoteId = route.query.id as string | undefined
+  if (quoteId) {
+    // Immediately show the builder to avoid flash of the list
+    showBuilder.value = true
+    // Load the specific quote directly
+    try {
+      const response = await quotesApi.getById(quoteId)
+      const fullQuote = ((response as any).data || (response as any)) as Quote
+      try {
+        const linesResp = await quotesApi.lines.getAll(quoteId)
+        const lines = (linesResp as any).data || []
+        ;(fullQuote as any).lines = lines
+      } catch (e) {
+        console.warn("Failed to fetch quote lines:", e)
+      }
+      selectedQuote.value = fullQuote
+    } catch (error) {
+      console.error("Failed to load quote from URL:", error)
+      showSnackbar("Devis non trouvé", "error")
+      // Fall back to showing the list
+      showBuilder.value = false
+      await loadQuotes()
+    }
+  } else {
+    await loadQuotes()
+  }
+})
 </script>
 
 <style scoped>

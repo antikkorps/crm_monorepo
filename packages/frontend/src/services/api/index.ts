@@ -698,6 +698,9 @@ export { opportunitiesApi } from './opportunities'
 // Export Revenue API
 export { revenueApi } from './revenue'
 
+// Export Simplified Transactions API
+export { simplifiedTransactionsApi } from './simplified-transactions'
+
 // Export Timeline API
 export { timelineApi } from './timeline'
 

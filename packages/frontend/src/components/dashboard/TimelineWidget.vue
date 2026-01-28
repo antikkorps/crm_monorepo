@@ -51,14 +51,26 @@
             <v-card-text class="pa-3">
               <div class="d-flex align-center justify-space-between mb-1">
                 <span class="text-subtitle-2 font-weight-bold">{{ activity.title }}</span>
-                <v-chip
-                  :color="activity.color"
-                  size="x-small"
-                  variant="flat"
-                  class="text-capitalize mx-2"
-                >
-                  {{ getActivityTypeLabel(activity.type) }}
-                </v-chip>
+                <div class="d-flex align-center">
+                  <v-chip
+                    v-if="activity.isExternal"
+                    color="orange"
+                    size="x-small"
+                    variant="tonal"
+                    class="mr-1"
+                    prepend-icon="mdi-link-variant"
+                  >
+                    Externe
+                  </v-chip>
+                  <v-chip
+                    :color="activity.color"
+                    size="x-small"
+                    variant="flat"
+                    class="text-capitalize"
+                  >
+                    {{ getActivityTypeLabel(activity.type) }}
+                  </v-chip>
+                </div>
               </div>
 
               <p class="text-body-2 text-medium-emphasis mb-2">
@@ -156,6 +168,7 @@ function getActivityTypeLabel(type: string): string {
     quote: "Devis",
     invoice: "Facture",
     sync: "Synchronisation",
+    external: "Réf. externe",
   }
   return labels[type] || type
 }

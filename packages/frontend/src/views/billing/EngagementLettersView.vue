@@ -2,6 +2,16 @@
   <AppLayout>
     <div class="engagement-letters-view">
       <div v-if="!showBuilder">
+        <!-- Back to institution banner -->
+        <v-alert v-if="fromInstitution" type="info" variant="tonal" class="mb-4" closable>
+          <div class="d-flex align-center justify-space-between">
+            <span>{{ t("engagementLetters.viewingFromInstitution") }}</span>
+            <v-btn variant="outlined" size="small" prepend-icon="mdi-arrow-left" @click="goBackToInstitution">
+              {{ t("common.backToInstitution") }}
+            </v-btn>
+          </div>
+        </v-alert>
+
         <div class="d-flex justify-space-between align-center mb-4">
           <div>
             <h1 class="text-h4 font-weight-bold">{{ t("engagementLetters.title") }}</h1>
@@ -189,8 +199,13 @@ import type {
 } from "@medical-crm/shared"
 import { computed, onMounted, ref } from "vue"
 import { useI18n } from "vue-i18n"
+import { useRoute, useRouter } from "vue-router"
 
 const { t } = useI18n()
+const route = useRoute()
+const router = useRouter()
+
+const fromInstitution = computed(() => route.query.fromInstitution as string | undefined)
 
 const letters = ref<EngagementLetter[]>([])
 const loading = ref(false)
@@ -277,9 +292,19 @@ const handleLetterSaved = () => {
   showSnackbar(t("engagementLetters.messages.saved"), "success")
 }
 
-const handleBuilderCancelled = () => {
+const handleBuilderCancelled = async () => {
   showBuilder.value = false
   selectedLetter.value = null
+  // Load the list if it wasn't loaded yet (direct navigation to a specific letter)
+  if (letters.value.length === 0) {
+    await loadLetters()
+  }
+}
+
+const goBackToInstitution = () => {
+  if (fromInstitution.value) {
+    router.push(`/institutions/${fromInstitution.value}`)
+  }
 }
 
 const confirmDeleteLetter = (letter: EngagementLetter) => {
@@ -377,8 +402,29 @@ const showSnackbar = (message: string, color: string = "info") => {
   snackbar.value = { visible: true, message, color }
 }
 
-onMounted(() => {
-  loadLetters()
+onMounted(async () => {
+  // Scroll to top when navigating to this page
+  window.scrollTo(0, 0)
+
+  // Check if we need to open a specific engagement letter BEFORE loading the list
+  const letterId = route.query.id as string | undefined
+  if (letterId) {
+    // Immediately show the builder to avoid flash of the list
+    showBuilder.value = true
+    // Load the specific letter directly
+    try {
+      const response = await engagementLettersApi.getById(letterId)
+      selectedLetter.value = response.data
+    } catch (error) {
+      console.error("Failed to load engagement letter from URL:", error)
+      showSnackbar(t("engagementLetters.messages.loadError"), "error")
+      // Fall back to showing the list
+      showBuilder.value = false
+      await loadLetters()
+    }
+  } else {
+    await loadLetters()
+  }
 })
 </script>
 

@@ -17,6 +17,8 @@
     "back": "Retour",
     "backToDashboard": "Dashboard",
     "backToInstitution": "Retour à l'institution",
+    "backToList": "Retour à la liste",
+    "viewingFromInstitution": "Vous consultez depuis une institution",
     "next": "Suivant",
     "previous": "Précédent",
     "refresh": "Actualiser",
@@ -1903,6 +1905,7 @@
   "engagementLetters": {
     "title": "Lettres de Mission",
     "subtitle": "Gérez vos lettres de mission et contrats d'engagement",
+    "viewingFromInstitution": "Vous consultez les lettres de mission depuis une institution",
     "createNew": "Nouvelle lettre",
     "noLettersFound": "Aucune lettre de mission trouvée",
     "noLettersMessage": "Créez votre première lettre de mission pour commencer.",
@@ -2052,6 +2055,114 @@
       "rejectError": "Erreur lors du refus",
       "completed": "Mission terminée",
       "completeError": "Erreur lors de la validation"
+    }
+  },
+  "simplifiedTransactions": {
+    "title": "Références Externes",
+    "subtitle": "Documents créés dans des outils externes (Sage, Digiforma, etc.)",
+    "createNew": "Ajouter une référence externe",
+    "addExternal": "Ajouter une référence externe",
+    "noTransactionsFound": "Aucune référence externe trouvée",
+    "noTransactionsMessage": "Ajoutez des références à vos documents externes pour une vision financière unifiée.",
+    "externalBadge": "Externe",
+    "type": {
+      "label": "Type de document",
+      "quote": "Devis externe",
+      "invoice": "Facture externe",
+      "engagement_letter": "Lettre de mission externe",
+      "contract": "Contrat externe"
+    },
+    "status": {
+      "label": "Statut",
+      "draft": "Brouillon",
+      "sent": "Envoyé",
+      "accepted": "Accepté",
+      "rejected": "Refusé",
+      "expired": "Expiré",
+      "cancelled": "Annulé",
+      "pending": "En attente",
+      "paid": "Payé",
+      "partial": "Paiement partiel",
+      "overdue": "En retard",
+      "active": "Actif",
+      "terminated": "Résilié"
+    },
+    "paymentStatus": {
+      "label": "Statut paiement",
+      "pending": "En attente",
+      "partial": "Partiel",
+      "paid": "Payé"
+    },
+    "contractType": {
+      "label": "Type de contrat",
+      "maintenance": "Maintenance",
+      "support": "Support",
+      "subscription": "Abonnement",
+      "service": "Service",
+      "other": "Autre"
+    },
+    "form": {
+      "createTitle": "Nouvelle référence externe",
+      "editTitle": "Modifier la référence externe",
+      "typeSelection": "Type de document",
+      "typeSelectionHint": "Sélectionnez le type de document externe",
+      "basicInfo": "Informations de base",
+      "institution": "Institution",
+      "institutionRequired": "L'institution est requise",
+      "referenceNumber": "Référence externe",
+      "referenceNumberPlaceholder": "Ex: Devis Sage #123",
+      "title": "Titre",
+      "titleRequired": "Le titre est requis",
+      "titlePlaceholder": "Nom du document",
+      "description": "Description",
+      "descriptionPlaceholder": "Description ou notes sur ce document...",
+      "date": "Date du document",
+      "dateRequired": "La date est requise",
+      "financial": "Montants",
+      "amountHt": "Montant HT",
+      "amountHtRequired": "Le montant HT est requis",
+      "vatRate": "Taux TVA (%)",
+      "amountTtc": "Montant TTC",
+      "amountTtcHint": "Calculé automatiquement",
+      "statusRequired": "Le statut est requis",
+      "invoiceFields": "Informations facture",
+      "dueDate": "Date d'échéance",
+      "paymentDate": "Date de paiement",
+      "paymentAmount": "Montant payé",
+      "contractFields": "Informations contrat",
+      "contractStartDate": "Date de début",
+      "contractEndDate": "Date de fin",
+      "isRecurring": "Contrat récurrent",
+      "notes": "Notes",
+      "notesPlaceholder": "Notes ou commentaires internes..."
+    },
+    "table": {
+      "referenceNumber": "Référence",
+      "title": "Titre",
+      "type": "Type",
+      "date": "Date",
+      "amount": "Montant TTC",
+      "status": "Statut",
+      "actions": "Actions"
+    },
+    "messages": {
+      "loadError": "Erreur lors du chargement des références externes",
+      "saved": "Référence externe sauvegardée",
+      "saveError": "Erreur lors de la sauvegarde",
+      "deleted": "Référence externe supprimée",
+      "deleteError": "Erreur lors de la suppression",
+      "created": "Référence externe créée avec succès",
+      "updated": "Référence externe mise à jour avec succès"
+    },
+    "confirmDelete": {
+      "title": "Confirmer la suppression",
+      "message": "Voulez-vous vraiment supprimer cette référence externe ?"
+    },
+    "timeline": {
+      "simplifiedQuote": "Devis externe",
+      "simplifiedInvoice": "Facture externe",
+      "simplifiedEngagementLetter": "Lettre de mission externe",
+      "simplifiedContract": "Contrat externe"
     }
   },
   "cgvTemplates": {
@@ -2851,6 +2962,7 @@
       "quotes": "Devis",
       "invoices": "Factures",
       "engagementLetters": "Lettres de Mission",
+      "externalReferences": "Réf. externes",
       "upcoming": "À venir"
     },
     "callTypes": {
@@ -2890,7 +3002,8 @@
       "tasks": "Tâches",
       "quotes": "Devis",
       "invoices": "Factures",
-      "engagementLetters": "Lettres de Mission"
+      "engagementLetters": "Lettres de Mission",
+      "external": "Références externes"
     },
     "labels": {
       "note": "Note",
@@ -2901,8 +3014,14 @@
       "quote": "Devis",
       "invoice": "Facture",
       "engagementLetter": "Lettre de Mission",
-      "engagement_letter": "Lettre de Mission"
+      "engagement_letter": "Lettre de Mission",
+      "simplified_quote": "Devis",
+      "simplified_invoice": "Facture",
+      "simplified_engagement_letter": "Lettre de mission",
+      "simplified_contract": "Contrat"
     },
+    "external": "Externe",
+    "ongoing": "En cours",
     "callTypes": {
       "incoming": "Entrant",
       "outgoing": "Sortant",

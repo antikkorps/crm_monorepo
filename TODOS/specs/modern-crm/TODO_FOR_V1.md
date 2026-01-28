@@ -50,6 +50,42 @@ we are almost done to v1 but still have some elements to prepare
 - [x] Fix: Export invalid file - generateXLSX was returning empty buffer for empty data, now returns valid empty workbook
 - [x] Fix: PDF generation error without template - now returns clear user message instead of crashing (422 status with "Aucun modèle de document n'est configuré...")
 
+## date: 2026-01-28
+
+### Context
+
+Améliorations UX et corrections de bugs liés à la navigation entre institutions et documents de facturation.
+
+### TODO
+
+- [x] Fix: Timeline et Activités ne retournaient plus de données (safeQuery pattern pour éviter qu'une requête en échec bloque toutes les autres)
+- [x] UX: Retrait des descriptions pour devis/factures/lettres de mission dans la timeline (vue d'ensemble)
+- [x] UX: Déplacement de l'avatar utilisateur de l'onglet Timeline vers l'onglet Activités (CollaborationTab) pour les appels
+- [x] Fix: Avatar affichant les bonnes initiales de l'utilisateur (DiceBear avec firstName + lastName)
+- [x] UX: Items cliquables ouvrent directement en mode édition (sans naviguer vers la liste)
+- [x] UX: Navigation "retour à l'institution" lors de la consultation d'items depuis une institution
+- [x] Fix: Dropdown d'assignation dans le formulaire d'institution affiche maintenant les vrais noms (prénom nom) au lieu des IDs
+- [x] UX: Auto-ouverture des devis et lettres de mission quand on arrive avec un paramètre `?id=xxx`
+- [x] Fix: Plus de flash de la liste lors de l'ouverture directe d'un item (showBuilder=true immédiat)
+- [x] Component: BackToInstitutionBanner réutilisable créé dans `/components/common/`
+- [x] UX: Bannière "retour à l'institution" ajoutée dans QuoteBuilder et EngagementLetterBuilder
+- [x] Fix: Warning "Duplicate keys" dans QuoteBuilder (déduplication des templates chargés)
+- [x] UX: Scroll vers le haut lors de la navigation vers les vues Devis et Lettres de mission
+
+### Files Modified
+
+- `packages/backend/src/services/MedicalInstitutionAnalyticsService.ts` - safeQuery pattern
+- `packages/frontend/src/components/institutions/CollaborationTab.vue` - avatars, click-to-edit
+- `packages/frontend/src/components/institutions/TimelineTab.vue` - removed descriptions for billing docs
+- `packages/frontend/src/components/institutions/MedicalInstitutionForm.vue` - user dropdown fix
+- `packages/frontend/src/views/billing/QuotesView.vue` - auto-open, scroll to top
+- `packages/frontend/src/views/billing/EngagementLettersView.vue` - auto-open, scroll to top, banner
+- `packages/frontend/src/views/billing/InvoiceDetailView.vue` - back to institution
+- `packages/frontend/src/components/billing/QuoteBuilder.vue` - banner, template deduplication
+- `packages/frontend/src/components/billing/engagement-letters/EngagementLetterBuilder.vue` - banner
+- `packages/frontend/src/components/common/BackToInstitutionBanner.vue` - NEW component
+- `packages/frontend/src/i18n/locales/fr.json` - i18n keys
+
 ### Decision
 
 ---
@@ -423,7 +459,7 @@ packages/shared/
 
 ---
 
-## Feature: Système Hybride Devis/Facturation Simplifié
+## Feature: Système Hybride Devis/Facturation Simplifié ✅
 
 ### Context
 
@@ -444,92 +480,179 @@ L'équipe commerciale n'est pas certaine d'utiliser le module complet de devis/f
 - Historique : "Facture #F2026-001 de 8 500€ payée le 20/01"
 - Contrats : "Contrat maintenance annuel signé le 01/02, 2 400€/an"
 
-### Architecture Decision (À définir)
+### Architecture Decision
 
-**Option A : Modèle "SimplifiedTransaction"**
-- Nouvelle table pour les transactions simplifiées
-- Types : `quote_reference`, `invoice_reference`, `contract_reference`
-- Champs : date, amount, reference_number, description, status, payment_date, payment_amount
+**Option retenue : Modèle "SimplifiedTransaction" (Option A)**
+- Nouvelle table pour les transactions simplifiées (références externes)
+- Types : `quote`, `invoice`, `engagement_letter`, `contract`
+- Champs : date, amountHt, amountTtc, vatRate, referenceNumber, status, paymentStatus, etc.
 - Coexiste avec les vrais devis/factures
+- Badge "Externe" et icône `mdi-link-variant` pour les distinguer visuellement
 
-**Option B : Extension des modèles existants**
-- Ajouter un flag `isSimplified` aux modèles Quote/Invoice existants
-- Mode simplifié = moins de champs obligatoires, pas de lignes détaillées
-- Réutilise l'infrastructure existante
+### Implementation Plan ✅
 
-**Option C : Système de "Financial Events"**
-- Table générique d'événements financiers liés aux institutions
-- Plus flexible, peut évoluer vers d'autres types d'événements
-- Agrégation pour les stats
+#### Phase 1: Backend - Modèle et Migration ✅
 
-### Implementation Plan (À compléter)
+- [x] **1.1 Migration** `20260128000000-create-simplified-transactions.cjs`
+  - Table `simplified_transactions` avec tous les champs nécessaires
+  - Enums pour type, status, payment_status, contract_type
+  - Index sur institution_id, type, date, status
 
-#### Phase 1: Paramétrage et Désactivation
+- [x] **1.2 Modèle Sequelize** `SimplifiedTransaction.ts`
+  - Associations: belongsTo MedicalInstitution, belongsTo User (createdBy)
+  - Méthodes: canBeModified, isExpired, isContractActive, isOverdue
+  - Méthodes statiques: calculateAmountTtc, createTransaction, findByInstitution, getStatistics
+  - Soft delete avec paranoid: true
 
-- [ ] **1.1 Settings Backend**
-  - Ajouter settings `billing.quotesEnabled` et `billing.invoicesEnabled`
-  - API pour modifier ces paramètres (super_admin uniquement)
+- [x] **1.3 Types partagés** `packages/shared/src/types/simplified-transaction.ts`
+  - SimplifiedTransactionType enum
+  - SimplifiedTransactionStatus enum
+  - SimplifiedPaymentStatus enum
+  - SimplifiedContractType enum
+  - Interfaces et helpers (getValidStatusesForType, getDefaultStatusForType)
 
-- [ ] **1.2 Settings Frontend**
-  - Page de paramètres système pour activer/désactiver les modules
-  - Toggle switches pour Devis et Factures
+#### Phase 2: Backend - Service et API ✅
 
-- [ ] **1.3 Conditional Navigation**
-  - Sidebar : masquer les liens Devis/Factures si désactivés
-  - Routes : rediriger vers 404 ou dashboard si module désactivé
-  - Permissions : bloquer API si module désactivé
+- [x] **2.1 Service** `SimplifiedTransactionService.ts`
+  - CRUD operations
+  - Validation des données
+  - Statistiques et métriques
+  - Timeline formatting
 
-#### Phase 2: Saisie Simplifiée (Modèle à choisir)
+- [x] **2.2 Routes API** `simplified-transactions.ts`
+  ```
+  GET    /api/simplified-transactions                    - Liste avec filtres
+  GET    /api/simplified-transactions/statistics         - Stats globales
+  GET    /api/simplified-transactions/institution/:id    - Liste par institution
+  GET    /api/simplified-transactions/type/:type         - Liste par type
+  GET    /api/simplified-transactions/timeline/:id       - Format timeline
+  GET    /api/simplified-transactions/:id                - Détail
+  POST   /api/simplified-transactions                    - Créer
+  PUT    /api/simplified-transactions/:id                - Modifier
+  DELETE /api/simplified-transactions/:id                - Supprimer (soft)
+  ```
 
-- [ ] **2.1 Backend Model**
-  - Migration pour la nouvelle structure
-  - Modèle Sequelize avec validations
-  - Association avec Institution
+- [x] **2.3 Controller** `SimplifiedTransactionController.ts`
+  - Validation des requêtes
+  - Gestion des erreurs
+  - Permissions (auth required)
 
-- [ ] **2.2 API Endpoints**
-  - CRUD pour les transactions simplifiées
-  - Endpoint agrégé par institution
-  - Filtres par type, date, statut
+#### Phase 3: Backend - Intégration Analytics ✅
 
-- [ ] **2.3 Frontend Components**
-  - Formulaire de saisie rapide (modal ou inline)
-  - Liste des transactions sur la fiche institution
-  - Indicateurs visuels (devis en attente, factures payées, contrats actifs)
+- [x] **3.1 InstitutionRevenueService**
+  - Ajout de simplifiedTransactionAnalytics dans le retour
+  - Inclusion des factures externes payées dans le LTV
+  - Compteurs par type
 
-#### Phase 3: Intégration Analytics
+- [x] **3.2 MedicalInstitutionAnalyticsService**
+  - Timeline: inclusion des simplified transactions avec type `simplified_${type}`
+  - Tri par date du document (pas date de création)
+  - Badge isExternal: true pour distinction visuelle
+  - Collaboration data: stats et recentSimplifiedTransactions
 
-- [ ] **3.1 Calculs de Rentabilité**
-  - Inclure les transactions simplifiées dans InstitutionRevenueService
-  - Distinguer "réel" (module complet) vs "référencé" (simplifié)
+- [x] **3.3 DashboardController** - Intégration complète
+  - getBillingMetrics: devis et factures externes inclus dans les totaux
+  - getConversionRate: devis externes inclus dans le taux de conversion
+  - getGrowthMetrics: factures externes incluses dans la croissance CA
+  - getRecentActivities: références externes dans les activités récentes
 
-- [ ] **3.2 Timeline Institution**
-  - Afficher les transactions simplifiées dans la timeline
-  - Icônes et couleurs distinctes
+#### Phase 4: Frontend - Composants ✅
 
-- [ ] **3.3 Dashboard Stats**
-  - Chiffre potentiel (devis en attente)
-  - CA référencé (factures payées)
-  - Contrats actifs
+- [x] **4.1 Formulaire** `SimplifiedTransactionForm.vue`
+  - Modal pour création/édition
+  - Sélection du type (devis, facture, lettre de mission, contrat)
+  - Champs communs: titre, référence, date, montants HT/TVA/TTC, statut
+  - Champs conditionnels pour factures (échéance, paiement) et contrats (dates, type)
 
-### Files to Create (À définir selon l'option choisie)
+- [x] **4.2 API Service** `simplified-transactions.ts`
+  - getAll, getById, getByInstitution, getByType
+  - getStatistics, getForTimeline
+  - create, update, delete
+
+- [x] **4.3 i18n** - Traductions complètes
+  - Section `simplifiedTransactions.*` dans fr.json
+  - Types, statuts, formulaire, messages, timeline
+
+#### Phase 5: Frontend - Intégration ✅
+
+- [x] **5.1 RevenueTab**
+  - Bouton "Ajouter une référence externe"
+  - Liste des transactions simplifiées avec badge "Externe"
+  - Click pour éditer
+  - Stats dans la section analytics
+
+- [x] **5.2 TimelineTab**
+  - Filtre "Références externes" ajouté
+  - Badge "Externe" sur les items
+  - Métadonnées spécifiques (statut, montant, dates)
+  - Filtre "Devis" inclut aussi les devis externes
+
+- [x] **5.3 CollaborationTab (Activités)**
+  - Section "Références externes" avec compteur
+  - Liste des transactions récentes
+  - Click pour éditer (SimplifiedTransactionForm intégré)
+  - Carte stats dans le header
+
+- [x] **5.4 Dashboard**
+  - TimelineWidget: affichage des références externes avec badge "Externe"
+  - KPIs: devis et factures externes inclus dans les totaux
+  - Taux de conversion: inclut les devis externes acceptés
+  - Croissance CA: inclut les factures externes
+
+#### Phase 6: Feature Flags ✅
+
+- [x] **6.1 engagement_letters_enabled**
+  - Ajouté dans SystemSettings.initializeDefaults()
+  - Ajouté dans FeatureFlags interface du store settings
+  - Toggle dans FeaturesSettingsView.vue
+  - Condition dans AppLayout.vue pour masquer la navigation
+
+### Files Created
 
 ```text
 packages/backend/
-├── src/models/SimplifiedTransaction.ts (ou Financial Event)
-├── src/routes/simplified-transactions.ts
+├── src/models/SimplifiedTransaction.ts
 ├── src/services/SimplifiedTransactionService.ts
-├── src/migrations/YYYYMMDD-create-simplified-transactions.cjs
+├── src/controllers/SimplifiedTransactionController.ts
+├── src/routes/simplified-transactions.ts
+└── src/migrations/20260128000000-create-simplified-transactions.cjs
 
 packages/frontend/
 ├── src/components/billing/simplified/SimplifiedTransactionForm.vue
-├── src/components/billing/simplified/SimplifiedTransactionList.vue
-├── src/components/institutions/InstitutionFinancialSummary.vue
-├── src/services/api/simplified-transactions.ts
+└── src/services/api/simplified-transactions.ts
 
 packages/shared/
 └── src/types/simplified-transaction.ts
 ```
 
+### Files Modified
+
+```text
+packages/backend/
+├── src/app.ts (routes registration)
+├── src/models/index.ts (export + associations)
+├── src/models/SystemSettings.ts (engagement_letters_enabled)
+├── src/services/MedicalInstitutionAnalyticsService.ts (timeline + collaboration)
+├── src/services/InstitutionRevenueService.ts (analytics)
+├── src/controllers/DashboardController.ts (metrics + activities)
+
+packages/frontend/
+├── src/components/institutions/RevenueTab.vue
+├── src/components/institutions/TimelineTab.vue
+├── src/components/institutions/CollaborationTab.vue
+├── src/components/dashboard/TimelineWidget.vue
+├── src/components/layout/AppLayout.vue (feature flags)
+├── src/views/settings/FeaturesSettingsView.vue
+├── src/stores/settings.ts (engagement_letters_enabled)
+├── src/services/api/index.ts (export)
+├── src/services/api/dashboard.ts (Activity interface)
+├── src/services/api/timeline.ts (TimelineItemType)
+├── src/i18n/locales/fr.json
+
+packages/shared/
+└── src/types/index.ts (export)
+```
+
 ### Priority
 
-**High** - Besoin métier immédiat pour l'équipe commerciale, même sans décision sur le module complet
+**Completed** - Feature entièrement implémentée le 2026-01-28

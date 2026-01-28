@@ -578,6 +578,65 @@
             </v-list>
           </v-card>
         </v-col>
+
+        <!-- External References (Simplified Transactions) -->
+        <v-col cols="12" md="6" class="d-flex">
+          <v-card class="flex-grow-1">
+            <v-card-title class="d-flex align-center justify-space-between">
+              <div class="d-flex align-center">
+                <v-icon class="mr-2" color="orange">mdi-link-variant</v-icon>
+                <span>{{ t("simplifiedTransactions.title") }}</span>
+                <v-chip class="ml-2" size="small" color="orange" variant="tonal">
+                  {{ collaborationData.stats.totalSimplifiedTransactions ?? 0 }}
+                </v-chip>
+              </div>
+            </v-card-title>
+            <v-divider></v-divider>
+            <div
+              v-if="!collaborationData.recentSimplifiedTransactions || collaborationData.recentSimplifiedTransactions.length === 0"
+              class="text-center py-8"
+            >
+              <v-icon size="48" color="grey-lighten-2">mdi-link-variant</v-icon>
+              <p class="mt-2 text-medium-emphasis">
+                {{ t("simplifiedTransactions.noTransactionsFound") }}
+              </p>
+            </div>
+            <v-list v-else lines="two">
+              <v-list-item
+                v-for="tx in collaborationData.recentSimplifiedTransactions"
+                :key="tx.id"
+                @click="openSimplifiedTransactionForEdit(tx)"
+              >
+                <template v-slot:prepend>
+                  <v-avatar :color="getSimplifiedTypeColor(tx.type)" variant="tonal">
+                    <v-icon>{{ getSimplifiedTypeIcon(tx.type) }}</v-icon>
+                  </v-avatar>
+                </template>
+                <v-list-item-title class="font-weight-medium">
+                  {{ tx.referenceNumber ? `${tx.referenceNumber} - ` : '' }}{{ tx.title }}
+                  <v-chip
+                    size="x-small"
+                    class="ml-2"
+                    color="orange"
+                    variant="tonal"
+                  >
+                    {{ t("simplifiedTransactions.externalBadge") }}
+                  </v-chip>
+                </v-list-item-title>
+                <v-list-item-subtitle>
+                  <div class="d-flex align-center">
+                    <v-icon size="small" class="mr-1">mdi-currency-eur</v-icon>
+                    {{ formatCurrency(tx.amountTtc) }}
+                  </div>
+                  <div class="d-flex align-center mt-1">
+                    <v-icon size="small" class="mr-1">mdi-calendar</v-icon>
+                    {{ formatDate(tx.date) }}
+                  </div>
+                </v-list-item-subtitle>
+              </v-list-item>
+            </v-list>
+          </v-card>
+        </v-col>
       </v-row>
     </div>
 
@@ -626,6 +685,14 @@
       @submit="handleTaskSubmit"
       @cancel="showTaskForm = false; selectedTask = null"
     />
+
+    <SimplifiedTransactionForm
+      v-model="showSimplifiedTransactionForm"
+      :transaction="selectedSimplifiedTransaction"
+      :institution-id="props.institutionId"
+      @saved="handleSimplifiedTransactionSaved"
+      @cancelled="showSimplifiedTransactionForm = false; selectedSimplifiedTransaction = null"
+    />
   </div>
 </template>
 
@@ -635,6 +702,7 @@ import MeetingForm from "@/components/meetings/MeetingForm.vue"
 import NoteForm from "@/components/notes/NoteForm.vue"
 import ReminderForm from "@/components/reminders/ReminderForm.vue"
 import TaskForm from "@/components/tasks/TaskForm.vue"
+import SimplifiedTransactionForm from "@/components/billing/simplified/SimplifiedTransactionForm.vue"
 import { callsApi, institutionsApi, meetingsApi, notesApi, remindersApi, tasksApi } from "@/services/api"
 import type {
   CallCreateRequest,
@@ -670,11 +738,13 @@ const showMeetingForm = ref(false)
 const showNoteForm = ref(false)
 const showReminderForm = ref(false)
 const showTaskForm = ref(false)
+const showSimplifiedTransactionForm = ref(false)
 const selectedCall = ref<any>(null)
 const selectedMeeting = ref<any>(null)
 const selectedNote = ref<any>(null)
 const selectedReminder = ref<any>(null)
 const selectedTask = ref<any>(null)
+const selectedSimplifiedTransaction = ref<any>(null)
 const formLoading = ref(false)
 
 const statsCards = computed(() => {
@@ -728,6 +798,12 @@ const statsCards = computed(() => {
       value: stats.totalEngagementLetters ?? 0,
       icon: "mdi-briefcase-outline",
       color: "indigo",
+    },
+    {
+      label: t("collaboration.stats.externalReferences"),
+      value: stats.totalSimplifiedTransactions ?? 0,
+      icon: "mdi-link-variant",
+      color: "orange",
     },
     {
       label: t("collaboration.stats.upcoming"),
@@ -811,6 +887,17 @@ const openReminderForEdit = (reminder: any) => {
 const openTaskForEdit = (task: any) => {
   selectedTask.value = task
   showTaskForm.value = true
+}
+
+const openSimplifiedTransactionForEdit = (tx: any) => {
+  selectedSimplifiedTransaction.value = tx
+  showSimplifiedTransactionForm.value = true
+}
+
+const handleSimplifiedTransactionSaved = () => {
+  showSimplifiedTransactionForm.value = false
+  selectedSimplifiedTransaction.value = null
+  loadData()
 }
 
 // Navigate to specific item with context
@@ -1131,6 +1218,27 @@ const formatEngagementLetterStatus = (status: string): string => {
     completed: t("engagementLetters.status.completed"),
   }
   return statusMap[status] || status
+}
+
+// Simplified Transaction helpers
+const getSimplifiedTypeColor = (type: string): string => {
+  const colorMap: Record<string, string> = {
+    quote: "purple",
+    invoice: "teal",
+    engagement_letter: "indigo",
+    contract: "deep-purple",
+  }
+  return colorMap[type] || "grey"
+}
+
+const getSimplifiedTypeIcon = (type: string): string => {
+  const iconMap: Record<string, string> = {
+    quote: "mdi-file-document-outline",
+    invoice: "mdi-receipt",
+    engagement_letter: "mdi-briefcase-outline",
+    contract: "mdi-file-document-edit-outline",
+  }
+  return iconMap[type] || "mdi-link-variant"
 }
 
 onMounted(() => {

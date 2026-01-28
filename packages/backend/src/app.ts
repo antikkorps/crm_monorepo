@@ -37,6 +37,7 @@ import sageRoutes from "./routes/sage"
 import securityLogRoutes from "./routes/security-logs"
 import segmentRoutes from "./routes/segments"
 import settingsRoutes from "./routes/settings"
+import simplifiedTransactionRoutes from "./routes/simplified-transactions"
 import socketRoutes from "./routes/socket"
 import taskRoutes from "./routes/tasks"
 import teamRoutes from "./routes/teams"
@@ -278,6 +279,10 @@ export const createApp = (): Koa => {
   // Apply settings routes
   app.use(settingsRoutes.routes())
   app.use(settingsRoutes.allowedMethods())
+
+  // Apply simplified transaction routes
+  app.use(simplifiedTransactionRoutes.routes())
+  app.use(simplifiedTransactionRoutes.allowedMethods())
 
   // 404 handler
   app.use(async (ctx) => {

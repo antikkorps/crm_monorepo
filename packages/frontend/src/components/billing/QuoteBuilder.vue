@@ -14,6 +14,11 @@
       </div>
     </div>
 
+    <BackToInstitutionBanner
+      :institution-id="fromInstitution"
+      :show-back-to-list="false"
+    />
+
     <div class="quote-form">
       <!-- Basic Information -->
       <v-card class="form-section mb-6">
@@ -357,8 +362,9 @@ import type {
 } from "@medical-crm/shared"
 import { computed, onMounted, ref, watch } from "vue"
 import { useI18n } from "vue-i18n"
-import { useRouter } from "vue-router"
+import { useRoute, useRouter } from "vue-router"
 import { quotesApi, templatesApi } from "../../services/api"
+import BackToInstitutionBanner from "../common/BackToInstitutionBanner.vue"
 import QuoteLine from "./QuoteLine.vue"
 import QuotePreview from "./QuotePreview.vue"
 
@@ -377,8 +383,10 @@ const emit = defineEmits<{
 }>()
 
 // Reactive state
+const route = useRoute()
 const router = useRouter()
 const institutionsStore = useInstitutionsStore()
+const fromInstitution = computed(() => route.query.fromInstitution as string | undefined)
 const saving = ref(false)
 const sending = ref(false)
 const downloading = ref(false)
@@ -553,7 +561,14 @@ const loadTemplates = async () => {
     ])
     const quoteTemplates = (quoteResponse as any)?.data || []
     const bothTemplates = (bothResponse as any)?.data || []
-    templates.value = [...quoteTemplates, ...bothTemplates]
+    // Deduplicate templates by ID
+    const allTemplates = [...quoteTemplates, ...bothTemplates]
+    const seen = new Set<string>()
+    templates.value = allTemplates.filter((t: DocumentTemplate) => {
+      if (seen.has(t.id)) return false
+      seen.add(t.id)
+      return true
+    })
   } catch (error) {
     console.error("Failed to load templates:", error)
   }
@@ -564,13 +579,15 @@ const loadTemplateById = async (templateId: string) => {
   if (!templateId) return
 
   // Check if template is already in the list
-  const existingTemplate = templates.value.find(t => t.id === templateId)
-  if (existingTemplate) return
+  if (templates.value.find(t => t.id === templateId)) return
 
   try {
     const template = await templatesApi.getById(templateId)
     if (template) {
-      templates.value = [...templates.value, template as DocumentTemplate]
+      // Check again after fetch to avoid race condition with loadTemplates
+      if (!templates.value.find(t => t.id === templateId)) {
+        templates.value = [...templates.value, template as DocumentTemplate]
+      }
     }
   } catch (error) {
     console.error("Failed to load template:", error)
