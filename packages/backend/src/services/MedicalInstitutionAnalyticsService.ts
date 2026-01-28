@@ -21,6 +21,7 @@ export class MedicalInstitutionAnalyticsService {
       totalTasks: number
       totalQuotes: number
       totalInvoices: number
+      totalEngagementLetters: number
       upcomingMeetings: number
       pendingReminders: number
       openTasks: number
@@ -34,17 +35,33 @@ export class MedicalInstitutionAnalyticsService {
     openTasks: any[]
     recentQuotes: any[]
     recentInvoices: any[]
+    recentEngagementLetters: any[]
   }> {
     try {
+      // Helper function to safely execute queries - returns empty array on error
+      const safeQuery = async <T>(queryFn: () => Promise<T[]>, queryName: string): Promise<T[]> => {
+        try {
+          return await queryFn()
+        } catch (error) {
+          logger.warn(`Collaboration query failed for ${queryName}`, {
+            institutionId,
+            error: (error as Error).message,
+          })
+          return []
+        }
+      }
+
       // Get all collaboration data in parallel for performance
-      const [notes, meetings, calls, reminders, tasks, quotes, invoices] = await Promise.all([
+      const [notes, meetings, calls, reminders, tasks, quotes, invoices, engagementLetters] = await Promise.all([
         // Get notes related to this institution
-        import("../models/Note").then(({ Note }) =>
-          Note.findByInstitution(institutionId)
-        ),
+        safeQuery(async () => {
+          const { Note } = await import("../models/Note")
+          return Note.findByInstitution(institutionId)
+        }, 'notes'),
         // Get meetings related to this institution
-        import("../models/Meeting").then(({ Meeting }) =>
-          Meeting.findAll({
+        safeQuery(async () => {
+          const { Meeting } = await import("../models/Meeting")
+          return Meeting.findAll({
             where: { institutionId },
             include: [
               {
@@ -55,10 +72,11 @@ export class MedicalInstitutionAnalyticsService {
             ],
             order: [["createdAt", "DESC"]],
           })
-        ),
+        }, 'meetings'),
         // Get calls related to this institution
-        import("../models/Call").then(({ Call }) =>
-          Call.findAll({
+        safeQuery(async () => {
+          const { Call } = await import("../models/Call")
+          return Call.findAll({
             where: { institutionId },
             include: [
               {
@@ -69,10 +87,11 @@ export class MedicalInstitutionAnalyticsService {
             ],
             order: [["createdAt", "DESC"]],
           })
-        ),
+        }, 'calls'),
         // Get reminders related to this institution
-        import("../models/Reminder").then(({ Reminder }) =>
-          Reminder.findAll({
+        safeQuery(async () => {
+          const { Reminder } = await import("../models/Reminder")
+          return Reminder.findAll({
             where: { institutionId },
             include: [
               {
@@ -83,10 +102,11 @@ export class MedicalInstitutionAnalyticsService {
             ],
             order: [["reminderDate", "ASC"]],
           })
-        ),
+        }, 'reminders'),
         // Get tasks related to this institution
-        import("../models/Task").then(({ Task }) =>
-          Task.findAll({
+        safeQuery(async () => {
+          const { Task } = await import("../models/Task")
+          return Task.findAll({
             where: { institutionId },
             include: [
               {
@@ -102,10 +122,11 @@ export class MedicalInstitutionAnalyticsService {
             ],
             order: [["createdAt", "DESC"]],
           })
-        ),
+        }, 'tasks'),
         // Get quotes related to this institution
-        import("../models/Quote").then(({ Quote }) =>
-          Quote.findAll({
+        safeQuery(async () => {
+          const { Quote } = await import("../models/Quote")
+          return Quote.findAll({
             where: { institutionId },
             include: [
               {
@@ -116,10 +137,11 @@ export class MedicalInstitutionAnalyticsService {
             ],
             order: [["createdAt", "DESC"]],
           })
-        ),
+        }, 'quotes'),
         // Get invoices related to this institution
-        import("../models/Invoice").then(({ Invoice }) =>
-          Invoice.findAll({
+        safeQuery(async () => {
+          const { Invoice } = await import("../models/Invoice")
+          return Invoice.findAll({
             where: { institutionId },
             include: [
               {
@@ -130,7 +152,22 @@ export class MedicalInstitutionAnalyticsService {
             ],
             order: [["createdAt", "DESC"]],
           })
-        ),
+        }, 'invoices'),
+        // Get engagement letters related to this institution
+        safeQuery(async () => {
+          const { EngagementLetter } = await import("../models/EngagementLetter")
+          return EngagementLetter.findAll({
+            where: { institutionId },
+            include: [
+              {
+                model: User,
+                as: "assignedUser",
+                attributes: ["id", "firstName", "lastName", "email"],
+              },
+            ],
+            order: [["createdAt", "DESC"]],
+          })
+        }, 'engagementLetters'),
       ])
 
       // Calculate summary statistics
@@ -144,6 +181,7 @@ export class MedicalInstitutionAnalyticsService {
         totalTasks: tasks.length,
         totalQuotes: quotes.length,
         totalInvoices: invoices.length,
+        totalEngagementLetters: engagementLetters.length,
         upcomingMeetings: meetings.filter(m => new Date(m.startDate) > new Date()).length,
         pendingReminders: reminders.filter(r => !r.isCompleted && new Date(r.reminderDate) > new Date()).length,
         openTasks: tasks.filter(t => t.status !== TaskStatus.COMPLETED && t.status !== TaskStatus.CANCELLED).length,
@@ -166,6 +204,7 @@ export class MedicalInstitutionAnalyticsService {
           .slice(0, 10),
         recentQuotes: quotes.slice(0, 5),
         recentInvoices: invoices.slice(0, 5),
+        recentEngagementLetters: engagementLetters.slice(0, 5),
       }
 
       logger.info("Collaboration data retrieved", {
@@ -228,10 +267,24 @@ export class MedicalInstitutionAnalyticsService {
         }
       }
 
+      // Helper function to safely execute queries - returns empty array on error
+      const safeQuery = async <T>(queryFn: () => Promise<T[]>, queryName: string): Promise<T[]> => {
+        try {
+          return await queryFn()
+        } catch (error) {
+          logger.warn(`Timeline query failed for ${queryName}`, {
+            institutionId,
+            error: (error as Error).message,
+          })
+          return []
+        }
+      }
+
       // Get all interactions for this institution in parallel
-      const [notes, meetings, calls, reminders, tasks, quotes, invoices] = await Promise.all([
-        import("../models/Note").then(({ Note }) =>
-          Note.findAll({
+      const [notes, meetings, calls, reminders, tasks, quotes, invoices, engagementLetters] = await Promise.all([
+        safeQuery(async () => {
+          const { Note } = await import("../models/Note")
+          return Note.findAll({
             where: whereClause,
             include: [
               {
@@ -241,9 +294,10 @@ export class MedicalInstitutionAnalyticsService {
               },
             ],
           })
-        ),
-        import("../models/Meeting").then(({ Meeting }) =>
-          Meeting.findAll({
+        }, 'notes'),
+        safeQuery(async () => {
+          const { Meeting } = await import("../models/Meeting")
+          return Meeting.findAll({
             where: whereClause,
             include: [
               {
@@ -253,9 +307,10 @@ export class MedicalInstitutionAnalyticsService {
               },
             ],
           })
-        ),
-        import("../models/Call").then(({ Call }) =>
-          Call.findAll({
+        }, 'meetings'),
+        safeQuery(async () => {
+          const { Call } = await import("../models/Call")
+          return Call.findAll({
             where: whereClause,
             include: [
               {
@@ -265,9 +320,10 @@ export class MedicalInstitutionAnalyticsService {
               },
             ],
           })
-        ),
-        import("../models/Reminder").then(({ Reminder }) =>
-          Reminder.findAll({
+        }, 'calls'),
+        safeQuery(async () => {
+          const { Reminder } = await import("../models/Reminder")
+          return Reminder.findAll({
             where: whereClause,
             include: [
               {
@@ -277,9 +333,10 @@ export class MedicalInstitutionAnalyticsService {
               },
             ],
           })
-        ),
-        import("../models/Task").then(({ Task }) =>
-          Task.findAll({
+        }, 'reminders'),
+        safeQuery(async () => {
+          const { Task } = await import("../models/Task")
+          return Task.findAll({
             where: whereClause,
             include: [
               {
@@ -294,10 +351,10 @@ export class MedicalInstitutionAnalyticsService {
               },
             ],
           })
-        ),
-        // Get quotes for this institution
-        import("../models/Quote").then(({ Quote }) =>
-          Quote.findAll({
+        }, 'tasks'),
+        safeQuery(async () => {
+          const { Quote } = await import("../models/Quote")
+          return Quote.findAll({
             where: whereClause,
             include: [
               {
@@ -307,10 +364,10 @@ export class MedicalInstitutionAnalyticsService {
               },
             ],
           })
-        ),
-        // Get invoices for this institution
-        import("../models/Invoice").then(({ Invoice }) =>
-          Invoice.findAll({
+        }, 'quotes'),
+        safeQuery(async () => {
+          const { Invoice } = await import("../models/Invoice")
+          return Invoice.findAll({
             where: whereClause,
             include: [
               {
@@ -320,7 +377,20 @@ export class MedicalInstitutionAnalyticsService {
               },
             ],
           })
-        ),
+        }, 'invoices'),
+        safeQuery(async () => {
+          const { EngagementLetter } = await import("../models/EngagementLetter")
+          return EngagementLetter.findAll({
+            where: whereClause,
+            include: [
+              {
+                model: User,
+                as: "assignedUser",
+                attributes: ["id", "firstName", "lastName", "email"],
+              },
+            ],
+          })
+        }, 'engagementLetters'),
       ])
 
       // Combine all interactions into a timeline
@@ -451,6 +521,32 @@ export class MedicalInstitutionAnalyticsService {
             paidAt: invoice.paidAt,
             totalPaid: invoice.totalPaid,
             remainingAmount: invoice.remainingAmount,
+          },
+        })
+      })
+
+      // Add engagement letters to timeline
+      engagementLetters.forEach(letter => {
+        const scopeText = typeof letter.scope === 'string'
+          ? letter.scope
+          : (letter.scope ? JSON.stringify(letter.scope).slice(0, 200) : '')
+        timelineItems.push({
+          id: letter.id,
+          type: 'engagement_letter',
+          title: `${letter.letterNumber} - ${letter.title}`,
+          description: scopeText.slice(0, 200) + (scopeText.length > 200 ? '...' : ''),
+          user: letter.assignedUser,
+          createdAt: letter.createdAt,
+          metadata: {
+            letterNumber: letter.letterNumber,
+            status: letter.status,
+            missionType: letter.missionType,
+            estimatedTotal: letter.estimatedTotal,
+            validUntil: letter.validUntil,
+            sentAt: letter.sentAt,
+            acceptedAt: letter.acceptedAt,
+            rejectedAt: letter.rejectedAt,
+            completedAt: letter.completedAt,
           },
         })
       })

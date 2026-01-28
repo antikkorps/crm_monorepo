@@ -608,7 +608,7 @@ export class PdfService {
             <tbody>
                 {{#each lines}}
                 <tr>
-                    <td>{{this.description}}</td>
+                    <td class="rich-description">{{{richText this.description}}}</td>
                     <td style="text-align: center;">{{this.quantity}}</td>
                     <td class="amount">{{currency this.unitPrice}}</td>
                     <td class="amount">{{currency this.total}}</td>
@@ -659,6 +659,10 @@ export class PdfService {
         th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
         th { background-color: #f8f9fa; font-weight: bold; }
         .amount { text-align: right; font-family: monospace; }
+        .rich-description p { margin: 4px 0; }
+        .rich-description ul, .rich-description ol { margin: 4px 0; padding-left: 20px; }
+        .rich-description li { margin: 2px 0; }
+        .rich-description strong { font-weight: 600; }
         .totals { margin-top: 20px; }
         .totals table { width: 300px; margin-left: auto; }
         .total-row { font-weight: bold; font-size: 18px; background-color: #007bff; color: white; }
@@ -912,7 +916,7 @@ export class PdfService {
           <tbody>
             {{#each lines}}
             <tr>
-              <td>{{description}}</td>
+              <td class="rich-description">{{{richText description}}}</td>
               <td>{{quantity}}</td>
               <td>{{currency unitPrice}}</td>
               <td>{{currency discountAmount}}</td>
@@ -1008,7 +1012,7 @@ export class PdfService {
           <tbody>
             {{#each lines}}
             <tr>
-              <td>{{description}}</td>
+              <td class="rich-description">{{{richText description}}}</td>
               <td>{{quantity}}</td>
               <td>{{currency unitPrice}}</td>
               <td>{{currency discountAmount}}</td>
@@ -1102,7 +1106,7 @@ export class PdfService {
           <tbody>
             {{#each lines}}
             <tr>
-              <td>{{description}}</td>
+              <td class="rich-description">{{{richText description}}}</td>
               <td>{{quantity}}</td>
               <td>{{currency unitPrice}}</td>
               <td>{{currency discountAmount}}</td>
@@ -2062,6 +2066,36 @@ export class PdfService {
           line-height: 1.7;
         }
 
+        .el-terms p {
+          margin: 8px 0;
+        }
+
+        .el-terms ul, .el-terms ol {
+          margin: 10px 0;
+          padding-left: 25px;
+        }
+
+        .el-terms li {
+          margin: 5px 0;
+        }
+
+        .el-terms strong, .el-terms b {
+          font-weight: 600;
+        }
+
+        .el-terms em, .el-terms i {
+          font-style: italic;
+        }
+
+        .el-terms h1, .el-terms h2, .el-terms h3 {
+          font-weight: 600;
+          margin: 12px 0 8px 0;
+        }
+
+        .el-terms h1 { font-size: 12pt; }
+        .el-terms h2 { font-size: 11pt; }
+        .el-terms h3 { font-size: 10pt; }
+
         /* Signatures section */
         .el-signatures {
           display: flex;
@@ -2207,7 +2241,7 @@ export class PdfService {
                 {{#each letter.deliverables}}
                   <tr>
                     <td><strong>{{this.name}}</strong></td>
-                    <td>{{this.description}}</td>
+                    <td class="rich-description">{{{richText this.description}}}</td>
                     <td>{{#if this.dueDate}}{{formatDate this.dueDate}}{{else}}-{{/if}}</td>
                   </tr>
                 {{/each}}

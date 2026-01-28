@@ -148,6 +148,20 @@
                   />
                 </div>
 
+                <div class="field" v-if="selectedExportType.type === 'engagement_letters'">
+                  <v-select
+                    v-model="exportOptions.engagementLetterStatus"
+                    :items="engagementLetterStatusOptions"
+                    item-title="name"
+                    item-value="value"
+                    :label="$t('export.dialog.engagementLetterStatus')"
+                    :placeholder="$t('export.dialog.allStatuses')"
+                    clearable
+                    density="compact"
+                    variant="outlined"
+                  />
+                </div>
+
                 <!-- Include Headers -->
                 <div class="field-checkbox">
                   <v-checkbox
@@ -338,6 +352,15 @@ const taskStatusOptions = computed(() => [
   { name: t('export.taskStatuses.cancelled'), value: "cancelled" },
 ])
 
+const engagementLetterStatusOptions = computed(() => [
+  { name: t('export.engagementLetterStatuses.draft'), value: "draft" },
+  { name: t('export.engagementLetterStatuses.sent'), value: "sent" },
+  { name: t('export.engagementLetterStatuses.accepted'), value: "accepted" },
+  { name: t('export.engagementLetterStatuses.rejected'), value: "rejected" },
+  { name: t('export.engagementLetterStatuses.completed'), value: "completed" },
+  { name: t('export.engagementLetterStatuses.cancelled'), value: "cancelled" },
+])
+
 // Computed properties for date range handling
 const dateRangeStart = computed({
   get: () => exportOptions.value.dateRange?.start || "",
@@ -381,6 +404,7 @@ const getExportIcon = (type: string) => {
     quotes: "mdi-file-document-outline",
     invoices: "mdi-receipt",
     opportunities: "mdi-chart-line",
+    engagement_letters: "mdi-file-sign",
   }
   return icons[type as keyof typeof icons] || "mdi-file"
 }
@@ -470,6 +494,9 @@ const performExport = async () => {
         break
       case "opportunities":
         blob = await ExportApiService.exportOpportunities(options)
+        break
+      case "engagement_letters":
+        blob = await ExportApiService.exportEngagementLetters(options)
         break
       default:
         throw new Error("Unsupported export type")
@@ -719,6 +746,52 @@ const generateMockPreviewData = (exportType: string) => {
         ],
       }
 
+    case "engagement_letters":
+      return {
+        totalCount: 45,
+        fields: [
+          { key: "id", label: "ID", type: "string" as const, required: true },
+          { key: "letterNumber", label: "Numéro", type: "string" as const, required: true },
+          { key: "title", label: "Titre", type: "string" as const, required: true },
+          { key: "missionType", label: "Type de mission", type: "string" as const },
+          { key: "status", label: "Statut", type: "string" as const },
+          { key: "estimatedTotal", label: "Total estimé", type: "number" as const },
+          { key: "startDate", label: "Date de début", type: "date" as const },
+          { key: "endDate", label: "Date de fin", type: "date" as const },
+          { key: "institutionName", label: "Établissement", type: "string" as const },
+          { key: "assignedUser", label: "Assigné à", type: "string" as const },
+          { key: "createdAt", label: "Date de création", type: "date" as const },
+        ],
+        data: [
+          {
+            id: "1",
+            letterNumber: "LM2025010001",
+            title: "Mission d'accompagnement RH",
+            missionType: "consulting",
+            status: "accepted",
+            estimatedTotal: 15000,
+            startDate: "2025-01-15T00:00:00Z",
+            endDate: "2025-03-15T00:00:00Z",
+            institutionName: "Hôpital Central",
+            assignedUser: "Jean Dupont",
+            createdAt: "2025-01-05T10:30:00Z",
+          },
+          {
+            id: "2",
+            letterNumber: "LM2025010002",
+            title: "Audit qualité",
+            missionType: "audit",
+            status: "sent",
+            estimatedTotal: 8500,
+            startDate: "2025-02-01T00:00:00Z",
+            endDate: "2025-02-28T00:00:00Z",
+            institutionName: "Centre Médical Plus",
+            assignedUser: "Marie Martin",
+            createdAt: "2025-01-10T14:15:00Z",
+          },
+        ],
+      }
+
     default:
       return {
         totalCount: 0,
@@ -902,6 +975,10 @@ onMounted(() => {
 .export-type-badge.invoices {
   background: #e0e7ff;
   color: #3730a3;
+}
+.export-type-badge.engagement_letters {
+  background: #fef3c7;
+  color: #d97706;
 }
 
 .format-badge {

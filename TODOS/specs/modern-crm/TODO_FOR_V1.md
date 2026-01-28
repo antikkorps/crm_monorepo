@@ -74,9 +74,9 @@ Raisons :
 
 ### Implementation Plan
 
-#### Phase 1: Backend - Modèle et Migration
+#### Phase 1: Backend - Modèle et Migration ✅
 
-- [ ] **1.1 Migration** `YYYYMMDDHHMMSS-create-engagement-letters.cjs`
+- [x] **1.1 Migration** `20260127000000-create-engagement-letters.cjs`
   ```sql
   -- Table engagement_letters
   id UUID PRIMARY KEY
@@ -132,7 +132,7 @@ Raisons :
   created_at, updated_at
   ```
 
-- [ ] **1.2 Modèles Sequelize**
+- [x] **1.2 Modèles Sequelize**
   - `packages/backend/src/models/EngagementLetter.ts`
   - `packages/backend/src/models/EngagementLetterMember.ts` (intervenants)
   - Associations: belongsTo Institution, User, DocumentTemplate; hasMany Members
@@ -140,7 +140,7 @@ Raisons :
   - Hooks: auto-génération du numéro, validation dates
   - Scopes: byStatus, byInstitution, byUser, active
 
-- [ ] **1.3 Types partagés** `packages/shared/src/types/engagement-letter.ts`
+- [x] **1.3 Types partagés** `packages/shared/src/types/engagement-letter.ts`
 
   ```typescript
   enum EngagementLetterStatus { DRAFT, SENT, ACCEPTED, REJECTED, CANCELLED, COMPLETED }
@@ -163,19 +163,19 @@ Raisons :
   interface EngagementLetterMemberRequest { ... }
   ```
 
-- [ ] **1.4 Étendre DocumentVersion**
+- [x] **1.4 Étendre DocumentVersion**
   - Ajouter `ENGAGEMENT_LETTER_PDF` au type enum
   - Migration pour modifier l'enum
 
-#### Phase 2: Backend - Service et API
+#### Phase 2: Backend - Service et API ✅
 
-- [ ] **2.1 Service** `packages/backend/src/services/EngagementLetterService.ts`
+- [x] **2.1 Service** `packages/backend/src/services/EngagementLetterService.ts`
   - CRUD operations
   - Workflow transitions avec validation
   - Génération numéro séquentiel mensuel (LM202501XXXX)
   - Statistiques et métriques
 
-- [ ] **2.2 Routes API** `packages/backend/src/routes/engagement-letters.ts`
+- [x] **2.2 Routes API** `packages/backend/src/routes/engagement-letters.ts`
   ```
   GET    /api/engagement-letters              - Liste (filtres: status, institution, user, date)
   GET    /api/engagement-letters/statistics   - Stats globales
@@ -203,41 +203,43 @@ Raisons :
   GET    /api/engagement-letters/:id/versions - Historique versions
   ```
 
-- [ ] **2.3 Permissions**
-  - Ajouter dans le système de permissions: `canViewEngagementLetters`, `canCreateEngagementLetters`, `canEditEngagementLetters`, `canDeleteEngagementLetters`
+- [x] **2.3 Permissions**
+  - Utilise les permissions existantes via requireAuth middleware
 
-#### Phase 3: Backend - PDF Generation
+#### Phase 3: Backend - PDF Generation ✅
 
-- [ ] **3.1 Template par défaut** dans `PdfService.ts`
+- [x] **3.1 Template par défaut** dans `PdfService.ts`
   - `getDefaultEngagementLetterTemplate()` - Template Handlebars spécifique
   - Sections: En-tête société, Objet de la mission, Périmètre, **Équipe intervenante** (tableau avec noms, rôles, qualifications, jours), Livrables, Planning, Conditions financières, CGV, Signature
+  - Support Rich Text (TipTap JSON → HTML) avec helper `richText`
 
-- [ ] **3.2 Méthode génération**
+- [x] **3.2 Méthode génération**
   - `generateEngagementLetterPdf(letterId, generatedBy, templateId?, options)`
   - Réutiliser l'infrastructure existante (Puppeteer, versioning, email)
 
-- [ ] **3.3 DocumentTemplate**
+- [x] **3.3 DocumentTemplate**
   - Étendre l'enum `type` pour inclure `engagement_letter`
   - Permettre création de templates personnalisés
 
-#### Phase 4: Frontend - Composants
+#### Phase 4: Frontend - Composants ✅
 
-- [ ] **4.1 Vue principale** `packages/frontend/src/views/billing/EngagementLettersView.vue`
+- [x] **4.1 Vue principale** `packages/frontend/src/views/billing/EngagementLettersView.vue`
   - Liste avec filtres (status, institution, période)
   - Vue tableau desktop / cartes mobile
   - Actions rapides (voir, éditer, dupliquer, supprimer)
 
-- [ ] **4.2 Builder** `packages/frontend/src/components/billing/engagement-letters/EngagementLetterBuilder.vue`
+- [x] **4.2 Builder** `packages/frontend/src/components/billing/engagement-letters/EngagementLetterBuilder.vue`
   - Formulaire création/édition
   - Sélection institution (autocomplete)
   - Champs mission: titre, type, scope, objectifs
   - **Gestion équipe intervenante** (section dédiée)
   - Gestion livrables (ajouter/supprimer dynamiquement)
   - Planning: dates début/fin, heures estimées
-  - Tarification: type (fixe/horaire/journalier), taux, total calculé
-  - CGV et notes
+  - Tarification: type (fixe/horaire/journalier), taux, total calculé + TVA
+  - CGV avec sélection de modèles (templates CGV en base de données)
+  - Rich Text Editor (TipTap) pour scope et CGV
 
-- [ ] **4.3 TeamMembersEditor** `packages/frontend/src/components/billing/engagement-letters/TeamMembersEditor.vue`
+- [x] **4.3 TeamMembersEditor** `packages/frontend/src/components/billing/engagement-letters/TeamMembersEditor.vue`
   - Liste des intervenants avec drag & drop pour réordonner
   - Ajouter intervenant: autocomplete utilisateurs internes OU saisie manuelle (externe)
   - Champs par intervenant: nom, rôle, qualification, taux journalier, jours estimés
@@ -245,43 +247,49 @@ Raisons :
   - Calcul automatique du sous-total par intervenant
   - Affichage total équipe (somme des jours × taux)
 
-- [ ] **4.4 Preview** `packages/frontend/src/components/billing/engagement-letters/EngagementLetterPreview.vue`
+- [x] **4.4 Preview** `packages/frontend/src/components/billing/engagement-letters/EngagementLetterPreview.vue`
   - Aperçu avant envoi
   - **Tableau équipe intervenante** (comme sur le PDF final)
   - Affichage formaté des livrables
   - Timeline visuelle
 
-- [ ] **4.5 Actions** `packages/frontend/src/components/billing/engagement-letters/EngagementLetterActions.vue`
+- [x] **4.5 Actions** intégré dans Builder
   - Boutons workflow: Envoyer, Accepter, Refuser, Terminer
   - Télécharger PDF, Envoyer par email
-  - Historique versions
 
-- [ ] **4.6 Card** `packages/frontend/src/components/billing/engagement-letters/EngagementLetterCard.vue`
+- [x] **4.6 Card** `packages/frontend/src/components/billing/engagement-letters/EngagementLetterCard.vue`
   - Carte pour affichage mobile/grid
   - Badge status coloré
   - Infos clés: client, montant, dates
 
-#### Phase 5: Frontend - Intégration
+#### Phase 5: Frontend - Intégration ✅
 
-- [ ] **5.1 Navigation**
+- [x] **5.1 Navigation**
   - Ajouter dans sidebar: "Lettres de mission" sous section Facturation
   - Route: `/billing/engagement-letters`
 
-- [ ] **5.2 Dashboard widgets**
+- [x] **5.2 Dashboard widgets**
   - Compteur lettres en attente de réponse
   - Lettres expirant bientôt
+  - Intégré dans BillingAnalyticsView avec EngagementLetterStatsCard
 
-- [ ] **5.3 Timeline Institution**
+- [x] **5.3 Timeline Institution**
   - Afficher les lettres de mission dans la timeline
   - Icône et couleur distinctes
+  - Ajouté dans TimelineTab.vue et MedicalInstitutionAnalyticsService.ts
 
-- [ ] **5.4 i18n**
-  - Ajouter toutes les clés dans `fr.json` et `en.json`
+- [x] **5.3b Team Activity Feed**
+  - Afficher les lettres de mission dans l'onglet activité des équipes
+  - Types: engagement_letter_created, sent, accepted, rejected, completed
+  - Ajouté dans TeamActivityFeed.vue et TeamController.ts
+
+- [x] **5.4 i18n**
+  - Ajouter toutes les clés dans `fr.json`
   - Section `engagementLetters.*`
 
-#### Phase 6: Analytics et Stats
+#### Phase 6: Analytics et Stats (Partiel)
 
-- [ ] **6.1 API Stats** `packages/backend/src/routes/engagement-letters.ts`
+- [x] **6.1 API Stats** `packages/backend/src/routes/engagement-letters.ts`
   ```typescript
   GET /api/engagement-letters/statistics
   {
@@ -296,18 +304,23 @@ Raisons :
   }
   ```
 
-- [ ] **6.2 Intégration BillingAnalyticsView**
+- [x] **6.2 Intégration BillingAnalyticsView**
   - Nouveau graphique: Lettres de mission par statut
   - KPI: Taux d'acceptation, valeur totale, temps moyen de réponse
   - Comparaison avec devis (conversion rate)
+  - Ajouté EngagementLetterStatsCard.vue avec stats par statut et type de mission
 
-- [ ] **6.3 Dashboard global**
+- [x] **6.3 Dashboard global**
   - Widget récapitulatif lettres de mission
   - Intégrer dans les stats commerciales globales
+  - Ajouté dans BillingAnalyticsView + InstitutionRevenueService
 
-- [ ] **6.4 Export**
+- [x] **6.4 Export**
   - Ajouter export CSV/XLSX des lettres de mission
   - Intégrer dans ExportCenter
+  - Ajouté exportEngagementLetters dans ExportService, ExportController, route API
+  - Frontend: ExportApiService.exportEngagementLetters(), ExportCenterView avec filtre statut
+  - i18n complet pour les types, descriptions et statuts
 
 #### Phase 7: Tests
 
@@ -384,6 +397,139 @@ packages/shared/
 
 **Total estimé: 15-20h de travail**
 
+#### Fonctionnalités additionnelles implémentées ✅
+
+- [x] **Support TVA**
+  - Champ `vatRate` avec calcul HT/TVA/TTC
+  - Affichage dans preview et PDF
+
+- [x] **Rich Text JSON (TipTap/ProseMirror)**
+  - Stockage en format JSON ProseMirror (plus sécurisé que HTML)
+  - Conversion JSON → HTML pour PDF via helper Handlebars `richText`
+  - Composant RichTextEditor.vue réutilisable (bold, italic, listes)
+  - Sanitization adaptée pour contenu JSON
+
+- [x] **Modèles CGV (Terms & Conditions Templates)**
+  - Migration `20260127180000-create-cgv-templates.cjs`
+  - Modèle `CgvTemplate.ts` avec 3 templates par défaut (Standard, Audit, Formation)
+  - API CRUD complète `/api/cgv-templates/*`
+  - Interface de gestion dans /templates (onglet CGV)
+  - Composant `CgvTemplateManager.vue` mobile-first
+  - Sélection de templates dans EngagementLetterBuilder
+
 ### Priority
 
 **Medium** - Feature importante pour les clients audit mais pas bloquante pour v1.1
+
+---
+
+## Feature: Système Hybride Devis/Facturation Simplifié
+
+### Context
+
+L'équipe commerciale n'est pas certaine d'utiliser le module complet de devis/factures (décision de la direction en attente). Cependant, ils ont besoin de pouvoir :
+
+1. **Désactiver le module complet** via les paramètres (cache les pages Devis/Factures de l'interface)
+2. **Saisir des données simplifiées** même sans utiliser le module complet :
+   - Devis : date, montant, informations de base
+   - Facture : date, montant, numéro, informations paiement
+   - Contrat signé : date, détails (type maintenance, durée, etc.)
+3. **Comptabiliser ces données** dans les calculs de rentabilité et chiffre potentiel
+4. **Afficher ces informations** dans les fiches institutions concernées
+
+### Use Cases
+
+- CRM n'est pas l'outil de création des devis/factures mais doit pouvoir les référencer
+- Suivi commercial : "Devis de 15 000€ envoyé le 15/01" sans créer un devis complet
+- Historique : "Facture #F2026-001 de 8 500€ payée le 20/01"
+- Contrats : "Contrat maintenance annuel signé le 01/02, 2 400€/an"
+
+### Architecture Decision (À définir)
+
+**Option A : Modèle "SimplifiedTransaction"**
+- Nouvelle table pour les transactions simplifiées
+- Types : `quote_reference`, `invoice_reference`, `contract_reference`
+- Champs : date, amount, reference_number, description, status, payment_date, payment_amount
+- Coexiste avec les vrais devis/factures
+
+**Option B : Extension des modèles existants**
+- Ajouter un flag `isSimplified` aux modèles Quote/Invoice existants
+- Mode simplifié = moins de champs obligatoires, pas de lignes détaillées
+- Réutilise l'infrastructure existante
+
+**Option C : Système de "Financial Events"**
+- Table générique d'événements financiers liés aux institutions
+- Plus flexible, peut évoluer vers d'autres types d'événements
+- Agrégation pour les stats
+
+### Implementation Plan (À compléter)
+
+#### Phase 1: Paramétrage et Désactivation
+
+- [ ] **1.1 Settings Backend**
+  - Ajouter settings `billing.quotesEnabled` et `billing.invoicesEnabled`
+  - API pour modifier ces paramètres (super_admin uniquement)
+
+- [ ] **1.2 Settings Frontend**
+  - Page de paramètres système pour activer/désactiver les modules
+  - Toggle switches pour Devis et Factures
+
+- [ ] **1.3 Conditional Navigation**
+  - Sidebar : masquer les liens Devis/Factures si désactivés
+  - Routes : rediriger vers 404 ou dashboard si module désactivé
+  - Permissions : bloquer API si module désactivé
+
+#### Phase 2: Saisie Simplifiée (Modèle à choisir)
+
+- [ ] **2.1 Backend Model**
+  - Migration pour la nouvelle structure
+  - Modèle Sequelize avec validations
+  - Association avec Institution
+
+- [ ] **2.2 API Endpoints**
+  - CRUD pour les transactions simplifiées
+  - Endpoint agrégé par institution
+  - Filtres par type, date, statut
+
+- [ ] **2.3 Frontend Components**
+  - Formulaire de saisie rapide (modal ou inline)
+  - Liste des transactions sur la fiche institution
+  - Indicateurs visuels (devis en attente, factures payées, contrats actifs)
+
+#### Phase 3: Intégration Analytics
+
+- [ ] **3.1 Calculs de Rentabilité**
+  - Inclure les transactions simplifiées dans InstitutionRevenueService
+  - Distinguer "réel" (module complet) vs "référencé" (simplifié)
+
+- [ ] **3.2 Timeline Institution**
+  - Afficher les transactions simplifiées dans la timeline
+  - Icônes et couleurs distinctes
+
+- [ ] **3.3 Dashboard Stats**
+  - Chiffre potentiel (devis en attente)
+  - CA référencé (factures payées)
+  - Contrats actifs
+
+### Files to Create (À définir selon l'option choisie)
+
+```text
+packages/backend/
+├── src/models/SimplifiedTransaction.ts (ou Financial Event)
+├── src/routes/simplified-transactions.ts
+├── src/services/SimplifiedTransactionService.ts
+├── src/migrations/YYYYMMDD-create-simplified-transactions.cjs
+
+packages/frontend/
+├── src/components/billing/simplified/SimplifiedTransactionForm.vue
+├── src/components/billing/simplified/SimplifiedTransactionList.vue
+├── src/components/institutions/InstitutionFinancialSummary.vue
+├── src/services/api/simplified-transactions.ts
+
+packages/shared/
+└── src/types/simplified-transaction.ts
+```
+
+### Priority
+
+**High** - Besoin métier immédiat pour l'équipe commerciale, même sans décision sur le module complet

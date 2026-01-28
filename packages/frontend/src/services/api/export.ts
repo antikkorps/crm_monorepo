@@ -18,6 +18,7 @@ export interface ExportOptions {
   invoiceStatus?: string
   opportunityStage?: string
   opportunityStatus?: string
+  engagementLetterStatus?: string
 }
 
 export interface ExportMetadata {
@@ -353,6 +354,56 @@ export class ExportApiService {
     // For blob responses, we need to use fetch directly
     const token = localStorage.getItem("token")
     const response = await fetch(`${import.meta.env.VITE_API_URL || "/api"}/export/opportunities?${params}`, {
+      method: 'GET',
+      headers: {
+        'Authorization': token ? `Bearer ${token}` : '',
+      }
+    })
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`)
+    }
+
+    return await response.blob()
+  }
+
+  /**
+   * Export engagement letters
+   */
+  static async exportEngagementLetters(options: ExportOptions): Promise<Blob> {
+    const params = new URLSearchParams()
+
+    params.append('format', options.format)
+    params.append('includeHeaders', options.includeHeaders.toString())
+
+    if (options.dateRange) {
+      if (options.dateRange.start) {
+        params.append('startDate', options.dateRange.start)
+      }
+      if (options.dateRange.end) {
+        params.append('endDate', options.dateRange.end)
+      }
+    }
+
+    if (options.searchQuery) {
+      params.append('search', options.searchQuery)
+    }
+
+    if (options.limit) {
+      params.append('limit', options.limit.toString())
+    }
+
+    if (options.offset) {
+      params.append('offset', options.offset.toString())
+    }
+
+    if (options.engagementLetterStatus) {
+      params.append('status', options.engagementLetterStatus)
+    }
+
+    // For blob responses, we need to use fetch directly
+    const token = localStorage.getItem("token")
+    const response = await fetch(`${import.meta.env.VITE_API_URL || "/api"}/export/engagement-letters?${params}`, {
       method: 'GET',
       headers: {
         'Authorization': token ? `Bearer ${token}` : '',

@@ -2095,6 +2095,19 @@
       "setDefaultError": "Erreur lors de la définition par défaut"
     }
   },
+  "billingAnalytics": {
+    "engagementLetters": {
+      "title": "Lettres de Mission",
+      "total": "Total",
+      "accepted": "Acceptées",
+      "pending": "En attente",
+      "acceptanceRate": "Taux d'acceptation",
+      "totalAcceptedValue": "Valeur totale acceptée",
+      "byStatus": "Par statut",
+      "byMissionType": "Par type de mission",
+      "noData": "Aucune donnée disponible"
+    }
+  },
   "catalog": {
     "title": "Catalogue d'Articles",
     "subtitle": "Gérez votre catalogue d'articles et de services",
@@ -2129,6 +2142,7 @@
     "form": {
       "name": "Nom",
       "description": "Description",
+      "descriptionPlaceholder": "Description détaillée du produit ou service...",
       "category": "Catégorie",
       "sku": "Référence (SKU)",
       "unit": "Unité de mesure",
@@ -2646,7 +2660,8 @@
       "tasks": "Tâches",
       "quotes": "Devis",
       "invoices": "Factures",
-      "opportunities": "Opportunités"
+      "opportunities": "Opportunités",
+      "engagement_letters": "Lettres de Mission"
     },
     "descriptions": {
       "institutions": "Exporter les établissements médicaux avec leurs profils et contacts",
@@ -2654,7 +2669,8 @@
       "tasks": "Exporter les tâches avec les assignations et statuts",
       "quotes": "Exporter les devis avec les lignes et détails financiers",
       "invoices": "Exporter les factures avec les paiements et détails financiers",
-      "opportunities": "Exporter les opportunités commerciales avec les données du pipeline"
+      "opportunities": "Exporter les opportunités commerciales avec les données du pipeline",
+      "engagement_letters": "Exporter les lettres de mission avec les détails de mission et données financières"
     },
     "format": {
       "csv": "CSV (Valeurs séparées par virgule)",
@@ -2671,6 +2687,14 @@
     "taskStatuses": {
       "pending": "En attente",
       "in_progress": "En cours",
+      "completed": "Terminée",
+      "cancelled": "Annulée"
+    },
+    "engagementLetterStatuses": {
+      "draft": "Brouillon",
+      "sent": "Envoyée",
+      "accepted": "Acceptée",
+      "rejected": "Refusée",
       "completed": "Terminée",
       "cancelled": "Annulée"
     },
@@ -2716,6 +2740,7 @@
       "institutionType": "Type d'établissement",
       "allTypes": "Tous les types",
       "taskStatus": "Statut de la tâche",
+      "engagementLetterStatus": "Statut de la lettre de mission",
       "allStatuses": "Tous les statuts",
       "includeHeaders": "Inclure les en-têtes de colonnes",
       "useQueue": "Utiliser le traitement en arrière-plan pour les gros exports",
@@ -2875,7 +2900,8 @@
       "task": "Tâche",
       "quote": "Devis",
       "invoice": "Facture",
-      "engagementLetter": "Lettre de Mission"
+      "engagementLetter": "Lettre de Mission",
+      "engagement_letter": "Lettre de Mission"
     },
     "callTypes": {
       "incoming": "Entrant",
@@ -2891,6 +2917,7 @@
     "dueDate": "Échéance",
     "validUntil": "Valide jusqu'au",
     "paidOn": "Payé le",
+    "acceptedOn": "Accepté le",
     "remaining": "Reste",
     "relativeTime": {
       "now": "À l'instant",
@@ -3022,7 +3049,8 @@
       "allActivities": "Toutes les activités",
       "tasks": "Tâches",
       "institutions": "Institutions",
-      "interactions": "Notes & Réunions"
+      "interactions": "Notes & Réunions",
+      "engagementLetters": "Lettres de Mission"
     },
     "userCreatedSuccess": "Utilisateur créé avec succès",
     "errorCreatingUser": "Erreur lors de la création de l'utilisateur",

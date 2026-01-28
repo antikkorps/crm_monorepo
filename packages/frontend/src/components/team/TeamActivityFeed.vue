@@ -152,6 +152,7 @@ const filterOptions = computed(() => [
   { label: t("teams.filters.tasks"), value: "task" },
   { label: t("teams.filters.institutions"), value: "institution" },
   { label: t("teams.filters.interactions"), value: "user" },
+  { label: t("teams.filters.engagementLetters"), value: "engagement_letter" },
 ])
 
 const getMarkerClass = (type: string) => {
@@ -166,6 +167,11 @@ const getMarkerClass = (type: string) => {
     note_created: "indigo",
     meeting_created: "teal",
     call_created: "cyan",
+    engagement_letter_created: "deep-purple",
+    engagement_letter_sent: "info",
+    engagement_letter_accepted: "success",
+    engagement_letter_rejected: "error",
+    engagement_letter_completed: "teal",
   }
   return colorMap[type as keyof typeof colorMap] || "grey"
 }
@@ -182,6 +188,11 @@ const getActivityIcon = (type: string) => {
     note_created: "mdi-text-box-outline",
     meeting_created: "mdi-calendar-account",
     call_created: "mdi-phone-outline",
+    engagement_letter_created: "mdi-file-sign",
+    engagement_letter_sent: "mdi-send",
+    engagement_letter_accepted: "mdi-check-decagram",
+    engagement_letter_rejected: "mdi-close-circle",
+    engagement_letter_completed: "mdi-clipboard-check",
   }
   return iconMap[type as keyof typeof iconMap] || "mdi-circle-outline"
 }

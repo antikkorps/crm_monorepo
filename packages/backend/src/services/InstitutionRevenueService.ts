@@ -1,8 +1,9 @@
 import { Op } from "sequelize"
 import { Invoice } from "../models/Invoice"
 import { Quote } from "../models/Quote"
+import { EngagementLetter } from "../models/EngagementLetter"
 import { MedicalInstitution } from "../models/MedicalInstitution"
-import { InvoiceStatus, QuoteStatus } from "@medical-crm/shared"
+import { InvoiceStatus, QuoteStatus, EngagementLetterStatus } from "@medical-crm/shared"
 
 /**
  * Revenue Analytics Response Interface
@@ -16,9 +17,13 @@ export interface InstitutionRevenueAnalytics {
     overdueRevenue: number // Overdue invoices
     totalQuotes: number
     acceptedQuotes: number
+    totalEngagementLetters: number
+    acceptedEngagementLetters: number
     conversionRate: number // % of quotes accepted
+    engagementLetterConversionRate: number // % of engagement letters accepted
     averageInvoiceValue: number
     averageQuoteValue: number
+    averageEngagementLetterValue: number
     lifetimeValue: number // LTV = totalRevenue
   }
   quoteAnalytics: {
@@ -38,6 +43,15 @@ export interface InstitutionRevenueAnalytics {
     totalInvoiceValue: number
     paidValue: number
     pendingValue: number
+  }
+  engagementLetterAnalytics: {
+    totalEngagementLetters: number
+    acceptedEngagementLetters: number
+    sentEngagementLetters: number
+    rejectedEngagementLetters: number
+    completedEngagementLetters: number
+    totalEngagementLetterValue: number
+    acceptedEngagementLetterValue: number
   }
 }
 
@@ -74,6 +88,12 @@ export class InstitutionRevenueService {
       attributes: ["id", "invoiceNumber", "status", "total", "totalPaid", "dueDate", "createdAt"],
     })
 
+    // Fetch all engagement letters for this institution
+    const engagementLetters = await EngagementLetter.findAll({
+      where: { institutionId: institutionId },
+      attributes: ["id", "letterNumber", "status", "estimatedTotal", "createdAt"],
+    })
+
     // Calculate quote analytics
     const quoteAnalytics = {
       totalQuotes: quotes.length,
@@ -84,6 +104,19 @@ export class InstitutionRevenueService {
       acceptedQuoteValue: quotes
         .filter((q) => q.status === QuoteStatus.ACCEPTED)
         .reduce((sum, q) => sum + parseFloat(q.total.toString()), 0),
+    }
+
+    // Calculate engagement letter analytics
+    const engagementLetterAnalytics = {
+      totalEngagementLetters: engagementLetters.length,
+      acceptedEngagementLetters: engagementLetters.filter((el) => el.status === EngagementLetterStatus.ACCEPTED).length,
+      sentEngagementLetters: engagementLetters.filter((el) => el.status === EngagementLetterStatus.SENT).length,
+      rejectedEngagementLetters: engagementLetters.filter((el) => el.status === EngagementLetterStatus.REJECTED).length,
+      completedEngagementLetters: engagementLetters.filter((el) => el.status === EngagementLetterStatus.COMPLETED).length,
+      totalEngagementLetterValue: engagementLetters.reduce((sum, el) => sum + parseFloat(el.estimatedTotal?.toString() || "0"), 0),
+      acceptedEngagementLetterValue: engagementLetters
+        .filter((el) => el.status === EngagementLetterStatus.ACCEPTED || el.status === EngagementLetterStatus.COMPLETED)
+        .reduce((sum, el) => sum + parseFloat(el.estimatedTotal?.toString() || "0"), 0),
     }
 
     // Calculate invoice analytics
@@ -127,11 +160,19 @@ export class InstitutionRevenueService {
         ? (quoteAnalytics.acceptedQuotes / quoteAnalytics.totalQuotes) * 100
         : 0
 
+    const engagementLetterConversionRate =
+      engagementLetterAnalytics.totalEngagementLetters > 0
+        ? (engagementLetterAnalytics.acceptedEngagementLetters / engagementLetterAnalytics.totalEngagementLetters) * 100
+        : 0
+
     const averageInvoiceValue =
       invoices.length > 0 ? invoiceAnalytics.totalInvoiceValue / invoices.length : 0
 
     const averageQuoteValue =
       quotes.length > 0 ? quoteAnalytics.totalQuoteValue / quotes.length : 0
+
+    const averageEngagementLetterValue =
+      engagementLetters.length > 0 ? engagementLetterAnalytics.totalEngagementLetterValue / engagementLetters.length : 0
 
     return {
       institutionId,
@@ -142,13 +183,18 @@ export class InstitutionRevenueService {
         overdueRevenue: Math.round(overdueRevenue * 100) / 100,
         totalQuotes: quoteAnalytics.totalQuotes,
         acceptedQuotes: quoteAnalytics.acceptedQuotes,
+        totalEngagementLetters: engagementLetterAnalytics.totalEngagementLetters,
+        acceptedEngagementLetters: engagementLetterAnalytics.acceptedEngagementLetters,
         conversionRate: Math.round(conversionRate * 100) / 100,
+        engagementLetterConversionRate: Math.round(engagementLetterConversionRate * 100) / 100,
         averageInvoiceValue: Math.round(averageInvoiceValue * 100) / 100,
         averageQuoteValue: Math.round(averageQuoteValue * 100) / 100,
+        averageEngagementLetterValue: Math.round(averageEngagementLetterValue * 100) / 100,
         lifetimeValue: Math.round(totalRevenue * 100) / 100,
       },
       quoteAnalytics,
       invoiceAnalytics,
+      engagementLetterAnalytics,
     }
   }
 }

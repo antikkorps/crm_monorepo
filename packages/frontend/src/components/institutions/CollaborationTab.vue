@@ -63,7 +63,7 @@
               <v-list-item
                 v-for="meeting in collaborationData.upcomingMeetings"
                 :key="meeting.id"
-                @click="navigateTo('/meetings')"
+                @click="openMeetingForEdit(meeting)"
               >
                 <template v-slot:prepend>
                   <v-avatar color="primary" variant="tonal">
@@ -124,14 +124,14 @@
               <v-list-item
                 v-for="call in collaborationData.recentCalls"
                 :key="call.id"
-                @click="navigateTo('/calls')"
+                @click="openCallForEdit(call)"
               >
                 <template v-slot:prepend>
                   <v-avatar :color="getCallColor(call.callType)" variant="tonal">
                     <v-icon>{{ getCallIcon(call.callType) }}</v-icon>
                   </v-avatar>
                 </template>
-                <v-list-item-title class="font-weight-medium">
+                <v-list-item-title class="font-weight-medium d-flex align-center">
                   {{ formatCallType(call.callType) }}
                   <v-chip
                     size="x-small"
@@ -140,6 +140,11 @@
                     variant="tonal"
                   >
                     {{ call.duration ? formatDuration(call.duration) : "N/A" }}
+                  </v-chip>
+                  <!-- User avatar -->
+                  <v-chip v-if="call.user" size="small" variant="tonal" color="primary" class="ml-2">
+                    <v-avatar start size="18" :image="getUserAvatarUrl(call.user)" />
+                    {{ call.user.firstName }} {{ call.user.lastName }}
                   </v-chip>
                 </v-list-item-title>
                 <v-list-item-subtitle>
@@ -191,7 +196,7 @@
               <v-list-item
                 v-for="note in collaborationData.recentNotes"
                 :key="note.id"
-                @click="navigateTo('/notes')"
+                @click="openNoteForEdit(note)"
               >
                 <template v-slot:prepend>
                   <v-avatar color="warning" variant="tonal">
@@ -258,7 +263,7 @@
               <v-list-item
                 v-for="reminder in collaborationData.pendingReminders"
                 :key="reminder.id"
-                @click="navigateTo('/reminders')"
+                @click="openReminderForEdit(reminder)"
               >
                 <template v-slot:prepend>
                   <v-avatar :color="getPriorityColor(reminder.priority)" variant="tonal">
@@ -402,7 +407,7 @@
               <v-list-item
                 v-for="quote in collaborationData.recentQuotes"
                 :key="quote.id"
-                @click="navigateTo('/quotes')"
+                @click="navigateToItem('/quotes', quote.id)"
               >
                 <template v-slot:prepend>
                   <v-avatar :color="getQuoteStatusColor(quote.status)" variant="tonal">
@@ -470,7 +475,7 @@
               <v-list-item
                 v-for="invoice in collaborationData.recentInvoices"
                 :key="invoice.id"
-                @click="navigateTo('/invoices')"
+                @click="navigateToItem(`/invoices/${invoice.id}`, invoice.id)"
               >
                 <template v-slot:prepend>
                   <v-avatar :color="getInvoiceStatusColor(invoice.status)" variant="tonal">
@@ -541,7 +546,7 @@
               <v-list-item
                 v-for="letter in collaborationData.recentEngagementLetters"
                 :key="letter.id"
-                @click="navigateTo('/engagement-letters')"
+                @click="navigateToItem('/engagement-letters', letter.id)"
               >
                 <template v-slot:prepend>
                   <v-avatar :color="getEngagementLetterStatusColor(letter.status)" variant="tonal">
@@ -576,37 +581,41 @@
       </v-row>
     </div>
 
-    <!-- Quick Add Dialogs -->
+    <!-- Quick Add/Edit Dialogs -->
     <CallForm
       v-model="showCallForm"
+      :call="selectedCall"
       :loading="formLoading"
       :preselected-institution-id="props.institutionId"
       @submit="handleCallSubmit"
-      @cancel="showCallForm = false"
+      @cancel="showCallForm = false; selectedCall = null"
     />
 
     <MeetingForm
       v-model="showMeetingForm"
+      :meeting="selectedMeeting"
       :loading="formLoading"
       :preselected-institution-id="props.institutionId"
       @submit="handleMeetingSubmit"
-      @cancel="showMeetingForm = false"
+      @cancel="showMeetingForm = false; selectedMeeting = null"
     />
 
     <NoteForm
       v-model="showNoteForm"
+      :note="selectedNote"
       :loading="formLoading"
       :preselected-institution-id="props.institutionId"
       @submit="handleNoteSubmit"
-      @cancel="showNoteForm = false"
+      @cancel="showNoteForm = false; selectedNote = null"
     />
 
     <ReminderForm
       v-model="showReminderForm"
+      :reminder="selectedReminder"
       :loading="formLoading"
       :preselected-institution-id="props.institutionId"
       @submit="handleReminderSubmit"
-      @cancel="showReminderForm = false"
+      @cancel="showReminderForm = false; selectedReminder = null"
     />
 
     <TaskForm
@@ -633,8 +642,11 @@ import type {
   MeetingCreateRequest,
   MeetingUpdateRequest,
   NoteCreateRequest,
+  NoteUpdateRequest,
   ReminderCreateRequest,
+  ReminderUpdateRequest,
   TaskCreateRequest,
+  TaskUpdateRequest,
 } from "@medical-crm/shared"
 import { computed, onMounted, ref } from "vue"
 import { useI18n } from "vue-i18n"
@@ -652,12 +664,16 @@ const collaborationData = ref<any>(null)
 const loading = ref(false)
 const error = ref("")
 
-// Quick add dialog states
+// Quick add/edit dialog states
 const showCallForm = ref(false)
 const showMeetingForm = ref(false)
 const showNoteForm = ref(false)
 const showReminderForm = ref(false)
 const showTaskForm = ref(false)
+const selectedCall = ref<any>(null)
+const selectedMeeting = ref<any>(null)
+const selectedNote = ref<any>(null)
+const selectedReminder = ref<any>(null)
 const selectedTask = ref<any>(null)
 const formLoading = ref(false)
 
@@ -745,20 +761,24 @@ const navigateTo = (path: string) => {
   })
 }
 
-// Open form dialogs
+// Open form dialogs (create mode)
 const openCallForm = () => {
+  selectedCall.value = null
   showCallForm.value = true
 }
 
 const openMeetingForm = () => {
+  selectedMeeting.value = null
   showMeetingForm.value = true
 }
 
 const openNoteForm = () => {
+  selectedNote.value = null
   showNoteForm.value = true
 }
 
 const openReminderForm = () => {
+  selectedReminder.value = null
   showReminderForm.value = true
 }
 
@@ -767,23 +787,64 @@ const openTaskForm = () => {
   showTaskForm.value = true
 }
 
+// Open form dialogs (edit mode)
+const openCallForEdit = (call: any) => {
+  selectedCall.value = call
+  showCallForm.value = true
+}
+
+const openMeetingForEdit = (meeting: any) => {
+  selectedMeeting.value = meeting
+  showMeetingForm.value = true
+}
+
+const openNoteForEdit = (note: any) => {
+  selectedNote.value = note
+  showNoteForm.value = true
+}
+
+const openReminderForEdit = (reminder: any) => {
+  selectedReminder.value = reminder
+  showReminderForm.value = true
+}
+
 const openTaskForEdit = (task: any) => {
   selectedTask.value = task
   showTaskForm.value = true
+}
+
+// Navigate to specific item with context
+const navigateToItem = (path: string, itemId: string) => {
+  // If the path already contains the ID (like /invoices/:id), just add the query
+  const hasIdInPath = path.includes(itemId)
+  router.push({
+    path: hasIdInPath ? path : path,
+    query: {
+      ...(hasIdInPath ? {} : { id: itemId }),
+      fromInstitution: props.institutionId
+    },
+  })
 }
 
 // Form submit handlers
 const handleCallSubmit = async (data: CallCreateRequest | CallUpdateRequest) => {
   formLoading.value = true
   try {
-    await callsApi.create({
-      ...data,
-      institutionId: props.institutionId,
-    } as CallCreateRequest)
+    if (selectedCall.value) {
+      // Update existing call
+      await callsApi.update(selectedCall.value.id, data)
+    } else {
+      // Create new call
+      await callsApi.create({
+        ...data,
+        institutionId: props.institutionId,
+      } as CallCreateRequest)
+    }
     showCallForm.value = false
-    loadData() // Reload data to show new call
+    selectedCall.value = null
+    loadData()
   } catch (err) {
-    console.error("Error creating call:", err)
+    console.error("Error saving call:", err)
   } finally {
     formLoading.value = false
   }
@@ -792,52 +853,73 @@ const handleCallSubmit = async (data: CallCreateRequest | CallUpdateRequest) => 
 const handleMeetingSubmit = async (data: MeetingCreateRequest | MeetingUpdateRequest) => {
   formLoading.value = true
   try {
-    await meetingsApi.create({
-      ...data,
-      institutionId: props.institutionId,
-    } as MeetingCreateRequest)
+    if (selectedMeeting.value) {
+      // Update existing meeting
+      await meetingsApi.update(selectedMeeting.value.id, data)
+    } else {
+      // Create new meeting
+      await meetingsApi.create({
+        ...data,
+        institutionId: props.institutionId,
+      } as MeetingCreateRequest)
+    }
     showMeetingForm.value = false
+    selectedMeeting.value = null
     loadData()
   } catch (err) {
-    console.error("Error creating meeting:", err)
+    console.error("Error saving meeting:", err)
   } finally {
     formLoading.value = false
   }
 }
 
-const handleNoteSubmit = async (data: NoteCreateRequest) => {
+const handleNoteSubmit = async (data: NoteCreateRequest | NoteUpdateRequest) => {
   formLoading.value = true
   try {
-    await notesApi.create({
-      ...data,
-      institutionId: props.institutionId,
-    })
+    if (selectedNote.value) {
+      // Update existing note
+      await notesApi.update(selectedNote.value.id, data)
+    } else {
+      // Create new note
+      await notesApi.create({
+        ...(data as NoteCreateRequest),
+        institutionId: props.institutionId,
+      })
+    }
     showNoteForm.value = false
+    selectedNote.value = null
     loadData()
   } catch (err) {
-    console.error("Error creating note:", err)
+    console.error("Error saving note:", err)
   } finally {
     formLoading.value = false
   }
 }
 
-const handleReminderSubmit = async (data: ReminderCreateRequest) => {
+const handleReminderSubmit = async (data: ReminderCreateRequest | ReminderUpdateRequest) => {
   formLoading.value = true
   try {
-    await remindersApi.create({
-      ...data,
-      institutionId: props.institutionId,
-    })
+    if (selectedReminder.value) {
+      // Update existing reminder
+      await remindersApi.update(selectedReminder.value.id, data)
+    } else {
+      // Create new reminder
+      await remindersApi.create({
+        ...(data as ReminderCreateRequest),
+        institutionId: props.institutionId,
+      })
+    }
     showReminderForm.value = false
+    selectedReminder.value = null
     loadData()
   } catch (err) {
-    console.error("Error creating reminder:", err)
+    console.error("Error saving reminder:", err)
   } finally {
     formLoading.value = false
   }
 }
 
-const handleTaskSubmit = async (data: TaskCreateRequest) => {
+const handleTaskSubmit = async (data: TaskCreateRequest | TaskUpdateRequest) => {
   formLoading.value = true
   try {
     if (selectedTask.value) {
@@ -909,6 +991,12 @@ const getCallIcon = (type: string): string => {
     missed: "mdi-phone-missed",
   }
   return iconMap[type] || "mdi-phone"
+}
+
+const getUserAvatarUrl = (user: { id: string; firstName?: string; lastName?: string }): string => {
+  // Use first name + last name as seed so DiceBear shows correct initials
+  const seed = `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.id
+  return `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(seed)}`
 }
 
 const getPriorityColor = (priority: string): string => {

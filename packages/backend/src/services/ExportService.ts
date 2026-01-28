@@ -10,6 +10,7 @@ import {
   Quote,
   Invoice,
   Opportunity,
+  EngagementLetter,
 } from "../models"
 import { UserRole } from "../models/User"
 
@@ -30,6 +31,7 @@ export interface ExportOptions {
   invoiceStatus?: string
   opportunityStage?: string
   opportunityStatus?: string
+  engagementLetterStatus?: string
   limit?: number // For pagination
   offset?: number // For pagination
   useQueue?: boolean // Use queue system for large exports
@@ -804,6 +806,127 @@ export class ExportService {
   }
 
   /**
+   * Export engagement letters with filtering options
+   */
+  static async exportEngagementLetters(options: ExportOptions): Promise<ExportResult> {
+    try {
+      const whereClause: any = {}
+
+      // Apply date range filtering
+      if (options.dateRange) {
+        whereClause.createdAt = {
+          [Op.gte]: options.dateRange.start,
+          [Op.lte]: options.dateRange.end,
+        }
+      }
+
+      // Apply engagement letter status filtering
+      if (options.engagementLetterStatus) {
+        whereClause.status = options.engagementLetterStatus
+      }
+
+      // Apply search query
+      if (options.searchQuery) {
+        whereClause[Op.or] = [
+          { title: { [Op.iLike]: `%${options.searchQuery}%` } },
+          { letterNumber: { [Op.iLike]: `%${options.searchQuery}%` } },
+        ]
+      }
+
+      // Apply team-based filtering
+      if (options.teamMemberIds && options.teamMemberIds.length > 0) {
+        const teamFilter = {
+          assignedUserId: {
+            [Op.in]: options.teamMemberIds,
+          },
+        }
+
+        // If there's already an Op.or (from search), combine them
+        if (whereClause[Op.or]) {
+          whereClause[Op.and] = [
+            { [Op.or]: whereClause[Op.or] },
+            teamFilter
+          ]
+          delete whereClause[Op.or]
+        } else {
+          Object.assign(whereClause, teamFilter)
+        }
+      } else if (options.userId) {
+        whereClause.assignedUserId = options.userId
+      }
+
+      const engagementLetters = await EngagementLetter.findAll({
+        where: whereClause,
+        include: [
+          {
+            model: User,
+            as: "assignedUser",
+            attributes: ["id", "firstName", "lastName", "email"],
+          },
+          {
+            model: MedicalInstitution,
+            as: "institution",
+            attributes: ["id", "name", "type"],
+          },
+        ],
+        order: [["createdAt", "DESC"]],
+        limit: options.limit,
+        offset: options.offset,
+      })
+
+      const data = engagementLetters.map(letter => ({
+        id: letter.id,
+        letterNumber: letter.letterNumber,
+        title: letter.title,
+        missionType: letter.missionType,
+        status: letter.status,
+        billingType: letter.billingType,
+        rate: letter.rate,
+        totalDays: letter.totalDays,
+        travelExpenses: letter.travelExpenses,
+        estimatedTotal: letter.estimatedTotal,
+        vatRate: letter.vatRate,
+        showVat: letter.showVat,
+        startDate: letter.startDate,
+        endDate: letter.endDate,
+        estimatedHours: letter.estimatedHours,
+        validUntil: letter.validUntil,
+        sentAt: letter.sentAt,
+        acceptedAt: letter.acceptedAt,
+        rejectedAt: letter.rejectedAt,
+        completedAt: letter.completedAt,
+        institutionId: letter.institutionId,
+        institutionName: letter.institution?.name || null,
+        institutionType: letter.institution?.type || null,
+        assignedUserId: letter.assignedUserId,
+        assignedUser: letter.assignedUser
+          ? `${letter.assignedUser.firstName} ${letter.assignedUser.lastName}`
+          : null,
+        assignedUserEmail: letter.assignedUser?.email || null,
+        createdAt: letter.createdAt,
+        updatedAt: letter.updatedAt,
+        isExpired: letter.isExpired(),
+      }))
+
+      return {
+        success: true,
+        data,
+        totalRecords: data.length,
+        filename: `engagement-letters-${new Date().toISOString().split('T')[0]}`,
+        contentType: options.format === 'csv' ? 'text/csv' :
+                     options.format === 'xlsx' ? 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' :
+                     'application/json',
+      }
+    } catch (error) {
+      console.error('Error exporting engagement letters:', error)
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error occurred',
+      }
+    }
+  }
+
+  /**
    * Generate CSV content from data
    */
   static generateCSV(data: any[], includeHeaders: boolean = true): string {
@@ -918,8 +1041,8 @@ export class ExportService {
 
       // Team admins can export team data
       if (user.role === UserRole.TEAM_ADMIN) {
-        // Team admins can export institutions, contacts, tasks, quotes, invoices, opportunities
-        return ['institutions', 'contacts', 'tasks', 'quotes', 'invoices', 'opportunities'].includes(exportType)
+        // Team admins can export institutions, contacts, tasks, quotes, invoices, opportunities, engagement_letters
+        return ['institutions', 'contacts', 'tasks', 'quotes', 'invoices', 'opportunities', 'engagement_letters'].includes(exportType)
       }
 
       // Regular users can only export their own data
@@ -975,6 +1098,8 @@ export class ExportService {
           return await this.exportInvoices(options)
         case 'opportunities':
           return await this.exportOpportunities(options)
+        case 'engagement_letters':
+          return await this.exportEngagementLetters(options)
         default:
           return {
             success: false,
@@ -1075,6 +1200,13 @@ export class ExportService {
       }
       const opportunityCount = await Opportunity.count({ where: opportunityWhereClause })
 
+      // Count engagement letters
+      const engagementLetterWhereClause: any = {}
+      if (teamMemberIds) {
+        engagementLetterWhereClause.assignedUserId = { [Op.in]: teamMemberIds }
+      }
+      const engagementLetterCount = await EngagementLetter.count({ where: engagementLetterWhereClause })
+
       return {
         institutions: institutionCount,
         contacts: contactCount,
@@ -1082,6 +1214,7 @@ export class ExportService {
         quotes: quoteCount,
         invoices: invoiceCount,
         opportunities: opportunityCount,
+        engagementLetters: engagementLetterCount,
       }
     } catch (error) {
       logger.error('Error getting record counts:', { error })
@@ -1092,6 +1225,7 @@ export class ExportService {
         quotes: 0,
         invoices: 0,
         opportunities: 0,
+        engagementLetters: 0,
       }
     }
   }

@@ -55,6 +55,10 @@
                 <v-icon start>mdi-receipt</v-icon>
                 {{ t('timeline.filters.invoices') }}
               </v-chip>
+              <v-chip filter variant="outlined" value="engagement_letter" size="small">
+                <v-icon start>mdi-file-sign</v-icon>
+                {{ t('timeline.filters.engagementLetters') }}
+              </v-chip>
             </v-chip-group>
           </v-col>
         </v-row>
@@ -103,7 +107,8 @@
           </v-card-title>
 
           <v-card-text>
-            <div v-if="item.description" class="text-body-2 mb-3">
+            <!-- Only show description for notes, tasks, meetings, reminders, calls - not for billing documents -->
+            <div v-if="item.description && !['quote', 'invoice', 'engagement_letter'].includes(item.type)" class="text-body-2 mb-3">
               {{ item.description }}
             </div>
 
@@ -206,6 +211,24 @@
                 </v-chip>
                 <v-chip v-if="item.metadata.remainingAmount > 0" size="small" color="warning" variant="tonal" prepend-icon="mdi-cash-clock">
                   {{ t('timeline.remaining') }}: {{ formatCurrency(item.metadata.remainingAmount) }}
+                </v-chip>
+              </template>
+
+              <template v-if="item.type === 'engagement_letter'">
+                <v-chip size="small" :color="getEngagementLetterStatusColor(item.metadata.status)" variant="tonal">
+                  {{ formatEngagementLetterStatus(item.metadata.status) }}
+                </v-chip>
+                <v-chip size="small" variant="outlined" prepend-icon="mdi-currency-eur">
+                  {{ formatCurrency(item.metadata.estimatedTotal) }}
+                </v-chip>
+                <v-chip v-if="item.metadata.missionType" size="small" variant="outlined" prepend-icon="mdi-briefcase">
+                  {{ formatMissionType(item.metadata.missionType) }}
+                </v-chip>
+                <v-chip v-if="item.metadata.validUntil" size="small" variant="outlined" prepend-icon="mdi-calendar-clock">
+                  {{ t('timeline.validUntil') }}: {{ formatDate(item.metadata.validUntil) }}
+                </v-chip>
+                <v-chip v-if="item.metadata.acceptedAt" size="small" color="success" variant="tonal" prepend-icon="mdi-check-circle">
+                  {{ t('timeline.acceptedOn') }}: {{ formatDate(item.metadata.acceptedAt) }}
                 </v-chip>
               </template>
             </div>
@@ -478,6 +501,7 @@ const getItemIcon = (type: TimelineItemType): string => {
     task: "mdi-checkbox-marked-circle-outline",
     quote: "mdi-file-document-outline",
     invoice: "mdi-receipt",
+    engagement_letter: "mdi-file-sign",
   }
   return icons[type] || "mdi-circle"
 }
@@ -491,6 +515,7 @@ const getItemColor = (type: TimelineItemType): string => {
     task: "secondary",
     quote: "purple",
     invoice: "teal",
+    engagement_letter: "indigo",
   }
   return colors[type] || "grey"
 }
@@ -542,6 +567,27 @@ const getInvoiceStatusColor = (status: string): string => {
 
 const formatInvoiceStatus = (status: string): string => {
   return t(`invoices.status.${status}`) || status
+}
+
+// Engagement letter status helpers
+const getEngagementLetterStatusColor = (status: string): string => {
+  const colors: Record<string, string> = {
+    draft: "grey",
+    sent: "info",
+    accepted: "success",
+    rejected: "error",
+    cancelled: "grey-darken-1",
+    completed: "teal",
+  }
+  return colors[status] || "grey"
+}
+
+const formatEngagementLetterStatus = (status: string): string => {
+  return t(`engagementLetters.status.${status}`) || status
+}
+
+const formatMissionType = (missionType: string): string => {
+  return t(`engagementLetters.missionType.${missionType}`) || missionType
 }
 
 const getCallTypeColor = (type: string): string => {

@@ -72,7 +72,7 @@ const envSchema = Joi.object({
     then: Joi.string().default("test-jwt-secret-must-be-32-chars-long!"),
     otherwise: Joi.string().min(32).required(),
   }),
-  JWT_EXPIRES_IN: Joi.string().default("15m"),
+  JWT_EXPIRES_IN: Joi.string().default("2h"),
   JWT_REFRESH_SECRET: Joi.string().when("NODE_ENV", {
     is: "test",
     then: Joi.string().default("test-refresh-secret-must-be-32-chars!"),
