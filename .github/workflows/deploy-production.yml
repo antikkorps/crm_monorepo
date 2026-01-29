@@ -87,28 +87,19 @@ jobs:
             echo "📊 Resource usage:"
             docker stats --no-stream
 
-      - name: Health check
-        run: |
-          echo "🏥 Performing health check..."
+            # Health check from within the server (bypasses geo-blocking)
+            echo "🏥 Performing health check..."
+            sleep 5
 
-          # Wait a bit for services to fully start
-          sleep 10
+            # Check backend health via docker
+            docker compose -f docker-compose.prod.yml exec -T backend curl -f -s http://localhost:3000/health || { echo "❌ Backend health check failed"; exit 1; }
+            echo "✅ Backend is healthy"
 
-          # Check backend health (with User-Agent to bypass Cloudflare bot protection)
-          curl -f -s -o /dev/null -w "%{http_code}" \
-            -H "User-Agent: GitHub-Actions-Health-Check/1.0" \
-            -H "Accept: application/json" \
-            --max-time 30 \
-            https://${{ secrets.BACKEND_DOMAIN }}/health || exit 1
-          echo "✅ Backend is healthy"
+            # Check frontend health via docker
+            docker compose -f docker-compose.prod.yml exec -T frontend curl -f -s http://localhost:80/ > /dev/null || { echo "❌ Frontend health check failed"; exit 1; }
+            echo "✅ Frontend is healthy"
 
-          # Check frontend (with User-Agent to bypass Cloudflare bot protection)
-          curl -f -s -o /dev/null -w "%{http_code}" \
-            -H "User-Agent: GitHub-Actions-Health-Check/1.0" \
-            -H "Accept: text/html" \
-            --max-time 30 \
-            https://${{ secrets.FRONTEND_DOMAIN }}/ || exit 1
-          echo "✅ Frontend is healthy"
+            echo "🎉 Deployment successful!"
 
   # ============================================
   # Notify on failure
