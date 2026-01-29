@@ -4,8 +4,11 @@ import Handlebars from "handlebars"
 import { dirname, join } from "path"
 import puppeteer, { Browser, PDFOptions } from "puppeteer"
 import { v4 as uuidv4 } from "uuid"
-import { generateHTML } from "@tiptap/html/server"
-import StarterKit from "@tiptap/starter-kit"
+// TipTap imports - using require for CommonJS compatibility
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const { generateHTML } = require("@tiptap/html/server")
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const StarterKit = require("@tiptap/starter-kit").default
 import { sequelize } from "../config/database"
 import { DocumentTemplate, TemplateType } from "../models/DocumentTemplate"
 import { DocumentVersion, DocumentVersionType } from "../models/DocumentVersion"
