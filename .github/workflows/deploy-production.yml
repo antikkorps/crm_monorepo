@@ -94,12 +94,20 @@ jobs:
           # Wait a bit for services to fully start
           sleep 10
 
-          # Check backend health
-          curl -f https://${{ secrets.BACKEND_DOMAIN }}/health || exit 1
+          # Check backend health (with User-Agent to bypass Cloudflare bot protection)
+          curl -f -s -o /dev/null -w "%{http_code}" \
+            -H "User-Agent: GitHub-Actions-Health-Check/1.0" \
+            -H "Accept: application/json" \
+            --max-time 30 \
+            https://${{ secrets.BACKEND_DOMAIN }}/health || exit 1
           echo "✅ Backend is healthy"
 
-          # Check frontend
-          curl -f https://${{ secrets.FRONTEND_DOMAIN }}/ || exit 1
+          # Check frontend (with User-Agent to bypass Cloudflare bot protection)
+          curl -f -s -o /dev/null -w "%{http_code}" \
+            -H "User-Agent: GitHub-Actions-Health-Check/1.0" \
+            -H "Accept: text/html" \
+            --max-time 30 \
+            https://${{ secrets.FRONTEND_DOMAIN }}/ || exit 1
           echo "✅ Frontend is healthy"
 
   # ============================================
