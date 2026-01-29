@@ -351,7 +351,8 @@ const onCatalogItemSelect = (item: CatalogItem | null) => {
 
   // Populate line with catalog item data
   ;(localLine.value as any).catalogItemId = item.id
-  localLine.value.description = item.name + (item.description ? ` - ${item.description}` : '')
+  // Use item description if available, otherwise just the name
+  localLine.value.description = item.description || item.name
   localLine.value.unitPrice = item.unitPrice
   localLine.value.taxRate = item.taxRate
 

@@ -11,6 +11,13 @@
             ? t("simplifiedTransactions.form.editTitle")
             : t("simplifiedTransactions.form.createTitle")
         }}
+        <v-spacer />
+        <v-btn
+          icon="mdi-close"
+          variant="text"
+          density="compact"
+          @click="handleCancel"
+        />
       </v-card-title>
 
       <v-card-text>
@@ -20,32 +27,37 @@
             <v-card-subtitle class="pt-3">
               {{ t("simplifiedTransactions.form.typeSelection") }}
             </v-card-subtitle>
-            <v-card-text>
-              <v-btn-toggle
-                v-model="formData.type"
-                mandatory
-                color="primary"
-                variant="outlined"
-                divided
-                class="type-toggle"
-              >
-                <v-btn value="quote" :disabled="isEditing">
-                  <v-icon start>mdi-file-document-outline</v-icon>
-                  {{ t("simplifiedTransactions.type.quote") }}
-                </v-btn>
-                <v-btn value="invoice" :disabled="isEditing">
-                  <v-icon start>mdi-receipt-text-outline</v-icon>
-                  {{ t("simplifiedTransactions.type.invoice") }}
-                </v-btn>
-                <v-btn value="engagement_letter" :disabled="isEditing">
-                  <v-icon start>mdi-file-sign</v-icon>
-                  {{ t("simplifiedTransactions.type.engagement_letter") }}
-                </v-btn>
-                <v-btn value="contract" :disabled="isEditing">
-                  <v-icon start>mdi-file-document-edit-outline</v-icon>
-                  {{ t("simplifiedTransactions.type.contract") }}
-                </v-btn>
-              </v-btn-toggle>
+            <v-card-text class="pt-2">
+              <v-row dense class="type-row">
+                <v-col cols="6" sm="3" v-for="typeOption in typeOptions" :key="typeOption.value" class="d-flex">
+                  <v-card
+                    :variant="formData.type === typeOption.value ? 'flat' : 'outlined'"
+                    :color="formData.type === typeOption.value ? typeOption.color : undefined"
+                    :class="[
+                      'type-card',
+                      { 'type-card--selected': formData.type === typeOption.value },
+                      { 'type-card--disabled': isEditing }
+                    ]"
+                    :disabled="isEditing"
+                    @click="!isEditing && (formData.type = typeOption.value)"
+                  >
+                    <v-card-text class="text-center pa-3">
+                      <v-icon
+                        :icon="typeOption.icon"
+                        size="28"
+                        :color="formData.type === typeOption.value ? 'white' : typeOption.color"
+                        class="mb-2"
+                      />
+                      <div
+                        class="text-caption font-weight-medium"
+                        :class="formData.type === typeOption.value ? 'text-white' : ''"
+                      >
+                        {{ typeOption.label }}
+                      </div>
+                    </v-card-text>
+                  </v-card>
+                </v-col>
+              </v-row>
             </v-card-text>
           </v-card>
 
@@ -445,6 +457,34 @@ const rules = {
   positiveNumber: (v: number) => v >= 0 || t("common.error"),
 }
 
+// Type options for selection cards
+const typeOptions = computed(() => [
+  {
+    value: SimplifiedTransactionType.QUOTE,
+    label: t("simplifiedTransactions.type.quote"),
+    icon: "mdi-file-document-outline",
+    color: "primary",
+  },
+  {
+    value: SimplifiedTransactionType.INVOICE,
+    label: t("simplifiedTransactions.type.invoice"),
+    icon: "mdi-receipt-text-outline",
+    color: "success",
+  },
+  {
+    value: SimplifiedTransactionType.ENGAGEMENT_LETTER,
+    label: t("simplifiedTransactions.type.engagement_letter"),
+    icon: "mdi-file-sign",
+    color: "info",
+  },
+  {
+    value: SimplifiedTransactionType.CONTRACT,
+    label: t("simplifiedTransactions.type.contract"),
+    icon: "mdi-file-document-edit-outline",
+    color: "warning",
+  },
+])
+
 // Status options based on type
 const statusOptions = computed(() => {
   const validStatuses = getValidStatusesForType(formData.value.type)
@@ -713,24 +753,37 @@ const handleCancel = () => {
 </script>
 
 <style scoped>
-.type-toggle {
-  width: 100%;
+.type-card {
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 2px solid transparent;
+  height: 100%;
+}
+
+.type-card :deep(.v-card-text) {
+  height: 100%;
   display: flex;
-  flex-wrap: wrap;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  min-height: 80px;
 }
 
-.type-toggle .v-btn {
-  flex: 1 1 auto;
-  min-width: 120px;
+.type-card:hover:not(.type-card--disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
-@media (max-width: 600px) {
-  .type-toggle {
-    flex-direction: column;
-  }
+.type-card--selected {
+  border-color: transparent;
+}
 
-  .type-toggle .v-btn {
-    width: 100%;
-  }
+.type-card--disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.type-card:not(.type-card--selected):not(.type-card--disabled):hover {
+  border-color: rgba(var(--v-theme-primary), 0.3);
 }
 </style>

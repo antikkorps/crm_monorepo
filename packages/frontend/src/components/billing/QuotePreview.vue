@@ -113,7 +113,7 @@
             </thead>
             <tbody>
               <tr v-for="(line, index) in quoteData.lines" :key="index">
-                <td class="description-cell">{{ line.description }}</td>
+                <td class="description-cell" v-html="renderDescription(line.description)"></td>
                 <td class="number-cell">{{ line.quantity }}</td>
                 <td class="number-cell">{{ formatCurrency(line.unitPrice) }}</td>
                 <td class="number-cell discount-cell">
@@ -219,6 +219,81 @@ const emit = defineEmits<{
 const downloading = ref(false)
 
 // Methods
+
+/**
+ * Convert TipTap JSON to HTML for display
+ */
+const renderDescription = (content: string | undefined | null): string => {
+  if (!content) return ''
+
+  // If it's not JSON, return as-is (plain text or HTML)
+  if (typeof content !== 'string' || !content.trim().startsWith('{')) {
+    return content
+  }
+
+  try {
+    const json = JSON.parse(content)
+    return convertTipTapToHtml(json)
+  } catch {
+    return content
+  }
+}
+
+/**
+ * Recursively convert TipTap JSON node to HTML
+ */
+const convertTipTapToHtml = (node: any): string => {
+  if (!node) return ''
+
+  // Text node
+  if (node.type === 'text') {
+    let text = node.text || ''
+    // Apply marks
+    if (node.marks) {
+      for (const mark of node.marks) {
+        switch (mark.type) {
+          case 'bold':
+            text = `<strong>${text}</strong>`
+            break
+          case 'italic':
+            text = `<em>${text}</em>`
+            break
+          case 'underline':
+            text = `<u>${text}</u>`
+            break
+          case 'strike':
+            text = `<s>${text}</s>`
+            break
+        }
+      }
+    }
+    return text
+  }
+
+  // Container nodes
+  const children = (node.content || []).map(convertTipTapToHtml).join('')
+
+  switch (node.type) {
+    case 'doc':
+      return children
+    case 'paragraph':
+      return children ? `<p>${children}</p>` : '<p></p>'
+    case 'bulletList':
+      return `<ul>${children}</ul>`
+    case 'orderedList':
+      return `<ol>${children}</ol>`
+    case 'listItem':
+      return `<li>${children}</li>`
+    case 'heading':
+      const level = node.attrs?.level || 1
+      return `<h${level}>${children}</h${level}>`
+    case 'hardBreak':
+      return '<br>'
+    default:
+      return children
+  }
+}
+
 const formatDate = (date: Date | string) => {
   const d = new Date(date)
   return new Intl.DateTimeFormat("en-US", {
@@ -510,6 +585,28 @@ const downloadOrderPDF = async () => {
 
 .description-col {
   width: 40%;
+}
+
+.description-cell {
+  vertical-align: top;
+}
+
+.description-cell :deep(p) {
+  margin: 0 0 0.5em 0;
+}
+
+.description-cell :deep(p:last-child) {
+  margin-bottom: 0;
+}
+
+.description-cell :deep(ul),
+.description-cell :deep(ol) {
+  margin: 0.5em 0;
+  padding-left: 1.5em;
+}
+
+.description-cell :deep(li) {
+  margin: 0.25em 0;
 }
 
 .number-col {

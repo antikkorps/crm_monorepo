@@ -4,7 +4,7 @@ import Handlebars from "handlebars"
 import { dirname, join } from "path"
 import puppeteer, { Browser, PDFOptions } from "puppeteer"
 import { v4 as uuidv4 } from "uuid"
-import { generateHTML } from "@tiptap/html"
+import { generateHTML } from "@tiptap/html/server"
 import StarterKit from "@tiptap/starter-kit"
 import { sequelize } from "../config/database"
 import { DocumentTemplate, TemplateType } from "../models/DocumentTemplate"
@@ -621,18 +621,18 @@ export class PdfService {
             <table>
                 {{#if invoice}}
                     <tr><td>Subtotal:</td><td class="amount">{{currency invoice.subtotal}}</td></tr>
-                    {{#if invoice.totalDiscountAmount}}
+                    {{#ifPositive invoice.totalDiscountAmount}}
                         <tr><td>Discount:</td><td class="amount">-{{currency invoice.totalDiscountAmount}}</td></tr>
-                    {{/if}}
+                    {{/ifPositive}}
                     {{#if invoice.totalTaxAmount}}
                         <tr><td>Tax:</td><td class="amount">{{currency invoice.totalTaxAmount}}</td></tr>
                     {{/if}}
                     <tr class="total-row"><td><strong>Total:</strong></td><td class="amount"><strong>{{currency invoice.total}}</strong></td></tr>
                 {{else}}
                     <tr><td>Subtotal:</td><td class="amount">{{currency quote.subtotal}}</td></tr>
-                    {{#if quote.totalDiscountAmount}}
+                    {{#ifPositive quote.totalDiscountAmount}}
                         <tr><td>Discount:</td><td class="amount">-{{currency quote.totalDiscountAmount}}</td></tr>
-                    {{/if}}
+                    {{/ifPositive}}
                     {{#if quote.totalTaxAmount}}
                         <tr><td>Tax:</td><td class="amount">{{currency quote.totalTaxAmount}}</td></tr>
                     {{/if}}
@@ -801,6 +801,13 @@ export class PdfService {
       return t + t * (r / 100)
     })
 
+    // Greater than zero helper - for proper numeric comparisons
+    // Handles Sequelize DECIMAL strings like "0.00" which Handlebars {{#if}} considers truthy
+    Handlebars.registerHelper("ifPositive", function (this: any, value: any, options: any) {
+      const num = Number(value) || 0
+      return num > 0 ? options.fn(this) : options.inverse(this)
+    })
+
     // ProseMirror JSON to HTML helper
     // Converts TipTap JSON content to HTML for PDF rendering
     Handlebars.registerHelper("richText", function (content: string | object) {
@@ -810,9 +817,9 @@ export class PdfService {
         // If content is already a string, try to parse as JSON
         let jsonContent: any
         if (typeof content === "string") {
-          // Check if it looks like JSON
+          // Check if it looks like JSON (TipTap format)
           const trimmed = content.trim()
-          if (trimmed.startsWith("{") || trimmed.startsWith("[")) {
+          if (trimmed.startsWith("{") && trimmed.includes('"type"')) {
             try {
               jsonContent = JSON.parse(content)
             } catch {
@@ -828,13 +835,37 @@ export class PdfService {
           jsonContent = content
         }
 
+        // Validate that it's TipTap format (has type: "doc")
+        if (!jsonContent || jsonContent.type !== "doc") {
+          // Not TipTap format, convert object to string if needed
+          return new Handlebars.SafeString(
+            typeof content === "string" ? content : JSON.stringify(content)
+          )
+        }
+
         // Convert ProseMirror JSON to HTML using TipTap
         const html = generateHTML(jsonContent, [StarterKit])
         return new Handlebars.SafeString(html)
       } catch (error) {
-        logger.warn("Failed to convert rich text content to HTML:", error)
-        // Return content as-is if conversion fails
-        return typeof content === "string" ? new Handlebars.SafeString(content) : ""
+        logger.error("Failed to convert rich text content to HTML:", { error, contentType: typeof content })
+        // Fallback: extract text manually from TipTap JSON
+        if (typeof content === "string") {
+          try {
+            const parsed = JSON.parse(content)
+            const extractText = (node: any): string => {
+              if (!node) return ""
+              if (node.text) return node.text
+              if (node.content && Array.isArray(node.content)) {
+                return node.content.map(extractText).join("")
+              }
+              return ""
+            }
+            return new Handlebars.SafeString(extractText(parsed))
+          } catch {
+            return new Handlebars.SafeString(content)
+          }
+        }
+        return ""
       }
     })
   }
@@ -930,8 +961,12 @@ export class PdfService {
         <div class="totals">
           <table class="totals-table">
             <tr><td>Sous-total HT:</td><td>{{currency quote.subtotal}}</td></tr>
-            <tr><td>Remise totale:</td><td>{{currency quote.totalDiscountAmount}}</td></tr>
+            {{#ifPositive quote.totalDiscountAmount}}
+            <tr><td>Remise totale:</td><td>-{{currency quote.totalDiscountAmount}}</td></tr>
+            {{/ifPositive}}
+            {{#if quote.totalTaxAmount}}
             <tr><td>TVA:</td><td>{{currency quote.totalTaxAmount}}</td></tr>
+            {{/if}}
             <tr class="total-row"><td><strong>Total TTC:</strong></td><td><strong>{{currency quote.total}}</strong></td></tr>
           </table>
         </div>
@@ -1027,8 +1062,12 @@ export class PdfService {
           <table class="totals-table">
             {{#if invoice}}
               <tr><td>Sous-total HT:</td><td>{{currency invoice.subtotal}}</td></tr>
-              <tr><td>Remise totale:</td><td>{{currency invoice.totalDiscountAmount}}</td></tr>
+              {{#ifPositive invoice.totalDiscountAmount}}
+              <tr><td>Remise totale:</td><td>-{{currency invoice.totalDiscountAmount}}</td></tr>
+              {{/ifPositive}}
+              {{#if invoice.totalTaxAmount}}
               <tr><td>TVA:</td><td>{{currency invoice.totalTaxAmount}}</td></tr>
+              {{/if}}
               <tr class="total-row"><td><strong>Total TTC:</strong></td><td><strong>{{currency invoice.total}}</strong></td></tr>
               {{#if invoice.totalPaid}}
               <tr><td>Déjà payé:</td><td>{{currency invoice.totalPaid}}</td></tr>
@@ -1036,8 +1075,12 @@ export class PdfService {
               {{/if}}
             {{else}}
               <tr><td>Sous-total HT:</td><td>{{currency quote.subtotal}}</td></tr>
-              <tr><td>Remise totale:</td><td>{{currency quote.totalDiscountAmount}}</td></tr>
+              {{#ifPositive quote.totalDiscountAmount}}
+              <tr><td>Remise totale:</td><td>-{{currency quote.totalDiscountAmount}}</td></tr>
+              {{/ifPositive}}
+              {{#if quote.totalTaxAmount}}
               <tr><td>TVA:</td><td>{{currency quote.totalTaxAmount}}</td></tr>
+              {{/if}}
               <tr class="total-row"><td><strong>Total TTC:</strong></td><td><strong>{{currency quote.total}}</strong></td></tr>
             {{/if}}
           </table>
@@ -1120,8 +1163,12 @@ export class PdfService {
         <div class="totals">
           <table class="totals-table">
             <tr><td>Sous-total HT:</td><td>{{currency invoice.subtotal}}</td></tr>
-            <tr><td>Remise totale:</td><td>{{currency invoice.totalDiscountAmount}}</td></tr>
+            {{#ifPositive invoice.totalDiscountAmount}}
+            <tr><td>Remise totale:</td><td>-{{currency invoice.totalDiscountAmount}}</td></tr>
+            {{/ifPositive}}
+            {{#if invoice.totalTaxAmount}}
             <tr><td>TVA:</td><td>{{currency invoice.totalTaxAmount}}</td></tr>
+            {{/if}}
             <tr class="total-row"><td><strong>Total TTC:</strong></td><td><strong>{{currency invoice.total}}</strong></td></tr>
             {{#if invoice.totalPaid}}
             <tr><td>Déjà payé:</td><td>{{currency invoice.totalPaid}}</td></tr>
@@ -2343,7 +2390,7 @@ export class PdfService {
           <div class="el-section">
             <div class="el-section-title">Conditions Générales</div>
             <div class="el-terms">
-              {{richText letter.termsAndConditions}}
+              {{{richText letter.termsAndConditions}}}
             </div>
           </div>
         {{/if}}

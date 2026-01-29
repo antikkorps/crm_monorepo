@@ -58,9 +58,7 @@ if (config.env === "test") {
         freezeTableName: true,
       },
       timezone: "+00:00",
-      retry: {
-        max: 3,
-      },
+      // retry disabled to see real transaction errors
     })
   } else {
     // Use individual variables for local Docker development
@@ -98,10 +96,7 @@ if (config.env === "test") {
       // Timezone configuration
       timezone: "+00:00",
 
-      // Retry configuration
-      retry: {
-        max: 3,
-      },
+      // retry disabled to see real transaction errors
     }
 
     // Create Sequelize instance

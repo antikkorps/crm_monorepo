@@ -9,6 +9,9 @@ export interface LoginCredentials {
 const API_BASE_URL = import.meta.env.VITE_API_URL || "/api"
 console.log("API_BASE_URL:", API_BASE_URL)
 
+// Flag to prevent multiple redirects when multiple 401 errors occur simultaneously
+let isRedirectingToLogin = false
+
 class ApiClient {
   private baseURL: string
 
@@ -33,7 +36,10 @@ class ApiClient {
     if (!response.ok) {
       if (response.status === 401) {
         localStorage.removeItem("token")
-        window.location.href = "/login"
+        if (!isRedirectingToLogin) {
+          isRedirectingToLogin = true
+          window.location.href = "/login"
+        }
         throw new Error("Unauthorized")
       }
       // Try to extract error message from JSON body if available
@@ -101,7 +107,10 @@ class ApiClient {
     if (!response.ok) {
       if (response.status === 401) {
         localStorage.removeItem("token")
-        window.location.href = "/login"
+        if (!isRedirectingToLogin) {
+          isRedirectingToLogin = true
+          window.location.href = "/login"
+        }
         throw new Error("Unauthorized")
       }
       // Try to extract error message from JSON body if available

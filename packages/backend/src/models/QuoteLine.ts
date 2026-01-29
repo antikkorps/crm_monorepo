@@ -170,9 +170,6 @@ export class QuoteLine
     data: QuoteLineCreationAttributes,
     options?: { transaction?: any }
   ): Promise<QuoteLine> {
-    console.log("=== DEBUG: QuoteLine.createLine ===")
-    console.log("Input data:", data)
-
     // Set default values
     const lineData = {
       ...data,
@@ -180,8 +177,6 @@ export class QuoteLine
       discountValue: data.discountValue || 0,
       taxRate: data.taxRate || 0,
     }
-
-    console.log("Line data after defaults:", lineData)
 
     // Get the next order index if not provided
     if (lineData.orderIndex === undefined) {
@@ -192,13 +187,8 @@ export class QuoteLine
       lineData.orderIndex = (maxOrderIndex || 0) + 1
     }
 
-    console.log("Line data after orderIndex:", lineData)
-
     const line = this.build(lineData)
-    console.log("After build - quoteId:", line.quoteId)
-
     line.calculateTotals()
-    console.log("After calculateTotals - quoteId:", line.quoteId)
 
     return line.save(options)
   }
@@ -294,7 +284,6 @@ QuoteLine.init(
       type: DataTypes.TEXT,
       allowNull: false,
       validate: {
-        len: [1, 1000],
         notEmpty: true,
       },
     },
