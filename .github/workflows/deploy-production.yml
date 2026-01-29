@@ -87,17 +87,35 @@ jobs:
             echo "📊 Resource usage:"
             docker stats --no-stream
 
-            # Health check from within the server (bypasses geo-blocking)
+            # Health check using Docker's built-in health status
             echo "🏥 Performing health check..."
-            sleep 5
 
-            # Check backend health via docker
-            docker compose -f docker-compose.prod.yml exec -T backend curl -f -s http://localhost:3000/health || { echo "❌ Backend health check failed"; exit 1; }
-            echo "✅ Backend is healthy"
+            # Check backend health status
+            BACKEND_HEALTH=$(docker inspect --format='{{.State.Health.Status}}' medical-crm-backend 2>/dev/null || echo "unknown")
+            if [ "$BACKEND_HEALTH" = "healthy" ]; then
+              echo "✅ Backend is healthy"
+            else
+              echo "❌ Backend health check failed (status: $BACKEND_HEALTH)"
+              exit 1
+            fi
 
-            # Check frontend health via docker
-            docker compose -f docker-compose.prod.yml exec -T frontend curl -f -s http://localhost:80/ > /dev/null || { echo "❌ Frontend health check failed"; exit 1; }
-            echo "✅ Frontend is healthy"
+            # Check frontend health status
+            FRONTEND_HEALTH=$(docker inspect --format='{{.State.Health.Status}}' medical-crm-frontend 2>/dev/null || echo "unknown")
+            if [ "$FRONTEND_HEALTH" = "healthy" ]; then
+              echo "✅ Frontend is healthy"
+            else
+              echo "❌ Frontend health check failed (status: $FRONTEND_HEALTH)"
+              exit 1
+            fi
+
+            # Check postgres health status
+            POSTGRES_HEALTH=$(docker inspect --format='{{.State.Health.Status}}' medical-crm-postgres 2>/dev/null || echo "unknown")
+            if [ "$POSTGRES_HEALTH" = "healthy" ]; then
+              echo "✅ PostgreSQL is healthy"
+            else
+              echo "❌ PostgreSQL health check failed (status: $POSTGRES_HEALTH)"
+              exit 1
+            fi
 
             echo "🎉 Deployment successful!"
 
