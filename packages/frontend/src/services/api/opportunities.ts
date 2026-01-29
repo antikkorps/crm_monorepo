@@ -100,7 +100,7 @@ export const opportunitiesApi = {
   /**
    * Get pipeline view (opportunities grouped by stage)
    */
-  getPipeline: (filters?: { assignedUserId?: string; institutionId?: string }) => {
+  getPipeline: (filters?: { assignedUserId?: string; institutionId?: string; includeArchived?: boolean }) => {
     const params = new URLSearchParams()
     if (filters) {
       Object.entries(filters).forEach(([key, value]) => {

@@ -827,4 +827,97 @@ export class SegmentService {
       .sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime())
       .slice(0, limit)
   }
+
+  /**
+   * Calculate real overlap between multiple segments
+   * Returns the intersection counts for each pair of segments
+   */
+  static async calculateSegmentOverlaps(segments: Segment[]): Promise<Array<{
+    segmentAId: string
+    segmentAName: string
+    segmentBId: string
+    segmentBName: string
+    overlapCount: number
+    overlapPercentage: number
+    segmentACount: number
+    segmentBCount: number
+  }>> {
+    const overlaps: Array<{
+      segmentAId: string
+      segmentAName: string
+      segmentBId: string
+      segmentBName: string
+      overlapCount: number
+      overlapPercentage: number
+      segmentACount: number
+      segmentBCount: number
+    }> = []
+
+    // Get record IDs for each segment
+    const segmentRecordIds = new Map<string, Set<string>>()
+    const segmentCounts = new Map<string, number>()
+
+    for (const segment of segments) {
+      try {
+        const results = await this.getSegmentResults(segment)
+        const ids = new Set(results.map(r => r.id))
+        segmentRecordIds.set(segment.id, ids)
+        segmentCounts.set(segment.id, ids.size)
+      } catch (err) {
+        logger.warn('Failed to get segment results for overlap calculation', {
+          segmentId: segment.id,
+          error: (err as Error).message
+        })
+        segmentRecordIds.set(segment.id, new Set())
+        segmentCounts.set(segment.id, 0)
+      }
+    }
+
+    // Calculate pairwise overlaps
+    for (let i = 0; i < segments.length; i++) {
+      for (let j = i + 1; j < segments.length; j++) {
+        const segmentA = segments[i]
+        const segmentB = segments[j]
+
+        // Only compare segments of the same type
+        if (segmentA.type !== segmentB.type) {
+          overlaps.push({
+            segmentAId: segmentA.id,
+            segmentAName: segmentA.name,
+            segmentBId: segmentB.id,
+            segmentBName: segmentB.name,
+            overlapCount: 0,
+            overlapPercentage: 0,
+            segmentACount: segmentCounts.get(segmentA.id) || 0,
+            segmentBCount: segmentCounts.get(segmentB.id) || 0
+          })
+          continue
+        }
+
+        const idsA = segmentRecordIds.get(segmentA.id) || new Set()
+        const idsB = segmentRecordIds.get(segmentB.id) || new Set()
+
+        // Calculate intersection
+        const intersection = new Set([...idsA].filter(id => idsB.has(id)))
+        const overlapCount = intersection.size
+
+        // Calculate percentage relative to the smaller segment
+        const minCount = Math.min(idsA.size, idsB.size)
+        const overlapPercentage = minCount > 0 ? (overlapCount / minCount) * 100 : 0
+
+        overlaps.push({
+          segmentAId: segmentA.id,
+          segmentAName: segmentA.name,
+          segmentBId: segmentB.id,
+          segmentBName: segmentB.name,
+          overlapCount,
+          overlapPercentage,
+          segmentACount: idsA.size,
+          segmentBCount: idsB.size
+        })
+      }
+    }
+
+    return overlaps
+  }
 }

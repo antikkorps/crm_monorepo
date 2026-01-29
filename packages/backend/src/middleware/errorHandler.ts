@@ -1,4 +1,5 @@
 import config from "../config/environment"
+import { getAlertService } from "../services/AlertService"
 import { Context, Next } from "../types/koa"
 import { AppError } from "../utils/AppError"
 import { logger } from "../utils/logger"
@@ -74,6 +75,23 @@ export const errorHandler = async (ctx: Context, next: Next) => {
     // Emit error event for monitoring if it's a 500
     if (ctx.status >= 500) {
       ctx.app.emit("error", error, ctx)
+
+      // Send email alert for critical errors
+      const alertService = getAlertService()
+      alertService.sendCriticalErrorAlert({
+        error,
+        status: ctx.status,
+        method: ctx.method,
+        url: ctx.url,
+        requestId: ctx.state.requestId || "unknown",
+        userId: ctx.state.user?.id,
+        userAgent: ctx.get("User-Agent"),
+        ip: ctx.ip,
+        timestamp: new Date(),
+      }).catch((alertError) => {
+        // Don't let alert failures affect the response
+        logger.error("Failed to send error alert", { error: alertError })
+      })
     }
   }
 }

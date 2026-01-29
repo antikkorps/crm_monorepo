@@ -1,0 +1,400 @@
+
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="utf-8">
+          <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        font-size: 13px;
+        line-height: 1.5;
+        color: #333;
+        background: white;
+      }
+
+      .document {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 30px;
+      }
+
+      /* Header */
+      .header {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        padding-bottom: 20px;
+        border-bottom: 3px solid #3f51b5;
+        margin-bottom: 25px;
+      }
+
+      .header-logo {
+        flex-shrink: 0;
+      }
+
+      .header-logo.logo-small img {
+        max-height: 40px;
+        max-width: 80px;
+      }
+
+      .header-logo.logo-medium img {
+        max-height: 60px;
+        max-width: 120px;
+      }
+
+      .header-logo.logo-large img {
+        max-height: 80px;
+        max-width: 160px;
+      }
+
+      .header-logo img {
+        object-fit: contain;
+      }
+
+      .header-content h1 {
+        font-size: 1.8rem;
+        font-weight: 700;
+        color: #3f51b5;
+        margin: 0;
+      }
+
+      /* Document meta info */
+      .document-meta {
+        margin-bottom: 30px;
+      }
+
+      .document-type {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #333;
+        margin-bottom: 10px;
+      }
+
+      .document-details p {
+        margin: 4px 0;
+        color: #555;
+      }
+
+      /* Parties table for two-column layout */
+      .parties-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 30px;
+      }
+
+      .parties-table td.party {
+        width: 50%;
+        vertical-align: top;
+        padding-right: 30px;
+      }
+
+      .parties-table td.party:last-child {
+        padding-right: 0;
+        padding-left: 30px;
+      }
+
+      .party h3 {
+        font-size: 0.85rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        color: #888;
+        margin: 0 0 10px 0;
+        letter-spacing: 0.5px;
+      }
+
+      .party-name {
+        font-weight: 600;
+        color: #333;
+        margin-bottom: 5px;
+      }
+
+      .party p {
+        margin: 3px 0;
+        color: #555;
+      }
+
+      /* Custom message */
+      .custom-message {
+        background: #fff8e1;
+        border-left: 3px solid #ffc107;
+        padding: 12px 15px;
+        margin-bottom: 25px;
+        color: #856404;
+      }
+
+      /* Items table */
+      .items-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 20px;
+      }
+
+      .items-table th {
+        background: #3f51b5;
+        color: white;
+        padding: 12px 10px;
+        text-align: left;
+        font-weight: 600;
+        font-size: 0.85rem;
+      }
+
+      .items-table td {
+        padding: 12px 10px;
+        border-bottom: 1px solid #eee;
+        vertical-align: top;
+      }
+
+      .text-center {
+        text-align: center;
+      }
+
+      .text-right {
+        text-align: right;
+      }
+
+      /* Totals section */
+      .totals-section {
+        width: 280px;
+        margin-left: auto;
+        margin-bottom: 30px;
+      }
+
+      .total-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 8px 0;
+        border-bottom: 1px solid #eee;
+      }
+
+      .total-final {
+        font-weight: 700;
+        font-size: 1.1rem;
+        color: #3f51b5;
+        border-bottom: 2px solid #3f51b5;
+        border-top: 1px solid #ccc;
+        margin-top: 5px;
+        padding-top: 10px;
+      }
+
+      /* Footer info */
+      .footer-info {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 30px;
+        margin-bottom: 30px;
+        padding-top: 20px;
+        border-top: 1px solid #eee;
+      }
+
+      .footer-block h4 {
+        font-size: 0.85rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        color: #888;
+        margin: 0 0 8px 0;
+        letter-spacing: 0.5px;
+      }
+
+      .footer-block p {
+        margin: 0;
+        color: #555;
+        font-size: 0.9rem;
+        line-height: 1.6;
+      }
+
+      /* Document footer */
+      .document-footer {
+        text-align: center;
+        padding-top: 20px;
+        border-top: 1px solid #eee;
+        color: #888;
+        font-size: 0.85rem;
+      }
+
+      /* Legacy support for old templates */
+      .line-items {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 30px;
+      }
+
+      .line-items th,
+      .line-items td {
+        padding: 10px;
+        text-align: left;
+        border-bottom: 1px solid #ddd;
+      }
+
+      .line-items th {
+        background-color: #3f51b5;
+        color: white;
+        font-weight: bold;
+      }
+
+      .totals-table {
+        width: 280px;
+        margin-left: auto;
+      }
+
+      .totals-table td {
+        padding: 8px 0;
+        border-bottom: 1px solid #eee;
+      }
+
+      .totals-table td:last-child {
+        text-align: right;
+      }
+
+      .footer {
+        text-align: center;
+        padding-top: 20px;
+        border-top: 1px solid #eee;
+        color: #888;
+        font-size: 0.85rem;
+      }
+
+      @media print {
+        .document {
+          padding: 20px;
+        }
+      }
+
+      @media (max-width: 768px) {
+        .header {
+          flex-direction: column;
+          align-items: flex-start;
+          gap: 15px;
+        }
+
+        .parties-section {
+          grid-template-columns: 1fr;
+          gap: 25px;
+        }
+
+        .footer-info {
+          grid-template-columns: 1fr;
+          gap: 20px;
+        }
+
+        .totals-section {
+          width: 100%;
+        }
+      }
+    
+</style>
+        </head>
+        <body>
+          
+      <div class="document">
+        <!-- Header with logo and company name -->
+        <div class="header">
+          <div class="header-content">
+            <h1>MVO</h1>
+          </div>
+        </div>
+
+        <!-- Document meta info - left aligned -->
+        <div class="document-meta">
+          
+          <div class="document-type">DEVIS</div>
+          <div class="document-details">
+            <p><strong>N° :</strong> Q2026010001</p>
+            <p><strong>Date :</strong> 26 janvier 2026</p>
+            <p><strong>Valide jusqu'au :</strong> February 25, 2026</p>
+          </div>
+      
+        </div>
+
+        <!-- Two columns: Émetteur and Destinataire using table for PDF compatibility -->
+        <table class="parties-table">
+          <tr>
+            <td class="party">
+              <h3>Émetteur</h3>
+              <p class="party-name">MVO</p>
+              <p>Boulevard Alexandre et Marie OYON</p>
+              <p>72000 LE MANS</p>
+              <p>France</p>
+              <p>Tél : +33 0707070707</p>
+              <p>Email : contact@mvo-h.fr</p>
+              <p>SIRET : vvvvvvvvvvv</p>
+              <p>TVA : ddfvvvvvvvvvvdfsfd</p>
+            </td>
+            <td class="party">
+              <h3>Destinataire</h3>
+              <p class="party-name">City Medical Clinic</p>
+              <p>456 Health St</p>
+              <p>90210 Los Angeles</p>
+              <p>US</p>
+              
+              
+            </td>
+          </tr>
+        </table>
+
+
+        <!-- Items table -->
+        <table class="items-table">
+          <thead>
+            <tr>
+              <th>Description</th>
+              <th class="text-center">Qté</th>
+              <th class="text-right">Prix unitaire</th>
+              <th class="text-right">Remise</th>
+              <th class="text-right">TVA</th>
+              <th class="text-right">Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>audit - Un super audit</td>
+              <td class="text-center">1</td>
+              <td class="text-right">900,00 €</td>
+              <td class="text-right">45,00 €</td>
+              <td class="text-right">167,58 €</td>
+              <td class="text-right">1 022,58 €</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <!-- Totals section -->
+        <div class="totals-section">
+          
+          <div class="total-row">
+            <span>Sous-total HT</span>
+            <span>900,00 €</span>
+          </div>
+          <div class="total-row">
+            <span>Remise totale</span>
+            <span>-45,00 €</span>
+          </div>
+          <div class="total-row">
+            <span>TVA</span>
+            <span>167,58 €</span>
+          </div>
+          <div class="total-row total-final">
+            <span>Total TTC</span>
+            <span>1 022,58 €</span>
+          </div>
+    
+        </div>
+
+        <!-- Footer info -->
+        <div class="footer-info">
+
+        </div>
+
+        <!-- Document footer -->
+        <div class="document-footer">
+          MVO - Document généré le 26 janvier 2026
+        </div>
+      </div>
+    
+        </body>
+      </html>
+    

@@ -100,14 +100,14 @@ export const authorize = (allowedRoles: UserRole[]) => {
 }
 
 /**
- * Admin-only authorization middleware
+ * Admin-only authorization middleware (includes super_admin)
  */
-export const requireAdmin = authorize([UserRole.ADMIN])
+export const requireAdmin = authorize([UserRole.SUPER_ADMIN, UserRole.ADMIN])
 
 /**
- * Manager or Admin authorization middleware
+ * Manager or Admin authorization middleware (includes super_admin)
  */
-export const requireManager = authorize([UserRole.ADMIN, UserRole.MANAGER])
+export const requireManager = authorize([UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.MANAGER])
 
 /**
  * Any authenticated user authorization middleware

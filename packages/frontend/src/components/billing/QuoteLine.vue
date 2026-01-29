@@ -57,14 +57,19 @@
           <!-- Description -->
           <v-row class="mb-3">
             <v-col cols="12">
-              <v-text-field
-                v-model="localLine.description"
-                label="Description *"
-                variant="outlined"
-                :error-messages="errors.description"
-                @input="updateLine"
-                :readonly="!isCustomLine && !!selectedCatalogItem"
-              />
+              <div class="description-field">
+                <label class="text-body-2 text-medium-emphasis mb-1 d-block">Description *</label>
+                <RichTextEditor
+                  v-model="localLine.description"
+                  placeholder="Description du produit ou service..."
+                  :disabled="!isCustomLine && !!selectedCatalogItem"
+                  min-height="100px"
+                  @update:model-value="updateLine"
+                />
+                <div v-if="errors.description" class="text-error text-caption mt-1">
+                  {{ errors.description }}
+                </div>
+              </div>
             </v-col>
           </v-row>
 
@@ -248,6 +253,7 @@ import { computed, ref, watch } from "vue"
 import { useI18n } from "vue-i18n"
 import { type CatalogItem } from "@/stores/catalog"
 import CatalogItemSelector from "./CatalogItemSelector.vue"
+import RichTextEditor from "@/components/common/RichTextEditor.vue"
 
 interface Props {
   line: QuoteLineType & { tempId?: string }
@@ -345,7 +351,8 @@ const onCatalogItemSelect = (item: CatalogItem | null) => {
 
   // Populate line with catalog item data
   ;(localLine.value as any).catalogItemId = item.id
-  localLine.value.description = item.name + (item.description ? ` - ${item.description}` : '')
+  // Use item description if available, otherwise just the name
+  localLine.value.description = item.description || item.name
   localLine.value.unitPrice = item.unitPrice
   localLine.value.taxRate = item.taxRate
 
@@ -371,10 +378,35 @@ const resetToOriginalTaxRate = () => {
 }
 
 // Methods
+const isDescriptionEmpty = (desc: string | undefined | null): boolean => {
+  if (!desc) return true
+  const trimmed = desc.trim()
+  if (!trimmed) return true
+  // Check if it's a rich text JSON with empty content
+  if (trimmed.startsWith("{")) {
+    try {
+      const json = JSON.parse(trimmed)
+      // Check if content is empty or contains only empty paragraphs
+      if (!json.content || json.content.length === 0) return true
+      // Check if all content is empty text
+      const hasContent = json.content.some((node: any) => {
+        if (node.content) {
+          return node.content.some((child: any) => child.text && child.text.trim())
+        }
+        return false
+      })
+      return !hasContent
+    } catch {
+      return false // Invalid JSON means it's text content
+    }
+  }
+  return false
+}
+
 const validateLine = () => {
   const newErrors: Record<string, string> = {}
 
-  if (!localLine.value.description?.trim()) {
+  if (isDescriptionEmpty(localLine.value.description)) {
     newErrors.description = t('billing.quoteBuilder.validation.descriptionRequired')
   }
 

@@ -340,6 +340,55 @@ export class EmailService {
     })
   }
 
+  /**
+   * Send invitation email to a new user
+   * The user will be able to set their password via the provided link
+   */
+  public async sendInvitationEmail(
+    recipientEmail: string,
+    firstName: string,
+    invitedByName: string,
+    code: string,
+  ): Promise<EmailDeliveryResult> {
+    const frontendUrl = process.env.FRONTEND_URL || "http://localhost:3000"
+    const invitationLink = `${frontendUrl}/invitation?email=${encodeURIComponent(recipientEmail)}&code=${code}`
+
+    const subject = `Invitation à rejoindre ${this.fromName}`
+
+    const html = `
+      <p>Bonjour ${firstName},</p>
+
+      <p><strong>${invitedByName}</strong> vous invite à rejoindre <strong>${this.fromName}</strong>.</p>
+
+      <p>Pour activer votre compte et définir votre mot de passe, cliquez sur le bouton ci-dessous :</p>
+
+      <div style="text-align: center; margin: 30px 0;">
+        <a href="${invitationLink}"
+           style="background-color: #1976d2; color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">
+          Activer mon compte
+        </a>
+      </div>
+
+      <p>Ou copiez ce lien dans votre navigateur :</p>
+      <p style="background: #f5f5f5; padding: 12px; border-radius: 4px; word-break: break-all;">
+        <a href="${invitationLink}">${invitationLink}</a>
+      </p>
+
+      <p><strong>Ce lien expirera dans 24 heures.</strong></p>
+
+      <p>Si vous n'attendiez pas cette invitation, vous pouvez ignorer cet email.</p>
+
+      <p>Cordialement,<br>
+      L'équipe ${this.fromName}</p>
+    `
+
+    return this.sendEmail({
+      to: recipientEmail,
+      subject,
+      html,
+    })
+  }
+
   public async testConnection(): Promise<boolean> {
     try {
       await this.transporter.verify()

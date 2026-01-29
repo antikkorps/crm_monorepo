@@ -28,34 +28,31 @@ export class QuoteService {
 
     try {
       // Validate institution exists
-      const institution = await MedicalInstitution.findByPk(data.institutionId)
+      const institution = await MedicalInstitution.findByPk(data.institutionId, { transaction })
       if (!institution) {
         throw createError("Medical institution not found", 404, "INSTITUTION_NOT_FOUND")
       }
 
       // Validate user exists
-      const user = await User.findByPk(userId)
+      const user = await User.findByPk(userId, { transaction })
       if (!user) {
         throw createError("User not found", 404, "USER_NOT_FOUND")
       }
 
-      // Create the quote
+      // Create the quote within the transaction
       const createData = {
         ...data,
         assignedUserId: userId,
         templateId: data.templateId || undefined,
       }
 
-      const quote = await Quote.createQuote(createData)
+      const quote = await Quote.createQuote(createData, { transaction })
 
       // Create quote lines if provided
       if (data.lines && data.lines.length > 0) {
-        console.log("=== DEBUG: Creating quote lines in QuoteService ===")
-        console.log("Quote ID:", quote.id)
-        console.log("Quote object:", { id: quote.id, quoteNumber: quote.quoteNumber })
-
         for (let i = 0; i < data.lines.length; i++) {
           const lineData = data.lines[i]
+
           // Clean line data and ensure correct quoteId
           const cleanLineData = { ...lineData } as any
           delete cleanLineData.id // Remove temporary id
@@ -68,8 +65,6 @@ export class QuoteService {
             quoteId: quote.id,
             orderIndex: i + 1,
           }
-
-          console.log("Final line data being sent to createLine:", finalLineData)
 
           await QuoteLine.createLine(finalLineData, { transaction })
         }
@@ -843,24 +838,6 @@ export class QuoteService {
         this.validateQuoteLineData(line)
       }
     }
-  }
-
-  /**
-   * Normalize optional quote fields (e.g., transform empty strings to null)
-   */
-  private static sanitizeQuotePayload<
-    T extends { templateId?: string | null }
-  >(data: T): T {
-    const sanitized = { ...data }
-
-    if (sanitized.templateId !== undefined) {
-      const templateId = sanitized.templateId
-      if (templateId === null || (typeof templateId === "string" && templateId.trim() === "")) {
-        sanitized.templateId = null
-      }
-    }
-
-    return sanitized
   }
 
   /**

@@ -14,10 +14,15 @@
         <div class="invoice-header mb-6">
           <!-- Ligne 1: Titre + statut -->
           <div class="d-flex align-center gap-3 flex-wrap">
-            <v-btn icon="mdi-arrow-left" variant="text" @click="goBack" />
+            <v-btn icon="mdi-arrow-left" variant="text" @click="goBack" :title="fromInstitution ? 'Retour à l\'institution' : 'Retour aux factures'" />
             <div>
               <h1 class="text-h5 text-sm-h4 font-weight-bold mb-1">{{ invoice.invoiceNumber }}</h1>
-              <v-chip :color="getStatusColor(invoice.status)" variant="tonal" size="small">{{ getStatusLabel(invoice.status) }}</v-chip>
+              <div class="d-flex align-center gap-2">
+                <v-chip :color="getStatusColor(invoice.status)" variant="tonal" size="small">{{ getStatusLabel(invoice.status) }}</v-chip>
+                <v-chip v-if="fromInstitution" color="primary" variant="outlined" size="small" prepend-icon="mdi-domain" @click="goBack">
+                  Retour à l'institution
+                </v-chip>
+              </div>
             </div>
           </div>
 
@@ -292,6 +297,8 @@ const route = useRoute()
 const router = useRouter()
 const authStore = useAuthStore()
 
+const fromInstitution = computed(() => route.query.fromInstitution as string | undefined)
+
 const invoice = ref<Invoice | null>(null)
 const loading = ref(false)
 const showPaymentDialog = ref(false)
@@ -343,7 +350,14 @@ const loadInvoice = async () => {
 }
 
 const refreshInvoice = () => loadInvoice()
-const goBack = () => router.push("/invoices")
+const goBack = () => {
+  const fromInstitution = route.query.fromInstitution as string | undefined
+  if (fromInstitution) {
+    router.push(`/institutions/${fromInstitution}`)
+  } else {
+    router.push("/invoices")
+  }
+}
 const editInvoice = () => router.push(`/invoices/${invoice.value?.id}/edit`)
 
 const openSendDialog = async () => {

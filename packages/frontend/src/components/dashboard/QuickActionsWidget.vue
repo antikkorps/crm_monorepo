@@ -1,9 +1,9 @@
 <template>
   <v-card elevation="2">
-    <v-card-title class="d-flex align-center justify-space-between">
+    <v-card-title class="d-flex align-center justify-space-between card-title-responsive">
       <div class="d-flex align-center">
-        <v-icon icon="mdi-lightning-bolt" color="primary" class="mr-2" />
-        Actions recommandées
+        <v-icon icon="mdi-lightning-bolt" color="primary" class="mr-2" size="small" />
+        <span>Actions recommandées</span>
       </div>
       <v-chip
         v-if="actions.length > 0"
@@ -15,103 +15,68 @@
     </v-card-title>
 
     <!-- Loading State -->
-    <v-card-text v-if="loading && actions.length === 0" class="text-center py-12">
+    <v-card-text v-if="loading && actions.length === 0" class="text-center py-8">
       <v-progress-circular indeterminate color="primary" />
       <p class="mt-4 text-body-2">Chargement...</p>
     </v-card-text>
 
     <!-- Empty State -->
-    <v-card-text v-else-if="actions.length === 0" class="text-center py-12">
-      <v-icon icon="mdi-check-all" size="64" color="success" class="mb-4" />
-      <p class="text-h6 text-medium-emphasis">Aucune action urgente</p>
+    <v-card-text v-else-if="actions.length === 0" class="text-center py-8">
+      <v-icon icon="mdi-check-all" size="48" color="success" class="mb-3" />
+      <p class="text-body-1 font-weight-medium">Aucune action urgente</p>
       <p class="text-body-2 text-medium-emphasis">
         Toutes les tâches prioritaires sont à jour
       </p>
     </v-card-text>
 
-    <!-- Actions Grid -->
-    <v-card-text v-else>
-      <v-row>
-        <v-col
+    <!-- Actions List -->
+    <v-card-text v-else class="pa-2 pa-sm-4">
+      <div class="actions-grid">
+        <div
           v-for="action in actions"
           :key="action.id"
-          cols="12"
-          sm="6"
-          md="4"
-          class="d-flex"
+          class="action-item"
+          @click="handleActionClick(action)"
         >
-          <v-card
-            class="quick-action-card flex-grow-1"
-            :class="`action-${action.category}`"
-            variant="outlined"
-            hover
-            @click="handleActionClick(action)"
-          >
-            <v-card-text class="text-center pa-6 d-flex flex-column">
-              <!-- Category Badge -->
-              <v-chip
-                v-if="action.category === 'urgent'"
-                color="error"
-                size="x-small"
-                variant="flat"
-                class="mb-3 align-self-center"
-              >
-                <v-icon start size="x-small">mdi-alert</v-icon>
-                Urgent
-              </v-chip>
+          <div class="action-content">
+            <!-- Icon -->
+            <v-avatar
+              size="40"
+              :color="action.color"
+              variant="tonal"
+              class="action-icon"
+            >
+              <v-icon :icon="action.icon" size="20" :color="action.color" />
+            </v-avatar>
 
-              <!-- Icon -->
-              <v-avatar
-                size="64"
-                class="mb-4 align-self-center"
-                :color="action.color"
-                variant="tonal"
-              >
-                <v-icon
-                  :icon="action.icon"
-                  size="32"
-                  :color="action.color"
-                />
-              </v-avatar>
+            <!-- Text -->
+            <div class="action-text">
+              <div class="d-flex align-center ga-2">
+                <span class="action-title">{{ action.title }}</span>
+                <v-chip
+                  v-if="action.category === 'urgent'"
+                  color="error"
+                  size="x-small"
+                  variant="flat"
+                  density="compact"
+                  class="urgent-chip"
+                >
+                  Urgent
+                </v-chip>
+              </div>
+              <span class="action-description">{{ action.description }}</span>
+            </div>
 
-              <!-- Title -->
-              <v-card-title class="text-h6 mb-2 text-wrap">
-                {{ action.title }}
-              </v-card-title>
-
-              <!-- Description -->
-              <p class="text-body-2 text-medium-emphasis mb-4 flex-grow-1">
-                {{ action.description }}
-              </p>
-
-              <!-- Action Button -->
-              <v-btn
-                :color="action.color"
-                variant="elevated"
-                size="small"
-                block
-                append-icon="mdi-arrow-right"
-                class="mt-auto"
-              >
-                Accéder
-              </v-btn>
-            </v-card-text>
-          </v-card>
-        </v-col>
-      </v-row>
-
-      <!-- Refresh Note -->
-      <v-alert
-        type="info"
-        variant="tonal"
-        density="compact"
-        class="mt-4"
-        closable
-      >
-        <span class="text-caption">
-          Les actions sont personnalisées selon votre activité et mises à jour automatiquement
-        </span>
-      </v-alert>
+            <!-- Arrow -->
+            <v-icon
+              icon="mdi-chevron-right"
+              size="20"
+              color="grey"
+              class="action-arrow"
+            />
+          </div>
+        </div>
+      </div>
     </v-card-text>
   </v-card>
 </template>
@@ -152,41 +117,101 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.quick-action-card {
-  cursor: pointer;
-  transition: all 0.3s ease-in-out;
-  height: 100%;
+.card-title-responsive {
+  font-size: 1rem;
+  padding: 12px 16px;
+}
+
+.actions-grid {
   display: flex;
   flex-direction: column;
-  border-radius: 12px;
+  gap: 8px;
 }
 
-.quick-action-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+.action-item {
+  cursor: pointer;
+  border-radius: 8px;
+  background: rgb(var(--v-theme-surface));
+  border: 1px solid rgba(var(--v-border-color), var(--v-border-opacity));
+  transition: all 0.2s ease;
 }
 
-.action-urgent {
-  border-left: 4px solid rgb(var(--v-theme-error));
+.action-item:hover {
+  background: rgba(var(--v-theme-primary), 0.04);
+  border-color: rgba(var(--v-theme-primary), 0.3);
 }
 
-.action-finance {
-  border-left: 4px solid rgb(var(--v-theme-warning));
+.action-content {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
 }
 
-.action-sales {
-  border-left: 4px solid rgb(var(--v-theme-info));
+.action-icon {
+  flex-shrink: 0;
 }
 
-.action-planning {
-  border-left: 4px solid rgb(var(--v-theme-primary));
+.action-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
 }
 
-.action-analytics {
-  border-left: 4px solid rgb(var(--v-theme-purple));
+.action-title {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: rgb(var(--v-theme-on-surface));
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.action-general {
-  border-left: 4px solid rgb(var(--v-theme-blue));
+.action-description {
+  font-size: 0.75rem;
+  color: rgba(var(--v-theme-on-surface), 0.6);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.action-arrow {
+  flex-shrink: 0;
+  opacity: 0.5;
+  transition: all 0.2s ease;
+}
+
+.urgent-chip {
+  padding-top: 2px;
+  font-size: 0.625rem;
+}
+
+.action-item:hover .action-arrow {
+  opacity: 1;
+  transform: translateX(2px);
+}
+
+/* Mobile optimizations */
+@media (max-width: 600px) {
+  .card-title-responsive {
+    font-size: 0.875rem;
+    padding: 8px 12px;
+  }
+
+  .action-content {
+    padding: 10px;
+    gap: 10px;
+  }
+
+  .action-icon {
+    width: 36px !important;
+    height: 36px !important;
+  }
+
+  .action-icon :deep(.v-icon) {
+    font-size: 18px !important;
+  }
 }
 </style>

@@ -1,4 +1,4 @@
-import { ComplianceStatus, InstitutionType } from "@medical-crm/shared"
+import { CommercialStatus, ComplianceStatus, InstitutionType } from "@medical-crm/shared"
 import Joi from "joi"
 import { Op, literal } from "sequelize"
 import { sequelize } from "../config/database"
@@ -138,6 +138,33 @@ const updateMedicalProfileSchema = medicalProfileSchema.fork(
   (schema) => schema.optional()
 )
 
+/**
+ * Fix encoding issues in CSV data
+ * Handles Latin-1/Windows-1252 encoded files and converts them to UTF-8
+ */
+function fixCsvEncoding(buffer: Buffer): string {
+  // Remove UTF-8 BOM if present
+  let data = buffer
+  if (buffer[0] === 0xEF && buffer[1] === 0xBB && buffer[2] === 0xBF) {
+    data = buffer.slice(3)
+  }
+
+  // Try UTF-8 first
+  let text = data.toString('utf8')
+
+  // Check for replacement characters or mojibake patterns (indicates encoding issues)
+  // Common pattern: UTF-8 decoding of Latin-1 produces Ã followed by special chars
+  const hasMojibake = text.includes('\uFFFD') || /Ã[\x80-\xBF]/.test(text)
+
+  if (hasMojibake) {
+    // Try Latin-1 (ISO-8859-1) which is compatible with Windows-1252 for most chars
+    text = data.toString('latin1')
+    logger.info('CSV encoding detected as Latin-1, converted to UTF-8')
+  }
+
+  return text
+}
+
 const searchSchema = Joi.object({
   name: Joi.string().trim().optional(),
   type: Joi.string()
@@ -158,6 +185,10 @@ const searchSchema = Joi.object({
   complianceStatus: Joi.string()
     .valid(...Object.values(ComplianceStatus))
     .optional(),
+  commercialStatus: Joi.string()
+    .valid(...Object.values(CommercialStatus))
+    .optional(),
+  groupName: Joi.string().trim().optional(),
   tags: Joi.alternatives()
     .try(Joi.string().trim(), Joi.array().items(Joi.string().trim()))
     .optional(),
@@ -193,6 +224,8 @@ export class MedicalInstitutionController {
       minSurgicalRooms,
       maxSurgicalRooms,
       complianceStatus,
+      commercialStatus,
+      groupName,
       tags,
       isActive,
       page,
@@ -227,6 +260,12 @@ export class MedicalInstitutionController {
     }
     if (isActive !== undefined) {
       filters.isActive = isActive
+    }
+    if (commercialStatus) {
+      filters.commercialStatus = commercialStatus
+    }
+    if (groupName) {
+      filters.groupName = groupName
     }
 
     // Apply team-based filtering if required
@@ -346,6 +385,16 @@ export class MedicalInstitutionController {
 
     if (filters.assignedUserId) {
       whereClause.assignedUserId = filters.assignedUserId
+    }
+
+    if (filters.commercialStatus) {
+      whereClause.commercialStatus = filters.commercialStatus
+    }
+
+    if (filters.groupName) {
+      whereClause.groupName = {
+        [Op.iLike]: `%${filters.groupName}%`,
+      }
     }
 
     // Team-based filtering
@@ -698,13 +747,14 @@ export class MedicalInstitutionController {
       throw new BadRequestError("File must be a CSV file")
     }
 
-    // Read file content
+    // Read file content with encoding detection
     let csvData = ""
     if (hasMulterFile && file.buffer) {
-      csvData = file.buffer.toString("utf8")
+      csvData = fixCsvEncoding(file.buffer)
     } else if ((file as any).filepath) {
       const fs = await import("fs")
-      csvData = await fs.promises.readFile((file as any).filepath, "utf8")
+      const buffer = await fs.promises.readFile((file as any).filepath)
+      csvData = fixCsvEncoding(buffer)
     } else {
       throw new BadRequestError("Unable to read uploaded file")
     }
@@ -784,13 +834,14 @@ export class MedicalInstitutionController {
       throw new BadRequestError("File must be a CSV file", "INVALID_FILE_TYPE")
     }
 
-    // Read file content
+    // Read file content with encoding detection
     let csvData = ""
     if (hasMulterFile && file.buffer) {
-      csvData = file.buffer.toString("utf8")
+      csvData = fixCsvEncoding(file.buffer)
     } else if ((file as any).filepath) {
       const fs = await import("fs")
-      csvData = await fs.promises.readFile((file as any).filepath, "utf8")
+      const buffer = await fs.promises.readFile((file as any).filepath)
+      csvData = fixCsvEncoding(buffer)
     } else {
       throw new BadRequestError("Unable to read uploaded file", "FILE_READ_ERROR")
     }
@@ -841,13 +892,14 @@ export class MedicalInstitutionController {
       throw new BadRequestError("File must be a CSV file", "INVALID_FILE_TYPE")
     }
 
-    // Read file content
+    // Read file content with encoding detection
     let csvData = ""
     if (hasMulterFile && file.buffer) {
-      csvData = file.buffer.toString("utf8")
+      csvData = fixCsvEncoding(file.buffer)
     } else if ((file as any).filepath) {
       const fs = await import("fs")
-      csvData = await fs.promises.readFile((file as any).filepath, "utf8")
+      const buffer = await fs.promises.readFile((file as any).filepath)
+      csvData = fixCsvEncoding(buffer)
     } else {
       throw new BadRequestError("Unable to read uploaded file", "FILE_READ_ERROR")
     }

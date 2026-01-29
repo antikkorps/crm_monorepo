@@ -15,6 +15,11 @@ export interface MedicalProfileAttributes {
   lastAuditDate?: Date
   complianceExpirationDate?: Date
   complianceNotes?: string
+  // Activity metrics
+  staffCount?: number
+  endoscopyRooms?: number
+  surgicalInterventions?: number
+  endoscopyInterventions?: number
   createdAt: Date
   updatedAt: Date
 }
@@ -38,6 +43,11 @@ export class MedicalProfile
   declare lastAuditDate?: Date
   declare complianceExpirationDate?: Date
   declare complianceNotes?: string
+  // Activity metrics
+  declare staffCount?: number
+  declare endoscopyRooms?: number
+  declare surgicalInterventions?: number
+  declare endoscopyInterventions?: number
   declare readonly createdAt: Date
   declare readonly updatedAt: Date
 
@@ -247,6 +257,40 @@ MedicalProfile.init(
       field: "compliance_notes",
       validate: {
         len: [0, 2000],
+      },
+    },
+    // Activity metrics
+    staffCount: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      field: "staff_count",
+      validate: {
+        min: 0,
+      },
+    },
+    endoscopyRooms: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      field: "endoscopy_rooms",
+      validate: {
+        min: 0,
+        max: 1000,
+      },
+    },
+    surgicalInterventions: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      field: "surgical_interventions",
+      validate: {
+        min: 0,
+      },
+    },
+    endoscopyInterventions: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      field: "endoscopy_interventions",
+      validate: {
+        min: 0,
       },
     },
     createdAt: {

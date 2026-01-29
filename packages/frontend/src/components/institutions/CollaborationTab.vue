@@ -63,7 +63,7 @@
               <v-list-item
                 v-for="meeting in collaborationData.upcomingMeetings"
                 :key="meeting.id"
-                @click="navigateTo('/meetings')"
+                @click="openMeetingForEdit(meeting)"
               >
                 <template v-slot:prepend>
                   <v-avatar color="primary" variant="tonal">
@@ -124,14 +124,14 @@
               <v-list-item
                 v-for="call in collaborationData.recentCalls"
                 :key="call.id"
-                @click="navigateTo('/calls')"
+                @click="openCallForEdit(call)"
               >
                 <template v-slot:prepend>
                   <v-avatar :color="getCallColor(call.callType)" variant="tonal">
                     <v-icon>{{ getCallIcon(call.callType) }}</v-icon>
                   </v-avatar>
                 </template>
-                <v-list-item-title class="font-weight-medium">
+                <v-list-item-title class="font-weight-medium d-flex align-center">
                   {{ formatCallType(call.callType) }}
                   <v-chip
                     size="x-small"
@@ -140,6 +140,11 @@
                     variant="tonal"
                   >
                     {{ call.duration ? formatDuration(call.duration) : "N/A" }}
+                  </v-chip>
+                  <!-- User avatar -->
+                  <v-chip v-if="call.user" size="small" variant="tonal" color="primary" class="ml-2">
+                    <v-avatar start size="18" :image="getUserAvatarUrl(call.user)" />
+                    {{ call.user.firstName }} {{ call.user.lastName }}
                   </v-chip>
                 </v-list-item-title>
                 <v-list-item-subtitle>
@@ -191,7 +196,7 @@
               <v-list-item
                 v-for="note in collaborationData.recentNotes"
                 :key="note.id"
-                @click="navigateTo('/notes')"
+                @click="openNoteForEdit(note)"
               >
                 <template v-slot:prepend>
                   <v-avatar color="warning" variant="tonal">
@@ -258,7 +263,7 @@
               <v-list-item
                 v-for="reminder in collaborationData.pendingReminders"
                 :key="reminder.id"
-                @click="navigateTo('/reminders')"
+                @click="openReminderForEdit(reminder)"
               >
                 <template v-slot:prepend>
                   <v-avatar :color="getPriorityColor(reminder.priority)" variant="tonal">
@@ -309,7 +314,7 @@
                 variant="text"
                 prepend-icon="mdi-plus"
                 color="secondary"
-                @click="navigateTo('/tasks')"
+                @click="openTaskForm"
               >
                 {{ t("collaboration.add") }}
               </v-btn>
@@ -325,7 +330,7 @@
               <v-list-item
                 v-for="task in collaborationData.openTasks"
                 :key="task.id"
-                @click="navigateTo('/tasks')"
+                @click="openTaskForEdit(task)"
               >
                 <template v-slot:prepend>
                   <v-avatar :color="getTaskStatusColor(task.status)" variant="tonal">
@@ -366,40 +371,327 @@
             </v-list>
           </v-card>
         </v-col>
+
+        <!-- Recent Quotes -->
+        <v-col cols="12" md="6" class="d-flex">
+          <v-card class="flex-grow-1">
+            <v-card-title class="d-flex align-center justify-space-between">
+              <div class="d-flex align-center">
+                <v-icon class="mr-2" color="purple">mdi-file-document-outline</v-icon>
+                <span>{{ t("collaboration.recentQuotes") }}</span>
+                <v-chip class="ml-2" size="small" color="purple" variant="tonal">
+                  {{ collaborationData.stats.totalQuotes ?? 0 }}
+                </v-chip>
+              </div>
+              <v-btn
+                size="small"
+                variant="text"
+                prepend-icon="mdi-plus"
+                color="purple"
+                @click="navigateTo('/quotes')"
+              >
+                {{ t("collaboration.add") }}
+              </v-btn>
+            </v-card-title>
+            <v-divider></v-divider>
+            <div
+              v-if="!collaborationData.recentQuotes || collaborationData.recentQuotes.length === 0"
+              class="text-center py-8"
+            >
+              <v-icon size="48" color="grey-lighten-2">mdi-file-document-outline</v-icon>
+              <p class="mt-2 text-medium-emphasis">
+                {{ t("collaboration.noRecentQuotes") }}
+              </p>
+            </div>
+            <v-list v-else lines="two">
+              <v-list-item
+                v-for="quote in collaborationData.recentQuotes"
+                :key="quote.id"
+                @click="navigateToItem('/quotes', quote.id)"
+              >
+                <template v-slot:prepend>
+                  <v-avatar :color="getQuoteStatusColor(quote.status)" variant="tonal">
+                    <v-icon>mdi-file-document-outline</v-icon>
+                  </v-avatar>
+                </template>
+                <v-list-item-title class="font-weight-medium">
+                  {{ quote.quoteNumber }} - {{ quote.title }}
+                  <v-chip
+                    size="x-small"
+                    class="ml-2"
+                    :color="getQuoteStatusColor(quote.status)"
+                    variant="tonal"
+                  >
+                    {{ formatQuoteStatus(quote.status) }}
+                  </v-chip>
+                </v-list-item-title>
+                <v-list-item-subtitle>
+                  <div class="d-flex align-center">
+                    <v-icon size="small" class="mr-1">mdi-currency-eur</v-icon>
+                    {{ formatCurrency(quote.total) }}
+                  </div>
+                  <div v-if="quote.validUntil" class="d-flex align-center mt-1">
+                    <v-icon size="small" class="mr-1">mdi-calendar-clock</v-icon>
+                    {{ t("collaboration.validUntil") }}: {{ formatDate(quote.validUntil) }}
+                  </div>
+                </v-list-item-subtitle>
+              </v-list-item>
+            </v-list>
+          </v-card>
+        </v-col>
+
+        <!-- Recent Invoices -->
+        <v-col cols="12" md="6" class="d-flex">
+          <v-card class="flex-grow-1">
+            <v-card-title class="d-flex align-center justify-space-between">
+              <div class="d-flex align-center">
+                <v-icon class="mr-2" color="teal">mdi-receipt</v-icon>
+                <span>{{ t("collaboration.recentInvoices") }}</span>
+                <v-chip class="ml-2" size="small" color="teal" variant="tonal">
+                  {{ collaborationData.stats.totalInvoices ?? 0 }}
+                </v-chip>
+              </div>
+              <v-btn
+                size="small"
+                variant="text"
+                prepend-icon="mdi-plus"
+                color="teal"
+                @click="navigateTo('/invoices')"
+              >
+                {{ t("collaboration.add") }}
+              </v-btn>
+            </v-card-title>
+            <v-divider></v-divider>
+            <div
+              v-if="!collaborationData.recentInvoices || collaborationData.recentInvoices.length === 0"
+              class="text-center py-8"
+            >
+              <v-icon size="48" color="grey-lighten-2">mdi-receipt</v-icon>
+              <p class="mt-2 text-medium-emphasis">
+                {{ t("collaboration.noRecentInvoices") }}
+              </p>
+            </div>
+            <v-list v-else lines="two">
+              <v-list-item
+                v-for="invoice in collaborationData.recentInvoices"
+                :key="invoice.id"
+                @click="navigateToItem(`/invoices/${invoice.id}`, invoice.id)"
+              >
+                <template v-slot:prepend>
+                  <v-avatar :color="getInvoiceStatusColor(invoice.status)" variant="tonal">
+                    <v-icon>mdi-receipt</v-icon>
+                  </v-avatar>
+                </template>
+                <v-list-item-title class="font-weight-medium">
+                  {{ invoice.invoiceNumber }} - {{ invoice.title }}
+                  <v-chip
+                    size="x-small"
+                    class="ml-2"
+                    :color="getInvoiceStatusColor(invoice.status)"
+                    variant="tonal"
+                  >
+                    {{ formatInvoiceStatus(invoice.status) }}
+                  </v-chip>
+                </v-list-item-title>
+                <v-list-item-subtitle>
+                  <div class="d-flex align-center">
+                    <v-icon size="small" class="mr-1">mdi-currency-eur</v-icon>
+                    {{ formatCurrency(invoice.total) }}
+                    <span v-if="invoice.remainingAmount > 0" class="ml-2 text-error">
+                      ({{ t("collaboration.remaining") }}: {{ formatCurrency(invoice.remainingAmount) }})
+                    </span>
+                  </div>
+                  <div v-if="invoice.dueDate" class="d-flex align-center mt-1">
+                    <v-icon size="small" class="mr-1">mdi-calendar-clock</v-icon>
+                    {{ t("collaboration.dueDate") }}: {{ formatDate(invoice.dueDate) }}
+                  </div>
+                </v-list-item-subtitle>
+              </v-list-item>
+            </v-list>
+          </v-card>
+        </v-col>
+
+        <!-- Engagement Letters -->
+        <v-col cols="12" md="6" class="d-flex">
+          <v-card class="flex-grow-1">
+            <v-card-title class="d-flex align-center justify-space-between">
+              <div class="d-flex align-center">
+                <v-icon class="mr-2" color="indigo">mdi-briefcase-outline</v-icon>
+                <span>{{ t("collaboration.engagementLetters") }}</span>
+                <v-chip class="ml-2" size="small" color="indigo" variant="tonal">
+                  {{ collaborationData.stats.totalEngagementLetters ?? 0 }}
+                </v-chip>
+              </div>
+              <v-btn
+                size="small"
+                variant="text"
+                prepend-icon="mdi-plus"
+                color="indigo"
+                @click="navigateTo('/engagement-letters')"
+              >
+                {{ t("collaboration.add") }}
+              </v-btn>
+            </v-card-title>
+            <v-divider></v-divider>
+            <div
+              v-if="!collaborationData.recentEngagementLetters || collaborationData.recentEngagementLetters.length === 0"
+              class="text-center py-8"
+            >
+              <v-icon size="48" color="grey-lighten-2">mdi-briefcase-outline</v-icon>
+              <p class="mt-2 text-medium-emphasis">
+                {{ t("collaboration.noEngagementLetters") }}
+              </p>
+            </div>
+            <v-list v-else lines="two">
+              <v-list-item
+                v-for="letter in collaborationData.recentEngagementLetters"
+                :key="letter.id"
+                @click="navigateToItem('/engagement-letters', letter.id)"
+              >
+                <template v-slot:prepend>
+                  <v-avatar :color="getEngagementLetterStatusColor(letter.status)" variant="tonal">
+                    <v-icon>mdi-briefcase-outline</v-icon>
+                  </v-avatar>
+                </template>
+                <v-list-item-title class="font-weight-medium">
+                  {{ letter.letterNumber }} - {{ letter.title }}
+                  <v-chip
+                    size="x-small"
+                    class="ml-2"
+                    :color="getEngagementLetterStatusColor(letter.status)"
+                    variant="tonal"
+                  >
+                    {{ formatEngagementLetterStatus(letter.status) }}
+                  </v-chip>
+                </v-list-item-title>
+                <v-list-item-subtitle>
+                  <div class="d-flex align-center">
+                    <v-icon size="small" class="mr-1">mdi-currency-eur</v-icon>
+                    {{ formatCurrency(letter.estimatedTotal) }}
+                  </div>
+                  <div v-if="letter.validUntil" class="d-flex align-center mt-1">
+                    <v-icon size="small" class="mr-1">mdi-calendar-clock</v-icon>
+                    {{ t("collaboration.validUntil") }}: {{ formatDate(letter.validUntil) }}
+                  </div>
+                </v-list-item-subtitle>
+              </v-list-item>
+            </v-list>
+          </v-card>
+        </v-col>
+
+        <!-- External References (Simplified Transactions) -->
+        <v-col cols="12" md="6" class="d-flex">
+          <v-card class="flex-grow-1">
+            <v-card-title class="d-flex align-center justify-space-between">
+              <div class="d-flex align-center">
+                <v-icon class="mr-2" color="orange">mdi-link-variant</v-icon>
+                <span>{{ t("simplifiedTransactions.title") }}</span>
+                <v-chip class="ml-2" size="small" color="orange" variant="tonal">
+                  {{ collaborationData.stats.totalSimplifiedTransactions ?? 0 }}
+                </v-chip>
+              </div>
+            </v-card-title>
+            <v-divider></v-divider>
+            <div
+              v-if="!collaborationData.recentSimplifiedTransactions || collaborationData.recentSimplifiedTransactions.length === 0"
+              class="text-center py-8"
+            >
+              <v-icon size="48" color="grey-lighten-2">mdi-link-variant</v-icon>
+              <p class="mt-2 text-medium-emphasis">
+                {{ t("simplifiedTransactions.noTransactionsFound") }}
+              </p>
+            </div>
+            <v-list v-else lines="two">
+              <v-list-item
+                v-for="tx in collaborationData.recentSimplifiedTransactions"
+                :key="tx.id"
+                @click="openSimplifiedTransactionForEdit(tx)"
+              >
+                <template v-slot:prepend>
+                  <v-avatar :color="getSimplifiedTypeColor(tx.type)" variant="tonal">
+                    <v-icon>{{ getSimplifiedTypeIcon(tx.type) }}</v-icon>
+                  </v-avatar>
+                </template>
+                <v-list-item-title class="font-weight-medium">
+                  {{ tx.referenceNumber ? `${tx.referenceNumber} - ` : '' }}{{ tx.title }}
+                  <v-chip
+                    size="x-small"
+                    class="ml-2"
+                    color="orange"
+                    variant="tonal"
+                  >
+                    {{ t("simplifiedTransactions.externalBadge") }}
+                  </v-chip>
+                </v-list-item-title>
+                <v-list-item-subtitle>
+                  <div class="d-flex align-center">
+                    <v-icon size="small" class="mr-1">mdi-currency-eur</v-icon>
+                    {{ formatCurrency(tx.amountTtc) }}
+                  </div>
+                  <div class="d-flex align-center mt-1">
+                    <v-icon size="small" class="mr-1">mdi-calendar</v-icon>
+                    {{ formatDate(tx.date) }}
+                  </div>
+                </v-list-item-subtitle>
+              </v-list-item>
+            </v-list>
+          </v-card>
+        </v-col>
       </v-row>
     </div>
 
-    <!-- Quick Add Dialogs -->
+    <!-- Quick Add/Edit Dialogs -->
     <CallForm
       v-model="showCallForm"
+      :call="selectedCall"
       :loading="formLoading"
       :preselected-institution-id="props.institutionId"
       @submit="handleCallSubmit"
-      @cancel="showCallForm = false"
+      @cancel="showCallForm = false; selectedCall = null"
     />
 
     <MeetingForm
       v-model="showMeetingForm"
+      :meeting="selectedMeeting"
       :loading="formLoading"
       :preselected-institution-id="props.institutionId"
       @submit="handleMeetingSubmit"
-      @cancel="showMeetingForm = false"
+      @cancel="showMeetingForm = false; selectedMeeting = null"
     />
 
     <NoteForm
       v-model="showNoteForm"
+      :note="selectedNote"
       :loading="formLoading"
       :preselected-institution-id="props.institutionId"
       @submit="handleNoteSubmit"
-      @cancel="showNoteForm = false"
+      @cancel="showNoteForm = false; selectedNote = null"
     />
 
     <ReminderForm
       v-model="showReminderForm"
+      :reminder="selectedReminder"
       :loading="formLoading"
       :preselected-institution-id="props.institutionId"
       @submit="handleReminderSubmit"
-      @cancel="showReminderForm = false"
+      @cancel="showReminderForm = false; selectedReminder = null"
+    />
+
+    <TaskForm
+      v-model="showTaskForm"
+      :task="selectedTask"
+      :loading="formLoading"
+      :preselected-institution-id="props.institutionId"
+      @submit="handleTaskSubmit"
+      @cancel="showTaskForm = false; selectedTask = null"
+    />
+
+    <SimplifiedTransactionForm
+      v-model="showSimplifiedTransactionForm"
+      :transaction="selectedSimplifiedTransaction"
+      :institution-id="props.institutionId"
+      @saved="handleSimplifiedTransactionSaved"
+      @cancelled="showSimplifiedTransactionForm = false; selectedSimplifiedTransaction = null"
     />
   </div>
 </template>
@@ -409,14 +701,20 @@ import CallForm from "@/components/calls/CallForm.vue"
 import MeetingForm from "@/components/meetings/MeetingForm.vue"
 import NoteForm from "@/components/notes/NoteForm.vue"
 import ReminderForm from "@/components/reminders/ReminderForm.vue"
-import { callsApi, institutionsApi, meetingsApi, notesApi, remindersApi } from "@/services/api"
+import TaskForm from "@/components/tasks/TaskForm.vue"
+import SimplifiedTransactionForm from "@/components/billing/simplified/SimplifiedTransactionForm.vue"
+import { callsApi, institutionsApi, meetingsApi, notesApi, remindersApi, tasksApi } from "@/services/api"
 import type {
   CallCreateRequest,
   CallUpdateRequest,
   MeetingCreateRequest,
   MeetingUpdateRequest,
   NoteCreateRequest,
+  NoteUpdateRequest,
   ReminderCreateRequest,
+  ReminderUpdateRequest,
+  TaskCreateRequest,
+  TaskUpdateRequest,
 } from "@medical-crm/shared"
 import { computed, onMounted, ref } from "vue"
 import { useI18n } from "vue-i18n"
@@ -434,11 +732,19 @@ const collaborationData = ref<any>(null)
 const loading = ref(false)
 const error = ref("")
 
-// Quick add dialog states
+// Quick add/edit dialog states
 const showCallForm = ref(false)
 const showMeetingForm = ref(false)
 const showNoteForm = ref(false)
 const showReminderForm = ref(false)
+const showTaskForm = ref(false)
+const showSimplifiedTransactionForm = ref(false)
+const selectedCall = ref<any>(null)
+const selectedMeeting = ref<any>(null)
+const selectedNote = ref<any>(null)
+const selectedReminder = ref<any>(null)
+const selectedTask = ref<any>(null)
+const selectedSimplifiedTransaction = ref<any>(null)
 const formLoading = ref(false)
 
 const statsCards = computed(() => {
@@ -476,6 +782,30 @@ const statsCards = computed(() => {
       color: "secondary",
     },
     {
+      label: t("collaboration.stats.quotes"),
+      value: stats.totalQuotes ?? 0,
+      icon: "mdi-file-document-outline",
+      color: "purple",
+    },
+    {
+      label: t("collaboration.stats.invoices"),
+      value: stats.totalInvoices ?? 0,
+      icon: "mdi-receipt",
+      color: "teal",
+    },
+    {
+      label: t("collaboration.stats.engagementLetters"),
+      value: stats.totalEngagementLetters ?? 0,
+      icon: "mdi-briefcase-outline",
+      color: "indigo",
+    },
+    {
+      label: t("collaboration.stats.externalReferences"),
+      value: stats.totalSimplifiedTransactions ?? 0,
+      icon: "mdi-link-variant",
+      color: "orange",
+    },
+    {
       label: t("collaboration.stats.upcoming"),
       value: stats.upcomingMeetings,
       icon: "mdi-calendar-clock",
@@ -507,35 +837,101 @@ const navigateTo = (path: string) => {
   })
 }
 
-// Open form dialogs
+// Open form dialogs (create mode)
 const openCallForm = () => {
+  selectedCall.value = null
   showCallForm.value = true
 }
 
 const openMeetingForm = () => {
+  selectedMeeting.value = null
   showMeetingForm.value = true
 }
 
 const openNoteForm = () => {
+  selectedNote.value = null
   showNoteForm.value = true
 }
 
 const openReminderForm = () => {
+  selectedReminder.value = null
   showReminderForm.value = true
+}
+
+const openTaskForm = () => {
+  selectedTask.value = null
+  showTaskForm.value = true
+}
+
+// Open form dialogs (edit mode)
+const openCallForEdit = (call: any) => {
+  selectedCall.value = call
+  showCallForm.value = true
+}
+
+const openMeetingForEdit = (meeting: any) => {
+  selectedMeeting.value = meeting
+  showMeetingForm.value = true
+}
+
+const openNoteForEdit = (note: any) => {
+  selectedNote.value = note
+  showNoteForm.value = true
+}
+
+const openReminderForEdit = (reminder: any) => {
+  selectedReminder.value = reminder
+  showReminderForm.value = true
+}
+
+const openTaskForEdit = (task: any) => {
+  selectedTask.value = task
+  showTaskForm.value = true
+}
+
+const openSimplifiedTransactionForEdit = (tx: any) => {
+  selectedSimplifiedTransaction.value = tx
+  showSimplifiedTransactionForm.value = true
+}
+
+const handleSimplifiedTransactionSaved = () => {
+  showSimplifiedTransactionForm.value = false
+  selectedSimplifiedTransaction.value = null
+  loadData()
+}
+
+// Navigate to specific item with context
+const navigateToItem = (path: string, itemId: string) => {
+  // If the path already contains the ID (like /invoices/:id), just add the query
+  const hasIdInPath = path.includes(itemId)
+  router.push({
+    path: hasIdInPath ? path : path,
+    query: {
+      ...(hasIdInPath ? {} : { id: itemId }),
+      fromInstitution: props.institutionId
+    },
+  })
 }
 
 // Form submit handlers
 const handleCallSubmit = async (data: CallCreateRequest | CallUpdateRequest) => {
   formLoading.value = true
   try {
-    await callsApi.create({
-      ...data,
-      institutionId: props.institutionId,
-    } as CallCreateRequest)
+    if (selectedCall.value) {
+      // Update existing call
+      await callsApi.update(selectedCall.value.id, data)
+    } else {
+      // Create new call
+      await callsApi.create({
+        ...data,
+        institutionId: props.institutionId,
+      } as CallCreateRequest)
+    }
     showCallForm.value = false
-    loadData() // Reload data to show new call
+    selectedCall.value = null
+    loadData()
   } catch (err) {
-    console.error("Error creating call:", err)
+    console.error("Error saving call:", err)
   } finally {
     formLoading.value = false
   }
@@ -544,46 +940,90 @@ const handleCallSubmit = async (data: CallCreateRequest | CallUpdateRequest) => 
 const handleMeetingSubmit = async (data: MeetingCreateRequest | MeetingUpdateRequest) => {
   formLoading.value = true
   try {
-    await meetingsApi.create({
-      ...data,
-      institutionId: props.institutionId,
-    } as MeetingCreateRequest)
+    if (selectedMeeting.value) {
+      // Update existing meeting
+      await meetingsApi.update(selectedMeeting.value.id, data)
+    } else {
+      // Create new meeting
+      await meetingsApi.create({
+        ...data,
+        institutionId: props.institutionId,
+      } as MeetingCreateRequest)
+    }
     showMeetingForm.value = false
+    selectedMeeting.value = null
     loadData()
   } catch (err) {
-    console.error("Error creating meeting:", err)
+    console.error("Error saving meeting:", err)
   } finally {
     formLoading.value = false
   }
 }
 
-const handleNoteSubmit = async (data: NoteCreateRequest) => {
+const handleNoteSubmit = async (data: NoteCreateRequest | NoteUpdateRequest) => {
   formLoading.value = true
   try {
-    await notesApi.create({
-      ...data,
-      institutionId: props.institutionId,
-    })
+    if (selectedNote.value) {
+      // Update existing note
+      await notesApi.update(selectedNote.value.id, data)
+    } else {
+      // Create new note
+      await notesApi.create({
+        ...(data as NoteCreateRequest),
+        institutionId: props.institutionId,
+      })
+    }
     showNoteForm.value = false
+    selectedNote.value = null
     loadData()
   } catch (err) {
-    console.error("Error creating note:", err)
+    console.error("Error saving note:", err)
   } finally {
     formLoading.value = false
   }
 }
 
-const handleReminderSubmit = async (data: ReminderCreateRequest) => {
+const handleReminderSubmit = async (data: ReminderCreateRequest | ReminderUpdateRequest) => {
   formLoading.value = true
   try {
-    await remindersApi.create({
-      ...data,
-      institutionId: props.institutionId,
-    })
+    if (selectedReminder.value) {
+      // Update existing reminder
+      await remindersApi.update(selectedReminder.value.id, data)
+    } else {
+      // Create new reminder
+      await remindersApi.create({
+        ...(data as ReminderCreateRequest),
+        institutionId: props.institutionId,
+      })
+    }
     showReminderForm.value = false
+    selectedReminder.value = null
     loadData()
   } catch (err) {
-    console.error("Error creating reminder:", err)
+    console.error("Error saving reminder:", err)
+  } finally {
+    formLoading.value = false
+  }
+}
+
+const handleTaskSubmit = async (data: TaskCreateRequest | TaskUpdateRequest) => {
+  formLoading.value = true
+  try {
+    if (selectedTask.value) {
+      // Update existing task
+      await tasksApi.update(selectedTask.value.id, data)
+    } else {
+      // Create new task
+      await tasksApi.create({
+        ...data,
+        institutionId: props.institutionId,
+      })
+    }
+    showTaskForm.value = false
+    selectedTask.value = null
+    loadData()
+  } catch (err) {
+    console.error("Error saving task:", err)
   } finally {
     formLoading.value = false
   }
@@ -640,6 +1080,12 @@ const getCallIcon = (type: string): string => {
   return iconMap[type] || "mdi-phone"
 }
 
+const getUserAvatarUrl = (user: { id: string; firstName?: string; lastName?: string }): string => {
+  // Use first name + last name as seed so DiceBear shows correct initials
+  const seed = `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.id
+  return `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(seed)}`
+}
+
 const getPriorityColor = (priority: string): string => {
   const colorMap: Record<string, string> = {
     low: "info",
@@ -686,6 +1132,113 @@ const stripHtml = (html: string): string => {
   const tmp = document.createElement("div")
   tmp.innerHTML = html
   return tmp.textContent || tmp.innerText || ""
+}
+
+const formatCurrency = (amount: number | null | undefined): string => {
+  if (amount == null) return "0,00 €"
+  return new Intl.NumberFormat("fr-FR", {
+    style: "currency",
+    currency: "EUR",
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(amount)
+}
+
+const getQuoteStatusColor = (status: string): string => {
+  const colorMap: Record<string, string> = {
+    draft: "grey",
+    pending: "warning",
+    sent: "info",
+    accepted: "success",
+    rejected: "error",
+    expired: "grey-darken-1",
+    ordered: "purple",
+  }
+  return colorMap[status] || "grey"
+}
+
+const formatQuoteStatus = (status: string): string => {
+  const statusMap: Record<string, string> = {
+    draft: t("quotes.status.draft"),
+    pending: t("quotes.status.pending"),
+    sent: t("quotes.status.sent"),
+    accepted: t("quotes.status.accepted"),
+    rejected: t("quotes.status.rejected"),
+    expired: t("quotes.status.expired"),
+    ordered: t("quotes.status.ordered"),
+  }
+  return statusMap[status] || status
+}
+
+const getInvoiceStatusColor = (status: string): string => {
+  const colorMap: Record<string, string> = {
+    draft: "grey",
+    pending: "warning",
+    sent: "info",
+    partial: "orange",
+    paid: "success",
+    overdue: "error",
+    cancelled: "grey-darken-1",
+  }
+  return colorMap[status] || "grey"
+}
+
+const formatInvoiceStatus = (status: string): string => {
+  const statusMap: Record<string, string> = {
+    draft: t("invoices.status.draft"),
+    pending: t("invoices.status.pending"),
+    sent: t("invoices.status.sent"),
+    partial: t("invoices.status.partial"),
+    paid: t("invoices.status.paid"),
+    overdue: t("invoices.status.overdue"),
+    cancelled: t("invoices.status.cancelled"),
+  }
+  return statusMap[status] || status
+}
+
+const getEngagementLetterStatusColor = (status: string): string => {
+  const colorMap: Record<string, string> = {
+    draft: "grey",
+    sent: "blue",
+    accepted: "success",
+    rejected: "error",
+    cancelled: "grey-darken-1",
+    completed: "purple",
+  }
+  return colorMap[status] || "grey"
+}
+
+const formatEngagementLetterStatus = (status: string): string => {
+  const statusMap: Record<string, string> = {
+    draft: t("engagementLetters.status.draft"),
+    sent: t("engagementLetters.status.sent"),
+    accepted: t("engagementLetters.status.accepted"),
+    rejected: t("engagementLetters.status.rejected"),
+    cancelled: t("engagementLetters.status.cancelled"),
+    completed: t("engagementLetters.status.completed"),
+  }
+  return statusMap[status] || status
+}
+
+// Simplified Transaction helpers
+const getSimplifiedTypeColor = (type: string): string => {
+  const colorMap: Record<string, string> = {
+    quote: "purple",
+    invoice: "teal",
+    engagement_letter: "indigo",
+    contract: "deep-purple",
+  }
+  return colorMap[type] || "grey"
+}
+
+const getSimplifiedTypeIcon = (type: string): string => {
+  const iconMap: Record<string, string> = {
+    quote: "mdi-file-document-outline",
+    invoice: "mdi-receipt",
+    engagement_letter: "mdi-briefcase-outline",
+    contract: "mdi-file-document-edit-outline",
+  }
+  return iconMap[type] || "mdi-link-variant"
 }
 
 onMounted(() => {

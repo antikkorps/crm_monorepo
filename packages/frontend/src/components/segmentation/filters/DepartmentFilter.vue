@@ -1,6 +1,6 @@
 <template>
   <div class="department-filter">
-    <v-select
+    <v-autocomplete
       v-model="selectedDepartments"
       :items="departmentOptions"
       :label="$t('segmentation.filters.department.label')"
@@ -8,8 +8,11 @@
       item-value="value"
       multiple
       chips
-      outlined
-      dense
+      closable-chips
+      variant="outlined"
+      density="compact"
+      :loading="loading"
+      :no-data-text="$t('segmentation.filters.department.noData')"
       class="mb-3"
     />
     <v-btn
@@ -18,15 +21,16 @@
       :disabled="selectedDepartments.length === 0"
       class="mt-2"
     >
-      <v-icon left>mdi-plus</v-icon>
+      <v-icon start>mdi-plus</v-icon>
       {{ $t('segmentation.filters.addFilter') }}
     </v-btn>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { filterOptionsApi } from '@/services/api'
 
 const { t } = useI18n()
 
@@ -44,25 +48,32 @@ const emit = defineEmits<{
 
 // Reactive data
 const selectedDepartments = ref<string[]>([])
+const departmentOptions = ref<Array<{ value: string; label: string }>>([])
+const loading = ref(false)
 
-// Mock department data - in real implementation, this would come from API
-const departmentOptions = [
-  { value: 'administration', label: t('segmentation.filters.department.departments.administration') },
-  { value: 'medical', label: t('segmentation.filters.department.departments.medical') },
-  { value: 'nursing', label: t('segmentation.filters.department.departments.nursing') },
-  { value: 'support', label: t('segmentation.filters.department.departments.support') },
-  { value: 'it', label: t('segmentation.filters.department.departments.it') },
-  { value: 'finance', label: t('segmentation.filters.department.departments.finance') },
-  { value: 'hr', label: t('segmentation.filters.department.departments.hr') },
-  { value: 'marketing', label: t('segmentation.filters.department.departments.marketing') }
-]
+// Load departments from API
+onMounted(async () => {
+  try {
+    loading.value = true
+    const response = await filterOptionsApi.getContactDepartments()
+    departmentOptions.value = (response.data || []).map((dept: string) => ({
+      value: dept,
+      label: dept
+    }))
+  } catch (error) {
+    console.error('Error loading departments:', error)
+    departmentOptions.value = []
+  } finally {
+    loading.value = false
+  }
+})
 
 // Methods
 const addFilter = () => {
   if (selectedDepartments.value.length === 0) return
 
-  const departmentLabels = selectedDepartments.value.map(dept => 
-    departmentOptions.find(opt => opt.value === dept)?.label || dept
+  const departmentLabels = selectedDepartments.value.map(dept =>
+    departmentOptions.value.find(opt => opt.value === dept)?.label || dept
   ).join(', ')
 
   emit('add-filter', {

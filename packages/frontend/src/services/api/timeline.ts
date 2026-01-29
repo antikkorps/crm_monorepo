@@ -3,7 +3,19 @@ import { apiClient } from "./index"
 /**
  * Timeline Item Type
  */
-export type TimelineItemType = "note" | "meeting" | "call" | "reminder" | "task"
+export type TimelineItemType =
+  | "note"
+  | "meeting"
+  | "call"
+  | "reminder"
+  | "task"
+  | "quote"
+  | "invoice"
+  | "engagement_letter"
+  | "simplified_quote"
+  | "simplified_invoice"
+  | "simplified_engagement_letter"
+  | "simplified_contract"
 
 /**
  * Timeline Item Interface
@@ -27,6 +39,7 @@ export interface TimelineItem {
   }
   createdAt: string
   metadata: Record<string, any>
+  isExternal?: boolean // True for simplified transactions (external references)
 }
 
 /**

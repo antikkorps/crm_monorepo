@@ -25,39 +25,92 @@ const strictOptions: sanitizeHtml.IOptions = {
   disallowedTagsMode: 'discard',
 }
 
+// Rich text sanitization options - allows safe formatting tags
+const richTextOptions: sanitizeHtml.IOptions = {
+  allowedTags: [
+    'b', 'i', 'em', 'strong', 'u', 'p', 'br',
+    'ul', 'ol', 'li', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
+    'blockquote', 'code', 'pre', 'a'
+  ],
+  allowedAttributes: {
+    'a': ['href', 'title', 'target'],
+  },
+  allowedSchemes: ['http', 'https', 'mailto'],
+  disallowedTagsMode: 'discard',
+}
+
+// Fields that are allowed to contain safe HTML (rich text editors)
+const RICH_TEXT_FIELDS = new Set([
+  'scope',
+  'termsAndConditions',
+  'description',
+  'notes',
+  'content',
+  'htmlTemplate',
+  'body',
+])
+
 /**
- * Sanitize a string value by removing all HTML tags
- * SECURITY: Always sanitizes to prevent XSS, even for short strings
+ * Check if a string is valid JSON (ProseMirror document format)
+ * This is used to skip HTML sanitization for JSON content stored by rich text editors
  */
-function sanitizeString(value: string): string {
+function isJsonContent(value: string): boolean {
+  const trimmed = value.trim()
+  if (!trimmed.startsWith("{") && !trimmed.startsWith("[")) {
+    return false
+  }
+  try {
+    JSON.parse(trimmed)
+    return true
+  } catch {
+    return false
+  }
+}
+
+/**
+ * Sanitize a string value
+ * @param value The string to sanitize
+ * @param isRichText If true, allow safe HTML tags for rich text fields or skip sanitization for JSON content
+ */
+function sanitizeString(value: string, isRichText: boolean = false): string {
   if (typeof value !== "string") return value
 
   const trimmed = value.trim()
 
-  // SECURITY: Always sanitize - even short strings or strings without obvious HTML
-  // can contain XSS vectors (encoded payloads, attribute-based attacks, etc.)
-  return sanitizeHtml(trimmed, strictOptions)
+  // For rich text fields, check if content is JSON (ProseMirror format)
+  // JSON content should be preserved as-is since it doesn't contain executable HTML
+  if (isRichText && isJsonContent(trimmed)) {
+    return trimmed
+  }
+
+  // Use appropriate sanitization options based on field type
+  const options = isRichText ? richTextOptions : strictOptions
+  return sanitizeHtml(trimmed, options)
 }
 
 /**
  * Recursively sanitize an object
+ * @param obj The object to sanitize
+ * @param fieldName Optional field name to check if it's a rich text field
  */
-function sanitizeObject(obj: any): any {
+function sanitizeObject(obj: any, fieldName?: string): any {
   if (obj === null || obj === undefined) return obj
 
   if (typeof obj === "string") {
-    return sanitizeString(obj)
+    const isRichText = fieldName ? RICH_TEXT_FIELDS.has(fieldName) : false
+    return sanitizeString(obj, isRichText)
   }
 
   if (Array.isArray(obj)) {
-    return obj.map(item => sanitizeObject(item))
+    return obj.map(item => sanitizeObject(item, fieldName))
   }
 
   if (typeof obj === "object") {
     const sanitized: any = {}
     for (const key in obj) {
       if (Object.prototype.hasOwnProperty.call(obj, key)) {
-        sanitized[key] = sanitizeObject(obj[key])
+        // Pass the key name so we can check if it's a rich text field
+        sanitized[key] = sanitizeObject(obj[key], key)
       }
     }
     return sanitized

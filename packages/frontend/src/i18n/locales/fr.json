@@ -5,6 +5,7 @@
     "cancel": "Annuler",
     "delete": "Supprimer",
     "edit": "Modifier",
+    "view": "Voir",
     "add": "Ajouter",
     "search": "Rechercher",
     "close": "Fermer",
@@ -12,8 +13,12 @@
     "yes": "Oui",
     "no": "Non",
     "ok": "OK",
+    "later": "Plus tard",
     "back": "Retour",
+    "backToDashboard": "Dashboard",
     "backToInstitution": "Retour à l'institution",
+    "backToList": "Retour à la liste",
+    "viewingFromInstitution": "Vous consultez depuis une institution",
     "next": "Suivant",
     "previous": "Précédent",
     "refresh": "Actualiser",
@@ -37,6 +42,7 @@
     "actions": "Actions",
     "status": "Statut",
     "name": "Nom",
+    "user": "Utilisateur",
     "description": "Description",
     "createdAt": "Créé le",
     "updatedAt": "Mis à jour le",
@@ -115,12 +121,14 @@
     "notes": "Notes",
     "reminders": "Rappels",
     "quotes": "Devis",
+    "engagementLetters": "Lettres de Mission",
     "invoices": "Factures",
     "templates": "Modèles",
     "analytics": "Analytiques",
     "analyticsIntelligence": "Analytics & Intelligence",
     "hotLeads": "Leads Chauds",
     "segmentation": "Segmentation",
+    "users": "Utilisateurs",
     "team": "Équipe",
     "webhooks": "Webhooks",
     "digiforma": "Digiforma",
@@ -128,6 +136,10 @@
     "exportCenter": "Centre d'Export",
     "catalog": "Catalogue",
     "profile": "Profil",
+    "notifications": "Notifications",
+    "billingAnalytics": "Analytiques Facturation",
+    "securityLogs": "Logs de Sécurité",
+    "featuresSettings": "Feature Flags",
     "systemSettings": "Paramètres système",
     "logout": "Se déconnecter"
   },
@@ -179,6 +191,22 @@
       "passwordWeak": "Le mot de passe ne respecte pas tous les critères sécurité",
       "passwordMismatch": "Les mots de passe ne correspondent pas",
       "resetSuccess": "Mot de passe réinitialisé avec succès"
+    },
+    "invitation": {
+      "title": "Bienvenue !",
+      "subtitle": "Activez votre compte pour commencer",
+      "setPasswordTitle": "Créez votre mot de passe",
+      "setPasswordSubtitle": "Définissez un mot de passe sécurisé pour activer votre compte",
+      "activateAccount": "Activer mon compte",
+      "accountActivated": "Compte activé avec succès ! Redirection vers la page de connexion...",
+      "activationError": "Une erreur s'est produite lors de l'activation du compte",
+      "invalidLink": "Le lien d'invitation est invalide. Veuillez contacter votre administrateur.",
+      "expiredLink": "Le lien d'invitation a expiré. Veuillez demander une nouvelle invitation à votre administrateur.",
+      "validating": "Vérification du lien d'invitation...",
+      "goToLogin": "Aller à la page de connexion",
+      "sendInvitation": "Envoyer une invitation",
+      "invitationSent": "Invitation envoyée avec succès",
+      "invitationError": "Erreur lors de l'envoi de l'invitation"
     },
     "loginTitle": "Connectez-vous à votre compte",
     "loginError": "Erreur de connexion. Vérifiez vos identifiants.",
@@ -248,7 +276,39 @@
       "lastNameMinLength": "Le nom doit comporter au moins 2 caractères.",
       "lastNameMaxLength": "Le nom ne doit pas dépasser 50 caractères.",
       "emailRequired": "L'email est requis.",
-      "emailInvalid": "L'email n'est pas valide."
+      "emailInvalid": "L'email n'est pas valide.",
+      "passwordRequired": "Le mot de passe est requis pour les nouveaux utilisateurs.",
+      "confirmPasswordRequired": "Veuillez confirmer le mot de passe."
+    },
+    "form": {
+      "editTitle": "Modifier le profil utilisateur",
+      "createTitle": "Créer un nouvel utilisateur",
+      "avatarDescription": "L'avatar est généré automatiquement à partir du nom de l'utilisateur",
+      "personalInformation": "Informations personnelles",
+      "firstNameLabel": "Prénom",
+      "firstNamePlaceholder": "Entrez le prénom",
+      "lastNameLabel": "Nom",
+      "lastNamePlaceholder": "Entrez le nom",
+      "emailLabel": "Email",
+      "emailPlaceholder": "Entrez l'adresse email",
+      "passwordLabel": "Mot de passe",
+      "passwordPlaceholder": "Entrez le mot de passe",
+      "confirmPasswordLabel": "Confirmer le mot de passe",
+      "confirmPasswordPlaceholder": "Confirmez le mot de passe",
+      "passwordHelp": "Le mot de passe doit contenir au moins 8 caractères avec une majuscule, une minuscule, un chiffre et un caractère spécial",
+      "roleTeamSection": "Rôle et équipe",
+      "roleLabel": "Rôle",
+      "rolePlaceholder": "Sélectionnez un rôle",
+      "teamLabel": "Équipe",
+      "teamPlaceholder": "Sélectionnez une équipe (optionnel)",
+      "activeUser": "Utilisateur actif",
+      "inactiveUserHelp": "Les utilisateurs inactifs ne peuvent pas se connecter",
+      "territorySection": "Affectation de territoire",
+      "institutionsLabel": "Institutions médicales assignées",
+      "institutionsPlaceholder": "Sélectionnez des institutions",
+      "institutionsHelp": "Sélectionnez les institutions médicales que cet utilisateur gérera",
+      "updateButton": "Mettre à jour",
+      "createButton": "Créer l'utilisateur"
     },
     "updated": "Profil mis à jour.",
     "updateError": "Erreur lors de la mise à jour du profil.",
@@ -342,6 +402,23 @@
       "surgery": "Chirurgie",
       "internalMedicine": "Médecine interne"
     },
+    "finess": "N° FINESS",
+    "groupName": "Groupe",
+    "commercialStatus": "Statut commercial",
+    "prospect": "Prospect",
+    "client": "Client",
+    "mainPhone": "Téléphone standard",
+    "staffCount": "Effectif",
+    "endoscopyRooms": "Salles d'endoscopie",
+    "surgicalInterventions": "Interventions chir./an",
+    "endoscopyInterventions": "Interventions endo./an",
+    "finessHint": "Numéro FINESS de l'établissement de santé (9 chiffres)",
+    "groupNameHint": "Nom du groupe d'appartenance (ex: AP-HP, Ramsay)",
+    "mainPhoneHint": "Numéro de téléphone principal de l'établissement",
+    "staffCountHint": "Nombre d'agents/personnel",
+    "surgicalInterventionsHint": "Nombre d'interventions chirurgicales par an",
+    "endoscopyInterventionsHint": "Nombre d'interventions endoscopie par an",
+    "showInactive": "Afficher les inactives",
     "tableHeaders": {
       "institution": "Institution",
       "location": "Localisation",
@@ -571,13 +648,16 @@
       },
       "type": {
         "label": "Type",
-        "placeholder": "Sélectionner un type..."
+        "placeholder": "Sélectionner des types...",
+        "noData": "Aucun type disponible"
       },
       "location": {
         "label": "Localisation",
         "country": "Pays",
         "region": "Région/État",
         "city": "Ville",
+        "noStates": "Aucune région disponible",
+        "noCities": "Aucune ville disponible",
         "countries": {
           "us": "États-Unis",
           "ca": "Canada",
@@ -586,6 +666,8 @@
       },
       "specialty": {
         "label": "Spécialité",
+        "placeholder": "Sélectionner des spécialités...",
+        "noData": "Aucune spécialité disponible",
         "specialties": {
           "cardiology": "Cardiologie",
           "neurology": "Neurologie",
@@ -628,6 +710,7 @@
       },
       "role": {
         "label": "Rôle",
+        "noData": "Aucun rôle disponible",
         "roles": {
           "admin": "Administrateur",
           "manager": "Gestionnaire",
@@ -641,6 +724,7 @@
       },
       "department": {
         "label": "Département",
+        "noData": "Aucun département disponible",
         "departments": {
           "administration": "Administration",
           "medical": "Médical",
@@ -654,6 +738,7 @@
       },
       "title": {
         "label": "Titre",
+        "noData": "Aucun titre disponible",
         "titles": {
           "dr": "Dr",
           "prof": "Prof",
@@ -743,6 +828,7 @@
       "activeRecords": "Enregistrements Actifs",
       "matchPercentage": "Pourcentage de Correspondance",
       "sampleRecords": "Échantillon d'Enregistrements",
+      "refresh": "Actualiser",
       "loading": "Chargement des données d'aperçu...",
       "noResults": "Aucun enregistrement ne correspond aux critères de filtre actuels",
       "noData": "Aucune donnée disponible",
@@ -750,15 +836,19 @@
       "exportResults": "Exporter les Résultats",
       "saveAsSegment": "Enregistrer comme Segment",
       "applyFilters": "Appliquer les Filtres",
-      "name": "",
-      "type": "",
-      "city": "",
-      "status": "",
-      "department": ""
+      "name": "Nom",
+      "type": "Type",
+      "city": "Ville",
+      "status": "Statut",
+      "department": "Département",
+      "columnTitle": "Titre"
     },
     "analytics": {
       "title": "Analyses du Segment",
       "subtitle": "Analyses détaillées et insights pour vos segments",
+      "selectSegment": "Sélectionner un segment",
+      "noSegmentSelected": "Aucun segment sélectionné",
+      "selectSegmentHint": "Sélectionnez un segment dans la liste pour voir ses analyses",
       "overview": "Aperçu",
       "demographics": "Démographie",
       "behavior": "Comportement",
@@ -870,6 +960,7 @@
     "comparison": {
       "title": "Comparer les Segments",
       "subtitle": "Comparer plusieurs segments côte à côte",
+      "refresh": "Actualiser",
       "selectSegments": "Sélectionner les Segments à Comparer",
       "chooseSegments": "Choisir les Segments",
       "selectedCount": "{count} sur {max} segments sélectionnés",
@@ -877,14 +968,33 @@
       "removeSegment": "Supprimer le Segment",
       "comparisonMetrics": "Métriques de Comparaison",
       "records": "Enregistrements",
+      "attributes": {
+        "type": "Type d'institution",
+        "location": "Localisation",
+        "size": "Taille",
+        "activity": "Niveau d'activité"
+      },
       "overlap": {
-        "title": "Chevauchement des Segments"
+        "title": "Chevauchement des Segments",
+        "segments": "Segments",
+        "shared": "en commun",
+        "percentage": "Chevauchement",
+        "noData": "Aucune donnée de chevauchement"
       },
       "visualization": {
         "title": "Visualisation"
       },
       "insights": {
-        "title": "Insights"
+        "title": "Insights",
+        "empty": "Sélectionnez des segments pour voir les insights",
+        "sizeDifference": "Différence de taille",
+        "sizeDifferenceDesc": "Les segments ont des tailles très différentes, ce qui peut indiquer des critères de ciblage différents.",
+        "typeDiversity": "Diversité de types",
+        "typeDiversityDesc": "Bonne diversité : vous comparez des segments d'institutions et de contacts.",
+        "sameType": "Même type de segment",
+        "sameTypeDesc": "Tous les segments sont du même type. Vérifiez qu'ils ne se chevauchent pas trop.",
+        "summary": "Résumé",
+        "summaryDesc": "Comparaison de {count} segments représentant {total} enregistrements au total."
       },
       "details": {
         "title": "Détails de la Comparaison",
@@ -903,6 +1013,10 @@
         "title": "Aucun segment sélectionné",
         "message": "Sélectionnez au moins 2 segments pour commencer la comparaison.",
         "hint": "Utilisez le sélecteur ci-dessus pour choisir les segments."
+      },
+      "noSegments": {
+        "title": "Aucun segment disponible",
+        "message": "Créez d'abord des segments dans l'onglet Constructeur pour pouvoir les comparer."
       },
       "metrics": {
         "size": "Taille du Segment",
@@ -1152,7 +1266,9 @@
     },
     "status": {
       "draft": "Brouillon",
+      "pending": "En attente",
       "sent": "Envoyé",
+      "partial": "Partiellement Payé",
       "partially_paid": "Partiellement Payé",
       "paid": "Payé",
       "overdue": "En Retard",
@@ -1410,13 +1526,20 @@
       "totalTax": "Taxes totales:",
       "total": "Total:",
       "actions": {
+        "downloadPdf": "Télécharger PDF",
         "sendToClient": "Envoyer au client",
-        "confirmOrder": "Confirmer bon de commande",
+        "acceptQuote": "Accepter le devis",
+        "confirmOrder": "Bon de commande",
         "convertToInvoice": "Convertir en facture",
         "saveDraft": "Sauvegarder brouillon",
         "preview": "Aperçu",
         "create": "Créer le devis",
         "update": "Mettre à jour"
+      },
+      "workflow": {
+        "alreadyOrdered": "Bon de commande déjà confirmé",
+        "cannotOrder": "Ce devis ne peut plus être commandé",
+        "needAcceptedOrOrdered": "Le devis doit être accepté ou commandé"
       },
       "sendDialog": {
         "title": "Envoyer le devis au client",
@@ -1442,10 +1565,16 @@
         "saved": "Devis sauvegardé avec succès",
         "draftSaved": "Devis sauvegardé comme brouillon",
         "sent": "Devis envoyé au client avec succès",
+        "accepted": "Devis accepté avec succès",
         "orderConfirmed": "Bon de commande confirmé",
+        "convertedToInvoice": "Devis converti en facture avec succès",
+        "pdfDownloaded": "PDF téléchargé avec succès",
         "saveError": "Erreur lors de la sauvegarde du devis",
         "sendError": "Erreur lors de l'envoi du devis",
-        "orderConfirmError": "Impossible de confirmer le bon de commande"
+        "acceptError": "Erreur lors de l'acceptation du devis",
+        "orderConfirmError": "Impossible de confirmer le bon de commande",
+        "convertToInvoiceError": "Erreur lors de la conversion en facture",
+        "pdfDownloadError": "Erreur lors du téléchargement du PDF"
       },
       "moveUp": "Déplacer vers le haut",
       "moveDown": "Déplacer vers le bas",
@@ -1528,7 +1657,11 @@
       "form": "Formulaire",
       "templateForm": "Formulaire de Modèle",
       "preview": "Aperçu",
-      "livePreview": "Aperçu en Direct"
+      "livePreview": "Aperçu en Direct",
+      "documents": "Modèles de Documents",
+      "documentsShort": "Documents",
+      "cgv": "Conditions Générales",
+      "cgvShort": "CGV"
     },
     "types": {
       "quote": "Devis",
@@ -1738,6 +1871,7 @@
     },
     "status": {
       "draft": "Brouillon",
+      "pending": "En attente",
       "sent": "Envoyé",
       "ordered": "Bon de commande",
       "accepted": "Accepté",
@@ -1767,6 +1901,323 @@
       "deleteError": "Impossible de supprimer le devis"
     },
     "confirmDelete": "Supprimer le devis {number} ?"
+  },
+  "engagementLetters": {
+    "title": "Lettres de Mission",
+    "subtitle": "Gérez vos lettres de mission et contrats d'engagement",
+    "viewingFromInstitution": "Vous consultez les lettres de mission depuis une institution",
+    "createNew": "Nouvelle lettre",
+    "noLettersFound": "Aucune lettre de mission trouvée",
+    "noLettersMessage": "Créez votre première lettre de mission pour commencer.",
+    "downloadPdf": "Télécharger le PDF",
+    "status": {
+      "draft": "Brouillon",
+      "sent": "Envoyée",
+      "accepted": "Acceptée",
+      "rejected": "Refusée",
+      "cancelled": "Annulée",
+      "completed": "Terminée"
+    },
+    "missionType": {
+      "audit": "Audit",
+      "conseil": "Conseil",
+      "formation": "Formation",
+      "autre": "Autre"
+    },
+    "billingType": {
+      "fixed": "Forfait",
+      "hourly": "Horaire",
+      "daily": "Journalier"
+    },
+    "filters": {
+      "status": "Statut",
+      "missionType": "Type de mission"
+    },
+    "table": {
+      "letterNumber": "N° Lettre",
+      "title": "Titre",
+      "missionType": "Type",
+      "amount": "Montant",
+      "status": "Statut",
+      "validUntil": "Validité",
+      "actions": "Actions"
+    },
+    "builder": {
+      "createTitle": "Nouvelle Lettre de Mission",
+      "editTitle": "Modifier la Lettre de Mission",
+      "backToList": "Retour à la liste",
+      "basicInfo": "Informations de base",
+      "institution": "Institution",
+      "institutionRequired": "L'institution est requise",
+      "template": "Modèle",
+      "title": "Titre",
+      "titleRequired": "Le titre est requis",
+      "missionType": "Type de mission",
+      "missionTypeRequired": "Le type de mission est requis",
+      "validUntil": "Validité",
+      "validUntilRequired": "La date de validité est requise",
+      "assignedUser": "Utilisateur assigné",
+      "missionDetails": "Détails de la mission",
+      "scope": "Périmètre de la mission",
+      "scopePlaceholder": "Décrivez le périmètre de la mission...",
+      "objectives": "Objectifs",
+      "objectivePlaceholder": "Décrivez un objectif...",
+      "addObjective": "Ajouter un objectif",
+      "deliverables": "Livrables",
+      "deliverableName": "Nom du livrable",
+      "deliverableDescription": "Description",
+      "deliverableDueDate": "Date limite",
+      "addDeliverable": "Ajouter un livrable",
+      "teamMembers": "Équipe intervenante",
+      "noMembers": "Aucun membre dans l'équipe",
+      "addFirstMember": "Ajouter le premier intervenant",
+      "addMember": "Ajouter un intervenant",
+      "memberName": "Nom",
+      "memberRole": "Rôle",
+      "memberQualification": "Qualification",
+      "dailyRate": "Taux journalier",
+      "hourlyRate": "Taux horaire",
+      "fixedAmount": "Montant forfaitaire",
+      "rate": "Taux",
+      "totalDays": "Nb jours",
+      "travelExpenses": "Frais de déplacement",
+      "totalFormula": "Total = (Taux journalier × Nb jours) + Frais de déplacement",
+      "estimatedDays": "Jours",
+      "isLead": "Responsable",
+      "memberSubtotal": "Sous-total",
+      "timeline": "Planning",
+      "startDate": "Date de début",
+      "endDate": "Date de fin",
+      "estimatedHours": "Heures estimées",
+      "financial": "Conditions financières",
+      "billingType": "Type de facturation",
+      "estimatedTotal": "Total estimé",
+      "showVat": "Afficher la TVA",
+      "vatRate": "Taux TVA",
+      "vatAmount": "Montant TVA",
+      "totalWithVat": "Total TTC",
+      "notes": "Notes internes",
+      "termsAndConditions": "Conditions générales",
+      "cgvTemplate": "Modèle de CGV",
+      "cgvTemplateHint": "Sélectionnez un modèle pour pré-remplir les CGV",
+      "termsAndConditionsContent": "Contenu des conditions générales",
+      "termsAndConditionsPlaceholder": "Saisissez ou modifiez les conditions générales...",
+      "internalNotes": "Notes internes",
+      "internalNotesHint": "Visible uniquement par l'équipe interne",
+      "actions": {
+        "saveDraft": "Enregistrer le brouillon",
+        "downloadPdf": "Télécharger PDF",
+        "send": "Envoyer au client",
+        "accept": "Accepter",
+        "reject": "Refuser",
+        "complete": "Marquer comme terminée",
+        "update": "Mettre à jour",
+        "create": "Créer"
+      }
+    },
+    "cgvTemplates": {
+      "standard": "CGV Standard",
+      "audit": "CGV Mission d'Audit",
+      "formation": "CGV Formation"
+    },
+    "confirmDelete": {
+      "title": "Confirmer la suppression",
+      "message": "Voulez-vous vraiment supprimer la lettre {number} ?"
+    },
+    "sendDialog": {
+      "title": "Envoyer au client",
+      "description": "Cette action marquera la lettre comme envoyée. Vous pouvez optionnellement envoyer un email au client.",
+      "recipientEmail": "Email du destinataire",
+      "recipientHint": "Laissez vide pour marquer comme envoyé sans email",
+      "confirm": "Envoyer"
+    },
+    "downloadDialog": {
+      "title": "Télécharger le PDF",
+      "markAsSent": "Marquer comme envoyé après téléchargement",
+      "markAsSentHint": "Le statut passera de brouillon à envoyé",
+      "readyToDownload": "Le PDF est prêt à être téléchargé.",
+      "confirm": "Télécharger"
+    },
+    "messages": {
+      "loadError": "Erreur lors du chargement des lettres de mission",
+      "saved": "Lettre de mission sauvegardée",
+      "saveError": "Erreur lors de la sauvegarde",
+      "deleted": "Lettre de mission supprimée",
+      "deleteError": "Erreur lors de la suppression",
+      "pdfDownloaded": "PDF téléchargé avec succès",
+      "pdfDownloadedAndSent": "PDF téléchargé et lettre marquée comme envoyée",
+      "pdfError": "Erreur lors de la génération du PDF",
+      "sent": "Lettre envoyée au client",
+      "sendError": "Erreur lors de l'envoi",
+      "accepted": "Lettre acceptée",
+      "acceptError": "Erreur lors de l'acceptation",
+      "rejected": "Lettre refusée",
+      "rejectError": "Erreur lors du refus",
+      "completed": "Mission terminée",
+      "completeError": "Erreur lors de la validation"
+    }
+  },
+  "simplifiedTransactions": {
+    "title": "Références Externes",
+    "subtitle": "Documents créés dans des outils externes (Sage, Digiforma, etc.)",
+    "createNew": "Ajouter une référence externe",
+    "addExternal": "Ajouter une référence externe",
+    "noTransactionsFound": "Aucune référence externe trouvée",
+    "noTransactionsMessage": "Ajoutez des références à vos documents externes pour une vision financière unifiée.",
+    "externalBadge": "Externe",
+    "type": {
+      "label": "Type de document",
+      "quote": "Devis externe",
+      "invoice": "Facture externe",
+      "engagement_letter": "Lettre de mission externe",
+      "contract": "Contrat externe"
+    },
+    "status": {
+      "label": "Statut",
+      "draft": "Brouillon",
+      "sent": "Envoyé",
+      "accepted": "Accepté",
+      "rejected": "Refusé",
+      "expired": "Expiré",
+      "cancelled": "Annulé",
+      "pending": "En attente",
+      "paid": "Payé",
+      "partial": "Paiement partiel",
+      "overdue": "En retard",
+      "active": "Actif",
+      "terminated": "Résilié"
+    },
+    "paymentStatus": {
+      "label": "Statut paiement",
+      "pending": "En attente",
+      "partial": "Partiel",
+      "paid": "Payé"
+    },
+    "contractType": {
+      "label": "Type de contrat",
+      "maintenance": "Maintenance",
+      "support": "Support",
+      "subscription": "Abonnement",
+      "service": "Service",
+      "other": "Autre"
+    },
+    "form": {
+      "createTitle": "Nouvelle référence externe",
+      "editTitle": "Modifier la référence externe",
+      "typeSelection": "Type de document",
+      "typeSelectionHint": "Sélectionnez le type de document externe",
+      "basicInfo": "Informations de base",
+      "institution": "Institution",
+      "institutionRequired": "L'institution est requise",
+      "referenceNumber": "Référence externe",
+      "referenceNumberPlaceholder": "Ex: Devis Sage #123",
+      "title": "Titre",
+      "titleRequired": "Le titre est requis",
+      "titlePlaceholder": "Nom du document",
+      "description": "Description",
+      "descriptionPlaceholder": "Description ou notes sur ce document...",
+      "date": "Date du document",
+      "dateRequired": "La date est requise",
+      "financial": "Montants",
+      "amountHt": "Montant HT",
+      "amountHtRequired": "Le montant HT est requis",
+      "vatRate": "Taux TVA (%)",
+      "amountTtc": "Montant TTC",
+      "amountTtcHint": "Calculé automatiquement",
+      "statusRequired": "Le statut est requis",
+      "invoiceFields": "Informations facture",
+      "dueDate": "Date d'échéance",
+      "paymentDate": "Date de paiement",
+      "paymentAmount": "Montant payé",
+      "contractFields": "Informations contrat",
+      "contractStartDate": "Date de début",
+      "contractEndDate": "Date de fin",
+      "isRecurring": "Contrat récurrent",
+      "notes": "Notes",
+      "notesPlaceholder": "Notes ou commentaires internes..."
+    },
+    "table": {
+      "referenceNumber": "Référence",
+      "title": "Titre",
+      "type": "Type",
+      "date": "Date",
+      "amount": "Montant TTC",
+      "status": "Statut",
+      "actions": "Actions"
+    },
+    "messages": {
+      "loadError": "Erreur lors du chargement des références externes",
+      "saved": "Référence externe sauvegardée",
+      "saveError": "Erreur lors de la sauvegarde",
+      "deleted": "Référence externe supprimée",
+      "deleteError": "Erreur lors de la suppression",
+      "created": "Référence externe créée avec succès",
+      "updated": "Référence externe mise à jour avec succès"
+    },
+    "confirmDelete": {
+      "title": "Confirmer la suppression",
+      "message": "Voulez-vous vraiment supprimer cette référence externe ?"
+    },
+    "timeline": {
+      "simplifiedQuote": "Devis externe",
+      "simplifiedInvoice": "Facture externe",
+      "simplifiedEngagementLetter": "Lettre de mission externe",
+      "simplifiedContract": "Contrat externe"
+    }
+  },
+  "cgvTemplates": {
+    "title": "Modèles de CGV",
+    "create": "Nouveau modèle",
+    "edit": "Modifier le modèle",
+    "noTemplates": "Aucun modèle de CGV",
+    "noTemplatesDescription": "Créez des modèles de conditions générales pour vos lettres de mission.",
+    "createFirst": "Créer un modèle",
+    "default": "Par défaut",
+    "setDefault": "Définir par défaut",
+    "categories": {
+      "general": "Général",
+      "audit": "Audit",
+      "conseil": "Conseil",
+      "formation": "Formation"
+    },
+    "form": {
+      "name": "Nom du modèle",
+      "nameRequired": "Le nom est requis",
+      "description": "Description",
+      "category": "Catégorie",
+      "isDefault": "Modèle par défaut",
+      "content": "Contenu des conditions générales",
+      "contentPlaceholder": "Saisissez les conditions générales..."
+    },
+    "confirmDelete": {
+      "title": "Supprimer le modèle",
+      "message": "Voulez-vous vraiment supprimer le modèle \"{name}\" ?"
+    },
+    "messages": {
+      "loadError": "Erreur lors du chargement des modèles",
+      "created": "Modèle créé avec succès",
+      "updated": "Modèle mis à jour avec succès",
+      "deleted": "Modèle supprimé",
+      "duplicated": "Modèle dupliqué",
+      "setDefault": "Modèle défini par défaut",
+      "saveError": "Erreur lors de l'enregistrement",
+      "deleteError": "Erreur lors de la suppression",
+      "duplicateError": "Erreur lors de la duplication",
+      "setDefaultError": "Erreur lors de la définition par défaut"
+    }
+  },
+  "billingAnalytics": {
+    "engagementLetters": {
+      "title": "Lettres de Mission",
+      "total": "Total",
+      "accepted": "Acceptées",
+      "pending": "En attente",
+      "acceptanceRate": "Taux d'acceptation",
+      "totalAcceptedValue": "Valeur totale acceptée",
+      "byStatus": "Par statut",
+      "byMissionType": "Par type de mission",
+      "noData": "Aucune donnée disponible"
+    }
   },
   "catalog": {
     "title": "Catalogue d'Articles",
@@ -1802,6 +2253,7 @@
     "form": {
       "name": "Nom",
       "description": "Description",
+      "descriptionPlaceholder": "Description détaillée du produit ou service...",
       "category": "Catégorie",
       "sku": "Référence (SKU)",
       "unit": "Unité de mesure",
@@ -2164,7 +2616,15 @@
     "deleteConfirm": "Êtes-vous sûr de vouloir supprimer cette opportunité ?",
     "unit": "opportunité",
     "empty": "Aucune opportunité trouvée",
+    "dropHere": "Déposer ici",
     "overdue": "En retard",
+    "closedStages": "Opportunités clôturées",
+    "last30Days": "30 derniers jours",
+    "showAllArchived": "Afficher toutes les opportunités archivées",
+    "actions": {
+      "won": "Gagné",
+      "lost": "Perdu"
+    },
     "statsByCollaborator": {
       "title": "Statistiques par collaborateur",
       "collaborator": "Collaborateur",
@@ -2172,7 +2632,8 @@
       "totalValue": "Valeur totale",
       "weightedValue": "Valeur pondérée",
       "overdue": "En Retard",
-      "button": "Statistiques par collaborateur"
+      "button": "Statistiques par collaborateur",
+      "noData": "Aucune donnée disponible"
     },
     "export": "Exporter les opportunités",
     "forecast": {
@@ -2310,7 +2771,8 @@
       "tasks": "Tâches",
       "quotes": "Devis",
       "invoices": "Factures",
-      "opportunities": "Opportunités"
+      "opportunities": "Opportunités",
+      "engagement_letters": "Lettres de Mission"
     },
     "descriptions": {
       "institutions": "Exporter les établissements médicaux avec leurs profils et contacts",
@@ -2318,7 +2780,8 @@
       "tasks": "Exporter les tâches avec les assignations et statuts",
       "quotes": "Exporter les devis avec les lignes et détails financiers",
       "invoices": "Exporter les factures avec les paiements et détails financiers",
-      "opportunities": "Exporter les opportunités commerciales avec les données du pipeline"
+      "opportunities": "Exporter les opportunités commerciales avec les données du pipeline",
+      "engagement_letters": "Exporter les lettres de mission avec les détails de mission et données financières"
     },
     "format": {
       "csv": "CSV (Valeurs séparées par virgule)",
@@ -2335,6 +2798,14 @@
     "taskStatuses": {
       "pending": "En attente",
       "in_progress": "En cours",
+      "completed": "Terminée",
+      "cancelled": "Annulée"
+    },
+    "engagementLetterStatuses": {
+      "draft": "Brouillon",
+      "sent": "Envoyée",
+      "accepted": "Acceptée",
+      "rejected": "Refusée",
       "completed": "Terminée",
       "cancelled": "Annulée"
     },
@@ -2380,6 +2851,7 @@
       "institutionType": "Type d'établissement",
       "allTypes": "Tous les types",
       "taskStatus": "Statut de la tâche",
+      "engagementLetterStatus": "Statut de la lettre de mission",
       "allStatuses": "Tous les statuts",
       "includeHeaders": "Inclure les en-têtes de colonnes",
       "useQueue": "Utiliser le traitement en arrière-plan pour les gros exports",
@@ -2487,13 +2959,26 @@
       "notes": "Notes",
       "reminders": "Rappels",
       "tasks": "Tâches",
+      "quotes": "Devis",
+      "invoices": "Factures",
+      "engagementLetters": "Lettres de Mission",
+      "externalReferences": "Réf. externes",
       "upcoming": "À venir"
     },
     "callTypes": {
       "incoming": "Entrant",
       "outgoing": "Sortant",
       "missed": "Manqué"
-    }
+    },
+    "recentQuotes": "Devis récents",
+    "noRecentQuotes": "Aucun devis récent",
+    "recentInvoices": "Factures récentes",
+    "noRecentInvoices": "Aucune facture récente",
+    "engagementLetters": "Lettres de Mission",
+    "noEngagementLetters": "Aucune lettre de mission",
+    "validUntil": "Valide jusqu'au",
+    "remaining": "Reste",
+    "dueDate": "Échéance"
   },
   "timeline": {
     "searchPlaceholder": "Rechercher dans la timeline...",
@@ -2514,15 +2999,29 @@
       "calls": "Appels",
       "notes": "Notes",
       "reminders": "Rappels",
-      "tasks": "Tâches"
+      "tasks": "Tâches",
+      "quotes": "Devis",
+      "invoices": "Factures",
+      "engagementLetters": "Lettres de Mission",
+      "external": "Références externes"
     },
     "labels": {
       "note": "Note",
       "meeting": "Réunion",
       "call": "Appel",
       "reminder": "Rappel",
-      "task": "Tâche"
+      "task": "Tâche",
+      "quote": "Devis",
+      "invoice": "Facture",
+      "engagementLetter": "Lettre de Mission",
+      "engagement_letter": "Lettre de Mission",
+      "simplified_quote": "Devis",
+      "simplified_invoice": "Facture",
+      "simplified_engagement_letter": "Lettre de mission",
+      "simplified_contract": "Contrat"
     },
+    "external": "Externe",
+    "ongoing": "En cours",
     "callTypes": {
       "incoming": "Entrant",
       "outgoing": "Sortant",
@@ -2535,6 +3034,10 @@
     "completed": "Complété",
     "private": "Privé",
     "dueDate": "Échéance",
+    "validUntil": "Valide jusqu'au",
+    "paidOn": "Payé le",
+    "acceptedOn": "Accepté le",
+    "remaining": "Reste",
     "relativeTime": {
       "now": "À l'instant",
       "minutes": "Il y a {n} min",
@@ -2548,6 +3051,7 @@
       "cancelled": "Annulé"
     },
     "taskStatus": {
+      "todo": "À faire",
       "pending": "En attente",
       "in_progress": "En cours",
       "blocked": "Bloqué",
@@ -2569,6 +3073,37 @@
     "removeMember": "Retirer le membre",
     "role": "Rôle",
     "permissions": "Permissions"
+  },
+  "users": {
+    "title": "Gestion des utilisateurs",
+    "subtitle": "Créez et gérez les comptes utilisateurs",
+    "createUser": "Créer un utilisateur",
+    "searchPlaceholder": "Rechercher un utilisateur...",
+    "filterByRole": "Filtrer par rôle",
+    "filterByStatus": "Filtrer par statut",
+    "clearFilters": "Effacer les filtres",
+    "role": "Rôle",
+    "team": "Équipe",
+    "lastLogin": "Dernière connexion",
+    "active": "Actif",
+    "inactive": "Inactif",
+    "neverLoggedIn": "Jamais connecté",
+    "sendInvitation": "Envoyer une invitation",
+    "resetPassword": "Réinitialiser le mot de passe",
+    "noUsers": "Aucun utilisateur trouvé",
+    "errorLoading": "Erreur lors du chargement des utilisateurs",
+    "userUpdated": "Utilisateur mis à jour avec succès",
+    "errorUpdating": "Erreur lors de la mise à jour de l'utilisateur",
+    "passwordResetSuccess": "Mot de passe réinitialisé avec succès",
+    "errorResettingPassword": "Erreur lors de la réinitialisation du mot de passe",
+    "activate": "Activer",
+    "deactivate": "Désactiver",
+    "userActivated": "Utilisateur activé avec succès",
+    "userDeactivated": "Utilisateur désactivé avec succès",
+    "confirmDelete": "Supprimer l'utilisateur",
+    "deleteConfirmMessage": "Êtes-vous sûr de vouloir supprimer {name} ? Cette action est irréversible.",
+    "userDeleted": "Utilisateur supprimé avec succès",
+    "errorDeleting": "Erreur lors de la suppression de l'utilisateur"
   },
   "teams": {
     "title": "Équipes",
@@ -2633,8 +3168,17 @@
       "allActivities": "Toutes les activités",
       "tasks": "Tâches",
       "institutions": "Institutions",
-      "interactions": "Notes & Réunions"
-    }
+      "interactions": "Notes & Réunions",
+      "engagementLetters": "Lettres de Mission"
+    },
+    "userCreatedSuccess": "Utilisateur créé avec succès",
+    "errorCreatingUser": "Erreur lors de la création de l'utilisateur",
+    "passwordRequired": "Le mot de passe est requis pour créer un utilisateur",
+    "invitationPrompt": "L'utilisateur {name} a été créé avec l'email {email}. Souhaitez-vous lui envoyer une invitation par email pour qu'il puisse définir son mot de passe ?",
+    "invitationInfo": "L'invitation permettra à l'utilisateur de créer son propre mot de passe sécurisé. Le lien sera valide pendant 24 heures.",
+    "role": "Rôle",
+    "team": "Équipe",
+    "lastLogin": "Dernière connexion"
   },
   "leadScore": {
     "title": "Lead Score",
@@ -2723,6 +3267,23 @@
       "today": "Aujourd'hui",
       "tomorrow": "Demain",
       "inDays": "Dans {days} jours"
+    },
+    "actions": {
+      "followUpOverdueInvoices": "Relancer {count} facture(s) en retard",
+      "followUpPendingQuote": "Relancer le devis en attente",
+      "reengageOpportunity": "Relancer l'opportunité \"{name}\"",
+      "scheduleCheckIn": "Planifier un appel ou une réunion de suivi",
+      "convertQuoteToInvoice": "Convertir le devis accepté en facture",
+      "exploreUpsell": "Explorer des opportunités de vente additionnelle"
+    },
+    "reasons": {
+      "overduePayments": "{amount} € de paiements en retard",
+      "quoteNoResponse": "Devis envoyé il y a {days} jours sans réponse",
+      "opportunityNoActivity": "Aucune activité depuis {days} jours",
+      "noContactDays": "Aucun contact depuis {days} jours - risque de désengagement",
+      "noRecordedInteractions": "Aucune interaction enregistrée - établir le contact",
+      "quoteAcceptedNotInvoiced": "Devis accepté mais pas encore facturé",
+      "recentSuccessfulDeal": "Vente récente réussie - satisfaction client élevée"
     }
   },
   "success": {
@@ -2751,5 +3312,42 @@
     "deleteFailed": "Échec de la suppression",
     "importFailed": "Échec de l'importation",
     "exportFailed": "Échec de l'exportation"
+  },
+  "charts": {
+    "noData": "Aucune donnée disponible",
+    "loading": "Chargement du graphique...",
+    "revenue": {
+      "title": "Répartition des revenus",
+      "won": "Gagné",
+      "pipeline": "Pipeline",
+      "lost": "Perdu",
+      "total": "Total"
+    },
+    "winLoss": {
+      "winReasons": "Raisons de victoire",
+      "lossReasons": "Raisons de perte",
+      "noReasons": "Aucune raison enregistrée"
+    },
+    "competitors": {
+      "title": "Analyse concurrentielle",
+      "lostDeals": "Deals perdus",
+      "lostValue": "Valeur perdue"
+    },
+    "conversion": {
+      "title": "Taux de conversion par étape",
+      "rate": "Taux"
+    },
+    "periods": {
+      "daily": "Journalier",
+      "weekly": "Hebdomadaire",
+      "monthly": "Mensuel",
+      "quarterly": "Trimestriel",
+      "yearly": "Annuel"
+    },
+    "tooltips": {
+      "value": "Valeur",
+      "percentage": "Pourcentage",
+      "count": "Nombre"
+    }
   }
 }

@@ -6,39 +6,80 @@
   >
     <v-card>
       <v-card-title>
-        Reset User Password
+        {{ t("users.resetPassword") }}
       </v-card-title>
 
       <v-card-text>
         <div class="password-reset-form">
           <p class="user-info">
-            <strong>User:</strong> {{ userName }}
+            <strong>{{ t("common.user") }}:</strong> {{ userName }}
           </p>
 
           <v-text-field
             v-model="newPassword"
             :error-messages="errorMessage ? [errorMessage] : []"
-            label="New Password *"
-            placeholder="Enter new password"
+            :label="t('profile.form.passwordLabel') + ' *'"
+            :placeholder="t('profile.form.newPasswordPlaceholder')"
             type="password"
             density="comfortable"
             @input="errorMessage = ''"
           />
 
           <small class="form-help">
-            Password must be at least 8 characters and contain uppercase, lowercase, number, and special character (!@#$%^&*(),.?":{}|&lt;&gt;)
+            {{ t("profile.form.passwordHelp") }}
           </small>
+
+          <!-- Reactive password validation checklist -->
+          <div v-if="newPassword" class="password-requirements mt-2">
+            <div :class="hasMinLength ? 'text-success' : 'text-error'">
+              <v-icon size="small">
+                {{ hasMinLength ? "mdi-check-circle" : "mdi-circle-outline" }}
+              </v-icon>
+              {{ t("auth.forgotPassword.minLength") }}
+            </div>
+            <div :class="hasUppercase ? 'text-success' : 'text-error'">
+              <v-icon size="small">
+                {{ hasUppercase ? "mdi-check-circle" : "mdi-circle-outline" }}
+              </v-icon>
+              {{ t("auth.forgotPassword.hasUppercase") }}
+            </div>
+            <div :class="hasLowercase ? 'text-success' : 'text-error'">
+              <v-icon size="small">
+                {{ hasLowercase ? "mdi-check-circle" : "mdi-circle-outline" }}
+              </v-icon>
+              {{ t("auth.forgotPassword.hasLowercase") }}
+            </div>
+            <div :class="hasNumber ? 'text-success' : 'text-error'">
+              <v-icon size="small">
+                {{ hasNumber ? "mdi-check-circle" : "mdi-circle-outline" }}
+              </v-icon>
+              {{ t("auth.forgotPassword.hasNumber") }}
+            </div>
+            <div :class="hasSpecialChar ? 'text-success' : 'text-error'">
+              <v-icon size="small">
+                {{ hasSpecialChar ? "mdi-check-circle" : "mdi-circle-outline" }}
+              </v-icon>
+              {{ t("auth.forgotPassword.hasSpecialChar") }}
+            </div>
+          </div>
 
           <v-text-field
             v-model="confirmPassword"
             :error-messages="confirmErrorMessage ? [confirmErrorMessage] : []"
-            label="Confirm Password *"
-            placeholder="Re-enter new password"
+            :label="t('profile.form.confirmPasswordLabel') + ' *'"
+            :placeholder="t('profile.form.confirmPasswordPlaceholder')"
             type="password"
             density="comfortable"
             class="mt-4"
             @input="confirmErrorMessage = ''"
           />
+
+          <div v-if="confirmPassword" :class="passwordsMatch ? 'text-success' : 'text-error'">
+            <v-icon size="small">
+              {{ passwordsMatch ? "mdi-check-circle" : "mdi-circle-outline" }}
+            </v-icon>
+            {{ t("auth.forgotPassword.passwordsMatch") }}
+          </div>
         </div>
       </v-card-text>
 
@@ -50,14 +91,15 @@
           @click="handleCancel"
           :disabled="loading"
         >
-          Cancel
+          {{ t("common.cancel") }}
         </v-btn>
         <v-btn
           color="primary"
           :loading="loading"
+          :disabled="!isPasswordValid || !passwordsMatch"
           @click="handleSubmit"
         >
-          Reset Password
+          {{ t("users.resetPassword") }}
         </v-btn>
       </v-card-actions>
     </v-card>
@@ -65,19 +107,21 @@
 </template>
 
 <script setup lang="ts">
+import type { User } from "@medical-crm/shared"
 import { computed, ref, watch } from "vue"
+import { useI18n } from "vue-i18n"
+
+const { t } = useI18n()
 
 interface Props {
   modelValue: boolean
-  userId: string
-  userName: string
+  user: User | null
   loading?: boolean
 }
 
 interface Emits {
   (e: "update:modelValue", visible: boolean): void
-  (e: "submit", userId: string, newPassword: string): void
-  (e: "cancel"): void
+  (e: "reset", newPassword: string): void
 }
 
 const props = defineProps<Props>()
@@ -88,10 +132,31 @@ const visible = computed({
   set: (value) => emit("update:modelValue", value)
 })
 
+const userName = computed(() => {
+  if (!props.user) return ""
+  return `${props.user.firstName} ${props.user.lastName}`
+})
+
 const newPassword = ref("")
 const confirmPassword = ref("")
 const errorMessage = ref("")
 const confirmErrorMessage = ref("")
+
+// Reactive password validation
+const hasMinLength = computed(() => newPassword.value.length >= 8)
+const hasUppercase = computed(() => /[A-Z]/.test(newPassword.value))
+const hasLowercase = computed(() => /[a-z]/.test(newPassword.value))
+const hasNumber = computed(() => /\d/.test(newPassword.value))
+const hasSpecialChar = computed(() => /[!@#$%^&*(),.?":{}|<>]/.test(newPassword.value))
+
+const isPasswordValid = computed(() => {
+  return hasMinLength.value && hasUppercase.value && hasLowercase.value && hasNumber.value && hasSpecialChar.value
+})
+
+const passwordsMatch = computed(() => {
+  if (!confirmPassword.value) return false
+  return newPassword.value === confirmPassword.value
+})
 
 watch(
   () => props.modelValue,
@@ -109,41 +174,34 @@ const resetForm = () => {
   confirmErrorMessage.value = ""
 }
 
-const validatePassword = (password: string): boolean => {
-  // Password must be at least 8 characters and contain uppercase, lowercase, number, and special character
-  const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*(),.?":{}|<>])[A-Za-z\d!@#$%^&*(),.?":{}|<>]{8,}$/
-  return passwordRegex.test(password)
-}
-
 const handleSubmit = () => {
   errorMessage.value = ""
   confirmErrorMessage.value = ""
 
   if (!newPassword.value) {
-    errorMessage.value = "Password is required"
+    errorMessage.value = t("profile.validation.passwordRequired")
     return
   }
 
-  if (!validatePassword(newPassword.value)) {
-    errorMessage.value = "Password must be at least 8 characters and contain uppercase, lowercase, number, and special character"
+  if (!isPasswordValid.value) {
+    errorMessage.value = t("profile.form.passwordHelp")
     return
   }
 
   if (!confirmPassword.value) {
-    confirmErrorMessage.value = "Please confirm the password"
+    confirmErrorMessage.value = t("profile.validation.confirmPasswordRequired")
     return
   }
 
-  if (newPassword.value !== confirmPassword.value) {
-    confirmErrorMessage.value = "Passwords do not match"
+  if (!passwordsMatch.value) {
+    confirmErrorMessage.value = t("auth.forgotPassword.passwordMismatch")
     return
   }
 
-  emit("submit", props.userId, newPassword.value)
+  emit("reset", newPassword.value)
 }
 
 const handleCancel = () => {
-  emit("cancel")
   visible.value = false
 }
 </script>
@@ -152,7 +210,7 @@ const handleCancel = () => {
 .password-reset-form {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 0.5rem;
   padding: 1rem 0;
 }
 
@@ -167,7 +225,13 @@ const handleCancel = () => {
 .form-help {
   color: #6b7280;
   font-size: 0.75rem;
-  margin-top: -0.5rem;
+}
+
+.password-requirements {
+  font-size: 0.875rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
 }
 
 .dialog-footer {

@@ -18,7 +18,12 @@
               <v-select v-model="form.type" :items="institutionTypeOptions" item-title="label" item-value="value" label="Institution Type *" :error-messages="errors.type ? [errors.type] : []" />
             </div>
             <div class="field col-12 md:col-6">
-              <v-switch v-model="form.isActive" :label="form.isActive ? 'Active' : 'Inactive'" inset />
+              <v-switch
+                v-model="form.isActive"
+                :label="form.isActive ? 'Actif' : 'Inactif'"
+                :color="form.isActive ? 'success' : 'grey'"
+                inset
+              />
             </div>
             <div class="field col-12">
               <v-combobox v-model="form.tags" label="Tags" multiple chips clearable hint="Press Enter to add tags. Tags help categorize and search institutions." persistent-hint />
@@ -43,6 +48,48 @@
                 persistent-hint
                 readonly
                 disabled
+              />
+            </div>
+            <div class="field col-12 md:col-6">
+              <v-text-field
+                v-model="form.finess"
+                label="N° FINESS"
+                hint="Numéro FINESS de l'établissement de santé (9 chiffres)"
+                persistent-hint
+                clearable
+                maxlength="9"
+                counter
+                :rules="[v => !v || /^\d{9}$/.test(v) || 'Le FINESS doit contenir exactement 9 chiffres']"
+              />
+            </div>
+            <div class="field col-12 md:col-6">
+              <v-text-field
+                v-model="form.groupName"
+                label="Groupe"
+                hint="Nom du groupe d'appartenance (ex: AP-HP, Ramsay)"
+                persistent-hint
+                clearable
+              />
+            </div>
+            <div class="field col-12 md:col-6">
+              <v-select
+                v-model="form.commercialStatus"
+                :items="commercialStatusOptions"
+                item-title="label"
+                item-value="value"
+                label="Statut commercial"
+                hint="Prospect ou Client"
+                persistent-hint
+              />
+            </div>
+            <div class="field col-12 md:col-6">
+              <v-text-field
+                v-model="form.mainPhone"
+                label="Téléphone standard"
+                hint="Numéro de téléphone principal de l'établissement"
+                persistent-hint
+                clearable
+                type="tel"
               />
             </div>
           </div>
@@ -71,28 +118,40 @@
         <v-window-item value="medical">
           <div class="formgrid grid">
             <div class="field col-12 md:col-6">
-              <v-text-field v-model.number="form.medicalProfile.bedCapacity" type="number" label="Bed Capacity" />
+              <v-text-field v-model.number="form.medicalProfile.bedCapacity" type="number" label="Capacité (lits)" />
             </div>
             <div class="field col-12 md:col-6">
-              <v-text-field v-model.number="form.medicalProfile.surgicalRooms" type="number" label="Surgical Rooms" />
+              <v-text-field v-model.number="form.medicalProfile.surgicalRooms" type="number" label="Salles d'opération" />
             </div>
             <div class="field col-12 md:col-6">
-              <v-select v-model="form.medicalProfile.specialties" :items="specialtyOptions" item-title="label" item-value="value" label="Specialties" multiple chips clearable />
+              <v-text-field v-model.number="form.medicalProfile.staffCount" type="number" label="Effectif" hint="Nombre d'agents/personnel" persistent-hint />
             </div>
             <div class="field col-12 md:col-6">
-              <v-combobox v-model="form.medicalProfile.departments" label="Departments" multiple chips clearable />
+              <v-text-field v-model.number="form.medicalProfile.endoscopyRooms" type="number" label="Salles d'endoscopie" />
             </div>
             <div class="field col-12 md:col-6">
-              <v-combobox v-model="form.medicalProfile.equipmentTypes" label="Equipment Types" multiple chips clearable />
+              <v-text-field v-model.number="form.medicalProfile.surgicalInterventions" type="number" label="Interventions chir./an" hint="Nombre d'interventions chirurgicales par an" persistent-hint />
+            </div>
+            <div class="field col-12 md:col-6">
+              <v-text-field v-model.number="form.medicalProfile.endoscopyInterventions" type="number" label="Interventions endo./an" hint="Nombre d'interventions endoscopie par an" persistent-hint />
+            </div>
+            <div class="field col-12 md:col-6">
+              <v-select v-model="form.medicalProfile.specialties" :items="specialtyOptions" item-title="label" item-value="value" label="Spécialités" multiple chips clearable />
+            </div>
+            <div class="field col-12 md:col-6">
+              <v-combobox v-model="form.medicalProfile.departments" label="Départements" multiple chips clearable />
+            </div>
+            <div class="field col-12 md:col-6">
+              <v-combobox v-model="form.medicalProfile.equipmentTypes" label="Équipements" multiple chips clearable />
             </div>
             <div class="field col-12 md:col-6">
               <v-combobox v-model="form.medicalProfile.certifications" label="Certifications" multiple chips clearable />
             </div>
             <div class="field col-12 md:col-6">
-              <v-select v-model="form.medicalProfile.complianceStatus" :items="complianceStatusOptions" item-title="label" item-value="value" label="Compliance Status" />
+              <v-select v-model="form.medicalProfile.complianceStatus" :items="complianceStatusOptions" item-title="label" item-value="value" label="Statut de conformité" />
             </div>
             <div class="field col-12">
-              <v-textarea v-model="form.medicalProfile.complianceNotes" label="Compliance Notes" rows="3" auto-grow />
+              <v-textarea v-model="form.medicalProfile.complianceNotes" label="Notes de conformité" rows="3" auto-grow />
             </div>
           </div>
         </v-window-item>
@@ -100,16 +159,18 @@
         <v-window-item value="assignment">
           <div class="formgrid grid">
             <div class="field col-12">
-              <v-select v-model="form.assignedUserId" :items="userOptions" item-title="label" item-value="value" label="Assigned User" clearable hint="Assign this institution to a team member for management" persistent-hint />
+              <v-select v-model="form.assignedUserId" :items="userOptions" item-title="label" item-value="value" label="Utilisateur assigné" clearable hint="Assigner cette institution à un membre de l'équipe" persistent-hint />
             </div>
           </div>
         </v-window-item>
       </v-window>
 
-      <div class="flex justify-content-end gap-2 mt-4">
-        <v-btn variant="outlined" color="secondary" prepend-icon="mdi-close" @click="$emit('cancel')" type="button">Cancel</v-btn>
+      <div class="form-actions">
+        <v-btn variant="outlined" color="secondary" prepend-icon="mdi-close" @click="$emit('cancel')" type="button">
+          Annuler
+        </v-btn>
         <v-btn :loading="saving" color="primary" :prepend-icon="isEditing ? 'mdi-check' : 'mdi-plus'" type="submit">
-          {{ isEditing ? 'Update Institution' : 'Create Institution' }}
+          {{ isEditing ? 'Mettre à jour' : 'Créer' }}
         </v-btn>
       </div>
     </form>
@@ -123,7 +184,9 @@ import type {
   MedicalInstitution,
   MedicalInstitutionCreationAttributes,
 } from "@medical-crm/shared"
-import { computed, reactive, ref, watch } from "vue"
+import { CommercialStatus } from "@medical-crm/shared"
+import { computed, onMounted, reactive, ref, watch } from "vue"
+import { usersApi } from "@/services/api"
 
 interface Props {
   institution?: MedicalInstitution
@@ -149,6 +212,11 @@ const form = reactive({
   tags: [] as string[],
   accountingNumber: undefined as string | undefined,
   digiformaId: undefined as string | undefined,
+  // Commercial fields
+  finess: undefined as string | undefined,
+  groupName: undefined as string | undefined,
+  commercialStatus: CommercialStatus.PROSPECT as CommercialStatus,
+  mainPhone: undefined as string | undefined,
   address: {
     street: "",
     city: "",
@@ -165,6 +233,11 @@ const form = reactive({
     certifications: [] as string[],
     complianceStatus: "pending_review" as ComplianceStatus,
     complianceNotes: "",
+    // Activity metrics
+    staffCount: undefined as number | undefined,
+    endoscopyRooms: undefined as number | undefined,
+    surgicalInterventions: undefined as number | undefined,
+    endoscopyInterventions: undefined as number | undefined,
   },
   assignedUserId: undefined as string | undefined,
 })
@@ -195,6 +268,11 @@ const complianceStatusOptions = [
   { label: "Expired", value: "expired" },
 ]
 
+const commercialStatusOptions = [
+  { label: "Prospect", value: CommercialStatus.PROSPECT },
+  { label: "Client", value: CommercialStatus.CLIENT },
+]
+
 const specialtyOptions = [
   { label: "Cardiology", value: "cardiology" },
   { label: "Neurology", value: "neurology" },
@@ -213,10 +291,28 @@ const specialtyOptions = [
   { label: "Otolaryngology", value: "otolaryngology" },
 ]
 
-const userOptions = ref([
-  { label: "John Doe", value: "user1" },
-  { label: "Jane Smith", value: "user2" },
-])
+const userOptions = ref<{ label: string; value: string }[]>([])
+
+// Load users on mount
+const loadUsers = async () => {
+  try {
+    const response = await usersApi.getAll({ isActive: true })
+    // API returns { success: true, data: [...users] }
+    const users = (response as any).data || (response as any).users || response
+    if (Array.isArray(users)) {
+      userOptions.value = users.map((user: any) => ({
+        label: `${user.firstName} ${user.lastName}`,
+        value: user.id,
+      }))
+    }
+  } catch (error) {
+    console.error("Failed to load users:", error)
+  }
+}
+
+onMounted(() => {
+  loadUsers()
+})
 
 // Initialize form with institution data if editing
 watch(
@@ -229,6 +325,11 @@ watch(
       form.tags = [...institution.tags]
       form.accountingNumber = institution.accountingNumber
       form.digiformaId = institution.digiformaId
+      // Commercial fields
+      form.finess = institution.finess
+      form.groupName = institution.groupName
+      form.commercialStatus = institution.commercialStatus || CommercialStatus.PROSPECT
+      form.mainPhone = institution.mainPhone
       form.address = { ...institution.address }
       form.medicalProfile = institution.medicalProfile ? {
         bedCapacity: institution.medicalProfile.bedCapacity,
@@ -239,6 +340,11 @@ watch(
         certifications: [...(institution.medicalProfile.certifications || [])],
         complianceStatus: institution.medicalProfile.complianceStatus,
         complianceNotes: institution.medicalProfile.complianceNotes || "",
+        // Activity metrics
+        staffCount: institution.medicalProfile.staffCount,
+        endoscopyRooms: institution.medicalProfile.endoscopyRooms,
+        surgicalInterventions: institution.medicalProfile.surgicalInterventions,
+        endoscopyInterventions: institution.medicalProfile.endoscopyInterventions,
       } : {
         bedCapacity: undefined,
         surgicalRooms: undefined,
@@ -248,6 +354,10 @@ watch(
         certifications: [],
         complianceStatus: "pending_review" as ComplianceStatus,
         complianceNotes: "",
+        staffCount: undefined,
+        endoscopyRooms: undefined,
+        surgicalInterventions: undefined,
+        endoscopyInterventions: undefined,
       }
       form.assignedUserId = institution.assignedUserId
     } else {
@@ -262,6 +372,11 @@ function resetForm() {
   form.type = "" as InstitutionType
   form.isActive = true
   form.tags = []
+  // Commercial fields
+  form.finess = undefined
+  form.groupName = undefined
+  form.commercialStatus = CommercialStatus.PROSPECT
+  form.mainPhone = undefined
   form.address = {
     street: "",
     city: "",
@@ -278,6 +393,10 @@ function resetForm() {
     certifications: [],
     complianceStatus: "pending_review" as ComplianceStatus,
     complianceNotes: "",
+    staffCount: undefined,
+    endoscopyRooms: undefined,
+    surgicalInterventions: undefined,
+    endoscopyInterventions: undefined,
   }
   form.assignedUserId = undefined
   clearErrors()
@@ -356,6 +475,11 @@ const handleSubmit = async () => {
       isActive: form.isActive,
       accountingNumber: form.accountingNumber?.trim() || undefined,
       digiformaId: form.digiformaId?.trim() || undefined,
+      // Commercial fields
+      finess: form.finess?.trim() || undefined,
+      groupName: form.groupName?.trim() || undefined,
+      commercialStatus: form.commercialStatus,
+      mainPhone: form.mainPhone?.trim() || undefined,
       assignedUserId: form.assignedUserId,
       medicalProfile: {
         bedCapacity: form.medicalProfile.bedCapacity,
@@ -366,6 +490,11 @@ const handleSubmit = async () => {
         certifications: form.medicalProfile.certifications,
         complianceStatus: form.medicalProfile.complianceStatus,
         complianceNotes: form.medicalProfile.complianceNotes?.trim(),
+        // Activity metrics
+        staffCount: form.medicalProfile.staffCount,
+        endoscopyRooms: form.medicalProfile.endoscopyRooms,
+        surgicalInterventions: form.medicalProfile.surgicalInterventions,
+        endoscopyInterventions: form.medicalProfile.endoscopyInterventions,
       },
     }
 
@@ -376,11 +505,19 @@ const handleSubmit = async () => {
       ...institutionData,
       tags: institutionData.tags || [],
       isActive: institutionData.isActive ?? true,
+      commercialStatus: institutionData.commercialStatus ?? CommercialStatus.PROSPECT,
       medicalProfile: {
         id: props.institution?.medicalProfile?.id || `profile-${Date.now()}`,
         ...institutionData.medicalProfile,
       },
       contactPersons: props.institution?.contactPersons || [],
+      // Multi-source tracking fields (defaults for new institutions)
+      dataSource: props.institution?.dataSource || 'crm',
+      isLocked: props.institution?.isLocked ?? false,
+      lockedAt: props.institution?.lockedAt,
+      lockedReason: props.institution?.lockedReason,
+      externalData: props.institution?.externalData || {},
+      lastSyncAt: props.institution?.lastSyncAt || {},
       createdAt: props.institution?.createdAt || new Date(),
       updatedAt: new Date(),
     }
@@ -399,7 +536,36 @@ const handleSubmit = async () => {
 </script>
 
 <style scoped>
-.medical-institution-form { padding: 1rem 0; }
-.field { margin-bottom: 1rem; }
-.p-error { display: block; margin-top: 0.25rem; }
+.medical-institution-form {
+  padding: 1rem 0;
+}
+
+.field {
+  margin-bottom: 1rem;
+}
+
+.p-error {
+  display: block;
+  margin-top: 0.25rem;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(var(--v-border-color), var(--v-border-opacity));
+}
+
+@media (max-width: 600px) {
+  .form-actions {
+    flex-direction: column-reverse;
+    gap: 0.5rem;
+  }
+
+  .form-actions .v-btn {
+    width: 100%;
+  }
+}
 </style>

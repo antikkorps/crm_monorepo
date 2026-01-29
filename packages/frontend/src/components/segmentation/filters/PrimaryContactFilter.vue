@@ -3,7 +3,7 @@
     <v-radio-group
       v-model="isPrimary"
       :label="$t('segmentation.filters.primary.label')"
-      row
+      inline
       class="mb-3"
     >
       <v-radio
@@ -21,7 +21,7 @@
       :disabled="isPrimary === null"
       class="mt-2"
     >
-      <v-icon left>mdi-plus</v-icon>
+      <v-icon start>mdi-plus</v-icon>
       {{ $t('segmentation.filters.addFilter') }}
     </v-btn>
   </div>
@@ -52,7 +52,7 @@ const isPrimary = ref<boolean | null>(null)
 const addFilter = () => {
   if (isPrimary.value === null) return
 
-  const label = isPrimary.value 
+  const label = isPrimary.value
     ? t('segmentation.filters.primary.primaryOnly')
     : t('segmentation.filters.primary.nonPrimaryOnly')
 

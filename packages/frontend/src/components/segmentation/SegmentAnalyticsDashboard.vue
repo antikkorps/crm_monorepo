@@ -8,21 +8,68 @@
               <v-icon class="mr-2">mdi-chart-bar</v-icon>
               {{ $t('segmentation.analytics.title') }}
             </div>
-            <v-select
-              v-model="selectedTimeRange"
-              :items="timeRangeOptions"
-              item-title="text"
-              item-value="value"
-              variant="outlined"
-              density="compact"
-              hide-details
-              class="analytics-time-select"
-            />
+            <div class="analytics-header-controls">
+              <v-autocomplete
+                v-model="internalSegmentId"
+                :items="availableSegments"
+                item-title="name"
+                item-value="id"
+                :label="$t('segmentation.analytics.selectSegment')"
+                variant="outlined"
+                density="compact"
+                hide-details
+                clearable
+                class="analytics-segment-select"
+                :prepend-inner-icon="selectedSegmentIcon"
+                :menu-props="{ maxHeight: 250 }"
+                no-filter
+                :custom-filter="segmentFilter"
+              >
+                <template v-slot:item="{ props, item }">
+                  <v-list-item v-bind="props">
+                    <template v-slot:prepend>
+                      <v-icon :color="item.raw.type === 'institution' ? 'primary' : 'success'" size="small">
+                        {{ item.raw.type === 'institution' ? 'mdi-hospital-building' : 'mdi-account-multiple' }}
+                      </v-icon>
+                    </template>
+                    <template v-slot:subtitle>
+                      <span class="text-caption">
+                        {{ item.raw.type === 'institution' ? $t('segmentation.types.institution') : $t('segmentation.types.contact') }}
+                      </span>
+                    </template>
+                  </v-list-item>
+                </template>
+                <template v-slot:no-data>
+                  <v-list-item>
+                    <v-list-item-title>{{ $t('common.noResults') }}</v-list-item-title>
+                  </v-list-item>
+                </template>
+              </v-autocomplete>
+              <v-select
+                v-model="selectedTimeRange"
+                :items="timeRangeOptions"
+                item-title="text"
+                item-value="value"
+                variant="outlined"
+                density="compact"
+                hide-details
+                class="analytics-time-select"
+              />
+            </div>
           </v-card-title>
 
           <v-card-text>
+            <!-- No segment selected state -->
+            <div v-if="!internalSegmentId" class="empty-analytics-state">
+              <v-icon size="64" color="grey-lighten-1">mdi-chart-box-outline</v-icon>
+              <div class="text-h6 mt-4">{{ $t('segmentation.analytics.noSegmentSelected') }}</div>
+              <div class="text-body-2 text-medium-emphasis">
+                {{ $t('segmentation.analytics.selectSegmentHint') }}
+              </div>
+            </div>
+
             <!-- Loading skeletons -->
-            <div v-if="loading">
+            <div v-else-if="loading">
               <v-row class="mb-6">
                 <v-col v-for="i in 4" :key="i" cols="12" md="3">
                   <v-skeleton-loader type="card" />
@@ -275,16 +322,46 @@ import { useI18n } from 'vue-i18n'
 import { Chart as ChartJS, ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement, Title, DoughnutController, BarController } from 'chart.js'
 import type { Chart as ChartType } from 'chart.js'
 import { segmentationApi } from '../../services/api/segmentation'
+import type { Segment } from '@medical-crm/shared'
 
 const { t } = useI18n()
 
 // Props
 interface Props {
   segmentId?: string
+  segments?: Segment[]
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  segmentId: ''
+  segmentId: '',
+  segments: () => []
+})
+
+// Internal segment ID (can be set from prop or from selector)
+const internalSegmentId = ref(props.segmentId)
+
+// Available segments for selector
+const availableSegments = computed(() => props.segments || [])
+
+// Selected segment icon
+const selectedSegmentIcon = computed(() => {
+  const segment = availableSegments.value.find(s => s.id === internalSegmentId.value)
+  if (!segment) return 'mdi-filter-variant'
+  return segment.type === 'institution' ? 'mdi-hospital-building' : 'mdi-account-multiple'
+})
+
+// Custom filter for segment autocomplete - filters by name, limits to 5 results
+const segmentFilter = (itemText: string, queryText: string, item: any) => {
+  const name = item?.raw?.name?.toLowerCase() || ''
+  const query = queryText?.toLowerCase() || ''
+  return name.includes(query)
+}
+
+// Sync internal segment ID with prop
+watch(() => props.segmentId, (newVal) => {
+  if (newVal) {
+    internalSegmentId.value = newVal
+  }
 })
 
 // Reactive data
@@ -447,8 +524,8 @@ const createTrendChart = () => {
 }
 
 const loadAnalyticsData = async () => {
-  if (!props.segmentId) {
-    console.log('SegmentAnalyticsDashboard: No segmentId provided')
+  if (!internalSegmentId.value) {
+    console.log('SegmentAnalyticsDashboard: No segment selected')
     return
   }
 
@@ -456,10 +533,10 @@ const loadAnalyticsData = async () => {
     loading.value = true
     error.value = null
 
-    console.log('SegmentAnalyticsDashboard: Loading analytics for segment:', props.segmentId)
+    console.log('SegmentAnalyticsDashboard: Loading analytics for segment:', internalSegmentId.value)
 
     // Fetch analytics data from API
-    const response = await segmentationApi.getSegmentAnalytics(props.segmentId)
+    const response = await segmentationApi.getSegmentAnalytics(internalSegmentId.value)
     const data = response.data
 
     console.log('SegmentAnalyticsDashboard: Received data:', data)
@@ -569,7 +646,14 @@ watch(() => selectedTimeRange.value, () => {
   loadAnalyticsData()
 })
 
-watch(() => props.segmentId, () => {
+watch(() => props.segmentId, (newVal) => {
+  if (newVal) {
+    internalSegmentId.value = newVal
+  }
+})
+
+// Watch for internal segment ID changes (when user selects from dropdown)
+watch(() => internalSegmentId.value, () => {
   loadAnalyticsData()
 })
 
@@ -601,9 +685,34 @@ onMounted(() => {
   font-weight: 500;
 }
 
+.analytics-header-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.analytics-segment-select {
+  min-width: 200px;
+  max-width: 300px;
+}
+
 .analytics-time-select {
   min-width: 140px;
   max-width: 180px;
+}
+
+/* Empty state */
+.empty-analytics-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 24px;
+  text-align: center;
+  background: var(--p-surface-50);
+  border-radius: 12px;
+  border: 2px dashed var(--p-surface-border);
 }
 
 /* Metric cards */
@@ -688,9 +797,23 @@ onMounted(() => {
     margin-bottom: 8px;
   }
 
+  .analytics-header-controls {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .analytics-segment-select {
+    max-width: none;
+    width: 100%;
+  }
+
   .analytics-time-select {
     max-width: none;
     width: 100%;
+  }
+
+  .empty-analytics-state {
+    padding: 32px 16px;
   }
 
   .metric-card-content {

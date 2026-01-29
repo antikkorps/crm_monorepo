@@ -77,10 +77,10 @@ export class Quote
   declare readonly createdAt: Date
   declare readonly updatedAt: Date
 
-  // Associations
-  public lines?: QuoteLine[]
-  public institution?: MedicalInstitution
-  public assignedUser?: User
+  // Associations - use declare to avoid shadowing Sequelize's getters
+  declare lines?: QuoteLine[]
+  declare institution?: MedicalInstitution
+  declare assignedUser?: User
 
   public static override associations: {
     lines: Association<Quote, QuoteLine>
@@ -92,21 +92,38 @@ export class Quote
   public isExpired(): boolean {
     const status = this.status || this.getDataValue('status')
     const validUntil = this.validUntil || this.getDataValue('validUntil')
+    // Handle case where validUntil is not loaded (partial association)
+    if (!validUntil) {
+      return false
+    }
     return status !== QuoteStatus.ACCEPTED && new Date() > validUntil
   }
 
   public canBeModified(): boolean {
     const status = this.status || this.getDataValue('status')
+    // Handle case where status is not loaded
+    if (!status) {
+      return false
+    }
     return [QuoteStatus.DRAFT, QuoteStatus.SENT].includes(status)
   }
 
   public canBeAccepted(): boolean {
     const status = this.status || this.getDataValue('status')
-    return status === QuoteStatus.SENT && !this.isExpired()
+    // Handle case where status is not loaded
+    if (!status) {
+      return false
+    }
+    // Allow acceptance from draft (manual send) or sent status
+    return [QuoteStatus.DRAFT, QuoteStatus.SENT].includes(status) && !this.isExpired()
   }
 
   public canBeRejected(): boolean {
     const status = this.status || this.getDataValue('status')
+    // Handle case where status is not loaded
+    if (!status) {
+      return false
+    }
     return status === QuoteStatus.SENT && !this.isExpired()
   }
 
@@ -147,7 +164,8 @@ export class Quote
 
   public async confirmOrder(): Promise<void> {
     const status = this.status || this.getDataValue('status')
-    if (![QuoteStatus.DRAFT, QuoteStatus.SENT].includes(status)) {
+    // Allow order confirmation from draft, sent, or accepted status
+    if (![QuoteStatus.DRAFT, QuoteStatus.SENT, QuoteStatus.ACCEPTED].includes(status)) {
       throw new Error("Quote cannot be ordered in its current state")
     }
     const number = await (this.constructor as typeof Quote).generateOrderNumber()
@@ -211,6 +229,10 @@ export class Quote
     }
 
     const validUntil = this.validUntil || this.getDataValue('validUntil')
+    // Handle case where validUntil is not loaded (partial association)
+    if (!validUntil) {
+      return null
+    }
     const now = new Date()
     const diffTime = validUntil.getTime() - now.getTime()
     return Math.ceil(diffTime / (1000 * 60 * 60 * 24))
@@ -229,15 +251,11 @@ export class Quote
   }
 
   // Static methods
-  public static async generateQuoteNumber(): Promise<string> {
+  public static async generateQuoteNumber(transaction?: any): Promise<string> {
     const year = new Date().getFullYear()
     const month = String(new Date().getMonth() + 1).padStart(2, "0")
     const basePattern = `Q${year}${month}`
 
-    console.log("=== DEBUG: generateQuoteNumber ===")
-    console.log("Base pattern:", basePattern)
-
-    // Use raw query to avoid transaction issues
     const sequelize = this.sequelize!
     const result = await sequelize.query(
       `SELECT quote_number FROM quotes
@@ -247,25 +265,24 @@ export class Quote
       {
         bind: [`${basePattern}%`],
         type: (sequelize.constructor as any).QueryTypes.SELECT,
+        transaction,
       }
     ) as unknown as Array<{ quote_number: string }>
-
-    console.log("Raw query result:", result)
 
     let sequence = 1
     if (result.length > 0 && result[0].quote_number) {
       const lastSequence = Number.parseInt(result[0].quote_number.slice(-4))
-      console.log("Last sequence:", lastSequence)
       sequence = lastSequence + 1
     }
 
-    const newNumber = `${basePattern}${String(sequence).padStart(4, "0")}`
-    console.log("Generated number:", newNumber)
-    return newNumber
+    return `${basePattern}${String(sequence).padStart(4, "0")}`
   }
 
-  public static async createQuote(data: QuoteCreationAttributes): Promise<Quote> {
-    const quoteNumber = await this.generateQuoteNumber()
+  public static async createQuote(
+    data: QuoteCreationAttributes,
+    options?: { transaction?: any }
+  ): Promise<Quote> {
+    const quoteNumber = await this.generateQuoteNumber(options?.transaction)
 
     return this.create({
       ...data,
@@ -275,7 +292,7 @@ export class Quote
       totalDiscountAmount: 0,
       totalTaxAmount: 0,
       total: 0,
-    })
+    }, options)
   }
 
   public static async generateOrderNumber(): Promise<string> {
@@ -489,10 +506,6 @@ Quote.init(
       type: DataTypes.DATE,
       allowNull: false,
       field: "valid_until",
-      validate: {
-        isDate: true,
-        isAfter: new Date().toISOString(),
-      },
     },
     status: {
       type:

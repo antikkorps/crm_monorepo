@@ -161,6 +161,13 @@ const features = [
     icon: "mdi-cloud-sync",
     color: "indigo",
   },
+  {
+    key: "engagement_letters_enabled",
+    title: "Lettres de Mission",
+    description: "Activer la création et gestion des lettres de mission",
+    icon: "mdi-file-sign",
+    color: "deep-purple",
+  },
 ]
 
 // Component state

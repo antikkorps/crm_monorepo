@@ -14,6 +14,7 @@ router.get("/tasks", ExportController.exportTasks)
 router.get("/quotes", ExportController.exportQuotes)
 router.get("/invoices", ExportController.exportInvoices)
 router.get("/opportunities", ExportController.exportOpportunities)
+router.get("/engagement-letters", ExportController.exportEngagementLetters)
 
 // Queue export endpoint
 router.post("/queue", ExportController.queueExport)

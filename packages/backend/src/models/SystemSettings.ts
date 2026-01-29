@@ -127,6 +127,13 @@ export class SystemSettings
         description: "Enable/disable Sage integration module",
         isPublic: true,
       },
+      {
+        key: "features.engagement_letters_enabled",
+        value: true,
+        category: "features",
+        description: "Enable/disable engagement letters module",
+        isPublic: true,
+      },
     ]
 
     // Execute all findOrCreate operations without transaction to avoid conflicts

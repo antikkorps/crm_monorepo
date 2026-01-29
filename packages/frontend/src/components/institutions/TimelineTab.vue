@@ -47,6 +47,22 @@
                 <v-icon start>mdi-checkbox-marked-circle-outline</v-icon>
                 {{ t('timeline.filters.tasks') }}
               </v-chip>
+              <v-chip filter variant="outlined" value="quote" size="small">
+                <v-icon start>mdi-file-document-outline</v-icon>
+                {{ t('timeline.filters.quotes') }}
+              </v-chip>
+              <v-chip filter variant="outlined" value="invoice" size="small">
+                <v-icon start>mdi-receipt</v-icon>
+                {{ t('timeline.filters.invoices') }}
+              </v-chip>
+              <v-chip filter variant="outlined" value="engagement_letter" size="small">
+                <v-icon start>mdi-file-sign</v-icon>
+                {{ t('timeline.filters.engagementLetters') }}
+              </v-chip>
+              <v-chip filter variant="outlined" value="external" size="small">
+                <v-icon start>mdi-link-variant</v-icon>
+                {{ t('timeline.filters.external') }}
+              </v-chip>
             </v-chip-group>
           </v-col>
         </v-row>
@@ -87,6 +103,16 @@
               <v-chip :color="getItemColor(item.type)" variant="tonal" size="small" class="mr-2">
                 {{ getItemLabel(item.type) }}
               </v-chip>
+              <v-chip
+                v-if="item.isExternal || isSimplifiedType(item.type)"
+                color="orange"
+                variant="tonal"
+                size="small"
+                class="mr-2"
+                prepend-icon="mdi-link-variant"
+              >
+                {{ t('timeline.external') }}
+              </v-chip>
               <span class="text-body-1">{{ getDisplayTitle(item) }}</span>
             </div>
             <v-chip size="x-small" variant="text">
@@ -95,7 +121,8 @@
           </v-card-title>
 
           <v-card-text>
-            <div v-if="item.description" class="text-body-2 mb-3">
+            <!-- Only show description for notes, tasks, meetings, reminders, calls - not for billing documents -->
+            <div v-if="item.description && !isBillingDocumentType(item.type)" class="text-body-2 mb-3">
               {{ item.description }}
             </div>
 
@@ -165,6 +192,87 @@
                 </v-chip>
                 <v-chip v-if="item.metadata.tags && item.metadata.tags.length" size="small" variant="outlined" prepend-icon="mdi-tag">
                   {{ item.metadata.tags.join(", ") }}
+                </v-chip>
+              </template>
+
+              <template v-if="item.type === 'quote'">
+                <v-chip size="small" :color="getQuoteStatusColor(item.metadata.status)" variant="tonal">
+                  {{ formatQuoteStatus(item.metadata.status) }}
+                </v-chip>
+                <v-chip size="small" variant="outlined" prepend-icon="mdi-currency-eur">
+                  {{ formatCurrency(item.metadata.total) }}
+                </v-chip>
+                <v-chip v-if="item.metadata.validUntil" size="small" variant="outlined" prepend-icon="mdi-calendar-clock">
+                  {{ t('timeline.validUntil') }}: {{ formatDate(item.metadata.validUntil) }}
+                </v-chip>
+                <v-chip v-if="item.metadata.orderNumber" size="small" color="success" variant="tonal" prepend-icon="mdi-cart-check">
+                  {{ item.metadata.orderNumber }}
+                </v-chip>
+              </template>
+
+              <template v-if="item.type === 'invoice'">
+                <v-chip size="small" :color="getInvoiceStatusColor(item.metadata.status)" variant="tonal">
+                  {{ formatInvoiceStatus(item.metadata.status) }}
+                </v-chip>
+                <v-chip size="small" variant="outlined" prepend-icon="mdi-currency-eur">
+                  {{ formatCurrency(item.metadata.total) }}
+                </v-chip>
+                <v-chip v-if="item.metadata.dueDate" size="small" variant="outlined" prepend-icon="mdi-calendar-clock">
+                  {{ t('timeline.dueDate') }}: {{ formatDate(item.metadata.dueDate) }}
+                </v-chip>
+                <v-chip v-if="item.metadata.paidAt" size="small" color="success" variant="tonal" prepend-icon="mdi-check-circle">
+                  {{ t('timeline.paidOn') }}: {{ formatDate(item.metadata.paidAt) }}
+                </v-chip>
+                <v-chip v-if="item.metadata.remainingAmount > 0" size="small" color="warning" variant="tonal" prepend-icon="mdi-cash-clock">
+                  {{ t('timeline.remaining') }}: {{ formatCurrency(item.metadata.remainingAmount) }}
+                </v-chip>
+              </template>
+
+              <template v-if="item.type === 'engagement_letter'">
+                <v-chip size="small" :color="getEngagementLetterStatusColor(item.metadata.status)" variant="tonal">
+                  {{ formatEngagementLetterStatus(item.metadata.status) }}
+                </v-chip>
+                <v-chip size="small" variant="outlined" prepend-icon="mdi-currency-eur">
+                  {{ formatCurrency(item.metadata.estimatedTotal) }}
+                </v-chip>
+                <v-chip v-if="item.metadata.missionType" size="small" variant="outlined" prepend-icon="mdi-briefcase">
+                  {{ formatMissionType(item.metadata.missionType) }}
+                </v-chip>
+                <v-chip v-if="item.metadata.validUntil" size="small" variant="outlined" prepend-icon="mdi-calendar-clock">
+                  {{ t('timeline.validUntil') }}: {{ formatDate(item.metadata.validUntil) }}
+                </v-chip>
+                <v-chip v-if="item.metadata.acceptedAt" size="small" color="success" variant="tonal" prepend-icon="mdi-check-circle">
+                  {{ t('timeline.acceptedOn') }}: {{ formatDate(item.metadata.acceptedAt) }}
+                </v-chip>
+              </template>
+
+              <!-- Simplified transactions (external references) -->
+              <template v-if="isSimplifiedType(item.type)">
+                <v-chip size="small" :color="getSimplifiedStatusColor(item.metadata.status, item.type)" variant="tonal">
+                  {{ formatSimplifiedStatus(item.metadata.status, item.type) }}
+                </v-chip>
+                <v-chip size="small" variant="outlined" prepend-icon="mdi-currency-eur">
+                  {{ formatCurrency(item.metadata.amountTtc) }}
+                </v-chip>
+                <v-chip v-if="item.metadata.referenceNumber" size="small" variant="outlined" prepend-icon="mdi-identifier">
+                  {{ item.metadata.referenceNumber }}
+                </v-chip>
+                <v-chip v-if="item.metadata.date" size="small" variant="outlined" prepend-icon="mdi-calendar">
+                  {{ formatDate(item.metadata.date) }}
+                </v-chip>
+                <!-- Invoice specific -->
+                <v-chip v-if="item.type === 'simplified_invoice' && item.metadata.paymentStatus" size="small" :color="getPaymentStatusColor(item.metadata.paymentStatus)" variant="tonal" prepend-icon="mdi-cash">
+                  {{ formatPaymentStatus(item.metadata.paymentStatus) }}
+                </v-chip>
+                <v-chip v-if="item.type === 'simplified_invoice' && item.metadata.dueDate" size="small" variant="outlined" prepend-icon="mdi-calendar-clock">
+                  {{ t('timeline.dueDate') }}: {{ formatDate(item.metadata.dueDate) }}
+                </v-chip>
+                <!-- Contract specific -->
+                <v-chip v-if="item.type === 'simplified_contract' && item.metadata.contractType" size="small" variant="outlined" prepend-icon="mdi-file-document-edit">
+                  {{ formatContractType(item.metadata.contractType) }}
+                </v-chip>
+                <v-chip v-if="item.type === 'simplified_contract' && item.metadata.contractStartDate" size="small" variant="outlined" prepend-icon="mdi-calendar-start">
+                  {{ formatDate(item.metadata.contractStartDate) }} - {{ item.metadata.contractEndDate ? formatDate(item.metadata.contractEndDate) : t('timeline.ongoing') }}
                 </v-chip>
               </template>
             </div>
@@ -255,19 +363,33 @@ const offset = ref(0)
 const total = ref(0)
 const limit = 15 // Load fewer items initially for better UX
 const searchQuery = ref("")
-const selectedTypes = ref<(TimelineItemType | "all")[]>(["all"])
+const selectedTypes = ref<(TimelineItemType | "all" | "external")[]>(["all"])
 
 // Computed
-const hasMore = computed(() => offset.value + limit < total.value)
+const hasMore = computed(() => items.value.length < total.value)
 
 const filteredItems = computed(() => {
   let filtered = items.value
 
   // Filter by type (client-side)
   if (!selectedTypes.value.includes("all")) {
-    filtered = filtered.filter((item) =>
-      selectedTypes.value.includes(item.type as TimelineItemType)
-    )
+    filtered = filtered.filter((item) => {
+      // Handle "external" filter - matches all simplified transaction types
+      if (selectedTypes.value.includes("external" as TimelineItemType)) {
+        if (isSimplifiedType(item.type)) {
+          return true
+        }
+      }
+      // Handle specific type filters - also match simplified versions
+      // e.g., "quote" filter should match both "quote" and "simplified_quote"
+      for (const selectedType of selectedTypes.value) {
+        if (selectedType === "external") continue
+        if (item.type === selectedType) return true
+        // Also match simplified version of the type
+        if (item.type === `simplified_${selectedType}`) return true
+      }
+      return false
+    })
   }
 
   // Filter by search query (client-side for loaded items)
@@ -316,7 +438,7 @@ const loadTimeline = async (reset = false) => {
       items.value = [...items.value, ...response.items]
     }
 
-    offset.value = response.pagination.offset + response.pagination.limit
+    offset.value = items.value.length
     total.value = response.pagination.total
   } catch (err: any) {
     error.value = err.message || "Impossible de charger la timeline"
@@ -332,7 +454,8 @@ const loadMore = () => {
   }
 }
 
-const onIntersect = (isIntersecting: boolean) => {
+const onIntersect = (isIntersecting: boolean, entries: IntersectionObserverEntry[]) => {
+  // Vuetify 3 v-intersect passes isIntersecting as first param
   if (isIntersecting && hasMore.value && !loading.value) {
     loadMore()
   }
@@ -435,6 +558,13 @@ const getItemIcon = (type: TimelineItemType): string => {
     call: "mdi-phone",
     reminder: "mdi-bell-alert",
     task: "mdi-checkbox-marked-circle-outline",
+    quote: "mdi-file-document-outline",
+    invoice: "mdi-receipt",
+    engagement_letter: "mdi-file-sign",
+    simplified_quote: "mdi-file-document-outline",
+    simplified_invoice: "mdi-receipt",
+    simplified_engagement_letter: "mdi-file-sign",
+    simplified_contract: "mdi-file-document-edit-outline",
   }
   return icons[type] || "mdi-circle"
 }
@@ -446,12 +576,95 @@ const getItemColor = (type: TimelineItemType): string => {
     call: "success",
     reminder: "info",
     task: "secondary",
+    quote: "purple",
+    invoice: "teal",
+    engagement_letter: "indigo",
+    simplified_quote: "purple",
+    simplified_invoice: "teal",
+    simplified_engagement_letter: "indigo",
+    simplified_contract: "deep-purple",
   }
   return colors[type] || "grey"
 }
 
 const getItemLabel = (type: TimelineItemType): string => {
   return t(`timeline.labels.${type}`) || type
+}
+
+// Helper to check if a type is a simplified transaction type
+const isSimplifiedType = (type: TimelineItemType): boolean => {
+  return type.startsWith("simplified_")
+}
+
+// Helper to check if a type is a billing document (internal or external)
+const isBillingDocumentType = (type: TimelineItemType): boolean => {
+  return ["quote", "invoice", "engagement_letter", "simplified_quote", "simplified_invoice", "simplified_engagement_letter", "simplified_contract"].includes(type)
+}
+
+// Format currency
+const formatCurrency = (amount: number): string => {
+  return new Intl.NumberFormat("fr-FR", {
+    style: "currency",
+    currency: "EUR",
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(amount || 0)
+}
+
+// Quote status helpers
+const getQuoteStatusColor = (status: string): string => {
+  const colors: Record<string, string> = {
+    draft: "grey",
+    sent: "info",
+    accepted: "success",
+    rejected: "error",
+    expired: "warning",
+    cancelled: "grey-darken-1",
+    ordered: "purple",
+  }
+  return colors[status] || "grey"
+}
+
+const formatQuoteStatus = (status: string): string => {
+  return t(`quotes.status.${status}`) || status
+}
+
+// Invoice status helpers
+const getInvoiceStatusColor = (status: string): string => {
+  const colors: Record<string, string> = {
+    draft: "grey",
+    sent: "info",
+    paid: "success",
+    partial: "warning",
+    overdue: "error",
+    cancelled: "grey-darken-1",
+  }
+  return colors[status] || "grey"
+}
+
+const formatInvoiceStatus = (status: string): string => {
+  return t(`invoices.status.${status}`) || status
+}
+
+// Engagement letter status helpers
+const getEngagementLetterStatusColor = (status: string): string => {
+  const colors: Record<string, string> = {
+    draft: "grey",
+    sent: "info",
+    accepted: "success",
+    rejected: "error",
+    cancelled: "grey-darken-1",
+    completed: "teal",
+  }
+  return colors[status] || "grey"
+}
+
+const formatEngagementLetterStatus = (status: string): string => {
+  return t(`engagementLetters.status.${status}`) || status
+}
+
+const formatMissionType = (missionType: string): string => {
+  return t(`engagementLetters.missionType.${missionType}`) || missionType
 }
 
 const getCallTypeColor = (type: string): string => {
@@ -491,6 +704,63 @@ const getPriorityColor = (priority: string): string => {
     urgent: "purple",
   }
   return colors[priority] || "grey"
+}
+
+// Simplified transaction helpers
+const getSimplifiedStatusColor = (status: string, type: TimelineItemType): string => {
+  // For invoices
+  if (type === "simplified_invoice") {
+    const colors: Record<string, string> = {
+      pending: "warning",
+      paid: "success",
+      partial: "orange",
+      overdue: "error",
+      cancelled: "grey",
+    }
+    return colors[status] || "grey"
+  }
+  // For quotes and engagement letters
+  if (type === "simplified_quote" || type === "simplified_engagement_letter") {
+    const colors: Record<string, string> = {
+      draft: "grey",
+      sent: "info",
+      accepted: "success",
+      rejected: "error",
+      expired: "warning",
+    }
+    return colors[status] || "grey"
+  }
+  // For contracts
+  if (type === "simplified_contract") {
+    const colors: Record<string, string> = {
+      active: "success",
+      expired: "warning",
+      terminated: "error",
+    }
+    return colors[status] || "grey"
+  }
+  return "grey"
+}
+
+const formatSimplifiedStatus = (status: string, _type: TimelineItemType): string => {
+  return t(`simplifiedTransactions.status.${status}`) || status
+}
+
+const getPaymentStatusColor = (paymentStatus: string): string => {
+  const colors: Record<string, string> = {
+    pending: "warning",
+    partial: "orange",
+    paid: "success",
+  }
+  return colors[paymentStatus] || "grey"
+}
+
+const formatPaymentStatus = (paymentStatus: string): string => {
+  return t(`simplifiedTransactions.paymentStatus.${paymentStatus}`) || paymentStatus
+}
+
+const formatContractType = (contractType: string): string => {
+  return t(`simplifiedTransactions.contractType.${contractType}`) || contractType
 }
 
 // Watch for filter changes - deselect "all" when specific filters are selected

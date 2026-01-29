@@ -247,9 +247,10 @@
       </div>
 
       <div v-else id="tour-opportunities-pipeline">
+        <!-- Active pipeline stages -->
         <v-row>
           <v-col
-            v-for="stage in pipeline"
+            v-for="stage in pipeline.filter(s => !isClosedStage(s.stage))"
             :key="stage.stage"
             cols="12"
             md="6"
@@ -276,19 +277,27 @@
 
               <v-divider></v-divider>
 
-              <v-card-text class="pa-2 pipeline-card-content">
+              <v-card-text
+                class="pa-2 pipeline-card-content"
+                :class="{ 'drag-active': isDragging }"
+              >
                 <draggable
                   :list="stage.opportunities"
                   group="opportunities"
                   item-key="id"
                   class="draggable-list"
+                  ghost-class="opportunity-ghost"
+                  drag-class="opportunity-drag"
+                  :animation="150"
+                  @start="onDragStart"
+                  @end="onDragEnd"
                   @change="handleDragChange($event, stage.stage)"
                 >
                   <template #item="{ element }">
                     <v-card
-                      class="opportunity-card mb-2"
+                      class="opportunity-card"
                       variant="outlined"
-                      @click="openEditDialog(element)"
+                      @click.stop="openEditDialog(element)"
                     >
                       <v-card-text class="pa-3">
                         <div class="d-flex justify-space-between align-start mb-2">
@@ -341,19 +350,179 @@
                             $t("opportunities.overdue")
                           }}</v-chip>
                         </div>
+
+                        <!-- Quick actions -->
+                        <div class="quick-actions mt-2 pt-2">
+                          <v-btn
+                            size="x-small"
+                            color="success"
+                            variant="tonal"
+                            prepend-icon="mdi-trophy"
+                            @click.stop="markAsWon(element)"
+                            :loading="closingOpportunityId === element.id"
+                          >
+                            {{ $t("opportunities.actions.won") }}
+                          </v-btn>
+                          <v-btn
+                            size="x-small"
+                            color="error"
+                            variant="tonal"
+                            prepend-icon="mdi-close-circle"
+                            class="ml-2"
+                            @click.stop="markAsLost(element)"
+                            :loading="closingOpportunityId === element.id"
+                          >
+                            {{ $t("opportunities.actions.lost") }}
+                          </v-btn>
+                        </div>
                       </v-card-text>
                     </v-card>
                   </template>
-                  <template #footer>
-                    <div
-                      v-if="stage.opportunities.length === 0"
-                      class="text-center py-8 text-medium-emphasis empty-drop-zone"
-                    >
-                      <v-icon size="48" color="grey-lighten-2">mdi-inbox-outline</v-icon>
-                      <p class="mt-2">{{ $t("opportunities.empty") }}</p>
+                </draggable>
+                <!-- Empty state overlay -->
+                <div v-if="stage.opportunities.length === 0" class="empty-state-overlay">
+                  <v-icon size="48" color="grey-lighten-2">mdi-inbox-outline</v-icon>
+                  <p class="mt-2 text-medium-emphasis">{{ $t("opportunities.empty") }}</p>
+                </div>
+              </v-card-text>
+            </v-card>
+          </v-col>
+        </v-row>
+
+        <!-- Closed stages (Gagné / Perdu) -->
+        <v-row class="mt-4">
+          <v-col cols="12">
+            <div class="d-flex flex-column flex-sm-row align-start align-sm-center justify-space-between mb-2 ga-2">
+              <div class="text-subtitle-2 text-medium-emphasis">
+                <v-icon size="small" class="mr-1">mdi-archive-outline</v-icon>
+                {{ $t("opportunities.closedStages") }}
+                <span v-if="!showAllArchived">({{ $t("opportunities.last30Days") }})</span>
+              </div>
+              <v-switch
+                v-model="showAllArchived"
+                :label="$t('opportunities.showAllArchived')"
+                density="compact"
+                hide-details
+                color="primary"
+                class="flex-grow-0"
+                @update:model-value="loadPipeline"
+              />
+            </div>
+          </v-col>
+          <v-col
+            v-for="stage in pipeline.filter(s => isClosedStage(s.stage))"
+            :key="stage.stage"
+            cols="12"
+            md="6"
+            class="pipeline-column"
+          >
+            <v-card
+              class="fill-height closed-stage-card"
+              :class="stage.stage === 'closed_won' ? 'closed-won' : 'closed-lost'"
+            >
+              <v-card-title
+                class="d-flex align-center justify-space-between"
+                :style="{ backgroundColor: getStageColor(stage.stage) + '22' }"
+              >
+                <div class="d-flex align-center">
+                  <v-icon
+                    :icon="stage.stage === 'closed_won' ? 'mdi-trophy' : 'mdi-close-circle'"
+                    :color="getStageColor(stage.stage)"
+                    class="mr-2"
+                  />
+                  <div>
+                    <div class="text-subtitle-1 font-weight-bold">
+                      {{ getStageLabel(stage.stage) }}
                     </div>
+                    <div class="text-caption">
+                      {{ stage.count }} {{ $t("opportunities.unit") }}
+                    </div>
+                  </div>
+                </div>
+                <v-chip :color="getStageColor(stage.stage)" size="small">
+                  {{ formatCurrency(stage.totalValue) }}
+                </v-chip>
+              </v-card-title>
+
+              <v-divider></v-divider>
+
+              <v-card-text class="pa-2 pipeline-card-content">
+                <draggable
+                  :list="stage.opportunities"
+                  group="opportunities"
+                  item-key="id"
+                  class="draggable-list"
+                  ghost-class="opportunity-ghost"
+                  :sort="false"
+                  :animation="150"
+                  @change="handleDragChange($event, stage.stage)"
+                >
+                  <template #item="{ element }">
+                    <v-card
+                      class="opportunity-card closed-opportunity"
+                      variant="outlined"
+                      @click.stop="openEditDialog(element)"
+                    >
+                      <v-card-text class="pa-3">
+                        <div class="d-flex justify-space-between align-start mb-2">
+                          <div class="text-subtitle-2 font-weight-bold flex-grow-1">
+                            {{ element.name }}
+                          </div>
+                          <v-chip
+                            size="x-small"
+                            :color="stage.stage === 'closed_won' ? 'success' : 'error'"
+                          >
+                            {{ stage.stage === 'closed_won' ? '100%' : '0%' }}
+                          </v-chip>
+                        </div>
+
+                        <div
+                          v-if="element.institution"
+                          class="text-caption text-medium-emphasis mb-1"
+                        >
+                          <v-icon size="small" class="mr-1">mdi-domain</v-icon>
+                          {{ element.institution.name }}
+                        </div>
+
+                        <div class="text-h6 mb-2">
+                          {{ formatCurrency(element.value) }}
+                        </div>
+
+                        <div class="d-flex justify-space-between align-center">
+                          <div class="text-caption text-medium-emphasis">
+                            <v-icon size="small" class="mr-1">mdi-calendar-check</v-icon>
+                            {{ formatDate(element.actualCloseDate || element.updatedAt) }}
+                          </div>
+                          <v-avatar
+                            v-if="element.assignedUser"
+                            size="24"
+                            :color="getAvatarColor(element.assignedUser.email)"
+                          >
+                            <span class="text-caption">
+                              {{
+                                getInitials(
+                                  element.assignedUser.firstName,
+                                  element.assignedUser.lastName,
+                                )
+                              }}
+                            </span>
+                          </v-avatar>
+                        </div>
+                      </v-card-text>
+                    </v-card>
                   </template>
                 </draggable>
+                <!-- Empty state overlay -->
+                <div v-if="stage.opportunities.length === 0" class="empty-state-overlay">
+                  <v-icon
+                    size="48"
+                    :color="stage.stage === 'closed_won' ? 'success' : 'error'"
+                    class="opacity-30"
+                  >
+                    {{ stage.stage === 'closed_won' ? 'mdi-trophy-outline' : 'mdi-close-circle-outline' }}
+                  </v-icon>
+                  <p class="mt-2 text-medium-emphasis">{{ $t("opportunities.empty") }}</p>
+                </div>
               </v-card-text>
             </v-card>
           </v-col>
@@ -413,10 +582,15 @@ const editingOpportunity = ref<Opportunity | null>(null)
 const showForecast = ref(false)
 const showCollaboratorStats = ref(false)
 const exporting = ref(false)
+const isDragging = ref(false)
+const closingOpportunityId = ref<string | null>(null)
+const showAllArchived = ref(false)
 
 const loadPipeline = async () => {
   try {
-    await opportunitiesStore.fetchPipeline()
+    await opportunitiesStore.fetchPipeline({
+      includeArchived: showAllArchived.value,
+    })
   } catch (err) {
     console.error("Failed to load pipeline:", err)
   }
@@ -478,6 +652,14 @@ const handleFormSubmit = async () => {
   await loadPipeline()
 }
 
+const onDragStart = () => {
+  isDragging.value = true
+}
+
+const onDragEnd = () => {
+  isDragging.value = false
+}
+
 const handleDragChange = async (event: any, targetStage: OpportunityStage) => {
   if (event.added) {
     const opportunity = event.added.element
@@ -488,6 +670,28 @@ const handleDragChange = async (event: any, targetStage: OpportunityStage) => {
       // Reload pipeline on error to reset
       await loadPipeline()
     }
+  }
+}
+
+const markAsWon = async (opportunity: Opportunity) => {
+  closingOpportunityId.value = opportunity.id
+  try {
+    await opportunitiesStore.updateStage(opportunity.id, "closed_won" as OpportunityStage)
+  } catch (err) {
+    console.error("Failed to mark as won:", err)
+  } finally {
+    closingOpportunityId.value = null
+  }
+}
+
+const markAsLost = async (opportunity: Opportunity) => {
+  closingOpportunityId.value = opportunity.id
+  try {
+    await opportunitiesStore.updateStage(opportunity.id, "closed_lost" as OpportunityStage)
+  } catch (err) {
+    console.error("Failed to mark as lost:", err)
+  } finally {
+    closingOpportunityId.value = null
   }
 }
 
@@ -509,10 +713,14 @@ const getStageColor = (stage: OpportunityStage): string => {
     qualification: "#4CAF50",
     proposal: "#FF9800",
     negotiation: "#9C27B0",
-    closed_won: "#4CAF50",
-    closed_lost: "#F44336",
+    closed_won: "#2E7D32",
+    closed_lost: "#C62828",
   }
   return colors[stage] || "#757575"
+}
+
+const isClosedStage = (stage: OpportunityStage): boolean => {
+  return stage === "closed_won" || stage === "closed_lost"
 }
 
 const getProbabilityColor = (probability: number): string => {
@@ -580,6 +788,11 @@ watch(showForecast, (newValue) => {
     loadForecast()
   }
 })
+
+// Watch showAllArchived to reload closed stages data
+watch(showAllArchived, () => {
+  loadPipeline()
+})
 </script>
 
 <style scoped>
@@ -599,9 +812,40 @@ watch(showForecast, (newValue) => {
   gap: 0.5rem;
 }
 
+/* Pipeline card content - relative for empty state overlay */
+.pipeline-card-content {
+  min-height: 250px;
+  position: relative;
+  transition: background-color 0.2s ease;
+  border-radius: 0 0 4px 4px;
+}
+
+/* Visual feedback when dragging is active */
+.pipeline-card-content.drag-active {
+  background-color: rgba(var(--v-theme-primary), 0.03);
+}
+
+/* Draggable list - fills the entire card content area */
+.draggable-list {
+  min-height: 230px;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  /* Prevent text selection while dragging */
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+
+/* Opportunity cards */
 .opportunity-card {
-  cursor: pointer;
-  transition: all 0.2s;
+  cursor: grab;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  /* Prevent text selection */
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 .opportunity-card:hover {
@@ -609,16 +853,78 @@ watch(showForecast, (newValue) => {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
-.draggable-list {
-  min-height: 150px;
+.opportunity-card:active {
+  cursor: grabbing;
 }
 
-.empty-drop-zone {
+/* Element being dragged */
+.opportunity-drag {
+  opacity: 0.9;
+  transform: rotate(1deg) scale(1.02);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+  cursor: grabbing;
+}
+
+/* Ghost element - placeholder showing where item will drop */
+.opportunity-ghost {
+  opacity: 0.5;
+  background: rgba(var(--v-theme-primary), 0.15) !important;
+  border: 2px dashed rgb(var(--v-theme-primary)) !important;
+  border-radius: 8px;
+}
+
+.opportunity-ghost > * {
+  opacity: 0;
+}
+
+/* Empty state overlay - doesn't block drag interactions */
+.empty-state-overlay {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
   pointer-events: none;
+  z-index: 0;
 }
 
-.pipeline-card-content {
-  min-height: 200px;
+/* Closed stage cards */
+.closed-stage-card {
+  border-left: 4px solid;
+}
+
+.closed-stage-card.closed-won {
+  border-left-color: #2E7D32;
+}
+
+.closed-stage-card.closed-lost {
+  border-left-color: #C62828;
+}
+
+.closed-opportunity {
+  opacity: 0.85;
+  cursor: pointer !important;
+}
+
+.closed-opportunity:hover {
+  opacity: 1;
+}
+
+/* Quick actions - visible on hover */
+.quick-actions {
+  display: flex;
+  gap: 8px;
+  border-top: 1px solid rgba(var(--v-border-color), var(--v-border-opacity));
+  opacity: 0;
+  max-height: 0;
+  overflow: hidden;
+  transition: all 0.2s ease;
+}
+
+.opportunity-card:hover .quick-actions {
+  opacity: 1;
+  max-height: 50px;
+  padding-top: 8px;
 }
 
 /* Mobile first styles */

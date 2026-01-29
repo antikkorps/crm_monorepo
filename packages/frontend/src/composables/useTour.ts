@@ -2,7 +2,7 @@ import { driver } from "driver.js"
 import "driver.js/dist/driver.css"
 import { ref } from "vue"
 
-export type TourName = "dashboard" | "institutions" | "opportunities" | "analytics"
+export type TourName = "dashboard" | "institutions" | "institutionDetail" | "opportunities" | "analytics"
 
 /**
  * Composable for managing guided tours using Driver.js
@@ -219,6 +219,75 @@ export function useTour() {
   }
 
   /**
+   * Institution Detail tour
+   */
+  const institutionDetailTour = (onComplete?: () => void): ReturnType<typeof driver> => {
+    const tour = driver({
+      showProgress: true,
+      showButtons: ["next", "previous", "close"],
+      onDestroyed: onComplete,
+      steps: [
+        {
+          popover: {
+            title: "🏥 Fiche Établissement Détaillée",
+            description:
+              "Découvrez toutes les informations et fonctionnalités disponibles pour gérer cet établissement médical. Cette vue centralise tout ce dont vous avez besoin.",
+          },
+        },
+        {
+          element: "#tour-detail-actions",
+          popover: {
+            title: "✏️ Actions Principales",
+            description:
+              "Modifiez les informations de l'établissement ou supprimez-le si nécessaire. Les établissements avec des données CRM enrichies (notes, réunions) ne peuvent être que désactivés.",
+            side: "bottom",
+            align: "start",
+          },
+        },
+        {
+          element: "#tour-detail-badges",
+          popover: {
+            title: "🏷️ Badges de Statut",
+            description:
+              "Visualisez rapidement les informations clés : source des données (CRM/Digiforma), statut de conformité, assignation et état actif/inactif. Le badge cadenas indique que les données sont protégées.",
+            side: "bottom",
+            align: "start",
+          },
+        },
+        {
+          element: "#tour-detail-health-score",
+          popover: {
+            title: "💚 Score de Santé",
+            description:
+              "Évaluez la qualité de la relation avec cet établissement. Ce score agrège plusieurs indicateurs : engagement, potentiel commercial, historique des interactions.",
+            side: "bottom",
+            align: "start",
+          },
+        },
+        {
+          element: "#tour-detail-tabs",
+          popover: {
+            title: "📑 Navigation par Onglets",
+            description:
+              "Accédez à toutes les informations via ces onglets : Aperçu général, Insights IA, Activité de l'équipe, Timeline, Profil Médical, Contacts, Revenus et données Digiforma.",
+            side: "bottom",
+            align: "start",
+          },
+        },
+        {
+          popover: {
+            title: "🎯 Explorez les Onglets !",
+            description:
+              "Chaque onglet offre des fonctionnalités spécifiques. L'onglet 'Insights' propose des recommandations IA, 'Timeline' retrace l'historique complet, et 'Revenus' montre l'analyse financière. Bonne exploration ! 🚀",
+          },
+        },
+      ],
+    })
+
+    return tour
+  }
+
+  /**
    * Opportunities tour
    */
   const opportunitiesTour = (onComplete?: () => void): ReturnType<typeof driver> => {
@@ -380,6 +449,9 @@ export function useTour() {
         break
       case "institutions":
         tour = institutionsTour(onComplete)
+        break
+      case "institutionDetail":
+        tour = institutionDetailTour(onComplete)
         break
       case "opportunities":
         tour = opportunitiesTour(onComplete)

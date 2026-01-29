@@ -7,6 +7,7 @@ export enum DocumentVersionType {
   QUOTE_PDF = "quote_pdf",
   INVOICE_PDF = "invoice_pdf",
   ORDER_PDF = "order_pdf",
+  ENGAGEMENT_LETTER_PDF = "engagement_letter_pdf",
 }
 
 export interface DocumentVersionAttributes {

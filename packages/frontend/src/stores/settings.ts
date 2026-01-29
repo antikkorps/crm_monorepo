@@ -8,6 +8,7 @@ export interface FeatureFlags {
   contacts_enabled: boolean
   segmentation_enabled: boolean
   sage_enabled: boolean
+  engagement_letters_enabled: boolean
 }
 
 export interface SystemSettings {
@@ -33,6 +34,7 @@ export const useSettingsStore = defineStore("settings", {
       contacts_enabled: true,
       segmentation_enabled: true,
       sage_enabled: false,
+      engagement_letters_enabled: true,
     } as FeatureFlags,
     allSettings: [] as SystemSettings[],
     loading: false,
@@ -46,8 +48,9 @@ export const useSettingsStore = defineStore("settings", {
     isContactsEnabled: (state) => state.featureFlags.contacts_enabled,
     isSegmentationEnabled: (state) => state.featureFlags.segmentation_enabled,
     isSageEnabled: (state) => state.featureFlags.sage_enabled,
+    isEngagementLettersEnabled: (state) => state.featureFlags.engagement_letters_enabled,
     isBillingEnabled: (state) =>
-      state.featureFlags.quotes_enabled || state.featureFlags.invoices_enabled,
+      state.featureFlags.quotes_enabled || state.featureFlags.invoices_enabled || state.featureFlags.engagement_letters_enabled,
   },
 
   actions: {
@@ -93,6 +96,7 @@ export const useSettingsStore = defineStore("settings", {
           contacts_enabled: settingsMap["features.contacts_enabled"] ?? true,
           segmentation_enabled: settingsMap["features.segmentation_enabled"] ?? true,
           sage_enabled: settingsMap["features.sage_enabled"] ?? false,
+          engagement_letters_enabled: settingsMap["features.engagement_letters_enabled"] ?? true,
         }
 
         this.initialized = true

@@ -58,42 +58,43 @@ export class Invoice
   extends Model<InvoiceAttributes, InvoiceCreationAttributes>
   implements InvoiceAttributes
 {
-  public id!: string
-  public invoiceNumber!: string
-  public institutionId!: string
-  public assignedUserId!: string
-  public quoteId?: string
-  public templateId?: string
+  // Use 'declare' to avoid shadowing Sequelize's getters/setters
+  declare id: string
+  declare invoiceNumber: string
+  declare institutionId: string
+  declare assignedUserId: string
+  declare quoteId: string | undefined
+  declare templateId: string | undefined
 
-  public title!: string
-  public description?: string
-  public dueDate!: Date
-  public status!: InvoiceStatus
+  declare title: string
+  declare description: string | undefined
+  declare dueDate: Date
+  declare status: InvoiceStatus
 
   // Payment tracking
-  public totalPaid!: number
-  public remainingAmount!: number
-  public lastPaymentDate?: Date
+  declare totalPaid: number
+  declare remainingAmount: number
+  declare lastPaymentDate: Date | undefined
 
   // Financial totals
-  public subtotal!: number
-  public totalDiscountAmount!: number
-  public totalTaxAmount!: number
-  public total!: number
+  declare subtotal: number
+  declare totalDiscountAmount: number
+  declare totalTaxAmount: number
+  declare total: number
 
   // Metadata
-  public sentAt?: Date
-  public paidAt?: Date
-  public archived!: boolean
-  public readonly createdAt!: Date
-  public readonly updatedAt!: Date
+  declare sentAt: Date | undefined
+  declare paidAt: Date | undefined
+  declare archived: boolean
+  declare readonly createdAt: Date
+  declare readonly updatedAt: Date
 
-  // Associations
-  public lines?: any[]
-  public payments?: any[]
-  public institution?: MedicalInstitution
-  public assignedUser?: User
-  public quote?: Quote
+  // Associations - also use declare to avoid shadowing Sequelize's getters
+  declare lines?: any[]
+  declare payments?: any[]
+  declare institution?: MedicalInstitution
+  declare assignedUser?: User
+  declare quote?: Quote
 
   public static override associations: {
     lines: Association<Invoice, any>
@@ -439,23 +440,31 @@ export class Invoice
     return `${prefix}${timestamp}`
   }
 
-  public static async createInvoice(data: InvoiceCreationAttributes): Promise<Invoice> {
+  public static async createInvoice(
+    data: InvoiceCreationAttributes,
+    transaction?: any
+  ): Promise<Invoice> {
     let attempts = 0
     while (attempts < 5) {
       try {
         const invoiceNumber = await this.generateInvoiceNumber()
 
-        return await this.create({
-          ...data,
-          invoiceNumber,
-          status: InvoiceStatus.DRAFT,
-          totalPaid: 0,
-          remainingAmount: 0,
-          subtotal: 0,
-          totalDiscountAmount: 0,
-          totalTaxAmount: 0,
-          total: 0,
-        })
+        const invoice = await this.create(
+          {
+            ...data,
+            invoiceNumber,
+            status: InvoiceStatus.DRAFT,
+            totalPaid: 0,
+            remainingAmount: 0,
+            subtotal: 0,
+            totalDiscountAmount: 0,
+            totalTaxAmount: 0,
+            total: 0,
+          },
+          { transaction }
+        )
+
+        return invoice
       } catch (error: any) {
         // Check if it's a unique constraint violation on invoice_number
         if (error.code === '23505' && error.constraint?.includes('invoice_number')) {
@@ -473,10 +482,14 @@ export class Invoice
     throw new Error('Maximum retry attempts exceeded')
   }
 
-  public static async createFromQuote(quote: Quote): Promise<Invoice> {
+  public static async createFromQuote(
+    quote: Quote,
+    assignedUserId: string,
+    transaction?: any
+  ): Promise<Invoice> {
     const invoiceData: InvoiceCreationAttributes = {
       institutionId: quote.institutionId,
-      assignedUserId: quote.assignedUserId,
+      assignedUserId: assignedUserId,
       quoteId: quote.id,
       templateId: quote.templateId,
       title: quote.title,
@@ -484,26 +497,29 @@ export class Invoice
       dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
     }
 
-    const invoice = await this.createInvoice(invoiceData)
+    const invoice = await this.createInvoice(invoiceData, transaction)
 
     // Copy quote lines to invoice lines
-    const quoteLines = await quote.getLines()
+    const quoteLines = await quote.getLines(transaction)
     const { InvoiceLine } = require("./InvoiceLine")
     for (const quoteLine of quoteLines) {
-      await InvoiceLine.createLine({
-        invoiceId: invoice.id,
-        orderIndex: quoteLine.orderIndex,
-        description: quoteLine.description,
-        quantity: quoteLine.quantity,
-        unitPrice: quoteLine.unitPrice,
-        discountType: quoteLine.discountType,
-        discountValue: quoteLine.discountValue,
-        taxRate: quoteLine.taxRate,
-      })
+      await InvoiceLine.createLine(
+        {
+          invoiceId: invoice.id,
+          orderIndex: quoteLine.orderIndex,
+          description: quoteLine.description,
+          quantity: quoteLine.quantity,
+          unitPrice: quoteLine.unitPrice,
+          discountType: quoteLine.discountType,
+          discountValue: quoteLine.discountValue,
+          taxRate: quoteLine.taxRate,
+        },
+        transaction
+      )
     }
 
     // Recalculate totals
-    await invoice.recalculateTotals()
+    await invoice.recalculateTotals({ transaction })
 
     return invoice
   }

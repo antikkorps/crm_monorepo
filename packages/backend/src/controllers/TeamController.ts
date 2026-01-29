@@ -6,6 +6,7 @@ import { Note } from "../models/Note"
 import { Call } from "../models/Call"
 import { Meeting } from "../models/Meeting"
 import { MedicalInstitution } from "../models/MedicalInstitution"
+import { EngagementLetter } from "../models/EngagementLetter"
 import { createError } from "../utils/logger"
 import { Op } from "sequelize"
 
@@ -544,6 +545,62 @@ export class TeamController {
               note.creatorId
             )
           )
+        })
+      }
+
+      // Track engagement letters
+      if (!type || type === "all" || type === "engagement_letter") {
+        const engagementLetters = await EngagementLetter.findAll({
+          where: {
+            assignedUserId: { [Op.in]: memberIds },
+          },
+          include: [
+            {
+              model: User,
+              as: "assignedUser",
+              attributes: ["id", "firstName", "lastName", "avatarSeed"],
+            },
+            {
+              model: MedicalInstitution,
+              as: "institution",
+              attributes: ["id", "name"],
+            },
+          ],
+          order: [["createdAt", "DESC"]],
+          limit: limitNum,
+        })
+
+        engagementLetters.forEach((letter) => {
+          let activityType = "engagement_letter_created"
+          let description = `Created engagement letter "${letter.title}"`
+
+          if (letter.status === "completed") {
+            activityType = "engagement_letter_completed"
+            description = `Completed engagement letter "${letter.title}"`
+          } else if (letter.status === "accepted") {
+            activityType = "engagement_letter_accepted"
+            description = `Engagement letter "${letter.title}" accepted`
+          } else if (letter.status === "rejected") {
+            activityType = "engagement_letter_rejected"
+            description = `Engagement letter "${letter.title}" rejected`
+          } else if (letter.status === "sent") {
+            activityType = "engagement_letter_sent"
+            description = `Sent engagement letter "${letter.title}"`
+          }
+
+          activities.push({
+            id: `${activityType}_${letter.id}`,
+            type: activityType,
+            userId: letter.assignedUserId || "",
+            description,
+            timestamp: letter.createdAt,
+            user: letter.assignedUser,
+            metadata: {
+              ...(letter.institution && { institutionName: letter.institution.name }),
+              ...(letter.estimatedTotal && { amount: letter.estimatedTotal }),
+              letterNumber: letter.letterNumber,
+            },
+          })
         })
       }
 

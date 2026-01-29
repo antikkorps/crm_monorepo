@@ -30,12 +30,16 @@
 
         <v-row>
           <v-col cols="12">
-            <v-textarea
-              v-model="form.description"
-              :label="$t('catalog.form.description')"
-              variant="outlined"
-              rows="3"
-            />
+            <div class="description-field">
+              <label class="text-body-2 text-medium-emphasis mb-1 d-block">
+                {{ $t('catalog.form.description') }}
+              </label>
+              <RichTextEditor
+                v-model="form.description"
+                :placeholder="$t('catalog.form.descriptionPlaceholder')"
+                min-height="100px"
+              />
+            </div>
           </v-col>
         </v-row>
 
@@ -122,6 +126,7 @@
 import { ref, computed, watch, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useCatalogStore, type CatalogItem } from '@/stores/catalog'
+import RichTextEditor from '@/components/common/RichTextEditor.vue'
 
 interface Props {
   item?: CatalogItem | null

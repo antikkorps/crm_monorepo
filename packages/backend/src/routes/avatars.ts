@@ -2,7 +2,7 @@ import Router from "@koa/router"
 import { AvatarController } from "../controllers/AvatarController"
 import { authenticate } from "../middleware/auth"
 
-const router = new Router()
+const router = new Router({ prefix: "/api" })
 
 // Public route - no authentication required
 router.get("/avatars/:filename", AvatarController.getAvatar)

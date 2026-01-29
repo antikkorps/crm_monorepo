@@ -23,6 +23,9 @@
             :hint="t('billing.catalogSelector.searchHint')"
             density="compact"
           >
+            <template #selection="{ item }">
+              <span>{{ item.raw?.name || selectedItemName }}</span>
+            </template>
             <template #item="{ props, item }">
               <v-list-item v-bind="props">
                 <template #prepend>
@@ -32,7 +35,7 @@
                 </template>
                 <v-list-item-title>{{ item.raw.name }}</v-list-item-title>
                 <v-list-item-subtitle>
-                  {{ item.raw.description || t("billing.catalogSelector.noDescription") }}
+                  {{ getDisplayText(item.raw.description, 50) || t("billing.catalogSelector.noDescription") }}
                   •
                   <span class="font-weight-bold">{{
                     formatCurrency(item.raw.unitPrice)
@@ -72,6 +75,7 @@
 import { useCatalogStore, type CatalogItem } from "@/stores/catalog"
 import { onMounted, ref } from "vue"
 import { useI18n } from "vue-i18n"
+import { getDisplayText } from "@/utils/billing"
 
 const { t } = useI18n()
 
@@ -94,6 +98,7 @@ const emit = defineEmits<{
 // Catalog integration
 const catalogStore = useCatalogStore()
 const selectedItem = ref<string | null>(props.modelValue)
+const selectedItemName = ref<string>("")
 const catalogItems = ref<CatalogItem[]>([])
 const catalogLoading = ref(false)
 const catalogSearch = ref("")
@@ -123,6 +128,7 @@ const onItemSelect = async (itemId: string | null) => {
   emit("update:modelValue", itemId)
 
   if (!itemId) {
+    selectedItemName.value = ""
     emit("item-selected", null)
     isCustomLine.value = true
     emit("update:customLine", true)
@@ -132,6 +138,7 @@ const onItemSelect = async (itemId: string | null) => {
   try {
     const item = await catalogStore.getItemById(itemId)
     if (item) {
+      selectedItemName.value = item.name
       emit("item-selected", item)
       isCustomLine.value = false
       emit("update:customLine", false)
@@ -158,10 +165,31 @@ const formatCurrency = (amount: number) => {
   }).format(amount || 0)
 }
 
+// Load initial catalog item if there's a pre-selected value
+const loadInitialItem = async () => {
+  if (props.modelValue) {
+    try {
+      catalogLoading.value = true
+      const item = await catalogStore.getItemById(props.modelValue)
+      if (item) {
+        // Store the name for display and add item to the list
+        selectedItemName.value = item.name
+        catalogItems.value = [item]
+      }
+    } catch (error) {
+      console.error("Error loading initial catalog item:", error)
+    } finally {
+      catalogLoading.value = false
+    }
+  }
+}
+
 // Load active catalog items on mount
 onMounted(async () => {
   try {
     await catalogStore.fetchItems({ isActive: "true", limit: 100 })
+    // Load initial item if pre-selected (for editing existing quotes)
+    await loadInitialItem()
   } catch (error) {
     console.error("Error loading catalog items:", error)
   }

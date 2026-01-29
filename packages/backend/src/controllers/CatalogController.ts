@@ -230,7 +230,9 @@ export class CatalogController {
       }
 
       // Check SKU uniqueness if provided and different from current
-      if (sku && sku !== item.sku) {
+      // Use get() to avoid class field shadowing Sequelize getter
+      const currentSku = item.get('sku') as string | null
+      if (sku && sku !== currentSku) {
         const existingItem = await CatalogItem.findOne({ where: { sku } })
         if (existingItem) {
           ctx.status = 400

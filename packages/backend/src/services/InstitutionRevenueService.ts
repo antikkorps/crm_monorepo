@@ -1,8 +1,16 @@
 import { Op } from "sequelize"
 import { Invoice } from "../models/Invoice"
 import { Quote } from "../models/Quote"
+import { EngagementLetter } from "../models/EngagementLetter"
+import { SimplifiedTransaction } from "../models/SimplifiedTransaction"
 import { MedicalInstitution } from "../models/MedicalInstitution"
-import { InvoiceStatus, QuoteStatus } from "@medical-crm/shared"
+import {
+  InvoiceStatus,
+  QuoteStatus,
+  EngagementLetterStatus,
+  SimplifiedTransactionType,
+  SimplifiedTransactionStatus,
+} from "@medical-crm/shared"
 
 /**
  * Revenue Analytics Response Interface
@@ -16,10 +24,16 @@ export interface InstitutionRevenueAnalytics {
     overdueRevenue: number // Overdue invoices
     totalQuotes: number
     acceptedQuotes: number
+    totalEngagementLetters: number
+    acceptedEngagementLetters: number
+    totalSimplifiedTransactions: number
     conversionRate: number // % of quotes accepted
+    engagementLetterConversionRate: number // % of engagement letters accepted
     averageInvoiceValue: number
     averageQuoteValue: number
+    averageEngagementLetterValue: number
     lifetimeValue: number // LTV = totalRevenue
+    externalInvoicesRevenue: number // Revenue from external invoices (simplified)
   }
   quoteAnalytics: {
     totalQuotes: number
@@ -38,6 +52,26 @@ export interface InstitutionRevenueAnalytics {
     totalInvoiceValue: number
     paidValue: number
     pendingValue: number
+  }
+  engagementLetterAnalytics: {
+    totalEngagementLetters: number
+    acceptedEngagementLetters: number
+    sentEngagementLetters: number
+    rejectedEngagementLetters: number
+    completedEngagementLetters: number
+    totalEngagementLetterValue: number
+    acceptedEngagementLetterValue: number
+  }
+  simplifiedTransactionAnalytics: {
+    total: number
+    byType: {
+      quotes: number
+      invoices: number
+      engagementLetters: number
+      contracts: number
+    }
+    totalValue: number
+    paidInvoicesValue: number
   }
 }
 
@@ -74,6 +108,18 @@ export class InstitutionRevenueService {
       attributes: ["id", "invoiceNumber", "status", "total", "totalPaid", "dueDate", "createdAt"],
     })
 
+    // Fetch all engagement letters for this institution
+    const engagementLetters = await EngagementLetter.findAll({
+      where: { institutionId: institutionId },
+      attributes: ["id", "letterNumber", "status", "estimatedTotal", "createdAt"],
+    })
+
+    // Fetch all simplified transactions (external references) for this institution
+    const simplifiedTransactions = await SimplifiedTransaction.findAll({
+      where: { institutionId: institutionId },
+      attributes: ["id", "type", "status", "amountHt", "amountTtc", "paymentStatus", "createdAt"],
+    })
+
     // Calculate quote analytics
     const quoteAnalytics = {
       totalQuotes: quotes.length,
@@ -84,6 +130,19 @@ export class InstitutionRevenueService {
       acceptedQuoteValue: quotes
         .filter((q) => q.status === QuoteStatus.ACCEPTED)
         .reduce((sum, q) => sum + parseFloat(q.total.toString()), 0),
+    }
+
+    // Calculate engagement letter analytics
+    const engagementLetterAnalytics = {
+      totalEngagementLetters: engagementLetters.length,
+      acceptedEngagementLetters: engagementLetters.filter((el) => el.status === EngagementLetterStatus.ACCEPTED).length,
+      sentEngagementLetters: engagementLetters.filter((el) => el.status === EngagementLetterStatus.SENT).length,
+      rejectedEngagementLetters: engagementLetters.filter((el) => el.status === EngagementLetterStatus.REJECTED).length,
+      completedEngagementLetters: engagementLetters.filter((el) => el.status === EngagementLetterStatus.COMPLETED).length,
+      totalEngagementLetterValue: engagementLetters.reduce((sum, el) => sum + parseFloat(el.estimatedTotal?.toString() || "0"), 0),
+      acceptedEngagementLetterValue: engagementLetters
+        .filter((el) => el.status === EngagementLetterStatus.ACCEPTED || el.status === EngagementLetterStatus.COMPLETED)
+        .reduce((sum, el) => sum + parseFloat(el.estimatedTotal?.toString() || "0"), 0),
     }
 
     // Calculate invoice analytics
@@ -127,11 +186,41 @@ export class InstitutionRevenueService {
         ? (quoteAnalytics.acceptedQuotes / quoteAnalytics.totalQuotes) * 100
         : 0
 
+    const engagementLetterConversionRate =
+      engagementLetterAnalytics.totalEngagementLetters > 0
+        ? (engagementLetterAnalytics.acceptedEngagementLetters / engagementLetterAnalytics.totalEngagementLetters) * 100
+        : 0
+
     const averageInvoiceValue =
       invoices.length > 0 ? invoiceAnalytics.totalInvoiceValue / invoices.length : 0
 
     const averageQuoteValue =
       quotes.length > 0 ? quoteAnalytics.totalQuoteValue / quotes.length : 0
+
+    const averageEngagementLetterValue =
+      engagementLetters.length > 0 ? engagementLetterAnalytics.totalEngagementLetterValue / engagementLetters.length : 0
+
+    // Calculate simplified transaction analytics
+    const simplifiedTransactionAnalytics = {
+      total: simplifiedTransactions.length,
+      byType: {
+        quotes: simplifiedTransactions.filter((t) => t.type === SimplifiedTransactionType.QUOTE).length,
+        invoices: simplifiedTransactions.filter((t) => t.type === SimplifiedTransactionType.INVOICE).length,
+        engagementLetters: simplifiedTransactions.filter((t) => t.type === SimplifiedTransactionType.ENGAGEMENT_LETTER).length,
+        contracts: simplifiedTransactions.filter((t) => t.type === SimplifiedTransactionType.CONTRACT).length,
+      },
+      totalValue: simplifiedTransactions.reduce((sum, t) => sum + parseFloat(t.amountTtc?.toString() || "0"), 0),
+      paidInvoicesValue: simplifiedTransactions
+        .filter(
+          (t) =>
+            t.type === SimplifiedTransactionType.INVOICE &&
+            (t.status === SimplifiedTransactionStatus.PAID || t.paymentStatus === "paid")
+        )
+        .reduce((sum, t) => sum + parseFloat(t.amountTtc?.toString() || "0"), 0),
+    }
+
+    // External invoices that are marked as paid
+    const externalInvoicesRevenue = simplifiedTransactionAnalytics.paidInvoicesValue
 
     return {
       institutionId,
@@ -142,13 +231,21 @@ export class InstitutionRevenueService {
         overdueRevenue: Math.round(overdueRevenue * 100) / 100,
         totalQuotes: quoteAnalytics.totalQuotes,
         acceptedQuotes: quoteAnalytics.acceptedQuotes,
+        totalEngagementLetters: engagementLetterAnalytics.totalEngagementLetters,
+        acceptedEngagementLetters: engagementLetterAnalytics.acceptedEngagementLetters,
+        totalSimplifiedTransactions: simplifiedTransactionAnalytics.total,
         conversionRate: Math.round(conversionRate * 100) / 100,
+        engagementLetterConversionRate: Math.round(engagementLetterConversionRate * 100) / 100,
         averageInvoiceValue: Math.round(averageInvoiceValue * 100) / 100,
         averageQuoteValue: Math.round(averageQuoteValue * 100) / 100,
-        lifetimeValue: Math.round(totalRevenue * 100) / 100,
+        averageEngagementLetterValue: Math.round(averageEngagementLetterValue * 100) / 100,
+        lifetimeValue: Math.round((totalRevenue + externalInvoicesRevenue) * 100) / 100,
+        externalInvoicesRevenue: Math.round(externalInvoicesRevenue * 100) / 100,
       },
       quoteAnalytics,
       invoiceAnalytics,
+      engagementLetterAnalytics,
+      simplifiedTransactionAnalytics,
     }
   }
 }

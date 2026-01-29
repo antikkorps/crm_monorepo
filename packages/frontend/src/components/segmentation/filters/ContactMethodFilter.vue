@@ -8,8 +8,9 @@
       item-value="value"
       multiple
       chips
-      outlined
-      dense
+      closable-chips
+      variant="outlined"
+      density="compact"
       class="mb-3"
     />
     <v-btn
@@ -18,7 +19,7 @@
       :disabled="selectedMethods.length === 0"
       class="mt-2"
     >
-      <v-icon left>mdi-plus</v-icon>
+      <v-icon start>mdi-plus</v-icon>
       {{ $t('segmentation.filters.addFilter') }}
     </v-btn>
   </div>
@@ -58,7 +59,7 @@ const contactMethodOptions = [
 const addFilter = () => {
   if (selectedMethods.value.length === 0) return
 
-  const methodLabels = selectedMethods.value.map(method => 
+  const methodLabels = selectedMethods.value.map(method =>
     contactMethodOptions.find(opt => opt.value === method)?.label || method
   ).join(', ')
 

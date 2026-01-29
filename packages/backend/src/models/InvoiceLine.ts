@@ -51,34 +51,35 @@ export class InvoiceLine
   extends Model<InvoiceLineAttributes, InvoiceLineCreationAttributes>
   implements InvoiceLineAttributes
 {
-  public id!: string
-  public invoiceId!: string
-  public orderIndex!: number
+  // Use 'declare' to avoid shadowing Sequelize's getters/setters
+  declare id: string
+  declare invoiceId: string
+  declare orderIndex: number
 
   // Product/Service details
-  public description!: string
-  public quantity!: number
-  public unitPrice!: number
+  declare description: string
+  declare quantity: number
+  declare unitPrice: number
 
   // Discount per line
-  public discountType!: DiscountType
-  public discountValue!: number
-  public discountAmount!: number
+  declare discountType: DiscountType
+  declare discountValue: number
+  declare discountAmount: number
 
   // Tax per line
-  public taxRate!: number
-  public taxAmount!: number
+  declare taxRate: number
+  declare taxAmount: number
 
   // Calculated totals
-  public subtotal!: number
-  public totalAfterDiscount!: number
-  public total!: number
+  declare subtotal: number
+  declare totalAfterDiscount: number
+  declare total: number
 
-  public readonly createdAt!: Date
-  public readonly updatedAt!: Date
+  declare readonly createdAt: Date
+  declare readonly updatedAt: Date
 
   // Associations
-  public invoice?: any
+  declare invoice?: any
 
   public static override associations: {
     invoice: Association<InvoiceLine, any>
@@ -143,7 +144,8 @@ export class InvoiceLine
 
   // Static methods
   public static async createLine(
-    data: InvoiceLineCreationAttributes
+    data: InvoiceLineCreationAttributes,
+    transaction?: any
   ): Promise<InvoiceLine> {
     // Validate that invoiceId is provided and not empty
     if (!data.invoiceId || data.invoiceId.trim() === '') {
@@ -162,12 +164,13 @@ export class InvoiceLine
     if (lineData.orderIndex === undefined) {
       const maxOrderIndex = (await this.max("orderIndex", {
         where: { invoiceId: data.invoiceId },
+        transaction,
       })) as number | null
       lineData.orderIndex = (maxOrderIndex || 0) + 1
     }
 
     // Create the line directly instead of using build + save
-    const line = await this.create(lineData)
+    const line = await this.create(lineData, { transaction })
 
     return line
   }

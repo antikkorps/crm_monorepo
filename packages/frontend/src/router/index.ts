@@ -7,16 +7,19 @@ import { createRouter, createWebHistory } from "vue-router"
 const Landing = () => import("@/views/LandingView.vue")
 const Login = () => import("@/views/auth/LoginView.vue")
 const ForgotPassword = () => import("@/views/auth/ForgotPasswordView.vue")
+const Invitation = () => import("@/views/auth/InvitationView.vue")
 const Dashboard = () => import("@/views/DashboardView.vue")
 const MedicalInstitutions = () =>
   import("@/views/institutions/MedicalInstitutionsView.vue")
 const InstitutionDetail = () => import("@/views/institutions/InstitutionDetailView.vue")
 const Tasks = () => import("@/views/tasks/TasksView.vue")
 const Quotes = () => import("@/views/billing/QuotesView.vue")
+const EngagementLetters = () => import("@/views/billing/EngagementLettersView.vue")
 const Invoices = () => import("@/views/billing/InvoicesView.vue")
 const InvoiceDetail = () => import("@/views/billing/InvoiceDetailView.vue")
 const Team = () => import("@/views/team/TeamView.vue")
 const TeamDetail = () => import("@/views/team/TeamDetailView.vue")
+const Users = () => import("@/views/users/UsersView.vue")
 const Profile = () => import("@/views/profile/ProfileView.vue")
 const Notifications = () => import("@/views/notifications/NotificationsView.vue")
 const Templates = () => import("@/views/templates/TemplatesView.vue")
@@ -60,6 +63,15 @@ const routes: RouteRecordRaw[] = [
     path: "/forgot-password",
     name: "ForgotPassword",
     component: ForgotPassword,
+    meta: {
+      requiresAuth: false,
+      layout: "auth",
+    },
+  },
+  {
+    path: "/invitation",
+    name: "Invitation",
+    component: Invitation,
     meta: {
       requiresAuth: false,
       layout: "auth",
@@ -111,6 +123,15 @@ const routes: RouteRecordRaw[] = [
     },
   },
   {
+    path: "/engagement-letters",
+    name: "EngagementLetters",
+    component: EngagementLetters,
+    meta: {
+      requiresAuth: true,
+      title: "Lettres de Mission",
+    },
+  },
+  {
     path: "/invoices",
     name: "Invoices",
     component: Invoices,
@@ -139,12 +160,22 @@ const routes: RouteRecordRaw[] = [
     props: (route) => ({ ...route.params, editMode: true }),
   },
   {
+    path: "/users",
+    name: "Users",
+    component: Users,
+    meta: {
+      requiresAuth: true,
+      title: "Users Management",
+      requiredRoles: ["super_admin", "team_admin"],
+    },
+  },
+  {
     path: "/team",
     name: "Team",
     component: Team,
     meta: {
       requiresAuth: true,
-      title: "Team",
+      title: "Équipe",
     },
   },
   {

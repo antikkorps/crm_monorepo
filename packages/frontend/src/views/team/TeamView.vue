@@ -355,6 +355,44 @@
         @cancel="showEditUserDialog = false"
       />
 
+      <!-- Invitation Confirmation Dialog -->
+      <v-dialog v-model="showInvitationDialog" max-width="450px" persistent>
+        <v-card>
+          <v-card-title class="d-flex align-center">
+            <v-icon color="success" class="mr-2">mdi-check-circle</v-icon>
+            {{ t("teams.userCreatedSuccess") }}
+          </v-card-title>
+
+          <v-card-text>
+            <p class="mb-4">
+              {{ t("teams.invitationPrompt", { name: newlyCreatedUser?.firstName + " " + newlyCreatedUser?.lastName, email: newlyCreatedUser?.email }) }}
+            </p>
+            <v-alert type="info" variant="tonal" density="compact">
+              {{ t("teams.invitationInfo") }}
+            </v-alert>
+          </v-card-text>
+
+          <v-card-actions>
+            <v-spacer />
+            <v-btn
+              variant="text"
+              @click="closeInvitationDialog"
+            >
+              {{ t("common.later") }}
+            </v-btn>
+            <v-btn
+              color="primary"
+              variant="elevated"
+              :loading="sendingInvitation"
+              prepend-icon="mdi-email-fast"
+              @click="sendInvitation"
+            >
+              {{ t("auth.invitation.sendInvitation") }}
+            </v-btn>
+          </v-card-actions>
+        </v-card>
+      </v-dialog>
+
       <!-- User Management Dialog -->
       <v-dialog v-model="showManageUserDialog" max-width="500px" persistent>
         <v-card>
@@ -435,11 +473,9 @@
       <!-- Password Reset Dialog -->
       <PasswordResetDialog
         v-model="showPasswordResetDialog"
-        :user-id="selectedUser?.id || ''"
-        :user-name="`${selectedUser?.firstName || ''} ${selectedUser?.lastName || ''}`"
+        :user="selectedUser"
         :loading="passwordResetLoading"
-        @submit="resetUserPassword"
-        @cancel="showPasswordResetDialog = false"
+        @reset="resetUserPassword"
       />
 
       <!-- Create Team Dialog -->
@@ -515,6 +551,9 @@ const showCreateUserDialog = ref(false)
 const showEditUserDialog = ref(false)
 const showManageUserDialog = ref(false)
 const showPasswordResetDialog = ref(false)
+const showInvitationDialog = ref(false)
+const newlyCreatedUser = ref<User | null>(null)
+const sendingInvitation = ref(false)
 const showCreateTeamDialog = ref(false)
 const showEditTeamDialog = ref(false)
 const showAddMemberDialog = ref(false)
@@ -760,9 +799,17 @@ const createUser = async (userData: UserCreationAttributes | UserUpdateAttribute
       showSnackbar(t("teams.passwordRequired"), "error")
       return
     }
-    await usersApi.create(userData as UserCreationAttributes)
+    const response = await usersApi.create(userData as UserCreationAttributes) as ApiResponse<{ user: User }>
     showCreateUserDialog.value = false
-    showSnackbar(t("teams.userCreatedSuccess"), "success")
+
+    // Store the newly created user and show invitation dialog
+    if (response?.data?.user) {
+      newlyCreatedUser.value = response.data.user
+      showInvitationDialog.value = true
+    } else {
+      showSnackbar(t("teams.userCreatedSuccess"), "success")
+    }
+
     await loadTeamData()
   } catch (error: any) {
     const message = error?.message || t("teams.errorCreatingUser")
@@ -770,6 +817,29 @@ const createUser = async (userData: UserCreationAttributes | UserUpdateAttribute
   } finally {
     formLoading.value = false
   }
+}
+
+const sendInvitation = async () => {
+  if (!newlyCreatedUser.value) return
+
+  try {
+    sendingInvitation.value = true
+    await usersApi.sendInvitation(newlyCreatedUser.value.id)
+    showSnackbar(t("auth.invitation.invitationSent"), "success")
+    showInvitationDialog.value = false
+    newlyCreatedUser.value = null
+  } catch (error: any) {
+    const message = error?.message || t("auth.invitation.invitationError")
+    showSnackbar(message, "error")
+  } finally {
+    sendingInvitation.value = false
+  }
+}
+
+const closeInvitationDialog = () => {
+  showInvitationDialog.value = false
+  newlyCreatedUser.value = null
+  showSnackbar(t("teams.userCreatedSuccess"), "success")
 }
 
 const editUser = (user: User) => {
@@ -834,10 +904,12 @@ const openPasswordResetDialog = (user: User) => {
   showPasswordResetDialog.value = true
 }
 
-const resetUserPassword = async (userId: string, newPassword: string) => {
+const resetUserPassword = async (newPassword: string) => {
+  if (!selectedUser.value) return
+
   try {
     passwordResetLoading.value = true
-    await usersApi.resetPassword(userId, newPassword)
+    await usersApi.resetPassword(selectedUser.value.id, newPassword)
     showPasswordResetDialog.value = false
     selectedUser.value = null
     showSnackbar("Password reset successfully", "success")

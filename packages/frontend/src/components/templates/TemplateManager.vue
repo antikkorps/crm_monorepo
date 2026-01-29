@@ -7,19 +7,48 @@
           {{ t('templates.subtitle') }}
         </p>
       </div>
-      <div class="header-actions">
-        <v-btn
-          color="primary"
-          prepend-icon="mdi-plus"
-          variant="elevated"
-          @click="showCreateDialog = true"
-        >
-          {{ t('templates.createTemplate') }}
-        </v-btn>
-      </div>
     </div>
 
-    <div class="template-filters">
+    <!-- Tabs for switching between template types -->
+    <v-tabs v-model="activeTab" class="mb-4" color="primary" grow>
+      <v-tab value="documents">
+        <v-icon start size="small">mdi-file-document-outline</v-icon>
+        <span class="d-none d-sm-inline">{{ t('templates.tabs.documents') }}</span>
+        <span class="d-sm-none">{{ t('templates.tabs.documentsShort') }}</span>
+      </v-tab>
+      <v-tab value="cgv">
+        <v-icon start size="small">mdi-scale-balance</v-icon>
+        <span class="d-none d-sm-inline">{{ t('templates.tabs.cgv') }}</span>
+        <span class="d-sm-none">{{ t('templates.tabs.cgvShort') }}</span>
+      </v-tab>
+    </v-tabs>
+
+    <v-window v-model="activeTab">
+      <!-- Document Templates Tab -->
+      <v-window-item value="documents">
+        <div class="header-actions mb-4 d-none d-md-flex">
+          <v-btn
+            color="primary"
+            prepend-icon="mdi-plus"
+            variant="elevated"
+            @click="showCreateDialog = true"
+          >
+            {{ t('templates.createTemplate') }}
+          </v-btn>
+        </div>
+
+        <!-- Mobile FAB for documents -->
+        <v-btn
+          v-if="$vuetify.display.smAndDown && activeTab === 'documents'"
+          color="primary"
+          icon="mdi-plus"
+          size="large"
+          class="fab-add"
+          position="fixed"
+          @click="showCreateDialog = true"
+        />
+
+        <div class="template-filters">
       <v-card variant="outlined">
         <v-card-text class="pa-4">
           <v-row dense>
@@ -91,6 +120,13 @@
         />
       </div>
     </div>
+      </v-window-item>
+
+      <!-- CGV Templates Tab - lazy loaded -->
+      <v-window-item value="cgv">
+        <CgvTemplateManager v-if="activeTab === 'cgv'" />
+      </v-window-item>
+    </v-window>
 
     <!-- Create/Edit Template Dialog -->
     <TemplateForm
@@ -158,11 +194,15 @@ import type { DocumentTemplate, TemplateType } from "@medical-crm/shared"
 import { computed, onMounted, ref } from "vue"
 import { useI18n } from "vue-i18n"
 import { templatesApi } from "../../services/api"
+import CgvTemplateManager from "./CgvTemplateManager.vue"
 import TemplateCard from "./TemplateCard.vue"
 import TemplateForm from "./TemplateForm.vue"
 import TemplatePreview from "./TemplatePreview.vue"
 
 const { t } = useI18n()
+
+// Tab state
+const activeTab = ref("documents")
 
 // Reactive state
 const templates = ref<DocumentTemplate[]>([])
@@ -340,7 +380,14 @@ onMounted(() => {
 }
 
 .header-actions {
-  flex-shrink: 0;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.fab-add {
+  bottom: 80px;
+  right: 16px;
+  z-index: 100;
 }
 
 .template-filters {

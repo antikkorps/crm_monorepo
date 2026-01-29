@@ -15,9 +15,11 @@ import avatarRoutes from "./routes/avatars"
 import billingAnalyticsRoutes from "./routes/billing-analytics"
 import callRoutes from "./routes/calls"
 import catalogRoutes from "./routes/catalog"
+import cgvTemplateRoutes from "./routes/cgv-templates"
 import contactRoutes from "./routes/contacts"
 import dashboardRoutes from "./routes/dashboard"
 import digiformaRoutes from "./routes/digiforma"
+import engagementLetterRoutes from "./routes/engagement-letters"
 import exportRoutes from "./routes/export"
 import filterOptionsRoutes from "./routes/filterOptions"
 import importRoutes from "./routes/import"
@@ -35,6 +37,7 @@ import sageRoutes from "./routes/sage"
 import securityLogRoutes from "./routes/security-logs"
 import segmentRoutes from "./routes/segments"
 import settingsRoutes from "./routes/settings"
+import simplifiedTransactionRoutes from "./routes/simplified-transactions"
 import socketRoutes from "./routes/socket"
 import taskRoutes from "./routes/tasks"
 import teamRoutes from "./routes/teams"
@@ -165,6 +168,10 @@ export const createApp = (): Koa => {
   app.use(catalogRoutes.routes())
   app.use(catalogRoutes.allowedMethods())
 
+  // Apply CGV template routes
+  app.use(cgvTemplateRoutes.routes())
+  app.use(cgvTemplateRoutes.allowedMethods())
+
   // Apply contact routes
   app.use(contactRoutes.routes())
   app.use(contactRoutes.allowedMethods())
@@ -196,6 +203,10 @@ export const createApp = (): Koa => {
   // Apply quote routes
   app.use(quoteRoutes.routes())
   app.use(quoteRoutes.allowedMethods())
+
+  // Apply engagement letter routes
+  app.use(engagementLetterRoutes.routes())
+  app.use(engagementLetterRoutes.allowedMethods())
 
   // Apply reminder routes
   app.use(reminderRoutes.routes())
@@ -268,6 +279,10 @@ export const createApp = (): Koa => {
   // Apply settings routes
   app.use(settingsRoutes.routes())
   app.use(settingsRoutes.allowedMethods())
+
+  // Apply simplified transaction routes
+  app.use(simplifiedTransactionRoutes.routes())
+  app.use(simplifiedTransactionRoutes.allowedMethods())
 
   // 404 handler
   app.use(async (ctx) => {

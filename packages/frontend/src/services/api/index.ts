@@ -9,6 +9,9 @@ export interface LoginCredentials {
 const API_BASE_URL = import.meta.env.VITE_API_URL || "/api"
 console.log("API_BASE_URL:", API_BASE_URL)
 
+// Flag to prevent multiple redirects when multiple 401 errors occur simultaneously
+let isRedirectingToLogin = false
+
 class ApiClient {
   private baseURL: string
 
@@ -33,7 +36,10 @@ class ApiClient {
     if (!response.ok) {
       if (response.status === 401) {
         localStorage.removeItem("token")
-        window.location.href = "/login"
+        if (!isRedirectingToLogin) {
+          isRedirectingToLogin = true
+          window.location.href = "/login"
+        }
         throw new Error("Unauthorized")
       }
       // Try to extract error message from JSON body if available
@@ -101,8 +107,31 @@ class ApiClient {
     if (!response.ok) {
       if (response.status === 401) {
         localStorage.removeItem("token")
-        window.location.href = "/login"
+        if (!isRedirectingToLogin) {
+          isRedirectingToLogin = true
+          window.location.href = "/login"
+        }
         throw new Error("Unauthorized")
+      }
+      // Try to extract error message from JSON body if available
+      try {
+        const contentType = response.headers.get("content-type") || ""
+        if (contentType.includes("application/json")) {
+          const errJson = await response.json().catch(() => null)
+          const serverMsg = errJson?.error?.message || errJson?.message || null
+          if (serverMsg) {
+            const e = new Error(serverMsg)
+            ;(e as any).status = response.status
+            ;(e as any).code = errJson?.error?.code || errJson?.code
+            throw e
+          }
+        }
+      } catch (innerErr) {
+        // If we already created an error with server message, rethrow it
+        if (innerErr instanceof Error && (innerErr as any).status) {
+          throw innerErr
+        }
+        // Otherwise fallthrough to generic error
       }
       throw new Error(`HTTP error! status: ${response.status}`)
     }
@@ -344,6 +373,7 @@ export const quotesApi = {
   reject: (id: string) => apiClient.put(`/quotes/${id}/reject`),
   cancel: (id: string) => apiClient.put(`/quotes/${id}/cancel`),
   order: (id: string) => apiClient.put(`/quotes/${id}/order`),
+  convertToInvoice: (id: string) => apiClient.post(`/quotes/${id}/convert-to-invoice`),
 
   // Quote lines
   lines: {
@@ -546,6 +576,8 @@ export const usersApi = {
     apiClient.post(`/users/${userId}/reset-password`, { newPassword }),
   assignTerritory: (userId: string, institutionIds: string[]) =>
     apiClient.post(`/users/${userId}/territory`, { institutionIds }),
+  sendInvitation: (userId: string) =>
+    apiClient.post(`/users/${userId}/send-invitation`, {}),
 }
 
 export const templatesApi = {
@@ -648,6 +680,9 @@ export const catalogApi = {
 // Export Digiforma API
 export { digiformaApi } from './digiforma'
 
+// Export Engagement Letters API
+export { engagementLettersApi } from './engagement-letters'
+
 // Export Dashboard API
 export { dashboardApi } from './dashboard'
 
@@ -672,6 +707,9 @@ export { opportunitiesApi } from './opportunities'
 // Export Revenue API
 export { revenueApi } from './revenue'
 
+// Export Simplified Transactions API
+export { simplifiedTransactionsApi } from './simplified-transactions'
+
 // Export Timeline API
 export { timelineApi } from './timeline'
 
@@ -683,6 +721,9 @@ export { healthScoreApi } from './healthScore'
 
 // Export Teams API
 export { teamsApi } from './teams'
+
+// Export Filter Options API
+export { filterOptionsApi } from './filterOptions'
 
 // System Settings API
 export const settingsApi = {

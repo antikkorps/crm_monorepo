@@ -114,6 +114,7 @@
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import type { CatalogItem } from '@/stores/catalog'
+import { getDisplayText } from '@/utils/billing'
 
 interface Props {
   item: CatalogItem
@@ -131,10 +132,7 @@ defineEmits<Emits>()
 const { t } = useI18n()
 
 const truncatedDescription = computed(() => {
-  if (!props.item.description) return ''
-  return props.item.description.length > 100
-    ? props.item.description.substring(0, 100) + '...'
-    : props.item.description
+  return getDisplayText(props.item.description, 100)
 })
 
 const creatorName = computed(() => {

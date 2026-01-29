@@ -1,55 +1,47 @@
 <template>
   <div class="location-filter">
-    <v-select
-      v-model="country"
-      :items="countryOptions"
-      :label="$t('segmentation.filters.location.country')"
-      item-title="label"
-      item-value="value"
-      outlined
-      dense
-      class="mb-3"
-      @update:modelValue="onCountryChange"
-    />
-    <v-select
-      v-model="region"
-      :items="regionOptions"
+    <v-autocomplete
+      v-model="selectedState"
+      :items="stateOptions"
       :label="$t('segmentation.filters.location.region')"
       item-title="label"
       item-value="value"
-      outlined
-      dense
+      variant="outlined"
+      density="compact"
+      clearable
+      :loading="loadingStates"
+      :no-data-text="$t('segmentation.filters.location.noStates')"
       class="mb-3"
-      :disabled="!country"
-      @update:modelValue="onRegionChange"
     />
-    <v-select
-      v-model="city"
+    <v-autocomplete
+      v-model="selectedCity"
       :items="cityOptions"
       :label="$t('segmentation.filters.location.city')"
       item-title="label"
       item-value="value"
-      outlined
-      dense
-      class="mb-3"
-      :disabled="!country"
+      variant="outlined"
+      density="compact"
       clearable
+      :loading="loadingCities"
+      :no-data-text="$t('segmentation.filters.location.noCities')"
+      class="mb-3"
     />
     <v-btn
       color="primary"
       @click="addFilter"
-      :disabled="!country"
+      :disabled="!selectedState && !selectedCity"
       class="mt-2"
     >
-      <v-icon left>mdi-plus</v-icon>
+      <v-icon start>mdi-plus</v-icon>
       {{ $t('segmentation.filters.addFilter') }}
     </v-btn>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { filterOptionsApi } from '@/services/api'
 
 const { t } = useI18n()
 
@@ -66,118 +58,69 @@ const emit = defineEmits<{
 }>()
 
 // Reactive data
-const country = ref<string>('')
-const region = ref<string>('')
-const city = ref<string>('')
+const selectedState = ref<string>('')
+const selectedCity = ref<string>('')
+const stateOptions = ref<Array<{ value: string; label: string }>>([])
+const cityOptions = ref<Array<{ value: string; label: string }>>([])
+const loadingStates = ref(false)
+const loadingCities = ref(false)
 
-// Mock location data - in real implementation, this would come from API
-const countryOptions = [
-  { value: 'us', label: t('segmentation.filters.location.countries.us') },
-  { value: 'ca', label: t('segmentation.filters.location.countries.ca') },
-  { value: 'fr', label: t('segmentation.filters.location.countries.fr') }
-]
-
-const regionOptions = computed(() => {
-  if (!country.value) return []
-  
-  const regions: Record<string, Array<{ value: string; label: string }>> = {
-    us: [
-      { value: 'ca', label: 'California' },
-      { value: 'ny', label: 'New York' },
-      { value: 'tx', label: 'Texas' }
-    ],
-    ca: [
-      { value: 'on', label: 'Ontario' },
-      { value: 'qc', label: 'Quebec' },
-      { value: 'bc', label: 'British Columbia' }
-    ],
-    fr: [
-      { value: 'idf', label: 'Île-de-France' },
-      { value: 'paca', label: 'Provence-Alpes-Côte d\'Azur' },
-      { value: 'auv', label: 'Auvergne-Rhône-Alpes' }
-    ]
-  }
-  
-  return regions[country.value] || []
+// Load options from API on mount
+onMounted(async () => {
+  await Promise.all([loadStates(), loadCities()])
 })
 
-const cityOptions = computed(() => {
-  if (!country.value) return []
-  
-  const cities: Record<string, Array<{ value: string; label: string }>> = {
-    us: [
-      { value: 'la', label: 'Los Angeles' },
-      { value: 'sf', label: 'San Francisco' },
-      { value: 'nyc', label: 'New York City' },
-      { value: 'buffalo', label: 'Buffalo' },
-      { value: 'houston', label: 'Houston' },
-      { value: 'chicago', label: 'Chicago' }
-    ],
-    ca: [
-      { value: 'toronto', label: 'Toronto' },
-      { value: 'ottawa', label: 'Ottawa' },
-      { value: 'vancouver', label: 'Vancouver' },
-      { value: 'montreal', label: 'Montreal' }
-    ],
-    fr: [
-      { value: 'paris', label: 'Paris' },
-      { value: 'versailles', label: 'Versailles' },
-      { value: 'lyon', label: 'Lyon' },
-      { value: 'marseille', label: 'Marseille' },
-      { value: 'nice', label: 'Nice' }
-    ]
+const loadStates = async () => {
+  loadingStates.value = true
+  try {
+    const response = await filterOptionsApi.getStates()
+    const states = response.data || []
+
+    stateOptions.value = states.map((state: string) => ({
+      value: state,
+      label: state
+    }))
+  } catch (error) {
+    console.error('Error loading states:', error)
+    stateOptions.value = []
+  } finally {
+    loadingStates.value = false
   }
-  
-  return cities[country.value] || []
-})
+}
+
+const loadCities = async () => {
+  loadingCities.value = true
+  try {
+    const response = await filterOptionsApi.getCities()
+    const cities = response.data || []
+
+    cityOptions.value = cities.map((city: string) => ({
+      value: city,
+      label: city
+    }))
+  } catch (error) {
+    console.error('Error loading cities:', error)
+    cityOptions.value = []
+  } finally {
+    loadingCities.value = false
+  }
+}
 
 // Methods
-const onCountryChange = () => {
-  region.value = ''
-  city.value = ''
-}
-
-const onRegionChange = () => {
-  // Don't clear city when region changes to allow independent selection
-}
-
 const addFilter = () => {
-  if (!country.value && !city.value) return
+  if (!selectedState.value && !selectedCity.value) return
 
-  const locationParts = []
-  let filterValue: any = {}
+  const locationParts: string[] = []
+  const filterValue: { state?: string; city?: string } = {}
 
-  if (country.value) {
-    const countryLabel = countryOptions.find(c => c.value === country.value)?.label
-    locationParts.push(countryLabel)
-    filterValue.country = country.value
-  }
-  
-  if (region.value) {
-    const regionLabel = regionOptions.value.find(r => r.value === region.value)?.label
-    locationParts.push(regionLabel)
-    filterValue.region = region.value
-  }
-  
-  if (city.value) {
-    const cityLabel = cityOptions.value.find(c => c.value === city.value)?.label
-    locationParts.push(cityLabel)
-    filterValue.city = city.value
+  if (selectedState.value) {
+    locationParts.push(selectedState.value)
+    filterValue.state = selectedState.value
   }
 
-  // If only city is selected, we need to determine the country from the city
-  if (!country.value && city.value) {
-    // Find which country this city belongs to
-    for (const [countryCode, cities] of Object.entries(cityOptions.value)) {
-      if (cities.some(c => c.value === city.value)) {
-        filterValue.country = countryCode
-        const countryLabel = countryOptions.find(c => c.value === countryCode)?.label
-        if (countryLabel) {
-          locationParts.unshift(countryLabel)
-        }
-        break
-      }
-    }
+  if (selectedCity.value) {
+    locationParts.push(selectedCity.value)
+    filterValue.city = selectedCity.value
   }
 
   emit('add-filter', {
@@ -189,8 +132,7 @@ const addFilter = () => {
     group: 'institution'
   })
 
-  country.value = ''
-  region.value = ''
-  city.value = ''
+  selectedState.value = ''
+  selectedCity.value = ''
 }
 </script>

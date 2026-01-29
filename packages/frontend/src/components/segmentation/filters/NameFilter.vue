@@ -4,8 +4,8 @@
       v-model="filterValue"
       :label="$t('segmentation.filters.name.label')"
       :placeholder="$t('segmentation.filters.name.placeholder')"
-      outlined
-      dense
+      variant="outlined"
+      density="compact"
       :rules="valueRules"
       @keyup.enter="addFilter"
     />
@@ -15,7 +15,7 @@
       :disabled="!filterValue.trim()"
       class="mt-2"
     >
-      <v-icon left>mdi-plus</v-icon>
+      <v-icon start>mdi-plus</v-icon>
       {{ $t('segmentation.filters.addFilter') }}
     </v-btn>
   </div>
@@ -57,7 +57,7 @@ const addFilter = () => {
     field: 'name',
     operator: 'contains',
     value: filterValue.value.trim(),
-    label: t('segmentation.filters.name.label'),
+    label: `${t('segmentation.filters.name.label')}: ${filterValue.value.trim()}`,
     group: 'institution'
   })
 

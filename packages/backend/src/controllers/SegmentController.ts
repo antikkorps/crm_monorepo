@@ -271,7 +271,15 @@ export class SegmentController {
         return
       }
 
-      // Relaxed: allow updates for any authenticated user (segments are public by default)
+      // Check if user can edit this segment
+      if (!segment.canEdit(user.id, user.teamId ?? undefined)) {
+        ctx.status = 403
+        ctx.body = {
+          success: false,
+          error: "You don't have permission to edit this segment",
+        }
+        return
+      }
 
       // Validate criteria if being updated
       if (updates.criteria) {
@@ -322,7 +330,15 @@ export class SegmentController {
         return
       }
 
-      // Relaxed: allow deletions for any authenticated user (segments are public by default)
+      // Only the owner can delete a segment
+      if (segment.ownerId !== user.id) {
+        ctx.status = 403
+        ctx.body = {
+          success: false,
+          error: "Only the owner can delete this segment",
+        }
+        return
+      }
 
       await segment.destroy()
 
@@ -811,9 +827,15 @@ export class SegmentController {
         })
       )
 
+      // Calculate real overlaps between segments
+      const overlaps = await SegmentService.calculateSegmentOverlaps(accessibleSegments)
+
       ctx.body = {
         success: true,
-        data: comparisons,
+        data: {
+          segments: comparisons,
+          overlaps
+        },
       }
     } catch (error) {
       ctx.status = 500

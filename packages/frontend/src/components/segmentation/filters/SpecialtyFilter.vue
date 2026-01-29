@@ -1,15 +1,19 @@
 <template>
   <div class="specialty-filter">
-    <v-select
+    <v-autocomplete
       v-model="selectedSpecialties"
       :items="specialtyOptions"
       :label="$t('segmentation.filters.specialty.label')"
+      :placeholder="$t('segmentation.filters.specialty.placeholder')"
       item-title="label"
       item-value="value"
       multiple
       chips
-      outlined
-      dense
+      closable-chips
+      variant="outlined"
+      density="compact"
+      :loading="loading"
+      :no-data-text="$t('segmentation.filters.specialty.noData')"
       class="mb-3"
     />
     <v-btn
@@ -18,15 +22,16 @@
       :disabled="selectedSpecialties.length === 0"
       class="mt-2"
     >
-      <v-icon left>mdi-plus</v-icon>
+      <v-icon start>mdi-plus</v-icon>
       {{ $t('segmentation.filters.addFilter') }}
     </v-btn>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { filterOptionsApi } from '@/services/api'
 
 const { t } = useI18n()
 
@@ -44,26 +49,46 @@ const emit = defineEmits<{
 
 // Reactive data
 const selectedSpecialties = ref<string[]>([])
+const specialtyOptions = ref<Array<{ value: string; label: string }>>([])
+const loading = ref(false)
 
-// Mock specialty data - in real implementation, this would come from API
-const specialtyOptions = [
-  { value: 'cardiology', label: t('segmentation.filters.specialty.specialties.cardiology') },
-  { value: 'neurology', label: t('segmentation.filters.specialty.specialties.neurology') },
-  { value: 'orthopedics', label: t('segmentation.filters.specialty.specialties.orthopedics') },
-  { value: 'pediatrics', label: t('segmentation.filters.specialty.specialties.pediatrics') },
-  { value: 'oncology', label: t('segmentation.filters.specialty.specialties.oncology') },
-  { value: 'radiology', label: t('segmentation.filters.specialty.specialties.radiology') },
-  { value: 'surgery', label: t('segmentation.filters.specialty.specialties.surgery') },
-  { value: 'emergency', label: t('segmentation.filters.specialty.specialties.emergency') }
-]
+// Translate specialty value to localized label
+const getSpecialtyLabel = (specialty: string): string => {
+  // Normalize to lowercase for translation key lookup
+  const key = specialty.toLowerCase().replace(/\s+/g, '_')
+  const translationKey = `segmentation.filters.specialty.specialties.${key}`
+  const translated = t(translationKey)
+  // If translation exists (not equal to the key), use it; otherwise use original value
+  return translated !== translationKey ? translated : specialty
+}
+
+// Load specialties from API on mount
+onMounted(async () => {
+  loading.value = true
+  try {
+    const response = await filterOptionsApi.getSpecialties()
+    const specialties = response.data || []
+
+    specialtyOptions.value = specialties.map((specialty: string) => ({
+      value: specialty,
+      label: getSpecialtyLabel(specialty)
+    }))
+  } catch (error) {
+    console.error('Error loading specialties:', error)
+    specialtyOptions.value = []
+  } finally {
+    loading.value = false
+  }
+})
 
 // Methods
 const addFilter = () => {
   if (selectedSpecialties.value.length === 0) return
 
-  const specialtyLabels = selectedSpecialties.value.map(specialty => 
-    specialtyOptions.find(opt => opt.value === specialty)?.label || specialty
-  ).join(', ')
+  // Build label with translated specialty names
+  const specialtyLabels = selectedSpecialties.value
+    .map(s => getSpecialtyLabel(s))
+    .join(', ')
 
   emit('add-filter', {
     type: 'institution',

@@ -100,7 +100,8 @@
              item-value="value"
              :label="t('task.form.institution')"
              :placeholder="t('task.form.institutionPlaceholder')"
-             clearable
+             :clearable="!isInstitutionPreselected"
+             :disabled="isInstitutionPreselected"
              :loading="loadingInstitutions"
              density="comfortable"
              hide-details="auto"
@@ -184,6 +185,7 @@ interface Props {
   modelValue: boolean
   task?: Task | null
   loading?: boolean
+  preselectedInstitutionId?: string
 }
 
 interface Emits {
@@ -229,6 +231,7 @@ const loadingUsers = computed(() => teamStore.loading)
 const loadingInstitutions = computed(() => institutionsStore.loading || loadingInstitutionsSearch.value)
 
 const isEditing = computed(() => !!props.task)
+const isInstitutionPreselected = computed(() => !!props.preselectedInstitutionId)
 
 const priorityOptions = computed(() => [
   { label: t('task.priority.low'), value: "low" },
@@ -262,13 +265,18 @@ const resetForm = () => {
     description: "",
     priority: "medium" as TaskPriority,
     assigneeId: "",
-    institutionId: "",
+    institutionId: props.preselectedInstitutionId || "",
     contactId: "",
     dueDate: "",
     status: "todo" as TaskStatus,
   }
   errors.value = {}
   contactOptions.value = []
+
+  // Load contacts if institution is preselected
+  if (props.preselectedInstitutionId) {
+    loadContacts(props.preselectedInstitutionId)
+  }
 }
 
 const populateForm = (task: Task) => {

@@ -4,40 +4,43 @@
       <!-- Header Section -->
       <div class="page-header">
         <div class="header-content">
-          <div class="header-main">
-            <div class="title-section">
-              <div class="title-icon">
-                <v-avatar color="primary" variant="flat" size="56">
-                  <v-icon size="28" color="white">mdi-hospital-building</v-icon>
-                </v-avatar>
-              </div>
-              <div class="title-text">
-                <h1 class="header-title">{{ t("institutions.title") }}</h1>
-                <p class="header-subtitle">
-                  {{ t("institutions.subtitle") }}
-                </p>
-              </div>
+          <div class="title-section">
+            <div class="title-icon">
+              <v-avatar color="primary" variant="flat" size="56" class="d-none d-sm-flex">
+                <v-icon size="28" color="white">mdi-hospital-building</v-icon>
+              </v-avatar>
+              <v-avatar color="primary" variant="flat" size="40" class="d-sm-none">
+                <v-icon size="20" color="white">mdi-hospital-building</v-icon>
+              </v-avatar>
             </div>
+            <div class="title-text">
+              <h1 class="header-title">{{ t("institutions.title") }}</h1>
+              <p class="header-subtitle">
+                {{ t("institutions.subtitle") }}
+              </p>
+            </div>
+          </div>
 
-            <div id="tour-institutions-actions" class="header-actions">
-              <v-btn
-                id="tour-institutions-import"
-                variant="outlined"
-                prepend-icon="mdi-upload"
-                class="action-btn"
-                @click="showImportDialog = true"
-                >{{ t("institutions.importCSV") }}</v-btn
-              >
-              <v-btn
-                id="tour-institutions-add"
-                color="primary"
-                prepend-icon="mdi-plus"
-                variant="elevated"
-                class="action-btn primary-btn"
-                @click="showCreateDialog = true"
-                >{{ t("institutions.addInstitution") }}</v-btn
-              >
-            </div>
+          <div id="tour-institutions-actions" class="header-actions">
+            <v-btn
+              id="tour-institutions-import"
+              variant="outlined"
+              prepend-icon="mdi-upload"
+              class="action-btn"
+              @click="showImportDialog = true"
+            >
+              {{ t("institutions.importCSV") }}
+            </v-btn>
+            <v-btn
+              id="tour-institutions-add"
+              color="primary"
+              prepend-icon="mdi-plus"
+              variant="elevated"
+              class="action-btn primary-btn"
+              @click="showCreateDialog = true"
+            >
+              {{ t("institutions.addInstitution") }}
+            </v-btn>
           </div>
         </div>
 
@@ -96,31 +99,33 @@
       </div>
 
       <!-- Search and Filter Section -->
-      <v-card id="tour-institutions-filters" class="filters-card mb-6" variant="outlined">
-        <v-card-text class="pa-4">
-          <div class="d-flex flex-wrap align-center gap-4">
-            <v-text-field
-              id="tour-institutions-search"
-              v-model="searchQuery"
-              :label="t('institutions.searchInstitutions')"
-              prepend-inner-icon="mdi-magnify"
-              variant="outlined"
-              density="compact"
-              clearable
-              hide-details
-              class="search-field flex-grow-1"
-              @input="onSearchInput"
-            />
+      <div id="tour-institutions-filters" class="filters-section mb-4">
+        <div class="search-row">
+          <v-text-field
+            id="tour-institutions-search"
+            v-model="searchQuery"
+            :label="t('institutions.searchInstitutions')"
+            prepend-inner-icon="mdi-magnify"
+            variant="outlined"
+            density="compact"
+            clearable
+            hide-details
+            class="search-field"
+            @input="onSearchInput"
+          />
+          <div class="filter-actions">
             <v-btn
               id="tour-institutions-advanced-filters"
               variant="text"
               color="primary"
+              size="small"
               @click="showAdvancedFilters = !showAdvancedFilters"
             >
-              <v-icon start>{{
+              <v-icon start size="small">{{
                 showAdvancedFilters ? "mdi-filter-variant-minus" : "mdi-filter-variant"
               }}</v-icon>
-              Filtres avancés
+              <span class="d-none d-sm-inline">Filtres avancés</span>
+              <span class="d-sm-none">Filtres</span>
             </v-btn>
             <v-btn
               variant="text"
@@ -128,386 +133,435 @@
               color="grey"
               @click="clearFilters"
               :disabled="!hasActiveFilters"
-              >Effacer les filtres</v-btn
             >
-          </div>
-
-          <v-expand-transition>
-            <div v-if="showAdvancedFilters" class="advanced-filters mt-4 pt-4 border-t">
-              <v-row dense>
-                <v-col cols="12" sm="6" md="3">
-                  <v-select
-                    v-model="filters.type"
-                    :items="institutionTypeOptions"
-                    item-title="label"
-                    item-value="value"
-                    :label="t('institutions.type')"
-                    variant="outlined"
-                    density="compact"
-                    clearable
-                    hide-details
-                    @update:model-value="applyFilters"
-                  />
-                </v-col>
-                <v-col cols="12" sm="6" md="3">
-                  <v-text-field
-                    v-model="filters.city"
-                    :label="t('institutions.city')"
-                    variant="outlined"
-                    density="compact"
-                    clearable
-                    hide-details
-                    @input="onFilterInput"
-                  />
-                </v-col>
-                <v-col cols="12" sm="6" md="3">
-                  <v-select
-                    v-model="filters.assignedUserId"
-                    :items="userOptions"
-                    item-title="label"
-                    item-value="value"
-                    :label="t('institutions.assignedTo')"
-                    variant="outlined"
-                    density="compact"
-                    clearable
-                    hide-details
-                    :loading="loadingUsers"
-                    @update:model-value="applyFilters"
-                  />
-                </v-col>
-                <v-col cols="12" sm="6" md="3">
-                  <v-select
-                    v-model="filters.complianceStatus"
-                    :items="complianceStatusOptions"
-                    item-title="label"
-                    item-value="value"
-                    :label="t('institutions.complianceStatus')"
-                    variant="outlined"
-                    density="compact"
-                    clearable
-                    hide-details
-                    @update:model-value="applyFilters"
-                  />
-                </v-col>
-                <v-col cols="12" sm="6" md="3">
-                  <v-switch
-                    v-model="showInactive"
-                    label="Afficher les inactives"
-                    color="primary"
-                    density="compact"
-                    hide-details
-                    @update:model-value="applyFilters"
-                  />
-                </v-col>
-              </v-row>
-            </div>
-          </v-expand-transition>
-        </v-card-text>
-      </v-card>
-
-      <!-- Desktop Data Table -->
-      <v-card id="tour-institutions-table" class="data-table-card d-none d-md-block" variant="flat">
-        <TableSkeleton
-          v-if="loading && institutions.length === 0"
-          :rows="lazyParams.rows"
-          :columns="7"
-          toolbar
-          pagination
-        />
-        <v-data-table
-          v-else
-          :items="institutions"
-          :loading="loading && institutions.length > 0"
-          :items-per-page="lazyParams.rows"
-          :page="Math.floor(lazyParams.first / lazyParams.rows) + 1"
-          :headers="tableHeaders"
-          :items-length="totalRecords"
-          item-key="id"
-          class="elevation-0 enhanced-table"
-          :item-class="(item) => item.isActive ? '' : 'inactive-institution'"
-          @update:page="onPageChange"
-          @update:items-per-page="onItemsPerPageChange"
-          @update:sort-by="onSortChange"
-        >
-          <template #no-data>
-            <div class="table-empty-state text-center py-12">
-              <v-icon size="64" class="mb-4 empty-icon">mdi-domain-off</v-icon>
-              <div class="text-h6 mb-2 empty-title">
-                {{ t("institutions.noInstitutionsFound") }}
-              </div>
-              <div class="text-body-1 empty-subtitle">
-                {{ t("institutions.adjustSearchOrAdd") }}
-              </div>
-            </div>
-          </template>
-
-          <template #item.name="{ item }">
-            <div
-              class="d-flex align-center py-2 cursor-pointer"
-              @click="viewInstitution(item)"
-            >
-              <v-avatar
-                size="40"
-                class="mr-4"
-                :color="getInstitutionColor(item.type)"
-                variant="tonal"
-              >
-                <v-icon size="20">{{ getInstitutionIcon(item.type) }}</v-icon>
-              </v-avatar>
-              <div>
-                <div class="text-subtitle-1 font-weight-bold text-grey-darken-4">
-                  {{ item.name }}
-                </div>
-                <div class="text-body-2 text-medium-emphasis">
-                  {{ formatInstitutionType(item.type) }}
-                </div>
-              </div>
-            </div>
-          </template>
-
-          <template #item.location="{ item }">
-            <div class="text-body-2 text-grey-darken-2">
-              {{ item.address.city }}, {{ item.address.state }}
-            </div>
-            <div class="text-caption text-medium-emphasis">
-              {{ item.address.country }}
-            </div>
-          </template>
-
-          <template #item.profile="{ item }">
-            <div v-if="item.medicalProfile" class="d-flex flex-wrap gap-2">
-              <v-chip
-                v-if="item.medicalProfile?.bedCapacity"
-                size="small"
-                variant="tonal"
-                color="blue-grey"
-                prepend-icon="mdi-bed"
-              >
-                {{ item.medicalProfile.bedCapacity }}
-              </v-chip>
-              <v-chip
-                v-if="item.medicalProfile?.surgicalRooms"
-                size="small"
-                variant="tonal"
-                color="blue-grey"
-                prepend-icon="mdi-medical-bag"
-              >
-                {{ item.medicalProfile.surgicalRooms }}
-              </v-chip>
-            </div>
-            <div v-else class="text-caption text-medium-emphasis">
-              {{ t("institutions.noMedicalProfile") }}
-            </div>
-          </template>
-
-          <template #item.status="{ item }">
-            <div class="d-flex align-center">
-              <v-chip
-                :color="item.isActive ? 'success' : 'grey'"
-                variant="flat"
-                size="small"
-              >
-                {{
-                  item.isActive ? t("institutions.active") : t("institutions.inactive")
-                }}
-              </v-chip>
-            </div>
-          </template>
-
-          <template #item.primaryContact="{ item }">
-            <div v-if="item.contactPersons && item.contactPersons.length > 0">
-              <!-- Contact principal -->
-              <template v-for="contact in item.contactPersons" :key="contact.id">
-                <div v-if="contact.isPrimary" class="contact-info">
-                  <div class="text-subtitle-2 font-weight-medium">
-                    {{ contact.firstName }} {{ contact.lastName }}
-                  </div>
-                  <div class="text-caption text-medium-emphasis">
-                    {{ contact.title }}
-                  </div>
-                </div>
-              </template>
-              <!-- Si pas de contact principal, prendre le premier -->
-              <div
-                v-if="!item.contactPersons.some((c) => c.isPrimary)"
-                class="contact-info"
-              >
-                <div class="text-subtitle-2 font-weight-medium">
-                  {{ item.contactPersons[0]?.firstName }}
-                  {{ item.contactPersons[0]?.lastName }}
-                </div>
-                <div class="text-caption text-medium-emphasis">
-                  {{ item.contactPersons[0]?.title }} (par défaut)
-                </div>
-              </div>
-            </div>
-            <div v-else class="text-caption text-medium-emphasis">Aucun contact</div>
-          </template>
-
-          <template #item.actions="{ item }">
-            <div class="actions-container">
-              <v-btn
-                v-if="!item.isActive"
-                icon="mdi-restore"
-                variant="text"
-                color="success"
-                size="small"
-                @click="reactivateInstitution(item)"
-                title="Réactiver"
-              />
-              <v-btn
-                v-if="item.isActive"
-                icon="mdi-pencil"
-                variant="text"
-                size="small"
-                @click="editInstitution(item)"
-                title="Modifier"
-              />
-              <v-tooltip
-                v-if="!item.isActive && item.isLocked"
-                location="top"
-              >
-                <template #activator="{ props }">
-                  <v-btn
-                    v-bind="props"
-                    icon="mdi-lock"
-                    variant="text"
-                    color="grey"
-                    size="small"
-                    disabled
-                  />
-                </template>
-                <div class="text-caption">
-                  <strong>Suppression impossible</strong><br>
-                  Cette institution contient des données<br>
-                  CRM enrichies (notes, réunions, modifications)<br>
-                  et ne peut être que désactivée.
-                </div>
-              </v-tooltip>
-              <v-btn
-                v-else
-                icon="mdi-delete"
-                variant="text"
-                color="error"
-                size="small"
-                @click="confirmDelete(item)"
-                :title="item.isActive ? 'Désactiver' : 'Supprimer définitivement'"
-              />
-            </div>
-          </template>
-        </v-data-table>
-      </v-card>
-
-      <!-- Mobile Cards List -->
-      <div class="mobile-cards-container d-md-none">
-        <ListSkeleton
-          v-if="loading && institutions.length === 0"
-          :count="5"
-          avatar
-          actions
-          type="list-item-three-line"
-        />
-
-        <div v-else-if="!loading && institutions.length === 0" class="empty-state">
-          <div class="text-center py-12">
-            <v-icon size="64" class="mb-4" color="grey-lighten-2">mdi-domain-off</v-icon>
-            <h3 class="text-h6 mb-2">{{ t("institutions.noInstitutionsFound") }}</h3>
-            <p class="text-body-1 text-medium-emphasis">
-              {{ t("institutions.adjustSearchOrAdd") }}
-            </p>
+              <span class="d-none d-sm-inline">Effacer les filtres</span>
+              <span class="d-sm-none">Effacer</span>
+            </v-btn>
           </div>
         </div>
 
-        <div v-else class="mobile-cards-list">
-          <v-card
-            v-for="institution in institutions"
-            :key="institution.id"
-            class="institution-card mb-3"
-            variant="outlined"
-            @click="viewInstitution(institution)"
+        <v-expand-transition>
+          <div v-if="showAdvancedFilters" class="advanced-filters">
+            <v-row dense>
+              <v-col cols="6" sm="6" md="3">
+                <v-select
+                  v-model="filters.type"
+                  :items="institutionTypeOptions"
+                  item-title="label"
+                  item-value="value"
+                  :label="t('institutions.type')"
+                  variant="outlined"
+                  density="compact"
+                  clearable
+                  hide-details
+                  @update:model-value="applyFilters"
+                />
+              </v-col>
+              <v-col cols="6" sm="6" md="3">
+                <v-text-field
+                  v-model="filters.city"
+                  :label="t('institutions.city')"
+                  variant="outlined"
+                  density="compact"
+                  clearable
+                  hide-details
+                  @input="onFilterInput"
+                />
+              </v-col>
+              <v-col cols="6" sm="6" md="3">
+                <v-select
+                  v-model="filters.assignedUserId"
+                  :items="userOptions"
+                  item-title="label"
+                  item-value="value"
+                  :label="t('institutions.assignedTo')"
+                  variant="outlined"
+                  density="compact"
+                  clearable
+                  hide-details
+                  :loading="loadingUsers"
+                  @update:model-value="applyFilters"
+                />
+              </v-col>
+              <v-col cols="6" sm="6" md="3">
+                <v-select
+                  v-model="filters.complianceStatus"
+                  :items="complianceStatusOptions"
+                  item-title="label"
+                  item-value="value"
+                  :label="t('institutions.complianceStatus')"
+                  variant="outlined"
+                  density="compact"
+                  clearable
+                  hide-details
+                  @update:model-value="applyFilters"
+                />
+              </v-col>
+              <v-col cols="6" sm="6" md="3">
+                <v-select
+                  v-model="filters.commercialStatus"
+                  :items="commercialStatusOptions"
+                  item-title="label"
+                  item-value="value"
+                  label="Statut commercial"
+                  variant="outlined"
+                  density="compact"
+                  clearable
+                  hide-details
+                  @update:model-value="applyFilters"
+                />
+              </v-col>
+              <v-col cols="6" sm="6" md="3">
+                <v-autocomplete
+                  v-model="filters.groupName"
+                  :items="groupOptions"
+                  :label="t('institutions.groupName')"
+                  variant="outlined"
+                  density="compact"
+                  clearable
+                  hide-details
+                  :loading="loadingGroups"
+                  @update:model-value="applyFilters"
+                />
+              </v-col>
+              <v-col cols="6" sm="6" md="3">
+                <v-switch
+                  v-model="showInactive"
+                  :label="t('institutions.showInactive')"
+                  color="primary"
+                  density="compact"
+                  hide-details
+                  @update:model-value="applyFilters"
+                />
+              </v-col>
+            </v-row>
+          </div>
+        </v-expand-transition>
+      </div>
+
+      <!-- Institutions List (table on desktop, cards on mobile) -->
+      <div id="tour-institutions-table">
+        <!-- Desktop Data Table -->
+        <v-card class="data-table-card d-none d-md-block" variant="flat">
+          <TableSkeleton
+            v-if="loading && institutions.length === 0"
+            :rows="lazyParams.rows"
+            :columns="7"
+            toolbar
+            pagination
+          />
+          <v-data-table
+            v-else
+            :items="institutions"
+            :loading="loading && institutions.length > 0"
+            :items-per-page="lazyParams.rows"
+            :page="Math.floor(lazyParams.first / lazyParams.rows) + 1"
+            :headers="tableHeaders"
+            :items-length="totalRecords"
+            item-key="id"
+            class="elevation-0 enhanced-table"
+            :item-class="
+              (item: MedicalInstitution) => (item.isActive ? '' : 'inactive-institution')
+            "
+            @update:page="onPageChange"
+            @update:items-per-page="onItemsPerPageChange"
+            @update:sort-by="onSortChange"
           >
-            <v-card-text class="pa-4">
-              <div class="d-flex justify-space-between align-start">
-                <div class="d-flex align-start">
-                  <v-avatar
-                    size="48"
-                    :color="getInstitutionColor(institution.type)"
-                    variant="tonal"
-                    class="mr-4"
-                  >
-                    <v-icon size="24">{{ getInstitutionIcon(institution.type) }}</v-icon>
-                  </v-avatar>
-                  <div>
-                    <h3 class="institution-name">{{ institution.name }}</h3>
-                    <div class="text-body-2 text-medium-emphasis">
-                      {{ institution.address.city }}, {{ institution.address.state }}
-                    </div>
+            <template #no-data>
+              <div class="table-empty-state text-center py-12">
+                <v-icon size="64" class="mb-4 empty-icon">mdi-domain-off</v-icon>
+                <div class="text-h6 mb-2 empty-title">
+                  {{ t("institutions.noInstitutionsFound") }}
+                </div>
+                <div class="text-body-1 empty-subtitle">
+                  {{ t("institutions.adjustSearchOrAdd") }}
+                </div>
+              </div>
+            </template>
+
+            <template #item.name="{ item }">
+              <div
+                class="d-flex align-center py-2 cursor-pointer"
+                @click="viewInstitution(item)"
+              >
+                <v-avatar
+                  size="40"
+                  class="mr-4"
+                  :color="getInstitutionColor(item.type)"
+                  variant="tonal"
+                >
+                  <v-icon size="20">{{ getInstitutionIcon(item.type) }}</v-icon>
+                </v-avatar>
+                <div>
+                  <div class="text-subtitle-1 font-weight-bold text-grey-darken-4">
+                    {{ item.name }}
+                  </div>
+                  <div class="text-body-2 text-medium-emphasis">
+                    {{ formatInstitutionType(item.type) }}
                   </div>
                 </div>
-                <v-menu>
-                  <template v-slot:activator="{ props }">
-                    <v-btn
-                      v-bind="props"
-                      icon="mdi-dots-vertical"
-                      variant="text"
-                      size="small"
-                      @click.stop
-                    ></v-btn>
-                  </template>
-                  <v-list>
-                    <v-list-item
-                      @click.stop="editInstitution(institution)"
-                      prepend-icon="mdi-pencil"
-                      >Modifier</v-list-item
-                    >
-                    <v-list-item
-                      @click.stop="confirmDelete(institution)"
-                      prepend-icon="mdi-delete"
-                      class="text-error"
-                      >Supprimer</v-list-item
-                    >
-                  </v-list>
-                </v-menu>
               </div>
-              <div class="d-flex flex-wrap gap-2 mt-3">
+            </template>
+
+            <template #item.location="{ item }">
+              <div class="text-body-2 text-grey-darken-2">
+                {{ item.address.city }}, {{ item.address.state }}
+              </div>
+              <div class="text-caption text-medium-emphasis">
+                {{ item.address.country }}
+              </div>
+            </template>
+
+            <template #item.profile="{ item }">
+              <div v-if="item.medicalProfile" class="d-flex gap-2">
                 <v-chip
+                  v-if="item.medicalProfile?.bedCapacity"
                   size="small"
                   variant="tonal"
-                  :color="getInstitutionColor(institution.type)"
-                  >{{ formatInstitutionType(institution.type) }}</v-chip
+                  color="blue-grey"
+                  prepend-icon="mdi-bed"
                 >
+                  {{ item.medicalProfile.bedCapacity }}
+                </v-chip>
                 <v-chip
-                  :color="institution.isActive ? 'success' : 'grey'"
+                  v-if="item.medicalProfile?.surgicalRooms"
+                  size="small"
+                  variant="tonal"
+                  color="blue-grey"
+                  prepend-icon="mdi-medical-bag"
+                >
+                  {{ item.medicalProfile.surgicalRooms }}
+                </v-chip>
+              </div>
+              <div v-else class="text-caption text-medium-emphasis">
+                {{ t("institutions.noMedicalProfile") }}
+              </div>
+            </template>
+
+            <template #item.status="{ item }">
+              <div class="d-flex align-center gap-1">
+                <v-chip
+                  :color="item.commercialStatus === CommercialStatus.CLIENT ? 'success' : 'warning'"
                   variant="tonal"
                   size="small"
-                  >{{ institution.isActive ? "Actif" : "Inactif" }}</v-chip
                 >
+                  {{ item.commercialStatus === CommercialStatus.CLIENT ? 'Client' : 'Prospect' }}
+                </v-chip>
                 <v-chip
-                  v-if="institution.medicalProfile"
-                  :color="
-                    getComplianceSeverity(institution.medicalProfile.complianceStatus)
-                  "
-                  variant="tonal"
+                  :color="item.isActive ? 'success' : 'grey'"
+                  variant="flat"
                   size="small"
                 >
                   {{
-                    formatComplianceStatus(institution.medicalProfile.complianceStatus)
+                    item.isActive ? t("institutions.active") : t("institutions.inactive")
                   }}
                 </v-chip>
               </div>
-            </v-card-text>
-          </v-card>
-        </div>
+            </template>
 
-        <div v-if="totalRecords > lazyParams.rows" class="mobile-pagination mt-4">
-          <v-pagination
-            :model-value="Math.floor(lazyParams.first / lazyParams.rows) + 1"
-            :length="Math.ceil(totalRecords / lazyParams.rows)"
-            :total-visible="3"
-            @update:model-value="onPageChange"
+            <template #item.primaryContact="{ item }">
+              <div v-if="item.contactPersons && item.contactPersons.length > 0">
+                <!-- Contact principal -->
+                <template v-for="contact in item.contactPersons" :key="contact.id">
+                  <div v-if="contact.isPrimary" class="contact-info">
+                    <div class="text-subtitle-2 font-weight-medium">
+                      {{ contact.firstName }} {{ contact.lastName }}
+                    </div>
+                    <div class="text-caption text-medium-emphasis">
+                      {{ contact.title }}
+                    </div>
+                  </div>
+                </template>
+                <!-- Si pas de contact principal, prendre le premier -->
+                <div
+                  v-if="!item.contactPersons.some((c) => c.isPrimary)"
+                  class="contact-info"
+                >
+                  <div class="text-subtitle-2 font-weight-medium">
+                    {{ item.contactPersons[0]?.firstName }}
+                    {{ item.contactPersons[0]?.lastName }}
+                  </div>
+                  <div class="text-caption text-medium-emphasis">
+                    {{ item.contactPersons[0]?.title }} (par défaut)
+                  </div>
+                </div>
+              </div>
+              <div v-else class="text-caption text-medium-emphasis">Aucun contact</div>
+            </template>
+
+            <template #item.actions="{ item }">
+              <div class="actions-container">
+                <v-btn
+                  v-if="!item.isActive"
+                  icon="mdi-restore"
+                  variant="text"
+                  color="success"
+                  size="small"
+                  @click="reactivateInstitution(item)"
+                  title="Réactiver"
+                />
+                <v-btn
+                  v-if="item.isActive"
+                  icon="mdi-pencil"
+                  variant="text"
+                  size="small"
+                  @click="editInstitution(item)"
+                  title="Modifier"
+                />
+                <v-tooltip v-if="!item.isActive && item.isLocked" location="top">
+                  <template #activator="{ props }">
+                    <v-btn
+                      v-bind="props"
+                      icon="mdi-lock"
+                      variant="text"
+                      color="grey"
+                      size="small"
+                      disabled
+                    />
+                  </template>
+                  <div class="text-caption">
+                    <strong>Suppression impossible</strong><br />
+                    Cette institution contient des données<br />
+                    CRM enrichies (notes, réunions, modifications)<br />
+                    et ne peut être que désactivée.
+                  </div>
+                </v-tooltip>
+                <v-btn
+                  v-else
+                  icon="mdi-delete"
+                  variant="text"
+                  color="error"
+                  size="small"
+                  @click="confirmDelete(item)"
+                  :title="item.isActive ? 'Désactiver' : 'Supprimer définitivement'"
+                />
+              </div>
+            </template>
+          </v-data-table>
+        </v-card>
+
+        <!-- Mobile Cards List -->
+        <div class="mobile-cards-container d-md-none">
+          <ListSkeleton
+            v-if="loading && institutions.length === 0"
+            :count="5"
+            avatar
+            actions
+            type="list-item-three-line"
           />
+
+          <div v-else-if="!loading && institutions.length === 0" class="empty-state">
+            <div class="text-center py-12">
+              <v-icon size="64" class="mb-4" color="grey-lighten-2"
+                >mdi-domain-off</v-icon
+              >
+              <h3 class="text-h6 mb-2">{{ t("institutions.noInstitutionsFound") }}</h3>
+              <p class="text-body-1 text-medium-emphasis">
+                {{ t("institutions.adjustSearchOrAdd") }}
+              </p>
+            </div>
+          </div>
+
+          <div v-else class="mobile-cards-list">
+            <div
+              v-for="institution in institutions"
+              :key="institution.id"
+              class="institution-card"
+              @click="viewInstitution(institution)"
+            >
+              <div class="institution-card-content">
+                <div class="d-flex justify-space-between align-start">
+                  <div class="d-flex align-start">
+                    <v-avatar
+                      size="48"
+                      :color="getInstitutionColor(institution.type)"
+                      variant="tonal"
+                      class="mr-4"
+                    >
+                      <v-icon size="24">{{
+                        getInstitutionIcon(institution.type)
+                      }}</v-icon>
+                    </v-avatar>
+                    <div>
+                      <h3 class="institution-name">{{ institution.name }}</h3>
+                      <div class="text-body-2 text-medium-emphasis">
+                        {{ institution.address.city }}, {{ institution.address.state }}
+                      </div>
+                    </div>
+                  </div>
+                  <v-menu>
+                    <template v-slot:activator="{ props }">
+                      <v-btn
+                        v-bind="props"
+                        icon="mdi-dots-vertical"
+                        variant="text"
+                        size="small"
+                        @click.stop
+                      ></v-btn>
+                    </template>
+                    <v-list>
+                      <v-list-item
+                        @click.stop="editInstitution(institution)"
+                        prepend-icon="mdi-pencil"
+                        >Modifier</v-list-item
+                      >
+                      <v-list-item
+                        @click.stop="confirmDelete(institution)"
+                        prepend-icon="mdi-delete"
+                        class="text-error"
+                        >Supprimer</v-list-item
+                      >
+                    </v-list>
+                  </v-menu>
+                </div>
+                <div class="d-flex flex-wrap gap-2 mt-3">
+                  <v-chip
+                    :color="institution.commercialStatus === CommercialStatus.CLIENT ? 'success' : 'warning'"
+                    variant="tonal"
+                    size="small"
+                  >
+                    {{ institution.commercialStatus === CommercialStatus.CLIENT ? 'Client' : 'Prospect' }}
+                  </v-chip>
+                  <v-chip
+                    size="small"
+                    variant="tonal"
+                    :color="getInstitutionColor(institution.type)"
+                    >{{ formatInstitutionType(institution.type) }}</v-chip
+                  >
+                  <v-chip
+                    :color="institution.isActive ? 'success' : 'grey'"
+                    variant="tonal"
+                    size="small"
+                    >{{ institution.isActive ? "Actif" : "Inactif" }}</v-chip
+                  >
+                  <v-chip
+                    v-if="institution.medicalProfile"
+                    :color="
+                      getComplianceSeverity(institution.medicalProfile.complianceStatus)
+                    "
+                    variant="tonal"
+                    size="small"
+                  >
+                    {{
+                      formatComplianceStatus(institution.medicalProfile.complianceStatus)
+                    }}
+                  </v-chip>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div v-if="totalRecords > lazyParams.rows" class="mobile-pagination mt-4">
+            <v-pagination
+              :model-value="Math.floor(lazyParams.first / lazyParams.rows) + 1"
+              :length="Math.ceil(totalRecords / lazyParams.rows)"
+              :total-visible="3"
+              @update:model-value="onPageChange"
+            />
+          </div>
         </div>
       </div>
+      <!-- End tour-institutions-table wrapper -->
 
       <!-- Dialogs and Snackbars -->
       <v-dialog v-model="showCreateDialog" max-width="900">
@@ -552,16 +606,16 @@
 import ImportInstitutionsDialog from "@/components/institutions/ImportInstitutionsDialog.vue"
 import MedicalInstitutionForm from "@/components/institutions/MedicalInstitutionForm.vue"
 import AppLayout from "@/components/layout/AppLayout.vue"
-import { TableSkeleton, ListSkeleton } from "@/components/skeletons"
-import { institutionsApi } from "@/services/api"
+import { ListSkeleton, TableSkeleton } from "@/components/skeletons"
+import { institutionsApi, usersApi } from "@/services/api"
 import type {
   MedicalInstitution,
   MedicalInstitutionSearchFilters,
 } from "@medical-crm/shared"
-import { ComplianceStatus, InstitutionType } from "@medical-crm/shared"
+import { CommercialStatus, ComplianceStatus, InstitutionType } from "@medical-crm/shared"
 import { computed, onMounted, onUnmounted, ref, watch } from "vue"
 import { useI18n } from "vue-i18n"
-import { useRouter, useRoute } from "vue-router"
+import { useRoute, useRouter } from "vue-router"
 
 const router = useRouter()
 const route = useRoute()
@@ -596,7 +650,7 @@ const stats = ref({
   total: 0,
   active: 0,
   pendingReview: 0,
-  nonCompliant: 0
+  nonCompliant: 0,
 })
 const searchQuery = ref("")
 const showAdvancedFilters = ref(false)
@@ -624,19 +678,19 @@ const complianceStatusOptions = computed(() => [
   { label: "En Révision", value: "under_review" },
 ])
 
-const specialtyOptions = computed(() => [
-  { label: "Cardiologie", value: "cardiology" },
-  { label: "Neurologie", value: "neurology" },
-  { label: "Orthopédie", value: "orthopedics" },
-  { label: "Pédiatrie", value: "pediatrics" },
-  { label: "Radiologie", value: "radiology" },
-  { label: "Urgences", value: "emergency" },
+const commercialStatusOptions = computed(() => [
+  { label: "Prospect", value: CommercialStatus.PROSPECT },
+  { label: "Client", value: CommercialStatus.CLIENT },
 ])
+
 const userOptions = ref<Array<{ label: string; value: string }>>([])
 const loadingUsers = ref(false)
 
+const groupOptions = ref<string[]>([])
+const loadingGroups = ref(false)
+
 const hasActiveFilters = computed(
-  () => Object.values(filters.value).some((v) => v) || searchQuery.value
+  () => Object.values(filters.value).some((v) => v) || searchQuery.value,
 )
 
 const activeFilters = computed(() => {
@@ -655,23 +709,16 @@ const loadUsers = async () => {
 
   loadingUsers.value = true
   try {
-    // Simuler le chargement des utilisateurs depuis l'API
-    // TODO: Remplacer par un vrai appel API
-    const response = await new Promise((resolve) =>
-      setTimeout(
-        () =>
-          resolve({
-            data: [
-              { id: "1", firstName: "Jean", lastName: "Dupont" },
-              { id: "2", firstName: "Marie", lastName: "Martin" },
-              { id: "3", firstName: "Pierre", lastName: "Bernard" },
-            ],
-          }),
-        500
-      )
-    )
+    const response = await usersApi.getAll()
+    const data = (response as any).data || response
 
-    const users = (response as any).data || []
+    let users: any[] = []
+    if (Array.isArray(data)) {
+      users = data
+    } else if (data && Array.isArray(data.users)) {
+      users = data.users
+    }
+
     userOptions.value = users.map((user: any) => ({
       label: `${user.firstName} ${user.lastName}`,
       value: user.id,
@@ -681,6 +728,39 @@ const loadUsers = async () => {
     userOptions.value = []
   } finally {
     loadingUsers.value = false
+  }
+}
+
+const loadGroups = async () => {
+  if (loadingGroups.value) return
+
+  loadingGroups.value = true
+  try {
+    // Fetch all institutions to extract unique group names
+    const response = await institutionsApi.getAll({ limit: -1 })
+    const data = (response as any).data || response
+
+    let institutions: any[] = []
+    if (Array.isArray(data)) {
+      institutions = data
+    } else if (data && Array.isArray(data.institutions)) {
+      institutions = data.institutions
+    }
+
+    // Extract unique group names, filter out empty values
+    const groups = new Set<string>()
+    institutions.forEach((inst: any) => {
+      if (inst.groupName && inst.groupName.trim()) {
+        groups.add(inst.groupName.trim())
+      }
+    })
+
+    groupOptions.value = Array.from(groups).sort()
+  } catch (error) {
+    console.error("Erreur lors du chargement des groupes:", error)
+    groupOptions.value = []
+  } finally {
+    loadingGroups.value = false
   }
 }
 
@@ -699,9 +779,13 @@ const loadStats = async () => {
 
     stats.value = {
       total: allInstitutions.length,
-      active: allInstitutions.filter(i => i.isActive).length,
-      pendingReview: allInstitutions.filter(i => i.medicalProfile?.complianceStatus === "pending_review").length,
-      nonCompliant: allInstitutions.filter(i => i.medicalProfile?.complianceStatus === "non_compliant").length
+      active: allInstitutions.filter((i) => i.isActive).length,
+      pendingReview: allInstitutions.filter(
+        (i) => i.medicalProfile?.complianceStatus === "pending_review",
+      ).length,
+      nonCompliant: allInstitutions.filter(
+        (i) => i.medicalProfile?.complianceStatus === "non_compliant",
+      ).length,
     }
   } catch (error) {
     console.error("Error loading stats:", error)
@@ -758,7 +842,7 @@ const onSortChange = (sortOptions: any[]) => {
   if (loading.value) return
   if (sortOptions && sortOptions.length > 0) {
     lazyParams.value.sortField = sortOptions[0].key
-    lazyParams.value.sortOrder = sortOptions[0].order === 'desc' ? -1 : 1
+    lazyParams.value.sortOrder = sortOptions[0].order === "desc" ? -1 : 1
   } else {
     lazyParams.value.sortField = "name"
     lazyParams.value.sortOrder = 1
@@ -789,13 +873,6 @@ const clearFilters = () => {
   applyFilters()
 }
 
-const refreshData = async () => {
-  await loadInstitutions()
-  showSnackbar("Données actualisées", "success")
-}
-
-const exportData = () => showSnackbar(t("institutions.exportComingSoon"), "info")
-
 const viewInstitution = (institution: MedicalInstitution) => {
   // Marquer qu'on navigue pour pouvoir rafraîchir au retour
   sessionStorage.setItem("needsRefresh", "true")
@@ -825,16 +902,13 @@ const deleteInstitution = async (institution: MedicalInstitution) => {
     if (institution.isActive) {
       // Soft delete: désactiver l'institution
       await institutionsApi.update(institution.id, { isActive: false })
-      showSnackbar(
-        `Institution "${institution.name}" désactivée avec succès`,
-        "success"
-      )
+      showSnackbar(`Institution "${institution.name}" désactivée avec succès`, "success")
     } else {
       // Hard delete: suppression définitive
       await institutionsApi.delete(institution.id, true) // force: true
       showSnackbar(
         `Institution "${institution.name}" supprimée définitivement`,
-        "success"
+        "success",
       )
     }
     loadInstitutions()
@@ -847,10 +921,7 @@ const deleteInstitution = async (institution: MedicalInstitution) => {
 const reactivateInstitution = async (institution: MedicalInstitution) => {
   try {
     await institutionsApi.update(institution.id, { isActive: true })
-    showSnackbar(
-      `Institution "${institution.name}" réactivée avec succès`,
-      "success"
-    )
+    showSnackbar(`Institution "${institution.name}" réactivée avec succès`, "success")
     loadInstitutions()
   } catch (error) {
     console.error("Error reactivating institution:", error)
@@ -863,7 +934,7 @@ const onInstitutionCreated = (newInstitution: MedicalInstitution) => {
   loadInstitutions()
   showSnackbar(
     t("institutions.institutionCreated", { name: newInstitution.name }),
-    "success"
+    "success",
   )
 }
 
@@ -927,7 +998,7 @@ const tableHeaders = computed(
       { title: "Statut", key: "status", sortable: true },
       { title: "Contact Principal", key: "primaryContact", sortable: false },
       { title: "Actions", key: "actions", sortable: false },
-    ] as const
+    ] as const,
 )
 
 onMounted(() => {
@@ -941,6 +1012,7 @@ onMounted(() => {
   loadStats()
   loadInstitutions()
   loadUsers()
+  loadGroups()
 
   // Rafraîchir les données quand la page redevient visible
   const handleVisibilityChange = () => {
@@ -967,7 +1039,7 @@ watch(
       console.log("Retour sur la page institutions, rafraîchissement des données...")
       setTimeout(() => loadInstitutions(), 100) // Petit délai pour laisser la page se charger
     }
-  }
+  },
 )
 </script>
 
@@ -981,36 +1053,36 @@ watch(
 }
 
 .header-content {
-  padding: 1.5rem;
-  border-radius: 16px;
-}
-
-.header-main {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
+  flex-direction: column;
+  gap: 1rem;
 }
 
 .title-section {
   display: flex;
   align-items: center;
-  gap: 1.5rem;
+  gap: 1rem;
 }
 
 .header-title {
-  font-size: 1.75rem;
+  font-size: 1.5rem;
   font-weight: 700;
+  margin: 0;
 }
 
 .header-subtitle {
   color: rgb(var(--v-theme-on-surface));
   opacity: 0.7;
+  margin: 0;
+  font-size: 0.875rem;
 }
 
 .header-actions {
   display: flex;
-  gap: 1rem;
+  gap: 0.75rem;
   flex-wrap: wrap;
+  justify-content: flex-end;
+  margin-bottom: 0.5rem;
 }
 
 .action-btn {
@@ -1024,16 +1096,44 @@ watch(
   margin-bottom: 1.5rem;
 }
 
-.filters-card {
-  border-radius: 12px;
+/* Search section */
+.filters-section {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.search-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
 }
 
 .search-field {
+  flex: 1;
+  min-width: 200px;
   max-width: 400px;
 }
 
+.filter-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
 .advanced-filters {
-  border-top: 1px solid rgba(var(--v-theme-outline), 0.2);
+  padding-top: 1rem;
+  border-top: 1px solid rgba(var(--v-border-color), var(--v-border-opacity));
+}
+
+/* Make table horizontally scrollable on smaller screens */
+.enhanced-table {
+  overflow-x: auto;
+}
+
+.enhanced-table :deep(.v-table__wrapper) {
+  overflow-x: auto;
 }
 
 .enhanced-table :deep(tbody tr) {
@@ -1047,6 +1147,48 @@ watch(
 .enhanced-table :deep(.v-data-table__td) {
   padding-top: 1rem;
   padding-bottom: 1rem;
+}
+
+/* Column widths for desktop consistency */
+.enhanced-table :deep(th:nth-child(1)),
+.enhanced-table :deep(td:nth-child(1)) {
+  min-width: 250px;
+}
+
+.enhanced-table :deep(th:nth-child(2)),
+.enhanced-table :deep(td:nth-child(2)) {
+  min-width: 140px;
+}
+
+.enhanced-table :deep(th:nth-child(3)),
+.enhanced-table :deep(td:nth-child(3)) {
+  min-width: 120px;
+}
+
+.enhanced-table :deep(th:nth-child(4)),
+.enhanced-table :deep(td:nth-child(4)) {
+  min-width: 150px;
+  white-space: nowrap;
+}
+
+.enhanced-table :deep(th:nth-child(5)),
+.enhanced-table :deep(td:nth-child(5)) {
+  min-width: 160px;
+}
+
+.enhanced-table :deep(th:nth-child(6)),
+.enhanced-table :deep(td:nth-child(6)) {
+  min-width: 140px;
+  white-space: nowrap;
+}
+
+/* Actions container - always horizontal */
+.actions-container {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: nowrap;
 }
 
 .enhanced-table :deep(.inactive-institution) {
@@ -1064,12 +1206,31 @@ watch(
   color: rgb(var(--v-theme-on-surface));
 }
 
+.mobile-cards-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
 .mobile-cards-list .institution-card {
-  border-radius: 12px;
+  cursor: pointer;
+  border-radius: 8px;
+  background: rgb(var(--v-theme-surface));
+  border: 1px solid rgba(var(--v-border-color), var(--v-border-opacity));
+  transition: all 0.2s ease;
+}
+
+.mobile-cards-list .institution-card:hover {
+  background: rgba(var(--v-theme-primary), 0.04);
+  border-color: rgba(var(--v-theme-primary), 0.3);
+}
+
+.mobile-cards-list .institution-card-content {
+  padding: 12px;
 }
 
 .mobile-cards-list .institution-name {
-  font-size: 1.1rem;
+  font-size: 1rem;
   font-weight: 600;
 }
 
@@ -1081,39 +1242,73 @@ watch(
   font-size: 0.75rem;
 }
 
+/* Chips spacing */
+.enhanced-table :deep(.v-chip) {
+  margin-top: 2px;
+  margin-bottom: 2px;
+}
+
+.mobile-cards-list .v-chip {
+  margin-top: 2px;
+  margin-bottom: 2px;
+}
+
 @media (max-width: 960px) {
   .medical-institutions-view {
     padding: 1rem;
   }
-  .header-main,
-  .title-section {
-    flex-direction: column;
-    align-items: start;
-    gap: 1rem;
-  }
-  .header-actions {
-    width: 100%;
-    justify-content: stretch;
-  }
-  .action-btn {
-    flex: 1;
-    min-width: 0;
-  }
+
   .stats-cards {
     grid-template-columns: repeat(2, 1fr);
+  }
+
+  .search-field {
+    max-width: none;
   }
 }
 
 @media (max-width: 600px) {
-  .stats-cards {
-    grid-template-columns: 1fr;
+  .medical-institutions-view {
+    padding: 0.75rem;
   }
+
+  .header-title {
+    font-size: 1.25rem;
+  }
+
+  .header-subtitle {
+    font-size: 0.75rem;
+  }
+
   .header-actions {
     flex-direction: column;
     width: 100%;
+    margin-bottom: 0.75rem;
   }
+
   .action-btn {
     width: 100%;
+    padding-top: 0.625rem;
+    padding-bottom: 0.625rem;
+  }
+
+  .stats-cards {
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
+  }
+
+  .search-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .search-field {
+    min-width: 0;
+    max-width: none;
+  }
+
+  .filter-actions {
+    justify-content: space-between;
   }
 }
 </style>

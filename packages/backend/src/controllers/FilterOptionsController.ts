@@ -1,6 +1,7 @@
 import { Context } from "koa"
 import { ContactPerson } from "../models/ContactPerson"
 import { MedicalInstitution } from "../models/MedicalInstitution"
+import { MedicalProfile } from "../models/MedicalProfile"
 import { logger } from "../utils/logger"
 import { Op } from "sequelize"
 
@@ -110,20 +111,32 @@ export class FilterOptionsController {
   }
 
   /**
-   * Get available specialties
+   * Get available specialties from medical profiles
    */
   static async getSpecialties(ctx: Context) {
     try {
-      const institutions = await MedicalInstitution.findAll({
-        attributes: ['medicalProfile'],
+      const profiles = await MedicalProfile.findAll({
+        attributes: ['specialties'],
         raw: true
       })
 
       const specialties = new Set<string>()
 
-      for (const inst of institutions) {
-        if (inst.medicalProfile && Array.isArray(inst.medicalProfile.specialties)) {
-          inst.medicalProfile.specialties.forEach((s: string) => specialties.add(s))
+      for (const profile of profiles) {
+        // Handle specialties which is an array field
+        let specs = profile.specialties
+        if (typeof specs === 'string') {
+          try {
+            specs = JSON.parse(specs)
+          } catch {
+            continue
+          }
+        }
+
+        if (Array.isArray(specs)) {
+          specs.forEach((s: string) => {
+            if (s) specialties.add(s)
+          })
         }
       }
 
@@ -154,8 +167,18 @@ export class FilterOptionsController {
       const cities = new Set<string>()
 
       for (const inst of institutions) {
-        if (inst.address && inst.address.city) {
-          cities.add(inst.address.city)
+        // Handle address which might be a string (raw JSON) or object
+        let address = inst.address
+        if (typeof address === 'string') {
+          try {
+            address = JSON.parse(address)
+          } catch {
+            continue
+          }
+        }
+
+        if (address && address.city) {
+          cities.add(address.city)
         }
       }
 
@@ -186,8 +209,18 @@ export class FilterOptionsController {
       const states = new Set<string>()
 
       for (const inst of institutions) {
-        if (inst.address && inst.address.state) {
-          states.add(inst.address.state)
+        // Handle address which might be a string (raw JSON) or object
+        let address = inst.address
+        if (typeof address === 'string') {
+          try {
+            address = JSON.parse(address)
+          } catch {
+            continue
+          }
+        }
+
+        if (address && address.state) {
+          states.add(address.state)
         }
       }
 

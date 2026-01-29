@@ -1,9 +1,9 @@
 <template>
   <v-card elevation="2" v-if="data">
-    <v-card-title class="d-flex align-center justify-space-between flex-wrap">
+    <v-card-title class="d-flex align-center justify-space-between flex-wrap card-title-responsive">
       <div class="d-flex align-center">
-        <v-icon icon="mdi-chart-line" color="primary" class="mr-2"></v-icon>
-        <span>Revenue Analytics</span>
+        <v-icon icon="mdi-chart-line" color="primary" class="mr-2" size="small" />
+        <span>Analyse des revenus</span>
       </div>
       <v-btn-toggle
         v-model="chartType"
@@ -12,44 +12,42 @@
         variant="outlined"
         class="mt-2 mt-sm-0"
       >
-        <v-btn value="monthly" size="small">Monthly</v-btn>
-        <v-btn value="status" size="small">By Status</v-btn>
+        <v-btn value="monthly" size="small">Mensuel</v-btn>
+        <v-btn value="status" size="small">Par statut</v-btn>
       </v-btn-toggle>
     </v-card-title>
 
-    <v-card-text>
+    <v-card-text class="pa-2 pa-md-4">
       <!-- Summary Cards -->
-      <v-row class="mb-4">
-        <v-col cols="12" sm="6" md="3">
-          <v-sheet rounded color="blue-lighten-5" class="text-center pa-3">
-            <div class="text-blue-darken-2 font-weight-medium mb-1">Total Revenue</div>
-            <div class="text-h5 font-weight-bold text-blue-darken-4">
+      <v-row dense class="mb-4">
+        <v-col cols="6" md="3">
+          <v-sheet rounded color="blue-lighten-5" class="text-center pa-2 pa-md-3">
+            <div class="text-blue-darken-2 font-weight-medium text-caption text-md-body-2 mb-1">Total</div>
+            <div class="text-h6 text-md-h5 font-weight-bold text-blue-darken-4">
               {{ formatCurrency(data.totalRevenue) }}
             </div>
           </v-sheet>
         </v-col>
-        <v-col cols="12" sm="6" md="3">
-          <v-sheet rounded color="green-lighten-5" class="text-center pa-3">
-            <div class="text-green-darken-2 font-weight-medium mb-1">Paid Revenue</div>
-            <div class="text-h5 font-weight-bold text-green-darken-4">
+        <v-col cols="6" md="3">
+          <v-sheet rounded color="green-lighten-5" class="text-center pa-2 pa-md-3">
+            <div class="text-green-darken-2 font-weight-medium text-caption text-md-body-2 mb-1">Payé</div>
+            <div class="text-h6 text-md-h5 font-weight-bold text-green-darken-4">
               {{ formatCurrency(data.paidRevenue) }}
             </div>
           </v-sheet>
         </v-col>
-        <v-col cols="12" sm="6" md="3">
-          <v-sheet rounded color="orange-lighten-5" class="text-center pa-3">
-            <div class="text-orange-darken-2 font-weight-medium mb-1">
-              Pending Revenue
-            </div>
-            <div class="text-h5 font-weight-bold text-orange-darken-4">
+        <v-col cols="6" md="3">
+          <v-sheet rounded color="orange-lighten-5" class="text-center pa-2 pa-md-3">
+            <div class="text-orange-darken-2 font-weight-medium text-caption text-md-body-2 mb-1">En attente</div>
+            <div class="text-h6 text-md-h5 font-weight-bold text-orange-darken-4">
               {{ formatCurrency(data.pendingRevenue) }}
             </div>
           </v-sheet>
         </v-col>
-        <v-col cols="12" sm="6" md="3">
-          <v-sheet rounded color="red-lighten-5" class="text-center pa-3">
-            <div class="text-red-darken-2 font-weight-medium mb-1">Overdue Revenue</div>
-            <div class="text-h5 font-weight-bold text-red-darken-4">
+        <v-col cols="6" md="3">
+          <v-sheet rounded color="red-lighten-5" class="text-center pa-2 pa-md-3">
+            <div class="text-red-darken-2 font-weight-medium text-caption text-md-body-2 mb-1">En retard</div>
+            <div class="text-h6 text-md-h5 font-weight-bold text-red-darken-4">
               {{ formatCurrency(data.overdueRevenue) }}
             </div>
           </v-sheet>
@@ -57,61 +55,72 @@
       </v-row>
 
       <!-- Chart -->
-      <div class="chart-container mb-4">
-        <Line
+      <div class="mb-4">
+        <BaseAreaChart
           v-if="chartType === 'monthly'"
-          :data="monthlyChartData"
-          :options="monthlyChartOptions"
+          :categories="monthlyCategories"
+          :series="monthlySeries"
+          :height="320"
+          :show-legend="true"
+          :gradient="true"
         />
-        <Doughnut v-else :data="statusChartData" :options="statusChartOptions" />
+        <BaseDonutChart
+          v-else
+          :data="statusChartData"
+          :height="320"
+          :show-legend="true"
+          :show-labels="true"
+        />
       </div>
 
       <!-- Additional Metrics -->
-      <v-row>
+      <v-row dense>
         <v-col cols="12" md="6">
           <v-card variant="outlined">
-            <v-card-text class="d-flex align-center justify-space-between">
+            <v-card-text class="d-flex align-center justify-space-between pa-3">
               <div>
-                <div class="text-medium-emphasis font-weight-medium">
-                  Average Invoice Value
+                <div class="text-medium-emphasis font-weight-medium text-body-2">
+                  Valeur moyenne facture
                 </div>
                 <div class="text-h6 font-weight-bold">
                   {{ formatCurrency(data.averageInvoiceValue) }}
                 </div>
               </div>
-              <v-icon icon="mdi-calculator" size="x-large" color="info"></v-icon>
+              <v-icon icon="mdi-calculator" size="large" color="info" />
             </v-card-text>
           </v-card>
         </v-col>
         <v-col cols="12" md="6">
           <v-card variant="outlined">
-            <v-card-text class="d-flex align-center justify-space-between">
+            <v-card-text class="d-flex align-center justify-space-between pa-3">
               <div>
-                <div class="text-medium-emphasis font-weight-medium">
-                  Average Payment Time
+                <div class="text-medium-emphasis font-weight-medium text-body-2">
+                  Délai moyen paiement
                 </div>
                 <div class="text-h6 font-weight-bold">
-                  {{ Math.round(data.averagePaymentTime) }} days
+                  {{ Number.isFinite(data.averagePaymentTime) ? Math.round(data.averagePaymentTime) : 0 }} jours
                 </div>
               </div>
-              <v-icon icon="mdi-clock-fast" size="x-large" color="success"></v-icon>
+              <v-icon icon="mdi-clock-fast" size="large" color="success" />
             </v-card-text>
           </v-card>
         </v-col>
       </v-row>
     </v-card-text>
   </v-card>
+
+  <!-- Empty State -->
   <v-card v-else elevation="2">
-    <v-card-title class="d-flex align-center">
-      <v-icon icon="mdi-chart-line" color="primary" class="mr-2" />
-      Revenue Analytics
+    <v-card-title class="d-flex align-center card-title-responsive">
+      <v-icon icon="mdi-chart-line" color="primary" class="mr-2" size="small" />
+      Analyse des revenus
     </v-card-title>
     <v-card-text>
       <div class="d-flex flex-column align-center justify-center pa-8 text-center">
         <v-icon icon="mdi-chart-line" size="64" color="grey-lighten-1" class="mb-4" />
-        <div class="text-h6 mb-2">No Data Available</div>
+        <div class="text-h6 mb-2">Aucune donnée disponible</div>
         <div class="text-body-2 text-medium-emphasis">
-          Revenue analytics will be displayed here once data is available.
+          Les analyses de revenus s'afficheront ici une fois les données disponibles.
         </div>
       </div>
     </v-card-text>
@@ -119,34 +128,8 @@
 </template>
 
 <script setup lang="ts">
-import {
-  ArcElement,
-  CategoryScale,
-  Chart as ChartJS,
-  Filler,
-  Legend,
-  LinearScale,
-  LineElement,
-  PointElement,
-  Title,
-  Tooltip,
-} from "chart.js"
 import { computed, ref } from "vue"
-import { Doughnut, Line } from "vue-chartjs"
-import { useTheme } from "vuetify"
-
-// Register Chart.js components
-ChartJS.register(
-  Title,
-  Tooltip,
-  Legend,
-  LineElement,
-  PointElement,
-  CategoryScale,
-  LinearScale,
-  ArcElement,
-  Filler
-)
+import { BaseAreaChart, BaseDonutChart, useChartColors } from "@/components/charts"
 
 // Interfaces
 interface MonthlyRevenue {
@@ -179,12 +162,12 @@ interface Props {
 
 const props = defineProps<Props>()
 
-const theme = useTheme()
+const { chartColors } = useChartColors()
 const chartType = ref<"monthly" | "status">("monthly")
 
-// Computed properties for chart data
-const monthlyChartData = computed(() => {
-  if (!props.data) return { labels: [], datasets: [] }
+// Monthly chart data
+const monthlyCategories = computed(() => {
+  if (!props.data) return []
 
   const sortedData = [...props.data.monthlyRevenue].sort((a, b) => {
     if (a.year !== b.year) return a.year - b.year
@@ -193,151 +176,75 @@ const monthlyChartData = computed(() => {
     return monthA - monthB
   })
 
-  return {
-    labels: sortedData.map(
-      (item) => `${item.month.substring(0, 3)} ${String(item.year).slice(-2)}`
-    ),
-    datasets: [
-      {
-        label: "Total Invoiced",
-        data: sortedData.map((item) => item.totalInvoiced),
-        borderColor: theme.current.value.colors.info,
-        backgroundColor: `${theme.current.value.colors.info}33`, // with alpha
-        tension: 0.4,
-        fill: true,
-      },
-      {
-        label: "Total Paid",
-        data: sortedData.map((item) => item.totalPaid),
-        borderColor: theme.current.value.colors.success,
-        backgroundColor: `${theme.current.value.colors.success}33`, // with alpha
-        tension: 0.4,
-        fill: true,
-      },
-    ],
-  }
+  return sortedData.map(
+    (item) => `${item.month.substring(0, 3)} ${String(item.year).slice(-2)}`
+  )
 })
 
+const monthlySeries = computed(() => {
+  if (!props.data) return []
+
+  const sortedData = [...props.data.monthlyRevenue].sort((a, b) => {
+    if (a.year !== b.year) return a.year - b.year
+    const monthA = new Date(Date.parse(a.month + " 1, 2012")).getMonth()
+    const monthB = new Date(Date.parse(b.month + " 1, 2012")).getMonth()
+    return monthA - monthB
+  })
+
+  return [
+    {
+      name: "Total facturé",
+      data: sortedData.map((item) => item.totalInvoiced),
+      color: chartColors.value.info,
+    },
+    {
+      name: "Total payé",
+      data: sortedData.map((item) => item.totalPaid),
+      color: chartColors.value.success,
+    },
+  ]
+})
+
+// Status chart data
 const statusChartData = computed(() => {
-  if (!props.data) return { labels: [], datasets: [] }
+  if (!props.data) return []
 
-  const statusColors = {
-    paid: theme.current.value.colors.success,
-    sent: theme.current.value.colors.info,
-    partially_paid: theme.current.value.colors.warning,
-    overdue: theme.current.value.colors.error,
-    draft: theme.current.value.colors.secondary,
+  const statusColors: Record<string, string> = {
+    paid: chartColors.value.success,
+    sent: chartColors.value.info,
+    partially_paid: chartColors.value.warning,
+    overdue: chartColors.value.error,
+    draft: chartColors.value.secondary,
   }
 
-  return {
-    labels: props.data.revenueByStatus.map((item) => formatStatusLabel(item.status)),
-    datasets: [
-      {
-        data: props.data.revenueByStatus.map((item) => item.amount),
-        backgroundColor: props.data.revenueByStatus.map(
-          (item) =>
-            statusColors[item.status as keyof typeof statusColors] || statusColors.draft
-        ),
-        borderWidth: 2,
-        borderColor: theme.current.value.colors.surface,
-      },
-    ],
-  }
+  return props.data.revenueByStatus.map((item) => ({
+    label: formatStatusLabel(item.status),
+    value: item.amount,
+    color: statusColors[item.status] || statusColors.draft,
+  }))
 })
-
-const chartOptionsBase = computed(() => ({
-  responsive: true,
-  maintainAspectRatio: false,
-  plugins: {
-    legend: {
-      position: "top" as const,
-      labels: {
-        color: theme.current.value.dark ? "white" : "black",
-      },
-    },
-    tooltip: {
-      callbacks: {
-        label: (context: any) => {
-          return `${context.dataset.label || context.label}: ${formatCurrency(
-            context.parsed.y || context.parsed
-          )}`
-        },
-      },
-    },
-  },
-  interaction: {
-    intersect: false,
-    mode: "index" as const,
-  },
-}))
-
-const monthlyChartOptions = computed(() => ({
-  ...chartOptionsBase.value,
-  scales: {
-    y: {
-      beginAtZero: true,
-      ticks: {
-        callback: (value: any) => formatCurrency(value),
-        color: theme.current.value.dark ? "rgba(255,255,255,0.7)" : "rgba(0,0,0,0.6)",
-      },
-      grid: {
-        color: theme.current.value.dark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.1)",
-      },
-    },
-    x: {
-      ticks: {
-        color: theme.current.value.dark ? "rgba(255,255,255,0.7)" : "rgba(0,0,0,0.6)",
-      },
-      grid: {
-        display: false,
-      },
-    },
-  },
-}))
-
-const statusChartOptions = computed(() => ({
-  responsive: true,
-  maintainAspectRatio: false,
-  plugins: {
-    legend: {
-      position: "right" as const,
-      labels: {
-        color: theme.current.value.dark ? "white" : "black",
-      },
-    },
-    tooltip: {
-      callbacks: {
-        label: (context: any) => {
-          const label = context.label || ""
-          const value = formatCurrency(context.parsed)
-          if (!props.data) return `${label}: ${value}`
-          const percentage =
-            props.data.revenueByStatus[context.dataIndex]?.percentage || 0
-          return `${label}: ${value} (${percentage.toFixed(1)}%)`
-        },
-      },
-      displayColors: false,
-    },
-  },
-  interaction: {
-    intersect: false,
-    mode: "index" as const,
-  },
-}))
 
 // Methods
 const formatCurrency = (value: number): string => {
-  if (value === null || value === undefined) return "$0"
-  return new Intl.NumberFormat("en-US", {
+  if (!Number.isFinite(value)) return "0 €"
+  return new Intl.NumberFormat("fr-FR", {
     style: "currency",
-    currency: "USD",
+    currency: "EUR",
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
+    notation: "compact",
   }).format(value)
 }
 
 const formatStatusLabel = (status: string): string => {
-  return status
+  const labels: Record<string, string> = {
+    paid: "Payé",
+    sent: "Envoyé",
+    partially_paid: "Partiellement payé",
+    overdue: "En retard",
+    draft: "Brouillon",
+  }
+  return labels[status] || status
     .split("_")
     .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
     .join(" ")
@@ -345,14 +252,16 @@ const formatStatusLabel = (status: string): string => {
 </script>
 
 <style scoped>
-.chart-container {
-  position: relative;
-  height: 22rem;
+.card-title-responsive {
+  font-size: 1rem;
+  padding: 12px 16px;
 }
 
-@media (max-width: 768px) {
-  .chart-container {
-    height: 18rem;
+/* Mobile optimizations */
+@media (max-width: 600px) {
+  .card-title-responsive {
+    font-size: 0.875rem;
+    padding: 8px 12px;
   }
 }
 </style>

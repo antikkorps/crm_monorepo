@@ -44,8 +44,10 @@ export interface NextBestAction {
   institutionId: string
   institutionName: string
   priority: "urgent" | "high" | "medium" | "low"
-  action: string
-  reason: string
+  actionKey: string
+  actionParams?: Record<string, string | number>
+  reasonKey: string
+  reasonParams?: Record<string, string | number>
   category: "follow_up" | "upsell" | "retention" | "reactivation" | "closing"
   dueDate?: Date
   relatedData?: {
@@ -364,8 +366,10 @@ export class InstitutionInsightsService {
           institutionId,
           institutionName: institution.name,
           priority: "urgent",
-          action: `Follow up on ${overdueInvoices.length} overdue invoice(s)`,
-          reason: `€${Math.round(totalOverdue)} in overdue payments`,
+          actionKey: "followUpOverdueInvoices",
+          actionParams: { count: overdueInvoices.length },
+          reasonKey: "overduePayments",
+          reasonParams: { amount: Math.round(totalOverdue) },
           category: "follow_up",
           dueDate: now,
           relatedData: {
@@ -387,8 +391,9 @@ export class InstitutionInsightsService {
             institutionId,
             institutionName: institution.name,
             priority: daysSinceSent > 14 ? "high" : "medium",
-            action: `Follow up on pending quote`,
-            reason: `Quote sent ${daysSinceSent} days ago with no response`,
+            actionKey: "followUpPendingQuote",
+            reasonKey: "quoteNoResponse",
+            reasonParams: { days: daysSinceSent },
             category: "follow_up",
             dueDate: now,
             relatedData: {
@@ -410,12 +415,15 @@ export class InstitutionInsightsService {
 
       if (stalledOpportunities.length > 0) {
         const stalled = stalledOpportunities[0]
+        const daysSinceActivity = Math.floor((now.getTime() - new Date(stalled.updatedAt).getTime()) / (1000 * 60 * 60 * 24))
         actions.push({
           institutionId,
           institutionName: institution.name,
           priority: "high",
-          action: `Re-engage on stalled opportunity "${stalled.name}"`,
-          reason: `No activity for ${Math.floor((now.getTime() - new Date(stalled.updatedAt).getTime()) / (1000 * 60 * 60 * 24))} days`,
+          actionKey: "reengageOpportunity",
+          actionParams: { name: stalled.name },
+          reasonKey: "opportunityNoActivity",
+          reasonParams: { days: daysSinceActivity },
           category: "closing",
           relatedData: {
             type: "opportunity",
@@ -440,10 +448,9 @@ export class InstitutionInsightsService {
           institutionId,
           institutionName: institution.name,
           priority: daysSinceContact > 60 ? "high" : "medium",
-          action: "Schedule check-in call or meeting",
-          reason: lastContact
-            ? `No contact in ${daysSinceContact} days - risk of disengagement`
-            : "No recorded interactions - establish contact",
+          actionKey: "scheduleCheckIn",
+          reasonKey: lastContact ? "noContactDays" : "noRecordedInteractions",
+          reasonParams: lastContact ? { days: daysSinceContact } : undefined,
           category: "retention",
           dueDate: new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000), // 1 week from now
         })
@@ -464,8 +471,8 @@ export class InstitutionInsightsService {
             institutionId,
             institutionName: institution.name,
             priority: "high",
-            action: "Convert accepted quote to invoice",
-            reason: "Quote accepted but not yet invoiced",
+            actionKey: "convertQuoteToInvoice",
+            reasonKey: "quoteAcceptedNotInvoiced",
             category: "closing",
             relatedData: {
               type: "quote",
@@ -486,8 +493,8 @@ export class InstitutionInsightsService {
           institutionId,
           institutionName: institution.name,
           priority: "medium",
-          action: "Explore upsell or cross-sell opportunities",
-          reason: "Recent successful deal(s) - customer satisfaction likely high",
+          actionKey: "exploreUpsell",
+          reasonKey: "recentSuccessfulDeal",
           category: "upsell",
           dueDate: new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000), // 2 weeks from now
         })

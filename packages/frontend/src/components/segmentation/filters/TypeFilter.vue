@@ -1,6 +1,6 @@
 <template>
   <div class="type-filter">
-    <v-select
+    <v-autocomplete
       v-model="selectedTypes"
       :items="institutionTypeOptions"
       :label="$t('segmentation.filters.type.label')"
@@ -8,10 +8,12 @@
       item-title="text"
       item-value="value"
       multiple
-      outlined
-      dense
       chips
-      :rules="valueRules"
+      closable-chips
+      variant="outlined"
+      density="compact"
+      :loading="loading"
+      :no-data-text="$t('segmentation.filters.type.noData')"
     />
     <v-btn
       color="primary"
@@ -19,16 +21,16 @@
       :disabled="selectedTypes.length === 0"
       class="mt-2"
     >
-      <v-icon left>mdi-plus</v-icon>
+      <v-icon start>mdi-plus</v-icon>
       {{ $t('segmentation.filters.addFilter') }}
     </v-btn>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { InstitutionType } from '@medical-crm/shared'
+import { filterOptionsApi } from '@/services/api'
 
 const { t } = useI18n()
 
@@ -45,30 +47,55 @@ const emit = defineEmits<{
 }>()
 
 // Reactive data
-const selectedTypes = ref<InstitutionType[]>([])
+const selectedTypes = ref<string[]>([])
+const institutionTypeOptions = ref<Array<{ text: string; value: string }>>([])
+const loading = ref(false)
 
-// Computed
-const institutionTypeOptions = computed(() => [
-  { text: t('institution.types.hospital'), value: InstitutionType.HOSPITAL },
-  { text: t('institution.types.clinic'), value: InstitutionType.CLINIC },
-  { text: t('institution.types.medicalCenter'), value: InstitutionType.MEDICAL_CENTER },
-  { text: t('institution.types.specialtyClinic'), value: InstitutionType.SPECIALTY_CLINIC }
-])
+// Map type values to translation keys
+const getTypeLabel = (type: string): string => {
+  const typeKey = type.toLowerCase().replace(/_/g, '')
+  const translationKey = `institution.types.${typeKey}`
+  const translated = t(translationKey)
+  // If translation not found, return the original type formatted nicely
+  if (translated === translationKey) {
+    return type.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, c => c.toUpperCase())
+  }
+  return translated
+}
 
-const valueRules = computed(() => [
-  (v: InstitutionType[]) => v.length > 0 || t('validation.required')
-])
+// Load types from API on mount
+onMounted(async () => {
+  loading.value = true
+  try {
+    const response = await filterOptionsApi.getInstitutionTypes()
+    const types = response.data || []
+
+    institutionTypeOptions.value = types.map((type: string) => ({
+      value: type,
+      text: getTypeLabel(type)
+    }))
+  } catch (error) {
+    console.error('Error loading institution types:', error)
+    institutionTypeOptions.value = []
+  } finally {
+    loading.value = false
+  }
+})
 
 // Methods
 const addFilter = () => {
   if (selectedTypes.value.length === 0) return
+
+  const typeLabels = selectedTypes.value
+    .map(type => institutionTypeOptions.value.find(opt => opt.value === type)?.text || type)
+    .join(', ')
 
   emit('add-filter', {
     type: 'institution',
     field: 'type',
     operator: 'in',
     value: selectedTypes.value,
-    label: t('segmentation.filters.type.label'),
+    label: `${t('segmentation.filters.type.label')}: ${typeLabels}`,
     group: 'institution'
   })
 

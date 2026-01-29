@@ -5,7 +5,7 @@ import { apiClient } from "./index"
  */
 export interface Activity {
   id: string
-  type: "institution" | "task" | "quote" | "invoice" | "sync"
+  type: "institution" | "task" | "quote" | "invoice" | "sync" | "external"
   action: string
   title: string
   description: string
@@ -18,6 +18,12 @@ export interface Activity {
   } | null
   icon: string
   color: string
+  isExternal?: boolean
+  metadata?: {
+    transactionType?: string
+    referenceNumber?: string
+    status?: string
+  }
 }
 
 /**

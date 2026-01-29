@@ -152,6 +152,11 @@
           <OutstandingSummaryCard :data="dashboardData.outstandingAnalytics" />
         </v-col>
 
+        <!-- Engagement Letters Stats -->
+        <v-col cols="12" lg="6">
+          <EngagementLetterStatsCard />
+        </v-col>
+
         <!-- Payment Analytics -->
         <v-col cols="12" lg="6">
           <PaymentMethodChart :data="dashboardData.paymentAnalytics" />
@@ -223,6 +228,7 @@
 <script setup lang="ts">
 import BillingKPICards from "@/components/billing/analytics/BillingKPICards.vue"
 import CashFlowProjectionChart from "@/components/billing/analytics/CashFlowProjectionChart.vue"
+import EngagementLetterStatsCard from "@/components/billing/analytics/EngagementLetterStatsCard.vue"
 import ExportDialog from "@/components/billing/analytics/ExportDialog.vue"
 import MedicalSegmentAnalytics from "@/components/billing/analytics/MedicalSegmentAnalytics.vue"
 import OutstandingInvoicesTable from "@/components/billing/analytics/OutstandingInvoicesTable.vue"

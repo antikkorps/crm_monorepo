@@ -9,11 +9,13 @@
             :key="filterType.value"
             :value="filterType.value"
             filter
-            outlined
-            @click="toggleFilterType(filterType.value)"
+            :variant="isFilterApplied(filterType.value) ? 'flat' : 'outlined'"
+            :color="isFilterApplied(filterType.value) ? 'primary' : undefined"
+            :disabled="isFilterApplied(filterType.value)"
           >
-            <v-icon left small>{{ filterType.icon }}</v-icon>
+            <v-icon start size="small">{{ filterType.icon }}</v-icon>
             {{ filterType.label }}
+            <v-icon v-if="isFilterApplied(filterType.value)" end size="small">mdi-check</v-icon>
           </v-chip>
         </v-chip-group>
       </v-col>
@@ -38,11 +40,11 @@
         <v-chip
           v-for="(filter, index) in filters"
           :key="filter.id"
-          close
+          closable
           @click:close="removeFilter(index)"
           class="mb-2"
         >
-          <v-icon left small>{{ getFilterIcon(filter.field) }}</v-icon>
+          <v-icon start size="small">{{ getFilterIcon(filter.field) }}</v-icon>
           {{ getFilterLabel(filter) }}
         </v-chip>
       </v-chip-group>
@@ -128,22 +130,42 @@ const currentFilterComponent = computed(() => {
 })
 
 // Methods
-const toggleFilterType = (filterType: string) => {
-  // If clicking on already selected type, deselect it
-  if (selectedFilterType.value === filterType) {
-    selectedFilterType.value = ""
-  }
-  // Otherwise v-chip-group will handle selection automatically
+const isFilterApplied = (filterType: string): boolean => {
+  return filters.value.some(f => f.field === filterType)
 }
 
 const addFilter = (filter: Omit<SegmentBuilderFilter, "id">) => {
-  const newFilter: SegmentBuilderFilter = {
-    ...filter,
-    id: `filter_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+  // Check if a filter for the same field already exists
+  const existingIndex = filters.value.findIndex(f => f.field === filter.field)
+
+  if (existingIndex !== -1) {
+    // Replace existing filter with new one (merge values for array types)
+    const existingFilter = filters.value[existingIndex]
+    if (Array.isArray(existingFilter.value) && Array.isArray(filter.value)) {
+      // Merge arrays and remove duplicates
+      const mergedValue = [...new Set([...existingFilter.value, ...filter.value])]
+      filters.value[existingIndex] = {
+        ...existingFilter,
+        value: mergedValue,
+        label: filter.label
+      }
+    } else {
+      // Replace with new filter
+      filters.value[existingIndex] = {
+        ...filter,
+        id: existingFilter.id
+      }
+    }
+  } else {
+    // Add new filter
+    const newFilter: SegmentBuilderFilter = {
+      ...filter,
+      id: `filter_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+    }
+    filters.value.push(newFilter)
   }
 
-  filters.value.push(newFilter)
-  emit("update:modelValue", filters.value)
+  emit("update:modelValue", [...filters.value])
   emit("filter-added")
   selectedFilterType.value = ""
 }
@@ -160,20 +182,49 @@ const getFilterIcon = (field: string): string => {
 }
 
 const getFilterLabel = (filter: SegmentBuilderFilter): string => {
+  // If the label already contains a colon with value info, use it as-is
+  // This handles filters like CapacityFilter and LocationFilter that build complete labels
+  if (filter.label && filter.label.includes(':')) {
+    return filter.label
+  }
+
+  // For simple filters, build the label with operator and value
   const operatorLabels: Record<string, string> = {
     equals: "=",
-    contains: "contains",
+    contains: "contient",
     greater_than: ">",
     less_than: "<",
-    between: "between",
-    in: "in",
-    not_in: "not in",
+    greater_than_or_equal: "≥",
+    less_than_or_equal: "≤",
+    between: "entre",
+    in: "dans",
+    not_in: "pas dans",
   }
 
   const operator = operatorLabels[filter.operator] || filter.operator
-  const value = Array.isArray(filter.value) ? filter.value.join(", ") : filter.value
 
-  return `${filter.label}: ${operator} ${value}`
+  // Handle different value types
+  let valueStr: string
+  if (filter.value === null || filter.value === undefined) {
+    valueStr = ''
+  } else if (typeof filter.value === 'object' && !Array.isArray(filter.value)) {
+    // Object value (e.g., { min: 100, max: 200 } or { country: 'fr' })
+    if ('min' in filter.value && 'max' in filter.value) {
+      valueStr = `${filter.value.min} - ${filter.value.max}`
+    } else if ('min' in filter.value) {
+      valueStr = `≥ ${filter.value.min}`
+    } else if ('max' in filter.value) {
+      valueStr = `≤ ${filter.value.max}`
+    } else {
+      valueStr = Object.values(filter.value).filter(Boolean).join(', ')
+    }
+  } else if (Array.isArray(filter.value)) {
+    valueStr = filter.value.join(", ")
+  } else {
+    valueStr = String(filter.value)
+  }
+
+  return `${filter.label}: ${operator} ${valueStr}`
 }
 
 // Watchers

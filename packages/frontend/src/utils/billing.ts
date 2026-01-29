@@ -5,6 +5,49 @@ import { DiscountType } from "@medical-crm/shared"
  * Utility functions for billing line management with catalog integration
  */
 
+/**
+ * Extract plain text from TipTap JSON content
+ * Recursively traverses the JSON structure to extract all text
+ */
+export function extractTextFromTipTap(content: any): string {
+  if (!content) return ''
+  if (typeof content === 'string') {
+    // Try to parse as JSON
+    if (content.trim().startsWith('{')) {
+      try {
+        const json = JSON.parse(content)
+        return extractTextFromTipTap(json)
+      } catch {
+        return content
+      }
+    }
+    return content
+  }
+  if (content.type === 'text') return content.text || ''
+  if (content.content && Array.isArray(content.content)) {
+    return content.content.map(extractTextFromTipTap).join(' ').replace(/\s+/g, ' ').trim()
+  }
+  return ''
+}
+
+/**
+ * Truncate text to a maximum length with ellipsis
+ */
+export function truncateText(text: string, maxLength: number = 100): string {
+  if (!text || text.length <= maxLength) return text
+  return text.substring(0, maxLength) + '...'
+}
+
+/**
+ * Get display text from a potentially rich text field
+ * Handles both plain text and TipTap JSON
+ */
+export function getDisplayText(content: string | undefined | null, maxLength?: number): string {
+  if (!content) return ''
+  const text = extractTextFromTipTap(content)
+  return maxLength ? truncateText(text, maxLength) : text
+}
+
 export type LineWithCatalog<T> = T & {
   tempId?: string
   catalogItemId?: string | null

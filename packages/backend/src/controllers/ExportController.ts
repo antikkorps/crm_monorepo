@@ -162,6 +162,16 @@ export class ExportController {
     })
   }
 
+  /**
+   * Export engagement letters
+   * GET /api/export/engagement-letters
+   */
+  static async exportEngagementLetters(ctx: Context) {
+    return ExportController.handleExport(ctx, 'engagement_letters', ExportService.exportEngagementLetters, {
+      engagementLetterStatus: ctx.query.status as string,
+    })
+  }
+
 /**
    * Queue export for large datasets
    * POST /api/export/queue
@@ -328,6 +338,14 @@ export class ExportController {
             formats: ['csv', 'xlsx', 'json'],
             permissions: await ExportService.checkExportPermissions(userId, 'opportunities'),
             recordCount: recordCounts.opportunities,
+          },
+          {
+            type: 'engagement_letters',
+            name: 'Engagement Letters',
+            description: 'Export engagement letters with mission details and financial data',
+            formats: ['csv', 'xlsx', 'json'],
+            permissions: await ExportService.checkExportPermissions(userId, 'engagement_letters'),
+            recordCount: recordCounts.engagementLetters,
           },
         ],
         formats: {

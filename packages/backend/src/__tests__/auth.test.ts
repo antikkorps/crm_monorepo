@@ -118,7 +118,7 @@ describe("Authentication System", () => {
 
         expect(tokens.accessToken).toBeDefined()
         expect(tokens.refreshToken).toBeDefined()
-        expect(tokens.expiresIn).toBe("15m")
+        expect(tokens.expiresIn).toBe("2h")
 
         // Verify tokens can be decoded
         const accessPayload = AuthService.verifyAccessToken(tokens.accessToken)

@@ -1,112 +1,149 @@
 <template>
   <div class="segment-preview">
-    <v-row>
-      <v-col cols="12" md="4">
-        <v-card outlined class="text-center">
-          <v-card-text class="pa-4">
-            <div class="text-h4 font-weight-bold primary--text">
-              {{ loading ? '...' : formatNumber(previewData.count) }}
-            </div>
-            <div class="text-caption text-medium-emphasis">
-              {{ $t('segmentation.preview.totalRecords') }}
-            </div>
-          </v-card-text>
-        </v-card>
-      </v-col>
+    <!-- Stats Cards - Horizontal on mobile -->
+    <div class="stats-row">
+      <div class="stat-card stat-total">
+        <div class="stat-value primary--text">
+          {{ loading ? '...' : formatNumber(previewData.count) }}
+        </div>
+        <div class="stat-label">
+          {{ $t('segmentation.preview.totalRecords') }}
+        </div>
+      </div>
 
-      <v-col cols="12" md="4">
-        <v-card outlined class="text-center">
-          <v-card-text class="pa-4">
-            <div class="text-h4 font-weight-bold success--text">
-              {{ loading ? '...' : formatNumber(activeCount) }}
-            </div>
-            <div class="text-caption text-medium-emphasis">
-              {{ $t('segmentation.preview.activeRecords') }}
-            </div>
-          </v-card-text>
-        </v-card>
-      </v-col>
+      <div class="stat-card stat-active">
+        <div class="stat-value success--text">
+          {{ loading ? '...' : formatNumber(activeCount) }}
+        </div>
+        <div class="stat-label">
+          {{ $t('segmentation.preview.activeRecords') }}
+        </div>
+      </div>
 
-      <v-col cols="12" md="4">
-        <v-card outlined class="text-center">
-          <v-card-text class="pa-4">
-            <div class="text-h4 font-weight-bold info--text">
-              {{ loading ? '...' : formatPercentage(matchPercentage) }}
-            </div>
-            <div class="text-caption text-medium-emphasis">
-              {{ $t('segmentation.preview.matchPercentage') }}
-            </div>
-          </v-card-text>
-        </v-card>
-      </v-col>
-    </v-row>
+      <div class="stat-card stat-percent">
+        <div class="stat-value info--text">
+          {{ loading ? '...' : formatPercentage(matchPercentage) }}
+        </div>
+        <div class="stat-label">
+          {{ $t('segmentation.preview.matchPercentage') }}
+        </div>
+      </div>
+    </div>
 
     <!-- Sample Records -->
-    <v-card outlined class="mt-4" v-if="!loading && previewData.sampleRecords.length > 0">
-      <v-card-title class="text-h6">
-        {{ $t('segmentation.preview.sampleRecords') }}
-        <v-spacer />
+    <div class="sample-records mt-4" v-if="!loading && previewData.sampleRecords.length > 0">
+      <div class="sample-header">
+        <span class="sample-title">{{ $t('segmentation.preview.sampleRecords') }}</span>
         <v-btn
-          icon
-          small
+          variant="text"
+          size="small"
+          color="primary"
           @click="refreshPreview"
           :loading="loading"
+          class="refresh-btn"
         >
-          <v-icon>mdi-refresh</v-icon>
+          <v-icon start size="small">mdi-refresh</v-icon>
+          <span class="d-none d-sm-inline">{{ $t('segmentation.preview.refresh') }}</span>
         </v-btn>
-      </v-card-title>
-      <v-card-text>
-        <v-data-table
-          :headers="tableHeaders"
-          :items="previewData.sampleRecords"
-          :items-per-page="5"
-          hide-default-footer
-          dense
+      </div>
+
+      <!-- Mobile: Card list view -->
+      <div class="sample-list d-md-none">
+        <div
+          v-for="(item, index) in previewData.sampleRecords.slice(0, 5)"
+          :key="index"
+          class="sample-item"
         >
-          <template v-slot:item.name="{ item }">
-            <div class="d-flex align-center">
-              <v-icon
-                v-if="segmentType === 'institution'"
-                left
-                small
-                color="primary"
-              >
-                mdi-hospital-building
-              </v-icon>
-              <v-icon
-                v-else
-                left
-                small
-                color="secondary"
-              >
-                mdi-account
-              </v-icon>
-              {{ item.name }}
-            </div>
-          </template>
-
-          <template v-slot:item.type="{ item }">
-            <v-chip
-              small
-              :color="getTypeColor(item.type)"
-              dark
+          <div class="sample-item-header">
+            <v-icon
+              v-if="segmentType === 'institution'"
+              size="small"
+              color="primary"
+              class="mr-2"
             >
-              {{ getTypeLabel(item.type) }}
-            </v-chip>
-          </template>
-
-          <template v-slot:item.status="{ item }">
+              mdi-hospital-building
+            </v-icon>
+            <v-icon
+              v-else
+              size="small"
+              color="secondary"
+              class="mr-2"
+            >
+              mdi-account
+            </v-icon>
+            <span class="sample-item-name">{{ item.name }}</span>
             <v-chip
-              small
+              size="x-small"
               :color="item.isActive ? 'success' : 'grey'"
-              dark
+              class="ml-auto"
             >
               {{ item.isActive ? $t('common.active') : $t('common.inactive') }}
             </v-chip>
-          </template>
-        </v-data-table>
-      </v-card-text>
-    </v-card>
+          </div>
+          <div class="sample-item-details">
+            <v-chip size="x-small" :color="getTypeColor(item.type)" class="mr-1">
+              {{ getTypeLabel(item.type) }}
+            </v-chip>
+            <span v-if="segmentType === 'institution' && item.address?.city" class="text-caption">
+              {{ item.address.city }}
+            </span>
+            <span v-else-if="item.department" class="text-caption">
+              {{ item.department }}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Desktop: Table view -->
+      <v-data-table
+        class="d-none d-md-block"
+        :headers="tableHeaders"
+        :items="previewData.sampleRecords"
+        :items-per-page="5"
+        hide-default-footer
+        density="compact"
+      >
+        <template v-slot:item.name="{ item }">
+          <div class="d-flex align-center">
+            <v-icon
+              v-if="segmentType === 'institution'"
+              start
+              size="small"
+              color="primary"
+            >
+              mdi-hospital-building
+            </v-icon>
+            <v-icon
+              v-else
+              start
+              size="small"
+              color="secondary"
+            >
+              mdi-account
+            </v-icon>
+            {{ item.name }}
+          </div>
+        </template>
+
+        <template v-slot:item.type="{ item }">
+          <v-chip
+            size="small"
+            :color="getTypeColor(item.type)"
+          >
+            {{ getTypeLabel(item.type) }}
+          </v-chip>
+        </template>
+
+        <template v-slot:item.status="{ item }">
+          <v-chip
+            size="small"
+            :color="item.isActive ? 'success' : 'grey'"
+          >
+            {{ item.isActive ? $t('common.active') : $t('common.inactive') }}
+          </v-chip>
+        </template>
+      </v-data-table>
+    </div>
 
     <!-- Loading State -->
     <v-card outlined class="mt-4" v-else-if="loading">
@@ -204,7 +241,8 @@ const formatPercentage = (percentage: number): string => {
   return `${percentage.toFixed(1)}%`
 }
 
-const getTypeColor = (type: string): string => {
+const getTypeColor = (type: string | undefined): string => {
+  if (!type) return 'grey'
   const colors: Record<string, string> = {
     'hospital': 'error',
     'clinic': 'warning',
@@ -214,8 +252,12 @@ const getTypeColor = (type: string): string => {
   return colors[type] || 'grey'
 }
 
-const getTypeLabel = (type: string): string => {
-  return t(`institution.types.${type}`) || type
+const getTypeLabel = (type: string | undefined): string => {
+  if (!type) return '-'
+  const translationKey = `institution.types.${type}`
+  const translated = t(translationKey)
+  // If translation key is returned (not found), use original value
+  return translated !== translationKey ? translated : type
 }
 
 const refreshPreview = async () => {
@@ -291,6 +333,167 @@ onMounted(() => {
 
 <style scoped>
 .segment-preview {
-  min-height: 200px;
+  min-height: 100px;
+}
+
+/* Stats Row - Horizontal layout */
+.stats-row {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.stat-card {
+  flex: 1;
+  text-align: center;
+  padding: 16px 12px;
+  background: var(--p-surface-0, #fff);
+  border: 1px solid var(--p-surface-border, rgba(0,0,0,0.12));
+  border-radius: 8px;
+}
+
+.stat-value {
+  font-size: 1.75rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.stat-label {
+  font-size: 0.75rem;
+  color: var(--p-text-muted-color, rgba(0,0,0,0.6));
+  margin-top: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Sample Records Section */
+.sample-records {
+  background: var(--p-surface-0, #fff);
+  border: 1px solid var(--p-surface-border, rgba(0,0,0,0.12));
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.sample-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--p-surface-border, rgba(0,0,0,0.08));
+  background: var(--p-surface-50, #fafafa);
+}
+
+.sample-title {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--p-text-color, rgba(0,0,0,0.87));
+}
+
+.refresh-btn {
+  min-width: auto;
+}
+
+/* Mobile Card List */
+.sample-list {
+  padding: 8px;
+}
+
+.sample-item {
+  padding: 10px 12px;
+  background: var(--p-surface-50, #fafafa);
+  border-radius: 6px;
+  margin-bottom: 8px;
+}
+
+.sample-item:last-child {
+  margin-bottom: 0;
+}
+
+.sample-item-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.sample-item-name {
+  font-weight: 500;
+  font-size: 0.875rem;
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-right: 8px;
+}
+
+.sample-item-details {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding-left: 28px;
+}
+
+/* Desktop Table */
+.sample-records :deep(.v-data-table) {
+  background: transparent;
+}
+
+/* Mobile optimizations */
+@media (max-width: 600px) {
+  .stats-row {
+    gap: 8px;
+  }
+
+  .stat-card {
+    padding: 10px 8px;
+    border-radius: 6px;
+  }
+
+  .stat-value {
+    font-size: 1.25rem;
+  }
+
+  .stat-label {
+    font-size: 0.6875rem;
+  }
+
+  .sample-header {
+    padding: 10px 12px;
+  }
+
+  .sample-title {
+    font-size: 0.875rem;
+  }
+
+  .sample-list {
+    padding: 6px;
+  }
+
+  .sample-item {
+    padding: 8px 10px;
+  }
+
+  .sample-item-name {
+    font-size: 0.8125rem;
+  }
+
+  .sample-item-details {
+    padding-left: 24px;
+  }
+}
+
+/* Loading and Empty states */
+.segment-preview :deep(.v-card.mt-4) {
+  border-radius: 8px;
+}
+
+@media (max-width: 600px) {
+  .segment-preview :deep(.v-card.mt-4 .v-card-text) {
+    padding: 1.5rem 1rem;
+  }
+
+  .segment-preview :deep(.v-card.mt-4 .v-icon) {
+    font-size: 48px !important;
+  }
 }
 </style>

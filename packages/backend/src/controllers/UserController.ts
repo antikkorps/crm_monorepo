@@ -2,8 +2,10 @@ import { Context, Next } from "../types/koa"
 import { MedicalInstitution } from "../models/MedicalInstitution"
 import { Team } from "../models/Team"
 import { User, UserRole } from "../models/User"
+import { PasswordResetToken } from "../models/PasswordResetToken"
 import { AvatarService } from "../services/AvatarService"
-import { createError } from "../utils/logger"
+import { EmailService } from "../services/EmailService"
+import { createError, logger } from "../utils/logger"
 
 export class UserController {
   /**
@@ -757,6 +759,93 @@ export class UserController {
     } catch (error) {
       if (error && typeof error === "object" && "statusCode" in error) throw error
       throw createError("Failed to reset password", 500, "RESET_PASSWORD_ERROR", { error })
+    }
+  }
+
+  /**
+   * Send invitation email to a user
+   * Creates an invitation token and sends an email with a link to set password
+   */
+  public static async sendInvitation(ctx: Context): Promise<void> {
+    try {
+      const currentUser = ctx.state.user as User
+
+      // Only super admins can send invitations
+      if (currentUser.role !== UserRole.SUPER_ADMIN) {
+        throw createError(
+          "Seuls les super administrateurs peuvent envoyer des invitations",
+          403,
+          "INSUFFICIENT_PERMISSIONS"
+        )
+      }
+
+      const { id } = ctx.params
+
+      const user = await User.findByPk(id)
+      if (!user) {
+        throw createError("Utilisateur non trouvé", 404, "USER_NOT_FOUND", { userId: id })
+      }
+
+      // Generate 6-digit code (same format as password reset)
+      const code = Math.floor(100000 + Math.random() * 900000).toString()
+
+      // Expire in 24 hours (longer than password reset)
+      const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000)
+
+      // Invalidate any existing tokens for this user
+      await PasswordResetToken.update(
+        { used: true },
+        { where: { userId: user.id, used: false } }
+      )
+
+      // Create new invitation token
+      await PasswordResetToken.create({
+        userId: user.id,
+        code,
+        expiresAt,
+        used: false,
+      })
+
+      // Send invitation email
+      const emailService = new EmailService()
+      const inviterName = currentUser.getFullName()
+      const result = await emailService.sendInvitationEmail(
+        user.email,
+        user.firstName,
+        inviterName,
+        code
+      )
+
+      if (!result.success) {
+        throw createError(
+          "Échec de l'envoi de l'email d'invitation",
+          500,
+          "EMAIL_SEND_FAILED",
+          { error: result.error }
+        )
+      }
+
+      logger.info("Invitation email sent", {
+        userId: user.id,
+        email: user.email,
+        invitedBy: currentUser.id,
+      })
+
+      ctx.body = {
+        success: true,
+        data: {
+          message: `Invitation envoyée à ${user.email}`,
+          user: {
+            id: user.id,
+            email: user.email,
+            firstName: user.firstName,
+            lastName: user.lastName,
+          },
+        },
+      }
+    } catch (error) {
+      if (error && typeof error === "object" && "statusCode" in error) throw error
+      throw createError("Échec de l'envoi de l'invitation", 500, "SEND_INVITATION_ERROR", { error })
     }
   }
 }
