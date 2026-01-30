@@ -118,17 +118,21 @@ export class ReminderController {
         title,
         description,
         reminderDate,
-        userId,
+        userId: bodyUserId,
         institutionId,
         priority = ReminderPriority.MEDIUM,
       } = ctx.request.body as {
         title: string
         description?: string
         reminderDate: string
-        userId: string
+        userId?: string
         institutionId?: string
         priority?: ReminderPriority
       }
+
+      // Use authenticated user if userId not provided
+      const authenticatedUser = ctx.state.user as User
+      const userId = bodyUserId || authenticatedUser?.id
 
       // Validate required fields
       if (!title || !reminderDate || !userId) {

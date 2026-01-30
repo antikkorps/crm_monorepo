@@ -1628,6 +1628,26 @@
         "reference": "Référence",
         "status": "Statut"
       }
+    },
+    "paymentMethods": {
+      "bank_transfer": "Virement bancaire",
+      "check": "Chèque",
+      "cash": "Espèces",
+      "credit_card": "Carte de crédit",
+      "other": "Autre"
+    },
+    "analytics": {
+      "paymentMethods": {
+        "title": "Analyse des méthodes de paiement",
+        "noData": "Aucune donnée de paiement",
+        "noDataHint": "Les paiements confirmés apparaîtront ici",
+        "totalReceived": "Total reçu",
+        "transactions": "Transactions",
+        "average": "Moyenne",
+        "payment": "paiement",
+        "payments": "paiements",
+        "avgPerTransaction": "Moy. par transaction"
+      }
     }
   },
   "templates": {

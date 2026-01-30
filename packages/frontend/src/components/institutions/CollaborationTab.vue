@@ -590,6 +590,15 @@
                   {{ collaborationData.stats.totalSimplifiedTransactions ?? 0 }}
                 </v-chip>
               </div>
+              <v-btn
+                size="small"
+                variant="text"
+                prepend-icon="mdi-plus"
+                color="orange"
+                @click="openSimplifiedTransactionForm"
+              >
+                {{ t("collaboration.add") }}
+              </v-btn>
             </v-card-title>
             <v-divider></v-divider>
             <div
@@ -861,6 +870,11 @@ const openReminderForm = () => {
 const openTaskForm = () => {
   selectedTask.value = null
   showTaskForm.value = true
+}
+
+const openSimplifiedTransactionForm = () => {
+  selectedSimplifiedTransaction.value = null
+  showSimplifiedTransactionForm.value = true
 }
 
 // Open form dialogs (edit mode)

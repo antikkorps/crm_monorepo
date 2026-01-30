@@ -30,23 +30,23 @@ export class Payment
   extends Model<PaymentAttributes, PaymentCreationAttributes>
   implements PaymentAttributes
 {
-  public id!: string
-  public invoiceId!: string
+  declare id: string
+  declare invoiceId: string
 
   // Payment details
-  public amount!: number
-  public paymentDate!: Date
-  public paymentMethod!: PaymentMethod
-  public reference?: string
+  declare amount: number
+  declare paymentDate: Date
+  declare paymentMethod: PaymentMethod
+  declare reference: string | undefined
 
   // Status and notes
-  public status!: PaymentStatus
-  public notes?: string
+  declare status: PaymentStatus
+  declare notes: string | undefined
 
   // Metadata
-  public recordedBy!: string
-  public readonly createdAt!: Date
-  public readonly updatedAt!: Date
+  declare recordedBy: string
+  declare readonly createdAt: Date
+  declare readonly updatedAt: Date
 
   // Associations
   public invoice?: any

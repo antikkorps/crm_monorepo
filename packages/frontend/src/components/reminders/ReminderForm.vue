@@ -308,7 +308,13 @@ watch(
 watch(
   () => props.modelValue,
   (newValue) => {
-    if (!newValue) {
+    if (newValue) {
+      // Dialog opened - reset form with preselected values if creating new
+      if (!props.reminder) {
+        resetForm()
+      }
+    } else {
+      // Dialog closed
       resetForm()
     }
   }
