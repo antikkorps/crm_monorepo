@@ -768,7 +768,7 @@ export class EngagementLetterService {
       EngagementLetter.count({ where: { ...whereClause, missionType: MissionType.AUTRE } }),
       EngagementLetter.sum("estimatedTotal", {
         where: { ...whereClause, status: EngagementLetterStatus.ACCEPTED },
-      }) || 0,
+      }),
     ])
 
     // Calculate acceptance rate
@@ -795,7 +795,7 @@ export class EngagementLetterService {
         [MissionType.FORMATION]: formationCount,
         [MissionType.AUTRE]: autreCount,
       },
-      totalAcceptedValue: parseFloat(totalAcceptedValue.toString()),
+      totalAcceptedValue: totalAcceptedValue !== null ? parseFloat(totalAcceptedValue.toString()) : 0,
       averageResponseTime,
       acceptanceRate: acceptanceRate !== null ? Math.round(acceptanceRate * 100) / 100 : null,
     }

@@ -65,6 +65,11 @@ const medicalProfileSchema = Joi.object({
   lastAuditDate: Joi.date().optional(),
   complianceExpirationDate: Joi.date().optional(),
   complianceNotes: Joi.string().max(2000).optional(),
+  // Activity metrics
+  staffCount: Joi.number().integer().min(0).max(100000).allow(null).optional(),
+  endoscopyRooms: Joi.number().integer().min(0).max(1000).allow(null).optional(),
+  surgicalInterventions: Joi.number().integer().min(0).allow(null).optional(),
+  endoscopyInterventions: Joi.number().integer().min(0).allow(null).optional(),
 })
 
 const contactPersonSchema = Joi.object({
@@ -134,6 +139,10 @@ const updateMedicalProfileSchema = medicalProfileSchema.fork(
     "equipmentTypes",
     "certifications",
     "complianceStatus",
+    "staffCount",
+    "endoscopyRooms",
+    "surgicalInterventions",
+    "endoscopyInterventions",
   ],
   (schema) => schema.optional()
 )

@@ -186,7 +186,7 @@ import type {
 } from "@medical-crm/shared"
 import { CommercialStatus } from "@medical-crm/shared"
 import { computed, onMounted, reactive, ref, watch } from "vue"
-import { usersApi } from "@/services/api"
+import { institutionsApi, usersApi } from "@/services/api"
 
 interface Props {
   institution?: MedicalInstitution
@@ -498,28 +498,33 @@ const handleSubmit = async () => {
       },
     }
 
-    await new Promise((resolve) => setTimeout(resolve, 1500))
+    let savedInstitution: MedicalInstitution
 
-    const savedInstitution: MedicalInstitution = {
-      id: props.institution?.id || `institution-${Date.now()}`,
-      ...institutionData,
-      tags: institutionData.tags || [],
-      isActive: institutionData.isActive ?? true,
-      commercialStatus: institutionData.commercialStatus ?? CommercialStatus.PROSPECT,
-      medicalProfile: {
-        id: props.institution?.medicalProfile?.id || `profile-${Date.now()}`,
-        ...institutionData.medicalProfile,
-      },
-      contactPersons: props.institution?.contactPersons || [],
-      // Multi-source tracking fields (defaults for new institutions)
-      dataSource: props.institution?.dataSource || 'crm',
-      isLocked: props.institution?.isLocked ?? false,
-      lockedAt: props.institution?.lockedAt,
-      lockedReason: props.institution?.lockedReason,
-      externalData: props.institution?.externalData || {},
-      lastSyncAt: props.institution?.lastSyncAt || {},
-      createdAt: props.institution?.createdAt || new Date(),
-      updatedAt: new Date(),
+    if (isEditing.value && props.institution?.id) {
+      // Update existing institution
+      const response = await institutionsApi.update(props.institution.id, {
+        name: institutionData.name,
+        type: institutionData.type,
+        address: institutionData.address,
+        tags: institutionData.tags,
+        isActive: institutionData.isActive,
+        accountingNumber: institutionData.accountingNumber || null,
+        digiformaId: institutionData.digiformaId || null,
+        assignedUserId: institutionData.assignedUserId || null,
+      }) as { data: { institution: MedicalInstitution } }
+      savedInstitution = response.data.institution
+
+      // Also update medical profile if needed
+      if (institutionData.medicalProfile) {
+        await institutionsApi.updateMedicalProfile(props.institution.id, institutionData.medicalProfile)
+        // Refetch to get updated data
+        const refreshed = await institutionsApi.getById(props.institution.id) as { data: { institution: MedicalInstitution } }
+        savedInstitution = refreshed.data.institution
+      }
+    } else {
+      // Create new institution
+      const response = await institutionsApi.create(institutionData) as { data: { institution: MedicalInstitution } }
+      savedInstitution = response.data.institution
     }
 
     emit("institution-saved", savedInstitution)

@@ -238,32 +238,30 @@ export class BillingAnalyticsService {
           }
         : {}
 
-    const userFilter = userId
-      ? {
-          "$invoice.assignedUserId$": userId,
-        }
-      : {}
+    const includeInvoice: any = {
+      model: Invoice,
+      as: "invoice",
+      attributes: ["id", "assignedUserId"],
+    }
+
+    // Only add where clause if userId filter is specified
+    if (userId) {
+      includeInvoice.where = { assignedUserId: userId }
+    }
 
     const payments = await Payment.findAll({
       where: {
         ...dateFilter,
         status: PaymentStatus.CONFIRMED,
       },
-      include: [
-        {
-          model: Invoice,
-          as: "invoice",
-          where: userFilter,
-          attributes: ["id", "assignedUserId"],
-        },
-      ],
+      include: [includeInvoice],
     })
 
-    const totalPayments = payments.reduce((sum, payment) => sum + payment.amount, 0)
+    const totalPayments = payments.reduce((sum, payment) => sum + parseFloat(String(payment.amount || 0)), 0)
     const averagePaymentAmount = payments.length > 0 ? totalPayments / payments.length : 0
 
     // Payment method analytics
-    const paymentsByMethod = await this.getPaymentsByMethod(payments)
+    const paymentsByMethod = this.getPaymentsByMethod(payments)
 
     // Payment status analytics
     const paymentsByStatus = await this.getPaymentsByStatus(startDate, endDate, userId)
@@ -836,13 +834,19 @@ export class BillingAnalyticsService {
     let totalAmount = 0
 
     payments.forEach((payment) => {
-      if (!methodMap.has(payment.paymentMethod)) {
-        methodMap.set(payment.paymentMethod, { amount: 0, count: 0 })
+      // Skip payments without a valid payment method
+      const method = payment.paymentMethod
+      if (!method) {
+        return
       }
-      const methodData = methodMap.get(payment.paymentMethod)!
-      methodData.amount += payment.amount
+      if (!methodMap.has(method)) {
+        methodMap.set(method, { amount: 0, count: 0 })
+      }
+      const methodData = methodMap.get(method)!
+      const amount = parseFloat(String(payment.amount || 0))
+      methodData.amount += amount
       methodData.count += 1
-      totalAmount += payment.amount
+      totalAmount += amount
     })
 
     return Array.from(methodMap.entries()).map(([method, data]) => ({

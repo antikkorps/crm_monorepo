@@ -310,6 +310,9 @@ export const institutionsApi = {
     }
     return await response.blob()
   },
+  // Medical profile endpoint
+  updateMedicalProfile: (institutionId: string, data: any) =>
+    apiClient.put(`/institutions/${institutionId}/medical-profile`, data),
   // Contact person endpoints
   contacts: {
     create: (institutionId: string, data: any) =>
