@@ -50,7 +50,7 @@
     "koa-jwt": "^4.0.4",
     "koa2-swagger-ui": "^5.12.0",
     "node-cron": "^4.2.1",
-    "nodemailer": "^7.0.10",
+    "nodemailer": "^8.0.4",
     "pg": "^8.13.1",
     "puppeteer": "^24.2.0",
     "sanitize-filename": "^1.6.3",
